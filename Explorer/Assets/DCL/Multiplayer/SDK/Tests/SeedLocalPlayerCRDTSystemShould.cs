@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             // Assert
-            Assert.IsNull(world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+            Assert.IsNull(world.Get<SDKTalking>(persistentPlayerEntity).Value);
         }
 
         [Test]
@@ -102,14 +102,14 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Initialize();
 
             // Assert
-            Assert.AreEqual(true, world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+            Assert.AreEqual(true, world.Get<SDKTalking>(persistentPlayerEntity).Value);
 
             // Act
             globalWorld.Get<LocalPlayerTalkingComponent>(localPlayerEntity).IsTalking = false;
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(false, world.Get<SDKProfile>(persistentPlayerEntity).Talking);
+            Assert.AreEqual(false, world.Get<SDKTalking>(persistentPlayerEntity).Value);
         }
     }
 }

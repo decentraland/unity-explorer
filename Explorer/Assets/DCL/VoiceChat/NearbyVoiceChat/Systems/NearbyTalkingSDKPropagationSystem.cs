@@ -16,8 +16,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Resolves each player's Nearby voice activity, exposed to scenes as <c>PBAvatarBase.talking</c>.
-    ///     A remote player's value goes to the <see cref="SDKProfile" /> of the scene the player stands in;
-    ///     <see cref="SDKProfile.SetTalking" /> marks it for a rewrite only when the value flips.
+    ///     A remote player's value goes to the <see cref="SDKTalking" /> of the scene the player stands in;
+    ///     <see cref="SDKTalking.Set" /> marks it for a rewrite only when the value flips.
     ///     Remote activity is read from <see cref="IsActivelySpeakingTag" /> as is: whether the local player hears
     ///     the speaker (mute, block, scene ban, listening state) does not change the fact that the avatar is talking.
     ///     The local player's value goes to <see cref="LocalPlayerTalkingComponent" />, which
@@ -78,9 +78,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private static void SetSceneTalking(in PlayerCRDTEntity playerCRDTEntity, bool talking)
         {
-            if (playerCRDTEntity.SceneFacade is { } scene
-                && scene.EcsExecutor.World.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKProfile? sdkProfile))
-                sdkProfile!.SetTalking(talking);
+            if (playerCRDTEntity.SceneFacade is not { } scene) return;
+
+            ref SDKTalking sdkTalking = ref scene.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
+
+            if (exists)
+                sdkTalking.Set(talking);
         }
     }
 }

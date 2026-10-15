@@ -284,7 +284,7 @@ namespace Global
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
             container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(
-                componentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>(onRelease: static profile => profile.SetTalking(null)));
+                componentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {

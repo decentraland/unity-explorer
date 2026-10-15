@@ -21,24 +21,6 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; private set; }
 
-        /// <summary>
-        ///     Voice activity written as <c>PBAvatarBase.talking</c>; <c>null</c> while the engine does not report it.
-        /// </summary>
-        public bool? Talking { get; private set; }
-
-        /// <summary>
-        ///     Set when <see cref="Talking" /> changes, independently of <see cref="IsDirty" /> that tracks the rest of the profile.
-        /// </summary>
-        public bool IsTalkingDirty { get; set; }
-
-        public void SetTalking(bool? talking)
-        {
-            if (Talking == talking) return;
-
-            Talking = talking;
-            IsTalkingDirty = true;
-        }
-
         public void OverrideWith(Profile profile)
         {
             Avatar.OverrideWith(profile.Avatar);

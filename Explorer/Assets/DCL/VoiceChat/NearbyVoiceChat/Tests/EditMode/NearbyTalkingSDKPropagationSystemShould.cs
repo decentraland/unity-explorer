@@ -22,7 +22,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
-    ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKProfile" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
+    ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKTalking" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
     ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through the registry.
     ///     The local player's value is stored in <see cref="LocalPlayerTalkingComponent" /> instead.
     /// </summary>
@@ -60,11 +60,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             written = null;
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, SDKProfile>>(), Arg.Any<CRDTEntity>(), Arg.Any<SDKProfile>()))
+            ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>()))
                            .Do(call =>
                             {
                                 var message = new PBAvatarBase();
-                                call.Arg<Action<PBAvatarBase, SDKProfile>>()(message, call.Arg<SDKProfile>());
+                                call.Arg<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>()(message, call.Arg<(SDKProfile profile, bool? talking)>());
                                 written = message;
                             });
 
@@ -151,7 +151,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Tick();
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, SDKProfile>>(), Arg.Any<CRDTEntity>(), Arg.Any<SDKProfile>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             sdkProfile.OverrideWith(profile);
             sdkProfile.IsDirty = false;
 
-            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile);
+            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile, new SDKTalking());
 
             var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
             playerCRDTEntity.AssignToScene(scene, sceneEntity);

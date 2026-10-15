@@ -40,12 +40,13 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
+        private void UpdateAvatarBase([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile, in SDKTalking talking)
         {
-            if (!force && !profile.IsDirty && !profile.IsTalkingDirty) return;
+            if (!force && !profile.IsDirty && !talking.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, (SDKProfile profile, bool? talking)>(static (pbComponent, data) =>
             {
+                SDKProfile profile = data.profile;
                 pbComponent.Name = profile.Name;
                 SDKProfile.SDKAvatar avatar = profile.Avatar;
                 pbComponent.BodyShapeUrn = avatar.BodyShape;
@@ -53,11 +54,9 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.EyesColor = avatar.EyesColor.ToColor3();
                 pbComponent.HairColor = avatar.HairColor.ToColor3();
 
-                if (profile.Talking is { } talking)
-                    pbComponent.Talking = talking;
-            }, playerCRDTEntity.CRDTEntity, profile);
-
-            profile.IsTalkingDirty = false;
+                if (data.talking is { } value)
+                    pbComponent.Talking = value;
+            }, playerCRDTEntity.CRDTEntity, (profile, talking.Value));
         }
 
         [Query]
