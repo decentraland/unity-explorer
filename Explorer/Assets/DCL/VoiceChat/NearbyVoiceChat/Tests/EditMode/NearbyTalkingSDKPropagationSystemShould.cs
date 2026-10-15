@@ -23,8 +23,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
     ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKTalking" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
     ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through <see cref="NearbyVoiceChatStateModel.IsLocalSpeaking" />.
-    ///     The tests never reset <see cref="PlayerCRDTEntity.IsDirty" />, so the scene-assignment path re-runs every tick unless a test clears it.
-    ///     The local player's value is stored in <see cref="TalkingComponent" /> instead.
     /// </summary>
     public class NearbyTalkingSDKPropagationSystemShould : UnitySystemTestBase<NearbyTalkingSDKPropagationSystem>
     {
@@ -36,6 +34,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         private World sceneWorld = null!;
         private ISceneFacade scene = null!;
         private WriteSDKAvatarBaseSystem writer = null!;
+        private CleanUpAvatarPropagationComponentsSystem cleanUp = null!;
         private Entity playerEntity;
         private PBAvatarBase? written;
 
@@ -67,6 +66,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                             });
 
             writer = new WriteSDKAvatarBaseSystem(sceneWorld, ecsToCRDTWriter);
+            cleanUp = new CleanUpAvatarPropagationComponentsSystem(sceneWorld);
 
             playerEntity = world.Create(new PlayerComponent());
 
@@ -78,6 +78,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         protected override void OnTearDown()
         {
             writer.Dispose();
+            cleanUp.Dispose();
             sceneWorld.Dispose();
             stateModel.Dispose();
         }
@@ -174,6 +175,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
             Tick();
             written = null;
+            ecsToCRDTWriter.ClearReceivedCalls();
 
             // Act
             Entity newSceneEntity = CreateSceneEntity(world.Get<Profile>(remote), SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, out _);
@@ -183,7 +185,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Assert
             Assert.That(written?.HasTalking, Is.True);
             Assert.That(written?.Talking, Is.True);
-            ecsToCRDTWriter.Received(2).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Is<CRDTEntity>(e => e.Id == SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1), Arg.Any<(SDKProfile profile, bool? talking)>());
         }
 
         [Test]
@@ -248,6 +250,29 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(world.Has<TalkingMirroredTag>(remote), Is.False);
         }
 
+        [Test]
+        public void WriteSilentWhenSpeakerStopsOutsideSceneAndEntersAnother()
+        {
+            // Arrange
+            Entity remote = world.Create(new IsActivelySpeakingTag());
+            AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            Tick();
+            world.Get<PlayerCRDTEntity>(remote).RemoveFromScene();
+            world.Remove<IsActivelySpeakingTag>(remote);
+            Tick();
+            written = null;
+
+            // Act
+            Entity newSceneEntity = CreateSceneEntity(world.Get<Profile>(remote), SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, out _);
+            world.Get<PlayerCRDTEntity>(remote).AssignToScene(scene, newSceneEntity);
+            Tick();
+
+            // Assert
+            Assert.That(written?.HasTalking, Is.True);
+            Assert.That(written?.Talking, Is.False);
+            Assert.That(world.Has<TalkingMirroredTag>(remote), Is.False);
+        }
+
         private SDKProfile AddPlayerToScene(Entity globalEntity, string walletId, int crdtEntity)
         {
             Profile profile = Profile.NewRandomProfile(walletId);
@@ -274,6 +299,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             system.Update(0);
             writer.Update(0);
+            cleanUp.Update(0);
         }
     }
 }

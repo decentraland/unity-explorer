@@ -13,14 +13,10 @@ using ECS.LifeCycle.Components;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Resolves each player's Nearby voice activity, exposed to scenes as <c>PBAvatarBase.talking</c>.
-    ///     A remote player's value goes to the <see cref="SDKTalking" /> of the scene the player stands in,
-    ///     written only on the frame <see cref="IsActivelySpeakingTag" /> appears or disappears
-    ///     (tracked through <see cref="TalkingMirroredTag" />) and on the frame the player is assigned to a scene;
-    ///     in steady state no remote player is touched.
-    ///     Remote activity is read from <see cref="IsActivelySpeakingTag" /> as is: whether the local player hears
-    ///     the speaker (mute, block, scene ban, listening state) does not change the fact that the avatar is talking.
-    ///     The local player's value goes to <see cref="TalkingComponent" /> on the global player entity.
+    ///     Mirrors Nearby voice activity into <c>PBAvatarBase.talking</c>.
+    ///     A remote player's <see cref="IsActivelySpeakingTag" /> transitions (tracked through <see cref="TalkingMirroredTag" />)
+    ///     and scene assignments are written to the <see cref="SDKTalking" /> of the scene the player stands in.
+    ///     The local player's value is written to <see cref="TalkingComponent" /> on the global player entity.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerProfileDataPropagationSystem))]
@@ -82,9 +78,9 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private static void SetSceneTalking(in PlayerCRDTEntity playerCRDTEntity, bool talking)
         {
-            if (!playerCRDTEntity.AssignedToScene) return;
+            if (playerCRDTEntity.SceneFacade is not { } sceneFacade) return;
 
-            ref SDKTalking sdkTalking = ref playerCRDTEntity.SceneFacade!.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
+            ref SDKTalking sdkTalking = ref sceneFacade.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
 
             if (exists)
                 sdkTalking.Set(talking);
