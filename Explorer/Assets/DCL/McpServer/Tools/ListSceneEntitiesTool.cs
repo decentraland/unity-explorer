@@ -32,7 +32,8 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "List the entities of the scene at the player's current parcel. Each entry carries the engine id (what get_entity_details takes), "
             + "the CRDT id the scene code uses, and a label describing what the entity shows (gltf src, primitive mesh, text, hidden, parent CRDT id; "
-            + "scene root / player / camera for the reserved entities). Pass crdtEntity to find the engine id of an entity the scene logs, or filter "
+            + "scene root / player / camera for the reserved entities). The scene container (the scene's Unity root at its base parcel) is listed "
+            + "without a CRDT id. Pass crdtEntity to find the engine id of an entity the scene logs, or filter "
             + "to search the labels (e.g. 'PoolToy', 'mesh Sphere', 'hidden') instead of calling get_entity_details on every id.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
@@ -83,11 +84,15 @@ namespace DCL.McpServer.Tools
             foreach (Entity entity in entities)
             {
                 int? crdtEntity = world.TryGet(entity, out CRDTEntity crdt) ? crdt.Id : null;
+                bool sceneContainer = crdtEntity.HasValue && SceneEntityLabel.IsSceneContainer(world, entity, crdtEntity.Value);
+
+                if (sceneContainer)
+                    crdtEntity = null;
 
                 if (byCrdtEntity && crdtEntity != crdtEntityFilter) continue;
 
-                string? label = crdtEntity.HasValue
-                    ? SceneEntityLabel.Reserved(crdtEntity.Value) ?? SceneEntityLabel.Describe(world, entity, parts)
+                string? label = sceneContainer ? "scene container"
+                    : crdtEntity.HasValue ? SceneEntityLabel.Reserved(crdtEntity.Value) ?? SceneEntityLabel.Describe(world, entity, parts)
                     : null;
 
                 if (!string.IsNullOrEmpty(filter) && (label == null || label.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)) continue;

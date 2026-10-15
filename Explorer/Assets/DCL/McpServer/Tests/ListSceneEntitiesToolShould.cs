@@ -1,5 +1,6 @@
 using Arch.Core;
 using CRDT;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.McpServer.Core;
@@ -103,7 +104,7 @@ namespace DCL.McpServer.Tests
         public void DescribeEachEntityWithItsCrdtIdAndLabel()
         {
             // Arrange
-            Entity root = world.Create(new CRDTEntity(0));
+            Entity root = world.Create(new CRDTEntity(0), new SceneRootComponent());
             Entity drink = world.Create(new CRDTEntity(1736), new PBGltfContainer { Src = "assets/drink.glb" }, new SDKTransform { ParentId = 1735 });
             Entity engineOnly = world.Create();
 
@@ -142,6 +143,27 @@ namespace DCL.McpServer.Tests
             Assert.That(structured["entities"]![0]!["id"]!.Value<int>(), Is.EqualTo(target.Id));
             Assert.That(structured["entities"]![0]!["label"]!.Value<string>(), Is.EqualTo("mesh Plane"));
             Assert.That(TextOf(result), Does.Contain("total=2 matched=1 returned=1"));
+        }
+
+        [Test]
+        public void ListTheSceneContainerWithoutTheRootCrdtId()
+        {
+            // Arrange
+            Entity root = world.Create(new CRDTEntity(0), new SceneRootComponent());
+            Entity container = world.Create(new CRDTEntity());
+
+            // Act
+            McpToolResult listing = Execute(new JObject());
+            McpToolResult byRootId = Execute(new JObject { ["crdtEntity"] = 0 });
+
+            // Assert
+            JToken containerEntry = Find((JArray)listing.Payload["structuredContent"]!["entities"]!, container.Id);
+            var rootMatches = (JArray)byRootId.Payload["structuredContent"]!["entities"]!;
+
+            Assert.That(containerEntry["crdtEntity"]!.Type, Is.EqualTo(JTokenType.Null));
+            Assert.That(containerEntry["label"]!.Value<string>(), Is.EqualTo("scene container"));
+            Assert.That(rootMatches.Count, Is.EqualTo(1));
+            Assert.That(rootMatches[0]["id"]!.Value<int>(), Is.EqualTo(root.Id));
         }
 
         [Test]

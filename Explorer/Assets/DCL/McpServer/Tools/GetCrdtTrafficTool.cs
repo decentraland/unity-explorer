@@ -321,7 +321,7 @@ namespace DCL.McpServer.Tools
 
             world.Query(in CRDT_ENTITIES, (Entity entity, ref CRDTEntity crdtEntity) =>
             {
-                if (wanted.Contains(crdtEntity.Id))
+                if (wanted.Contains(crdtEntity.Id) && !SceneEntityLabel.IsSceneContainer(world, entity, crdtEntity.Id))
                     engineEntities[crdtEntity.Id] = entity;
             });
 

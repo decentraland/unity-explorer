@@ -1,5 +1,6 @@
 using Arch.Core;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using System.Collections.Generic;
@@ -13,6 +14,13 @@ namespace DCL.McpServer.Utils
     public static class SceneEntityLabel
     {
         private const int MAX_TEXT_LENGTH = 24;
+
+        /// <summary>
+        ///     The scene container is created with a default <see cref="CRDT.CRDTEntity" />, so it carries the scene root's CRDT id 0
+        ///     without being a CRDT entity; only the real root has <see cref="SceneRootComponent" />.
+        /// </summary>
+        public static bool IsSceneContainer(World world, Entity entity, int crdtEntityId) =>
+            crdtEntityId == SpecialEntitiesID.SCENE_ROOT_ENTITY && !world.Has<SceneRootComponent>(entity);
 
         /// <summary>
         ///     Names the SDK reserved entities by CRDT id; null for any other id.

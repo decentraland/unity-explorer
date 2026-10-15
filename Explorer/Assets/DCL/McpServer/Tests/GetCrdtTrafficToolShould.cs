@@ -1,5 +1,6 @@
 using Arch.Core;
 using CRDT;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECS7;
@@ -200,6 +201,28 @@ namespace DCL.McpServer.Tests
             Assert.That(missing["engineEntityId"]!.Type, Is.EqualTo(JTokenType.Null));
             Assert.That(missing["entityLabel"]!.Type, Is.EqualTo(JTokenType.Null));
             Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain($"entity {ENTITY} [engine {engineEntity.Id}] (gltf assets/drink.glb"));
+        }
+
+        [Test]
+        public void ResolveTheSceneRootRatherThanTheSceneContainer()
+        {
+            // Arrange
+            Entity root = world.Create(new CRDTEntity(0), new SceneRootComponent());
+            world.Create(new CRDTEntity());
+
+            GetCrdtTrafficTool tool = CreateTool(static probe =>
+            {
+                probe.RecordBatch();
+                probe.Record(CrdtTrafficDirection.FromScene, 0, ComponentID.PRIMARY_POINTER_INFO, CrdtTrafficOutcome.RedundantIdenticalData, 8);
+            });
+
+            // Act
+            McpToolResult result = Execute(tool, new JObject());
+
+            // Assert
+            var writer = (JObject)result.Payload["structuredContent"]!["fromScene"]!["hotWriters"]![0]!;
+            Assert.That(writer["engineEntityId"]!.Value<int>(), Is.EqualTo(root.Id));
+            Assert.That(writer["entityLabel"]!.Value<string>(), Is.EqualTo("scene root"));
         }
 
         [Test]
