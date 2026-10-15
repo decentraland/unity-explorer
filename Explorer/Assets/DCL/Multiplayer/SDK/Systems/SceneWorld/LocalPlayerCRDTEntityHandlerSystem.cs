@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     ///     Update() keeps the SDKProfile in sync when Profile.IsDirty — unlike
     ///     <see cref="PlayerProfileDataPropagationSystem" /> which only targets the assigned scene
     ///     and which skips the local player entirely (filtered by PlayerComponent).
-    ///     It also mirrors <see cref="LocalPlayerTalkingComponent" /> into <see cref="SDKTalking" />,
+    ///     It also mirrors <see cref="TalkingComponent" /> into <see cref="SDKTalking" />,
     ///     leaving it unset while the component is absent (Nearby voice chat disabled).
     ///     Runs in SyncedPreRenderingSystemGroup before the writer systems so SDKProfile
     ///     is up-to-date when they flush CRDT. Profile.IsDirty is guaranteed to be set
@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (profile!.IsDirty)
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
-            if (globalWorld.TryGet(localPlayerEntity, out LocalPlayerTalkingComponent talking))
+            if (globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))
                 World.Get<SDKTalking>(persistentEntities.Player).Set(talking.IsTalking);
         }
     }

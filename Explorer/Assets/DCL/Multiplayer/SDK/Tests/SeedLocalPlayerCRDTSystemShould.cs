@@ -96,7 +96,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void MirrorLocalPlayerTalking()
         {
             // Arrange
-            globalWorld.Add(localPlayerEntity, new LocalPlayerTalkingComponent { IsTalking = true });
+            globalWorld.Add(localPlayerEntity, new TalkingComponent { IsTalking = true });
 
             // Act
             system.Initialize();
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(true, world.Get<SDKTalking>(persistentPlayerEntity).Value);
 
             // Act
-            globalWorld.Get<LocalPlayerTalkingComponent>(localPlayerEntity).IsTalking = false;
+            globalWorld.Get<TalkingComponent>(localPlayerEntity).IsTalking = false;
             system.Update(0);
 
             // Assert

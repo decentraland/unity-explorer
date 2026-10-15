@@ -18,7 +18,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     <see cref="SDKTalking.Set" /> marks it for a rewrite only when the value flips.
     ///     Remote activity is read from <see cref="IsActivelySpeakingTag" /> as is: whether the local player hears
     ///     the speaker (mute, block, scene ban, listening state) does not change the fact that the avatar is talking.
-    ///     The local player's value goes to <see cref="LocalPlayerTalkingComponent" />, which
+    ///     The local player's value goes to <see cref="TalkingComponent" />, which
     ///     <see cref="DCL.Multiplayer.SDK.Systems.SceneWorld.LocalPlayerCRDTEntityHandlerSystem" /> mirrors into every scene.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -38,12 +38,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         public override void Initialize()
         {
-            World.Add(playerEntity, new LocalPlayerTalkingComponent());
+            World.Add(playerEntity, new TalkingComponent());
         }
 
         protected override void Update(float t)
         {
-            World.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
+            World.Get<TalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
             MarkRemotePlayerTalkingQuery(World);
             MarkRemotePlayerSilentQuery(World);
         }

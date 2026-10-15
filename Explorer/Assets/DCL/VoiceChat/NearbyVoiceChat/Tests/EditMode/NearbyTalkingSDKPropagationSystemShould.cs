@@ -23,7 +23,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
     ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKTalking" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
     ///     Remote activity enters through <see cref="IsActivelySpeakingTag" />, the local player's through <see cref="NearbyVoiceChatStateModel.IsLocalSpeaking" />.
-    ///     The local player's value is stored in <see cref="LocalPlayerTalkingComponent" /> instead.
+    ///     The local player's value is stored in <see cref="TalkingComponent" /> instead.
     /// </summary>
     public class NearbyTalkingSDKPropagationSystemShould : UnitySystemTestBase<NearbyTalkingSDKPropagationSystem>
     {
@@ -124,14 +124,14 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Tick();
 
             // Assert
-            Assert.That(world.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking, Is.True);
+            Assert.That(world.Get<TalkingComponent>(playerEntity).IsTalking, Is.True);
 
             // Act
             stateModel.IsLocalSpeaking = false;
             Tick();
 
             // Assert
-            Assert.That(world.Get<LocalPlayerTalkingComponent>(playerEntity).IsTalking, Is.False);
+            Assert.That(world.Get<TalkingComponent>(playerEntity).IsTalking, Is.False);
 
             // Nothing is written through the scene the local player stands in
             Assert.That(written, Is.Null);
