@@ -9,6 +9,7 @@ using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DCL.SyntheticInput.Tests
 {
@@ -16,6 +17,9 @@ namespace DCL.SyntheticInput.Tests
     {
         private World world = null!;
         private GameObject eventSystemGo = null!;
+        private GameObject canvasRoot = null!;
+        private Texture2D highlightTexture = null!;
+        private Sprite highlightSprite = null!;
         private UiAutomationServices services = null!;
 
         [SetUp]
@@ -31,14 +35,127 @@ namespace DCL.SyntheticInput.Tests
             scenesCache.CurrentScene.Returns(new ReactiveProperty<ISceneFacade?>(null));
 
             services = new UiAutomationServices(world, playerEntity, eventSystem, scenesCache);
+
+            canvasRoot = new GameObject("Root", typeof(RectTransform));
+            canvasRoot.AddComponent<Canvas>();
+
+            highlightTexture = new Texture2D(2, 2);
+            highlightSprite = Sprite.Create(highlightTexture, new Rect(0f, 0f, 2f, 2f), Vector2.zero);
         }
 
         [TearDown]
         public void TearDown()
         {
             services.Dispose();
+            Object.DestroyImmediate(canvasRoot);
+            Object.DestroyImmediate(highlightSprite);
+            Object.DestroyImmediate(highlightTexture);
             Object.DestroyImmediate(eventSystemGo);
             World.Destroy(world);
+        }
+
+        /// <summary>
+        ///     A sprite-swap Button shows the highlighted sprite exactly while a pointer is inside it, which makes the
+        ///     enter and exit events observable without a test MonoBehaviour (one from an editor assembly cannot be added).
+        /// </summary>
+        private GameObject AddHighlightable(string name, GameObject parent)
+        {
+            var element = new GameObject(name, typeof(RectTransform));
+            element.transform.SetParent(parent.transform);
+
+            Image image = element.AddComponent<Image>();
+            Button button = element.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.SpriteSwap;
+            button.spriteState = new SpriteState { highlightedSprite = highlightSprite };
+
+            return element;
+        }
+
+        private bool IsHighlighted(GameObject element) =>
+            element.GetComponent<Image>().overrideSprite == highlightSprite;
+
+        // EditMode raycasts reach no graphic, so the tests force past the occlusion pre-check to reach the events.
+        private UiActionResult HoverForced(GameObject target, string path) =>
+            services.HoverUguiAsync(UiElementAddress.UguiPath(path), target, force: true, device: false, timeoutSec: 1f, CancellationToken.None)
+                    .GetAwaiter().GetResult().Result;
+
+        [Test]
+        public void EnterTheHoveredElementAndItsAncestorsAndKeepTheHoverParked()
+        {
+            GameObject panel = AddHighlightable("Panel", canvasRoot);
+            GameObject button = AddHighlightable("Button", panel);
+
+            UiActionResult result = HoverForced(button, "Root/Panel/Button");
+
+            Assert.That(result.Ok, Is.True);
+            Assert.That(IsHighlighted(button), Is.True);
+            Assert.That(IsHighlighted(panel), Is.True, "the input module enters every ancestor of the hovered element");
+            Assert.That(services.HoveredAddress, Is.EqualTo("ugui:path=Root/Panel/Button"), "the hover rests until something ends it");
+        }
+
+        [Test]
+        public void ExitEveryEnteredObjectWhenTheHoverEnds()
+        {
+            GameObject panel = AddHighlightable("Panel", canvasRoot);
+            GameObject button = AddHighlightable("Button", panel);
+            HoverForced(button, "Root/Panel/Button");
+
+            string? ended = services.EndHover();
+
+            Assert.That(ended, Is.EqualTo("ugui:path=Root/Panel/Button"));
+            Assert.That(IsHighlighted(button), Is.False);
+            Assert.That(IsHighlighted(panel), Is.False);
+            Assert.That(services.HoveredAddress, Is.Null);
+        }
+
+        [Test]
+        public void LeaveThePreviousHoverBeforeEnteringTheNextOne()
+        {
+            GameObject first = AddHighlightable("First", canvasRoot);
+            GameObject second = AddHighlightable("Second", canvasRoot);
+            HoverForced(first, "Root/First");
+
+            UiActionResult result = HoverForced(second, "Root/Second");
+
+            Assert.That(result.EndedHover, Is.EqualTo("ugui:path=Root/First"));
+            Assert.That(result.ToJson("Free")["hoverEnded"]?.ToString(), Is.EqualTo("ugui:path=Root/First"));
+            Assert.That(IsHighlighted(first), Is.False);
+            Assert.That(IsHighlighted(second), Is.True);
+            Assert.That(services.HoveredAddress, Is.EqualTo("ugui:path=Root/Second"));
+        }
+
+        [Test]
+        public void ReportNothingEndedWhenNoHoverIsParked()
+        {
+            Assert.That(services.EndHover(), Is.Null);
+            Assert.That(services.HoveredAddress, Is.Null);
+        }
+
+        [Test]
+        public void SkipAHoveredObjectDestroyedWhileTheHoverWasParked()
+        {
+            GameObject panel = AddHighlightable("Panel", canvasRoot);
+            GameObject button = AddHighlightable("Button", panel);
+            HoverForced(button, "Root/Panel/Button");
+
+            Object.DestroyImmediate(button);
+
+            Assert.That(services.EndHover(), Is.EqualTo("ugui:path=Root/Panel/Button"));
+            Assert.That(IsHighlighted(panel), Is.False, "the surviving ancestors still receive their exit");
+        }
+
+        [Test]
+        public void HoverANonInteractableElementAndSayItShowsNoHighlight()
+        {
+            GameObject element = AddHighlightable("DisabledButton", canvasRoot);
+            element.GetComponent<Button>().interactable = false;
+
+            UiActionResult result = HoverForced(element, "Root/DisabledButton");
+
+            Assert.That(result.Ok, Is.True, "a disabled element still raycasts, so a user's pointer enters it");
+            Assert.That(result.Info, Does.Contain("not interactable"));
+            Assert.That(services.HoveredAddress, Is.EqualTo("ugui:path=Root/DisabledButton"));
         }
 
         [Test]
