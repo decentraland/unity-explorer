@@ -1,9 +1,14 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics.Sentry;
 using NUnit.Framework;
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility.Networking;
 
 namespace DCL.Diagnostics.Tests
@@ -17,9 +22,17 @@ namespace DCL.Diagnostics.Tests
         private static Scope NewScope() =>
             new (new SentryOptions());
 
+        private static IEnumerable<Exception> NetworkingFailures()
+        {
+            yield return new UnityWebRequestException(new UnityWebRequest("http://127.0.0.1:8767/hamsterwood/comms"));
+            yield return new WebException("The remote server returned an error: (404) Not Found.");
+            yield return new SocketException((int)SocketError.ConnectionRefused);
+        }
+
         [TestCase("[Physics.PhysX] cleaning the mesh failed")]
         [TestCase("Curl error 56: Recv failure: Connection reset by peer")]
         [TestCase("Screen position out of view frustum (screen pos 33.000000, 1860.000000) (Camera rect 0 0 3024 1832)")]
+        [TestCase("Platform does not support compute shaders")]
         public void DropUnactionableNativeMessages(string message)
         {
             var @event = new SentryEvent { Message = message };
@@ -69,6 +82,22 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropInsecureConnectionRefusals()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("Insecure connection not allowed"));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherInvalidOperations()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("Collection was modified"));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void KeepAggregateWhenAnyInnerExceptionIsActionable()
         {
             var @event = new SentryEvent(new AggregateException(new IOException("Disk full"), new NullReferenceException()));
@@ -76,17 +105,58 @@ namespace DCL.Diagnostics.Tests
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }
 
-        [Test]
-        public void DropSceneWebSocketFailuresOnly()
+        [TestCase(ReportCategory.JAVASCRIPT)]
+        [TestCase(ReportCategory.LIVEKIT)]
+        [TestCase(ReportCategory.PLACES)]
+        public void DropWebSocketFailuresRegardlessOfCategory(string category)
         {
-            var sceneEvent = new SentryEvent(new WebSocketException());
-            sceneEvent.SetTag("category", ReportCategory.JAVASCRIPT);
+            var @event = new SentryEvent(new WebSocketException("The remote party closed the WebSocket connection without completing the close handshake."));
+            @event.SetTag("category", category);
 
-            var clientEvent = new SentryEvent(new WebSocketException());
-            clientEvent.SetTag("category", ReportCategory.LIVEKIT);
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
 
-            Assert.IsNull(SentryReportHandler.BeforeSend(sceneEvent));
-            Assert.IsNotNull(SentryReportHandler.BeforeSend(clientEvent));
+        [Test]
+        public void DropWebSocketFailuresWrappedByTheRpcTransport()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("RPC Transport failed", new WebSocketException()));
+            @event.SetTag("category", ReportCategory.FRIENDS);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void DropNetworkingFailuresInLocalSceneDevelopment(Exception exception)
+        {
+            var @event = new SentryEvent(exception);
+            @event.SetTag("category", ReportCategory.MULTIPLAYER);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void KeepNetworkingFailuresOutsideLocalSceneDevelopment(Exception exception)
+        {
+            var @event = new SentryEvent(exception);
+            @event.SetTag("category", ReportCategory.MULTIPLAYER);
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: false));
+        }
+
+        [Test]
+        public void DropNetworkingFailureWrappedByUnobservedTaskInLocalSceneDevelopment()
+        {
+            var @event = new SentryEvent(new AggregateException(new SocketException((int)SocketError.ConnectionRefused)));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
+        }
+
+        [Test]
+        public void KeepOtherExceptionsInLocalSceneDevelopment()
+        {
+            var @event = new SentryEvent(new NullReferenceException());
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: true));
         }
 
         [Test]
