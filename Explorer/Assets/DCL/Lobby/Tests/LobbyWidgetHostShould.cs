@@ -57,8 +57,10 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(root.Q("BottomRightGrid"), root.Q("FeaturedPlaces").parent);
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("RecentPlaces4x2").parent, "The four-column places have no room by default");
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("FeaturedPlaces4x2").parent);
+            Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("Communities").parent, "The communities wait to be placed");
+            Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("Communities4x2").parent);
             Assert.AreSame(root.Q("UnplacedWidgets"), root.Q("GoTo").parent, "The go-to row waits to be placed");
-            Assert.AreEqual(3, root.Q("UnplacedWidgets").childCount);
+            Assert.AreEqual(5, root.Q("UnplacedWidgets").childCount);
 
             Assert.AreEqual(0f, welcome.style.left.value.value);
             Assert.AreEqual(0f, welcome.style.top.value.value);
@@ -167,6 +169,8 @@ namespace DCL.Lobby.Tests
             unplaced.Add(new VisualElement { name = "FeaturedPlaces" });
             unplaced.Add(new VisualElement { name = "RecentPlaces4x2" });
             unplaced.Add(new VisualElement { name = "FeaturedPlaces4x2" });
+            unplaced.Add(new VisualElement { name = "Communities" });
+            unplaced.Add(new VisualElement { name = "Communities4x2" });
             unplaced.Add(new VisualElement { name = "GoTo" });
 
             return lobby;

@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -78,6 +79,7 @@ namespace DCL.PluginSystem.Global
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
         private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly CommunitiesDataProvider? communitiesDataProvider;
 
         private LobbyStage? lobbyStage;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
@@ -122,7 +124,8 @@ namespace DCL.PluginSystem.Global
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             NotificationsRequestController notificationsRequestController,
             FriendsConnectivityStatusTracker? friendsConnectivity,
-            IOnlineUsersProvider onlineUsersProvider)
+            IOnlineUsersProvider onlineUsersProvider,
+            CommunitiesDataProvider? communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -157,6 +160,7 @@ namespace DCL.PluginSystem.Global
             this.notificationsRequestController = notificationsRequestController;
             this.friendsConnectivity = friendsConnectivity;
             this.onlineUsersProvider = onlineUsersProvider;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -236,7 +240,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
-                notificationsPanel, friendsPresenter, connectedFriendsPresenter);
+                notificationsPanel, friendsPresenter, connectedFriendsPresenter, communitiesDataProvider);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);

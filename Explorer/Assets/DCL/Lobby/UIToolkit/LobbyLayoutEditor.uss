@@ -159,6 +159,10 @@
     background-image: url('/Assets/Textures/ExplorePanel/MyPlacesIcn.png');
 }
 
+.lobby-widget-card__icon--communities {
+    background-image: url('/Assets/Textures/Common/CommunitiesIcn.png');
+}
+
 .lobby-widget-card__icon--go-to {
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
 }

@@ -5,6 +5,10 @@ using DCL.Backpack;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities;
+using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.Events;
@@ -59,6 +63,9 @@ namespace DCL.Lobby
         /// <summary>Recent places the four-column section has room for.</summary>
         private const int MAX_RECENT_PLACES_4X2 = 2;
 
+        /// <summary>How many of the user's communities the rails page through.</summary>
+        private const int MAX_COMMUNITIES = 10;
+
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
         /// <summary>Panel pixels from the pointer to the left edge of the avatar tooltip.</summary>
@@ -91,8 +98,12 @@ namespace DCL.Lobby
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
+        private readonly List<GetUserCommunitiesData.CommunityData> communities = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
+
+        // Null while the communities feature is off
+        private readonly CommunitiesDataProvider? communitiesProvider;
         private readonly ClickOrDragManipulator avatarGesture;
         private readonly LobbyWidgetHost widgetHost = new ();
         private readonly LobbyLayoutEditor layoutEditor;
@@ -103,6 +114,8 @@ namespace DCL.Lobby
         private LobbyPlacesRail? featuredPlaces4x2Rail;
         private LobbyLiveEventsRail? liveEventsRail;
         private LobbyUpcomingEventsRail? upcomingEventsRail;
+        private LobbyCommunitiesRail? communitiesRail;
+        private LobbyCommunitiesRail? communities4x2Rail;
         private LobbyCharacterPreviewController? avatarPreview;
 
         // Null while the landing place loads
@@ -123,6 +136,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? placesCts;
         private CancellationTokenSource? eventsCts;
         private CancellationTokenSource? friendsCts;
+        private CancellationTokenSource? communitiesCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
@@ -178,7 +192,8 @@ namespace DCL.Lobby
             SidebarProfileButtonPresenter profileButtonPresenter,
             NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
             LobbyDocumentFriendsPresenter? friends,
-            LobbyConnectedFriendsPresenter? connectedFriends) : base(viewFactory)
+            LobbyConnectedFriendsPresenter? connectedFriends,
+            CommunitiesDataProvider? communitiesProvider) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.cursor = cursor;
@@ -205,6 +220,7 @@ namespace DCL.Lobby
             this.notificationsPanel = notificationsPanel;
             this.friends = friends;
             this.connectedFriends = connectedFriends;
+            this.communitiesProvider = communitiesProvider;
 
             avatarGesture = new ClickOrDragManipulator
             {
@@ -240,6 +256,7 @@ namespace DCL.Lobby
             placesCts.SafeCancelAndDispose();
             eventsCts.SafeCancelAndDispose();
             friendsCts.SafeCancelAndDispose();
+            communitiesCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
@@ -315,6 +332,12 @@ namespace DCL.Lobby
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
 
+            // The four-column rail lists the same communities as the six-column one
+            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communities4x2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communitiesRail.Show(viewInstance.Communities);
+            communities4x2Rail.Show(viewInstance.Communities4x2);
+
             // Before the places: a cached landing place binds its card synchronously
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(viewInstance.Friends, friendsCts.Token);
@@ -334,6 +357,10 @@ namespace DCL.Lobby
             eventsCts = eventsCts.SafeRestart();
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
             ShowEventsAsync(eventsCts.Token).Forget();
+
+            // Every show fetches again: a community joined or left from a panel over the lobby is reflected on the way back
+            communitiesCts = communitiesCts.SafeRestart();
+            ShowCommunitiesAsync(communitiesCts.Token).Forget();
 
             if (inputData.IsStartup)
                 startParcel.JumpInRequestRaised += RequestClose;
@@ -364,6 +391,8 @@ namespace DCL.Lobby
             connectedFriends?.Hide();
             friendsCts.SafeCancelAndDispose();
             friendsCts = null;
+            communitiesCts.SafeCancelAndDispose();
+            communitiesCts = null;
 
             // A drag cut short by the close leaves the hardware cursor hidden otherwise
             avatarGesture.Cancel();
@@ -375,6 +404,8 @@ namespace DCL.Lobby
             featuredPlaces4x2Rail?.Hide();
             liveEventsRail?.Hide();
             upcomingEventsRail?.Hide();
+            communitiesRail?.Hide();
+            communities4x2Rail?.Hide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
@@ -708,6 +739,55 @@ namespace DCL.Lobby
             card.IsLoading = false;
             card.Thumbnail = sprite;
         }
+
+        // A failed fetch keeps the last communities, so the rows only hide while none have ever arrived; a user the feature
+        // flag leaves out gets none
+        private async UniTaskVoid ShowCommunitiesAsync(CancellationToken ct)
+        {
+            if (communitiesProvider == null) return;
+
+            Result<bool> allowed = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested || !allowed.Success || !allowed.Value) return;
+
+            Result<GetUserCommunitiesResponse> result = await communitiesProvider.GetUserCommunitiesAsync(string.Empty, onlyMemberOf: true, pageNumber: 1, elementsPerPage: MAX_COMMUNITIES, ct)
+                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (result.Success)
+            {
+                communities.Clear();
+                GetUserCommunitiesData.CommunityData[] data = result.Value.data.results;
+
+                for (var i = 0; i < data.Length && i < MAX_COMMUNITIES; i++)
+                    communities.Add(data[i]);
+            }
+
+            ShowCommunityCards(communitiesRail!, ct);
+            ShowCommunityCards(communities4x2Rail!, ct);
+        }
+
+        private void ShowCommunityCards(LobbyCommunitiesRail rail, CancellationToken ct)
+        {
+            rail.SetCount(communities.Count);
+
+            for (var i = 0; i < communities.Count; i++)
+                ShowCommunityCard(rail.Cards[i], communities[i], ct);
+        }
+
+        private void ShowCommunityCard(LobbyCommunityCardElement card, GetUserCommunitiesData.CommunityData community, CancellationToken ct)
+        {
+            card.Title = community.name;
+            card.MembersCount = community.membersCount;
+            card.IsPrivate = community.privacy == CommunityPrivacy.@private;
+
+            LoadThumbnailAsync(card, community.ThumbnailUrl, ReportCategory.COMMUNITIES, ct).Forget();
+        }
+
+        // The card panel reads the pictures from the same cache, so the thumbnail it opens with is already there
+        private void OnCommunityClicked(int index) =>
+            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communities[index].id, spriteCache)));
 
         private LobbyUpcomingEventsRail CreateUpcomingEventsRail() =>
             new (viewInstance!.UpcomingEventCardTemplate)

@@ -11,6 +11,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyCommunityCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGoTo.uss" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
@@ -85,6 +86,15 @@
             <ui:VisualElement name="FeaturedPlaces4x2" class="lobby__widget lobby__places" style="display: none;">
                 <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="2" arrows-move-one-card="true" />
+            </ui:VisualElement>
+            <!-- The communities the user belongs to, in the two widths of the places sections; hidden while there are none -->
+            <ui:VisualElement name="Communities" class="lobby__widget lobby__communities" style="display: none;">
+                <ui:Label name="Title" text="My Communities" class="lobby__communities-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail" cards-per-page="3" arrows-move-one-card="true" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Communities4x2" class="lobby__widget lobby__communities" style="display: none;">
+                <ui:Label name="Title" text="My Communities" class="lobby__communities-title" picking-mode="Ignore" />
+                <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
             <!-- One row: the question over the pill a destination is typed in, which goes where the /goto chat command goes -->
             <ui:VisualElement name="GoTo" class="lobby__widget lobby__goto" picking-mode="Ignore">

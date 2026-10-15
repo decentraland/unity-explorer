@@ -14,6 +14,8 @@ namespace DCL.Lobby
         JumpBackIn4x2,
         RecommendedPlaces6x2,
         RecommendedPlaces4x2,
+        Communities6x2,
+        Communities4x2,
         GoTo4x1,
     }
 }

@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyCommunityCard.uss" />
+    <DCL.Lobby.LobbyCommunityCardElement name="CommunityCard" title="Community Name" members-count="0">
+        <ui:VisualElement name="Thumbnail" class="lobby-community-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="Gradient" class="lobby-community-card__gradient" picking-mode="Ignore" />
+        <ui:VisualElement name="PrivateBadge" class="lobby-community-card__private" picking-mode="Ignore">
+            <ui:VisualElement name="PrivateIcon" class="lobby-community-card__private-icon" picking-mode="Ignore" />
+            <ui:Label name="PrivateText" text="Private" class="lobby-community-card__private-text" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Footer" class="lobby-community-card__footer" picking-mode="Ignore">
+            <ui:Label name="Title" text="Community Name" enable-rich-text="false" class="lobby-community-card__title" picking-mode="Ignore" />
+            <ui:VisualElement name="MembersRow" class="lobby-community-card__members-row" picking-mode="Ignore">
+                <ui:VisualElement name="MembersIcon" class="lobby-community-card__members-icon" picking-mode="Ignore" />
+                <ui:Label name="Members" text="0 Members" class="lobby-community-card__members" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </DCL.Lobby.LobbyCommunityCardElement>
+</ui:UXML>

@@ -178,10 +178,11 @@ namespace DCL.Lobby.Tests
 
             //Assert
             VisualElement items = root.Q("WidgetModalItems");
-            Assert.AreEqual(3, items.childCount, "The four-column places belong to placed families, so they get no row");
+            Assert.AreEqual(4, items.childCount, "The four-column places belong to placed families, so they get no row");
             Assert.AreSame(Card(LobbyWidgetFamily.LiveEvents), items[0], "The rows follow the order of the families");
             Assert.AreSame(Card(LobbyWidgetFamily.JumpBackIn), items[1]);
-            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), items[2], "The go-to row is off the grids by default");
+            Assert.AreSame(Card(LobbyWidgetFamily.Communities), items[2], "The communities and the go-to row are off the grids by default");
+            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), items[3]);
             Assert.AreEqual(4, root.Query<LobbyWidgetHandleElement>().ToList().Count, "The unplaced widgets have no handle");
 
             LobbyWidgetCardElement liveEvents = Card(LobbyWidgetFamily.LiveEvents);
@@ -216,8 +217,9 @@ namespace DCL.Lobby.Tests
             editor.Show(root);
 
             //Assert
-            Assert.AreEqual(1, root.Q("WidgetModalItems").childCount, "Every family but the go-to row has a size placed by default");
-            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), root.Q("WidgetModalItems")[0]);
+            Assert.AreEqual(2, root.Q("WidgetModalItems").childCount, "Every family but the communities and the go-to row has a size placed by default");
+            Assert.AreSame(Card(LobbyWidgetFamily.Communities), root.Q("WidgetModalItems")[0]);
+            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), root.Q("WidgetModalItems")[1]);
 
             //Act
             host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces6x2);
@@ -226,9 +228,10 @@ namespace DCL.Lobby.Tests
 
             //Assert
             VisualElement items = root.Q("WidgetModalItems");
-            Assert.AreEqual(2, items.childCount);
+            Assert.AreEqual(3, items.childCount);
             Assert.AreSame(Card(LobbyWidgetFamily.RecommendedPlaces), items[0]);
-            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), items[1]);
+            Assert.AreSame(Card(LobbyWidgetFamily.Communities), items[1]);
+            Assert.AreSame(Card(LobbyWidgetFamily.GoTo), items[2]);
         }
 
         [Test]
@@ -255,7 +258,7 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.width.value.value);
             Assert.AreEqual(size.y + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.height.value.value);
             Assert.AreEqual(LobbyGridElement.CellPitch.y - LobbyWidgetHandleElement.OUTSET, handle.style.top.value.value);
-            Assert.AreEqual(1, root.Q("WidgetModalItems").childCount, "Only the go-to row is left off the grids");
+            Assert.AreEqual(2, root.Q("WidgetModalItems").childCount, "Only the communities and the go-to row are left off the grids");
         }
 
         [Test]
@@ -625,6 +628,8 @@ namespace DCL.Lobby.Tests
             unplaced.Add(new VisualElement { name = "FeaturedPlaces" });
             unplaced.Add(new VisualElement { name = "RecentPlaces4x2" });
             unplaced.Add(new VisualElement { name = "FeaturedPlaces4x2" });
+            unplaced.Add(new VisualElement { name = "Communities" });
+            unplaced.Add(new VisualElement { name = "Communities4x2" });
             unplaced.Add(new VisualElement { name = "GoTo" });
 
             var modal = new VisualElement { name = "WidgetModal" };

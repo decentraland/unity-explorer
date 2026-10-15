@@ -12,6 +12,7 @@ namespace DCL.Lobby
         FriendsOnline,
         JumpBackIn,
         RecommendedPlaces,
+        Communities,
         GoTo,
     }
 }
