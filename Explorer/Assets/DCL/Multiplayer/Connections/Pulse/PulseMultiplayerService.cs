@@ -28,6 +28,20 @@ namespace DCL.Multiplayer.Connections.Pulse
         private DisconnectHandler? disconnectHandler;
         private HandshakeHandler? handshakeHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
+
+        /// <summary>
+        ///     Spans one explicit <see cref="ConnectAsync" /> up to the matching <see cref="DisconnectAsync" />,
+        ///     including every automatic reconnection in between. Cancelling it stops the background
+        ///     reconnection loop as well as the attempt in flight.
+        /// </summary>
+        private CancellationTokenSource? sessionCts;
+
+        /// <summary>
+        ///     The connection attempt still in flight, shared with concurrent callers so a second call cannot
+        ///     start a second transport connection or handshake. A completion source rather than the attempt's
+        ///     own task because several callers await it at once.
+        /// </summary>
+        private UniTaskCompletionSource<bool>? connectAttempt;
         private volatile bool isAuthenticated;
 
         public PulseMultiplayerService(
@@ -45,6 +59,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Dispose()
         {
             isAuthenticated = false;
+            sessionCts.SafeCancelAndDispose();
+            sessionCts = null;
+            connectAttempt = null;
+            connectionLifeCycleCts.SafeCancelAndDispose();
             UnregisterAllHandlers();
             transport.Dispose();
         }
@@ -77,19 +95,36 @@ namespace DCL.Multiplayer.Connections.Pulse
             handshakeHandler = null;
         }
 
-        public async UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
+        public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
-            if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
-                return true;
+            if (connectAttempt != null)
+                return connectAttempt.Task;
 
-            return await ConnectWithRetriesAsync(ct, maxAttempts);
+            if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
+                return UniTask.FromResult(true);
+
+            sessionCts = sessionCts.SafeRestartLinked(ct);
+            return StartAttempt(sessionCts.Token, maxAttempts);
         }
 
-        public UniTask DisconnectAsync()
+        public async UniTask DisconnectAsync()
         {
+            if (sessionCts == null)
+                return;
+
+            // Cleared before the transport teardown so a ConnectAsync issued meanwhile starts a fresh session
+            // instead of joining the attempt being cancelled
+            sessionCts.SafeCancelAndDispose();
+            sessionCts = null;
+            connectAttempt = null;
             connectionLifeCycleCts.SafeCancelAndDispose();
+
+            // Waits for the ENet listen loop to exit, so no further event reaches the routing loop
+            // (already cancelled above) before the disconnect handler clears the peer collections
+            await transport.DisconnectAsync(DisconnectReason.GRACEFUL);
+
+            isAuthenticated = false;
             disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
-            return transport.DisconnectAsync(DisconnectReason.GRACEFUL);
         }
 
         /// <summary>
@@ -111,6 +146,75 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             pipe.Send(outgoingMessage);
+        }
+
+        /// <summary>
+        ///     Single flight per session: an attempt already in flight — explicit or automatic reconnection —
+        ///     is handed to every caller instead of starting a second transport connection and handshake.
+        /// </summary>
+        private UniTask<bool> StartAttempt(CancellationToken sessionCt, int maxAttempts)
+        {
+            if (connectAttempt != null)
+                return connectAttempt.Task;
+
+            // The session may have been ended between the caller's check and this point
+            if (sessionCt.IsCancellationRequested)
+                return UniTask.FromCanceled<bool>(sessionCt);
+
+            var attempt = new UniTaskCompletionSource<bool>();
+            connectAttempt = attempt;
+            RunAttemptAsync(attempt, sessionCt, maxAttempts).Forget();
+            return attempt.Task;
+        }
+
+        private async UniTaskVoid RunAttemptAsync(UniTaskCompletionSource<bool> attempt, CancellationToken sessionCt, int maxAttempts)
+        {
+            bool connected;
+
+            try { connected = await ConnectWithRetriesAsync(sessionCt, maxAttempts); }
+            catch (Exception e)
+            {
+                ReleaseAttempt(attempt);
+
+                if (e is OperationCanceledException)
+                    attempt.TrySetCanceled(sessionCt);
+                else
+                    attempt.TrySetException(e);
+
+                return;
+            }
+
+            ReleaseAttempt(attempt);
+            attempt.TrySetResult(connected);
+        }
+
+        /// <summary>
+        ///     Cleared before the attempt is settled, so an awaiter that reacts by starting a new attempt
+        ///     gets a fresh one. A DisconnectAsync that ran meanwhile already cleared it and may have been
+        ///     followed by a newer session whose attempt must stay registered.
+        /// </summary>
+        private void ReleaseAttempt(UniTaskCompletionSource<bool> attempt)
+        {
+            if (ReferenceEquals(connectAttempt, attempt))
+                connectAttempt = null;
+        }
+
+        /// <summary>
+        ///     An explicit attempt that was in flight when the transport dropped is awaited first: joining it
+        ///     would report its outcome for a connection that is already gone.
+        /// </summary>
+        private async UniTask ReconnectAsync(CancellationToken sessionCt)
+        {
+            UniTaskCompletionSource<bool>? inFlight = connectAttempt;
+
+            if (inFlight != null)
+            {
+                // Its outcome belongs to the callers that started it; only its completion matters here
+                try { await inFlight.Task; }
+                catch (Exception) { }
+            }
+
+            await StartAttempt(sessionCt, int.MaxValue);
         }
 
         private async UniTask<bool> ConnectWithRetriesAsync(CancellationToken ct, int maxAttempts)
@@ -190,7 +294,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             isAuthenticated = true;
         }
 
-        private void StartRouting(UniTaskCompletionSource<(bool success, string? error)> handshakeCompletion, CancellationToken connectionCt, CancellationToken parentCt)
+        private void StartRouting(UniTaskCompletionSource<(bool success, string? error)> handshakeCompletion, CancellationToken connectionCt, CancellationToken sessionCt)
         {
             // RunOnThreadPool with configureAwait: false ensures all await continuations
             // stay on the thread pool — matching the ENet transport pattern.
@@ -214,15 +318,17 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                                     (bool reconnectionAllowed, TimeSpan reconnectionDelay) = disconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
 
-                                    if (reconnectionAllowed && !parentCt.IsCancellationRequested)
+                                    // Both the delay and the attempt run under the session token so an explicit
+                                    // DisconnectAsync ends the reconnection instead of racing a new connection
+                                    if (reconnectionAllowed && !sessionCt.IsCancellationRequested)
                                     {
                                         ResetConnectionLifecycle();
 
                                         ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
 
-                                        await DCLTask.Delay(reconnectionDelay, parentCt);
+                                        await DCLTask.Delay(reconnectionDelay, sessionCt);
 
-                                        try { await ConnectAsync(parentCt); }
+                                        try { await ReconnectAsync(sessionCt); }
                                         catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
                                         finally
                                         {

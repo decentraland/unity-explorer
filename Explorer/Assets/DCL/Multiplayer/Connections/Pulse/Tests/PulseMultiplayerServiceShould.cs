@@ -179,5 +179,135 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             Assert.IsTrue(service.IsAuthenticated);
             Assert.IsTrue(disconnectHandled.Wait(TimeSpan.FromSeconds(5)), "Post-handshake disconnects must reach the disconnect handler");
         }
+
+        [Test]
+        public async Task NotReconnectAfterExplicitDisconnect()
+        {
+            // Arrange
+            service.RegisterDisconnectHandler(_ => (true, TimeSpan.FromMilliseconds(100)));
+            RegisterSettlingHandshakeHandler();
+            await service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            // Act
+            // The routing loop schedules the automatic reconnection after the handler's delay;
+            // the explicit disconnect that follows ends the session before that delay elapses.
+            pipe.OnDisconnected(DisconnectReason.AUTH_TIMEOUT);
+            await service.DisconnectAsync();
+            await Task.Delay(300);
+
+            // Assert
+            Assert.IsFalse(service.IsAuthenticated);
+            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task IgnoreDisconnectWithoutSession()
+        {
+            // Arrange
+            var disconnectHandlerCalled = false;
+
+            service.RegisterDisconnectHandler(_ =>
+            {
+                disconnectHandlerCalled = true;
+                return (false, TimeSpan.Zero);
+            });
+
+            // Act
+            await service.DisconnectAsync();
+
+            // Assert
+            Assert.IsFalse(disconnectHandlerCalled, "Disconnecting without a session must not reach the disconnect handler");
+            transport.DidNotReceive().DisconnectAsync(Arg.Any<DisconnectReason>());
+        }
+
+        [Test]
+        public async Task ResetAuthenticationOnDisconnect()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            bool connected = await service.ConnectAsync(cts.Token, maxAttempts: 1);
+            Assert.IsTrue(connected);
+            Assert.IsTrue(service.IsAuthenticated);
+
+            // Act
+            await service.DisconnectAsync();
+
+            // Assert
+            Assert.IsFalse(service.IsAuthenticated);
+            transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
+        }
+
+        [Test]
+        public async Task ShareInFlightAttemptBetweenConcurrentConnectCalls()
+        {
+            // Arrange
+            var transportConnected = new UniTaskCompletionSource();
+
+            transport
+               .ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+               .Returns(transportConnected.Task);
+
+            RegisterSettlingHandshakeHandler();
+
+            // Act
+            // Both callers await while the transport connection is still in flight: the state stays None,
+            // so only the in-flight attempt can stop the second call from starting another connection.
+            UniTask<bool> first = service.ConnectAsync(cts.Token);
+            UniTask<bool> second = service.ConnectAsync(cts.Token);
+            UniTask<(bool, bool)> both = UniTask.WhenAll(first, second);
+            transportConnected.TrySetResult();
+            (bool firstConnected, bool secondConnected) = await both;
+
+            // Assert
+            Assert.IsTrue(firstConnected);
+            Assert.IsTrue(secondConnected);
+            Assert.IsTrue(service.IsAuthenticated);
+            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task AllowConnectingAgainAfterDisconnect()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            await service.ConnectAsync(cts.Token, maxAttempts: 1);
+            await service.DisconnectAsync();
+
+            // Act
+            bool reconnected = await service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            // Assert
+            Assert.IsTrue(reconnected);
+            Assert.IsTrue(service.IsAuthenticated);
+            transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task TolerateDisconnectTwice()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            await service.ConnectAsync(cts.Token, maxAttempts: 1);
+            await service.DisconnectAsync();
+
+            // Act
+            Assert.DoesNotThrowAsync(async () => await service.DisconnectAsync());
+
+            // Assert
+            Assert.IsFalse(service.IsAuthenticated);
+            transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
+        }
+
+        /// <summary>
+        ///     Settles the handshake synchronously so a connection attempt completes as soon as the transport connects.
+        /// </summary>
+        private void RegisterSettlingHandshakeHandler()
+        {
+            service.RegisterHandshakeHandler((handshakeReceived, _) =>
+            {
+                handshakeReceived.TrySetResult((true, null));
+                return UniTask.CompletedTask;
+            });
+        }
     }
 }

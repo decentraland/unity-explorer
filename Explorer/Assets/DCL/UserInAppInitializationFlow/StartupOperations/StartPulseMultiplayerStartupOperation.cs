@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utility.Types;
+using ECS;
 using System;
 using System.Threading;
 
@@ -18,18 +19,21 @@ namespace DCL.UserInAppInitializationFlow
         private readonly SelfProfile selfProfile;
         private readonly PulseActivation pulseActivation;
         private readonly PulseRealm pulseRealm;
+        private readonly IRealmData realmData;
 
         public StartPulseMultiplayerStartupOperation(IPulseMultiplayerService service,
             IProfilePropagation profilePropagation,
             SelfProfile selfProfile,
             PulseActivation pulseActivation,
-            PulseRealm pulseRealm)
+            PulseRealm pulseRealm,
+            IRealmData realmData)
         {
             this.service = service;
             this.profilePropagation = profilePropagation;
             this.selfProfile = selfProfile;
             this.pulseActivation = pulseActivation;
             this.pulseRealm = pulseRealm;
+            this.realmData = realmData;
         }
 
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
@@ -37,6 +41,13 @@ namespace DCL.UserInAppInitializationFlow
             // Pulse disabled (feature off / --pulse false) or already fell back in a previous flow — nothing to start.
             if (!pulseActivation.IsActive)
                 return;
+
+            // Single-player realm: Pulse stays active but unconnected, so leaving the realm can still connect it.
+            if (realmData.IsCommsOffline())
+            {
+                ReportHub.Log(ReportCategory.MULTIPLAYER, "Start realm comms adapter is offline; Pulse is not connected.");
+                return;
+            }
 
             // Resolved before connecting: the realm goes out in the very first message (the handshake's
             // initial state), and an empty one violates the server contract.

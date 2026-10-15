@@ -121,8 +121,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 await UniTask.WaitUntil(() => State == ITransport.TransportState.Connected, cancellationToken: ct)
                              .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
-            catch (TimeoutException)
+            catch (Exception e) when (e is TimeoutException or OperationCanceledException)
             {
+                // The host and peer created above would otherwise stay alive in the Connecting state
                 await ForceDisconnectAsync();
                 throw;
             }

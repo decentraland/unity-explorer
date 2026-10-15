@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
         public IRealmData RealmData { get; }
         public string HardwareFingerprint { get; }
 
-        public bool IsCommsOffline => RealmData.CommsAdapter.Contains("offline:offline");
+        public bool IsCommsOffline => RealmData.IsCommsOffline();
 
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;

@@ -312,7 +312,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager, dynamicWorldParams.StartParcel);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager, dynamicWorldParams.StartParcel, multiplayerContainer.PulseMultiplayerService, multiplayerContainer.PulseActivation, multiplayerContainer.PulseRealm);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -849,7 +849,8 @@ namespace Global.Dynamic
                     multiplayerContainer.PulseTransport,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     uiShellContainer.MvcManager,
-                    bootstrapContainer.DecentralandUrlsSource));
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.RealmData));
 
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
 
