@@ -61,9 +61,11 @@ namespace DCL.McpServer.Tools
             + "values every tick' is scene code calling a mutable getter (e.g. Transform.getMutable) in a system every frame without changing anything — "
             + "grep the scene source for that component to find it. Each writer carries engineEntityId (the id get_entity_details takes; "
             + "'entity' is the CRDT id the scene uses) and an entityLabel describing it (GLTF src, primitive mesh, text, hidden, parent). "
-            + "Scene-defined custom components never appear: the SDK does not send them to the renderer. bridgeTime reports the CPU time the CRDT "
-            + "bridge spent per scene tick (incoming reconcile, apply under the scene world lock, outgoing serialize) — the cost a fix removes, "
-            + "measurable even when render FPS is too noisy to show it; it excludes the ECS systems that later react to the dirtied components. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
+            + "Scene-defined custom components never appear: the SDK does not send them to the renderer. bridgeTime reports the wall time the CRDT "
+            + "bridge spent per scene tick (incoming reconcile, apply under the scene world lock, outgoing serialize). It is elapsed time on the "
+            + "scene thread, so it includes the thread being preempted and varies between captures: compare several captures, and for a fix to "
+            + "scene writes compare incomingUsPerTick, the stage that scales with the scene's messages. It measures what render FPS is too noisy "
+            + "to show, and excludes the ECS systems that later react to the dirtied components. The call holds for sampleSeconds while it captures. Pair with get_performance_stats: "
             + "msgs/tick from the scene is the cost the Current Scene debug panel charts.";
 
         public override JObject OutputSchema =>
@@ -73,12 +75,12 @@ namespace DCL.McpServer.Tools
                           .Object("fromScene", DirectionSchema(), "Messages the scene sent to the renderer.")
                           .Object("toScene", DirectionSchema(), "Messages the renderer sent to the scene (player/camera transforms, pointer events, engine info, load states).")
                           .Object("bridgeTime", McpJsonSchema.Object()
-                                                             .Number("totalMs", "CRDT bridge CPU time over the whole window.")
+                                                             .Number("totalMs", "CRDT bridge wall time over the whole window.")
                                                              .Number("totalUsPerTick", "Average microseconds per scene tick: the sum of the three stages.")
                                                              .Number("incomingUsPerTick", "Deserializing the scene's messages, reconciling them and preparing the world sync buffer (scene thread).")
                                                              .Number("applyUsPerTick", "Applying the sync buffer to the ECS world while holding the scene world lock, which blocks the main thread from that world.")
                                                              .Number("outgoingUsPerTick", "Serializing the renderer's messages back to the scene."),
-                              "CPU time the CRDT bridge spent on the exchanges, excluding the capture's own classification work and the ECS systems reacting afterwards.")
+                              "Wall time the CRDT bridge spent on the exchanges (elapsed, so it includes preemption of the scene thread), excluding the capture's own classification work and the ECS systems reacting afterwards.")
                           .Build();
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
