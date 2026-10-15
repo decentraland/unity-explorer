@@ -72,8 +72,13 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (profile!.IsDirty)
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
-            if (globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))
-                World.Get<SDKTalking>(persistentEntities.Player).Set(talking.IsTalking);
+            if (!globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))
+                return;
+
+            ref SDKTalking sdkTalking = ref World.TryGetRef<SDKTalking>(persistentEntities.Player, out bool exists);
+
+            if (exists)
+                sdkTalking.Set(talking.IsTalking);
         }
     }
 }

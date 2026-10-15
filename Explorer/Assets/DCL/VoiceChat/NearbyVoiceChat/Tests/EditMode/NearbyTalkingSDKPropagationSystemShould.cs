@@ -165,15 +165,30 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(written?.HasTalking, Is.False);
         }
 
+        [Test]
+        public void WriteTalkingToTheSceneRemoteSpeakerMovesTo()
+        {
+            // Arrange
+            Entity remote = world.Create(new IsActivelySpeakingTag());
+            AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            Tick();
+            written = null;
+
+            // Act
+            Entity newSceneEntity = CreateSceneEntity(world.Get<Profile>(remote), SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, out _);
+            world.Get<PlayerCRDTEntity>(remote).AssignToScene(scene, newSceneEntity);
+            Tick();
+
+            // Assert
+            Assert.That(written?.HasTalking, Is.True);
+            Assert.That(written?.Talking, Is.True);
+            ecsToCRDTWriter.Received(2).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
+        }
+
         private SDKProfile AddPlayerToScene(Entity globalEntity, string walletId, int crdtEntity)
         {
             Profile profile = Profile.NewRandomProfile(walletId);
-
-            var sdkProfile = new SDKProfile();
-            sdkProfile.OverrideWith(profile);
-            sdkProfile.IsDirty = false;
-
-            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile, new SDKTalking());
+            Entity sceneEntity = CreateSceneEntity(profile, crdtEntity, out SDKProfile sdkProfile);
 
             var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
             playerCRDTEntity.AssignToScene(scene, sceneEntity);
@@ -181,6 +196,15 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             world.Add(globalEntity, playerCRDTEntity);
 
             return sdkProfile;
+        }
+
+        private Entity CreateSceneEntity(Profile profile, int crdtEntity, out SDKProfile sdkProfile)
+        {
+            sdkProfile = new SDKProfile();
+            sdkProfile.OverrideWith(profile);
+            sdkProfile.IsDirty = false;
+
+            return sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile, new SDKTalking());
         }
 
         private void Tick()

@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
@@ -24,7 +23,6 @@ namespace DCL.VoiceChat.Nearby.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerProfileDataPropagationSystem))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
-    [ThrottlingEnabled]
     public partial class NearbyTalkingSDKPropagationSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;

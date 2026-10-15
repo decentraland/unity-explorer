@@ -112,5 +112,20 @@ namespace DCL.Multiplayer.SDK.Tests
             // Assert
             Assert.AreEqual(false, world.Get<SDKTalking>(persistentPlayerEntity).Value);
         }
+
+        [Test]
+        public void NotFailWhenProfileArrivesAfterInitializeWithoutDirtyFlag()
+        {
+            // Arrange
+            Profile profile = globalWorld.Get<Profile>(localPlayerEntity);
+            globalWorld.Remove<Profile>(localPlayerEntity);
+            system.Initialize();
+            profile.IsDirty = false;
+            globalWorld.Add(localPlayerEntity, profile, new TalkingComponent { IsTalking = true });
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => system.Update(0));
+            Assert.IsFalse(world.Has<SDKTalking>(persistentPlayerEntity));
+        }
     }
 }
