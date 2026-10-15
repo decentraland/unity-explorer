@@ -13,6 +13,7 @@ namespace DCL.Lobby
         JumpBackIn,
         RecommendedPlaces,
         Communities,
+        Gallery,
         GoTo,
     }
 }

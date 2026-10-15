@@ -14,6 +14,7 @@ using DCL.Events;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Lobby;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
@@ -80,6 +81,7 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly CommunitiesDataProvider? communitiesDataProvider;
+        private readonly CameraReelContainer? cameraReelContainer;
 
         private LobbyStage? lobbyStage;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
@@ -125,7 +127,8 @@ namespace DCL.PluginSystem.Global
             NotificationsRequestController notificationsRequestController,
             FriendsConnectivityStatusTracker? friendsConnectivity,
             IOnlineUsersProvider onlineUsersProvider,
-            CommunitiesDataProvider? communitiesDataProvider)
+            CommunitiesDataProvider? communitiesDataProvider,
+            CameraReelContainer? cameraReelContainer)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -161,6 +164,7 @@ namespace DCL.PluginSystem.Global
             this.friendsConnectivity = friendsConnectivity;
             this.onlineUsersProvider = onlineUsersProvider;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.cameraReelContainer = cameraReelContainer;
         }
 
         public void Dispose()
@@ -240,7 +244,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
                 placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, startParcel, new SpriteCache(webRequestController), profileButtonPresenter,
-                notificationsPanel, friendsPresenter, connectedFriendsPresenter, communitiesDataProvider);
+                notificationsPanel, friendsPresenter, connectedFriendsPresenter, communitiesDataProvider, cameraReelContainer, identityCache);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(profileMenuController);

@@ -859,7 +859,7 @@ namespace Global.Dynamic
                     identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
                     dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
                     FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider,
-                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null));
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

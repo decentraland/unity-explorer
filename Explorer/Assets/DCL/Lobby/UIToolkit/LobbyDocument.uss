@@ -137,7 +137,8 @@
 .lobby__events-title,
 .lobby__friends-title,
 .lobby__places-title,
-.lobby__communities-title {
+.lobby__communities-title,
+.lobby__gallery-title {
     font-size: 24px;
     -unity-font-definition: var(--dcl-font-inter-bold);
     color: var(--lobby-title-color);
@@ -145,7 +146,8 @@
 
 .lobby__friends-title,
 .lobby__places-title,
-.lobby__communities-title {
+.lobby__communities-title,
+.lobby__gallery-title {
     height: 30px;
     -unity-text-align: middle-left;
 }
@@ -218,14 +220,16 @@
 }
 
 /* 165px cards plus the dots row under the viewport: with the 30px title it fills the two rows of the section; the
-   communities rail shares the metrics as its cards are the size of the place cards */
+   communities and gallery rails share the metrics as their cards are the size of the place cards */
 .lobby__places-rail,
-.lobby__communities-rail {
+.lobby__communities-rail,
+.lobby__gallery-rail {
     height: 178px;
 }
 
 .lobby__places-rail .lobby-rail__pager,
-.lobby__communities-rail .lobby-rail__pager {
+.lobby__communities-rail .lobby-rail__pager,
+.lobby__gallery-rail .lobby-rail__pager {
     margin-top: 5px;
 }
 

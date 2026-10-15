@@ -15,6 +15,10 @@ using DCL.Events;
 using DCL.EventsApi;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.PhotoDetail;
+using DCL.InWorldCamera.ReelActions;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
@@ -30,12 +34,14 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -65,6 +71,12 @@ namespace DCL.Lobby
 
         /// <summary>How many of the user's communities the rails page through.</summary>
         private const int MAX_COMMUNITIES = 10;
+
+        /// <summary>How many of the user's latest photos the rails page through.</summary>
+        private const int MAX_PHOTOS = 10;
+
+        /// <summary>The day a photo was taken, as its card captions it.</summary>
+        private const string PHOTO_DATE_FORMAT = "MMM d, yyyy";
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
@@ -99,11 +111,16 @@ namespace DCL.Lobby
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
         private readonly List<GetUserCommunitiesData.CommunityData> communities = new ();
+        private readonly List<CameraReelResponseCompact> photos = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
         private readonly LobbyConnectedFriendsPresenter? connectedFriends;
 
         // Null while the communities feature is off
         private readonly CommunitiesDataProvider? communitiesProvider;
+
+        // Null while the camera reel feature is off
+        private readonly CameraReelContainer? cameraReel;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly ClickOrDragManipulator avatarGesture;
         private readonly LobbyWidgetHost widgetHost = new ();
         private readonly LobbyLayoutEditor layoutEditor;
@@ -116,6 +133,8 @@ namespace DCL.Lobby
         private LobbyUpcomingEventsRail? upcomingEventsRail;
         private LobbyCommunitiesRail? communitiesRail;
         private LobbyCommunitiesRail? communities4x2Rail;
+        private LobbyGalleryRail? galleryRail;
+        private LobbyGalleryRail? gallery4x2Rail;
         private LobbyCharacterPreviewController? avatarPreview;
 
         // Null while the landing place loads
@@ -137,6 +156,8 @@ namespace DCL.Lobby
         private CancellationTokenSource? eventsCts;
         private CancellationTokenSource? friendsCts;
         private CancellationTokenSource? communitiesCts;
+        private CancellationTokenSource? galleryCts;
+        private CancellationTokenSource? deletePhotoCts;
         private CancellationTokenSource? jumpInCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
@@ -193,7 +214,9 @@ namespace DCL.Lobby
             NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
             LobbyDocumentFriendsPresenter? friends,
             LobbyConnectedFriendsPresenter? connectedFriends,
-            CommunitiesDataProvider? communitiesProvider) : base(viewFactory)
+            CommunitiesDataProvider? communitiesProvider,
+            CameraReelContainer? cameraReel,
+            IWeb3IdentityCache identityCache) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.cursor = cursor;
@@ -221,6 +244,8 @@ namespace DCL.Lobby
             this.friends = friends;
             this.connectedFriends = connectedFriends;
             this.communitiesProvider = communitiesProvider;
+            this.cameraReel = cameraReel;
+            this.identityCache = identityCache;
 
             avatarGesture = new ClickOrDragManipulator
             {
@@ -257,6 +282,8 @@ namespace DCL.Lobby
             eventsCts.SafeCancelAndDispose();
             friendsCts.SafeCancelAndDispose();
             communitiesCts.SafeCancelAndDispose();
+            galleryCts.SafeCancelAndDispose();
+            deletePhotoCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
@@ -338,6 +365,12 @@ namespace DCL.Lobby
             communitiesRail.Show(viewInstance.Communities);
             communities4x2Rail.Show(viewInstance.Communities4x2);
 
+            // The four-column rail lists the same photos as the six-column one
+            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            gallery4x2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            galleryRail.Show(viewInstance.Gallery);
+            gallery4x2Rail.Show(viewInstance.Gallery4x2);
+
             // Before the places: a cached landing place binds its card synchronously
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(viewInstance.Friends, friendsCts.Token);
@@ -361,6 +394,10 @@ namespace DCL.Lobby
             // Every show fetches again: a community joined or left from a panel over the lobby is reflected on the way back
             communitiesCts = communitiesCts.SafeRestart();
             ShowCommunitiesAsync(communitiesCts.Token).Forget();
+
+            // Every show fetches again: a photo taken since the lobby was last up is reflected on the way back
+            galleryCts = galleryCts.SafeRestart();
+            ShowGalleryAsync(galleryCts.Token).Forget();
 
             if (inputData.IsStartup)
                 startParcel.JumpInRequestRaised += RequestClose;
@@ -393,6 +430,8 @@ namespace DCL.Lobby
             friendsCts = null;
             communitiesCts.SafeCancelAndDispose();
             communitiesCts = null;
+            galleryCts.SafeCancelAndDispose();
+            galleryCts = null;
 
             // A drag cut short by the close leaves the hardware cursor hidden otherwise
             avatarGesture.Cancel();
@@ -406,6 +445,8 @@ namespace DCL.Lobby
             upcomingEventsRail?.Hide();
             communitiesRail?.Hide();
             communities4x2Rail?.Hide();
+            galleryRail?.Hide();
+            gallery4x2Rail?.Hide();
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
@@ -788,6 +829,83 @@ namespace DCL.Lobby
         // The card panel reads the pictures from the same cache, so the thumbnail it opens with is already there
         private void OnCommunityClicked(int index) =>
             mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communities[index].id, spriteCache)));
+
+        // A failed fetch keeps the last photos, so the rows only hide while none have ever arrived; the reel lists the
+        // latest first, as the rails do
+        private async UniTaskVoid ShowGalleryAsync(CancellationToken ct)
+        {
+            if (cameraReel == null) return;
+
+            IWeb3Identity? identity = identityCache.Identity;
+
+            if (identity == null) return;
+
+            Result<CameraReelResponsesCompact> result = await cameraReel.StorageService.GetCompactScreenshotGalleryAsync(identity.Address, MAX_PHOTOS, 0, ct)
+                                                                       .SuppressToResultAsync(ReportCategory.CAMERA_REEL);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (result.Success)
+            {
+                photos.Clear();
+                List<CameraReelResponseCompact> images = result.Value.images;
+
+                for (var i = 0; i < images.Count && i < MAX_PHOTOS; i++)
+                    photos.Add(images[i]);
+            }
+
+            ShowPhotoCards(galleryRail!, ct, rewind: true);
+            ShowPhotoCards(gallery4x2Rail!, ct, rewind: true);
+        }
+
+        private void ShowPhotoCards(LobbyGalleryRail rail, CancellationToken ct, bool rewind)
+        {
+            rail.SetCount(photos.Count, rewind);
+
+            for (var i = 0; i < photos.Count; i++)
+                ShowPhotoCard(rail.Cards[i], photos[i], ct);
+        }
+
+        private void ShowPhotoCard(LobbyGalleryCardElement card, CameraReelResponseCompact photo, CancellationToken ct)
+        {
+            DateTime takenAt = ReelUtility.GetDateTimeFromString(photo.dateTime);
+            card.DateText = takenAt == default ? string.Empty : takenAt.ToString(PHOTO_DATE_FORMAT, CultureInfo.InvariantCulture);
+
+            LoadThumbnailAsync(card, photo.thumbnailUrl, ReportCategory.CAMERA_REEL, ct).Forget();
+        }
+
+        // The detail pages through the same list the rails show, so its arrows stay within the lobby's photos
+        private void OnPhotoClicked(int index) =>
+            mvcManager.ShowAndForget(PhotoDetailController.IssueCommand(new PhotoDetailParameter(photos, index, false,
+                PhotoDetailParameter.CallerContext.CameraReel, OnPhotoDeleteIntention, RemovePhoto, cameraReel!.GalleryEventBus)));
+
+        private void OnPhotoDeleteIntention(CameraReelResponseCompact photo)
+        {
+            deletePhotoCts = deletePhotoCts.SafeRestart();
+            DeletePhotoAsync(photo, deletePhotoCts.Token).Forget();
+        }
+
+        // Outlives the show: the detail closes itself on the intention, so the server has to hear of it even if the lobby
+        // goes down meanwhile
+        private async UniTaskVoid DeletePhotoAsync(CameraReelResponseCompact photo, CancellationToken ct)
+        {
+            Result<CameraReelStorageStatus> result = await cameraReel!.StorageService.DeleteScreenshotAsync(photo.id, ct)
+                                                                     .SuppressToResultAsync(ReportCategory.CAMERA_REEL);
+
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            cameraReel.GalleryEventBus.ReelDeleted(photo.id);
+            RemovePhoto(photo);
+        }
+
+        // Keeps the page the rails are on; a hidden lobby only drops the photo from the list, the next show refetches
+        private void RemovePhoto(CameraReelResponseCompact photo)
+        {
+            if (!photos.Remove(photo) || galleryCts == null) return;
+
+            ShowPhotoCards(galleryRail!, galleryCts.Token, rewind: false);
+            ShowPhotoCards(gallery4x2Rail!, galleryCts.Token, rewind: false);
+        }
 
         private LobbyUpcomingEventsRail CreateUpcomingEventsRail() =>
             new (viewInstance!.UpcomingEventCardTemplate)

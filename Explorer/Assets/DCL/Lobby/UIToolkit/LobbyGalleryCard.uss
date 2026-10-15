@@ -1,0 +1,78 @@
+:root {
+    --gallery-card-hover-duration: 0.3s;
+}
+
+/* Same footprint as the place card (280x165, 24px corners): the photo fills the card and a gradient darkens its bottom
+   under the date; hovering zooms the photo */
+.lobby-gallery-card {
+    width: 280px;
+    height: 165px;
+    border-radius: 24px;
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+.lobby-gallery-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--gallery-card-hover-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__thumbnail {
+    scale: 1.05;
+}
+
+/* While the photo is on its way the dark fill of the card shows; the photo then fades in over it rather than popping up */
+.lobby-gallery-card--loading .lobby-gallery-card__thumbnail {
+    opacity: 0;
+    transition: opacity 0s;
+}
+
+/* The place card's sprite and slices: a 52px fade into a flat strip under the date */
+.lobby-gallery-card__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+}
+
+.lobby-gallery-card__footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 36px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 10px 8px;
+}
+
+.lobby-gallery-card__date-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/CalendarIcn.png');
+    -unity-background-image-tint-color: var(--lobby-subtitle-color);
+}
+
+.lobby-gallery-card__date {
+    flex-shrink: 1;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

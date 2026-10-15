@@ -26,6 +26,8 @@ namespace DCL.Lobby
         private const string FEATURED_PLACES_4X2_NAME = "FeaturedPlaces4x2";
         private const string COMMUNITIES_NAME = "Communities";
         private const string COMMUNITIES_4X2_NAME = "Communities4x2";
+        private const string GALLERY_NAME = "Gallery";
+        private const string GALLERY_4X2_NAME = "Gallery4x2";
         private const string GO_TO_NAME = "GoTo";
 
         private static readonly LobbyWidgetId[] WIDGETS = (LobbyWidgetId[])Enum.GetValues(typeof(LobbyWidgetId));
@@ -59,6 +61,8 @@ namespace DCL.Lobby
             sections[(int)LobbyWidgetId.RecommendedPlaces4x2] = Find<VisualElement>(root, FEATURED_PLACES_4X2_NAME);
             sections[(int)LobbyWidgetId.Communities6x2] = Find<VisualElement>(root, COMMUNITIES_NAME);
             sections[(int)LobbyWidgetId.Communities4x2] = Find<VisualElement>(root, COMMUNITIES_4X2_NAME);
+            sections[(int)LobbyWidgetId.Gallery6x2] = Find<VisualElement>(root, GALLERY_NAME);
+            sections[(int)LobbyWidgetId.Gallery4x2] = Find<VisualElement>(root, GALLERY_4X2_NAME);
             sections[(int)LobbyWidgetId.GoTo4x1] = Find<VisualElement>(root, GO_TO_NAME);
 
             Layout = new LobbyLayout(

@@ -27,6 +27,8 @@ namespace DCL.Lobby
         private const string FEATURED_PLACES_4X2_NAME = "FeaturedPlaces4x2";
         private const string COMMUNITIES_NAME = "Communities";
         private const string COMMUNITIES_4X2_NAME = "Communities4x2";
+        private const string GALLERY_NAME = "Gallery";
+        private const string GALLERY_4X2_NAME = "Gallery4x2";
         private const string FRIENDS_NAME = "Friends";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
@@ -43,6 +45,7 @@ namespace DCL.Lobby
         [SerializeField] private VisualTreeAsset liveEventCardTemplate = null!;
         [SerializeField] private VisualTreeAsset upcomingEventCardTemplate = null!;
         [SerializeField] private VisualTreeAsset communityCardTemplate = null!;
+        [SerializeField] private VisualTreeAsset galleryCardTemplate = null!;
         [SerializeField] private EventContextMenuConfiguration eventContextMenuSettings = null!;
         [SerializeField] private CharacterPreviewView characterPreviewView = null!;
 
@@ -58,6 +61,8 @@ namespace DCL.Lobby
         public VisualTreeAsset UpcomingEventCardTemplate => upcomingEventCardTemplate;
 
         public VisualTreeAsset CommunityCardTemplate => communityCardTemplate;
+
+        public VisualTreeAsset GalleryCardTemplate => galleryCardTemplate;
 
         /// <summary>The same asset the Explore event cards use for their Share menu.</summary>
         public EventContextMenuConfiguration EventContextMenuSettings => eventContextMenuSettings;
@@ -121,6 +126,12 @@ namespace DCL.Lobby
 
         /// <summary>Four-column section of the user's communities, title and rail. Exists only while the view is shown.</summary>
         public VisualElement Communities4x2 => Section(COMMUNITIES_4X2_NAME);
+
+        /// <summary>Section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Gallery => Section(GALLERY_NAME);
+
+        /// <summary>Four-column section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Gallery4x2 => Section(GALLERY_4X2_NAME);
 
         /// <summary>Section of the online friends, header and rail. Exists only while the view is shown.</summary>
         public VisualElement Friends => Section(FRIENDS_NAME);

@@ -25,6 +25,7 @@ namespace DCL.Lobby
         private const string USS_ICON_JUMP_BACK_IN = USS_ICON + "--jump-back-in";
         private const string USS_ICON_RECOMMENDED_PLACES = USS_ICON + "--recommended-places";
         private const string USS_ICON_COMMUNITIES = USS_ICON + "--communities";
+        private const string USS_ICON_GALLERY = USS_ICON + "--gallery";
         private const string USS_ICON_GO_TO = USS_ICON + "--go-to";
         private const string USS_TITLE = USS_BLOCK + "__title";
         private const string USS_SIZES = USS_BLOCK + "__sizes";
@@ -160,6 +161,7 @@ namespace DCL.Lobby
                 LobbyWidgetFamily.JumpBackIn => USS_ICON_JUMP_BACK_IN,
                 LobbyWidgetFamily.RecommendedPlaces => USS_ICON_RECOMMENDED_PLACES,
                 LobbyWidgetFamily.Communities => USS_ICON_COMMUNITIES,
+                LobbyWidgetFamily.Gallery => USS_ICON_GALLERY,
                 LobbyWidgetFamily.GoTo => USS_ICON_GO_TO,
                 _ => throw new ArgumentOutOfRangeException(nameof(family), family, null),
             };

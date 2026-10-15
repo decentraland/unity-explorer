@@ -21,6 +21,8 @@ namespace DCL.Lobby
                 LobbyWidgetId.RecommendedPlaces4x2 => new Vector2Int(4, 2),
                 LobbyWidgetId.Communities6x2 => new Vector2Int(6, 2),
                 LobbyWidgetId.Communities4x2 => new Vector2Int(4, 2),
+                LobbyWidgetId.Gallery6x2 => new Vector2Int(6, 2),
+                LobbyWidgetId.Gallery4x2 => new Vector2Int(4, 2),
                 LobbyWidgetId.GoTo4x1 => new Vector2Int(4, 1),
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };
@@ -39,6 +41,8 @@ namespace DCL.Lobby
                 LobbyWidgetId.RecommendedPlaces4x2 => 2,
                 LobbyWidgetId.Communities6x2 => 3,
                 LobbyWidgetId.Communities4x2 => 2,
+                LobbyWidgetId.Gallery6x2 => 3,
+                LobbyWidgetId.Gallery4x2 => 2,
                 LobbyWidgetId.GoTo4x1 => 1,
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),
             };

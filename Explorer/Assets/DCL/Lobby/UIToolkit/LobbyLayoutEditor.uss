@@ -163,6 +163,10 @@
     background-image: url('/Assets/Textures/Common/CommunitiesIcn.png');
 }
 
+.lobby-widget-card__icon--gallery {
+    background-image: url('/Assets/DCL/InWorldCamera/InWorldCamera/UI/Textures/CameraReelIcn.png');
+}
+
 .lobby-widget-card__icon--go-to {
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
 }
