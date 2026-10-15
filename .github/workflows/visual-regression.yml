@@ -180,9 +180,9 @@ jobs:
     # stick. !cancelled() keeps the suite running when pending skips or fails.
     needs: [resolve, automation-pending]
     if: ${{ !cancelled() && needs.resolve.outputs.authorized == 'true' }}
-    # Reviewed immutable revision includes Visual scoping and the unified report writer.
-    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@8c84a893d8611a58fd7fed0d99bfbe9873a23dc1
-    # The pinned reusable still declares recording permissions workflow-wide.
+    # Follow merged automation, as InWorld does; squash merges can orphan feature-branch refs.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
+    # The reusable still declares recording permissions workflow-wide.
     permissions:
       contents: write
       pull-requests: write

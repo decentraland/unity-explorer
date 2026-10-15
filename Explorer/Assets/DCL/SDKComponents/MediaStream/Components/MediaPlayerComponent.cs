@@ -1,9 +1,10 @@
 using DCL.ECSComponents;
-using DCL.AvProSwitch;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Plugins.NativeAudioAnalysis;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -150,7 +151,7 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
         {
             AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 

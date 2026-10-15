@@ -454,15 +454,15 @@ namespace DCL.UI.Sidebar
 
         private void OnNearbyVoiceButtonClicked()
         {
-            if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
-            {
-                viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
-                return;
-            }
-
             if (identityCache.IsGuest())
             {
                 OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice))).Forget();
+                return;
+            }
+
+            if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
+            {
+                viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
                 return;
             }
 

@@ -31,6 +31,10 @@ Dispatched automation runs report InWorld and Visual results, but [cannot satisf
 
 Never re-run *Create Release Branch and PR* to fix any of this: it force-pushes the release branch from `dev`'s current tip, re-cutting the release from newer commits. Pushing to the release branch is the normal path — a push starts the build, lint, tests and automation suites through their regular `pull_request` triggers and replaces every reused section.
 
+### Issue deduplication
+
+Issues are not labelled automatically (the team did not use the labeller's output), and neither former issue workflow, `AI Label Issues` or `Issue Deduplication`, exists any more. The only automated step left is the duplicate check, which Jarvis (agent-server) runs instead of a workflow in this repository. The org GitHub webhook delivers `issues.opened` to agent-server. Agent-server then runs a no-tools model over the new issue, the recent issues and older issues with the same title or the same top stack frame. When it finds an older original filed by Sentry or by a repository owner, member or collaborator, it adds `duplicate` and comments. It also closes the issue as not planned, but only when all of these hold: the issue carries the `sentry` label and was opened by Sentry, the original is still open, and both issues carry a stack frame whose top frame is the same. Without that frame match the issue is labelled and commented but left open, and a closed original is treated as a possible regression. Workspace members can re-run the check from Slack with `@jarvis dedup <issue url>`. Flow and host checks: [agent-server `skills/issue-dedup/SKILL.md`](https://github.com/decentraland/agent-server/blob/main/skills/issue-dedup/SKILL.md) (internal repository).
+
 ## Native plugin binaries (UUAV, RustSegment)
 
 Two Rust plugins ship prebuilt native binaries committed to Git LFS: UUAV (`Explorer/Assets/Plugins/UUAV/`) and the Segment analytics client (`Explorer/Assets/Plugins/RustSegment/`). Each is pinned to its inputs by a hash lock and guarded by the same pair of workflows:
