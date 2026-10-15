@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Movement
 
             PlayerProfileVersionsAnnounced announcement = message.Message.PlayerProfileVersionAnnounced;
 
-            if (!TryGetWalletInCurrentRealm(announcement.SubjectId, PROFILE_ANNOUNCEMENT_MESSAGE, out Web3Address userId))
+            if (GetPeerInCurrentRealm(announcement.SubjectId, PROFILE_ANNOUNCEMENT_MESSAGE, out Web3Address userId) != PeerIdCache.LookupResult.Found)
                 return;
 
             incomingProfiles.Enqueue(userId, announcement.Version);

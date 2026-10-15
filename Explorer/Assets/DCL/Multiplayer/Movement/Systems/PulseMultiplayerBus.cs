@@ -35,9 +35,9 @@ namespace DCL.Multiplayer.Movement
         // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements
         private string? lastBroadcastRealm;
 
-        internal long ResyncCount { get; private set; }
+        internal long resyncCount { get; private set; }
 
-        internal long EmoteStateMismatchCount { get; private set; }
+        internal long emoteStateMismatchCount { get; private set; }
 
         public PulseMultiplayerBus(IPulseMultiplayerService pulseService,
             PeerIdCache peerIdCache,
@@ -70,22 +70,22 @@ namespace DCL.Multiplayer.Movement
             return identityCache.EnsuredIdentity().Address;
         }
 
-        private bool TryGetWalletInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
+        private PeerIdCache.LookupResult GetPeerInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
         {
-            switch (peerIdCache.GetWalletInRealm(subjectId, pulseRealm.Value, out wallet))
+            PeerIdCache.LookupResult result = peerIdCache.GetWalletInRealm(subjectId, pulseRealm.Value, out wallet);
+
+            switch (result)
             {
                 case PeerIdCache.LookupResult.UnknownPeer:
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
-                    return false;
+                    break;
                 case PeerIdCache.LookupResult.RealmMismatch:
                     // Expected while a realm-change purge is pending, so not a warning
                     ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
-                    return false;
-                case PeerIdCache.LookupResult.SupersededPeer:
-                    return false;
-                default:
-                    return true;
+                    break;
             }
+
+            return result;
         }
 
         public void Dispose()
@@ -116,7 +116,8 @@ namespace DCL.Multiplayer.Movement
 
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
-            emotingSubjects.Clear();
+            peerEmotes.Clear();
+            ClearEmoteIntentions();
         }
 
         /// <summary>
@@ -163,34 +164,41 @@ namespace DCL.Multiplayer.Movement
             PurgeQueues(subjectId);
 
             if (walletLeftRealm)
+            {
                 removeIntentions.Enqueue(wallet);
+                RestorePeerEmote(wallet, subjectId, 0, stopIfInactive: false);
+            }
             else if (promotedPeerId.HasValue)
                 RestorePromotedPeer(wallet, promotedPeerId.Value);
         }
 
         private void RestorePromotedPeer(Web3Address wallet, uint subjectId)
         {
-            // A shadow's resync response may have been ignored while it was not selected.
+            // Refresh any state missed while the peer was shadowed.
             pendingResyncs.Remove(subjectId);
 
             if (lastMovementMessages.TryGetValue(subjectId, out var lastMovement))
             {
                 NetworkMovementMessage movementMessage = lastMovement.message;
                 movementMessage.isInstant = true;
-                movementMessage.ResetTimeline = true;
-                movementMessage.isEmoting = emotingSubjects.Contains(subjectId);
+                movementMessage.resetTimeline = true;
+                movementMessage.isEmoting = IsSubjectEmoting(subjectId);
                 Inbox(movementMessage, wallet);
-                TryRequestResync(subjectId, lastMovement.sequence, resetTimeline: true);
+                RestorePeerEmote(wallet, subjectId, movementMessage.timestamp);
+                TryRequestResync(subjectId, lastMovement.sequence, ResyncKind.Promotion);
             }
             else
-                TryRequestResync(subjectId, 0, resetTimeline: true);
+            {
+                RestorePeerEmote(wallet, subjectId, 0);
+                TryRequestResync(subjectId, 0, ResyncKind.Promotion);
+            }
         }
 
         private void PurgeQueues(uint subjectId)
         {
             lastMovementMessages.Remove(subjectId);
             pendingResyncs.Remove(subjectId);
-            emotingSubjects.Remove(subjectId);
+            peerEmotes.Remove(subjectId);
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

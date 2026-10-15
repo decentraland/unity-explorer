@@ -69,13 +69,14 @@ namespace DCL.Multiplayer.Movement
             }
 
             // Refreshing the realm is what keeps a co-teleporting peer (no PlayerJoined re-announcement) out of the purge
-            peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm);
+            peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm, out _);
+
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
+            TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);
 
             if (peerIdCache.GetWalletInRealm(teleport.SubjectId, pulseRealm.Value, out _) != PeerIdCache.LookupResult.Found)
                 return;
 
-            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
-            TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);
             Inbox(movementMessage, wallet);
         }
     }

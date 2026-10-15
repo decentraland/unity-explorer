@@ -1,4 +1,6 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -461,6 +463,8 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsTrue(bunch.Available());
             (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
             movementInbox.DrainToEntities();
             int queuedMovements = component.Queue!.Count;
@@ -471,7 +475,7 @@ namespace DCL.Multiplayer.Movement.Tests
             movementInbox.DrainToEntities();
 
             Assert.AreEqual(queuedMovements, component.Queue.Count);
-            Assert.AreEqual(0, bus.ResyncCount);
+            Assert.AreEqual(0, bus.resyncCount);
             Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 Assert.IsFalse(bunch.Available());
@@ -497,19 +501,19 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(PlayerStateDeltaMessage(7, 10, 11));
-            Assert.AreEqual(1, bus.ResyncCount);
+            Assert.AreEqual(1, bus.resyncCount);
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
             Handle(PlayerStateDeltaMessage(8, 10, 11));
-            Assert.AreEqual(2, bus.ResyncCount);
+            Assert.AreEqual(2, bus.resyncCount);
 
             Handle(PlayerStateFullMessage(7, 10));
             Handle(PlayerStateDeltaMessage(8, 10, 11));
-            Assert.AreEqual(2, bus.ResyncCount);
+            Assert.AreEqual(2, bus.resyncCount);
 
             Handle(PlayerStateFullMessage(8, 10));
             Handle(PlayerStateDeltaMessage(8, 10, 11));
             Handle(PlayerStateDeltaMessage(8, 20, 21));
-            Assert.AreEqual(3, bus.ResyncCount);
+            Assert.AreEqual(3, bus.resyncCount);
         }
 
         [TestCase(false)]
@@ -600,7 +604,7 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(PlayerStateDeltaMessage(7, 10, 11));
-            Assert.AreEqual(1, bus.ResyncCount);
+            Assert.AreEqual(1, bus.resyncCount);
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
             (Entity _, RemotePlayerMovementComponent component) = RegisterEntity(WALLET_1);
             movementInbox.DrainToEntities();
@@ -610,19 +614,19 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.AreEqual(queuedMovements, component.Queue.Count);
 
             Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
-            Assert.AreEqual(2, bus.ResyncCount);
+            Assert.AreEqual(2, bus.resyncCount);
             movementInbox.DrainToEntities();
             Assert.AreEqual(1, component.Queue.Count);
-            Assert.IsTrue(component.Queue.First.ResetTimeline);
+            Assert.IsTrue(component.Queue.First.resetTimeline);
             Handle(PlayerStateDeltaMessage(7, 10, 11));
-            Assert.AreEqual(2, bus.ResyncCount);
+            Assert.AreEqual(2, bus.resyncCount);
             Handle(PlayerStateFullMessage(7, 10));
             Handle(PlayerStateDeltaMessage(7, 10, 11));
             movementInbox.DrainToEntities();
             Assert.AreEqual(2, component.Queue.Count);
 
             Handle(PlayerStateDeltaMessage(7, 20, 21));
-            Assert.AreEqual(3, bus.ResyncCount);
+            Assert.AreEqual(3, bus.resyncCount);
             using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
                 Assert.IsFalse(bunch.Available());
         }
@@ -668,7 +672,7 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
-            peerIdCache.Set(new Web3Address(WALLET_1), 7, REALM_B);
+            peerIdCache.Set(new Web3Address(WALLET_1), 7, REALM_B, out _);
             bus.BroadcastTeleport(Vector3.zero);
             currentRealm = REALM_B;
             bus.BroadcastTeleport(Vector3.zero);
@@ -798,6 +802,9 @@ namespace DCL.Multiplayer.Movement.Tests
                 Assert.AreEqual(stopWhileShadowed, bunch.Available());
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
 
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsTrue(bunch.Available());
+
             Handle(stopWhileShadowed ? EmoteStoppedMessage(7) : EmoteStartedMessage(7));
 
             Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
@@ -835,7 +842,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 using var movementSystem = new RemotePlayersMovementSystem(world, settings, Substitute.For<ICharacterControllerSettings>());
                 ServerMessage survivor = PlayerJoinedMessage(7, WALLET_1, REALM_A);
                 ServerMessage departing = PlayerJoinedMessage(8, WALLET_1, REALM_A);
-                int parcel = new ParcelEncoder(LandscapeData.terrainData).Encode(Vector2Int.zero);
+                int parcel = new ParcelEncoder(cachedLandscapeData.terrainData).Encode(Vector2Int.zero);
                 survivor.PlayerJoined.State.State.ParcelIndex = parcel;
                 survivor.PlayerJoined.State.State.PositionXQuantized = 3;
                 departing.PlayerJoined.State.ServerTick = 100;
@@ -905,7 +912,7 @@ namespace DCL.Multiplayer.Movement.Tests
             movementInbox.DrainToEntities();
 
             Assert.AreEqual(1, component.Queue!.Count);
-            Assert.IsTrue(component.Queue.First.ResetTimeline);
+            Assert.IsTrue(component.Queue.First.resetTimeline);
             Assert.AreEqual(0.001, component.Queue.First.timestamp, 0.000001);
             Assert.AreEqual(6, component.Queue.First.position.x - (component.Queue.First.parcel.x * 16), PlayerState.PositionXQuantizedStep);
         }
@@ -926,18 +933,395 @@ namespace DCL.Multiplayer.Movement.Tests
 
             Assert.AreEqual(2, component.Queue!.Count);
             NetworkMovementMessage recovered = component.Queue.Dequeue();
-            Assert.IsTrue(recovered.ResetTimeline);
+            Assert.IsTrue(recovered.resetTimeline);
             Assert.AreEqual(0.002, recovered.timestamp, 0.000001);
             NetworkMovementMessage delayed = component.Queue.Dequeue();
-            Assert.IsFalse(delayed.ResetTimeline);
+            Assert.IsFalse(delayed.resetTimeline);
             Assert.AreEqual(0.001, delayed.timestamp, 0.000001);
 
             Handle(PlayerStateDeltaMessage(7, 2, 3));
             movementInbox.DrainToEntities();
             Assert.AreEqual(1, component.Queue.Count);
-            Assert.IsFalse(component.Queue.First.ResetTimeline);
+            Assert.IsFalse(component.Queue.First.resetTimeline);
             Assert.AreEqual(0.003, component.Queue.First.timestamp, 0.000001);
-            Assert.AreEqual(1, bus.ResyncCount);
+            Assert.AreEqual(1, bus.resyncCount);
+        }
+
+        [Test]
+        public void RestoreTheLatestShadowEmoteIdAndMaskAfterReplacingAnotherPeersEmote()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(8));
+            ServerMessage shadowStart = EmoteStartedMessage(7);
+            shadowStart.EmoteStarted.EmoteId = "urn:decentraland:off-chain:base-emotes:dance";
+            shadowStart.EmoteStarted.Mask = (int)AvatarEmoteMask.AemUpperBody;
+            Handle(shadowStart);
+            shadowStart.EmoteStarted.EmoteId = "urn:decentraland:off-chain:base-emotes:clap";
+            shadowStart.EmoteStarted.Sequence = 4;
+            shadowStart.EmoteStarted.ServerTick = 4;
+            Handle(shadowStart);
+            Handle(EmoteStoppedMessage(7));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                CollectionAssert.AreEquivalent(new[]
+                {
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:wave"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody),
+                }, bunch.Collection());
+            Handle(EmoteStartedMessage(8));
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                CollectionAssert.AreEquivalent(new[]
+                {
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.004, AvatarEmoteMask.AemUpperBody),
+                }, bunch.Collection());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [TestCase(AvatarEmoteMask.AemFullBody, 2u)]
+        [TestCase(AvatarEmoteMask.AemUpperBody, 2u)]
+        [TestCase(AvatarEmoteMask.AemFullBody, 3u)]
+        [TestCase(AvatarEmoteMask.AemUpperBody, 3u)]
+        public void StopTheSelectedAnimationWithoutReplayingACompletedShadowEmote(AvatarEmoteMask mask, uint lateStartSequence)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            ServerMessage start = EmoteStartedMessage(7);
+            start.EmoteStarted.Mask = (int)mask;
+            Handle(start);
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsTrue(bunch.Available());
+            Handle(EmoteStoppedMessage(7));
+            start.EmoteStarted.Sequence = lateStartSequence;
+            Handle(start);
+            Handle(EmoteStartedMessage(8));
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+            {
+                Assert.AreEqual(1, bunch.Collection().Count);
+                foreach (RemoteEmoteStopIntention stop in bunch.Collection())
+                    Assert.AreEqual(WALLET_1, stop.WalletId);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void StopThePreviousSelectedPeersMaskedEmoteOnANewJoin(bool stopBeforeJoin)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            ServerMessage start = EmoteStartedMessage(7);
+            start.EmoteStarted.Mask = (int)AvatarEmoteMask.AemUpperBody;
+            Handle(start);
+            if (stopBeforeJoin)
+                Handle(EmoteStoppedMessage(7));
+
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                CollectionAssert.AreEquivalent(new[] { new RemoteEmoteStopIntention(WALLET_1, 0.001) }, bunch.Collection());
+        }
+
+        [Test]
+        public void StartTheNewSelectedEmoteWithoutAnObsoleteQueuedStop()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            Handle(EmoteStoppedMessage(7));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            ServerMessage start = EmoteStartedMessage(8);
+            start.EmoteStarted.EmoteId = "urn:decentraland:off-chain:base-emotes:clap";
+
+            Handle(start);
+
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                CollectionAssert.AreEquivalent(new[]
+                {
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody),
+                }, bunch.Collection());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ForgetThePreviousRegistrationEmoteWhenAPeerIdIsReused(bool disconnectAll)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            if (disconnectAll)
+                disconnect(DisconnectReason.GRACEFUL);
+            else
+                Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+
+            Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [TestCase(ServerMessage.MessageOneofCase.PlayerStateFull)]
+        [TestCase(ServerMessage.MessageOneofCase.PlayerStateDelta)]
+        [TestCase(ServerMessage.MessageOneofCase.Teleported)]
+        public void RestoreTheLatestShadowPoseWithoutDispatchingItBeforePromotion(ServerMessage.MessageOneofCase kind)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            (Entity _, RemotePlayerMovementComponent movement) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+            int queuedMovements = movement.Queue!.Count;
+            ServerMessage update;
+            switch (kind)
+            {
+                case ServerMessage.MessageOneofCase.PlayerStateFull:
+                    update = PlayerStateFullMessage(7, 2);
+                    update.PlayerStateFull.State.PositionYQuantized = 6;
+                    break;
+                case ServerMessage.MessageOneofCase.Teleported:
+                    update = TeleportMessage(7, REALM_A);
+                    update.Teleported.State.PositionYQuantized = 6;
+                    break;
+                default:
+                    update = PlayerStateDeltaMessage(7, 1, 2);
+                    update.PlayerStateDelta.PositionYQuantized = 6;
+                    break;
+            }
+            Handle(update);
+            Handle(PlayerStateFullMessage(7, 1));
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(queuedMovements, movement.Queue.Count);
+            Assert.AreEqual(0, bus.resyncCount);
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(1, movement.Queue.Count);
+            Assert.IsTrue(movement.Queue.First.resetTimeline);
+            Assert.AreEqual(6, movement.Queue.First.position.y, PlayerState.PositionYQuantizedStep);
+            Assert.AreEqual(1, bus.resyncCount);
+            Handle(PlayerStateDeltaMessage(7, 2, 3));
+            Assert.AreEqual(1, bus.resyncCount, "The promotion resync uses the cached shadow sequence.");
+        }
+
+        [Test]
+        public void IgnoreAShadowDeltaGapUntilPromotionResyncRepairsIt()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            ServerMessage consecutive = PlayerStateDeltaMessage(7, 1, 2);
+            consecutive.PlayerStateDelta.PositionYQuantized = 6;
+            Handle(consecutive);
+            ServerMessage gap = PlayerStateDeltaMessage(7, 4, 5);
+            gap.PlayerStateDelta.PositionYQuantized = 9;
+            Handle(gap);
+            ServerMessage staleBaseline = PlayerStateDeltaMessage(7, 1, 6);
+            staleBaseline.PlayerStateDelta.PositionYQuantized = 12;
+            Handle(staleBaseline);
+            Assert.AreEqual(0, bus.resyncCount);
+            (Entity _, RemotePlayerMovementComponent movement) = RegisterEntity(WALLET_1);
+            movementInbox.DrainToEntities();
+
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+            movementInbox.DrainToEntities();
+            Assert.AreEqual(6, movement.Queue!.First.position.y, PlayerState.PositionYQuantizedStep);
+            Assert.AreEqual(1, bus.resyncCount);
+            ServerMessage recovered = PlayerStateFullMessage(7, 6);
+            recovered.PlayerStateFull.State.PositionYQuantized = 12;
+            Handle(recovered);
+            movementInbox.DrainToEntities();
+
+            Assert.AreEqual(1, movement.Queue.Count);
+            Assert.IsTrue(movement.Queue.First.resetTimeline);
+            Assert.AreEqual(12, movement.Queue.First.position.y, PlayerState.PositionYQuantizedStep);
+            Handle(PlayerStateDeltaMessage(7, 6, 7));
+            Assert.AreEqual(1, bus.resyncCount);
+        }
+
+        [Test]
+        public void RetryTheCurrentSelectedEmoteStartAndStop()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention start = TakeEmoteIntention();
+
+            bus.SaveForRetry(start);
+
+            RemoteEmoteIntention retriedStart = TakeEmoteIntention();
+            Assert.AreEqual(start, retriedStart);
+            Assert.AreSame(bus, retriedStart.Source);
+            Assert.AreNotEqual(0, retriedStart.RetryGeneration);
+            Handle(EmoteStoppedMessage(7));
+            RemoteEmoteStopIntention stop = TakeEmoteStopIntention();
+
+            bus.SaveForRetry(stop);
+
+            RemoteEmoteStopIntention retriedStop = TakeEmoteStopIntention();
+            Assert.AreEqual(stop, retriedStop);
+            Assert.AreSame(bus, retriedStop.Source);
+            Assert.AreNotEqual(start.RetryGeneration, retriedStop.RetryGeneration);
+        }
+
+        [Test]
+        public void RejectAnOldSelectedPeersRetryAfterSelectionChanges()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention oldStart = TakeEmoteIntention();
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+
+            bus.SaveForRetry(oldStart);
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            RemoteEmoteStopIntention currentStop = TakeEmoteStopIntention();
+            Assert.AreNotEqual(oldStart.RetryGeneration, currentStop.RetryGeneration);
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 8 } });
+
+            bus.SaveForRetry(currentStop);
+
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+            Assert.AreEqual(oldStart.EmoteId, TakeEmoteIntention().EmoteId);
+        }
+
+        [Test]
+        public void RejectAStartRetryAfterStopAndAStopRetryAfterANewStart()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention oldStart = TakeEmoteIntention();
+            Handle(EmoteStoppedMessage(7));
+            RemoteEmoteStopIntention oldStop = TakeEmoteStopIntention();
+
+            bus.SaveForRetry(oldStart);
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+            ServerMessage newStart = EmoteStartedMessage(7);
+            newStart.EmoteStarted.Sequence = 4;
+            newStart.EmoteStarted.ServerTick = 4;
+            Handle(newStart);
+
+            bus.SaveForRetry(oldStop);
+
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+            Assert.AreEqual(0.004, TakeEmoteIntention().Timestamp, 0.000001);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RejectCapturedRetriesAcrossDetachAndPeerIdReuse(bool disconnectAll)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention oldStart = TakeEmoteIntention();
+            Handle(EmoteStoppedMessage(7));
+            RemoteEmoteStopIntention oldStop = TakeEmoteStopIntention();
+            if (disconnectAll)
+                disconnect(DisconnectReason.GRACEFUL);
+            else
+                Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention currentStart = TakeEmoteIntention();
+
+            bus.SaveForRetry(oldStart);
+            bus.SaveForRetry(oldStop);
+            bus.SaveForRetry(currentStart);
+
+            Assert.AreEqual(currentStart.RetryGeneration, TakeEmoteIntention().RetryGeneration);
+            Assert.AreNotEqual(oldStart.RetryGeneration, currentStart.RetryGeneration);
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [Test]
+        public void RejectCapturedRetriesAfterRealmCleanup()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            RemoteEmoteIntention oldStart = TakeEmoteIntention();
+            bus.BroadcastTeleport(Vector3.zero);
+            currentRealm = REALM_B;
+            bus.BroadcastTeleport(Vector3.zero);
+
+            bus.SaveForRetry(oldStart);
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available());
+        }
+
+        [Test]
+        public void KeepSelectedRetriesValidWhileShadowEmotesChange()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(8));
+            RemoteEmoteIntention selectedStart = TakeEmoteIntention();
+            Handle(EmoteStartedMessage(7));
+            Handle(EmoteStoppedMessage(7));
+
+            bus.SaveForRetry(selectedStart);
+
+            Assert.AreEqual(selectedStart.RetryGeneration, TakeEmoteIntention().RetryGeneration);
+            Handle(EmoteStoppedMessage(8));
+            RemoteEmoteStopIntention selectedStop = TakeEmoteStopIntention();
+            ServerMessage shadowStart = EmoteStartedMessage(7);
+            shadowStart.EmoteStarted.Sequence = 4;
+            Handle(shadowStart);
+
+            bus.SaveForRetry(selectedStop);
+
+            Assert.AreEqual(selectedStop.RetryGeneration, TakeEmoteStopIntention().RetryGeneration);
+        }
+
+        [Test]
+        public void ReplaceEqualQueuedPayloadsWithTheCurrentRetryGeneration()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            ServerMessage start = EmoteStartedMessage(7);
+            Handle(start);
+            RemoteEmoteIntention oldStart = TakeEmoteIntention();
+            bus.SaveForRetry(oldStart);
+
+            Handle(start);
+
+            RemoteEmoteIntention currentStart = TakeEmoteIntention();
+            Assert.AreEqual(oldStart, currentStart);
+            Assert.AreNotEqual(oldStart.RetryGeneration, currentStart.RetryGeneration);
+            bus.SaveForRetry(oldStart);
+            bus.SaveForRetry(currentStart);
+            Assert.AreEqual(currentStart.RetryGeneration, TakeEmoteIntention().RetryGeneration);
+        }
+
+        private RemoteEmoteIntention TakeEmoteIntention()
+        {
+            using OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions();
+            Assert.AreEqual(1, bunch.Collection().Count);
+            foreach (RemoteEmoteIntention intention in bunch.Collection())
+                return intention;
+            throw new InvalidOperationException("Expected one emote intention.");
+        }
+
+        private RemoteEmoteStopIntention TakeEmoteStopIntention()
+        {
+            using OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions();
+            Assert.AreEqual(1, bunch.Collection().Count);
+            foreach (RemoteEmoteStopIntention intention in bunch.Collection())
+                return intention;
+            throw new InvalidOperationException("Expected one emote stop intention.");
         }
 
         private void Handle(ServerMessage serverMessage)
@@ -1049,6 +1433,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 EmoteStopped = new EmoteStopped
                 {
                     SubjectId = subjectId,
+                    Sequence = 3,
                     ServerTick = 3,
                 },
             };

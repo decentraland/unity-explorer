@@ -815,3 +815,14 @@ resharper_space_after_operator_keyword = true
 # resharper_web_config_wrong_module_highlighting = warning
 # resharper_wrong_indent_size_highlighting = hint
 
+# Keep this movement snapshot's existing public field convention across transport and plugin callers.
+[NetworkMovementMessage.cs]
+dotnet_naming_style.movement_snapshot_camel_case.capitalization = camel_case
+dotnet_naming_symbols.movement_snapshot_fields.applicable_kinds = field
+dotnet_naming_symbols.movement_snapshot_fields.applicable_accessibilities = public
+dotnet_naming_symbols.movement_snapshot_fields.resharper_required_modifiers = instance
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.symbols = movement_snapshot_fields
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.style = movement_snapshot_camel_case
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.severity = warning
+resharper_abbreviations = IK
+

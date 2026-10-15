@@ -14,13 +14,18 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private enum ResyncKind : byte
+        {
+            PacketLoss,
+            Promotion,
+        }
+
         private const string PLAYER_STATE_MESSAGE = "player state";
         private const string PLAYER_STATE_DELTA_MESSAGE = "player state delta";
-        private const byte PROMOTION_RESYNC = 1;
 
         // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
-        private readonly Dictionary<uint, byte> pendingResyncs = new ();
+        private readonly Dictionary<uint, ResyncKind> pendingResyncs = new ();
 
         public void Send(NetworkMovementMessage message)
         {
@@ -61,17 +66,20 @@ namespace DCL.Multiplayer.Movement
 
             bool knownPeer = peerIdCache.TryGetWallet(playerJoined.State.SubjectId, out Web3Address previousWallet);
             bool peerReassigned = knownPeer && !previousWallet.Equals(resolvedWallet);
-            bool previousPeerSelected = peerReassigned && peerIdCache.TryGetPeerId(previousWallet, out uint previousPeerId) && previousPeerId == playerJoined.State.SubjectId;
+            bool replacesSelectedPeer = peerIdCache.TryGetPeerId(resolvedWallet, out uint selectedPeerId) && selectedPeerId != playerJoined.State.SubjectId;
 
             if (peerReassigned)
                 PurgeQueues(playerJoined.State.SubjectId);
 
-            Web3Address? orphanedWallet = peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId, playerJoined.Realm);
+            Web3Address? orphanedWallet = peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId, playerJoined.Realm, out uint? promotedPeerId);
 
             if (orphanedWallet.HasValue)
+            {
                 removeIntentions.Enqueue(orphanedWallet.Value);
-            else if (previousPeerSelected && peerIdCache.TryGetPeerId(previousWallet, out uint promotedPeerId))
-                RestorePromotedPeer(previousWallet, promotedPeerId);
+                RestorePeerEmote(orphanedWallet.Value, playerJoined.State.SubjectId, 0, stopIfInactive: false);
+            }
+            else if (promotedPeerId.HasValue)
+                RestorePromotedPeer(previousWallet, promotedPeerId.Value);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
 
@@ -91,8 +99,11 @@ namespace DCL.Multiplayer.Movement
 
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
-            movementMessage.ResetTimeline = !knownPeer || peerReassigned;
+            movementMessage.resetTimeline = !knownPeer || peerReassigned;
             Inbox(movementMessage, resolvedWallet);
+
+            if (replacesSelectedPeer)
+                RestorePeerEmote(resolvedWallet, playerJoined.State.SubjectId, movementMessage.timestamp);
         }
 
         private void HandlePlayerLeft(IncomingMessage message)
@@ -118,10 +129,12 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet))
+            PeerIdCache.LookupResult lookup = GetPeerInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet);
+            if (lookup is not (PeerIdCache.LookupResult.Found or PeerIdCache.LookupResult.SupersededPeer))
                 return;
 
-            bool resetTimeline = pendingResyncs.TryGetValue(playerStateFull.SubjectId, out byte resyncKind) && resyncKind == PROMOTION_RESYNC;
+            bool isShadow = lookup == PeerIdCache.LookupResult.SupersededPeer;
+            bool resetTimeline = !isShadow && IsPromotionResyncPending(playerStateFull.SubjectId);
 
             if (resetTimeline && lastMovementMessages.TryGetValue(playerStateFull.SubjectId, out var lastMovement) && playerStateFull.Sequence < lastMovement.sequence)
                 return;
@@ -130,9 +143,12 @@ namespace DCL.Multiplayer.Movement
             TryUpdateLastMovementAndCompleteResync(playerStateFull.ServerTick, playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage,
                 allowOverrides: resetTimeline, completePromotionResync: true);
 
+            if (isShadow)
+                return;
+
             if (resetTimeline)
             {
-                movementMessage.ResetTimeline = true;
+                movementMessage.resetTimeline = true;
                 movementMessage.isInstant = true;
             }
 
@@ -149,13 +165,18 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!TryGetWalletInCurrentRealm(delta.SubjectId, PLAYER_STATE_DELTA_MESSAGE, out Web3Address wallet))
+            PeerIdCache.LookupResult lookup = GetPeerInCurrentRealm(delta.SubjectId, PLAYER_STATE_DELTA_MESSAGE, out Web3Address wallet);
+            if (lookup is not (PeerIdCache.LookupResult.Found or PeerIdCache.LookupResult.SupersededPeer))
                 return;
 
-            bool resetTimeline = pendingResyncs.TryGetValue(delta.SubjectId, out byte resyncKind) && resyncKind == PROMOTION_RESYNC;
+            bool isShadow = lookup == PeerIdCache.LookupResult.SupersededPeer;
+            bool resetTimeline = !isShadow && IsPromotionResyncPending(delta.SubjectId);
 
             if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
             {
+                if (isShadow)
+                    return;
+
                 if (!TryRequestResync(delta.SubjectId, 0))
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Already waiting for a resync for {delta.SubjectId}");
 
@@ -168,6 +189,9 @@ namespace DCL.Multiplayer.Movement
                 // If compared via "!=" the diff based on the old "resync" request may trigger redundant resync
                 if (delta.BaselineSeq > lastMovement.sequence)
                 {
+                    if (isShadow)
+                        return;
+
                     if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
                         ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
 
@@ -199,20 +223,26 @@ namespace DCL.Multiplayer.Movement
             NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, delta);
             lastMovementMessages[delta.SubjectId] = (delta.NewSeq, movementMessage);
 
+            if (isShadow)
+                return;
+
             if (resetTimeline)
             {
-                movementMessage.ResetTimeline = true;
+                movementMessage.resetTimeline = true;
                 movementMessage.isInstant = true;
             }
 
             Inbox(movementMessage, wallet);
         }
 
-        private bool TryRequestResync(uint subjectId, uint knownSequence, bool resetTimeline = false)
-        {
-            if (!pendingResyncs.TryAdd(subjectId, resetTimeline ? PROMOTION_RESYNC : (byte)0)) return false;
+        private bool IsPromotionResyncPending(uint subjectId) =>
+            pendingResyncs.TryGetValue(subjectId, out ResyncKind kind) && kind == ResyncKind.Promotion;
 
-            ResyncCount++;
+        private bool TryRequestResync(uint subjectId, uint knownSequence, ResyncKind kind = ResyncKind.PacketLoss)
+        {
+            if (!pendingResyncs.TryAdd(subjectId, kind)) return false;
+
+            resyncCount++;
 
             OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.Resync);
@@ -239,8 +269,11 @@ namespace DCL.Multiplayer.Movement
             else
                 lastMovementMessages[subjectId] = (sequence, movementMessage);
 
-            if (pendingResyncs.TryGetValue(subjectId, out byte resyncKind) && (resyncKind != PROMOTION_RESYNC || completePromotionResync) && pendingResyncs.Remove(subjectId))
+            if (pendingResyncs.TryGetValue(subjectId, out ResyncKind resyncKind) && (resyncKind != ResyncKind.Promotion || completePromotionResync))
+            {
+                pendingResyncs.Remove(subjectId);
                 ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
+            }
         }
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
@@ -429,7 +462,7 @@ namespace DCL.Multiplayer.Movement
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
                 isInstant = isInstant,
-                isEmoting = emotingSubjects.Contains(subjectId),
+                isEmoting = IsSubjectEmoting(subjectId),
 
                 headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
                 headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),

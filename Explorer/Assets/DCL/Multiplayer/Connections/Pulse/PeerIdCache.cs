@@ -4,7 +4,10 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    /// <summary>Retains overlapping peer registrations and selects one peer per wallet for routing.</summary>
+    /// <summary>
+    /// Retains overlapping peer registrations and selects one peer per wallet for routing. Public access is serialized by
+    /// <c>sync</c>. Callbacks run inside that lock and must not acquire locks in reverse order to callers of this cache.
+    /// </summary>
     public class PeerIdCache
     {
         public enum LookupResult : byte
@@ -22,12 +25,13 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly HashSet<Web3Address> walletsBuffer = new ();
         private ulong joinOrder;
 
-        /// <summary>Registers a peer or refreshes its realm without promoting an existing shadow. Returns an orphaned previous wallet on peer ID reuse.</summary>
-        public Web3Address? Set(Web3Address wallet, uint peerId, string realm)
+        /// <summary>Registers a peer or refreshes its realm without promoting an existing shadow. Peer ID reuse returns an orphaned previous wallet or reports its promoted survivor.</summary>
+        public Web3Address? Set(Web3Address wallet, uint peerId, string realm, out uint? promotedPeerId)
         {
             lock (sync)
             {
                 Web3Address? orphanedWallet = null;
+                promotedPeerId = null;
 
                 if (peersByWallet.TryGetValue(peerId, out var previousEntry))
                 {
@@ -37,21 +41,13 @@ namespace DCL.Multiplayer.Connections.Pulse
                         return null;
                     }
 
-                    if (RemovePeer(peerId, null, out Web3Address previousWallet, out _))
+                    if (RemovePeer(peerId, null, out Web3Address previousWallet, out promotedPeerId))
                         orphanedWallet = previousWallet;
                 }
 
                 peersByWallet[peerId] = (wallet, realm, ++joinOrder);
                 walletsByPeerId[wallet] = peerId;
                 return orphanedWallet;
-            }
-        }
-
-        public void Remove(uint peerId)
-        {
-            lock (sync)
-            {
-                RemovePeer(peerId, null, out _, out _);
             }
         }
 
@@ -139,12 +135,11 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         /// <summary>Removes stale-realm registrations and repairs selection using survivors in the requested realm.</summary>
-        public void RemoveWhereNotInRealm(string realm, Action<uint> onPeerRemoved, Action<Web3Address, uint>? onPeerPromoted = null)
+        public void RemoveWhereNotInRealm(string realm, Action<uint> onPeerRemoved, Action<Web3Address, uint> onPeerPromoted)
         {
             lock (sync)
             {
                 removalBuffer.Clear();
-                walletsBuffer.Clear();
 
                 foreach (var pair in peersByWallet)
                     if (pair.Value.realm != realm)
@@ -152,27 +147,12 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 foreach (uint peerId in removalBuffer)
                 {
-                    peersByWallet.Remove(peerId, out var entry);
-
-                    if (walletsByPeerId.TryGetValue(entry.wallet, out uint selectedPeerId) && selectedPeerId == peerId)
-                    {
-                        walletsByPeerId.Remove(entry.wallet);
-                        walletsBuffer.Add(entry.wallet);
-                    }
-                }
-
-                foreach (var pair in peersByWallet)
-                    if (walletsBuffer.Contains(pair.Value.wallet)
-                        && (!walletsByPeerId.TryGetValue(pair.Value.wallet, out uint selectedPeerId)
-                            || pair.Value.joinOrder > peersByWallet[selectedPeerId].joinOrder))
-                        walletsByPeerId[pair.Value.wallet] = pair.Key;
-
-                foreach (uint peerId in removalBuffer)
+                    RemovePeer(peerId, realm, out Web3Address wallet, out uint? promotedPeerId);
                     onPeerRemoved(peerId);
 
-                foreach (Web3Address wallet in walletsBuffer)
-                    if (walletsByPeerId.TryGetValue(wallet, out uint selectedPeerId))
-                        onPeerPromoted?.Invoke(wallet, selectedPeerId);
+                    if (promotedPeerId.HasValue)
+                        onPeerPromoted(wallet, promotedPeerId.Value);
+                }
             }
         }
 

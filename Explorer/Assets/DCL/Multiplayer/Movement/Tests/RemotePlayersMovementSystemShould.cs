@@ -139,7 +139,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 timestamp = timestamp,
                 position = new Vector3(x, 0, 0),
                 isInstant = true,
-                ResetTimeline = resetTimeline,
+                resetTimeline = resetTimeline,
             };
     }
 }

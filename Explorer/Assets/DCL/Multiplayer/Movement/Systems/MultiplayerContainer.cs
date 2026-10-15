@@ -20,9 +20,7 @@ using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using Global;
 using Global.AppArgs;
@@ -84,10 +82,10 @@ namespace DCL.Multiplayer.Movement
             }
         }
 
-        private class EmoteMessageBusProxy : IEmotesMessageBus
+        internal class EmoteMessageBusProxy : IEmotesMessageBus
         {
-            private readonly PulseMultiplayerBus pulseMultiplayerBus;
-            private readonly LiveKitEmotesMessageBus liveKitEmotesMessageBus;
+            private readonly IEmotesMessageBus pulseMultiplayerBus;
+            private readonly IEmotesMessageBus liveKitEmotesMessageBus;
 
             // Not used
             private readonly MutexSync mutexSync = new ();
@@ -95,7 +93,7 @@ namespace DCL.Multiplayer.Movement
             private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
             private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
 
-            public EmoteMessageBusProxy(PulseMultiplayerBus pulseMultiplayerBus, LiveKitEmotesMessageBus liveKitEmotesMessageBus)
+            public EmoteMessageBusProxy(IEmotesMessageBus pulseMultiplayerBus, IEmotesMessageBus liveKitEmotesMessageBus)
             {
                 this.pulseMultiplayerBus = pulseMultiplayerBus;
                 this.liveKitEmotesMessageBus = liveKitEmotesMessageBus;
@@ -141,17 +139,11 @@ namespace DCL.Multiplayer.Movement
                 liveKitEmotesMessageBus.OnPlayerRemoved(walletId);
             }
 
-            public void SaveForRetry(RemoteEmoteIntention intention)
-            {
-                pulseMultiplayerBus.SaveForRetry(intention);
-                liveKitEmotesMessageBus.SaveForRetry(intention);
-            }
+            public void SaveForRetry(RemoteEmoteIntention intention) =>
+                (intention.Source ?? liveKitEmotesMessageBus).SaveForRetry(intention);
 
-            public void SaveForRetry(RemoteEmoteStopIntention intention)
-            {
-                pulseMultiplayerBus.SaveForRetry(intention);
-                liveKitEmotesMessageBus.SaveForRetry(intention);
-            }
+            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
+                (intention.Source ?? liveKitEmotesMessageBus).SaveForRetry(intention);
         }
 
         private class RemoveIntentionsProxy : IRemoveIntentions

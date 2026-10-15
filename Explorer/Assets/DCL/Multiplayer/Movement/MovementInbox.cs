@@ -1,5 +1,4 @@
 using Arch.Core;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Tables;
 using System.Collections.Generic;
 using Utility.Multithreading;
@@ -42,10 +41,10 @@ namespace DCL.Multiplayer.Movement
                 {
                     if (pendingMessages.TryGetValue(item.wallet, out NetworkMovementMessage pending))
                     {
-                        if (pending.ResetTimeline && !item.message.ResetTimeline && item.message.timestamp < pending.timestamp)
+                        if (pending.resetTimeline && !item.message.resetTimeline && item.message.timestamp < pending.timestamp)
                             continue;
 
-                        item.message.ResetTimeline |= pending.ResetTimeline;
+                        item.message.resetTimeline |= pending.resetTimeline;
                     }
 
                     pendingMessages[item.wallet] = item.message;

@@ -2,15 +2,19 @@ using System;
 
 namespace DCL.Multiplayer.Emotes
 {
-    public struct RemoteEmoteStopIntention
+    public struct RemoteEmoteStopIntention : IEquatable<RemoteEmoteStopIntention>
     {
         public readonly string WalletId;
         public readonly double Timestamp;
+        public readonly IEmotesMessageBus? Source;
+        public readonly ulong RetryGeneration;
 
-        public RemoteEmoteStopIntention(string walletId, double timestamp)
+        public RemoteEmoteStopIntention(string walletId, double timestamp, IEmotesMessageBus? source = null, ulong retryGeneration = 0)
         {
             WalletId = walletId;
             Timestamp = timestamp;
+            Source = source;
+            RetryGeneration = retryGeneration;
         }
 
         public bool Equals(RemoteEmoteStopIntention other) =>

@@ -9,6 +9,7 @@ using DCL.Optimization.Pools;
 using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement
@@ -18,10 +19,12 @@ namespace DCL.Multiplayer.Movement
         private const string EMOTE_STARTED_MESSAGE = "EmoteStarted";
         private const string EMOTE_STOPPED_MESSAGE = "EmoteStopped";
 
-        private readonly HashSet<uint> emotingSubjects = new ();
+        private readonly Dictionary<uint, (uint sequence, URN urn, AvatarEmoteMask mask, bool active)> peerEmotes = new ();
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly Dictionary<string, ulong> emoteRetryGenerations = new (StringComparer.OrdinalIgnoreCase);
         private readonly MutexSync emoteSync = new ();
+        private ulong nextEmoteRetryGeneration;
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (emoteSync, emoteIntentions);
@@ -73,7 +76,10 @@ namespace DCL.Multiplayer.Movement
         public void SaveForRetry(RemoteEmoteIntention intention)
         {
             using (emoteSync.GetScope())
-                emoteIntentions.Add(intention);
+                if (!isDisposed && ReferenceEquals(intention.Source, this)
+                    && emoteRetryGenerations.TryGetValue(intention.WalletId, out ulong generation)
+                    && generation == intention.RetryGeneration)
+                    emoteIntentions.Add(intention);
         }
 
         public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
@@ -82,13 +88,34 @@ namespace DCL.Multiplayer.Movement
         public void SaveForRetry(RemoteEmoteStopIntention intention)
         {
             using (emoteSync.GetScope())
-                emoteStopIntentions.Add(intention);
+                if (!isDisposed && ReferenceEquals(intention.Source, this)
+                    && emoteRetryGenerations.TryGetValue(intention.WalletId, out ulong generation)
+                    && generation == intention.RetryGeneration)
+                    emoteStopIntentions.Add(intention);
         }
 
-        private void EnqueueEmoteIntention(RemoteEmoteIntention intention)
+        private void EnqueueEmoteIntention(URN emoteId, string wallet, double timestamp, AvatarEmoteMask mask)
         {
             using (emoteSync.GetScope())
-                emoteIntentions.Add(intention);
+            {
+                ulong generation = AdvanceEmoteRetryGeneration(wallet);
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteId, wallet, timestamp, mask, this, generation));
+            }
+        }
+
+        private void ClearWalletEmoteIntentions(string wallet)
+        {
+            emoteIntentions.RemoveWhere(intention => string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase));
+            emoteStopIntentions.RemoveWhere(intention => string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase));
+            emoteRetryGenerations.Remove(wallet);
+        }
+
+        private ulong AdvanceEmoteRetryGeneration(string wallet)
+        {
+            ClearWalletEmoteIntentions(wallet);
+            ulong generation = ++nextEmoteRetryGeneration;
+            emoteRetryGenerations[wallet] = generation;
+            return generation;
         }
 
         private void ClearEmoteIntentions()
@@ -97,6 +124,26 @@ namespace DCL.Multiplayer.Movement
             {
                 emoteIntentions.Clear();
                 emoteStopIntentions.Clear();
+                emoteRetryGenerations.Clear();
+            }
+        }
+
+        private void RestorePeerEmote(Web3Address wallet, uint subjectId, double timestamp, bool stopIfInactive = true)
+        {
+            using (emoteSync.GetScope())
+            {
+                if (peerEmotes.TryGetValue(subjectId, out var activeEmote) && activeEmote.active)
+                {
+                    ulong generation = AdvanceEmoteRetryGeneration(wallet);
+                    emoteIntentions.Add(new RemoteEmoteIntention(activeEmote.urn, wallet, timestamp, activeEmote.mask, this, generation));
+                }
+                else if (stopIfInactive)
+                {
+                    ulong generation = AdvanceEmoteRetryGeneration(wallet);
+                    emoteStopIntentions.Add(new RemoteEmoteStopIntention(wallet, timestamp, this, generation));
+                }
+                else
+                    ClearWalletEmoteIntentions(wallet);
             }
         }
 
@@ -110,23 +157,18 @@ namespace DCL.Multiplayer.Movement
 
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
-            if (peerIdCache.GetWalletInRealm(emoteStarted.SubjectId, pulseRealm.Value, out _) == PeerIdCache.LookupResult.SupersededPeer)
-            {
-                emotingSubjects.Add(emoteStarted.SubjectId);
-
-                if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out var shadowMovement))
-                {
-                    shadowMovement.message.isEmoting = true;
-                    lastMovementMessages[emoteStarted.SubjectId] = shadowMovement;
-                }
-
-                return;
-            }
-
-            if (!TryGetWalletInCurrentRealm(emoteStarted.SubjectId, EMOTE_STARTED_MESSAGE, out Web3Address walletId))
+            PeerIdCache.LookupResult lookup = GetPeerInCurrentRealm(emoteStarted.SubjectId, EMOTE_STARTED_MESSAGE, out Web3Address walletId);
+            if (lookup is not (PeerIdCache.LookupResult.Found or PeerIdCache.LookupResult.SupersededPeer))
                 return;
 
-            emotingSubjects.Add(emoteStarted.SubjectId);
+            bool isShadow = lookup == PeerIdCache.LookupResult.SupersededPeer;
+            if (peerEmotes.TryGetValue(emoteStarted.SubjectId, out var previousEmote)
+                && (emoteStarted.Sequence < previousEmote.sequence || (emoteStarted.Sequence == previousEmote.sequence && !previousEmote.active)))
+                return;
+
+            var emoteId = new URN(emoteStarted.EmoteId);
+            AvatarEmoteMask mask = emoteStarted.HasMask ? (AvatarEmoteMask)emoteStarted.Mask : AvatarEmoteMask.AemFullBody;
+            peerEmotes[emoteStarted.SubjectId] = (emoteStarted.Sequence, emoteId, mask, true);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
 
@@ -142,15 +184,17 @@ namespace DCL.Multiplayer.Movement
             {
                 stored.message.isEmoting = true;
                 lastMovementMessages[emoteStarted.SubjectId] = stored;
-                EmoteStateMismatchCount++;
+                emoteStateMismatchCount++;
             }
+
+            if (isShadow)
+                return;
 
             Inbox(movementMessage, walletId);
 
             double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
 
-            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp,
-                emoteStarted.HasMask ? (AvatarEmoteMask)emoteStarted.Mask : AvatarEmoteMask.AemFullBody));
+            EnqueueEmoteIntention(emoteId, walletId, timestamp, mask);
         }
 
         private void HandleEmoteStopped(IncomingMessage message)
@@ -163,28 +207,15 @@ namespace DCL.Multiplayer.Movement
 
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
 
-            if (peerIdCache.GetWalletInRealm(emoteStopped.SubjectId, pulseRealm.Value, out _) == PeerIdCache.LookupResult.SupersededPeer)
-            {
-                emotingSubjects.Remove(emoteStopped.SubjectId);
-
-                if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out var shadowMovement))
-                {
-                    shadowMovement.message.isEmoting = false;
-                    lastMovementMessages[emoteStopped.SubjectId] = shadowMovement;
-                }
-
-                return;
-            }
-
-            if (!TryGetWalletInCurrentRealm(emoteStopped.SubjectId, EMOTE_STOPPED_MESSAGE, out Web3Address walletId))
+            PeerIdCache.LookupResult lookup = GetPeerInCurrentRealm(emoteStopped.SubjectId, EMOTE_STOPPED_MESSAGE, out Web3Address walletId);
+            if (lookup is not (PeerIdCache.LookupResult.Found or PeerIdCache.LookupResult.SupersededPeer))
                 return;
 
-            emotingSubjects.Remove(emoteStopped.SubjectId);
+            bool isShadow = lookup == PeerIdCache.LookupResult.SupersededPeer;
+            if (peerEmotes.TryGetValue(emoteStopped.SubjectId, out var previousEmote) && emoteStopped.Sequence < previousEmote.sequence)
+                return;
 
-            double timestamp = emoteStopped.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-
-            using (emoteSync.GetScope())
-                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
+            peerEmotes[emoteStopped.SubjectId] = (emoteStopped.Sequence, default(URN), AvatarEmoteMask.AemFullBody, false);
 
             if (emoteStopped.PlayerState != null)
             {
@@ -199,11 +230,25 @@ namespace DCL.Multiplayer.Movement
                 lastMovementMessages[emoteStopped.SubjectId] = (lastMessage.sequence, lastMessage.message);
             }
 
+            if (isShadow)
+                return;
+
+            double timestamp = emoteStopped.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+
+            using (emoteSync.GetScope())
+            {
+                ulong generation = AdvanceEmoteRetryGeneration(walletId);
+                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp, this, generation));
+            }
+
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
         }
 
         internal bool IsPeerEmoting(Web3Address wallet) =>
             peerIdCache.TryGetPeerId(wallet, out uint subjectId)
-            && emotingSubjects.Contains(subjectId);
+            && IsSubjectEmoting(subjectId);
+
+        private bool IsSubjectEmoting(uint subjectId) =>
+            peerEmotes.TryGetValue(subjectId, out var emote) && emote.active;
     }
 }
