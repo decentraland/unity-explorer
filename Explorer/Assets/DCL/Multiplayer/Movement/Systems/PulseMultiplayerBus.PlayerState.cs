@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Movement
             if (orphanedWallet.HasValue)
             {
                 removeIntentions.Enqueue(orphanedWallet.Value);
-                RestorePeerEmote(orphanedWallet.Value, playerJoined.State.SubjectId, 0, stopIfInactive: false);
+                DiscardWalletEmoteIntentions(orphanedWallet.Value);
             }
             else if (promotedPeerId.HasValue)
                 RestorePromotedPeer(previousWallet, promotedPeerId.Value);
@@ -272,7 +272,7 @@ namespace DCL.Multiplayer.Movement
             if (pendingResyncs.TryGetValue(subjectId, out ResyncKind resyncKind) && (resyncKind != ResyncKind.Promotion || completePromotionResync))
             {
                 pendingResyncs.Remove(subjectId);
-                ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
+                ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{serverTick}] {resyncKind} resync completed for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
             }
         }
 

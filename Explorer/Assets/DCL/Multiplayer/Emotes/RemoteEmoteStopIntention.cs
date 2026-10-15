@@ -6,10 +6,10 @@ namespace DCL.Multiplayer.Emotes
     {
         public readonly string WalletId;
         public readonly double Timestamp;
-        public readonly IEmotesMessageBus? Source;
+        public readonly IEmotesMessageBus Source;
         public readonly ulong RetryGeneration;
 
-        public RemoteEmoteStopIntention(string walletId, double timestamp, IEmotesMessageBus? source = null, ulong retryGeneration = 0)
+        public RemoteEmoteStopIntention(string walletId, double timestamp, IEmotesMessageBus source, ulong retryGeneration = 0)
         {
             WalletId = walletId;
             Timestamp = timestamp;

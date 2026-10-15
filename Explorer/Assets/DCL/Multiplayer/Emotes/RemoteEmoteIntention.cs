@@ -13,11 +13,11 @@ namespace DCL.Multiplayer.Emotes
         public readonly string WalletId;
         public readonly double Timestamp;
         public readonly AvatarEmoteMask Mask;
-        public readonly IEmotesMessageBus? Source;
+        public readonly IEmotesMessageBus Source;
         public readonly ulong RetryGeneration;
 
         public RemoteEmoteIntention(URN emoteId, string walletId, double timestamp, AvatarEmoteMask mask,
-            IEmotesMessageBus? source = null, ulong retryGeneration = 0)
+            IEmotesMessageBus source, ulong retryGeneration = 0)
         {
             EmoteId = emoteId;
             WalletId = walletId;

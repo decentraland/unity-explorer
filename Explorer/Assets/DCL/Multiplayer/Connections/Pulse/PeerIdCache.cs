@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly HashSet<Web3Address> walletsBuffer = new ();
         private ulong joinOrder;
 
-        /// <summary>Registers a peer or refreshes its realm without promoting an existing shadow. Peer ID reuse returns an orphaned previous wallet or reports its promoted survivor.</summary>
+        /// <summary>Registers a peer or refreshes its realm without promoting an existing shadow. Peer ID reuse returns an orphaned previous wallet or reports its promoted survivor in the supplied realm.</summary>
         public Web3Address? Set(Web3Address wallet, uint peerId, string realm, out uint? promotedPeerId)
         {
             lock (sync)
@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                         return null;
                     }
 
-                    if (RemovePeer(peerId, null, out Web3Address previousWallet, out promotedPeerId))
+                    if (RemovePeer(peerId, realm, out Web3Address previousWallet, out promotedPeerId))
                         orphanedWallet = previousWallet;
                 }
 

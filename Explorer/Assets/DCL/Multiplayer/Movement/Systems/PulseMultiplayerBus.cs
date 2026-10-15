@@ -166,7 +166,7 @@ namespace DCL.Multiplayer.Movement
             if (walletLeftRealm)
             {
                 removeIntentions.Enqueue(wallet);
-                RestorePeerEmote(wallet, subjectId, 0, stopIfInactive: false);
+                DiscardWalletEmoteIntentions(wallet);
             }
             else if (promotedPeerId.HasValue)
                 RestorePromotedPeer(wallet, promotedPeerId.Value);

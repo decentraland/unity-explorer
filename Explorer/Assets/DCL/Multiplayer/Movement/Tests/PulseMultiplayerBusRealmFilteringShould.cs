@@ -965,7 +965,7 @@ namespace DCL.Multiplayer.Movement.Tests
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 CollectionAssert.AreEquivalent(new[]
                 {
-                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:wave"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody),
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:wave"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody, bus),
                 }, bunch.Collection());
             Handle(EmoteStartedMessage(8));
 
@@ -974,7 +974,7 @@ namespace DCL.Multiplayer.Movement.Tests
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 CollectionAssert.AreEquivalent(new[]
                 {
-                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.004, AvatarEmoteMask.AemUpperBody),
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.004, AvatarEmoteMask.AemUpperBody, bus),
                 }, bunch.Collection());
             using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
                 Assert.IsFalse(bunch.Available());
@@ -1027,7 +1027,7 @@ namespace DCL.Multiplayer.Movement.Tests
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 Assert.IsFalse(bunch.Available());
             using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
-                CollectionAssert.AreEquivalent(new[] { new RemoteEmoteStopIntention(WALLET_1, 0.001) }, bunch.Collection());
+                CollectionAssert.AreEquivalent(new[] { new RemoteEmoteStopIntention(WALLET_1, 0.001, bus) }, bunch.Collection());
         }
 
         [Test]
@@ -1047,20 +1047,30 @@ namespace DCL.Multiplayer.Movement.Tests
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 CollectionAssert.AreEquivalent(new[]
                 {
-                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody),
+                    new RemoteEmoteIntention(new URN("urn:decentraland:off-chain:base-emotes:clap"), WALLET_1, 0.002, AvatarEmoteMask.AemFullBody, bus),
                 }, bunch.Collection());
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ForgetThePreviousRegistrationEmoteWhenAPeerIdIsReused(bool disconnectAll)
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        public void ForgetThePreviousRegistrationEmoteWhenAPeerIdIsReused(bool disconnectAll, bool stopBeforeRemoval)
         {
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(EmoteStartedMessage(7));
+            if (stopBeforeRemoval)
+                Handle(EmoteStoppedMessage(7));
             if (disconnectAll)
                 disconnect(DisconnectReason.GRACEFUL);
             else
                 Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available(), "Removal discards pending starts before any new registration.");
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available(), "Removal discards pending stops without adding a replacement stop.");
+
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
             Handle(PlayerJoinedMessage(8, WALLET_1, REALM_A));
 
@@ -1069,6 +1079,26 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
             using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
                 Assert.IsFalse(bunch.Available());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DiscardThePreviousWalletsPendingEmotesWhenItsOnlyPeerIdIsReassigned(bool stopBeforeReassignment)
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            Handle(EmoteStartedMessage(7));
+            if (stopBeforeReassignment)
+                Handle(EmoteStoppedMessage(7));
+
+            Handle(PlayerJoinedMessage(7, WALLET_2, REALM_A));
+
+            Assert.IsFalse(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out _));
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out Web3Address wallet));
+            Assert.IsTrue(wallet.Equals(WALLET_2));
+            using (OwnedBunch<RemoteEmoteIntention> bunch = bus.EmoteIntentions())
+                Assert.IsFalse(bunch.Available(), "Reassignment discards the orphaned wallet's pending start.");
+            using (OwnedBunch<RemoteEmoteStopIntention> bunch = bus.EmoteStopIntentions())
+                Assert.IsFalse(bunch.Available(), "Reassignment discards the orphaned wallet's pending stop.");
         }
 
         [TestCase(ServerMessage.MessageOneofCase.PlayerStateFull)]

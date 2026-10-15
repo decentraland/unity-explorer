@@ -671,7 +671,7 @@ The struct exists purely to keep the app layer from assuming "peer identifier ==
 
 The newest **new-peer** announcement selects the peer for a wallet. Reannouncing or teleporting an already-known shadow peer preserves selection. Announcement order does not prove session ownership, so either session can temporarily drive the avatar during overlap.
 
-Keep the avatar while any peer for its wallet remains in the current realm. When the selected peer leaves, select the newest eligible survivor and restore its cached pose and emote. Teleports and realm cleanup follow the same membership rule; disconnect removes each wallet once. A join cancels any still-queued wallet removal.
+Keep the avatar while any peer for its wallet remains in the current realm. When the selected peer leaves, select the newest eligible survivor and restore its cached pose and emote. Teleports and realm cleanup follow the same membership rule; disconnect removes each wallet once. A join that selects the peer in the current realm cancels any still-queued removal for that wallet.
 
 Shadow state updates refresh the cache without driving the avatar. Promotion also requests the survivor's current pose through the existing resync path to cover missed updates. Changing peers resets the local movement timeline: a stationary survivor's timestamp can precede the departing peer's last movement and would otherwise be discarded as stale.
 
@@ -820,7 +820,7 @@ A one-method partial. When the server says "peer *X* now has profile version *V*
 
 **`SaveForRetry`** returns an intention to its originating bus. Pulse accepts it under `emoteSync` only if its local generation still matches the wallet's current emote. Selection changes, later emote events and cleanup invalidate older retries, including intentions already collected by the main thread. Source and generation are local metadata; payload equality still deduplicates equivalent transport messages.
 
-**`HandleEmoteStarted` / `HandleEmoteStopped`** update the peer's cached emote and movement state. Emote sequences reject stale events; a stop wins over a start at the same sequence. A reliable start can override an equal-sequence movement snapshot; `emoteStateMismatchCount` records correction of a racing delta's inactive flag. A stop clears that flag even when its embedded pose is older than the cached pose.
+**`HandleEmoteStarted` / `HandleEmoteStopped`** update the peer's cached emote and movement state. Pulse advances the snapshot sequence for each accepted [emote start](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Peers/Simulation/PeerSnapshotPublisher.cs#L49) and [stop](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Messaging/EmoteStopHandler.cs#L36), including stationary peers. A start can share a movement snapshot's sequence, but a new start cannot reuse its preceding stop's sequence; a stop therefore wins over a replayed start at the same sequence. A reliable start can override an equal-sequence movement snapshot; `emoteStateMismatchCount` records correction of a racing delta's inactive flag. A stop clears that flag even when its embedded pose is older than the cached pose.
 
 Only selected peers emit avatar intentions. On selection changes, `RestorePeerEmote` replaces queued intentions for the wallet with the survivor's current emote or an explicit stop. Retaining the URN and mask matters: movement resync does not replay an emote start already delivered by Pulse.
 

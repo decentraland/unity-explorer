@@ -15,7 +15,6 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             Pulse,
             LiveKit,
-            Untagged,
         }
 
         private const string WALLET = "0x0000000000000000000000000000000000000001";
@@ -46,11 +45,10 @@ namespace DCL.Multiplayer.Movement.Tests
 
         [TestCase(RetrySource.Pulse)]
         [TestCase(RetrySource.LiveKit)]
-        [TestCase(RetrySource.Untagged)]
         public void ReturnStartRetriesOnlyToTheirSource(RetrySource retrySource)
         {
             // Arrange
-            IEmotesMessageBus? source = GetSource(retrySource);
+            IEmotesMessageBus source = GetSource(retrySource);
             var intention = new RemoteEmoteIntention(new URN(EMOTE), WALLET, 1, AvatarEmoteMask.AemFullBody, source, 17);
             IEmotesMessageBus expected = retrySource == RetrySource.Pulse ? pulse : liveKit;
             IEmotesMessageBus other = retrySource == RetrySource.Pulse ? liveKit : pulse;
@@ -66,11 +64,10 @@ namespace DCL.Multiplayer.Movement.Tests
 
         [TestCase(RetrySource.Pulse)]
         [TestCase(RetrySource.LiveKit)]
-        [TestCase(RetrySource.Untagged)]
         public void ReturnStopRetriesOnlyToTheirSource(RetrySource retrySource)
         {
             // Arrange
-            IEmotesMessageBus? source = GetSource(retrySource);
+            IEmotesMessageBus source = GetSource(retrySource);
             var intention = new RemoteEmoteStopIntention(WALLET, 1, source, 17);
             IEmotesMessageBus expected = retrySource == RetrySource.Pulse ? pulse : liveKit;
             IEmotesMessageBus other = retrySource == RetrySource.Pulse ? liveKit : pulse;
@@ -146,12 +143,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 Assert.That(next.Available(), Is.False);
         }
 
-        private IEmotesMessageBus? GetSource(RetrySource source) =>
-            source switch
-            {
-                RetrySource.Pulse => pulse,
-                RetrySource.LiveKit => liveKit,
-                _ => null,
-            };
+        private IEmotesMessageBus GetSource(RetrySource source) =>
+            source == RetrySource.Pulse ? pulse : liveKit;
     }
 }

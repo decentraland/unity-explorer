@@ -22,6 +22,8 @@ namespace DCL.Multiplayer.Movement
         private readonly Dictionary<uint, (uint sequence, URN urn, AvatarEmoteMask mask, bool active)> peerEmotes = new ();
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly List<RemoteEmoteIntention> emoteIntentionsRemovalBuffer = new (PoolConstants.AVATARS_COUNT);
+        private readonly List<RemoteEmoteStopIntention> emoteStopIntentionsRemovalBuffer = new (PoolConstants.AVATARS_COUNT);
         private readonly Dictionary<string, ulong> emoteRetryGenerations = new (StringComparer.OrdinalIgnoreCase);
         private readonly MutexSync emoteSync = new ();
         private ulong nextEmoteRetryGeneration;
@@ -105,9 +107,30 @@ namespace DCL.Multiplayer.Movement
 
         private void ClearWalletEmoteIntentions(string wallet)
         {
-            emoteIntentions.RemoveWhere(intention => string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase));
-            emoteStopIntentions.RemoveWhere(intention => string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase));
+            foreach (RemoteEmoteIntention intention in emoteIntentions)
+                if (string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase))
+                    emoteIntentionsRemovalBuffer.Add(intention);
+
+            foreach (RemoteEmoteIntention intention in emoteIntentionsRemovalBuffer)
+                emoteIntentions.Remove(intention);
+
+            emoteIntentionsRemovalBuffer.Clear();
+
+            foreach (RemoteEmoteStopIntention intention in emoteStopIntentions)
+                if (string.Equals(intention.WalletId, wallet, StringComparison.OrdinalIgnoreCase))
+                    emoteStopIntentionsRemovalBuffer.Add(intention);
+
+            foreach (RemoteEmoteStopIntention intention in emoteStopIntentionsRemovalBuffer)
+                emoteStopIntentions.Remove(intention);
+
+            emoteStopIntentionsRemovalBuffer.Clear();
             emoteRetryGenerations.Remove(wallet);
+        }
+
+        private void DiscardWalletEmoteIntentions(string wallet)
+        {
+            using (emoteSync.GetScope())
+                ClearWalletEmoteIntentions(wallet);
         }
 
         private ulong AdvanceEmoteRetryGeneration(string wallet)
@@ -128,7 +151,7 @@ namespace DCL.Multiplayer.Movement
             }
         }
 
-        private void RestorePeerEmote(Web3Address wallet, uint subjectId, double timestamp, bool stopIfInactive = true)
+        private void RestorePeerEmote(Web3Address wallet, uint subjectId, double timestamp)
         {
             using (emoteSync.GetScope())
             {
@@ -137,13 +160,11 @@ namespace DCL.Multiplayer.Movement
                     ulong generation = AdvanceEmoteRetryGeneration(wallet);
                     emoteIntentions.Add(new RemoteEmoteIntention(activeEmote.urn, wallet, timestamp, activeEmote.mask, this, generation));
                 }
-                else if (stopIfInactive)
+                else
                 {
                     ulong generation = AdvanceEmoteRetryGeneration(wallet);
                     emoteStopIntentions.Add(new RemoteEmoteStopIntention(wallet, timestamp, this, generation));
                 }
-                else
-                    ClearWalletEmoteIntentions(wallet);
             }
         }
 
@@ -162,6 +183,7 @@ namespace DCL.Multiplayer.Movement
                 return;
 
             bool isShadow = lookup == PeerIdCache.LookupResult.SupersededPeer;
+            // A stopped sequence stays terminal; a new emote requires a newer sequence.
             if (peerEmotes.TryGetValue(emoteStarted.SubjectId, out var previousEmote)
                 && (emoteStarted.Sequence < previousEmote.sequence || (emoteStarted.Sequence == previousEmote.sequence && !previousEmote.active)))
                 return;

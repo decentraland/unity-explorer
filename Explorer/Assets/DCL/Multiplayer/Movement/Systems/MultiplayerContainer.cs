@@ -140,10 +140,10 @@ namespace DCL.Multiplayer.Movement
             }
 
             public void SaveForRetry(RemoteEmoteIntention intention) =>
-                (intention.Source ?? liveKitEmotesMessageBus).SaveForRetry(intention);
+                intention.Source.SaveForRetry(intention);
 
             public void SaveForRetry(RemoteEmoteStopIntention intention) =>
-                (intention.Source ?? liveKitEmotesMessageBus).SaveForRetry(intention);
+                intention.Source.SaveForRetry(intention);
         }
 
         private class RemoveIntentionsProxy : IRemoveIntentions

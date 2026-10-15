@@ -96,6 +96,56 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             Assert.That(wallet.Equals(WALLET_B), Is.True);
         }
 
+        [TestCase("realm")]
+        [TestCase("")]
+        public void PromoteTheNewestSameRealmSurvivorWhenReusingTheSelectedPeerId(string realm)
+        {
+            // Arrange
+            var cache = new PeerIdCache();
+            cache.Set(new Web3Address(WALLET_A), 7, realm, out _);
+            cache.Set(new Web3Address(WALLET_A), 8, "other-realm", out _);
+            cache.Set(new Web3Address(WALLET_A), 9, realm, out _);
+            cache.Set(new Web3Address(WALLET_A), 10, "other-realm", out _);
+            cache.Set(new Web3Address(WALLET_A), 11, realm, out _);
+
+            // Act
+            Web3Address? orphanedWallet = cache.Set(new Web3Address(WALLET_B), 11, realm, out uint? promotedPeerId);
+
+            // Assert
+            Assert.That(orphanedWallet, Is.Null);
+            Assert.That(promotedPeerId, Is.EqualTo(9));
+            Assert.That(cache.GetWalletInRealm(9, realm, out _), Is.EqualTo(PeerIdCache.LookupResult.Found));
+            Assert.That(cache.TryGetPeerId(new Web3Address(WALLET_A), out uint selectedPeerId), Is.True);
+            Assert.That(selectedPeerId, Is.EqualTo(9));
+            Assert.That(cache.TryGetPeerId(new Web3Address(WALLET_B), out selectedPeerId), Is.True);
+            Assert.That(selectedPeerId, Is.EqualTo(11));
+            Assert.That(cache.TryGetWallet(10, out Web3Address staleWallet), Is.True);
+            Assert.That(staleWallet.Equals(WALLET_A), Is.True);
+        }
+
+        [TestCase("realm")]
+        [TestCase("")]
+        public void OrphanThePreviousWalletWhenPeerIdReuseLeavesOnlyOtherRealmSurvivors(string realm)
+        {
+            // Arrange
+            var cache = new PeerIdCache();
+            cache.Set(new Web3Address(WALLET_A), 7, "other-realm", out _);
+            cache.Set(new Web3Address(WALLET_A), 8, realm, out _);
+
+            // Act
+            Web3Address? orphanedWallet = cache.Set(new Web3Address(WALLET_B), 8, realm, out uint? promotedPeerId);
+
+            // Assert
+            Assert.That(orphanedWallet.HasValue, Is.True);
+            Assert.That(orphanedWallet.GetValueOrDefault().Equals(WALLET_A), Is.True);
+            Assert.That(promotedPeerId, Is.Null);
+            Assert.That(cache.GetWalletInRealm(7, realm, out _), Is.EqualTo(PeerIdCache.LookupResult.RealmMismatch));
+            Assert.That(cache.TryGetWallet(7, out Web3Address staleWallet), Is.True);
+            Assert.That(staleWallet.Equals(WALLET_A), Is.True);
+            Assert.That(cache.TryGetPeerId(new Web3Address(WALLET_B), out uint selectedPeerId), Is.True);
+            Assert.That(selectedPeerId, Is.EqualTo(8));
+        }
+
         [Test]
         public void RemovePreviousWalletWhenReusingItsOnlyPeerId()
         {
