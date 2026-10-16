@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CixkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdGV4dF9zaGFwZS5wcm90",
             "bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzGiBkZWNlbnRyYWxhbmQv",
             "Y29tbW9uL2NvbG9ycy5wcm90bxouZGVjZW50cmFsYW5kL3Nkay9jb21wb25l",
-            "bnRzL2NvbW1vbi90ZXh0cy5wcm90byKbCAoLUEJUZXh0U2hhcGUSDAoEdGV4",
+            "bnRzL2NvbW1vbi90ZXh0cy5wcm90byK/CAoLUEJUZXh0U2hhcGUSDAoEdGV4",
             "dBgBIAEoCRI7CgRmb250GAIgASgOMiguZGVjZW50cmFsYW5kLnNkay5jb21w",
             "b25lbnRzLmNvbW1vbi5Gb250SACIAQESFgoJZm9udF9zaXplGAMgASgCSAGI",
             "AQESGwoOZm9udF9hdXRvX3NpemUYBCABKAhIAogBARJKCgp0ZXh0X2FsaWdu",
@@ -43,19 +43,20 @@ namespace DCL.ECSComponents {
             "AQESNgoMc2hhZG93X2NvbG9yGBMgASgLMhsuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5Db2xvcjNIEYgBARI3Cg1vdXRsaW5lX2NvbG9yGBQgASgLMhsuZGVjZW50",
             "cmFsYW5kLmNvbW1vbi5Db2xvcjNIEogBARI0Cgp0ZXh0X2NvbG9yGBUgASgL",
-            "MhsuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjRIE4gBAUIHCgVfZm9udEIM",
-            "CgpfZm9udF9zaXplQhEKD19mb250X2F1dG9fc2l6ZUINCgtfdGV4dF9hbGln",
-            "bkIICgZfd2lkdGhCCQoHX2hlaWdodEIOCgxfcGFkZGluZ190b3BCEAoOX3Bh",
-            "ZGRpbmdfcmlnaHRCEQoPX3BhZGRpbmdfYm90dG9tQg8KDV9wYWRkaW5nX2xl",
-            "ZnRCDwoNX2xpbmVfc3BhY2luZ0INCgtfbGluZV9jb3VudEIQCg5fdGV4dF93",
-            "cmFwcGluZ0IOCgxfc2hhZG93X2JsdXJCEgoQX3NoYWRvd19vZmZzZXRfeEIS",
-            "ChBfc2hhZG93X29mZnNldF95QhAKDl9vdXRsaW5lX3dpZHRoQg8KDV9zaGFk",
-            "b3dfY29sb3JCEAoOX291dGxpbmVfY29sb3JCDQoLX3RleHRfY29sb3JCFKoC",
-            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "MhsuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjRIE4gBARIVCghmb250X3Ny",
+            "YxgWIAEoCUgUiAEBQgcKBV9mb250QgwKCl9mb250X3NpemVCEQoPX2ZvbnRf",
+            "YXV0b19zaXplQg0KC190ZXh0X2FsaWduQggKBl93aWR0aEIJCgdfaGVpZ2h0",
+            "Qg4KDF9wYWRkaW5nX3RvcEIQCg5fcGFkZGluZ19yaWdodEIRCg9fcGFkZGlu",
+            "Z19ib3R0b21CDwoNX3BhZGRpbmdfbGVmdEIPCg1fbGluZV9zcGFjaW5nQg0K",
+            "C19saW5lX2NvdW50QhAKDl90ZXh0X3dyYXBwaW5nQg4KDF9zaGFkb3dfYmx1",
+            "ckISChBfc2hhZG93X29mZnNldF94QhIKEF9zaGFkb3dfb2Zmc2V0X3lCEAoO",
+            "X291dGxpbmVfd2lkdGhCDwoNX3NoYWRvd19jb2xvckIQCg5fb3V0bGluZV9j",
+            "b2xvckINCgtfdGV4dF9jb2xvckILCglfZm9udF9zcmNCFKoCEURDTC5FQ1ND",
+            "b21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::DCL.ECSComponents.TextsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTextShape), global::DCL.ECSComponents.PBTextShape.Parser, new[]{ "Text", "Font", "FontSize", "FontAutoSize", "TextAlign", "Width", "Height", "PaddingTop", "PaddingRight", "PaddingBottom", "PaddingLeft", "LineSpacing", "LineCount", "TextWrapping", "ShadowBlur", "ShadowOffsetX", "ShadowOffsetY", "OutlineWidth", "ShadowColor", "OutlineColor", "TextColor" }, new[]{ "Font", "FontSize", "FontAutoSize", "TextAlign", "Width", "Height", "PaddingTop", "PaddingRight", "PaddingBottom", "PaddingLeft", "LineSpacing", "LineCount", "TextWrapping", "ShadowBlur", "ShadowOffsetX", "ShadowOffsetY", "OutlineWidth", "ShadowColor", "OutlineColor", "TextColor" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTextShape), global::DCL.ECSComponents.PBTextShape.Parser, new[]{ "Text", "Font", "FontSize", "FontAutoSize", "TextAlign", "Width", "Height", "PaddingTop", "PaddingRight", "PaddingBottom", "PaddingLeft", "LineSpacing", "LineCount", "TextWrapping", "ShadowBlur", "ShadowOffsetX", "ShadowOffsetY", "OutlineWidth", "ShadowColor", "OutlineColor", "TextColor", "FontSrc" }, new[]{ "Font", "FontSize", "FontAutoSize", "TextAlign", "Width", "Height", "PaddingTop", "PaddingRight", "PaddingBottom", "PaddingLeft", "LineSpacing", "LineCount", "TextWrapping", "ShadowBlur", "ShadowOffsetX", "ShadowOffsetY", "OutlineWidth", "ShadowColor", "OutlineColor", "TextColor", "FontSrc" }, null, null, null)
           }));
     }
     #endregion
@@ -128,6 +129,7 @@ namespace DCL.ECSComponents {
       shadowColor_ = other.shadowColor_ != null ? other.shadowColor_.Clone() : null;
       outlineColor_ = other.outlineColor_ != null ? other.outlineColor_.Clone() : null;
       textColor_ = other.textColor_ != null ? other.textColor_.Clone() : null;
+      fontSrc_ = other.fontSrc_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -707,6 +709,35 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "font_src" field.</summary>
+    public const int FontSrcFieldNumber = 22;
+    private readonly static string FontSrcDefaultValue = "";
+
+    private string fontSrc_;
+    /// <summary>
+    /// a ttf font file in the scene content or a Google Fonts family name; `font` is the fallback (default: unset)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string FontSrc {
+      get { return fontSrc_ ?? FontSrcDefaultValue; }
+      set {
+        fontSrc_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "font_src" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasFontSrc {
+      get { return fontSrc_ != null; }
+    }
+    /// <summary>Clears the value of the "font_src" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearFontSrc() {
+      fontSrc_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -743,6 +774,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(ShadowColor, other.ShadowColor)) return false;
       if (!object.Equals(OutlineColor, other.OutlineColor)) return false;
       if (!object.Equals(TextColor, other.TextColor)) return false;
+      if (FontSrc != other.FontSrc) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -771,6 +803,7 @@ namespace DCL.ECSComponents {
       if (shadowColor_ != null) hash ^= ShadowColor.GetHashCode();
       if (outlineColor_ != null) hash ^= OutlineColor.GetHashCode();
       if (textColor_ != null) hash ^= TextColor.GetHashCode();
+      if (HasFontSrc) hash ^= FontSrc.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -873,6 +906,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(170, 1);
         output.WriteMessage(TextColor);
       }
+      if (HasFontSrc) {
+        output.WriteRawTag(178, 1);
+        output.WriteString(FontSrc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -967,6 +1004,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(170, 1);
         output.WriteMessage(TextColor);
       }
+      if (HasFontSrc) {
+        output.WriteRawTag(178, 1);
+        output.WriteString(FontSrc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1039,6 +1080,9 @@ namespace DCL.ECSComponents {
       }
       if (textColor_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(TextColor);
+      }
+      if (HasFontSrc) {
+        size += 2 + pb::CodedOutputStream.ComputeStringSize(FontSrc);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1123,6 +1167,9 @@ namespace DCL.ECSComponents {
           TextColor = new global::Decentraland.Common.Color4();
         }
         TextColor.MergeFrom(other.TextColor);
+      }
+      if (other.HasFontSrc) {
+        FontSrc = other.FontSrc;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1236,6 +1283,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(TextColor);
             break;
           }
+          case 178: {
+            FontSrc = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -1346,6 +1397,10 @@ namespace DCL.ECSComponents {
               TextColor = new global::Decentraland.Common.Color4();
             }
             input.ReadMessage(TextColor);
+            break;
+          }
+          case 178: {
+            FontSrc = input.ReadString();
             break;
           }
         }

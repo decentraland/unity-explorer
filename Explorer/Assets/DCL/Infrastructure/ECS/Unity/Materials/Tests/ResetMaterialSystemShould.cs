@@ -117,5 +117,64 @@ namespace ECS.Unity.Materials.Tests
             Object.DestroyImmediate(originalMaterial);
             Object.DestroyImmediate(newMaterial);
         }
+
+        [Test]
+        public void ReleaseGltfNodeMaterialWhenContainerIsDestroyed()
+        {
+            // Arrange
+            var nodeMaterial = new Material(DefaultMaterial.Get());
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = nodeMaterial;
+
+            Entity containerEntity = world.Create(new GltfNodeModifiers.Components.GltfNodeModifiers(
+                new Dictionary<Entity, string>(),
+                new Dictionary<Renderer, Material>()));
+
+            Entity gltfNodeEntity = world.Create(
+                new GltfNode(new[] { meshRenderer }, containerEntity, "TestPath"),
+                new MaterialComponent { Result = nodeMaterial, Status = StreamableLoading.LifeCycle.Applied });
+
+            world.Destroy(containerEntity);
+
+            // Act
+            Assert.DoesNotThrow(() => system.Update(0));
+
+            // Assert
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), nodeMaterial);
+            Assert.That(world.IsAlive(gltfNodeEntity), Is.False);
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(nodeMaterial);
+        }
+
+        [Test]
+        public void ReleaseGltfNodeMaterialWhenContainerModifiersAreRemoved()
+        {
+            // Arrange
+            var nodeMaterial = new Material(DefaultMaterial.Get());
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = nodeMaterial;
+
+            Entity containerEntity = world.Create();
+
+            Entity gltfNodeEntity = world.Create(
+                new GltfNode(new[] { meshRenderer }, containerEntity, "TestPath"),
+                new MaterialComponent { Result = nodeMaterial, Status = StreamableLoading.LifeCycle.Applied });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), nodeMaterial);
+            Assert.That(world.IsAlive(gltfNodeEntity), Is.False);
+            Assert.That(world.IsAlive(containerEntity), Is.True);
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(nodeMaterial);
+        }
     }
 }

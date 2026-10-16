@@ -14,6 +14,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
@@ -50,17 +51,21 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private readonly SceneLoadingLimit sceneLoadingLimit;
 
+        private readonly SingleSceneMode singleSceneMode;
+
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity,
             VisualSceneStateResolver visualSceneStateResolver,
-            SceneLoadingLimit sceneLoadingLimit) : base(world)
+            SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.realmPartitionSettings = realmPartitionSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.singleSceneMode = singleSceneMode;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             int initialCapacity = ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3;
@@ -145,8 +150,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(RoadInfo))]
-        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent, ref SceneLoadingState sceneLoadingState)
+        private void StartUnloading(in Entity entity, in PartitionComponent partitionComponent,
+            in SceneDefinitionComponent sceneDefinitionComponent,
+            ref SceneLoadingState sceneLoadingState)
         {
+            if (singleSceneMode.IsRestricting && !sceneDefinitionComponent.IsPortableExperience)
+            {
+                if (!singleSceneMode.IsAnchorScene(sceneDefinitionComponent))
+                    TryUnload(entity, ref sceneLoadingState);
+
+                return;
+            }
+
             if (partitionComponent.OutOfRange)
                 TryUnload(entity, ref sceneLoadingState);
         }
@@ -189,7 +204,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             int xCoordinate;
             int yCoordinate;
 
-            if (teleportParcel.IsTeleporting)
+            if (singleSceneMode.IsRestricting)
+            {
+                xCoordinate = singleSceneMode.AnchorParcel.x;
+                yCoordinate = singleSceneMode.AnchorParcel.y;
+            }
+            else if (teleportParcel.IsTeleporting)
             {
                 xCoordinate = teleportParcel.Parcel.x;
                 yCoordinate = teleportParcel.Parcel.y;
@@ -284,8 +304,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             if (World.Has<BannedSceneComponent>(entity))
                 return;
 
-            VisualSceneState candidateBy
-                = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
+            if (singleSceneMode.IsActive && !singleSceneMode.IsAnchorScene(sceneDefinitionComponent))
+                return;
+
+            VisualSceneState candidateBy = singleSceneMode.IsActive
+                ? VisualSceneState.ShowingScene
+                : visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
             if (candidateBy == VisualSceneState.ShowingScene && !sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))

@@ -67,6 +67,8 @@ private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHeal
 
 When a `DuplicateIdentity` disconnect reason is detected (same wallet connected from another client), the reconnection loop stops entirely rather than entering an infinite reconnect cycle.
 
+For that reason `ArchipelagoIslandRoom` refuses to re-join an island it already holds. The server re-announces a player's current island on any reconnect it cannot distinguish from a second session, and joining the held room again would put two participants under one wallet identity in it — LiveKit would evict the older, which is this client's own room, and the loop above would then terminate the client. The re-announced string is still cached, so a later genuine reconnect uses its fresher token.
+
 ### Why Two Entity Rooms
 
 - The **Scene room** connects only to the scene the host is standing in, so only co-located players exchange scene-specific CRDT state. This keeps bandwidth manageable.

@@ -47,6 +47,9 @@ namespace DCL.CharacterPreview
         [field: SerializeField] public bool rotationEnabled { get; private set; }
         [field: SerializeField] public float rotationModifier { get; private set; }
         [field: SerializeField, Min(0f)] public float rotationInertia { get; private set; }
+
+        [field: Header("Camera Range")]
+        [field: SerializeField, Min(0f)] internal float cameraFarClipPlane { get; private set; }
     }
 
     [Serializable]

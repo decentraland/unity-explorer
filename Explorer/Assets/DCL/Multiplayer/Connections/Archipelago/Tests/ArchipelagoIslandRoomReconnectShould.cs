@@ -1,3 +1,4 @@
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using NUnit.Framework;
 using System;
@@ -6,32 +7,95 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
 {
     public class ArchipelagoIslandRoomReconnectShould
     {
+        private const string HELD_ISLAND = "island-C1";
+        private const string OTHER_ISLAND = "island-C2";
+
         private static readonly DateTime NOW = new (2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
 
         [Test]
-        public void ConnectWhenNewStringArrivesRegardlessOfRoomState([Values(true, false)] bool roomIsDisconnected)
+        public void ConnectWhenANewIslandArrivesRegardlessOfRoomState(
+            [Values(LKConnectionState.ConnDisconnected, LKConnectionState.ConnConnected, LKConnectionState.ConnReconnecting)]
+            LKConnectionState roomState)
         {
             // Arrange: a backoff in the future must not delay a server-pushed string
-            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str"));
+            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection(OTHER_ISLAND, "conn-str"));
             DateTime nextAttempt = NOW + TimeSpan.FromSeconds(30);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(pending, roomIsDisconnected, NOW, nextAttempt, out string? connectionString);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(pending, roomState, HELD_ISLAND, NOW, nextAttempt, out string? connectionString);
 
             // Assert
             Assert.IsTrue(shouldConnect);
             Assert.AreEqual("conn-str", connectionString);
+        }
+
+        [Test]
+        public void SkipReJoiningTheIslandAlreadyHeld(
+            [Values(LKConnectionState.ConnConnected, LKConnectionState.ConnReconnecting)]
+            LKConnectionState roomState)
+        {
+            // Arrange: the server re-announced the island this client already holds, which happens on every
+            // Pulse-only reconnect. A reconnecting room still holds it server-side, so both states suppress.
+            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection(HELD_ISLAND, "fresh-conn-str"));
+            DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
+
+            // Act
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(pending, roomState, HELD_ISLAND, NOW, nextAttempt, out string? _);
+
+            // Assert
+            Assert.IsFalse(shouldConnect);
+        }
+
+        [Test]
+        public void ReJoinTheSameIslandOnceTheRoomIsFullyDisconnected()
+        {
+            // Arrange: same island, but the room dropped — a genuine reconnect, not a re-announcement
+            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection(HELD_ISLAND, "conn-str"));
+            DateTime nextAttempt = NOW + TimeSpan.FromSeconds(30);
+
+            // Act
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(pending, LKConnectionState.ConnDisconnected, HELD_ISLAND, NOW, nextAttempt, out string? connectionString);
+
+            // Assert
+            Assert.IsTrue(shouldConnect);
+            Assert.AreEqual("conn-str", connectionString);
+        }
+
+        /// <summary>
+        ///     Pins the state machine that lets a suppressed re-announcement still refresh the cached
+        ///     token: the pending value is what the predicate suppresses on, and its consumed form is what
+        ///     the next reconnect retries with, carrying the same fresh string.
+        ///     <para />
+        ///     It does not pin the sequencing inside <c>ReadAndConsumeConnectionState</c>, which is what
+        ///     actually consumes before deciding — that method is private and its owner reaches app
+        ///     singletons in its base constructor, so no edit-mode test can drive it today.
+        /// </summary>
+        [Test]
+        public void SuppressOnThePendingValueAndRetryWithItsConsumedForm()
+        {
+            // Arrange: a re-announcement of the held island, suppressed while the room is healthy
+            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection(HELD_ISLAND, "fresh-conn-str"));
+
+            // Act
+            ConnectionStringState afterConsume = pending.Consume();
+            bool suppressed = !ArchipelagoIslandRoom.ShouldAttemptConnection(pending, LKConnectionState.ConnConnected, HELD_ISLAND, NOW, DateTime.MinValue, out string? _);
+            bool retries = ArchipelagoIslandRoom.ShouldAttemptConnection(afterConsume, LKConnectionState.ConnDisconnected, HELD_ISLAND, NOW, DateTime.MinValue, out string? retryString);
+
+            // Assert
+            Assert.IsTrue(suppressed);
+            Assert.IsTrue(retries);
+            Assert.AreEqual("fresh-conn-str", retryString);
         }
 
         [Test]
         public void ReconnectWithCachedStringWhenRoomIsDisconnectedAndBackoffElapsed()
         {
             // Arrange
-            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection(HELD_ISLAND, "conn-str"));
             DateTime nextAttempt = NOW - TimeSpan.FromSeconds(1);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: true, NOW, nextAttempt, out string? connectionString);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, LKConnectionState.ConnDisconnected, HELD_ISLAND, NOW, nextAttempt, out string? connectionString);
 
             // Assert
             Assert.IsTrue(shouldConnect);
@@ -39,14 +103,28 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         }
 
         [Test]
+        public void SkipTheCachedRetryWhileTheRoomIsStillReconnecting()
+        {
+            // Arrange: LiveKit is recovering the same room, so racing it with our own connect would collide
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection(HELD_ISLAND, "conn-str"));
+            DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
+
+            // Act
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, LKConnectionState.ConnReconnecting, HELD_ISLAND, NOW, nextAttempt, out string? _);
+
+            // Assert
+            Assert.IsFalse(shouldConnect);
+        }
+
+        [Test]
         public void SkipReconnectWhenWithinBackoff()
         {
             // Arrange
-            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection(HELD_ISLAND, "conn-str"));
             DateTime nextAttempt = NOW + TimeSpan.FromSeconds(3);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: true, NOW, nextAttempt, out string? _);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, LKConnectionState.ConnDisconnected, HELD_ISLAND, NOW, nextAttempt, out string? _);
 
             // Assert
             Assert.IsFalse(shouldConnect);
@@ -56,11 +134,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public void SkipWhenRoomIsHealthy()
         {
             // Arrange: a cached string and a connected room — nothing to do, even past backoff
-            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection(HELD_ISLAND, "conn-str"));
             DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: false, NOW, nextAttempt, out string? _);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, LKConnectionState.ConnConnected, HELD_ISLAND, NOW, nextAttempt, out string? _);
 
             // Assert
             Assert.IsFalse(shouldConnect);
@@ -73,7 +151,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(ConnectionStringState.None(), roomIsDisconnected: true, NOW, nextAttempt, out string? _);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(ConnectionStringState.None(), LKConnectionState.ConnDisconnected, HELD_ISLAND, NOW, nextAttempt, out string? _);
 
             // Assert
             Assert.IsFalse(shouldConnect);
@@ -90,13 +168,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             Assert.IsTrue(ArchipelagoIslandRoom.ShouldForceFreshHandshake(consecutiveFailures));
 
         [Test]
-        public void ConsumePendingBecomesCurrentKeepingTheString()
+        public void ConsumePendingBecomesCurrentKeepingTheStringAndIsland()
         {
+            // The island rides along so a suppressed re-announcement still refreshes the cached token
             ConnectionStringState consumed =
-                ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str")).Consume();
+                ConnectionStringState.FromPendingConnection(new PendingConnection(HELD_ISLAND, "conn-str")).Consume();
 
             Assert.IsTrue(consumed.IsCurrentConnection(out CurrentConnection current));
             Assert.AreEqual("conn-str", current.ConnectionString);
+            Assert.AreEqual(HELD_ISLAND, current.IslandId);
         }
 
         [Test]
@@ -112,7 +192,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         {
             // A Current string is only re-evaluated against the room/backoff state, never re-consumed
             ConnectionStringState current =
-                ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str")).Consume();
+                ConnectionStringState.FromPendingConnection(new PendingConnection(HELD_ISLAND, "conn-str")).Consume();
 
             ConnectionStringState reconsumed = current.Consume();
 

@@ -56,6 +56,7 @@ MonoBehaviour:
   - rid: 3022170012058910723
   - rid: 3414978285727645699
   - rid: 4107643854440628226
+  - rid: 4933664074294100087
   - rid: 1970080267461197826
   - rid: 634089542387236867
   - rid: 8813103964372074592
@@ -85,6 +86,7 @@ MonoBehaviour:
   - rid: 6784895264912310272
   - rid: 7162477752737071106
   - rid: 857448815798779906
+  - rid: 857448815798779907
   - rid: 7493825610294857301
   - rid: 3511243270148325472
   - rid: 1709771649487732831
@@ -141,8 +143,6 @@ MonoBehaviour:
           samplingRate: 0.01
         - url: 51
           samplingRate: 0.01
-        - url: 73
-          samplingRate: 0.005
     - rid: 745469515127586908
       type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -231,6 +231,12 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+          <BackpackModalPrefab>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
     - rid: 758312499805421571
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -273,6 +279,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 857448815798779906
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField:
+          m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 857448815798779907
+      type: {class: FontsLoadingPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         <FontList>k__BackingField:
           m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
@@ -537,6 +552,12 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
+          <BackpackModalPrefab>k__BackingField:
+            m_AssetGUID: ebd7609b18c5429db0cd1ac5fdc1b8b8
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <EmbeddedEmotes>k__BackingField: []
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
@@ -563,7 +584,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <pointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
+        <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
         <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
@@ -792,6 +813,12 @@ MonoBehaviour:
         realmPartitionSettings: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        gpuiShaderBindings:
+          m_AssetGUID: 50f997bbd4ff89a469f03b9794ff393f
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1100,6 +1127,54 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuButtonListPrefab:
           m_AssetGUID: 03dabb815fc004f9581a9528b72c106f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 4933664074294100087
+      type: {class: LobbyPlugin/LobbyPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <DocumentPrefab>k__BackingField:
+          m_AssetGUID: 8ae3fb61048040438ec8a0347e048766
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupsPrefab>k__BackingField:
+          m_AssetGUID: c85615cb88b54cc9a85e397318aff22f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <StagePrefab>k__BackingField:
+          m_AssetGUID: 656920c5c75f2fdfa40685df8aa57d37
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <AvatarSettings>k__BackingField:
+          <FlavourEmotes>k__BackingField:
+          - wave
+          - fistpump
+          - dab
+          <MinSecondsBetweenFlavourEmotes>k__BackingField: 8
+          <MaxSecondsBetweenFlavourEmotes>k__BackingField: 20
+          <ProfileUpdatedEmoteURN>k__BackingField: fistpump
+          <PostProcessing>k__BackingField: 0
+        <NotificationIconTypes>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnails>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1553,6 +1628,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryMenuPopupPrefab:
           m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        UpgradeGuestAccountPopupPrefab:
+          m_AssetGUID: f5f9dfc19df574348991427c083d6e04
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

@@ -58,7 +58,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             // There's always 1 child GameObject in both AB or Raw GLTF instantiated GltfContainer...
             // AB: The GO name is "AB:hash"
-            // Raw GLTF: the GO name is "Scene"
+            // Raw GLTF: the GO name is "Scene:name"
             Transform anchor = gltfRootTransform.GetChild(0);
 
             // 1. Exact match relative to the anchor. Preserves every path that resolves today.

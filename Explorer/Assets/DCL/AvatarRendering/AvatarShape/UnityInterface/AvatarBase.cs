@@ -146,6 +146,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private Vector3 armatureStartLocalPosition;
         private Vector3 armatureStartLocalScale;
 
+        private Transform[] restPoseTransforms = null!;
+        private Vector3[] restPoseLocalPositions = null!;
+        private Quaternion[] restPoseLocalRotations = null!;
+        private Vector3[] restPoseLocalScales = null!;
+
         public float NametagGlideOffset => nametagGlideOffset;
 
         public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
@@ -177,6 +182,26 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             armatureStartLocalScale = Armature.localScale;
 
             GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
+
+            CaptureRestPose();
+        }
+
+        // The IK targets, hints and look-at helpers are moved by the IK systems too, so the whole hierarchy is captured, not just the bones
+        private void CaptureRestPose()
+        {
+            restPoseTransforms = GetComponentsInChildren<Transform>(true);
+            int count = restPoseTransforms.Length;
+            restPoseLocalPositions = new Vector3[count];
+            restPoseLocalRotations = new Quaternion[count];
+            restPoseLocalScales = new Vector3[count];
+
+            for (var i = 0; i < count; i++)
+            {
+                Transform t = restPoseTransforms[i];
+                restPoseLocalPositions[i] = t.localPosition;
+                restPoseLocalRotations[i] = t.localRotation;
+                restPoseLocalScales[i] = t.localScale;
+            }
         }
 
         public Transform GetTransform() =>
@@ -275,12 +300,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.localScale = armatureStartLocalScale;
         }
 
-        // Called onRelease of the pool. Resets stuff to avoid:
-        //   - Armature inclination, offset and scale that could be caused by emote clips animating the Armature node
-        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        // Runs on pool release, possibly with the hierarchy inactive, where Rebind() has nothing bound to reset a frozen emote pose
         public void ResetState()
         {
-            ResetArmatureTransform();
+            RestoreRestPose();
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
@@ -291,7 +314,30 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
+
+            // Left disabled as in the prefab, so the pool's SetActive(true) does not bake IK offsets from the previous owner's pose
+            RigBuilder.enabled = false;
             FeetIKRig.enabled = false;
+            FeetIKRig.weight = 0;
+            HandsIKRig.weight = 0;
+            HeadIKRig.weight = 0;
+            TorsoIKRig.weight = 0;
+            CachePoseRig.weight = 0;
+            AdditiveBreathRig.weight = 0;
+            LeftLegIK.weight = 0;
+            RightLegIK.weight = 0;
+        }
+
+        private void RestoreRestPose()
+        {
+            for (var i = 0; i < restPoseTransforms.Length; i++)
+            {
+                Transform t = restPoseTransforms[i];
+                if (t == transform) continue;
+
+                t.SetLocalPositionAndRotation(restPoseLocalPositions[i], restPoseLocalRotations[i]);
+                t.localScale = restPoseLocalScales[i];
+            }
         }
 
         public void SetLayerWeight(int layerIndex, float weight) =>

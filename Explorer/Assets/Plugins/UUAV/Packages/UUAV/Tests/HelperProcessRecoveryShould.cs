@@ -69,6 +69,39 @@ namespace UUAV.Tests
         }
 
         [UnityTest]
+        public IEnumerator ResumeNearTheFrozenPositionAfterRespawn()
+        {
+            // Arrange: deep enough into the fixture that a restart from 0 is distinguishable
+            UUAVPlayer player = CreatePlayer(out _);
+            yield return OpenPlayAndAwaitPlaying(player, UrlFor(Fixtures.ToneColorBands));
+            yield return AwaitClockRunning(player);
+            player.Seek(3.0);
+            yield return Wait.Until(
+                () => System.Math.Abs(player.CurrentTime - 3.0) <= 0.75,
+                StateTimeout,
+                () => $"clock never converged to 3.0s\n{Wait.Diagnostics(player)}"
+            );
+            int pid = RequireHelperPid();
+            double frozenAt = player.CurrentTime;
+
+            // Act
+            HelperProcess.Kill(pid);
+            yield return AwaitRespawn(pid);
+            yield return AwaitRestoredOrDegraded(player);
+            if (player.State == UUAVState.Error)
+            {
+                Assert.Inconclusive("the player degraded to Error; the resume position is only observable on a restored player");
+            }
+
+            // Assert: the restore seeks back to where the clock froze instead of restarting from 0
+            Assert.That(
+                player.CurrentTime,
+                Is.GreaterThanOrEqualTo(frozenAt - 0.75),
+                $"recovery restarted playback from the beginning (frozen at {frozenAt:F2}s)\n{Wait.Diagnostics(player)}"
+            );
+        }
+
+        [UnityTest]
         public IEnumerator RecoverFromAKillWhileIdle()
         {
             // Arrange: no media open anywhere

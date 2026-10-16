@@ -74,22 +74,22 @@ namespace DCL.Navmap
             view.gameObject.SetActive(false);
         }
 
-        public void Set(EventDTO @event, PlacesData.PlaceInfo place)
+        public void Set(EventDTO newEvent, PlacesData.PlaceInfo newPlace)
         {
-            this.place = place;
-            this.@event = @event;
-            view.EventNameLabel.text = @event.name;
-            view.LiveContainer.SetActive(@event.live);
-            view.InterestedButton.gameObject.SetActive(!@event.live);
-            view.JumpInButton.gameObject.SetActive(@event.live);
-            view.ScheduleLabel.gameObject.SetActive(!@event.live);
-            view.AttendeeContainer.SetActive(!@event.live);
+            this.place = newPlace;
+            this.@event = newEvent;
+            view.EventNameLabel.text = newEvent.name;
+            view.LiveContainer.SetActive(newEvent.live);
+            view.InterestedButton.gameObject.SetActive(!newEvent.live);
+            view.JumpInButton.gameObject.SetActive(newEvent.live);
+            view.ScheduleLabel.gameObject.SetActive(!newEvent.live);
+            view.AttendeeContainer.SetActive(!newEvent.live);
 
             var schedule = "";
 
-            if (DateTime.TryParse(@event.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
+            if (DateTime.TryParse(newEvent.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
             {
-                if (@event.live)
+                if (newEvent.live)
                 {
                     TimeSpan elapsed = DateTime.UtcNow - startAt;
 
@@ -105,36 +105,36 @@ namespace DCL.Navmap
                     schedule = startAt.ToString("R");
             }
 
-            if (@event.live)
+            if (newEvent.live)
             {
                 view.LiveScheduleLabel.text = schedule;
-                view.LiveUserCountLabel.text = place.user_count.ToString();
+                view.LiveUserCountLabel.text = newPlace.user_count.ToString();
             }
             else
                 view.ScheduleLabel.text = schedule;
 
-            view.AttendingUserCountLabel.text = @event.total_attendees.ToString();
-            interestedButtonController.SetButtonState(@event.attending);
-            view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
-            view.DescriptionLabel.text = @event.description;
+            view.AttendingUserCountLabel.text = newEvent.total_attendees.ToString();
+            interestedButtonController.SetButtonState(newEvent.attending);
+            view.HostAndPlaceLabel.text = $"hosted by <b>{newEvent.user_name}</b> - at <b>{newPlace.title} ({newEvent.x}, {newEvent.y})</b>";
+            view.DescriptionLabel.text = newEvent.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            thumbnailController.RequestImage(@event.image);
+            thumbnailController.RequestImage(newEvent.image);
 
             updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
             view.LayoutRoot.ForceUpdateLayoutAsync(updateLayoutCancellationToken.Token).Forget();
 
             ClearScheduleElements();
-            AddRecurrentEvents(@event);
+            AddRecurrentEvents(newEvent);
         }
 
         private void OpenUrl(string url) =>
             webBrowser.OpenUrlMainThreadOnly(url);
 
-        private void AddRecurrentEvents(EventDTO @event)
+        private void AddRecurrentEvents(EventDTO recurrentEvent)
         {
-            DateTime.TryParse(@event.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
+            DateTime.TryParse(recurrentEvent.next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
 
-            foreach (string dateStr in @event.recurrent_dates)
+            foreach (string dateStr in recurrentEvent.recurrent_dates)
             {
                 if (!DateTime.TryParse(dateStr, null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
                 if (date < nextStartAt) continue;
@@ -151,14 +151,14 @@ namespace DCL.Navmap
 
         private void AddRecurrentEventToCalendar(DateTime startAt)
         {
-            string jumpInLink = string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), @event?.x, @event?.y);
-            var description = $"jump in: {jumpInLink}";
+            string jumpInLink = ShareLinkUtilities.WithReferrer(string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), @event?.x, @event?.y));
+            var description = $"jump in: {ShareLinkUtilities.AsQueryParameterValue(jumpInLink)}";
 
             DateTime nextStartAt = DateTime.Parse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind);
             DateTime nextFinishAt = DateTime.Parse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind);
             TimeSpan duration = nextFinishAt - nextStartAt;
 
-            userCalendar.Add(@event?.name, description, startAt, startAt + duration);
+            userCalendar.Add(@event?.name ?? string.Empty, description, startAt, startAt + duration);
         }
 
         private void ClearScheduleElements()
@@ -180,10 +180,12 @@ namespace DCL.Navmap
 
             async UniTaskVoid SetInterestedAsync(CancellationToken ct)
             {
+                if (!@event.HasValue) return;
+
                 if (interested)
-                    await eventsApiService.MarkAsInterestedAsync(@event?.id, ct);
+                    await eventsApiService.MarkAsInterestedAsync(@event.Value.id, ct);
                 else
-                    await eventsApiService.MarkAsNotInterestedAsync(@event?.id, ct);
+                    await eventsApiService.MarkAsNotInterestedAsync(@event.Value.id, ct);
 
                 interestedButtonController.SetButtonState(interested);
             }

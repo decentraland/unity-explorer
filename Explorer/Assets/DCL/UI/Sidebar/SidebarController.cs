@@ -31,9 +31,11 @@ using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
 using DCL.UI.Sidebar.HelpMenu;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.UI;
 using ECS.Abstract;
@@ -47,11 +49,12 @@ namespace DCL.UI.Sidebar
         private const string SOURCE_BUTTON = "Button";
 
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IChatHistory chatHistory;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
@@ -91,16 +94,18 @@ namespace DCL.UI.Sidebar
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             UnityAppWebBrowser webBrowser,
             IChatHistory chatHistory,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
@@ -299,8 +304,8 @@ namespace DCL.UI.Sidebar
             {
                 try
                 {
-                    Profile? myProfile = await selfProfile.ProfileAsync(ct);
-                    if (myProfile == null) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile)) return;
+                    // TODO (Nick): do we really need it to be async? Maybe just take the snapshot?
 
                     urlBuilder.Clear();
 
@@ -357,9 +362,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile == null)
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 return;
 
             isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);
@@ -422,9 +425,17 @@ namespace DCL.UI.Sidebar
         private void OnFriendsButtonClicked() =>
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
 
-        private void OnMarketplaceCreditsButtonClicked() =>
+        private void OnMarketplaceCreditsButtonClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(viewInstance!.MarketplaceCreditsButton, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits))).Forget();
+                return;
+            }
+
             OpenPanelAsync(viewInstance!.MarketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
+        }
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
 
@@ -443,6 +454,12 @@ namespace DCL.UI.Sidebar
 
         private void OnNearbyVoiceButtonClicked()
         {
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice))).Forget();
+                return;
+            }
+
             if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
             {
                 viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();

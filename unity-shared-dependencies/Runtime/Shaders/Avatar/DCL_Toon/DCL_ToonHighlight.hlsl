@@ -40,7 +40,7 @@ VertexOutput vert_highlight (VertexInput v)
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
+    float4 objPos = mul ( UNITY_MATRIX_M, float4(0,0,0,1) );
 
     float4 vVert;
     float3 vNormal;
@@ -59,10 +59,10 @@ VertexOutput vert_highlight (VertexInput v)
         vNormal = _GlobalAvatarBuffer[lastAvatarVertCount + lastWearableVertCount + v.index].normal.xyz;
         normalDir = UnityObjectToWorldNormal(vNormal);
         skinnedTangent = _GlobalAvatarBuffer[lastAvatarVertCount + lastWearableVertCount + v.index].tangent;
-        tangentDir = normalize( mul( unity_ObjectToWorld, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
+        tangentDir = normalize( mul( UNITY_MATRIX_M, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
         bitangentDir = normalize(cross(normalDir, tangentDir) * skinnedTangent.w);
 
-        float4 clipPosition = mul(UNITY_MATRIX_VP, mul(unity_ObjectToWorld, float4(vVert.xyz, 1.0)));
+        float4 clipPosition = mul(UNITY_MATRIX_VP, mul(UNITY_MATRIX_M, float4(vVert.xyz, 1.0)));
         float3 clipNormal = mul((float3x3) UNITY_MATRIX_VP, mul((float3x3) UNITY_MATRIX_M, vNormal));
 
         float2 offset = normalize(clipNormal.xy) / _ScreenParams.xy * Set_Outline_Width * clipPosition.w * 2.0f;
@@ -75,7 +75,7 @@ VertexOutput vert_highlight (VertexInput v)
         vNormal = v.normal;
         vTangent = v.tangent;
         normalDir = UnityObjectToWorldNormal(vNormal);
-        tangentDir = normalize( mul( unity_ObjectToWorld, float4( vTangent.xyz, 0.0 ) ).xyz );
+        tangentDir = normalize( mul( UNITY_MATRIX_M, float4( vTangent.xyz, 0.0 ) ).xyz );
         bitangentDir = normalize(cross(normalDir, tangentDir) * vTangent.w);
 
         float2 offset = normalize(normalDir.xy) / _ScreenParams.xy * Set_Outline_Width * vVert.w * 2.0f;

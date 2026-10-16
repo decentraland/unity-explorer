@@ -73,6 +73,19 @@ namespace Utility
             JobStarted = true;
         }
 
+        public void StartSingleParcelSplit(int2 parcel, NativeHashSet<int2> processedParcels)
+        {
+            Assert.IsTrue(jobHandle.IsCompleted, "Can't start several jobs at the same time");
+
+            EnsureRingsArraySize(0);
+
+            rings[0] = new ParcelInfo
+                { AlreadyProcessed = processedParcels.Contains(parcel), Parcel = parcel };
+
+            jobHandle = default(JobHandle);
+            JobStarted = true;
+        }
+
         public ref readonly NativeArray<ParcelInfo> FinishParcelsRingSplit()
         {
             jobHandle.Complete();

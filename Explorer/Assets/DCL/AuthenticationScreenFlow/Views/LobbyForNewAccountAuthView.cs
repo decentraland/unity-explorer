@@ -4,8 +4,6 @@ using DCL.Utility.Extensions;
 using MVC;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Localization;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
@@ -31,31 +29,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Space]
         [field: SerializeField]
-        public Button RandomizeButton { get; private set; } = null!;
-
-        [field: Header("Body Type Selector")]
-        [field: SerializeField]
-        public Button BodyTypeDropdownButton { get; private set; } = null!;
-        [field: SerializeField]
-        public GameObject BodyTypeDropdownPanel { get; private set; } = null!;
-        [field: SerializeField]
-        public Button BodyTypeOptionA { get; private set; } = null!;
-        [field: SerializeField]
-        public Button BodyTypeOptionB { get; private set; } = null!;
-        [field: SerializeField]
-        public TMPro.TMP_Text BodyTypeLabel { get; private set; } = null!;
-        [field: SerializeField]
-        public RectTransform ChevronIcon { get; private set; } = null!;
-        [field: SerializeField]
-        public GameObject DropdownManIcon { get; private set; } = null!;
-        [field: SerializeField]
-        public GameObject DropdownWomanIcon { get; private set; } = null!;
-        [field: SerializeField]
-        public GameObject CheckmarkIconA { get; private set; } = null!;
-        [field: SerializeField]
-        public GameObject CheckmarkIconB { get; private set; } = null!;
-
-        [field: Space]
+        public GameObject SubscribeRoot { get; private set; } = null!;
         [field: SerializeField]
         public Toggle SubscribeToggle { get; private set; } = null!;
         [field: SerializeField]
@@ -69,46 +43,6 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private CanvasGroup canvasGroup = null!;
 
         private int hideAnimHash = UIAnimationHashes.OUT;
-
-        public void SetBodyTypeDropdownOpen(bool isOpen)
-        {
-            BodyTypeDropdownPanel.SetActive(isOpen);
-            ChevronIcon.localRotation = Quaternion.Euler(0, 0, isOpen ? 180f : 0f);
-        }
-
-        public void UpdateBodyTypeUI(bool isMale)
-        {
-            BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
-
-            DropdownManIcon.SetActive(isMale);
-            DropdownWomanIcon.SetActive(!isMale);
-
-            CheckmarkIconA.SetActive(isMale);
-            CheckmarkIconB.SetActive(!isMale);
-
-            UpdateBodyTypeLabelAsync(isMale).Forget();
-        }
-
-        private async UniTaskVoid UpdateBodyTypeLabelAsync(bool isMale)
-        {
-            string key = isMale ? "BODY_TYPE_A" : "BODY_TYPE_B";
-
-            try
-            {
-                var localized = new LocalizedString("Authentication", key);
-
-                AsyncOperationHandle<string> handle = localized.GetLocalizedStringAsync();
-                await handle;
-
-                if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded
-                                     && !string.IsNullOrEmpty(handle.Result))
-                    BodyTypeLabel.text = handle.Result;
-            }
-            catch
-            {
-                // keep fallback already set in UpdateBodyTypeUI
-            }
-        }
 
         public void Show()
         {

@@ -170,7 +170,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName),
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName, realmLaunchSettings.startParcelSource),
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -209,9 +209,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Reset();
@@ -287,9 +287,9 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache, identityCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 

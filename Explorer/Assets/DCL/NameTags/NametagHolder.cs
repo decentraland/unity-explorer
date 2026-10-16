@@ -11,8 +11,8 @@ namespace DCL.Nametags
 
         public NametagElement Nametag => nametag ?? throw new InvalidOperationException($"{nameof(NametagHolder)} is used before {nameof(OnEnable)} resolved its {nameof(NametagElement)}");
 
-        // Visual flags live as CSS classes on the NametagElement and persist across pool reuse.
-        // Reset transient state on release so a freshly-acquired holder cannot inherit a previous owner's voice chat badge or chat bubble.
+        // Visual flags live as CSS classes on the NametagElement, and the debug label as its text; both persist across pool reuse.
+        // Reset transient state on release so a freshly-acquired holder cannot inherit a previous owner's voice chat badge, chat bubble or debug label.
         public void ResetTransientVisualState()
         {
             if (nametag != null)
@@ -22,6 +22,7 @@ namespace DCL.Nametags
                         nametag.SceneAvatarTagVisible = false;
 
                 nametag.NameVisible = true;
+                nametag.DebugText = null;
             }
         }
 

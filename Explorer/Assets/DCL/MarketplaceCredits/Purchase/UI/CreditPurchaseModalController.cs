@@ -58,7 +58,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly World world;
         private readonly IWearableStorage wearableStorage;
@@ -100,7 +100,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             UnityAppWebBrowser webBrowser,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             IWearableStorage wearableStorage,
@@ -407,12 +407,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             try
             {
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
+                ProfileReadResult profileResult = await selfProfile.ProfileAsync(ct);
 
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (profile == null)
+                if (!profileResult.IsOk(out Profile? profile))
                 {
                     ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "Try-on preview aborted: own profile is unavailable.");
                     ResetCharacterPreview();
@@ -502,6 +502,10 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             try
             {
                 CreditsPurchaseResult result = await purchaseService.PurchaseAsync(confirmedQuote, ct);
+
+                // A Cancelled result after the modal closed would reopen the try-on preview on the hidden view.
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (result.Success)
                 {
@@ -682,7 +686,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
 
-            bool previewVisible = (newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits) && IsTryOnAvailable();
+            bool previewVisible = newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits && IsTryOnAvailable();
 
             if (previewVisible)
                 ShowCharacterPreview();

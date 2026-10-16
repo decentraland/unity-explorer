@@ -1,0 +1,30 @@
+/* Solid black pill like CreditsPanel.prefab as the lobby draws it; the fill lightens on hover while top-up is possible */
+.credits-panel {
+    width: 100px;
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 15px;
+    border-radius: 23px;
+    background-color: black;
+    transition: background-color 0.1s;
+}
+
+.credits-panel--top-up:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.credits-panel__icon {
+    width: 20px;
+    height: 20px;
+    background-image: url('/Assets/DCL/MarketplaceCredits/Textures/NewCreditsLogo.png');
+}
+
+.credits-panel__amount {
+    width: 55px;
+    margin-left: 2px;
+    font-size: 21.2px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}

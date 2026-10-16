@@ -1,4 +1,6 @@
 using MVC;
+using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,22 +13,32 @@ namespace DCL.BugReporting.UI
         Success,
     }
 
+    /// <summary>One attached screenshot in the form; the slots fill in attachment order.</summary>
+    [Serializable]
+    public struct BugReportScreenshotSlot
+    {
+        public RawImage Preview;
+        public Button RemoveButton;
+    }
+
     public class BugReportView : ViewBase, IView
     {
+        private const float DISABLED_LABEL_ALPHA = 0.5f;
+
         [field: Header("Form")]
         [field: SerializeField] public TMP_Dropdown IssueTypeDropdown { get; private set; } = null!;
         [field: SerializeField] public TMP_InputField DescriptionInput { get; private set; } = null!;
         [field: SerializeField] public TMP_Text DescriptionCharCounter { get; private set; } = null!;
         [field: SerializeField] public Toggle ShareLogsToggle { get; private set; } = null!;
         [field: SerializeField] public Button SubmitButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text SubmitButtonLabel { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
 
-        [field: Header("Screenshot")]
+        [field: Header("Screenshots")]
         [field: SerializeField] public GameObject ScreenshotSection { get; private set; } = null!;
-        [field: SerializeField] public RawImage ScreenshotPreview { get; private set; } = null!;
         [field: SerializeField] public Button AttachScreenshotButton { get; private set; } = null!;
-        [field: SerializeField] public Button RemoveScreenshotButton { get; private set; } = null!;
+        [field: SerializeField] public BugReportScreenshotSlot[] ScreenshotSlots { get; private set; } = null!;
 
         [field: Header("States")]
         [field: SerializeField] public GameObject FormPanel { get; private set; } = null!;
@@ -38,10 +50,13 @@ namespace DCL.BugReporting.UI
         {
             WireCharCounter(DescriptionInput, DescriptionCharCounter);
 
-            // The preview hangs from the left edge of its slot; SetScreenshot sizes it to the texture's aspect ratio.
-            RectTransform previewRect = ScreenshotPreview.rectTransform;
-            previewRect.anchorMin = previewRect.anchorMax = previewRect.pivot = new Vector2(0f, 0.5f);
-            previewRect.anchoredPosition = Vector2.zero;
+            // Each preview hangs from the left edge of its slot; SetScreenshots sizes it to the texture's aspect ratio.
+            foreach (BugReportScreenshotSlot slot in ScreenshotSlots)
+            {
+                RectTransform previewRect = slot.Preview.rectTransform;
+                previewRect.anchorMin = previewRect.anchorMax = previewRect.pivot = new Vector2(0f, 0.5f);
+                previewRect.anchoredPosition = Vector2.zero;
+            }
         }
 
         public void ShowState(BugReportViewState state)
@@ -50,29 +65,47 @@ namespace DCL.BugReporting.UI
             SuccessPanel.SetActive(state == BugReportViewState.Success);
         }
 
+        /// <summary>The button's color tint only fades its background, so the label is faded here to match.</summary>
+        public void SetSubmitInteractable(bool interactable)
+        {
+            SubmitButton.interactable = interactable;
+
+            Color labelColor = SubmitButtonLabel.color;
+            labelColor.a = interactable ? 1f : DISABLED_LABEL_ALPHA;
+            SubmitButtonLabel.color = labelColor;
+        }
+
         /// <summary>The field can still be focused when the view closes, so a reopen hides the counter explicitly.</summary>
         public void HideCharCounter() =>
             DescriptionCharCounter.gameObject.SetActive(false);
 
-        public void SetScreenshot(Texture2D? texture)
+        /// <summary>Fills the slots in order with the given images and hides the rest.</summary>
+        public void SetScreenshots(IReadOnlyList<BugReportImage> images, bool canAttachMore)
         {
-            ScreenshotPreview.texture = texture;
+            for (var i = 0; i < ScreenshotSlots.Length; i++)
+            {
+                BugReportScreenshotSlot slot = ScreenshotSlots[i];
+                Texture2D? texture = i < images.Count ? images[i].Preview : null;
 
-            if (texture != null)
-                FitScreenshotPreviewToSlot(texture);
+                slot.Preview.texture = texture;
 
-            ScreenshotPreview.gameObject.SetActive(texture != null);
-            RemoveScreenshotButton.gameObject.SetActive(texture != null);
-            AttachScreenshotButton.gameObject.SetActive(texture == null);
+                if (texture != null)
+                    FitPreviewToSlot(slot.Preview, texture);
+
+                slot.Preview.gameObject.SetActive(texture != null);
+                slot.RemoveButton.gameObject.SetActive(texture != null);
+            }
+
+            AttachScreenshotButton.gameObject.SetActive(canAttachMore);
         }
 
         /// <summary>Sizes the preview to the largest rect at the texture's aspect ratio that fits its slot.</summary>
-        private void FitScreenshotPreviewToSlot(Texture2D texture)
+        private static void FitPreviewToSlot(RawImage preview, Texture2D texture)
         {
-            Rect slot = ((RectTransform)ScreenshotPreview.rectTransform.parent).rect;
+            Rect slot = ((RectTransform)preview.rectTransform.parent).rect;
             float aspect = texture.width / (float)texture.height;
             float height = Mathf.Min(slot.height, slot.width / aspect);
-            ScreenshotPreview.rectTransform.sizeDelta = new Vector2(height * aspect, height);
+            preview.rectTransform.sizeDelta = new Vector2(height * aspect, height);
         }
 
         // Refreshes on focus as well as on typing: the controller fills the field with SetTextWithoutNotify, which skips onValueChanged.

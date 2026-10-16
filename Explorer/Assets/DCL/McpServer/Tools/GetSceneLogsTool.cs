@@ -14,8 +14,8 @@ namespace DCL.McpServer.Tools
     {
         private enum Severity : byte
         {
-            ALL,
-            ERROR,
+            All,
+            Error,
         }
 
         private const int DEFAULT_LIMIT = 100;
@@ -52,10 +52,10 @@ namespace DCL.McpServer.Tools
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
 
-            if (!arguments.TryGetEnum("severity", Severity.ALL, out Severity severity))
-                return UniTask.FromResult(McpToolResult.Error("severity must be one of: all, error."));
+            if (!arguments.TryGetEnum("severity", Severity.All, out Severity severity))
+                return UniTask.FromResult(McpToolResult.Error(arguments.EnumArgumentError<Severity>("severity")));
 
-            bool errorsOnly = severity == Severity.ERROR;
+            bool errorsOnly = severity == Severity.Error;
             long sinceSeq = arguments.GetLong("sinceSeq", -1);
 
             using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);

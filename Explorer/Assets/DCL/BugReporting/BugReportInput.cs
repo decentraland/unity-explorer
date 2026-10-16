@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.BugReporting
@@ -7,8 +8,10 @@ namespace DCL.BugReporting
     {
         public BugReportIssueType IssueType;
         public string Description;
-        public byte[]? Image;
-        public string? ImageContentType;
+
+        /// <summary>In the order the user attached them; null or empty when there are none.</summary>
+        public IReadOnlyList<EvidenceImage>? Images;
+
         public string? ContactEmail;
         public string? UserName;
         public Vector2Int? Coordinates;

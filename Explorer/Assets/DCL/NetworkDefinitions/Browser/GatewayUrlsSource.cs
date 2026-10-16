@@ -85,10 +85,22 @@ namespace DCL.Browser
             "profile-images",
         };
 
+        /// <summary>
+        ///     The abgen pipeline's hosts, spelled as <see cref="DecentralandUrlsSource" /> composes them. They are
+        ///     this deployment's subdomains like the regular ones, so <see cref="RawUrl" /> routes them despite the
+        ///     flag-dependent caching the flip gives them.
+        /// </summary>
+        private static readonly string[] ABGEN_SUBDOMAINS =
+        {
+            "asset-bundle-registry-abgen",
+            "abgen-cdn",
+        };
+
         // The origin --gateway named, already normalized by TryNormalizeGatewayPrefix, or null to use
         // gateway.{BaseDomain}. Naming one is itself the opt-in, so it also stands in for the flag.
         private readonly string? cliGatewayPrefix;
         private readonly List<string> resolvedNonClientHosts;
+        private readonly string[] abgenOrigins;
         private readonly string gatewayPrefix;
         private readonly string domainSuffix;
 
@@ -107,8 +119,9 @@ namespace DCL.Browser
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
-            string? cliGatewayPrefix = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced)
+            string? cliGatewayPrefix = null,
+            bool abgenLodsForced = false)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
 
@@ -116,6 +129,11 @@ namespace DCL.Browser
 
             foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
                 resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
+
+            abgenOrigins = new string[ABGEN_SUBDOMAINS.Length];
+
+            for (var i = 0; i < ABGEN_SUBDOMAINS.Length; i++)
+                abgenOrigins[i] = $"https://{ABGEN_SUBDOMAINS[i]}.{BaseDomain}";
 
             gatewayPrefix = cliGatewayPrefix ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
             domainSuffix = $".{BaseDomain}";
@@ -184,14 +202,33 @@ namespace DCL.Browser
                 return serviceUrl;
 
             // FeatureFlagsDependent from base.RawUrl() signals a consolidated / optimized-assets URL that
-            // must NOT be gateway-rewritten (it resolves to its own origin). If a future URL legitimately
-            // needs FeatureFlagsDependent caching AND gateway routing, give UrlData a dedicated skipGateway
-            // field instead of widening this guard. Custom hosts also pass through untouched.
-            if (serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent || !IsGatewayTransformable(serviceUrl.Url))
+            // must NOT be gateway-rewritten (it resolves to its own origin). The abgen hosts are the exception:
+            // they carry that caching because the flip decides them, not because they are their own origin.
+            // Custom hosts also pass through untouched.
+            if ((serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent && !IsAbgenHost(serviceUrl.Url))
+                || !IsGatewayTransformable(serviceUrl.Url))
                 return serviceUrl;
 
             // it is called only once and then cached in the base class
             return new UrlData(CacheBehaviour.FeatureFlagsDependent, TransformToGateway(serviceUrl.Url));
+        }
+
+        /// <summary>
+        ///     True for <c>https://{abgen subdomain}.{BaseDomain}</c> and anything under it. A registry endpoint
+        ///     composed off an already-gatewayed base is not one: its host is the gateway's.
+        /// </summary>
+        private bool IsAbgenHost(string url)
+        {
+            foreach (string origin in abgenOrigins)
+            {
+                if (!url.StartsWith(origin, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (url.Length == origin.Length || url[origin.Length] == '/')
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>

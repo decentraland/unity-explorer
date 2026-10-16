@@ -39,7 +39,21 @@ namespace DCL.WebRequests.Dumper
             },
         };
 
-        internal readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+        private RequestMetricRecorder[]? activeMetricsLazy;
+
+        internal RequestMetricRecorder[] activeMetrics
+        {
+            get
+            {
+                if (activeMetricsLazy == null)
+                {
+                    MetricsRegistry.Initialize();
+                    activeMetricsLazy = new RequestMetricRecorder[MetricsRegistry.Types.Length];
+                }
+
+                return activeMetricsLazy;
+            }
+        }
 
         private readonly WebRequestDump dump = new ();
 
@@ -47,7 +61,7 @@ namespace DCL.WebRequests.Dumper
         /// <summary>
         ///     Preserves the values across domain reload (edit mode => play mode)
         /// </summary>
-        private bool IsEnabledFromEditorPrefs
+        private bool isEnabledFromEditorPrefs
         {
             get => EditorPrefs.GetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", false);
             set => EditorPrefs.SetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", value);
@@ -61,7 +75,7 @@ namespace DCL.WebRequests.Dumper
             get
             {
 #if UNITY_EDITOR
-                return IsEnabledFromEditorPrefs;
+                return isEnabledFromEditorPrefs;
 #else
                 return isEnabled;
 #endif
@@ -70,7 +84,7 @@ namespace DCL.WebRequests.Dumper
             set
             {
 #if UNITY_EDITOR
-                IsEnabledFromEditorPrefs = value;
+                isEnabledFromEditorPrefs = value;
 #else
                 isEnabled = value;
 #endif

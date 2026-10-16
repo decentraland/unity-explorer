@@ -30,6 +30,7 @@ Use:
 - Asynchronous methods end with `Async`.
 - Events name is in past tense and without `On` prefix.
 - `_`, `__`, `___` for unused parameters of the method (for example, for event subscribers, interface implementation and inheritance overridden methods).
+- UI Toolkit USS class names follow [BEM](https://getbem.com/naming/), the convention Unity recommends for UI Toolkit: `block`, `block__element`, `block--modifier` (for example `lobby-place-card`, `lobby-place-card__title`, `lobby-place-card--selected`). A custom `VisualElement` keeps its block name in a `USS_BLOCK` constant and derives the element and modifier names from it.
 
 ```csharp
 namespace MyProject                                     // Namespace -> PascalCase
@@ -75,7 +76,7 @@ Fields populated by JSON deserialization follow the wire format, not local conve
 - **Nullability (CS8618):** fields the schema marks *required* are initialized `= null!` (`= default!` when the field's type is a generic parameter); fields the schema marks *optional* are declared `T?`. A schema-optional field may be kept non-nullable only when every entity type the client consumes guarantees it in practice — state that strengthened contract in the schema-link comment. A field absent from the linked schema is optional unless verified against its actual source. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`) so reviewers can verify the contract.
 - **Guards follow the declaration:** a required field (`= null!`) must not be null-guarded at all — no `?.`, no `?? fallback`, no `== null`; an optional `T?` field keeps its guards.
 
-These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code.
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code. The one other place `= null!` is allowed is a test fixture field assigned in `[SetUp]`/`[OneTimeSetUp]`.
 
 Reference example — [`EntityDefinitionBase.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionBase.cs) and [`EntityDefinitionGeneric.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionGeneric.cs):
 

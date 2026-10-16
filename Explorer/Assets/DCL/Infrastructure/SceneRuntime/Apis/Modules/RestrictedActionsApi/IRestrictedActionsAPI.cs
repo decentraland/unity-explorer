@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using Decentraland.Kernel.Apis;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         UniTask<bool> TryMovePlayerToAsync(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget, float duration, CancellationToken ct);
 
-        void TryTeleportTo(Vector2Int newCoords);
+        void TryTeleportTo(TeleportDestination destination);
 
         bool TryChangeRealm(string message, string realm);
 
@@ -22,10 +23,11 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         bool TryOpenNftDialog(string urn);
 
-        int TryOpenExplorerUi(int ui);
+        UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 
-        void TryStopEmote();
+        /// <summary>False when the scene is not the current one, so the stop is refused.</summary>
+        bool TryStopEmote();
     }
 }

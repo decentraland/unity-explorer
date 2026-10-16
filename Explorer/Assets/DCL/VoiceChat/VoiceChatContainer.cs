@@ -63,7 +63,8 @@ namespace DCL.VoiceChat
                 participantsStateService,
                 sceneVoiceChatTrackerService,
                 chatEventBus,
-                currentChannelService);
+                currentChannelService,
+                identityCache);
 
             JoinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(VoiceChatOrchestrator, communityDataService);
 

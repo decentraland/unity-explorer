@@ -7,232 +7,336 @@ using DCL.MapRenderer.Culling;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Prefs;
+using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
 
 namespace DCL.MapRenderer.MapLayers.HomeMarker
 {
-	/// <summary>
-	/// Controls the home marker on the map, handling placement, highlighting, and interaction with the home location.
-	/// </summary>
-	public class HomeMarkerController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
-	{
-		internal delegate IHomeMarker HomeMarkerBuilder(Transform parent);
+    /// <summary>
+    ///     Controls the home marker on the map, handling placement, highlighting, and interaction with the home location.
+    ///     The home location belongs to the signed-in account: it is persisted per wallet address and reloaded whenever the identity changes.
+    /// </summary>
+    public class HomeMarkerController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
+    {
+        internal delegate IHomeMarker HomeMarkerBuilder(Transform parent);
 
-		private readonly HomeMarkerBuilder builder;
-		private readonly INavmapBus navmapBus;
-		private readonly IPlacesAPIService placesAPIService;
-		private readonly IEventBus analyticsEventBus;
+        private readonly INavmapBus navmapBus;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IEventBus analyticsEventBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IHomeMarker homeMarker;
 
-		public Vector2Int? CurrentCoordinates { get; private set; }
-		public string? CurrentWorldName { get; private set; }
-		private IHomeMarker homeMarker;
-		private CancellationTokenSource highlightCt = new();
-		private CancellationTokenSource deHighlightCt = new();
-		private CancellationTokenSource placesCts = new();
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private CancellationTokenSource placesCts = new ();
 
-		public bool HomeIsSet => CurrentCoordinates.HasValue || !string.IsNullOrEmpty(CurrentWorldName);
-		public bool IsWorldHome => !string.IsNullOrEmpty(CurrentWorldName);
-		public bool ZoomBlocked { get; set; }
+        public Vector2Int? CurrentCoordinates { get; private set; }
+        public string? CurrentWorldName { get; private set; }
 
-		internal HomeMarkerController(
-			HomeMarkerBuilder builder,
-			Transform instantiationParent,
-			ICoordsUtils coordsUtils,
-			IMapCullingController cullingController,
-			INavmapBus navmapBus,
-			IPlacesAPIService placesAPIService,
-			IEventBus analyticsEventBus)
-			: base(instantiationParent, coordsUtils, cullingController)
-		{
-			this.builder = builder;
-			this.navmapBus = navmapBus;
-			this.placesAPIService = placesAPIService;
-			this.analyticsEventBus = analyticsEventBus;
-		}
+        public bool HomeIsSet => CurrentCoordinates.HasValue || !string.IsNullOrEmpty(CurrentWorldName);
+        public bool IsWorldHome => !string.IsNullOrEmpty(CurrentWorldName);
+        public bool ZoomBlocked { get; set; }
 
-		internal void Initialize()
-		{
-			homeMarker = builder(instantiationParent);
+        internal HomeMarkerController(
+            HomeMarkerBuilder builder,
+            Transform instantiationParent,
+            ICoordsUtils coordsUtils,
+            IMapCullingController cullingController,
+            INavmapBus navmapBus,
+            IPlacesAPIService placesAPIService,
+            IEventBus analyticsEventBus,
+            IWeb3IdentityCache identityCache)
+            : base(instantiationParent, coordsUtils, cullingController)
+        {
+            this.navmapBus = navmapBus;
+            this.placesAPIService = placesAPIService;
+            this.analyticsEventBus = analyticsEventBus;
+            this.identityCache = identityCache;
 
-			string? worldName = DeserializeWorldName();
-			if (!string.IsNullOrEmpty(worldName))
-				SetWorldMarker(worldName);
-			else
-				SetMarker(Deserialize());
-		}
+            homeMarker = builder(instantiationParent);
+        }
 
-		protected override void DisposeImpl()
-		{
-			highlightCt.SafeCancelAndDispose();
-			deHighlightCt.SafeCancelAndDispose();
-			placesCts.SafeCancelAndDispose();
-			homeMarker.Dispose();
-		}
+        internal void Initialize()
+        {
+            identityCache.OnIdentityChanged += RestoreHome;
+            identityCache.OnIdentityCleared += RestoreHome;
 
-		public static Vector2Int? Deserialize()
-		{
-			if (!HasSerializedPosition())
-				return null;
+            RestoreHome();
+        }
 
-			return DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, Vector2Int.zero);
-		}
+        protected override void DisposeImpl()
+        {
+            identityCache.OnIdentityChanged -= RestoreHome;
+            identityCache.OnIdentityCleared -= RestoreHome;
 
-		public static bool HasSerializedPosition() => DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+            highlightCt.SafeCancelAndDispose();
+            deHighlightCt.SafeCancelAndDispose();
+            placesCts.SafeCancelAndDispose();
+            homeMarker.Dispose();
+        }
 
-		public static string? DeserializeWorldName()
-		{
-			if (!HasSerializedWorldName())
-				return null;
+        /// <summary>
+        ///     The account whose home applies before sign-in: the session restored from the previous run or, when that
+        ///     session has already expired, the last account the map loaded a home for. The account-less home of earlier
+        ///     releases is adopted by it.
+        /// </summary>
+        public static string? ResolveStartupAccount(IWeb3IdentityCache identityCache)
+        {
+            string? account = AccountOf(identityCache);
 
-			return DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME);
-		}
+            if (account == null && DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT))
+                account = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT);
 
-		public static bool HasSerializedWorldName()
-		{
-			if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
-				return false;
+            if (!string.IsNullOrEmpty(account))
+                AdoptLegacyHome(account);
 
-			string value = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME);
-			return !string.IsNullOrEmpty(value);
-		}
+            return string.IsNullOrEmpty(account) ? null : account;
+        }
 
-		public static bool HasSerializedHome() => HasSerializedWorldName() || HasSerializedPosition();
+        public static Vector2Int? Deserialize(string? account)
+        {
+            if (account == null)
+                return null;
 
-		internal static void Serialize(Vector2Int? coordinates)
-		{
-			if (!coordinates.HasValue)
-			{
-				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
-				return;
-			}
+            string key = PositionKey(account);
 
-			DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, coordinates.Value);
-		}
+            return DCLPlayerPrefs.HasVectorKey(key) ? DCLPlayerPrefs.GetVector2Int(key, Vector2Int.zero) : null;
+        }
 
-		internal static void SerializeWorldName(string? worldName)
-		{
-			if (string.IsNullOrEmpty(worldName))
-			{
-				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
-				return;
-			}
+        public static bool HasSerializedPosition(string? account) =>
+            account != null && DCLPlayerPrefs.HasVectorKey(PositionKey(account));
 
-			DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_WORLD_NAME, worldName);
-		}
+        public static string? DeserializeWorldName(string? account)
+        {
+            if (account == null)
+                return null;
 
-		public void SetMarker(Vector2Int? coordinates)
-		{
-			homeMarker.SetActive(coordinates.HasValue);
-			CurrentCoordinates = coordinates;
-			CurrentWorldName = null;
+            string key = WorldNameKey(account);
 
-			if (CurrentCoordinates.HasValue)
-				homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(CurrentCoordinates.Value));
+            if (!DCLPlayerPrefs.HasKey(key))
+                return null;
 
-			Serialize(CurrentCoordinates);
-			SerializeWorldName(null);
-			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates, null));
-		}
+            string value = DCLPlayerPrefs.GetString(key);
+            return string.IsNullOrEmpty(value) ? null : value;
+        }
 
-		public void SetWorldMarker(string? worldName)
-		{
-			homeMarker.SetActive(false);
-			CurrentCoordinates = null;
-			CurrentWorldName = worldName;
+        public static bool HasSerializedWorldName(string? account) =>
+            DeserializeWorldName(account) != null;
 
-			Serialize(null);
-			SerializeWorldName(worldName);
-			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(null, worldName));
-		}
+        public static bool HasSerializedHome(string? account) =>
+            HasSerializedWorldName(account) || HasSerializedPosition(account);
 
-		public UniTask InitializeAsync(CancellationToken cancellationToken) =>
-			UniTask.CompletedTask;
+        internal static void Serialize(string? account, Vector2Int? coordinates)
+        {
+            // Without an account there is nobody to keep the home for
+            if (account == null)
+                return;
 
-		public UniTask EnableAsync(CancellationToken cancellationToken)
-		{
-			if(HomeIsSet && !IsWorldHome)
-				homeMarker.SetActive(true);
+            if (!coordinates.HasValue)
+            {
+                DCLPlayerPrefs.DeleteVector2Key(PositionKey(account));
+                return;
+            }
 
-			return UniTask.CompletedTask;
-		}
+            DCLPlayerPrefs.SetVector2Int(PositionKey(account), coordinates.Value);
+        }
 
-		public UniTask Disable(CancellationToken cancellationToken)
-		{
-			homeMarker.SetActive(false);
+        internal static void SerializeWorldName(string? account, string? worldName)
+        {
+            if (account == null)
+                return;
 
-			mapCullingController.StopTracking(homeMarker);
+            if (string.IsNullOrEmpty(worldName))
+            {
+                DCLPlayerPrefs.DeleteKey(WorldNameKey(account));
+                return;
+            }
 
-			return UniTask.CompletedTask;
-		}
+            DCLPlayerPrefs.SetString(WorldNameKey(account), worldName);
+        }
 
-		public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
-		{
-			if (ZoomBlocked)
-				return;
+        public void SetMarker(Vector2Int? coordinates)
+        {
+            ApplyMarker(coordinates);
 
-			homeMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
-		}
+            string? account = AccountOf(identityCache);
+            Serialize(account, CurrentCoordinates);
+            SerializeWorldName(account, null);
+            analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates));
+        }
 
-		public void ResetToBaseScale()
-		{
-			homeMarker.ResetToBaseScale();
-		}
+        public void SetWorldMarker(string? worldName)
+        {
+            ApplyWorldMarker(worldName);
 
-		public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
-		{
-			mapMarker = null;
+            string? account = AccountOf(identityCache);
+            Serialize(account, null);
+            SerializeWorldName(account, worldName);
+            analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(null, worldName));
+        }
 
-			if (gameObject != homeMarker.MarkerObject.gameObject)
-				return false;
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
-			mapMarker = homeMarker;
-			highlightCt = highlightCt.SafeRestart();
-			homeMarker.AnimateSelectionAsync(highlightCt.Token);
-			return true;
-		}
+        public UniTask EnableAsync(CancellationToken cancellationToken)
+        {
+            if (HomeIsSet && !IsWorldHome)
+                homeMarker.SetActive(true);
 
-		public bool TryDeHighlightObject(GameObject gameObject)
-		{
-			if (gameObject != homeMarker.MarkerObject.gameObject)
-				return false;
+            return UniTask.CompletedTask;
+        }
 
-			deHighlightCt = deHighlightCt.SafeRestart();
-			homeMarker.AnimateDeSelectionAsync(deHighlightCt.Token);
-			return true;
-		}
+        public UniTask Disable(CancellationToken cancellationToken)
+        {
+            homeMarker.SetActive(false);
 
-		public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
-		{
-			mapRenderMarker = null;
+            mapCullingController.StopTracking(homeMarker);
 
-			if (gameObject != homeMarker.MarkerObject.gameObject)
-				return false;
+            return UniTask.CompletedTask;
+        }
 
-			DisplayPlacesInfoPanelAsync(CurrentCoordinates).Forget();
-			return true;
-		}
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
+        {
+            if (ZoomBlocked)
+                return;
 
-		internal async UniTask DisplayPlacesInfoPanelAsync(Vector2Int? coords)
-		{
-			if (!coords.HasValue)
-				return;
+            homeMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+        }
 
-			try
-			{
-				placesCts = placesCts.SafeRestart();
-				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(coords.Value, placesCts.Token)
-				                                  ?? new PlacesData.PlaceInfo(coords.Value);
-				if (placesCts.IsCancellationRequested)
-					return;
-				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value).Forget();
-			}
-			catch (OperationCanceledException _) { }
-			catch (Exception e)
-			{
-				ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerController: Error while fetching place info" + e);
-			}
+        public void ResetToBaseScale()
+        {
+            homeMarker.ResetToBaseScale();
+        }
 
-		}
-	}
+        public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
+        {
+            mapMarker = null;
+
+            if (gameObject != homeMarker.MarkerObject.gameObject)
+                return false;
+
+            mapMarker = homeMarker;
+            highlightCt = highlightCt.SafeRestart();
+            homeMarker.AnimateSelectionAsync(highlightCt.Token);
+            return true;
+        }
+
+        public bool TryDeHighlightObject(GameObject gameObject)
+        {
+            if (gameObject != homeMarker.MarkerObject.gameObject)
+                return false;
+
+            deHighlightCt = deHighlightCt.SafeRestart();
+            homeMarker.AnimateDeSelectionAsync(deHighlightCt.Token);
+            return true;
+        }
+
+        public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
+        {
+            mapRenderMarker = null;
+
+            if (gameObject != homeMarker.MarkerObject.gameObject)
+                return false;
+
+            DisplayPlacesInfoPanelAsync(CurrentCoordinates).Forget();
+            return true;
+        }
+
+        internal async UniTask DisplayPlacesInfoPanelAsync(Vector2Int? coords)
+        {
+            if (!coords.HasValue)
+                return;
+
+            try
+            {
+                placesCts = placesCts.SafeRestart();
+
+                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(coords.Value, placesCts.Token)
+                                                 ?? new PlacesData.PlaceInfo(coords.Value);
+
+                if (placesCts.IsCancellationRequested)
+                    return;
+
+                navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value).Forget();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerController: Error while fetching place info" + e);
+            }
+        }
+
+        /// <summary>
+        ///     Shows the home persisted for the signed-in account without writing it back or announcing a change.
+        /// </summary>
+        private void RestoreHome()
+        {
+            string? account = AccountOf(identityCache);
+
+            if (account != null)
+            {
+                AdoptLegacyHome(account);
+                DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_LAST_ACCOUNT, account);
+            }
+
+            string? worldName = DeserializeWorldName(account);
+
+            if (!string.IsNullOrEmpty(worldName))
+                ApplyWorldMarker(worldName);
+            else
+                ApplyMarker(Deserialize(account));
+        }
+
+        private void ApplyMarker(Vector2Int? coordinates)
+        {
+            homeMarker.SetActive(coordinates.HasValue);
+            CurrentCoordinates = coordinates;
+            CurrentWorldName = null;
+
+            if (CurrentCoordinates.HasValue)
+                homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(CurrentCoordinates.Value));
+        }
+
+        private void ApplyWorldMarker(string? worldName)
+        {
+            homeMarker.SetActive(false);
+            CurrentCoordinates = null;
+            CurrentWorldName = worldName;
+        }
+
+        /// <summary>
+        ///     Moves the account-less home written by earlier releases under the given account, unless that account already
+        ///     has one, and removes the old keys so no later account inherits it.
+        /// </summary>
+        private static void AdoptLegacyHome(string account)
+        {
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY))
+            {
+                string legacyWorldName = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+
+                if (!string.IsNullOrEmpty(legacyWorldName) && !HasSerializedHome(account))
+                    DCLPlayerPrefs.SetString(WorldNameKey(account), legacyWorldName);
+
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY);
+            }
+
+            if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY))
+            {
+                if (!HasSerializedHome(account))
+                    DCLPlayerPrefs.SetVector2Int(PositionKey(account), DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY, Vector2Int.zero));
+
+                DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA_LEGACY);
+            }
+        }
+
+        private static string? AccountOf(IWeb3IdentityCache identityCache) =>
+            identityCache.Identity is { } identity ? identity.Address.ToString() : null;
+
+        private static string PositionKey(string account) =>
+            string.Format(DCLPrefKeys.MAP_HOME_MARKER_DATA, account);
+
+        private static string WorldNameKey(string account) =>
+            string.Format(DCLPrefKeys.MAP_HOME_WORLD_NAME, account);
+    }
 }

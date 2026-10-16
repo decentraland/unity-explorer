@@ -1,4 +1,5 @@
 using DCL.Audio;
+using System;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,5 +30,12 @@ namespace DCL.CharacterPreview
         public AudioClipConfig ZoomInAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig ZoomOutAudio { get; private set; }
+
+        public event Action? RectDimensionsChanged;
+
+        private void OnRectTransformDimensionsChange()
+        {
+            RectDimensionsChanged?.Invoke();
+        }
     }
 }

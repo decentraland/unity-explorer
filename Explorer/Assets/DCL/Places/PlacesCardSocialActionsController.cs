@@ -11,11 +11,11 @@ using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Places
@@ -180,7 +180,6 @@ namespace DCL.Places
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
                 realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldServer))),
                     ct,
-                    default,
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else
@@ -192,7 +191,7 @@ namespace DCL.Places
         public void SharePlace(PlacesData.PlaceInfo placeInfo)
         {
             var description = string.Format(TWITTER_PLACE_DESCRIPTION, placeInfo.title);
-            var twitterLink = string.Format(dclUrlSource.Url(DecentralandUrl.TwitterNewPostLink), description, "DCLPlace", GetPlaceCopyLink(placeInfo));
+            var twitterLink = string.Format(dclUrlSource.Url(DecentralandUrl.TwitterNewPostLink), description, "DCLPlace", ShareLinkUtilities.AsQueryParameterValue(GetPlaceCopyLink(placeInfo)));
 
             webBrowser.OpenUrlMainThreadOnly(twitterLink);
 
@@ -211,11 +210,11 @@ namespace DCL.Places
         private string GetPlaceCopyLink(PlacesData.PlaceInfo place)
         {
             if (!string.IsNullOrEmpty(place.world_name))
-                return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInWorldLink), place.world_name);
+                return ShareLinkUtilities.WithReferrer(string.Format(dclUrlSource.Url(DecentralandUrl.JumpInWorldLink), place.world_name));
 
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
 
-            return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y);
+            return ShareLinkUtilities.WithReferrer(string.Format(dclUrlSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y));
         }
 
         public void StartNavigationToPlace(PlacesData.PlaceInfo placeInfo)

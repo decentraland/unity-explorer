@@ -11,6 +11,8 @@ namespace Global.AppArgs
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
         public const string SKIP_MINIMUM_SPECS_SCREEN = "skip-minimum-specs-screen";
 
+        public const string FORCE_SINGLE_SCENE_MODE = "force-single-scene-mode";
+
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
@@ -87,6 +89,9 @@ namespace Global.AppArgs
         public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
+
+        /// <summary>Comma-separated wearable URNs rendered on the own avatar without owning them. Suppresses profile deploys for the session.</summary>
+        public const string FORCED_WEARABLES = "self-force-wearables";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
@@ -135,6 +140,12 @@ namespace Global.AppArgs
 
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
 
+        public const string GUEST_LOGIN = "guest-login";
+
+        public const string LOBBY = "lobby";
+
+        public const string EPHEMERAL_GUEST_ACCOUNT = "ephemeral-guest-account";
+
         public const string AVATAR_HIGHLIGHT = "avatar-highlight";
 
         public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";
@@ -145,8 +156,6 @@ namespace Global.AppArgs
         public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
 
         public const string DOUBLE_JUMP = "double-jump";
-
-        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
 
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
@@ -190,6 +199,14 @@ namespace Global.AppArgs
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
 
+        /// <summary>
+        ///     Presence forces LOD bundles and ISS descriptors onto the abgen LOD source (abgen-cdn) without waiting
+        ///     for the abgen-lods feature flag. Pair it with <see cref="ABGEN_PIPELINE" />: abgen publishes no LOD_0,
+        ///     level 0 comes from the ISS path instead, and both the descriptor's assets and the manifest that gates
+        ///     it on v49+ are resolved by the pipeline flip.
+        /// </summary>
+        public const string ABGEN_LODS = "abgen-lods";
+
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
         public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
@@ -208,6 +225,7 @@ namespace Global.AppArgs
         {
             public const string URL = "feature-flags-url";
             public const string HOSTNAME = "feature-flags-hostname";
+            public const string USER_ID = "feature-flags-user-id";
         }
 
         public static class Analytics

@@ -58,6 +58,28 @@ namespace Global.AppArgs.Tests
             Assert.True(args.HasDebugFlag(false), $"flags in args: {string.Join(", ", args.Flags())}");
         }
 
+        [TestCase("--realm", "https://peer.decentraland.org")]
+        [TestCase("--position", "10,20")]
+        public void ReportALaunchDestinationFromTheCommandLine(string flag, string value)
+        {
+            IAppArgs args = new ApplicationParametersParser(false, flag, value);
+            Assert.True(args.HasLaunchDestination(), $"flags in args: {string.Join(", ", args.Flags())}");
+        }
+
+        [Test]
+        public void ReportALaunchDestinationFromADeepLink()
+        {
+            IAppArgs args = new ApplicationParametersParser(false, "decentraland://?position=1,2");
+            Assert.True(args.HasLaunchDestination(), $"flags in args: {string.Join(", ", args.Flags())}");
+        }
+
+        [Test]
+        public void ReportNoLaunchDestinationWithoutRealmOrPosition()
+        {
+            Assert.False(new ApplicationParametersParser(false).HasLaunchDestination());
+            Assert.False(new ApplicationParametersParser(false, "decentraland://?signin=abc-123&force-open-backpack=true").HasLaunchDestination(), "a sign-in or backpack link names no destination");
+        }
+
         [Test]
         public void DeepLinkDropsInternalFlags()
         {

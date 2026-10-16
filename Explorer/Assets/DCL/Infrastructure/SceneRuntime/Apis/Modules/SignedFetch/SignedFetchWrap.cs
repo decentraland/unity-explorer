@@ -247,6 +247,13 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     // Code on JS is likely to be stopped execution either way.
                     return FlatFetchResponse.Cancelled;
                 }
+                catch (InvalidOperationException e)
+                {
+                    // The request was refused before it was sent (e.g. a plain http URL): the scene asked for something
+                    // the player build does not allow, so it is reported as the scene's problem, not as a client exception
+                    ReportHub.LogWarning(GetReportData(), $"Signed fetch to '{request.url}' rejected: {e.Message}");
+                    throw;
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));
@@ -270,9 +277,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 parcel = $"{parcel.x},{parcel.y}",
                 tld = decentralandEnvironment,
                 network = "mainnet",
-
-                // TODO: support guest if required in the future
-                isGuest = false,
+                isGuest = identityCache.IsGuest(),
                 signer = "decentraland-kernel-scene",
 
                 // It is used for external servers to verify that the user is currently valid for that realm

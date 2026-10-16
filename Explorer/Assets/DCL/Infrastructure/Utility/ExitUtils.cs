@@ -172,8 +172,16 @@ namespace DCL.Utility
             ReportHub.LogProductionInfo($"[ExitUtils] CleanUpCandidates finished at {stopwatch.ElapsedMilliseconds}ms");
 
             // Flush save file only AFTER the candidates
-            DCLPlayerPrefs.SaveSync();
-            ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
+            try
+            {
+                DCLPlayerPrefs.SaveSync();
+                ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
+            }
+            catch (Exception e)
+            {
+                // A full disk or a locked prefs file must not keep the process alive: the quit below still has to be dispatched
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"[ExitUtils] DCLPlayerPrefs could not be flushed, quitting anyway: {e.Message}");
+            }
 
             // Reflection may drop the values. Reapply to be sure, and to move TryTerminateSelf back to the
             // last position in case anything subscribed to Application.quitting after the previous Apply().
@@ -260,10 +268,9 @@ namespace DCL.Utility
                 CloseHandle(handle);
             }
 #elif UNITY_STANDALONE_OSX
-            if (kill(pid, SIGKILL) != 0)
-            {
-                ReportHub.LogProductionInfo($"[ExitUtils] kill(SIGKILL) failed (errno {Marshal.GetLastWin32Error()})");
-            }
+            // hard self kill, always exits.
+            // more info: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/_exit.2.html
+            _exit(0);
 #endif
         }
 
@@ -281,11 +288,8 @@ namespace DCL.Utility
         private static extern bool CloseHandle(IntPtr hObject);
         
 #elif UNITY_STANDALONE_OSX
-
-        private const int SIGKILL = 9;
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int kill(int pid, int sig);
+        [DllImport("libc")]
+        private static extern void _exit(int status);
 
 #endif
 

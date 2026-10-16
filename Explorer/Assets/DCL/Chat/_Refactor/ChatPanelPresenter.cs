@@ -79,7 +79,8 @@ namespace DCL.Chat
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IMVCManager mvcManager)
         {
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
@@ -100,7 +101,9 @@ namespace DCL.Chat
                 view.JoinCommunityLiveStreamSubTitleButton,
                 voiceChatOrchestrator,
                 currentChannelService.CurrentChannelProperty,
-                communityDataProvider);
+                communityDataProvider,
+                web3IdentityCache,
+                mvcManager);
 
 
             var titleBarPresenter = new ChatTitlebarPresenter(
@@ -118,7 +121,10 @@ namespace DCL.Chat
                 voiceChatOrchestrator,
                 chatEventBus,
                 chatCommandRegistry.GetUserCallStatusCommand,
-                chatCommandRegistry.ToggleAutoTranslateCommand);
+                chatCommandRegistry.ToggleAutoTranslateCommand,
+                web3IdentityCache,
+                mvcManager,
+                profileCache);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
@@ -220,7 +226,10 @@ namespace DCL.Chat
                 chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
-                chatCommandRegistry.GetChannelMembersCommand);
+                chatCommandRegistry.GetChannelMembersCommand,
+                mvcManager,
+                web3IdentityCache,
+                chatHistory);
 
             SituationalReactionPresenter? situationalReactionPresenter = null;
             if (isChatReactionsEnabled)

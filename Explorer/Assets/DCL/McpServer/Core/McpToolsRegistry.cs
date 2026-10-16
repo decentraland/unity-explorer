@@ -9,6 +9,7 @@ namespace DCL.McpServer.Core
     public class McpToolsRegistry
     {
         private readonly Dictionary<string, McpTool> tools = new ();
+        private readonly Dictionary<string, string[]> argumentNames = new ();
         private string toolsListJson = null!;
 
         /// <summary>
@@ -21,7 +22,27 @@ namespace DCL.McpServer.Core
         public McpToolsRegistry Add(McpTool tool)
         {
             tools.Add(tool.Name, tool);
+            argumentNames.Add(tool.Name, DeclaredArgumentNames(tool));
             return this;
+        }
+
+        /// <summary>
+        ///     The argument names the tool's input schema declares. Captured at registration because
+        ///     <see cref="McpTool.InputSchema" /> is rebuilt on every read.
+        /// </summary>
+        public string[] ArgumentNames(string toolName) =>
+            argumentNames[toolName];
+
+        private static string[] DeclaredArgumentNames(McpTool tool)
+        {
+            var properties = (JObject)tool.InputSchema["properties"]!;
+            var names = new string[properties.Count];
+            var i = 0;
+
+            foreach (JProperty property in properties.Properties())
+                names[i++] = property.Name;
+
+            return names;
         }
 
         public McpToolsRegistry Build()

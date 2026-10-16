@@ -27,7 +27,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
         private readonly DCLSemaphoreSlim semaphore = new ();
 
-        private bool disposed;
+        // Written by the main thread, read by the scene thread
+        private volatile bool disposed;
 
         public IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap => entitiesMap;
 
@@ -45,10 +46,14 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public void Dispose()
         {
+            // Flagged first so a buffer the scene thread is about to apply is discarded instead of hitting the freed world
+            // Flagged first so a buffer the scene thread is about to apply is discarded instead of hitting the freed world;
+            // the field is volatile, so the scene thread observes the write without an explicit fence
+            disposed = true;
+
             reusableCommandBuffer.Dispose();
             semaphore.Dispose();
             collectionsPool.Dispose();
-            disposed = true;
         }
 
         public IWorldSyncCommandBuffer GetSyncCommandBuffer()
@@ -80,15 +85,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 else
                     syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             }
-            finally
-            {
-#if !UNITY_WEBGL
-                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
-                // including the disposed early-return and any exception thrown by Apply,
-                // otherwise the slot leaks and subsequent Rents time out forever.
-                semaphore.Release();
-#endif
-            }
+            finally { ReleaseRentSlot(); }
         }
 
         public void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
@@ -97,14 +94,23 @@ namespace CrdtEcsBridge.WorldSynchronizer
             {
                 syncCommandBuffer.Dispose();
             }
-            finally
-            {
+            finally { ReleaseRentSlot(); }
+        }
+
+        /// <summary>
+        ///     Pairs with the semaphore wait in <see cref="GetSyncCommandBuffer" />; must run on every path,
+        ///     including the disposed early-return and any exception thrown by Apply or Dispose,
+        ///     otherwise the slot leaks and subsequent rents time out forever.
+        /// </summary>
+        private void ReleaseRentSlot()
+        {
 #if !UNITY_WEBGL
-                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release even if Dispose throws,
-                // otherwise the slot leaks and subsequent Rents time out forever.
-                semaphore.Release();
-#endif
+            try { semaphore.Release(); }
+            catch (ObjectDisposedException)
+            {
+                // The scene thread was finishing its last buffer while the main thread disposed this synchronizer: nothing rents again
             }
+#endif
         }
     }
 }

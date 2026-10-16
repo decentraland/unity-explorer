@@ -7,10 +7,12 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Prefs;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -44,7 +46,7 @@ namespace DCL.MarketplaceCredits
 
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
@@ -76,7 +78,7 @@ namespace DCL.MarketplaceCredits
             UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             Animator sidebarCreditsButtonAnimator,
@@ -302,6 +304,12 @@ namespace DCL.MarketplaceCredits
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)));
+                return;
+            }
+
             if (!isFeatureActivated)
                 return;
 
@@ -320,8 +328,11 @@ namespace DCL.MarketplaceCredits
             {
                 await UniTask.WaitUntil(() => sidebarButton.gameObject.activeInHierarchy, cancellationToken: ct);
                 await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile == null)
+
+                if (web3IdentityCache.IsGuest())
+                    return;
+
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
                 isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);

@@ -14,6 +14,7 @@ using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
@@ -35,7 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Arch.Core.World world;
         private readonly IWearableStorage wearableStorage;
@@ -54,7 +55,7 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Arch.Core.World world,
             IWearableStorage wearableStorage)
@@ -120,10 +121,15 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(creditsTopUpModalController);
         }
 
-        private UniTask OpenGetCreditsPanelAsync(CancellationToken ct) =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
+        private UniTask OpenGetCreditsPanelAsync(CancellationToken ct)
+        {
+            if (web3IdentityCache.IsGuest())
+                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct);
+
+            return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)
                 : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
+        }
 
         private UniTask OpenBackpackPanelAsync(CancellationToken ct) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)), ct);

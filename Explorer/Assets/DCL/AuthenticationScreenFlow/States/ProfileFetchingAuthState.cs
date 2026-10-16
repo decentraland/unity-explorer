@@ -24,7 +24,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ProfileFetchingAuthView view;
         private Exception? profileFetchException;
@@ -34,7 +34,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWeb3IdentityCache identityCache) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
@@ -53,7 +53,7 @@ namespace DCL.AuthenticationScreenFlow
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsCached, payload.Ct).Forget();
+            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsRestoredSession, payload.Ct).Forget();
         }
 
         public override void Exit()
@@ -69,11 +69,12 @@ namespace DCL.AuthenticationScreenFlow
                                     OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
                                     ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
                                     NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
+                                    ProfileFetchFailedException ex => new SpanErrorInfo($"Profile fetch failed during {nameof(ProfileFetchingAuthState)}", ex),
                                     TimeoutException ex => new SpanErrorInfo($"Profile fetch timed out during {nameof(ProfileFetchingAuthState)}", ex),
                                     { } ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
-                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)
+                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException and not ProfileFetchFailedException)
                     ReportHub.LogException(profileFetchException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
@@ -81,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
@@ -92,93 +93,85 @@ namespace DCL.AuthenticationScreenFlow
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isRestoredSession ? "restored" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.RestrictedUser);
             }
             else
             {
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
+                currentState.Value = isRestoredSession ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
 
                 try
                 {
                     SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "ProfileFetchingCached" : "ProfileFetching",
+                        SpanName = isRestoredSession ? "ProfileFetchingCached" : "ProfileFetching",
                         SpanOperation = "auth.profile_fetching",
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    if (await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct) is { } profile)
+                    ProfileReadResult read = await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct);
+
+                    if (read.IsOk(out Profile? profile))
                     {
-                        // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
-                        profile.IsDirty = true;
-                        // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-                        profile.HasConnectedWeb3 = true;
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                        if (controller.SkipExistingAccountLobby)
+                            controller.CompleteExistingAccountLogin(profile, isRestoredSession);
+                        else
+                            machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isRestoredSession, ct));
                     }
-                    else if (isCached)
+                    else if (read.IsError(out ProfileReadError error) && error == ProfileReadError.NotFound)
                     {
-                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and return to login selection.
-                        identityCache.Clear();
-                        profileFetchException = new ProfileNotFoundException();
-                        machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                        if (isRestoredSession)
+                        {
+                            // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
+                            identityCache.Clear();
+                            profileFetchException = new ProfileNotFoundException();
+                            controller.ReturnToOrigin(SLIDE);
+                        }
+                        else
+                        {
+                            profile = CreateRandomProfile(identity);
+                            machine.Enter<SelectAvatarForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        }
+                    }
+                    else if (error == ProfileReadError.Cancelled && ct.IsCancellationRequested)
+                    {
+                        profileFetchException = new OperationCanceledException(ct);
+                        controller.ReturnToOrigin(SLIDE);
                     }
                     else
                     {
-                        profile = CreateRandomProfile(identity.Address.ToString());
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        profileFetchException = error switch
+                                                {
+                                                    ProfileReadError.Cancelled => new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s"),
+                                                    ProfileReadError.FetchFailed => new ProfileFetchFailedException(),
+                                                    _ => new InvalidOperationException($"Own profile read failed: {error}"),
+                                                };
+
+                        controller.ReturnToOrigin(ErrorType.ConnectionError);
                     }
-                }
-                catch (OperationCanceledException e)
-                {
-                    profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
-                }
-                catch (ProfileNotFoundException e)
-                {
-                    profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
-                }
-                catch (TimeoutException e)
-                {
-                    profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
                 catch (Exception e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
             }
         }
 
-        /// <summary>
-        ///     Runs the fetch under a linked token so a timeout cancels the underlying request. Timeout throws
-        ///     <see cref="TimeoutException" />; cancellation of <paramref name="ct" /> throws <see cref="OperationCanceledException" />.
-        /// </summary>
-        internal static async UniTask<Profile?> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
+        /// <summary>Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with <paramref name="ct" /> not cancelled.</summary>
+        internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(SelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);
 
-            if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
-                return profile;
-
-            // The repository suppresses cancellation into a null profile; rethrow external cancellation as OCE
-            // so it is not misread as "no deployed profile"
-            ct.ThrowIfCancellationRequested();
-
-            if (timeoutCts.IsCancellationRequested)
-                throw new TimeoutException($"Profile fetch timed out after {timeout.TotalSeconds:F0}s");
-
-            return null; // genuine "no deployed profile"
+            return await selfProfile.ProfileAsync(timeoutCts.Token);
         }
 
-        private Profile CreateRandomProfile(string identityAddress)
+        private Profile CreateRandomProfile(IWeb3Identity identity)
         {
-            var profile = Profile.NewRandomProfile(identityAddress);
+            var profile = Profile.NewRandomProfile(identity.Address.ToString());
             profile.HasClaimedName = false;
             profile.Description = string.Empty;
             profile.Country = string.Empty;
@@ -193,8 +186,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
             profile.Version = 0;
-
-            profile.HasConnectedWeb3 = true;
+            profile.HasConnectedWeb3 = !identity.IsGuest();
             profile.IsDirty = true;
 
             return profile;
@@ -223,22 +215,22 @@ namespace DCL.AuthenticationScreenFlow
     {
         public readonly string Email;
         public readonly IWeb3Identity Identity;
-        public readonly bool IsCached;
+        public readonly bool IsRestoredSession;
         public CancellationToken Ct;
 
-        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = email;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
 
-        public ProfileFetchingPayload(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        public ProfileFetchingPayload(IWeb3Identity identity, bool isRestoredSession, CancellationToken ct)
         {
             this.Email = string.Empty;
             this.Identity = identity;
-            this.IsCached = isCached;
+            this.IsRestoredSession = isRestoredSession;
             this.Ct = ct;
         }
     }

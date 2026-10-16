@@ -46,6 +46,11 @@ ShaderVariantCollection:
       variants:
       - keywords: SOFTMASKABLE
         passType: 0
+  - first: {fileID: 4800000, guid: 33e06cd3c50064f30a691b600fc62f3f, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

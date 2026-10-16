@@ -15,11 +15,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UITransformParentingSystemShould : UnitySystemTestBase<UITransformParentingSystem>
     {
         private Dictionary<CRDTEntity, Entity> entitiesMap = null!;
+        private Entity sceneRoot;
 
         [SetUp]
         public void SetUp()
         {
-            system = new UITransformParentingSystem(world, entitiesMap = new Dictionary<CRDTEntity, Entity>(), world.Create(new SceneRootComponent()));
+            sceneRoot = world.Create(new SceneRootComponent());
+            system = new UITransformParentingSystem(world, entitiesMap = new Dictionary<CRDTEntity, Entity>(), sceneRoot);
         }
 
         [Test]
@@ -46,6 +48,50 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             Assert.That(parentUiTransformComponent.RelationData.ContainsNode(childSdkEntity), Is.False);
             Assert.That(parentUiTransformComponent.RelationData.head, Is.Null);
+        }
+
+        [Test]
+        public void ReparentEveryChildOfADeletedEntityToTheSceneRoot()
+        {
+            // Arrange - the scene root can take children, and a parent with two children is being deleted
+            var sceneRootComponent = new UITransformComponent();
+            sceneRootComponent.InitializeAsRoot(new VisualElement());
+            world.Add(sceneRoot, sceneRootComponent);
+
+            var parentComponent = new UITransformComponent();
+            parentComponent.InitializeAsRoot(new VisualElement());
+            var parentSdkEntity = new CRDTEntity(100);
+            Entity parentEntity = world.Create(parentSdkEntity, parentComponent, new PBUiTransform(), new DeleteEntityIntention());
+            entitiesMap[parentSdkEntity] = parentEntity;
+
+            UITransformComponent childA = CreateAttachedChild(200, 0, parentEntity, parentComponent);
+            UITransformComponent childB = CreateAttachedChild(300, 200, parentEntity, parentComponent);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(childA.RelationData.parent, Is.EqualTo(sceneRoot));
+            Assert.That(childB.RelationData.parent, Is.EqualTo(sceneRoot));
+            Assert.That(sceneRootComponent.ContentContainer.Contains(childA.Transform), Is.True);
+            Assert.That(sceneRootComponent.ContentContainer.Contains(childB.Transform), Is.True);
+            Assert.That(sceneRootComponent.RelationData.ContainsNode(new CRDTEntity(200)), Is.True);
+            Assert.That(sceneRootComponent.RelationData.ContainsNode(new CRDTEntity(300)), Is.True);
+            Assert.That(parentComponent.RelationData.ContainsNode(new CRDTEntity(200)), Is.False);
+            Assert.That(parentComponent.RelationData.ContainsNode(new CRDTEntity(300)), Is.False);
+        }
+
+        private UITransformComponent CreateAttachedChild(int crdtId, int rightOf, Entity parentEntity, UITransformComponent parentComponent)
+        {
+            var childSdkEntity = new CRDTEntity(crdtId);
+            var childComponent = new UITransformComponent();
+            childComponent.InitializeAsChild("Child", childSdkEntity, new CRDTEntity(rightOf));
+            Entity childEntity = world.Create(childSdkEntity, childComponent, new PBUiTransform());
+            entitiesMap[childSdkEntity] = childEntity;
+
+            parentComponent.RelationData.AddChild(parentEntity, childSdkEntity, ref childComponent.RelationData);
+            parentComponent.ContentContainer.Add(childComponent.Transform);
+            return childComponent;
         }
 
         [Test]

@@ -1,6 +1,7 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem;
 using DCL.SDKComponents.ParticleSystem.Systems;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
@@ -79,6 +80,21 @@ namespace DCL.ParticleSystem.Tests
             system.Update(0);
 
             Assert.IsTrue(testParticleSystem.isStopped);
+        }
+
+        [Test]
+        public void SkipReleasedInstancesWhenStoppingAllOnSceneLeave()
+        {
+            // Regression coverage for https://github.com/decentraland/unity-explorer/issues/10044: the pooled instance is released while the component still sits on the entity.
+            var doomedGameObject = new GameObject("DoomedPS");
+            var doomedParticleSystem = doomedGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var doomedComponent = new ParticleSystemComponent(doomedParticleSystem, doomedGameObject);
+            var pb = new PBParticleSystem { IsDirty = true };
+
+            world.Create(pb, doomedComponent, new DeleteEntityIntention());
+            Object.DestroyImmediate(doomedGameObject);
+
+            Assert.DoesNotThrow(() => system.OnSceneIsCurrentChanged(false));
         }
 
         [Test]

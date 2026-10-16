@@ -96,9 +96,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, ct);
+            await core.InitializeFeatureFlagsAsync(decentralandUrlsSource, ct);
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
@@ -168,9 +168,9 @@ namespace Global.Dynamic
             });
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
+            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache, identityCache);
 
             //No analytics to track on this step
         }

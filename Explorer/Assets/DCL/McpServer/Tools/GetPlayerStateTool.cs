@@ -66,7 +66,7 @@ namespace DCL.McpServer.Tools
             {
                 ["position"] = position.ToVector(),
                 ["rotationEuler"] = characterTransform.Rotation.eulerAngles.ToVector(),
-                ["parcel"] = position.ToParcel().ToParcel(),
+                ["parcel"] = position.ToParcel().ToParcelJson(),
                 ["velocity"] = (rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero).ToVector(),
                 ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
                 ["isPlayerStandingOnScene"] = currentSceneInfo.IsPlayerStandingOnScene,

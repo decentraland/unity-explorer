@@ -8,5 +8,6 @@ namespace DCL.CharacterPreview
         public static readonly Vector3 AUTH_SCREEN_PREVIEW_POSITION = new (0, 6000, 0);
         public static readonly Vector3 PASSPORT_PREVIEW_POSITION = new (0, 7000, 0);
         public static readonly Vector3 CREDIT_PURCHASE_PREVIEW_POSITION = new (0, 8000, 0);
+        public static readonly Vector3 LOBBY_PREVIEW_POSITION = new (0, 9000, 0);
     }
 }

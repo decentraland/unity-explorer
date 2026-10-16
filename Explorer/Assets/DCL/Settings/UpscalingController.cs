@@ -1,98 +1,69 @@
-using DCL.Platforms;
+using DCL.CharacterPreview;
 using DCL.Quality.Runtime;
-using UnityEngine;
+using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using MVC;
 
 namespace DCL.Utilities
 {
-    public class UpscalingController
+    /// <summary>
+    ///     Applies the user's Resolution Scale and forces 100% while anything renders into a transparent RenderTexture.
+    /// </summary>
+    public class UpscalingController : IDisposable
     {
-        private const float STP_VALUE_FOR_UI_OPEN = 1f;
-        private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
-        private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
-        private const float STP_MID_RESOLUTION_MAC = 0.6f;
-        private const float STP_MID_RESOLUTION_WINDOWS = 1f;
+        private const float FULL_RENDER_SCALE = 1f;
 
-        private readonly float highResolutionPreset;
-        private readonly float midResolutionPreset;
-        private readonly IMVCManager mvcManager;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
-        private float savedUpscalingDuringUIOpen;
-        private bool ignoreFirstResolutionChange;
-        private int currentUIOpened;
+        // Keyed by owner so a release without a require, or a repeated require, cannot unbalance the override.
+        private readonly HashSet<object> fullRenderScaleRequesters = new ();
 
-        public UpscalingController(IMVCManager mvcManager)
+        private float savedUserRenderScale;
+
+        public UpscalingController(CharacterPreviewEventBus characterPreviewEventBus)
         {
-            this.mvcManager = mvcManager;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            characterPreviewEventBus.OnAnyShownChangedEvent += OnAnyCharacterPreviewShownChanged;
+        }
 
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-            {
-                highResolutionPreset = STP_HIGH_RESOLUTION_WINDOWS;
-                midResolutionPreset = STP_MID_RESOLUTION_WINDOWS;
-            }
-            else
-            {
-                highResolutionPreset = STP_HIGH_RESOLUTION_MAC;
-                midResolutionPreset = STP_MID_RESOLUTION_MAC;
-            }
-
-            mvcManager.OnViewShowed += OnUIOpened;
-            mvcManager.OnViewClosed += OnUIClosed;
+        public void Dispose()
+        {
+            characterPreviewEventBus.OnAnyShownChangedEvent -= OnAnyCharacterPreviewShownChanged;
         }
 
         //Should always get in decimal form
         public void UpdateUpscaling(float newValue)
         {
-            if (currentUIOpened > 0)
-                savedUpscalingDuringUIOpen = newValue;
-            else { SetUpscaling(newValue, UpscalingFilterSelection.FSR); }
+            if (fullRenderScaleRequesters.Count > 0)
+                savedUserRenderScale = newValue;
+            else
+                URPSettingsApplier.ApplyUpscaling(newValue, UpscalingFilterSelection.FSR);
         }
 
-        private void OnUIClosed(IController controller)
+        public void RequireFullRenderScale(object requester)
         {
-            if (ShouldTriggerUpscalerChange(controller))
-            {
-                currentUIOpened--;
+            if (!fullRenderScaleRequesters.Add(requester) || fullRenderScaleRequesters.Count > 1) return;
 
-                if (currentUIOpened == 0)
-                    UpdateUpscaling(savedUpscalingDuringUIOpen);
-            }
+            savedUserRenderScale = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+
+            // FSR keeps running at 100% and writes alpha 1, which turns transparent render targets black.
+            URPSettingsApplier.ApplyUpscaling(FULL_RENDER_SCALE, UpscalingFilterSelection.Auto);
         }
 
-        private void OnUIOpened(IController controller)
+        public void ReleaseFullRenderScale(object requester)
         {
-            // Only trigger upscaler change for certain types of controllers
-            if (ShouldTriggerUpscalerChange(controller))
-            {
-                savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-                SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
-                currentUIOpened++;
-            }
+            if (!fullRenderScaleRequesters.Remove(requester) || fullRenderScaleRequesters.Count > 0) return;
+
+            UpdateUpscaling(savedUserRenderScale);
         }
 
-        private void SetUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
+        private void OnAnyCharacterPreviewShownChanged(bool anyShown)
         {
-            URPSettingsApplier.ApplyUpscaling(renderScale, filterSelection);
-        }
-
-        //This UIs should force an upscaling reset.
-        private bool ShouldTriggerUpscalerChange(IController controller)
-        {
-            string controllerTypeName = controller.GetType().Name;
-            return controllerTypeName.Contains("AuthenticationScreenController") ||
-                   controllerTypeName.Contains("ExplorePanelController") ||
-                   controllerTypeName.Contains("PassportController");
-        }
-
-        public void Dispose()
-        {
-            if (mvcManager != null)
-            {
-                mvcManager.OnViewShowed -= OnUIOpened;
-                mvcManager.OnViewClosed -= OnUIClosed;
-            }
+            if (anyShown)
+                RequireFullRenderScale(characterPreviewEventBus);
+            else
+                ReleaseFullRenderScale(characterPreviewEventBus);
         }
     }
 }

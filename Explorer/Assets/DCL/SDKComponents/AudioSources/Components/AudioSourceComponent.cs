@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -60,7 +61,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output)
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
         {
             if (AudioSource is { } audioSource)
                 return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);

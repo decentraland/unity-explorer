@@ -175,6 +175,76 @@ namespace UUAV.Tests
             );
         }
 
+        [UnityTest]
+        public IEnumerator HonourSeekIssuedWhileOpening()
+        {
+            // Arrange
+            UUAVPlayer player = CreatePlayer(out _);
+            var messages = new List<string>();
+            UUAVDebug.CopyRecentMessages(messages);
+            int seekErrorsBefore = CountSeekErrors(messages);
+
+            // Act: the consumer's order on a single frame, before the media is open
+            double target = Fixtures.BlueBandStartSeconds + 0.5;
+            player.OpenMedia(UrlFor(Fixtures.ToneColorBands));
+            player.Seek(target);
+            player.Play();
+            yield return Wait.ForState(player, UUAVState.Playing, OpenTimeout, "open + seek + play");
+            yield return AwaitClockRunning(player);
+
+            // Assert: the clock starts at the target instead of at 0 and reaching it later
+            Assert.That(
+                player.CurrentTime,
+                Is.GreaterThanOrEqualTo(target - SeekTolerance).And.LessThan(target + 1.5),
+                $"playback did not start at the seek target\n{Wait.Diagnostics(player)}"
+            );
+
+            UUAVDebug.CopyRecentMessages(messages);
+            Assert.That(CountSeekErrors(messages), Is.LessThanOrEqualTo(seekErrorsBefore), "the seek was rejected while the media was opening");
+        }
+
+        [UnityTest]
+        public IEnumerator HonourSeekIssuedWithPlayFromEnded()
+        {
+            // Arrange: run the fixture to its end
+            UUAVPlayer player = CreatePlayer(out _);
+            yield return OpenPlayAndAwaitPlaying(player, UrlFor(Fixtures.ToneColorBands));
+            yield return AwaitClockRunning(player);
+            player.Seek(Fixtures.DurationSeconds - 1.0);
+            yield return Wait.ForState(player, UUAVState.Ended, StateTimeout, "before restarting");
+
+            // Act: play first, then seek, as the consumer does
+            const double target = 2.5;
+            player.Play();
+            player.Seek(target);
+
+            // Assert: the restart lands on the seek target, not on 0
+            yield return Wait.Until(
+                () => player.State == UUAVState.Playing && player.CurrentTime < Fixtures.DurationSeconds - 0.5,
+                StateTimeout,
+                () => $"playback never restarted from ENDED\n{Wait.Diagnostics(player)}"
+            );
+            Assert.That(
+                player.CurrentTime,
+                Is.GreaterThanOrEqualTo(target - SeekTolerance).And.LessThan(target + 1.5),
+                $"the restart clobbered the seek target\n{Wait.Diagnostics(player)}"
+            );
+        }
+
+        private static int CountSeekErrors(List<string> messages)
+        {
+            var count = 0;
+            foreach (string message in messages)
+            {
+                if (message.StartsWith("E:") && message.Contains("seek failed"))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         private static IEnumerator AwaitSeekConverged(UUAVPlayer player, double target)
         {
             yield return Wait.Until(

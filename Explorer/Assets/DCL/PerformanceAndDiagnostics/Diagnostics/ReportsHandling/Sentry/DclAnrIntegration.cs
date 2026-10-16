@@ -180,7 +180,7 @@ namespace DCL.Diagnostics.Sentry
             var exception = new DclApplicationNotRespondingException(message, loadingStage);
 #endif
 
-            exception.SetSentryMechanism(MECHANISM, "Main thread unresponsive.", false);
+            exception.SetSentryMechanism(MECHANISM, "Main thread unresponsive.", handled: true);
             OnApplicationNotResponding.Invoke(this, exception);
         }
     }

@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;
 using Decentraland.Common;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
@@ -91,7 +93,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    ApplyPointLight(pbLightSource, lightSourceInstance);
+                    ApplyPointLight(lightSourceInstance);
                     break;
             }
 
@@ -109,7 +111,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 light.spotAngle = pbLightSource.Spot.OuterAngle;
         }
 
-        private static void ApplyPointLight(PBLightSource pbLightSource, Light light)
+        private static void ApplyPointLight(Light light)
         {
             light.type = LightType.Point;
         }
@@ -168,6 +170,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
             var promise = lightSourceComponent.Cookie.LoadingPromise;
@@ -179,10 +182,25 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.Cookie.LoadingPromise = null;
             lightSourceComponent.Cookie.SourceTextureData = texture.Asset;
 
+            if (!texture.Succeeded)
+            {
+                lightSourceComponent.LightSourceInstance.cookie = null;
+                return;
+            }
+
             switch (lightSourceComponent.LightSourceInstance.type)
             {
                 case LightType.Spot:
-                    lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+                    // Unity errors on a non-square spot cookie, and the texture comes from scene content.
+                    UnityEngine.Texture? spotCookie = texture.Asset;
+
+                    if (spotCookie != null && spotCookie.width != spotCookie.height)
+                    {
+                        ReportHub.LogWarning(GetReportCategory(), $"Spot Light cookie texture must be square, got {spotCookie.width}x{spotCookie.height}; cookie ignored");
+                        spotCookie = null;
+                    }
+
+                    lightSourceComponent.LightSourceInstance.cookie = spotCookie;
                     break;
 
                 case LightType.Point:

@@ -6,7 +6,6 @@ using DCL.Audio;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -14,6 +13,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Profiles.Helpers;
 using ECS.SceneLifeCycle;
 using DCL.VoiceChat;
+using DCL.Web3.Identities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
@@ -64,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly VolumeBus volumeBus;
+        private readonly IWeb3IdentityCache identityCache;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -83,7 +84,7 @@ namespace DCL.PluginSystem.Global
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private VoiceChatConfiguration voiceChatConfiguration;
+        private VoiceChatConfiguration? voiceChatConfiguration;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -106,12 +107,14 @@ namespace DCL.PluginSystem.Global
             NearbyVoiceTipView nearbyVoiceTipView,
             VolumeBus volumeBus,
             IUserBlockingCache userBlockingCache,
+            IWeb3IdentityCache identityCache,
             NearbyMuteService? nearbyMuteService = null,
             NearbyVoiceChatStateModel? nearbyStateModel = null)
         {
             this.nearbyMuteService = nearbyMuteService;
             this.nearbyStateModel = nearbyStateModel;
             this.userBlockingCache = userBlockingCache;
+            this.identityCache = identityCache;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -163,10 +166,16 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "VOICE CHAT!");
             AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
-            audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
-            AudioSettings.Reset(audioConfig);
+
+            // Fix ANR: Reset tears the audio manager down and rebuilds it, which waits on every pending
+            // async load and re-enumerates the output devices. The project already requests 48 kHz, so
+            // most machines were paying that for a no-op.
+            if (audioConfig.sampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
+            {
+                audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
+                AudioSettings.Reset(audioConfig);
+            }
 
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
 
@@ -236,6 +245,9 @@ namespace DCL.PluginSystem.Global
 
                 var bannedPlayerWatcher = new NearbyVoiceBannedPlayerWatcher(roomHub, sceneRestrictionBusController, stateModel);
                 pluginScope.Add(bannedPlayerWatcher);
+
+                var guestWatcher = new NearbyVoiceGuestWatcher(identityCache, stateModel);
+                pluginScope.Add(guestWatcher);
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
 

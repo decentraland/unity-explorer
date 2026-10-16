@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3;
 
 namespace DCL.FeatureFlags
 {
@@ -8,7 +7,7 @@ namespace DCL.FeatureFlags
     {
         public const string APP_NAME = "explorer";
 
-        public Web3Address? UserId { get; set; }
+        public string? UserId { get; set; }
         public bool Debug { get; set; }
         public URLDomain URL { get; set; }
         /// <summary>

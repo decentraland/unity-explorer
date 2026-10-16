@@ -1,0 +1,68 @@
+/* Right-aligned and centred in the 100px header band */
+.lobby__top-bar {
+    position: absolute;
+    top: 27px;
+    right: var(--lobby-margin);
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* The credits and profile widgets are moved into the slots at runtime; a slot is only as big as what it holds */
+.lobby__top-bar-slot {
+    flex-direction: row;
+    margin-left: 10px;
+}
+
+/* The profile widget of the lobby shows the name alone, like the uGUI one whose wallet tag is disabled */
+.lobby__top-bar .profile-widget__address {
+    display: none;
+}
+
+.lobby__top-bar-button {
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-radius: 20px;
+    border-color: rgba(255, 255, 255, 0.03);
+    background-color: black;
+    transition: background-color 0.1s;
+}
+
+.lobby__top-bar-button:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__top-bar-button:active {
+    background-color: black;
+}
+
+.lobby__notifications-icon {
+    width: 22px;
+    height: 22px;
+    background-image: url('/Assets/Textures/Common/NotificationIcn.png');
+}
+
+.lobby__notifications-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: rgb(255, 45, 85);
+    font-size: 11px;
+    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby__close-icon {
+    width: 12px;
+    height: 12px;
+    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+}

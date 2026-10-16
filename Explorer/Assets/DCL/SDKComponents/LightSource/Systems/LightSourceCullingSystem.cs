@@ -5,8 +5,8 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ClearLightSourceCulling(ref LightSourceComponent lightSourceComponent)
         {
             lightSourceComponent.Index = -1;
@@ -53,6 +54,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ComputeDistanceToPlayer(in TransformComponent transform, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
@@ -73,6 +75,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CollectActiveLightSources([Data] ref NativeList<LightData> lightData, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
@@ -120,6 +123,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CullLightSources([Data] NativeArray<(int, int)> ranks, [Data] int maxLightCount, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             // Lights without an index are inactive

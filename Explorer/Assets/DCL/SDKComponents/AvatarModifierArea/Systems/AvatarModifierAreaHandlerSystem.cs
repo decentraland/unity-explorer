@@ -23,7 +23,8 @@ using Utility.Arch;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
-    [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
+    // Unthrottled so an area's destruction/removal is handled in the same frame it is flagged, while CurrentEntitiesInside still holds the hidden avatars (#10032).
+    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

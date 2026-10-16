@@ -305,6 +305,7 @@ namespace DCL.UI
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
+                { "source", "community_members_context_menu" },
             });
 
         private void OnDemoteSpeakerClicked(string walletId)

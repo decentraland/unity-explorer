@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Identities;
+using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,6 +30,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         // Long enough for the fetch timeout to fire and be observed
         private const float OBSERVATION_SECONDS = 16.5f;
 
+        private const string FAKE_WALLET = "0x0000000000000000000000000000000000000001";
+
         [UnityTest]
         public IEnumerator CancelStalledFetchOnTimeout() =>
             UniTask.ToCoroutine(async () =>
@@ -40,32 +44,13 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                 try
                 {
-                    AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
-
-                    var viewGo = new GameObject(nameof(ProfileFetchingAuthView));
-                    viewGo.transform.SetParent(root.transform);
-                    StubProfileFetchingAuthView fetchingView = viewGo.AddComponent<StubProfileFetchingAuthView>();
-
-                    var buttonGo = new GameObject("CancelButton");
-                    buttonGo.transform.SetParent(viewGo.transform);
-                    Button cancelButton = buttonGo.AddComponent<Button>();
-
-                    SetBackingField(fetchingView, typeof(ProfileFetchingAuthView), nameof(ProfileFetchingAuthView.CancelButton), cancelButton);
-                    SetBackingField(screenView, typeof(AuthenticationScreenView), nameof(AuthenticationScreenView.ProfileFetchingAuthView), fetchingView);
-
-                    var machine = new MVCStateMachine<AuthStateBase>();
                     var selfProfile = new StalledSelfProfile();
 
                     // The controller is only captured for the Cancel button listener, which is never invoked here
                     var controller = (AuthenticationScreenController)FormatterServices.GetUninitializedObject(typeof(AuthenticationScreenController));
 
-                    var state = new ProfileFetchingAuthState(
-                        machine,
-                        screenView,
-                        controller,
-                        new ReactiveProperty<AuthStatus>(AuthStatus.None),
-                        selfProfile,
-                        Substitute.For<IWeb3IdentityCache>());
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), controller,
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false);
 
                     state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), true, cts.Token));
 
@@ -93,13 +78,21 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         [UnityTest]
+        public IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkipped() =>
+            CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(isRestoredSession: false, AuthStatus.LoggedIn);
+
+        [UnityTest]
+        public IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedOnRestoredSession() =>
+            CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(isRestoredSession: true, AuthStatus.LoggedInCached);
+
+        [UnityTest]
         public IEnumerator SurfaceExternalCancellationInsteadOfMissingProfile() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new StalledSelfProfile();
                 using var cts = new CancellationTokenSource();
 
-                UniTask<Profile?> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                UniTask<ProfileReadResult> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
                     selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), cts.Token);
 
                 float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
@@ -111,32 +104,23 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                 cts.Cancel();
 
-                try
-                {
-                    Profile? result = await fetch;
+                ProfileReadResult result = await fetch;
 
-                    Assert.Fail("cancelling the flow token must surface as OperationCanceledException, not be read as " +
-                                $"\"no deployed profile\" (got {(result == null ? "null" : "a profile")}); a null here wipes " +
-                                "a still-valid cached identity on the cached flow");
-                }
-                catch (OperationCanceledException) { }
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"cancelling the flow token must surface as a result, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.Cancelled), "a cancelled read must not be read as \"no deployed profile\"; that wipes a still-valid cached identity on the cached flow");
             });
 
         [UnityTest]
-        public IEnumerator ThrowTimeoutWhenFetchStalls() =>
+        public IEnumerator ReturnCancelledWhenFetchStalls() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new StalledSelfProfile();
 
-                try
-                {
-                    await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
-                        selfProfile, TimeSpan.FromSeconds(0.25), CancellationToken.None);
+                ProfileReadResult result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                    selfProfile, TimeSpan.FromSeconds(0.25), CancellationToken.None);
 
-                    Assert.Fail("a stalled fetch must surface as TimeoutException");
-                }
-                catch (TimeoutException) { }
-
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"a stalled fetch must give up, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.Cancelled));
                 Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(1), "the fetch must run exactly once");
 
                 Assert.That(selfProfile.CapturedTokens[0].IsCancellationRequested, Is.True,
@@ -144,17 +128,193 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         [UnityTest]
-        public IEnumerator ReturnNullWhenProfileIsNotDeployed() =>
+        public IEnumerator ReturnNotFoundWhenProfileIsNotDeployed() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new MissingProfileSelfProfile();
 
-                Profile? result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                ProfileReadResult result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
                     selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), CancellationToken.None);
 
-                Assert.That(result, Is.Null);
+                Assert.That(result.IsError(out ProfileReadError error), Is.True, $"expected NotFound, got {result}");
+                Assert.That(error, Is.EqualTo(ProfileReadError.NotFound));
                 Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
+
+        [UnityTest]
+        public IEnumerator ClearARestoredIdentityWhoseProfileIsNotDeployed() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new MissingProfileSelfProfile();
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: true, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1));
+                    identityCache.Received(1).Clear();
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        [UnityTest]
+        public IEnumerator KeepARestoredIdentityWhenTheFetchFails() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new FailingProfileSelfProfile();
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: true, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1));
+                    identityCache.DidNotReceive().Clear();
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        [UnityTest]
+        public IEnumerator StartAvatarSelectionWhenAFreshLoginHasNoDeployedProfile() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                // The avatar-selection state is an uninitialized stand-in: entering it throws into the logged connection-error path, but the machine has already moved to it
+                LogAssert.ignoreFailingMessages = true;
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
+                    var selfProfile = new MissingProfileSelfProfile();
+                    var machine = new MVCStateMachine<AuthStateBase>();
+                    var avatarSelection = (SelectAvatarForNewAccountAuthState)FormatterServices.GetUninitializedObject(typeof(SelectAvatarForNewAccountAuthState));
+                    machine.AddStates(avatarSelection);
+
+                    ProfileFetchingAuthState state = NewState(root, machine, AuthenticationScreenControllerShould.NewNeverShownController(),
+                        new ReactiveProperty<AuthStatus>(AuthStatus.None), selfProfile, skipExistingAccountLobby: false, identityCache);
+
+                    state.Enter(new ProfileFetchingPayload(NewIdentity(), isRestoredSession: false, cts.Token));
+                    await SettleAsync();
+
+                    Assert.That(machine.CurrentState, Is.SameAs(avatarSelection), "a fresh login without a deployed profile goes on to create one");
+                    identityCache.DidNotReceive().Clear();
+                }
+                finally
+                {
+                    LogAssert.ignoreFailingMessages = false;
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        // Entering the missing lobby state throws into the connection-error path, so reaching LoggedIn proves the login completed without the lobby
+        private static IEnumerator CompleteExistingAccountLoginWhenLobbyIsSkippedAsync(bool isRestoredSession, AuthStatus expectedStatus) =>
+            UniTask.ToCoroutine(async () =>
+            {
+                EcsTestsUtils.SetUpFeaturesRegistry();
+
+                using var cts = new CancellationTokenSource();
+                var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
+
+                try
+                {
+                    AuthenticationScreenController controller = AuthenticationScreenControllerShould.NewNeverShownController();
+                    var selfProfile = new ExistingProfileSelfProfile(Profile.NewRandomProfile(FAKE_WALLET));
+
+                    ProfileFetchingAuthState state = NewState(root, new MVCStateMachine<AuthStateBase>(), controller,
+                        controller.CurrentState, selfProfile, skipExistingAccountLobby: true);
+
+                    state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), isRestoredSession, cts.Token));
+
+                    float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
+
+                    while (controller.CurrentState.Value != expectedStatus && UnityEngine.Time.realtimeSinceStartup < deadline)
+                        await UniTask.Yield();
+
+                    Assert.That(selfProfile.Calls, Is.EqualTo(1), "the profile fetch must run exactly once");
+
+                    Assert.That(controller.CurrentState.Value, Is.EqualTo(expectedStatus),
+                        $"an existing profile must complete the login through {nameof(AuthenticationScreenController.CompleteExistingAccountLogin)} " +
+                        $"instead of entering {nameof(LobbyForExistingAccountAuthState)}");
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                    EcsTestsUtils.TearDownFeaturesRegistry();
+                }
+            });
+
+        private static ProfileFetchingAuthState NewState(GameObject root, MVCStateMachine<AuthStateBase> machine, AuthenticationScreenController controller,
+            ReactiveProperty<AuthStatus> currentState, SelfProfile selfProfile, bool skipExistingAccountLobby, IWeb3IdentityCache? identityCache = null)
+        {
+            AuthenticationScreenView screenView = root.AddComponent<AuthenticationScreenView>();
+
+            var viewGo = new GameObject(nameof(ProfileFetchingAuthView));
+            viewGo.transform.SetParent(root.transform);
+            StubProfileFetchingAuthView fetchingView = viewGo.AddComponent<StubProfileFetchingAuthView>();
+
+            var buttonGo = new GameObject("CancelButton");
+            buttonGo.transform.SetParent(viewGo.transform);
+            Button cancelButton = buttonGo.AddComponent<Button>();
+
+            SetBackingField(fetchingView, typeof(ProfileFetchingAuthView), nameof(ProfileFetchingAuthView.CancelButton), cancelButton);
+            SetBackingField(screenView, typeof(AuthenticationScreenView), nameof(AuthenticationScreenView.ProfileFetchingAuthView), fetchingView);
+
+            controller.SkipExistingAccountLobby = skipExistingAccountLobby;
+
+            return new ProfileFetchingAuthState(
+                machine,
+                screenView,
+                controller,
+                currentState,
+                selfProfile,
+                identityCache ?? Substitute.For<IWeb3IdentityCache>());
+        }
+
+        private static IWeb3Identity NewIdentity()
+        {
+            IWeb3Identity identity = Substitute.For<IWeb3Identity>();
+            identity.Address.Returns(new Web3Address(FAKE_WALLET));
+            return identity;
+        }
+
+        /// <summary>The fetch flow is fire-and-forget; a few frames let its continuations run.</summary>
+        private static async UniTask SettleAsync()
+        {
+            for (var i = 0; i < 4; i++)
+                await UniTask.Yield();
+        }
 
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)
         {
@@ -164,58 +324,93 @@ namespace DCL.AuthenticationScreenFlow.Tests
         }
 
         /// <summary>
-        ///     Stalled catalyst request. Mirrors <see cref="SelfProfile.ProfileAsync" />: cancellation is
-        ///     suppressed into a null profile, never surfaced as an exception.
+        ///     Stalled catalyst request: the read settles only when its token is cancelled, as <c>Cancelled</c>.
         /// </summary>
-        private class StalledSelfProfile : ISelfProfile
+        private class StalledSelfProfile : SelfProfile
         {
             public readonly List<CancellationToken> CapturedTokens = new ();
 
-            public event Action<Profile>? ProfilePropagated;
+            public override SelfProfileModel CurrentProfileSnapshot => SelfProfileModel.NoIdentity();
 
-            public Profile? OwnProfile => null;
-
-            public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            public override async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
                 CapturedTokens.Add(ct);
 
-                try { return await UniTask.Never<Profile?>(ct); }
-                catch (OperationCanceledException) { return null; }
+                try { return await UniTask.Never<ProfileReadResult>(ct); }
+                catch (OperationCanceledException) { return ProfileReadResult.FromError(ProfileReadError.Cancelled); }
             }
 
-            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
-
-            public UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
-
-            public void Dispose() { }
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
 
         /// <summary>
-        ///     Responsive catalyst with no deployed profile: resolves to null immediately, no cancellation involved.
+        ///     Responsive catalyst with a deployed profile: resolves to it immediately.
         /// </summary>
-        private class MissingProfileSelfProfile : ISelfProfile
+        private class ExistingProfileSelfProfile : SelfProfile
         {
+            private readonly Profile profile;
+
             public int Calls { get; private set; }
 
-            public event Action<Profile>? ProfilePropagated;
+            public override SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(profile.UserId, ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle()));
 
-            public Profile? OwnProfile => null;
-
-            public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            public ExistingProfileSelfProfile(Profile profile)
             {
-                Calls++;
-                return UniTask.FromResult<Profile?>(null);
+                this.profile = profile;
             }
 
-            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult(ProfileReadResult.FromOk(profile));
+            }
 
-            public UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true) =>
-                UniTask.FromResult<Profile?>(null);
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
+                UniTask.FromResult(ProfileDeployResult.FromOk(edited));
+        }
 
-            public void Dispose() { }
+        /// <summary>
+        ///     Responsive catalyst with no deployed profile: resolves to <c>NotFound</c> immediately, no cancellation involved.
+        /// </summary>
+        private class MissingProfileSelfProfile : SelfProfile
+        {
+            private readonly UserId address = UserId.NewRandom();
+
+            public int Calls { get; private set; }
+
+            public override SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.Missing(), ProfileActivity.Idle()));
+
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
+            }
+
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
+        }
+
+        /// <summary>Responsive catalyst whose read fails: resolves to <c>FetchFailed</c> immediately, no cancellation involved.</summary>
+        private class FailingProfileSelfProfile : SelfProfile
+        {
+            private readonly UserId address = UserId.NewRandom();
+
+            public int Calls { get; private set; }
+
+            public override SelfProfileModel CurrentProfileSnapshot =>
+                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.FromFailed(new ProfileFailure(new Exception("fetch failed"))), ProfileActivity.Idle()));
+
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed));
+            }
+
+            public override UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false) =>
+                UniTask.FromResult(ProfileDeployResult.FromError(ProfileDeployError.NoIdentity));
         }
     }
 

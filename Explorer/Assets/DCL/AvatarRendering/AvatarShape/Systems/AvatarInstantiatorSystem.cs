@@ -136,7 +136,16 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            // TryInstantiateNewAvatar moves the entity to another archetype; the ref then points at another slot
+            AvatarBase instantiated = avatarBase;
+
+            if (TryInstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase))
+                PoseForFirstSkinning(instantiated);
+        }
+
+        private bool TryInstantiateNewAvatar(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
 
@@ -175,22 +184,34 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.AdditiveBreathRig.enabled = pointAtFeatureEnabled;
         }
 
+        // Runs after Unity's animation update, so a freshly activated AvatarBase would otherwise skin its rest pose
+        // for one frame. Posed after the rigs: their constraints bake offsets from the pose they are built with.
+        private static void PoseForFirstSkinning(AvatarBase avatarBase)
+        {
+            Animator animator = avatarBase.AvatarAnimator;
+            animator.enabled = true;
+            animator.Update(0f);
+        }
+
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            if (!InstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
+            AvatarBase instantiated = avatarBase;
 
-            if (avatarBase != null)
+            if (!TryInstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
+
+            if (instantiated != null)
             {
                 // Re-enable rigs since by default we disable them when instantiating new avatars
-                EnableRigsByFeatureFlags(avatarBase);
-                avatarBase.RigBuilder.enabled = true;
-                avatarBase.HandsIKRig.enabled = true;
-                avatarBase.FeetIKRig.enabled = true;
+                EnableRigsByFeatureFlags(instantiated);
+                instantiated.RigBuilder.enabled = true;
+                instantiated.HandsIKRig.enabled = true;
+                instantiated.FeetIKRig.enabled = true;
 
-                mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+                mainPlayerAvatarBaseProxy.SetObject(instantiated);
+                PoseForFirstSkinning(instantiated);
             }
         }
 
