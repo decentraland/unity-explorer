@@ -83,7 +83,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             if (World.Has<IsActivelySpeakingTag>(entity))
             {
-                SDKTalkingPropagation.Propagate(World, entity, false);
+                SDKTalkingPropagation.Propagate(World, entity, talking: false);
                 World.Remove<IsActivelySpeakingTag>(entity);
             }
 
@@ -99,7 +99,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId.Value;
             if (registry.IsActiveSpeaker(walletId))
             {
-                SDKTalkingPropagation.Propagate(World, entity, true);
+                SDKTalkingPropagation.Propagate(World, entity, talking: true);
                 World.Add<IsActivelySpeakingTag>(entity);
             }
         }
@@ -112,7 +112,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId.Value;
             if (!registry.IsActiveSpeaker(walletId))
             {
-                SDKTalkingPropagation.Propagate(World, entity, false);
+                SDKTalkingPropagation.Propagate(World, entity, talking: false);
                 World.Remove<IsActivelySpeakingTag>(entity);
             }
         }

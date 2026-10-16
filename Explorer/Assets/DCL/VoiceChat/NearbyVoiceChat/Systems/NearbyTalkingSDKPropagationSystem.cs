@@ -40,7 +40,10 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
+            // local player
             World.Get<TalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
+
+            // remote players
             SeedOnSceneAssignmentQuery(World);
         }
 
@@ -48,9 +51,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void SeedOnSceneAssignment(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
         {
-            if (!playerCRDTEntity.IsDirty) return;
-
-            SDKTalkingPropagation.Propagate(in playerCRDTEntity, World.Has<IsActivelySpeakingTag>(entity));
+            if (playerCRDTEntity.IsDirty)
+                SDKTalkingPropagation.Propagate(in playerCRDTEntity, talking: World.Has<IsActivelySpeakingTag>(entity));
         }
     }
 }
