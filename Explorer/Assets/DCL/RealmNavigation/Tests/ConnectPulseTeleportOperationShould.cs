@@ -7,6 +7,7 @@ using ECS;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.RealmNavigation.TeleportOperations.Tests
@@ -43,52 +44,52 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         }
 
         [Test]
-        public void ConnectWhenRealmCommsAreOnline()
+        public async Task ConnectWhenRealmCommsAreOnline()
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
             var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            _ = pulseMultiplayerService.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
         }
 
         [Test]
-        public void NotConnectWhenRealmCommsAreOffline()
+        public async Task NotConnectWhenRealmCommsAreOffline()
         {
             // Arrange
             realmData.CommsAdapter.Returns(OFFLINE_ADAPTER);
             var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            _ = pulseMultiplayerService.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
         }
 
         [Test]
-        public void NotConnectWhenPulseIsInactive()
+        public async Task NotConnectWhenPulseIsInactive()
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
             var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(false), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            _ = pulseMultiplayerService.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
         }
 
         [Test]
-        public void FallBackToLiveKitWhenConnectionFailsTerminally()
+        public async Task FallBackToLiveKitWhenConnectionFailsTerminally()
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
@@ -97,7 +98,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
             var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, activation, realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);

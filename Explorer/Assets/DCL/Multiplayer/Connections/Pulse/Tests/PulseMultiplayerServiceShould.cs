@@ -308,7 +308,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             UniTask disconnect = service.DisconnectAsync();
             UniTask<bool> reconnect = service.ConnectAsync(cts.Token, maxAttempts: 1);
 
-            // The transport must not be connected again while its teardown is in progress
+            // The transport must not be connected again while its teardown is in progress.
             _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
 
             teardownFinished.TrySetResult();
@@ -338,7 +338,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             await service.DisconnectAsync();
             UniTask<bool> reconnect = service.ConnectAsync(cts.Token, maxAttempts: 1);
 
-            // The cancelled attempt is still cleaning up its transport connection
+            // The cancelled attempt is still cleaning up its transport connection.
             Assert.AreEqual(1, connectCalls);
 
             cancelledConnectCleanedUp.TrySetResult();
@@ -366,7 +366,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             RegisterSettlingHandshakeHandler();
             await service.ConnectAsync(cts.Token, maxAttempts: 1);
 
-            // The transport queues a disconnect event while the session is being torn down
+            // The transport queues a disconnect event while the session is being torn down.
             transport.DisconnectAsync(Arg.Any<DisconnectReason>()).Returns(_ =>
             {
                 pipe.OnDisconnected(DisconnectReason.AUTH_TIMEOUT);
@@ -409,7 +409,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             await service.DisconnectAsync();
 
             // Act
-            Assert.DoesNotThrowAsync(async () => await service.DisconnectAsync());
+            await service.DisconnectAsync();
 
             // Assert
             Assert.IsFalse(service.IsAuthenticated);

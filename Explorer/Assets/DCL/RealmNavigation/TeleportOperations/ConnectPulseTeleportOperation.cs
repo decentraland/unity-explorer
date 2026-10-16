@@ -39,7 +39,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             {
                 ReportHub.Log(ReportCategory.MULTIPLAYER, $"Connecting Pulse for realm {realmData.RealmName}");
 
-                // With unbounded retries a failure is terminal (e.g. the handshake is rejected): same fallback as at start-up
+                // With unbounded retries a failure is terminal (e.g. the handshake is rejected): same fallback as at start-up.
                 if (!await pulseMultiplayerService.ConnectAsync(CancellationToken.None))
                 {
                     pulseActivation.Deactivate();

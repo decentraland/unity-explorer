@@ -18,13 +18,13 @@ namespace ECS.Tests
         [TestCase("FIXED-ADAPTER:OFFLINE:Offline")]
         public void BeOfflineWhenAdapterContainsOfflineMarker(string commsAdapter)
         {
-            //Arrange
+            // Arrange
             realmData.CommsAdapter.Returns(commsAdapter);
 
-            //Act
+            // Act
             bool isOffline = realmData.IsCommsOffline();
 
-            //Assert
+            // Assert
             Assert.IsTrue(isOffline);
         }
 
@@ -33,13 +33,13 @@ namespace ECS.Tests
         [TestCase("")]
         public void BeOnlineWhenAdapterLacksOfflineMarker(string commsAdapter)
         {
-            //Arrange
+            // Arrange
             realmData.CommsAdapter.Returns(commsAdapter);
 
-            //Act
+            // Act
             bool isOffline = realmData.IsCommsOffline();
 
-            //Assert
+            // Assert
             Assert.IsFalse(isOffline);
         }
     }

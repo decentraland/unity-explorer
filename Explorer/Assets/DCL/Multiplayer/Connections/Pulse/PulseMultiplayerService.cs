@@ -82,7 +82,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 connectAttempt = null;
             }
 
-            // The transport is disposed below without waiting for the attempt to observe the cancellation
+            // The transport is disposed below without waiting for the attempt to observe the cancellation.
             abandonedAttempt?.TrySetCanceled();
 
             connectionLifeCycleCts.SafeCancelAndDispose();
@@ -129,7 +129,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 if (inFlight == null)
                 {
-                    // Without a session the transport may still be connected only because its teardown is in progress
+                    // Without a session the transport may still be connected only because its teardown is in progress.
                     if (sessionCts != null && transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
                         return UniTask.FromResult(true);
 
@@ -167,7 +167,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 await transport.DisconnectAsync(DisconnectReason.GRACEFUL);
 
-                // Events and messages of the closed connection must not reach the next session
+                // Events and messages of the closed connection must not reach the next session.
                 pipe.DiscardPending();
 
                 isAuthenticated = false;
@@ -229,7 +229,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (connectAttempt != null)
                     return connectAttempt.Task;
 
-                // The session may have been ended between the caller's check and this point
+                // The session may have been ended between the caller's check and this point.
                 if (sessionCt.IsCancellationRequested)
                     return UniTask.FromCanceled<bool>(sessionCt);
 
@@ -248,7 +248,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             try
             {
-                // The transport is connected again only once the previous session's teardown has finished
+                // The transport is connected again only once the previous session's teardown has finished.
                 if (pendingTeardown != null)
                     await pendingTeardown.Task.AttachExternalCancellation(sessionCt);
 
@@ -401,7 +401,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                                     (bool reconnectionAllowed, TimeSpan reconnectionDelay) = disconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
 
                                     // Both the delay and the attempt run under the session token so an explicit
-                                    // DisconnectAsync ends the reconnection instead of racing a new connection
+                                    // DisconnectAsync ends the reconnection instead of racing a new connection.
                                     if (reconnectionAllowed && !sessionCt.IsCancellationRequested)
                                     {
                                         ResetConnectionLifecycle();

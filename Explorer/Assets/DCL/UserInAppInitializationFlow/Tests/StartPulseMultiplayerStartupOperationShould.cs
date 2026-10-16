@@ -175,7 +175,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             // Act
             await operation.ExecuteAsync(MakeParams(), cts.Token);
 
-            // Assert — Pulse stays active so it can connect once the user leaves the offline realm
+            // Assert — Pulse stays active so it can connect once the user leaves the offline realm.
             _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             Assert.IsTrue(activation.IsActive);
             profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());

@@ -7,6 +7,7 @@ using ECS;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.RealmNavigation.TeleportOperations.Tests
@@ -43,48 +44,48 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         }
 
         [Test]
-        public void DisconnectWhenRealmCommsAreOffline()
+        public async Task DisconnectWhenRealmCommsAreOffline()
         {
             // Arrange
             realmData.CommsAdapter.Returns(OFFLINE_ADAPTER);
             var operation = new DisconnectPulseInOfflineRealmTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.Received(1).DisconnectAsync();
+            _ = pulseMultiplayerService.Received(1).DisconnectAsync();
         }
 
         [Test]
-        public void NotDisconnectWhenRealmCommsAreOnline()
+        public async Task NotDisconnectWhenRealmCommsAreOnline()
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
             var operation = new DisconnectPulseInOfflineRealmTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.DidNotReceive().DisconnectAsync();
+            _ = pulseMultiplayerService.DidNotReceive().DisconnectAsync();
         }
 
         [Test]
-        public void NotDisconnectWhenPulseIsInactive()
+        public async Task NotDisconnectWhenPulseIsInactive()
         {
             // Arrange
             realmData.CommsAdapter.Returns(OFFLINE_ADAPTER);
             var operation = new DisconnectPulseInOfflineRealmTeleportOperation(pulseMultiplayerService, new PulseActivation(false), realmData);
 
             // Act
-            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            EnumResult<TaskError> result = await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsTrue(result.Success);
-            pulseMultiplayerService.DidNotReceive().DisconnectAsync();
+            _ = pulseMultiplayerService.DidNotReceive().DisconnectAsync();
         }
 
         private TeleportParams MakeParams() =>
