@@ -1,22 +1,11 @@
-using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using DCL.AvProSwitch;
-using System;
 using UnityEngine;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
     public static class MediaPlayerExtensions
     {
-        public static void CloseCurrentStream(this MediaPlayer mediaPlayer)
-        {
-            mediaPlayer.Stop();
-            mediaPlayer.CloseMedia();
-
-            if (mediaPlayer.Events.HasListeners())
-                mediaPlayer.Events.RemoveAllListeners();
-        }
-
         public static void CrossfadeVolume(this MediaPlayer mediaPlayer, float targetVolume, float volumeDelta)
         {
             mediaPlayer.AudioVolume = mediaPlayer.AudioVolume > targetVolume
@@ -29,7 +18,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!mediaPlayer.MediaOpened)
                 return;
 
-            MediaPlayerBackend control = mediaPlayer.Control;
+            IMediaControl control = mediaPlayer.Control;
 
             if (hasPlaying)
             {
@@ -64,27 +53,21 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Stop();
         }
 
-        internal static UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
-            SetPlaybackPropertiesAsync(control,
+        internal static void SetPlaybackProperties(IMediaControl control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
+            SetPlaybackProperties(control,
                 sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION,
                 sdkVideoPlayer is { HasLoop: true, Loop: true },
                 sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE,
                 sdkVideoPlayer is { HasPlaying: true, Playing: true },
                 isLiveStream);
 
-        internal static async UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
+        internal static void SetPlaybackProperties(IMediaControl control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
         {
-            // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
-            await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
-
-            // The only way found to make the video initialization consistent and reliable even after a scene reload
-            await UniTask.Delay(TimeSpan.FromSeconds(1f));
-
             control.SetLooping(loop);
             control.SetPlaybackRate(rate);
 
             // For live streams, seeking to a position would move to the beginning of the DVR window.
-            // Skip the seek entirely to let AVPro start at the live edge.
+            // Skip the seek entirely to let the player start at the live edge.
             if (!isLiveStream)
                 control.Seek(position);
 
@@ -96,7 +79,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!mediaPlayer.MediaOpened) return;
 
-            MediaPlayerBackend control = mediaPlayer.Control;
+            IMediaControl control = mediaPlayer.Control;
 
             if (sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop != control.IsLooping())
                 control.SetLooping(sdkVideoPlayer.Loop);

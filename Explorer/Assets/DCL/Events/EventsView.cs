@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.ExplorePanel;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,8 @@ namespace DCL.Events
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
         [SerializeField] private Animator headerAnimator = null!;
+
+        private bool isCompact;
 
         public EventsCalendarView EventsCalendarView => eventsCalendarView;
         public EventsByDayView EventsByDayView => eventsByDayView;
@@ -59,6 +62,19 @@ namespace DCL.Events
         {
             eventsCalendarView.gameObject.SetActive(section == EventsSection.Calendar);
             eventsByDayView.gameObject.SetActive(section == EventsSection.EventsByDay);
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            eventsCalendarView.SetCompactLayout(compact);
+            eventsByDayView.SetCompactLayout(compact);
+
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+            var shift = new Vector2(compact ? -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
+            ((RectTransform)goToTodayButton.transform).anchoredPosition += shift;
+            ((RectTransform)createEventButton.transform).anchoredPosition += shift;
         }
     }
 }

@@ -175,7 +175,7 @@ namespace DCL.SDKComponents.MediaStream
             // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
             MultiMediaPlayer player = address.Match(
                 (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource))
             );
 

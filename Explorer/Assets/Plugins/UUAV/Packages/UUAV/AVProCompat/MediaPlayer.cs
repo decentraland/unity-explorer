@@ -2,47 +2,17 @@ using UnityEngine;
 
 namespace UUAV.Compat
 {
-    // AVPro-compatible facade over UUAVPlayer. The consumer is poll-based
-    // (no event subscriptions), see the compat plan for the full mapping.
+    // AVPro-shaped facade over UUAVPlayer. Poll-based: exposes state through
+    // Control / Info / TextureProducer and no events.
     [RequireComponent(typeof(AudioSource))]
     public sealed class MediaPlayer : MonoBehaviour
     {
-        // Base for the per-platform option objects; holds the shared AudioMode
-        // enum the macOS options reference. All values are inert under UUAV.
-        public class PlatformOptions
-        {
-            public enum AudioMode
-            {
-                SystemDirect,
-                Unity,
-                FacebookAudio360,
-                None,
-            }
-        }
-
-        public sealed class OptionsWindows : PlatformOptions
-        {
-            public Windows.AudioOutput _audioMode = Windows.AudioOutput.Unity;
-            public Windows.VideoApi videoApi = Windows.VideoApi.MediaFoundation;
-            public bool startWithHighestBitrate;
-            public bool useLowLiveLatency;
-        }
-
-        public sealed class OptionsApple : PlatformOptions
-        {
-            public AudioMode audioMode = AudioMode.Unity;
-        }
-
         private UUAVPlayer uuavPlayer = null!;
         private UUAVBackend backend = null!;
-
-        public OptionsWindows PlatformOptionsWindows { get; } = new OptionsWindows();
-        public OptionsApple PlatformOptions_macOS { get; } = new OptionsApple();
 
         public IMediaControl Control => backend;
         public IMediaInfo Info => backend;
         public ITextureProducer TextureProducer => backend;
-        public MediaPlayerEvent Events { get; } = new MediaPlayerEvent();
 
         public AudioSource AudioSource => uuavPlayer.AudioSource;
 
@@ -72,9 +42,8 @@ namespace UUAV.Compat
             backend.Tick();
         }
 
-        public bool OpenMedia(MediaPathType pathType, string path, bool autoPlay)
+        public bool OpenMedia(string path, bool autoPlay)
         {
-            // Only AbsolutePathOrURL is used; UUAV takes the URL/path verbatim.
             uuavPlayer.OpenMedia(path);
 
             if (autoPlay)
@@ -83,13 +52,6 @@ namespace UUAV.Compat
             }
 
             return true;
-        }
-
-        // Forwards to Control.Stop (pause + seek to the start), mirroring
-        // AVPro's component-level Stop.
-        public void Stop()
-        {
-            backend.Stop();
         }
 
         public void CloseMedia()
