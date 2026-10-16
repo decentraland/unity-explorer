@@ -326,7 +326,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         [TestCase("playing", 12_500L, 3.5)]
         [TestCase("paused", 99_999L, 1.0)]
-        [TestCase("playing", 8_000L, 0.0)]
+        [TestCase("playing", 10_000L, 1.0)]
         public void ComputeTargetPosition_FromAnchor(string state, long nowEpochMs, double expectedSeconds)
         {
             var metadata = new PresentationBotMetadata { videoState = state, videoPositionMs = 1_000, videoPositionAt = 10_000 };
@@ -350,6 +350,77 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = "loading", videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
             Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
+        }
+
+        [Test]
+        public void ReturnNoTargetPosition_WhenAnchorIsInTheFuture()
+        {
+            var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000, videoPositionAt = 10_000 };
+
+            double? target = PresentationLayout.TargetPositionSeconds(metadata, 8_000);
+
+            Assert.IsNull(target);
+        }
+
+        [TestCase("playing", true)]
+        [TestCase("paused", false)]
+        [TestCase("loading", false)]
+        [TestCase(null, false)]
+        public void ReportVideoPlaying_OnlyWhilePlaying(string? state, bool expected)
+        {
+            var metadata = new PresentationBotMetadata { videoState = state };
+
+            bool playing = PresentationLayout.IsVideoPlaying(metadata);
+
+            Assert.AreEqual(expected, playing);
+        }
+
+        [TestCase("client", 0, true)]
+        [TestCase("stream", 0, false)]
+        [TestCase(null, 0, false)]
+        [TestCase("client", 1, false)]
+        [TestCase("client", -1, false)]
+        public void DetectClientEntry_AtPlayingVideoIndex_WhateverTheState(string? source, int index, bool expected)
+        {
+            var metadata = new PresentationBotMetadata
+            {
+                videoState = "loading",
+                playingVideoIndex = index,
+                slideVideos = new PresentationSlideVideo?[] { new () { source = source } },
+            };
+
+            bool isClient = PresentationLayout.IsClientEntry(metadata);
+
+            Assert.AreEqual(expected, isClient);
+        }
+
+        [Test]
+        public void DetectNoClientEntry_WhenNoVideoIsPlaying()
+        {
+            var metadata = new PresentationBotMetadata { slideVideos = new PresentationSlideVideo?[] { new () { source = "client" } } };
+
+            bool isClient = PresentationLayout.IsClientEntry(metadata);
+
+            Assert.IsFalse(isClient);
+        }
+
+        [TestCase(30.0, 10.0, false, true)]
+        [TestCase(30.0, 29.0, false, false)]
+        [TestCase(30.0, 40.0, false, false)]
+        [TestCase(30.0, 10.0, true, false)]
+        public void DetectRewind_OnlyWhenTargetIsMoreThanTwoSecondsBehind(double currentSeconds, double targetSeconds, bool isLive, bool expected)
+        {
+            bool rewind = PresentationLayout.IsRewind(currentSeconds, targetSeconds, isLive);
+
+            Assert.AreEqual(expected, rewind);
+        }
+
+        [Test]
+        public void DetectNoRewind_WithoutTarget()
+        {
+            bool rewind = PresentationLayout.IsRewind(30.0, null, false);
+
+            Assert.IsFalse(rewind);
         }
 
         [TestCase(10.0, 11.9)]

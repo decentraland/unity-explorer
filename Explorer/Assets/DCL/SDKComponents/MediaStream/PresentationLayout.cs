@@ -140,6 +140,15 @@ namespace DCL.SDKComponents.MediaStream
         public static bool NeedsSeek(double currentSeconds, double? targetSeconds, bool isLive) =>
             !isLive && targetSeconds is { } target && Math.Abs(currentSeconds - target) > SEEK_THRESHOLD_SECONDS;
 
+        public static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
+            false;
+
+        public static bool IsVideoPlaying(PresentationBotMetadata metadata) =>
+            false;
+
+        public static bool IsClientEntry(PresentationBotMetadata metadata) =>
+            false;
+
         /// <summary>
         ///     The presenter camera circle's bounding square, computed in integer pixels exactly as the server does.
         ///     A null overlay means bottom-left small; an unknown size means small.

@@ -1040,6 +1040,20 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void NeverDecodeBotTrack_WhenClientEntryIsLoading()
+        {
+            LKParticipant bot = AddParticipant(BOT, V2("0", "loading", slideVideo: CLIENT_VIDEO));
+            IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
+            LivekitPlayer p = NewClientVideoPlayer();
+
+            p.OpenMedia(LivekitAddress.CurrentStream());
+            p.EnsureVideoIsPlaying();
+
+            AssertComposite(p.LastTexture());
+            video.DidNotReceive().DecodeLastFrame();
+        }
+
+        [Test]
         public void ComposeClientTexture_WhenClientVideoPlays()
         {
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
