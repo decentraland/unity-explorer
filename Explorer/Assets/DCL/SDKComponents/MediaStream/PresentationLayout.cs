@@ -150,6 +150,9 @@ namespace DCL.SDKComponents.MediaStream
         public static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
             targetSeconds < currentSeconds && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
+        public static bool ShouldSeek(double currentSeconds, double? targetSeconds, bool isLive, bool isBusy, float now, float lastSeekAt) =>
+            false;
+
         public static bool IsVideoPlaying(PresentationBotMetadata metadata) =>
             metadata.videoState == PLAYING_STATE;
 

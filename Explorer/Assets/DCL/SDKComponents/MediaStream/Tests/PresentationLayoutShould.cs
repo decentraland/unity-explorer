@@ -415,6 +415,25 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual(expected, rewind);
         }
 
+        [TestCase(3f, false, false, true)]
+        [TestCase(2.9f, false, false, false)]
+        [TestCase(3f, true, false, false)]
+        [TestCase(3f, false, true, false)]
+        public void Seek_AtMostEveryThreeSeconds_WhenIdleAndOnDemand(float secondsSinceLastSeek, bool isBusy, bool isLive, bool expected)
+        {
+            bool seek = PresentationLayout.ShouldSeek(10.0, 20.0, isLive, isBusy, 100f, 100f - secondsSinceLastSeek);
+
+            Assert.AreEqual(expected, seek);
+        }
+
+        [Test]
+        public void SkipSeek_WhenDriftIsWithinThreshold()
+        {
+            bool seek = PresentationLayout.ShouldSeek(10.0, 11.0, false, false, 100f, float.NegativeInfinity);
+
+            Assert.IsFalse(seek);
+        }
+
         [Test]
         public void DetectNoRewind_WithoutTarget()
         {
