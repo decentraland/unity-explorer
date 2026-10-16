@@ -978,11 +978,27 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          TARGET: ${{ matrix.target }}
         run: |
+          # A new launcher zip invalidates the delta patch set made for the previous zip of this
+          # tag and platform (docs/delta-updates.md): remove it before the zip is replaced and
+          # again after, so a manifest a concurrent run published during the upload is not kept.
+          # Epic zips have no patches, and a zip of one platform says nothing about the other.
+          DELTA_PREFIX="s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/delta/$TARGET/"
+          REPLACES_PATCHES=false
+          if [ "$IS_RELEASE_BUILD" = "true" ] && [ "$INSTALL_SOURCE" = "launcher" ]; then
+            REPLACES_PATCHES=true
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+          if [ "$REPLACES_PATCHES" = "true" ]; then
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
 
       - name: Print S3 upload URL
         run: |
