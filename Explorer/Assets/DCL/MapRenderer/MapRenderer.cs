@@ -78,7 +78,7 @@ namespace DCL.MapRenderer
 
             EnableLayers(cameraInput.ActivityOwner, cameraInput.EnabledLayers);
             IMapCameraControllerInternal mapCameraController = mapCameraPool!.Get();
-            mapCameraController.Initialize(cameraInput.TextureResolution, zoomValues, cameraInput.EnabledLayers);
+            mapCameraController.Initialize(cameraInput.ActivityOwner, cameraInput.TextureResolution, zoomValues, cameraInput.EnabledLayers);
             mapCameraController.OnReleasing += ReleaseCamera;
 
             mapCameraController.ZoomChanged += OnCameraZoomChanged;
@@ -126,9 +126,9 @@ namespace DCL.MapRenderer
                 ResetCancellationSource(mapLayerStatus);
 
                 if (active)
-                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.Cts!.Token).SuppressCancellationThrow().Forget();
                 else
-                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.Cts!.Token).SuppressCancellationThrow().Forget();
             }
         }
 
@@ -150,7 +150,7 @@ namespace DCL.MapRenderer
                 {
                     // Cancel deactivation flow
                     ResetCancellationSource(mapLayerStatus);
-                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.Cts!.Token).SuppressCancellationThrow().Forget();
                 }
 
                 mapLayerStatus.ActivityOwners.Add(owner);
@@ -170,7 +170,7 @@ namespace DCL.MapRenderer
                 {
                     // Cancel activation flow
                     ResetCancellationSource(mapLayerStatus);
-                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS!.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.Cts!.Token).SuppressCancellationThrow().Forget();
                 }
                 else
                 {
@@ -185,13 +185,13 @@ namespace DCL.MapRenderer
 
         private void ResetCancellationSource(MapLayerStatus mapLayerStatus)
         {
-            if (mapLayerStatus.CTS != null)
+            if (mapLayerStatus.Cts != null)
             {
-                mapLayerStatus.CTS.Cancel();
-                mapLayerStatus.CTS.Dispose();
+                mapLayerStatus.Cts.Cancel();
+                mapLayerStatus.Cts.Dispose();
             }
 
-            mapLayerStatus.CTS = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            mapLayerStatus.Cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         }
 
         private class MapLayerStatus
@@ -200,7 +200,7 @@ namespace DCL.MapRenderer
             public readonly List<IMapActivityOwner> ActivityOwners = new ();
 
             public bool? SharedActive;
-            public CancellationTokenSource? CTS;
+            public CancellationTokenSource? Cts;
 
             public MapLayerStatus(IMapLayerController mapLayerController)
             {

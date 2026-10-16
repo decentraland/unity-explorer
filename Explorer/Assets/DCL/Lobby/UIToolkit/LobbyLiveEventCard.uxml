@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <DCL.Lobby.LobbyLiveEventCardElement name="LiveEventCard" title="Event Name" host="By Host" attendees="0">
         <ui:VisualElement name="Shadow" class="lobby-live-event-card__shadow" picking-mode="Ignore" />
         <ui:VisualElement name="Thumbnail" class="lobby-live-event-card__thumbnail" picking-mode="Ignore" />
@@ -14,6 +15,7 @@
                 <ui:VisualElement name="PlayerIcon" class="lobby-live-event-card__attendees-icon" picking-mode="Ignore" />
                 <ui:Label name="Attendees" text="0" class="lobby-live-event-card__attendees-count" picking-mode="Ignore" />
             </ui:VisualElement>
+            <DCL.Lobby.LobbyConnectedFriendsElement name="ConnectedFriends" />
         </ui:VisualElement>
         <ui:Label name="Title" text="Event Name" enable-rich-text="false" class="lobby-live-event-card__title" picking-mode="Ignore" />
         <ui:Label name="Host" text="By Host" enable-rich-text="false" class="lobby-live-event-card__host" picking-mode="Ignore" />

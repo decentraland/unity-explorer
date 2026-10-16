@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.AvProSwitch;
 using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public Texture? Texture => LivePlayer()?.LastTexture();
 
-        public bool RequiresVerticalFlip => LivePlayer() is { } current && current.GetTexureScale.y < 0f;
+        public bool RequiresVerticalFlip => LivePlayer() is { } current && current.TextureScale.y < 0f;
 
         public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
         {
@@ -231,7 +231,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void Open(string url, bool playing, float now)
         {
-            var opened = MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(pool.GetOrCreateReusableMediaPlayer(url), pool));
+            var opened = MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(pool.GetOrCreateReusableMediaPlayer(url), pool));
             player = opened;
             MediaOpenThrottle.MarkOpened(now);
 
@@ -254,6 +254,6 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private static bool IsMediaOpened(MultiMediaPlayer media) =>
-            media.TryGetAvProPlayer(out MediaPlayer? mediaPlayer) && mediaPlayer != null && mediaPlayer.MediaOpened;
+            media.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer) && urlMediaPlayer.MediaPlayer.MediaOpened;
     }
 }

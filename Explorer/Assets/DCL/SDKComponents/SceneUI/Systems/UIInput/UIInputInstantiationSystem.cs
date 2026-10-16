@@ -14,6 +14,8 @@ using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -39,13 +41,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IInputBlock inputBlock;
         private readonly StyleFontDefinition[] styleFontDefinitions;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
-        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>().EnsureNotNull();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
             this.styleFontDefinitions = styleFontDefinitions;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
         }
 
         protected override void Update(float t)
@@ -54,13 +60,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             InstantiateUIInputQuery(World!);
             UpdateUIInputQuery(World!);
+            ApplyLoadedFontQuery(World!);
 
             TriggerInputResultsQuery(World!);
         }
 
         [Query]
         [All(typeof(PBUiInput))]
-        [None(typeof(UIInputComponent))]
+        [None(typeof(UIInputComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIInput(in Entity entity, in PBUiInput sdkModel, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newUIInputComponent = inputTextsPool.Get()!;
@@ -81,14 +88,22 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIInput(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
+        private void UpdateUIInput(ref UIInputComponent uiInputComponent, in PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)
                 return;
 
+            uiInputComponent.FontRequest.Update(World!, sceneData, sdkModel.FontSrc, scenePartition);
+
             UiElementUtils.SetupUiInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
+
+        [Query]
+        [All(typeof(PBUiInput))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyLoadedFont(ref UIInputComponent uiInputComponent) =>
+            UiElementUtils.ApplyLoadedCustomFont(World!, ref uiInputComponent.FontRequest, uiInputComponent.TextField);
 
         [Query]
         [All(typeof(UIInputComponent))]

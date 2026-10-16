@@ -179,7 +179,7 @@ namespace DCL.SDKComponents.MediaStream
 
             MultiMediaPlayer player = address.Match(
                 (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, urlResolverService),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
                     () => new PresentationUrlVideo(ctx.mediaPlayerPool, ctx.urlResolverService)))
             );

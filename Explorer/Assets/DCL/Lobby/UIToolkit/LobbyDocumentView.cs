@@ -6,6 +6,7 @@ using MVC;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Lobby
 {
@@ -17,6 +18,8 @@ namespace DCL.Lobby
     {
         private const string AVATAR_HIT_AREA_NAME = "AvatarHitArea";
         private const string AVATAR_TOOLTIP_NAME = "AvatarTooltip";
+        private const string AVATAR_DRAG_CURSOR_NAME = "AvatarDragCursor";
+        private const string FRIEND_TOOLTIP_NAME = "FriendTooltip";
         private const string WELCOME_TEXT_NAME = "WelcomeText";
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
@@ -25,11 +28,18 @@ namespace DCL.Lobby
         private const string EVENTS_NAME = "Events";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
+        private const string MAP_BUTTON_NAME = "MapButton";
+        private const string PLACES_BUTTON_NAME = "PlacesButton";
+        private const string EVENTS_BUTTON_NAME = "EventsButton";
         private const string CREDITS_SLOT_NAME = "CreditsSlot";
         private const string PROFILE_SLOT_NAME = "ProfileSlot";
         private const string NOTIFICATIONS_NAME = "Notifications";
         private const string UNREAD_BADGE_NAME = "UnreadBadge";
         private const string CLOSE_NAME = "Close";
+        private const string PROFILE_MENU_NAME = "ProfileMenu";
+        private const string PROFILE_MENU_SLOT_NAME = "ProfileMenuSlot";
+        private const string USS_PROFILE_MENU_WITH_CLOSE = "lobby__profile-menu--with-close";
+        private const string USS_NOTIFICATIONS_OPEN = "lobby__top-bar-button--open";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
         [SerializeField] private VisualTreeAsset friendCardTemplate = null!;
@@ -61,11 +71,26 @@ namespace DCL.Lobby
         /// <summary>Hint beside the pointer over <see cref="AvatarHitArea" />. Exists only while shown.</summary>
         public VisualElement AvatarTooltip => Element<VisualElement>(AVATAR_TOOLTIP_NAME);
 
+        /// <summary>Rotate cursor shown at the pointer while the figure is dragged. Exists only while shown.</summary>
+        public VisualElement AvatarDragCursor => Element<VisualElement>(AVATAR_DRAG_CURSOR_NAME);
+
+        /// <summary>Name of the friend picture under the pointer on a card. Exists only while shown.</summary>
+        public VisualElement FriendTooltip => Element<VisualElement>(FRIEND_TOOLTIP_NAME);
+
         /// <summary>Credits widget of the top bar. It outlives the hierarchy, so its bindings stay.</summary>
         public CreditsPanelElement Credits => credits ??= new CreditsPanelElement();
 
         /// <summary>Profile widget of the top bar. It outlives the hierarchy like <see cref="Credits" />.</summary>
         public ProfileWidgetElement Profile => profile ??= new ProfileWidgetElement();
+
+        /// <summary>Exists only while the view is shown.</summary>
+        public Button MapButton => Element<Button>(MAP_BUTTON_NAME);
+
+        /// <summary>Exists only while the view is shown.</summary>
+        public Button PlacesButton => Element<Button>(PLACES_BUTTON_NAME);
+
+        /// <summary>Exists only while the view is shown.</summary>
+        public Button EventsButton => Element<Button>(EVENTS_BUTTON_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>
         public Button NotificationsButton => Element<Button>(NOTIFICATIONS_NAME);
@@ -75,6 +100,9 @@ namespace DCL.Lobby
 
         /// <summary>Exists only while the view is shown.</summary>
         public Button CloseButton => Element<Button>(CLOSE_NAME);
+
+        /// <summary>Dropdown of the own profile under the top bar. Exists only while the view is shown.</summary>
+        public LobbyProfileMenuElement ProfileMenu => Element<LobbyProfileMenuElement>(PROFILE_MENU_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>
         public Label WelcomeText => Element<Label>(WELCOME_TEXT_NAME);
@@ -109,6 +137,17 @@ namespace DCL.Lobby
             Section(CREDITS_SLOT_NAME).Add(Credits);
             Section(PROFILE_SLOT_NAME).Add(Profile);
         }
+
+        /// <summary>The dropdown moves left of the Close button while that is shown.</summary>
+        public void SetCloseButtonDisplayed(bool displayed)
+        {
+            CloseButton.SetDisplayed(displayed);
+            Section(PROFILE_MENU_SLOT_NAME).EnableInClassList(USS_PROFILE_MENU_WITH_CLOSE, displayed);
+        }
+
+        /// <summary>Open state of <see cref="NotificationsButton" />; a no-op while the hierarchy is gone.</summary>
+        public void SetNotificationsPanelOpen(bool open) =>
+            root?.Q<Button>(NOTIFICATIONS_NAME)?.EnableInClassList(USS_NOTIFICATIONS_OPEN, open);
 
         private VisualElement Section(string elementName) =>
             Element<VisualElement>(elementName);

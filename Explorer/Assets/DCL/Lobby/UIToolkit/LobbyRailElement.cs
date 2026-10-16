@@ -30,17 +30,11 @@ namespace DCL.Lobby
         private const string PREVIOUS_NAME = "Previous";
         private const string NEXT_NAME = "Next";
 
-        // Pointer travel before a press on a card turns into a drag of the rail
-        private const float DRAG_THRESHOLD = 8f;
-
         // Seconds of its release speed a flung drag runs on for, capped at a page
         private const float FLING_PROJECTION = 0.12f;
 
         // A pointer that rested longer than this before its release was not flung
         private const long FLING_STALE_MS = 100;
-
-        // Bit of PointerEventBase.pressedButtons for the left mouse button
-        private const int LEFT_BUTTON_MASK = 1;
 
         // Matches the snap duration of the stylesheet
         private const float WHEEL_COOLDOWN = 0.25f;
@@ -238,7 +232,7 @@ namespace DCL.Lobby
             if (evt.pointerId != pressedPointerId) return;
 
             // The button is up: the release went to an element outside the rail's hearing
-            if ((evt.pressedButtons & LEFT_BUTTON_MASK) == 0)
+            if ((evt.pressedButtons & ClickOrDragManipulator.LEFT_BUTTON_MASK) == 0)
             {
                 EndPress(0f);
                 return;
@@ -246,7 +240,7 @@ namespace DCL.Lobby
 
             if (!dragging)
             {
-                if (Mathf.Abs(evt.position.x - pressX) < DRAG_THRESHOLD) return;
+                if (Mathf.Abs(evt.position.x - pressX) < ClickOrDragManipulator.DRAG_THRESHOLD) return;
 
                 dragging = true;
                 AddToClassList(USS_INSTANT);

@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.MediaStream
             ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
-        // Drops players whose AVPro object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // Drops players whose MediaPlayer object was destroyed under them (pool eviction / scene teardown). Runs first so no
         // later query dereferences the stale ref; recreated from the SDK component next frame.
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -151,7 +151,6 @@ namespace DCL.SDKComponents.MediaStream
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
             if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
-            if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
@@ -192,7 +191,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
                 if (ConsumePromise(ref component, false))
-                    component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+                    component.MediaPlayer.SetPlaybackProperties(sdkComponent, component.IsLiveStream);
 
                 component.UpdateState();
 
@@ -259,7 +258,7 @@ namespace DCL.SDKComponents.MediaStream
             if (assignedTexture.Texture.width != targetWidth || assignedTexture.Texture.height != targetHeight)
                 assignedTexture.Resize(targetWidth, targetHeight);
 
-            bool needsFlip = playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1));
+            bool needsFlip = playerComponent.MediaPlayer.TextureScale.Equals(new Vector2(1, -1));
             bool dimensionsCapped = targetWidth != avText.width || targetHeight != avText.height;
 
             if (needsFlip)
@@ -420,6 +419,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
+            // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
+            // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
+            // the gap still pays for delaying the Nth stream by N × the MediaOpenThrottle interval.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
 
             if (!MediaOpenThrottle.CanOpen(currentTime))
@@ -447,9 +449,7 @@ namespace DCL.SDKComponents.MediaStream
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
                     $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}");
 
-                Profiler.BeginSample(component.MediaPlayer.HasControl
-                    ? "MediaPlayer.OpenMedia"
-                    : "MediaPlayer.InitialiseAndOpenMedia");
+                Profiler.BeginSample("MediaPlayer.OpenMedia");
 
                 try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }

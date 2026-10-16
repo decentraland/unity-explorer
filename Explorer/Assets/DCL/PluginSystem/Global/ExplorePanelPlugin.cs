@@ -29,17 +29,16 @@ using DCL.Settings;
 using DCL.Shop;
 using DCL.SpringBones;
 using DCL.Settings.Configuration;
-using DCL.UserInAppInitializationFlow;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
 using Global.Dynamic;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
-using DCL.Chat.MessageBus;
+using DCL.Chat.Commands;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
@@ -77,11 +76,13 @@ using DCL.UI;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.SystemMenu;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
@@ -104,11 +105,10 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly ISelfProfile selfProfile;
+        private readonly UserLogout userLogout;
+        private readonly SelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -131,9 +131,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
-        private readonly IProfileCache profileCache;
         private readonly IInputBlock inputBlock;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly VolumeBus volumeBus;
         private readonly HttpEventsApiService eventsApiService;
@@ -144,6 +143,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly SceneLoadingLimit sceneLoadingLimit;
+        private readonly SingleSceneMode singleSceneMode;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -190,6 +190,7 @@ namespace DCL.PluginSystem.Global
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
         private BackpackModalController? backpackModalController;
+        private ExploreSectionModalController? exploreSectionModalController;
         private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
@@ -206,15 +207,13 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
-            ICompositeWeb3Provider web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            ISelfProfile selfProfile,
+            UserLogout userLogout,
+            SelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
-            IProfileCache profileCache,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
@@ -225,7 +224,7 @@ namespace DCL.PluginSystem.Global
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
             Entity playerEntity,
-            IChatMessagesBus chatMessagesBus,
+            ChatTeleporter chatTeleporter,
             ISystemMemoryCap systemMemoryCap,
             VolumeBus volumeBus,
             HttpEventsApiService eventsApiService,
@@ -237,6 +236,7 @@ namespace DCL.PluginSystem.Global
             IUserBlockingCache userBlockingCache,
             ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
@@ -278,14 +278,12 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.userLogout = userLogout;
             this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
             this.realmData = realmData;
-            this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -297,7 +295,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.chatMessagesBus = chatMessagesBus;
+            this.chatTeleporter = chatTeleporter;
             this.systemMemoryCap = systemMemoryCap;
             this.volumeBus = volumeBus;
             this.eventsApiService = eventsApiService;
@@ -309,6 +307,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCache = userBlockingCache;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.singleSceneMode = singleSceneMode;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.upscalingController = upscalingController;
@@ -344,6 +343,7 @@ namespace DCL.PluginSystem.Global
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
+            eventInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             explorePanelController?.Dispose();
@@ -352,6 +352,7 @@ namespace DCL.PluginSystem.Global
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
             backpackModalController?.Dispose();
+            exploreSectionModalController?.Dispose();
             creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
@@ -386,7 +387,6 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 wearableStorage,
                 selfProfile,
-                profileCache,
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
@@ -446,7 +446,7 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser, decentralandUrlsSource);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
@@ -458,7 +458,7 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                navmapBus, chatTeleporter, eventsApiService, eventScheduleElementsPool,
                 userCalendar, shareContextMenu, webBrowser, decentralandUrlsSource, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
@@ -468,15 +468,13 @@ namespace DCL.PluginSystem.Global
             navmapCommandFactory.AttachUiControllers(placesAndEventsPanelController, searchResultPanelController,
                 searchBarController, placeInfoPanelController, eventInfoPanelController);
 
-            IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
-
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
-                navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+                navmapView.MapCameraDragBehaviorData, webBrowser);
 
             // Kept alive by its navmap bus subscription.
             _ = new PlaceInfoToastController(navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
@@ -501,6 +499,7 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 userBlockingCache,
                 sceneLoadingLimit,
+                singleSceneMode,
                 volumeBus,
                 assetsProvisioner,
                 eventBus,
@@ -609,6 +608,19 @@ namespace DCL.PluginSystem.Global
                 BackpackModalView backpackModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.BackpackModalPrefab, ct: ct)).GetComponent<BackpackModalView>();
                 backpackModalController = new BackpackModalController(BackpackModalController.CreateLazily(backpackModalViewAsset, null), backpackSubPlugin.backpackController!);
                 mvcManager.RegisterController(backpackModalController);
+
+                ExploreSectionModalView sectionModalViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExploreSectionModalPrefab, ct: ct)).GetComponent<ExploreSectionModalView>();
+
+                exploreSectionModalController = new ExploreSectionModalController(ExploreSectionModalController.CreateLazily(sectionModalViewAsset, null),
+                    new Dictionary<ExploreSections, IHostableSection>
+                    {
+                        { ExploreSections.Navmap, navmapController },
+                        { ExploreSections.Places, placesController },
+                        { ExploreSections.Events, eventsController },
+                        { ExploreSections.Settings, settingsController },
+                    });
+
+                mvcManager.RegisterController(exploreSectionModalController);
             }
 
             EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
@@ -625,12 +637,8 @@ namespace DCL.PluginSystem.Global
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView,
                         web3IdentityCache,
-                        world,
-                        playerEntity,
                         webBrowser,
-                        web3Authenticator,
-                        userInAppInitializationFlow,
-                        profileCache,
+                        userLogout,
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
@@ -640,8 +648,7 @@ namespace DCL.PluginSystem.Global
                     inputBlock,
                     eventsApiService,
                     mvcManager,
-                    joinedCommunitiesVoiceLiveTracker,
-                    creditsPanelController);
+                    joinedCommunitiesVoiceLiveTracker);
 
             mvcManager.RegisterController(explorePanelController);
 
@@ -801,6 +808,7 @@ namespace DCL.PluginSystem.Global
             [field: Header("Place Detail Panel")] [field: SerializeField] public AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; } = null!;
             [field: Header("Event Detail Panel")] [field: SerializeField] public AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
             [field: Header("Quality Settings")] [field: SerializeField] public QualityPresetsAsset QualityPresets { get; private set; } = null!;
+            [field: Header("Lobby modal")] [field: SerializeField] public AssetReferenceGameObject ExploreSectionModalPrefab { get; private set; } = null!;
         }
     }
 }

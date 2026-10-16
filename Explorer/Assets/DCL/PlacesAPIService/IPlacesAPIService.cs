@@ -27,7 +27,7 @@ namespace DCL.PlacesAPIService
         /// <summary>
         ///     Every destination the Places menu tags as Featured, in the order the server ranks them.
         /// </summary>
-        UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct);
+        UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct, bool? withConnectedUsers = null);
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 

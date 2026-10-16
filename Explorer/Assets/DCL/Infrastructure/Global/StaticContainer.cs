@@ -35,6 +35,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SingleScene;
 using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
@@ -99,6 +100,8 @@ namespace Global
         public ISystemMemoryCap MemoryCap { get; private set; } = null!;
 
         public SceneLoadingLimit SceneLoadingLimit { get; private set; } = null!;
+
+        public SingleSceneMode SingleSceneMode { get; } = new ();
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -289,6 +292,8 @@ namespace Global
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.MediaContainer.mediaFactoryBuilder),
+                new FontsLoadingPlugin(container.CacheCleaner, container.assetsProvisioner,
+                    launchMode.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment && useLocalAssetBundles),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
                 new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
                 textureResolvePlugin,

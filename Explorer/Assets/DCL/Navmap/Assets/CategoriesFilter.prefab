@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7120152346170031156}
   - component: {fileID: 7717259738681178032}
   - component: {fileID: 4367110612037573594}
+  - component: {fileID: 2100000000000000020}
   m_Layer: 5
   m_Name: CategoriesFilter
   m_TagString: Untagged
@@ -3136,3 +3137,23 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6428389351864878118, guid: d17a1ce06dc3945c4a6c8ca4a7e4b4f8, type: 3}
   m_PrefabInstance: {fileID: 8771535950998132825}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2100000000000000020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6884972300609805251}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 701f39b169f5d774a83334f4449c1df3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 5
+    m_Bottom: 0
+  m_ChildAlignment: 3
+  <SpacingX>k__BackingField: -4.5
+  <SpacingY>k__BackingField: 0

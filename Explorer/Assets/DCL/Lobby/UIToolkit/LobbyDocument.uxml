@@ -9,6 +9,8 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLiveEventCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
+    <ui:Template name="LobbyProfileMenu" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uxml?fileID=9197481963319205126&amp;guid=35655be02a234b9ea1b138ab6323062c&amp;type=3#LobbyProfileMenu" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
         <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
@@ -16,6 +18,18 @@
         <ui:VisualElement name="AvatarHitArea" class="lobby__avatar-hit-area" style="display: none;" />
         <ui:VisualElement name="Logo" class="lobby__logo" picking-mode="Ignore" />
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
+            <ui:Button name="MapButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__map-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Map" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="PlacesButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__places-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Places" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="EventsButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__events-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Events" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
@@ -56,10 +70,17 @@
             <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
             <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
         </ui:VisualElement>
+        <!-- Before the tooltips so they still draw on top -->
+        <ui:Instance template="LobbyProfileMenu" name="ProfileMenuSlot" class="lobby__profile-menu" picking-mode="Ignore" />
         <!-- Last so it draws over everything else -->
         <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
             <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />
             <ui:Label name="Label" text="CUSTOMIZE" class="lobby__avatar-tooltip-label" picking-mode="Ignore" />
         </ui:VisualElement>
+        <ui:VisualElement name="FriendTooltip" class="lobby__friend-tooltip" picking-mode="Ignore" style="display: none;">
+            <ui:Label name="Label" text="Friend" enable-rich-text="false" class="lobby__friend-tooltip-label" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <!-- Stands in for the hardware cursor, hidden while the figure is dragged -->
+        <ui:VisualElement name="AvatarDragCursor" class="lobby__avatar-drag-cursor" picking-mode="Ignore" style="display: none;" />
     </ui:VisualElement>
 </ui:UXML>

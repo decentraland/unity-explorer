@@ -46,10 +46,21 @@ namespace DCL.Lobby
         [field: Header("Colours")]
         [field: SerializeField] public Color FloorColor { get; private set; } = new (0.55f, 0.55f, 0.58f, 1f);
         [field: SerializeField] public Color SpotColor { get; private set; } = new (0.15f, 0.13f, 0.2f, 1f);
-        [field: SerializeField] public Color MistColor { get; private set; } = new (0.6f, 0.5f, 0.8f, 0.35f);
 
         [field: Tooltip("Fraction of the image height, from the bottom, sampled by 'Match colours to backdrop'")]
         [field: SerializeField, Range(0.02f, 0.5f)] public float ColorSampleBand { get; private set; } = 0.15f;
+
+        [field: Header("Mist")]
+        [field: Tooltip("Off hides the mist behind the avatar")]
+        [field: SerializeField] public bool MistEnabled { get; private set; } = true;
+
+        [field: SerializeField] public Color MistColor { get; private set; } = new (0.6f, 0.5f, 0.8f, 0.35f);
+
+        [field: Header("Dust")]
+        [field: Tooltip("Off stops the floating dust motes")]
+        [field: SerializeField] public bool DustEnabled { get; private set; } = true;
+
+        [field: SerializeField] public Color DustColor { get; private set; } = new (1f, 0.96f, 0.9f, 0.55f);
 
         [field: Header("Key Light")]
         [field: Tooltip("Euler angles of the stage's directional light")]
