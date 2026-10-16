@@ -89,7 +89,7 @@ namespace Global.Dynamic
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence(identityCache);
             var pendingTransferService = new PendingTransferService(giftingPersistence, identityCache, wearableContainer.WearableCatalog, staticContainer.EmoteStorage);
 
-            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableContainer.WearableCatalog,
+            var selfProfile = new SelfProfile(profilesRepository, identityCache, staticContainer.RealmData, equippedWearables, wearableContainer.WearableCatalog,
                 staticContainer.EmoteStorage, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity, forcedWearables);
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);

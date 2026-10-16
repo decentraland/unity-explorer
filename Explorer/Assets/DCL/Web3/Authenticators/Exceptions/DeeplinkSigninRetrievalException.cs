@@ -14,8 +14,14 @@ namespace DCL.Web3.Authenticators
             /// <summary>410: the identity expired before retrieval (server-side TTL is 15 minutes).</summary>
             Expired,
 
-            /// <summary>403: the retrieval came from a different IP than the one that stored the identity (commonly a VPN or private relay).</summary>
+            /// <summary>
+            ///     403: the retrieval came from a different IP than the one that stored the identity (commonly a VPN, a private relay,
+            ///     or a dual-stack network where the browser and the client use different IPv4/IPv6 addresses).
+            /// </summary>
             IpMismatch,
+
+            /// <summary>401: the verifier sent on retrieval does not match the one the sign-in request was created with.</summary>
+            VerifierMismatch,
         }
 
         public ErrorReason Reason { get; }
@@ -31,7 +37,8 @@ namespace DCL.Web3.Authenticators
             {
                 ErrorReason.NotFound => $"Signin identity {identityId} was not found or was already retrieved",
                 ErrorReason.Expired => $"Signin identity {identityId} expired before it was retrieved",
-                ErrorReason.IpMismatch => $"Signin identity {identityId} was stored from a different IP: a VPN or private relay is likely interfering",
+                ErrorReason.IpMismatch => $"Signin identity {identityId} was stored from a different IP: a VPN, a private relay or an IPv4/IPv6 dual-stack network is likely interfering",
+                ErrorReason.VerifierMismatch => $"Signin identity {identityId} does not belong to this sign-in request",
                 _ => $"Signin identity {identityId} retrieval failed: {reason}",
             };
     }
