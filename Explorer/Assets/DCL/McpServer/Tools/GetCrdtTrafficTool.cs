@@ -54,8 +54,9 @@ namespace DCL.McpServer.Tools
             + "and classify each one: applied (changed the renderer state) or wasted (rewrote identical values with a newer timestamp, duplicated the "
             + "current state, arrived stale, targeted a deleted entity, or was a Creator Hub component leaked from main.composite). Reports totals, "
             + "the per-tick rate and the top writers grouped by entity + component with their cadence and a verdict. A writer flagged 'rewrites identical "
-            + "values every tick' is scene code calling a mutable getter (e.g. Transform.getMutable) in a system every frame without changing anything — "
-            + "grep the scene source for that component to find it. Each writer carries engineEntityId (the id get_entity_details takes; "
+            + "values every tick' is scene code re-setting a component to the same value every frame — createOrReplace or a helper built on it "
+            + "(MeshRenderer.setBox/setPlane, Material.set*), which the SDK always sends; grep the scene source for that component to find it. "
+            + "An unchanged getMutable is not sent since SDK 7.22.3, except on SDK builds that resend after an incoming update of the same component. Each writer carries engineEntityId (the id get_entity_details takes; "
             + "'entity' is the CRDT id the scene uses) and an entityLabel describing it (GLTF src, primitive mesh, text, hidden, parent). "
             + "Scene-defined custom components never appear: the SDK does not send them to the renderer. bridgeTime reports the wall time the CRDT "
             + "bridge spent per scene tick (incoming reconcile, apply under the scene world lock, outgoing serialize). It is elapsed time on the "
@@ -288,7 +289,7 @@ namespace DCL.McpServer.Tools
 
             if (counts[CrdtTrafficOutcome.RedundantIdenticalData] == entry.Messages)
                 return everyTick
-                    ? "wasted: rewrites identical values every tick (mutable write without a change)"
+                    ? "wasted: rewrites identical values every tick (re-set without a change)"
                     : "wasted: rewrites identical values";
 
             if (counts.Wasted == entry.Messages)
