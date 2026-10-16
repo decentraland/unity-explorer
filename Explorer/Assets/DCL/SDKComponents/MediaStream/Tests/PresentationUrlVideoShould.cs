@@ -2,8 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UUAV.Compat;
 using Object = UnityEngine.Object;
 
@@ -13,6 +15,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
     {
         private const string URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
         private const string DIRECT_URL = "https://example.com/v.m3u8";
+        private const string SIGNED_VIMEO_URL = "https://player.vimeo.com/external/123456.m3u8?s=secret-token";
         private const string POOL_CONTAINER_NAME = "POOL_CONTAINER_MEDIA_PLAYER";
 
         private MediaPlayer prefab = null!;
@@ -75,6 +78,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
             video.Update(URL, null, true, 2f);
 
             AssertResolved(2);
+        }
+
+        [Test]
+        public void LogUnreachableUrl_WithoutItsQuery()
+        {
+            resolver.ResolveAsync(SIGNED_VIMEO_URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>())
+                    .Returns(UniTask.FromResult(new ResolvedMediaUrl(SIGNED_VIMEO_URL, false)));
+            LogAssert.Expect(LogType.Warning, new Regex(@"external/123456\.m3u8$"));
+
+            video.Update(SIGNED_VIMEO_URL, null, true, 0f);
         }
 
         [Test]

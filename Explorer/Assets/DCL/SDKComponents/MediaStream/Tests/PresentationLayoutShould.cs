@@ -261,6 +261,15 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsFalse(metadata.videoPositionAt.HasValue);
         }
 
+        [Test]
+        public void DropVideoPosition_WhenBeyondRange()
+        {
+            PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoPositionMs\":9223372036854775807,\"videoPositionAt\":100000000000001}}");
+
+            Assert.IsFalse(metadata.videoPositionMs.HasValue);
+            Assert.IsFalse(metadata.videoPositionAt.HasValue);
+        }
+
         [TestCase("playing", YOUTUBE_URL)]
         [TestCase("paused", "https://drive.google.com/file/d/1AbC-dEf_GhIjKlMnOp/view")]
         [TestCase("playing", "https://player.vimeo.com/external/123456.m3u8?s=abc&logging=false")]
