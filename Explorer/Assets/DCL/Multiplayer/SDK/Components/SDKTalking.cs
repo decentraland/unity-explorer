@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.SDK.Components
     /// </summary>
     public struct SDKTalking : IDirtyMarker
     {
-        public bool? Value;
+        public bool? Value { get; private set; }
         public bool IsDirty { get; set; }
 
         public void Set(bool? value)

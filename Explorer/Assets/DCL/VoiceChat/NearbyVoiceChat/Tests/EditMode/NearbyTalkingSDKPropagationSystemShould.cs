@@ -174,6 +174,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(written?.HasTalking, Is.True);
             Assert.That(written?.Talking, Is.True);
             ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Is<CRDTEntity>(e => e.Id == SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1), Arg.Any<(SDKProfile profile, bool? talking)>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
         }
 
         [Test]
