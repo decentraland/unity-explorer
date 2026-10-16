@@ -14,6 +14,8 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Pull-mirror from <see cref="INearbyAudioStreamRegistry"/> to avatar-entity components.
     ///     Runs every tick in <see cref="NearbyVoiceChatGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
     ///     Stateless — pass-through under the listening gate (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
+    ///     Every <see cref="IsActivelySpeakingTag"/> flip is also written to the player's scene through
+    ///     <see cref="NearbyTalkingSDKPropagationSystem.SetSceneTalking(World, Entity, bool)"/>.
     ///     <para>
     ///         Maintains the avatar's <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/> as a
     ///         reference to the registry's copy-on-write sid array — <c>ReferenceEquals</c> is the
@@ -81,7 +83,10 @@ namespace DCL.VoiceChat.Nearby.Systems
             World.Remove<NearbyAudioStreamerComponent>(entity);
 
             if (World.Has<IsActivelySpeakingTag>(entity))
+            {
+                NearbyTalkingSDKPropagationSystem.SetSceneTalking(World, entity, false);
                 World.Remove<IsActivelySpeakingTag>(entity);
+            }
 
             if (World.Has<InAudibleRangeTag>(entity))
                 World.Remove<InAudibleRangeTag>(entity);
@@ -94,7 +99,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             string walletId = profile.UserId.Value;
             if (registry.IsActiveSpeaker(walletId))
+            {
+                NearbyTalkingSDKPropagationSystem.SetSceneTalking(World, entity, true);
                 World.Add<IsActivelySpeakingTag>(entity);
+            }
         }
 
         [Query]
@@ -104,7 +112,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             string walletId = profile.UserId.Value;
             if (!registry.IsActiveSpeaker(walletId))
+            {
+                NearbyTalkingSDKPropagationSystem.SetSceneTalking(World, entity, false);
                 World.Remove<IsActivelySpeakingTag>(entity);
+            }
         }
     }
 }
