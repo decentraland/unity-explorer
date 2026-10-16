@@ -230,6 +230,10 @@ jobs:
               platform_row "Mac" "Decentraland_macos" "Decentraland_macos.zip"
             } > build.md
             upsert build build.md
+            {
+              echo "REUSED_RUN_ID=$RUN_ID"
+              echo "REUSED_S3_BASE=$S3_BASE"
+            } >> "$GITHUB_ENV"
           fi
           echo "BUILD_STATE=$BUILD_STATE" >> "$GITHUB_ENV"
 
@@ -358,13 +362,86 @@ jobs:
           # pr-comment-artifact-url dispatches it with the PR number. A dev
           # build that finished before the cut never had one, so the
           # placeholder's promise ("results land in this section") is one
-          # nothing at the cut can keep; say what will.
+          # nothing at the cut can keep; say what will. In the reused state the
+          # next step dispatches against that dev build and overwrites this.
           {
             echo "![Performance](https://img.shields.io/badge/Performance-Not%20dispatched-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)"
             echo ""
             echo "No benchmark has been dispatched yet: one rides each *successful* build that reports into this PR, and a dev build that finished before the cut reported into none. The first that does — dev's build of \`${SHORT_SHA}\` finishing after the cut, or the release branch's own — dispatches one into this section."
           } > performance.md
           upsert performance performance.md
+
+      # A dev build that went green before the cut never reports into this PR,
+      # and nothing else builds the release branch, so without this step the
+      # release ships with no benchmark. Its artifacts are the release's, so
+      # dispatch against them with the payload pr-comment-artifact-url.yml sends.
+      #
+      # Never fails the job, for the same reason as the automation step below:
+      # a re-run force-pushes the release branch from a newer dev tip.
+      - name: Dispatch the benchmark against the reused dev build
+        if: env.BUILD_STATE == 'reused'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERF_TOKEN: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+        run: |
+          set -uo pipefail
+
+          PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number --jq '.number')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          STEP_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          PERF_QUEUE="https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml"
+          BADGE_STYLE="?logo=speedtest&logoColor=white&style=for-the-badge"
+
+          upsert() {
+            SECTION=performance SECTION_BODY_FILE=performance.md REPO="$GITHUB_REPOSITORY" PR_NUMBER="$PR_NUMBER" \
+              bash .github/actions/ci-status-comment/upsert-ci-status.sh
+          }
+
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
+
+          # A green run can still have built nothing (no Explorer/** change) or
+          # one platform (windows-only/macos-only label); the benchmark downloads
+          # both zips, so it needs both legs.
+          LEGS_GREEN=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${REUSED_RUN_ID}/jobs?per_page=50" \
+            --jq '[.jobs[] | select(.conclusion == "success") | .name] | any(startswith("Build (macos")) and any(startswith("Build (windows64"))') || LEGS_GREEN=unknown
+          if [ "$LEGS_GREEN" != "true" ]; then
+            echo "::warning::dev's build of ${SHORT_SHA} does not have both Build (macos) and Build (windows64) green (${LEGS_GREEN}), so no benchmark was dispatched. Label the release PR \`force-build\` to build the release branch; its build dispatches one."
+            exit 0
+          fi
+
+          if RELEASE_TAG=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq '.tagName') && [ -n "$RELEASE_TAG" ] && \
+             jq -n \
+               --arg run_name "release: ${RELEASE_DATE}" \
+               --arg pr_number "$PR_NUMBER" \
+               --arg change "$REUSED_S3_BASE" \
+               --arg base "${PUBLIC_URL_PREFIX}/@dcl/${GITHUB_REPOSITORY#*/}/releases/${RELEASE_TAG}" \
+               '{event_type: "unity-explorer", client_payload: {
+                  run_name: $run_name,
+                  pr_number: $pr_number,
+                  win_change_build_url: "\($change)/Decentraland_windows64.zip",
+                  win_base_build_url: "\($base)/Decentraland_windows64.zip",
+                  mac_change_build_url: "\($change)/Decentraland_macos.zip",
+                  mac_base_build_url: "\($base)/Decentraland_macos.zip"}}' > dispatch.json && \
+             GH_TOKEN="$PERF_TOKEN" gh api repos/decentraland/performance-testing/dispatches --input dispatch.json; then
+            {
+              echo "[![Performance](https://img.shields.io/badge/Performance-Dispatched!-yellow${BADGE_STYLE})](${PERF_QUEUE})"
+              echo ""
+              echo "🏁 Bare-metal benchmark dispatched for dev's build of \`${SHORT_SHA}\`, the commit this release was cut from ([run queue](${PERF_QUEUE})) — results across the runner fleet land in this section when it finishes."
+              echo ""
+              echo "<sub>Latest build wins this section — a push to the release branch dispatches a new benchmark that replaces this one.</sub>"
+            } > performance.md
+            upsert || echo "::warning::Benchmark dispatched, but the performance section could not be updated."
+            echo "::notice::Benchmark dispatched against dev's build of ${SHORT_SHA} (baseline ${RELEASE_TAG})."
+          else
+            echo "::error::Could not dispatch the benchmark against dev's build of ${SHORT_SHA}. If the log says \"Repository not found, OR token has insufficient permissions\", PERFORMANCE_TESTING_PAT has expired and needs rotating. Label the release PR \`force-build\` to get a benchmark from the release branch's own build. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            {
+              echo "[![Performance](https://img.shields.io/badge/Performance-Dispatch%20failed-ff0000${BADGE_STYLE})](${STEP_URL})"
+              echo ""
+              echo "❌ Could not dispatch the bare-metal benchmark against dev's build of \`${SHORT_SHA}\` — see the [step log](${STEP_URL}). Label this PR \`force-build\` to benchmark the release branch's own build."
+            } > performance.md
+            upsert || true
+          fi
 
       # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
       # run without manual approval — the same suppression the CI-status step above

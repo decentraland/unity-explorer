@@ -16,10 +16,13 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         private MapCameraObject mapCameraObject = null!;
         private ICoordsUtils coordsUtils = null!;
         private IMapCullingController culling = null!;
+        private IMapActivityOwner owner = null!;
 
         [SetUp]
         public void SetUp()
         {
+            owner = Substitute.For<IMapActivityOwner>();
+
             GameObject go = new GameObject();
             mapCameraObject = go.AddComponent<MapCameraObject>();
             mapCameraObject.mapCamera = go.AddComponent<Camera>();
@@ -46,7 +49,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         [Test]
         public void BeInitialized()
         {
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(30, 30), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(30, 30), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
 
             Assert.NotNull(mapCamera.RenderTexture);
             Assert.AreEqual(30, mapCamera.RenderTexture.width);
@@ -64,11 +67,45 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         [Test]
         public void ReturnRenderTexture()
         {
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), Vector2Int.one, MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), Vector2Int.one, MapLayer.SatelliteAtlas);
 
             var renderTexture = mapCamera.GetRenderTexture();
 
             Assert.AreEqual(mapCamera.RenderTexture, renderTexture);
+        }
+
+        [Test]
+        public void IgnoreAReleaseFromAPreviousRenter()
+        {
+            // Arrange
+            IMapActivityOwner previousRenter = Substitute.For<IMapActivityOwner>();
+            var released = false;
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), Vector2Int.one, MapLayer.SatelliteAtlas);
+            mapCamera.OnReleasing += (_, _) => released = true;
+
+            // Act
+            mapCamera.Release(previousRenter);
+
+            // Assert
+            Assert.IsFalse(released);
+            culling.DidNotReceive().OnCameraRemoved(mapCamera);
+        }
+
+        [Test]
+        public void ReleaseOnlyOnceForItsRenter()
+        {
+            // Arrange
+            var releases = 0;
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), Vector2Int.one, MapLayer.SatelliteAtlas);
+            mapCamera.OnReleasing += (_, _) => releases++;
+
+            // Act
+            mapCamera.Release(owner);
+            mapCamera.Release(owner);
+
+            // Assert
+            Assert.AreEqual(1, releases);
+            culling.Received(1).OnCameraRemoved(mapCamera);
         }
 
         // A zoomable camera's closest zoom is 1 parcel, not the configured 100
@@ -81,7 +118,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         [TestCase(2f, 100, 200, 1)]
         public void SetZoom(float zoom, int minZoom, int maxZoom, float expected)
         {
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(100, 200), MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(100, 200), MapLayer.SatelliteAtlas);
 
             mapCamera.SetZoom(zoom, 0);
 
@@ -93,7 +130,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         public void SetPosition()
         {
             coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(-1000, -1000, 1000, 1000));
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
             mapCamera.SetZoom(0, 0);
 
             coordsUtils.CoordsToPositionUnclamped(Arg.Any<Vector2>()).Returns((x) => (Vector3)x.ArgAt<Vector2>(0) * 10); //Multiply input by 10
@@ -108,7 +145,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         [TestCaseSource(nameof(LocalPositionTestCases))]
         public void SetLocalPosition(Vector2 desired, Vector2 expected, Vector2Int zoomValues, float zoom)
         {
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), zoomValues, MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), zoomValues, MapLayer.SatelliteAtlas);
             mapCamera.SetZoom(zoom, 0);
             mapCamera.SetLocalPosition(desired);
 
@@ -129,7 +166,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         public void MarkTheCameraChangedWhenItResumesRendering()
         {
             // Arrange: a minimap camera suspended while a popup covers it, standing still meanwhile
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
             mapCamera.SuspendRendering();
             culling.ClearReceivedCalls();
 
@@ -144,8 +181,8 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         public void NotMarkAReleasedCameraChangedWhenItResumesRendering()
         {
             // Arrange
-            ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
-            mapCamera.Release(Substitute.For<IMapActivityOwner>());
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.Release(owner);
             culling.ClearReceivedCalls();
 
             // Act

@@ -20,9 +20,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
     public class WritePointerEventResultsSystemShould : UnitySystemTestBase<WritePointerEventResultsSystem>
     {
         private readonly List<PBPointerEventsResult> results = new ();
-        private IECSToCRDTWriter writer;
-        private IGlobalInputEvents globalInputEvents;
-        private ISceneStateProvider sceneStateProvider;
+        private IECSToCRDTWriter writer = null!;
+        private IGlobalInputEvents globalInputEvents = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
 
         [SetUp]
         public void SetUp()
@@ -92,6 +92,45 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(second.TickNumber, Is.EqualTo(123u));
             Assert.That(second.Timestamp, Is.EqualTo(123u));
             Assert.That(second.Hit, Is.Null);
+
+            // Releasing IaBackward (movement) is not a gesture, pressing IaAction6 is
+            sceneStateProvider.Received(1).LastUserInputTick = 123u;
+        }
+
+        [Test]
+        public void NotRecordUserGestureForMovementInput()
+        {
+            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
+            {
+                new (InputAction.IaForward, PointerEventType.PetDown),
+                new (InputAction.IaJump, PointerEventType.PetDown),
+                new (InputAction.IaWalk, PointerEventType.PetUp),
+                new (InputAction.IaAny, PointerEventType.PetDown),
+            });
+
+            system.Update(0);
+
+            sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
+        }
+
+        [Test]
+        [TestCase(PointerEventType.PetProximityEnter)]
+        [TestCase(PointerEventType.PetProximityLeave)]
+        public void NotRecordUserGestureForProximityEvents(PointerEventType eventType)
+        {
+            var sdkEvents = new PBPointerEvents
+            {
+                AppendPointerEventResultsIntent = new AppendPointerEventResultsIntent(),
+                PointerEvents = { CreateEntry(eventType, InputAction.IaPointer) },
+            };
+
+            sdkEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(0);
+            world.Create(new CRDTEntity(100), sdkEvents);
+
+            system.Update(0);
+
+            sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
         }
 
         [Test]
@@ -152,6 +191,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             }
 
             Assert.That(writer.ReceivedCalls().Count(), Is.EqualTo(2));
+
+            // Only the PetDown result is a gesture, the PetHoverLeave one is not
+            sceneStateProvider.Received(1).LastUserInputTick = 123u;
         }
 
         [Test]

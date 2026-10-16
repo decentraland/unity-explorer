@@ -2,7 +2,6 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
-using DCL.Navmap;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -38,13 +37,13 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly MapCameraObject mapCameraObject;
 
         private RenderTexture? renderTexture;
+        private IMapActivityOwner? renter;
 
         // Zoom Thresholds in Parcels
         private Vector2Int zoomValues;
 
         private Rect cameraPositionBounds;
         private Sequence? translationSequence;
-        private bool rented;
 
         public MapCameraController(
             IMapInteractivityControllerInternal interactivityBehavior,
@@ -62,8 +61,9 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.mapCamera.orthographic = true;
         }
 
-        void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
+        void IMapCameraControllerInternal.Initialize(IMapActivityOwner owner, Vector2Int textureResolution, Vector2Int zoomValuesInParcels, MapLayer layers)
         {
+            renter = owner;
             textureResolution = ClampTextureResolution(textureResolution);
             renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 16, RenderTextureFormat.Default, 0);
             // Bilinear and Trilinear make texture blurry
@@ -71,14 +71,13 @@ namespace DCL.MapRenderer.MapCameraController
             renderTexture.autoGenerateMips = false;
             renderTexture.useMipMap = false;
 
-            this.zoomValues = zoomValues * coordsUtils.ParcelSize;
+            zoomValues = zoomValuesInParcels * coordsUtils.ParcelSize;
 
             EnabledLayers = layers;
 
             mapCameraObject.mapCamera.targetTexture = renderTexture;
 
             cullingController.OnCameraAdded(this);
-            rented = true;
 
             interactivityBehavior.Initialize(layers);
         }
@@ -248,7 +247,7 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.mapCamera.enabled = true;
 
             // What the camera shows was skipped while it was suspended; it resumes in place, so nothing else marks it changed.
-            if (rented)
+            if (renter != null)
                 cullingController.SetCameraDirty(this);
         }
 
@@ -269,8 +268,11 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void Release(IMapActivityOwner owner)
         {
+            // A previous renter's stale reference must not free the camera under its current renter.
+            if (owner != renter) return;
+
+            renter = null;
             cullingController.OnCameraRemoved(this);
-            rented = false;
             if (renderTexture != null)
                 renderTexture.Release();
             interactivityBehavior.Release();

@@ -1,5 +1,4 @@
 using DCL.Notifications.NotificationsMenu;
-using DCL.UI.Profiles;
 using UnityEngine;
 
 namespace DCL.Lobby
@@ -9,9 +8,6 @@ namespace DCL.Lobby
     /// </summary>
     public class LobbyPopupsView : MonoBehaviour
     {
-        [field: SerializeField]
-        public ProfileMenuView ProfileMenuView { get; private set; } = null!;
-
         [field: SerializeField]
         public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
     }
