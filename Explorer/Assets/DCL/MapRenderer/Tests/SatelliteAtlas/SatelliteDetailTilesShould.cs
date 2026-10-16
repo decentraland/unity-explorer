@@ -198,12 +198,42 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             Assert.AreEqual(TileId(3), evictions[1].Value);
         }
 
-        private static Vector3Int TileId(int i) =>
-            new (i, 0, SatelliteDetailTiles.BASE_LEVEL);
-
-        private void AddTile(int i, int lastUsed, bool loaded = false)
+        [Test]
+        public void NeverDropTheBaseLevelLoads()
         {
-            tiles.Add(TileId(i), new SatelliteDetailTiles.Tile(view) { LastUsed = lastUsed, Texture = loaded ? loadedTexture : null });
+            // Arrange
+            AddTile(0, lastUsed: 1, level: SatelliteDetailTiles.BASE_LEVEL); // loading, out of view
+            AddTile(1, lastUsed: 1); // loading, out of view
+
+            // Act
+            SatelliteDetailTiles.CollectUnusedLoads(tiles, CURRENT_REFRESH, unusedLoads);
+
+            // Assert
+            Assert.AreEqual(1, unusedLoads.Count);
+            Assert.AreEqual(TileId(1), unusedLoads[0]);
+        }
+
+        [Test]
+        public void NeitherEvictNorCountTheBaseLevelTiles()
+        {
+            // Arrange
+            AddTile(0, lastUsed: 1, loaded: true, level: SatelliteDetailTiles.BASE_LEVEL);
+            AddTile(1, lastUsed: 2, loaded: true, level: SatelliteDetailTiles.BASE_LEVEL);
+            AddTile(2, lastUsed: 3, loaded: true);
+
+            // Act
+            SatelliteDetailTiles.CollectEvictions(tiles, CURRENT_REFRESH, 1, evictions);
+
+            // Assert: one finer tile within a cap of one
+            Assert.IsEmpty(evictions);
+        }
+
+        private static Vector3Int TileId(int i, int level = SatelliteDetailTiles.BASE_LEVEL + 1) =>
+            new (i, 0, level);
+
+        private void AddTile(int i, int lastUsed, bool loaded = false, int level = SatelliteDetailTiles.BASE_LEVEL + 1)
+        {
+            tiles.Add(TileId(i, level), new SatelliteDetailTiles.Tile(view) { LastUsed = lastUsed, Texture = loaded ? loadedTexture : null });
         }
     }
 }

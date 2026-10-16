@@ -26,9 +26,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     ///     is cancelled. A tile that fails is requested again after <see cref="RETRY_FAILED_TILE_AFTER_SECONDS" />, even if no camera moves,
     ///     and keeps that wait if it leaves the view and comes back in between; a tile the server answers 404 for is never requested again
     ///     in the session. Each tile's KTX2 file is kept in the disk cache, so a later load reads it from disk, and a file that fails to decode is removed
-    ///     from it. The decoded texture keeps no CPU copy and belongs to the tile alone. Up to <see cref="MAX_CACHED_TILES" /> tiles out of
-    ///     view stay loaded while the same cameras are rented; once a camera is released, every tile out of view is destroyed and its
-    ///     memory freed.
+    ///     from it. The decoded texture keeps no CPU copy and belongs to the tile alone. Level-3 tiles are the baseline: once the manifest
+    ///     loads, the ones already in the disk cache are loaded without any camera showing them, and no level-3 tile is ever dropped or
+    ///     evicted, so each one covers its bundled chunk for the rest of the session. Up to <see cref="MAX_CACHED_TILES" /> finer tiles out
+    ///     of view stay loaded while the same cameras are rented; once a camera is released, every finer tile out of view is destroyed and
+    ///     its memory freed.
     /// </summary>
     internal class SatelliteDetailTiles : IDisposable
     {
@@ -75,7 +77,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly HashSet<string> emptyUrls = new ();
         private readonly Dictionary<string, float> failedUrls = new ();
 
-        private UniTask<SatelliteManifest> manifestLoad;
+        // A completion source takes every awaiter while the load is pending; a preserved task takes only one until it completes.
+        private readonly UniTaskCompletionSource<SatelliteManifest> manifestLoad = new ();
+
         private Vector2 gridTopLeft;
         private float baseChunkSize;
         private int refreshStamp;
@@ -114,10 +118,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             gridTopLeft = bundledGridTopLeft;
             baseChunkSize = bundledChunkSize;
 
-            // Preserved so every settle wait can await the same load.
-            manifestLoad = LoadManifestAsync(lifetimeCts.Token).Preserve();
+            PublishManifestAsync(lifetimeCts.Token).Forget();
             cullingController.CamerasChanged += Refresh;
             Refresh();
+            LoadCachedBaseLevelAsync(lifetimeCts.Token).Forget();
         }
 
         public void Dispose()
@@ -138,8 +142,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
-        ///     Marks the tiles every active camera shows, drops the loads of tiles that left the view, releases the oldest loaded tiles
-        ///     over the cap (all of them out of view once a camera was released), and schedules the missing tiles' requests for when
+        ///     Marks the tiles every active camera shows, drops the loads of finer tiles that left the view, releases the oldest loaded
+        ///     finer tiles over the cap (all of them out of view once a camera was released), and schedules the missing tiles' requests for when
         ///     the cameras settle. Does nothing while the satellite layer is hidden.
         /// </summary>
         internal void Refresh()
@@ -221,33 +225,38 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
-        ///     Fills <paramref name="result" /> with the tiles that have no texture and were not used in the refresh
-        ///     <paramref name="refreshStamp" />: pending or loading tiles that left the view, and failed tiles out of view.
+        ///     Fills <paramref name="result" /> with the finer-than-<see cref="BASE_LEVEL" /> tiles that have no texture and were not used
+        ///     in the refresh <paramref name="refreshStamp" />: pending or loading tiles that left the view, and failed tiles out of view.
         /// </summary>
         internal static void CollectUnusedLoads(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, List<Vector3Int> result)
         {
             result.Clear();
 
             foreach ((Vector3Int id, Tile tile) in tiles)
-                if (tile.Texture == null && tile.LastUsed != refreshStamp)
+                if (id.z != BASE_LEVEL && tile.Texture == null && tile.LastUsed != refreshStamp)
                     result.Add(id);
         }
 
         /// <summary>
-        ///     Fills <paramref name="result" /> with the tiles to release to get back to <paramref name="maxCachedTiles" />, oldest first.
-        ///     Tiles used in the refresh <paramref name="refreshStamp" /> are never released.
+        ///     Fills <paramref name="result" /> with the finer-than-<see cref="BASE_LEVEL" /> tiles to release to get back to
+        ///     <paramref name="maxCachedTiles" /> of them, oldest first. Tiles used in the refresh <paramref name="refreshStamp" /> and
+        ///     <see cref="BASE_LEVEL" /> tiles are never released.
         /// </summary>
         internal static void CollectEvictions(Dictionary<Vector3Int, Tile> tiles, int refreshStamp, int maxCachedTiles, List<KeyValuePair<int, Vector3Int>> result)
         {
             result.Clear();
 
-            int excess = tiles.Count - maxCachedTiles;
+            int excess = -maxCachedTiles;
+
+            foreach (Vector3Int id in tiles.Keys)
+                if (id.z != BASE_LEVEL)
+                    excess++;
 
             if (excess <= 0)
                 return;
 
             foreach ((Vector3Int id, Tile tile) in tiles)
-                if (tile.LastUsed != refreshStamp)
+                if (id.z != BASE_LEVEL && tile.LastUsed != refreshStamp)
                     result.Add(new KeyValuePair<int, Vector3Int>(tile.LastUsed, id));
 
             result.Sort(OLDEST_FIRST);
@@ -269,7 +278,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             try
             {
-                SatelliteManifest manifest = await manifestLoad;
+                SatelliteManifest manifest = await manifestLoad.Task;
 
                 while (true)
                 {
@@ -289,6 +298,41 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
             catch (OperationCanceledException) { }
             finally { settlePending = false; }
+        }
+
+        /// <summary>
+        ///     Once the manifest loads, queues every <see cref="BASE_LEVEL" /> tile it lists that no camera has requested yet, to be read
+        ///     from the disk cache only: a tile that isn't stored there is dropped and left to be downloaded when a camera shows it.
+        /// </summary>
+        private async UniTaskVoid LoadCachedBaseLevelAsync(CancellationToken ct)
+        {
+            SatelliteManifest manifest;
+
+            try { manifest = await manifestLoad.Task; }
+            catch (OperationCanceledException) { return; }
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            int side = 1 << BASE_LEVEL;
+
+            for (var j = 0; j < side; j++)
+            for (var i = 0; i < side; i++)
+            {
+                var id = new Vector3Int(i, j, BASE_LEVEL);
+
+                if (tiles.ContainsKey(id) || !manifest.TryGetTilePath(id, out string path))
+                    continue;
+
+                var tile = new Tile(RentView()) { Url = $"{baseUrl}/{path}", CacheOnly = true, Pending = true };
+
+                // Behind every request for a tile a camera shows.
+                tile.DistanceSqToCamera = float.MaxValue;
+                tiles.Add(id, tile);
+                pending.Add(id);
+            }
+
+            PumpLoads();
         }
 
         /// <summary>
@@ -337,6 +381,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             if (tiles.TryGetValue(id, out Tile? tile))
             {
                 tile.LastUsed = refreshStamp;
+
+                // A camera shows a tile queued from the disk cache only: it is downloaded if the cache misses, and queued by its distance.
+                if (requestWith != null && tile.CacheOnly)
+                {
+                    tile.CacheOnly = false;
+                    tile.DistanceSqToCamera = (TileCenter(id, gridTopLeft, baseChunkSize) - cameraCenter).sqrMagnitude;
+                }
 
                 if (requestWith != null && tile.FailedAt is { } failedAt && Now - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
                 {
@@ -413,23 +464,26 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             try
             {
-                byte[] bytes = await FetchAsync(url, ct);
+                byte[]? bytes = await FetchAsync(url, tile, ct);
 
                 await UniTask.SwitchToMainThread(ct);
 
-                try
+                if (bytes != null)
                 {
-                    texture = decodeOverride != null
-                        ? await decodeOverride(bytes, url)
-                        : await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
-                }
+                    try
+                    {
+                        texture = decodeOverride != null
+                            ? await decodeOverride(bytes, url)
+                            : await KtxTextureDecoder.DecodeAsync(bytes, linear: false, TextureWrapMode.Clamp, FilterMode.Bilinear, readable: false, url);
+                    }
 
-                // A missing native decoder is the machine's, not the file's.
-                catch (Exception e) when (e is not (OperationCanceledException or DllNotFoundException or EntryPointNotFoundException))
-                {
-                    // Remove the stored file so the tile's next attempt downloads it again instead of decoding the same bytes.
-                    RemoveCachedFileAsync(url).Forget();
-                    throw;
+                    // A missing native decoder is the machine's, not the file's.
+                    catch (Exception e) when (e is not (OperationCanceledException or DllNotFoundException or EntryPointNotFoundException))
+                    {
+                        // Remove the stored file so the tile's next attempt downloads it again instead of decoding the same bytes.
+                        RemoveCachedFileAsync(url).Forget();
+                        throw;
+                    }
                 }
             }
             catch (OperationCanceledException) { }
@@ -442,16 +496,30 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             // The tile was dropped while loading: it no longer owns anything, so the texture is destroyed here.
             if (ct.IsCancellationRequested)
                 UnityObjectUtils.SafeDestroy(texture);
-            else if (failure != null)
-                Fail(id, tile, failure);
             else if (texture != null)
                 Show(id, tile, texture);
+
+            // Not in the disk cache, or its stored file failed to decode, and no camera shows it: nothing to download for it yet.
+            else if (tile.CacheOnly)
+            {
+                tiles.Remove(id);
+                ReleaseTile(tile);
+            }
+            else if (failure != null)
+                Fail(id, tile, failure);
+
+            // A camera showed the tile while its disk read missed: it is downloaded now.
+            else
+            {
+                tile.Pending = true;
+                pending.Add(id);
+            }
 
             PumpLoads();
         }
 
-        /// <summary>The tile's KTX2 file from the disk cache, or downloaded and stored there.</summary>
-        private async UniTask<byte[]> FetchAsync(string url, CancellationToken ct)
+        /// <summary>The tile's KTX2 file from the disk cache, or downloaded and stored there. Null on a cache miss while the tile is cache-only.</summary>
+        private async UniTask<byte[]?> FetchAsync(string url, Tile tile, CancellationToken ct)
         {
             EnumResult<Option<byte[]>, TaskError> cached;
 
@@ -467,6 +535,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             }
             else
                 ReportDiskCacheFailure(cached.Error!.Value.Message);
+
+            if (tile.CacheOnly)
+                return null;
 
             byte[] bytes = await webRequestController
                                 .GetAsync(new CommonArguments(URLAddress.FromString(url), RetryPolicy.WithRetries(1)), ct, ReportCategory.UI, suppressErrors: true)
@@ -516,6 +587,12 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             diskCacheFailureReported = true;
             ReportHub.Log(ReportCategory.UI, $"Satellite tiles are not using the disk cache: {message}");
+        }
+
+        private async UniTaskVoid PublishManifestAsync(CancellationToken ct)
+        {
+            try { manifestLoad.TrySetResult(await LoadManifestAsync(ct)); }
+            catch (OperationCanceledException) { manifestLoad.TrySetCanceled(ct); }
         }
 
         /// <summary>
@@ -663,6 +740,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             public float DistanceSqToCamera;
             public int LastUsed;
             public bool Pending;
+
+            /// <summary>Read from the disk cache only, never downloaded, until a camera shows the tile.</summary>
+            public bool CacheOnly;
 
             public Tile(AtlasChunk view)
             {
