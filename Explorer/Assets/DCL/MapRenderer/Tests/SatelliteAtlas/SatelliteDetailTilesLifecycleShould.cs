@@ -171,10 +171,10 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 
             // Act
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to download");
+            await UntilAsync(() => DownloadCount(LEVEL_3_TILE_URL) == 1 && DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-3 and level-4 tiles in view to download");
 
             // Assert
-            await diskCache.Received(1).PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, ktx2Tile, Arg.Any<CancellationToken>());
+            await diskCache.Received(2).PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, ktx2Tile, Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -202,6 +202,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public async Task RetryAFailedTileOnlyAfterTheWaitEvenIfItLeftTheView()
         {
             // Arrange
+            LogAssert.ignoreFailingMessages = true;
             responses[LEVEL_4_TILE_URL] = () => UniTask.FromException<byte[]>(new Exception("offline"));
 
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
@@ -228,6 +229,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public async Task RemoveACachedFileThatFailsToDecode()
         {
             // Arrange
+            LogAssert.ignoreFailingMessages = true;
             RequireNativeDecoder(requireSampling: false);
             SetDiskCacheContent(Option<byte[]>.Some(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
 
@@ -297,6 +299,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public async Task NotStoreADownloadThatFailsToDecode()
         {
             // Arrange
+            LogAssert.ignoreFailingMessages = true;
             tiles.decodeOverride = (_, _) => UniTask.FromException<Texture2D>(new Exception("not a KTX2 file"));
 
             // Act
