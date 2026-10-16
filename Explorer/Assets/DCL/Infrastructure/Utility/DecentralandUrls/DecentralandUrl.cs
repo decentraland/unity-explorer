@@ -176,5 +176,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ChainRpc = 106,
 
         LodAssetBundlesCDN = 107,
+
+        /// <summary>
+        ///     Base URL of the satellite map's streamed zoom tiles and their manifest
+        /// </summary>
+        SatelliteMapTiles = 108,
     }
 }

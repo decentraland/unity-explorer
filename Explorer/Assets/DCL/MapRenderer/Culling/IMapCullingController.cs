@@ -6,6 +6,9 @@ namespace DCL.MapRenderer.Culling
 {
     internal interface IMapCullingController : IDisposable
     {
+        /// <summary>Raised once per frame after any camera's rect changed or a camera was added or removed.</summary>
+        event Action? CamerasChanged;
+
         IReadOnlyDictionary<IMapPositionProvider, MapCullingController.TrackedState> TrackedObjects { get; }
 
         IReadOnlyList<CameraState> CameraStates { get; }

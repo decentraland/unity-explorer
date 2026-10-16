@@ -15,6 +15,9 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
         private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
+        // Half-height a zoomable camera reaches at its closest zoom: about where the finest satellite level (8) is shown.
+        private const int CLOSEST_ZOOM_PARCELS = 1;
+
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
         public event Action<float, float, int>? ZoomChanged;
 
@@ -22,7 +25,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public Camera Camera => mapCameraObject.mapCamera;
 
-        public float Zoom => Mathf.InverseLerp(zoomValues.y, zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+        public float Zoom => Mathf.InverseLerp(zoomValues.y, ClosestZoom(), mapCameraObject.mapCamera.orthographicSize);
 
         public Vector2 LocalPosition => mapCameraObject.mapCamera.transform.localPosition;
 
@@ -179,13 +182,20 @@ namespace DCL.MapRenderer.MapCameraController
         private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
             zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, ClosestZoom(), zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
             ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
         }
+
+        private bool IsZoomable() =>
+            zoomValues.x < zoomValues.y;
+
+        // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
+        private float ClosestZoom() =>
+            IsZoomable() ? CLOSEST_ZOOM_PARCELS * coordsUtils.ParcelSize : zoomValues.x;
 
         private Vector3 ClampLocalPosition(Vector3 localPos)
         {
@@ -235,6 +245,10 @@ namespace DCL.MapRenderer.MapCameraController
         public void ResumeRendering()
         {
             mapCameraObject.mapCamera.enabled = true;
+
+            // What the camera shows was skipped while it was suspended; it resumes in place, so nothing else marks it changed.
+            if (renter != null)
+                cullingController.SetCameraDirty(this);
         }
 
         public void SetActive(bool active)
