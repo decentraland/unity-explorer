@@ -126,7 +126,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             typeof(AtlasChunk).GetProperty(nameof(AtlasChunk.LoadingSpriteRenderer))!.SetValue(chunk, loadingObject.AddComponent<SpriteRenderer>());
 
             tiles = new SatelliteDetailTiles(BASE_URL, webRequestController, diskCache, cullingController, template, drawOrderOfBaseLevel: 0);
-            tiles.clockOverride = () => Time.realtimeSinceStartup + clockOffset;
+            tiles.clockOverride = () => UnityEngine.Time.realtimeSinceStartup + clockOffset;
         }
 
         [TearDown]
