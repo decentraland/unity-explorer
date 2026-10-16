@@ -28,11 +28,10 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(DisplayStyle.None, section.style.display.value);
-            Assert.AreEqual("0 Online", OnlineCount().text);
         }
 
         [Test]
-        public void CountTheOnlineFriendsInTheHeader()
+        public void ShowTheSectionWithACardPerOnlineFriend()
         {
             //Arrange
             friends.Show(section);
@@ -42,7 +41,6 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
-            Assert.AreEqual("2 Online", OnlineCount().text);
             Assert.AreEqual(2, Rail().childCount);
         }
 
@@ -59,7 +57,7 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(1, Rail().CurrentPage);
-            Assert.AreEqual("6 Online", OnlineCount().text);
+            Assert.AreEqual(6, Rail().childCount);
         }
 
         [Test]
@@ -85,16 +83,12 @@ namespace DCL.Lobby.Tests
         private LobbyRailElement Rail() =>
             section.Q<LobbyRailElement>();
 
-        private Label OnlineCount() =>
-            section.Q<Label>("OnlineCount");
-
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)Rail()[index];
 
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
-            friendsSection.Add(new Label { name = "OnlineCount", text = "0 Online" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

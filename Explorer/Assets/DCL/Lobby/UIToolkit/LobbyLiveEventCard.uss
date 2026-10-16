@@ -1,9 +1,12 @@
-/* The live event card of the uGUI lobby; it casts a shadow past its edges, so it does not clip and each layer rounds its own corners instead */
+/* The live event card of the uGUI lobby: hovering lifts the title, fades the host out and brings the jump-in button in under it */
+:root {
+    --live-event-card-hover-duration: 0.3s;
+}
+
+/* It casts a shadow past its edges, so the card does not clip and the body rounds the layers instead */
 .lobby-live-event-card {
-    width: 358px;
-    height: 214px;
-    border-radius: 24px;
-    background-color: var(--lobby-card-color);
+    width: 326px;
+    height: 199px;
 }
 
 /* The 24px shadow sprite (see LobbyDocument.uss) hangs 6px past the sides and 10px under the card; tinted like the card, as the thumbnail covers it only once loaded */
@@ -22,13 +25,23 @@
     -unity-background-image-tint-color: var(--lobby-card-color);
 }
 
+.lobby-live-event-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--lobby-card-radius);
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
 .lobby-live-event-card__thumbnail {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
-    border-radius: 24px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
@@ -42,35 +55,40 @@
     transition: opacity 0s;
 }
 
+/* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the texts, sliced so the fade
+   keeps its shape while the strip stretches with the hovered footer, putting the jump-in button on the flat part */
 .lobby-live-event-card__gradient {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     height: 100px;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    background-size: 100% 100%;
-    -unity-background-image-tint-color: var(--dcl-color-black-80);
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+    transition: height var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__gradient {
+    height: 124px;
 }
 
 .lobby-live-event-card__badges {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    height: 28px;
+    top: 16px;
+    left: 16px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
 }
 
 .lobby-live-event-card__live {
-    height: 28px;
+    height: 26px;
     margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 8px 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: rgb(255, 0, 0);
 }
 
@@ -91,12 +109,12 @@
 
 /* Spaces the friends row that follows it in the badges strip */
 .lobby-live-event-card__attendees {
-    height: 28px;
-    margin-right: 8px;
+    height: 26px;
+    margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }
@@ -127,6 +145,7 @@
     color: var(--dcl-color-snow);
 }
 
+/* Rises by the height of the jump-in button while hovered */
 .lobby-live-event-card__title {
     position: absolute;
     left: 16px;
@@ -141,6 +160,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: bottom var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__title {
+    bottom: 66px;
 }
 
 .lobby-live-event-card__host {
@@ -156,4 +180,59 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: opacity var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__host {
+    opacity: 0;
+}
+
+/* Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
+.lobby-live-event-card__jump-in {
+    position: absolute;
+    left: 16px;
+    bottom: 10px;
+    width: 155px;
+    height: 46px;
+    padding: 0 0 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    opacity: 0;
+    transition: opacity var(--live-event-card-hover-duration) ease-out, -unity-background-image-tint-color 0.1s;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__jump-in {
+    opacity: 1;
+}
+
+.lobby-live-event-card__jump-in:hover {
+    -unity-background-image-tint-color: var(--lobby-jump-in-hover-color);
+}
+
+.lobby-live-event-card__jump-in:active {
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
+}
+
+.lobby-live-event-card__jump-in-text {
+    margin-right: 8px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-live-event-card__jump-in-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
 }

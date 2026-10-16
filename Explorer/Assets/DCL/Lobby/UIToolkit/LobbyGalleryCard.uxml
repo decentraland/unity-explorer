@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGalleryCard.uss" />
+    <!-- The outline hangs past the card, so the body clips the photo instead of the card itself -->
+    <DCL.Lobby.LobbyGalleryCardElement name="GalleryCard">
+        <ui:VisualElement name="Outline" class="lobby-gallery-card__outline" picking-mode="Ignore" />
+        <ui:VisualElement name="Body" class="lobby-gallery-card__body" picking-mode="Ignore">
+            <ui:VisualElement name="Thumbnail" class="lobby-gallery-card__thumbnail" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </DCL.Lobby.LobbyGalleryCardElement>
+</ui:UXML>

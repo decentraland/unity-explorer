@@ -1,4 +1,3 @@
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -9,7 +8,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PlacesAPIService;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Chains;

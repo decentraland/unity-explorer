@@ -4,29 +4,29 @@
     --friend-card-status-offline: var(--dcl-color-silver);
 }
 
-/* The friend card of the uGUI lobby: 124x132 with 24px corners, darker while hovered */
+/* 103x117 with 12px corners over a 60% black fill: the picture, the name and the place stack down the middle */
 .lobby-friend-card {
-    width: 124px;
-    height: 132px;
-    border-radius: 24px;
-    background-color: var(--lobby-card-color);
+    width: 103px;
+    height: 117px;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
 }
 
 .lobby-friend-card:hover {
-    background-color: var(--dcl-color-shadow);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 /* The profile color, its lighter border and the picture are set inline by the element */
 .lobby-friend-card__picture {
     position: absolute;
-    top: 10px;
-    left: 40px;
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.2);
+    top: 12px;
+    left: 31px;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.4);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
     background-size: cover;
@@ -38,10 +38,11 @@
     background-image: none;
 }
 
+/* On the top-right of the picture */
 .lobby-friend-card__online {
     position: absolute;
-    top: 43px;
-    left: 73px;
+    top: 10px;
+    left: 61px;
     width: 12px;
     height: 12px;
     border-radius: 6px;
@@ -113,25 +114,26 @@
     left: 6px;
     right: 6px;
     bottom: 10px;
-    height: 16px;
+    height: 18px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     overflow: hidden;
 }
 
+/* The pin sprite is taller than wide (36x43), so the box keeps its shape */
 .lobby-friend-card__location-icon {
     flex-shrink: 0;
-    width: 12px;
+    width: 10px;
     height: 12px;
-    margin-right: 3px;
+    margin-right: 5px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
     -unity-background-image-tint-color: var(--lobby-subtitle-color);
 }
 
 .lobby-friend-card__location-text {
     flex-shrink: 1;
-    font-size: 11px;
+    font-size: 12px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
     color: var(--lobby-subtitle-color);
@@ -144,9 +146,9 @@
 .lobby-friend-card__join {
     display: none;
     position: absolute;
-    left: 16px;
-    bottom: 8px;
-    width: 92px;
+    left: 12px;
+    bottom: 6px;
+    width: 79px;
     height: 24px;
     flex-direction: row;
     align-items: center;

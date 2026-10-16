@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
@@ -53,6 +55,7 @@ namespace MVC
         // Invoked at once when the hierarchy is already attached, otherwise from the panel update that attaches it
         protected virtual void OnEnable()
         {
+            BuildSpriteLookupTables(panelRenderer.panelSettings);
             panelRenderer.RegisterUIReloadCallback(OnUIReload);
         }
 
@@ -60,6 +63,34 @@ namespace MVC
         {
             panelRenderer.UnregisterUIReloadCallback(OnUIReload);
             root = null;
+        }
+
+        /// <summary>
+        ///     Builds the sprite character tables of the panel's emoji sprite assets on the main thread, before the first
+        ///     repaint. The text jobs otherwise build them lazily from several worker threads at once, which corrupts the
+        ///     dictionaries and leaves every label with a character outside the fonts blank from then on (Unity 6000.5.9,
+        ///     SpriteAsset.UpdateLookupTables). A table already built is only read by the jobs.
+        /// </summary>
+        private static void BuildSpriteLookupTables(PanelSettings panelSettings)
+        {
+            PanelTextSettings textSettings = panelSettings.textSettings;
+            var built = new HashSet<SpriteAsset>();
+            BuildSpriteLookupTable(textSettings.defaultSpriteAsset, built);
+
+            foreach (UnityEngine.TextCore.Text.TextAsset fallback in textSettings.emojiFallbackTextAssets)
+                if (fallback is SpriteAsset spriteAsset)
+                    BuildSpriteLookupTable(spriteAsset, built);
+        }
+
+        // The sprite assets are unassigned in a fresh text settings asset; the visited set stops a fallback cycle
+        private static void BuildSpriteLookupTable(SpriteAsset? spriteAsset, HashSet<SpriteAsset> built)
+        {
+            if (spriteAsset == null || !built.Add(spriteAsset)) return;
+
+            _ = spriteAsset.spriteCharacterLookupTable;
+
+            foreach (SpriteAsset fallback in spriteAsset.fallbackSpriteAssets)
+                BuildSpriteLookupTable(fallback, built);
         }
 
         private void OnUIReload(PanelRenderer renderer, VisualElement rootElement)

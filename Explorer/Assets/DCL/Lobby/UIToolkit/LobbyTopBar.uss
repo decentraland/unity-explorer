@@ -1,4 +1,55 @@
-/* Right-aligned and centred in the 100px header band */
+/* Both bars are centred in the 100px header band: the header on the left holds the wordmark, the title and the edit button,
+   the top bar on the right the widgets and the round buttons */
+.lobby__header {
+    position: absolute;
+    top: 27px;
+    left: var(--lobby-margin);
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby__logo {
+    width: 175px;
+    height: 24px;
+    background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
+}
+
+.lobby__header-title {
+    margin-left: 2px;
+    font-size: 26px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-silver);
+}
+
+.lobby__edit-layout-button {
+    width: 42px;
+    height: 42px;
+    margin-left: 12px;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--dcl-color-white-10);
+    background-color: var(--dcl-color-black-70);
+    transition: background-color 0.1s;
+}
+
+.lobby__edit-layout-button:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__edit-layout-button:active {
+    background-color: var(--dcl-color-black-70);
+}
+
+.lobby__edit-layout-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/EditIcn.png');
+}
+
 .lobby__top-bar {
     position: absolute;
     top: 27px;
@@ -61,8 +112,79 @@
     color: var(--dcl-color-snow);
 }
 
-.lobby__close-icon {
-    width: 12px;
-    height: 12px;
-    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+/* The Back pill of the top bar, sized like the round buttons beside it and coloured like the design's pills */
+.lobby__top-bar-back-button {
+    height: 40px;
+    margin-left: 10px;
+    padding: 0 16px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 20px;
+    border-color: var(--dcl-color-white-10);
+    background-color: rgba(0, 0, 0, 0.6);
+    transition: background-color 0.1s;
+}
+
+.lobby__top-bar-back-button:hover {
+    background-color: rgba(31, 31, 31, 0.8);
+}
+
+.lobby__top-bar-back-button:active {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* The key that does the same as the pill, in brackets and dimmed beside its text */
+.lobby__back-key {
+    margin-left: 6px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-silver);
+}
+
+/* The modal takes over while the layout is edited, with its own Cancel and Save, so the button steps aside for Back */
+.lobby--editing .lobby__edit-layout-button {
+    display: none;
+}
+
+/* The Back pill of the edit mode, styled like the edit button it replaces */
+.lobby__back-button {
+    display: none;
+    height: 42px;
+    margin-left: 12px;
+    padding: 0 16px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--dcl-color-white-10);
+    background-color: rgba(0, 0, 0, 0.6);
+    transition: background-color 0.1s;
+}
+
+.lobby--editing .lobby__back-button {
+    display: flex;
+}
+
+.lobby__back-button:hover {
+    background-color: rgba(31, 31, 31, 0.8);
+}
+
+.lobby__back-button:active {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.lobby__back-icon {
+    width: 9px;
+    height: 14px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/Common/ArrowLeft.png');
+}
+
+.lobby__back-text {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
 }

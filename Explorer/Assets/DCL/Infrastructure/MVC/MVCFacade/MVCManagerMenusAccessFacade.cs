@@ -14,7 +14,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.Web3;

@@ -4,9 +4,9 @@
 }
 
 .lobby-upcoming-event-card {
-    width: 358px;
-    height: 135px;
-    border-radius: 24px;
+    width: 326px;
+    height: 139px;
+    border-radius: var(--lobby-card-radius);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -16,13 +16,13 @@
     background-color: rgba(8, 8, 10, 0.95);
 }
 
-/* The card's own 24px corners cut its outer ones */
+/* The card's own 16px corners cut its outer ones */
 .lobby-upcoming-event-card__thumbnail {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 135px;
+    width: 139px;
     border-radius: 8px;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
@@ -38,8 +38,8 @@
 .lobby-upcoming-event-card__info {
     position: absolute;
     left: 18px;
-    top: 28px;
-    width: 170px;
+    top: 30px;
+    width: 160px;
 }
 
 .lobby-upcoming-event-card__texts {
@@ -127,7 +127,7 @@
 .lobby-upcoming-event-card__actions {
     position: absolute;
     left: 18px;
-    bottom: 19px;
+    bottom: 21px;
     flex-direction: row;
     opacity: 0;
     transition: opacity var(--upcoming-event-card-hover-duration) ease-out;

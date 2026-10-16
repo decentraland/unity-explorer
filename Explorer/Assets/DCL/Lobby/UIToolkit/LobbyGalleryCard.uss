@@ -1,0 +1,58 @@
+:root {
+    --gallery-card-hover-duration: 0.3s;
+}
+
+/* Same footprint as the place card (256x146) but square-cornered, so the photos stand apart from the place and event
+   cards: the photo fills the card with nothing over it; hovering zooms it and outlines the card with the gradient */
+.lobby-gallery-card {
+    width: 256px;
+    height: 146px;
+}
+
+/* Two pixels past the body on every side, showing only while hovered */
+.lobby-gallery-card__outline {
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    background-image: var(--lobby-outline-gradient-image);
+    opacity: 0;
+    transition: opacity var(--lobby-outline-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__outline {
+    opacity: 1;
+}
+
+.lobby-gallery-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+.lobby-gallery-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--gallery-card-hover-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__thumbnail {
+    scale: 1.05;
+}
+
+/* While the photo is on its way the dark fill of the card shows; the photo then fades in over it rather than popping up */
+.lobby-gallery-card--loading .lobby-gallery-card__thumbnail {
+    opacity: 0;
+    transition: opacity 0s;
+}

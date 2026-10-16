@@ -48,19 +48,23 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void ReportTheClickedCardByIndex()
+        public void ReportTheClickedCardAndJumpInByIndex()
         {
             //Arrange
             var clicked = -1;
+            var jumpedIn = -1;
             events.CardClicked = index => clicked = index;
+            events.CardJumpInClicked = index => jumpedIn = index;
             events.Show(section);
             events.SetCount(2);
 
             //Act
             Card(1).Clicked!.Invoke();
+            Card(0).JumpInClicked!.Invoke();
 
             //Assert
             Assert.AreEqual(1, clicked);
+            Assert.AreEqual(0, jumpedIn);
         }
 
         [Test]

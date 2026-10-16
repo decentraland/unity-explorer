@@ -39,7 +39,6 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
-using DCL.RealmNavigation;
 using DCL.Roads.Systems;
 using SystemGroups.Visualiser;
 using UnityEngine;

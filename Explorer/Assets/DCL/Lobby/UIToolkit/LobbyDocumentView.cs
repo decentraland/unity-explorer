@@ -23,20 +23,29 @@ namespace DCL.Lobby
         private const string LANDING_CARD_NAME = "LandingCard";
         private const string RECENT_PLACES_NAME = "RecentPlaces";
         private const string FEATURED_PLACES_NAME = "FeaturedPlaces";
+        private const string RECENT_PLACES_4_BY_2_NAME = "RecentPlaces4x2";
+        private const string FEATURED_PLACES_4_BY_2_NAME = "FeaturedPlaces4x2";
+        private const string COMMUNITIES_NAME = "Communities";
+        private const string COMMUNITIES_4_BY_2_NAME = "Communities4x2";
+        private const string GALLERY_NAME = "Gallery";
+        private const string GALLERY_4_BY_2_NAME = "Gallery4x2";
         private const string FRIENDS_NAME = "Friends";
-        private const string EVENTS_NAME = "Events";
         private const string LIVE_EVENTS_NAME = "LiveEvents";
         private const string UPCOMING_EVENTS_NAME = "UpcomingEvents";
         private const string CREDITS_SLOT_NAME = "CreditsSlot";
         private const string PROFILE_SLOT_NAME = "ProfileSlot";
         private const string NOTIFICATIONS_NAME = "Notifications";
         private const string UNREAD_BADGE_NAME = "UnreadBadge";
-        private const string CLOSE_NAME = "Close";
+        private const string BACK_NAME = "Back";
+        private const string EDIT_LAYOUT_NAME = "EditLayout";
+        private const string GO_TO_FIELD_NAME = "GoToField";
 
         [SerializeField] private VisualTreeAsset placeCardTemplate = null!;
         [SerializeField] private VisualTreeAsset friendCardTemplate = null!;
         [SerializeField] private VisualTreeAsset liveEventCardTemplate = null!;
         [SerializeField] private VisualTreeAsset upcomingEventCardTemplate = null!;
+        [SerializeField] private VisualTreeAsset communityCardTemplate = null!;
+        [SerializeField] private VisualTreeAsset galleryCardTemplate = null!;
         [SerializeField] private EventContextMenuConfiguration eventContextMenuSettings = null!;
         [SerializeField] private CharacterPreviewView characterPreviewView = null!;
 
@@ -51,11 +60,18 @@ namespace DCL.Lobby
 
         public VisualTreeAsset UpcomingEventCardTemplate => upcomingEventCardTemplate;
 
+        public VisualTreeAsset CommunityCardTemplate => communityCardTemplate;
+
+        public VisualTreeAsset GalleryCardTemplate => galleryCardTemplate;
+
         /// <summary>The same asset the Explore event cards use for their Share menu.</summary>
         public EventContextMenuConfiguration EventContextMenuSettings => eventContextMenuSettings;
 
         /// <summary>The uGUI avatar preview nested in the prefab, so it exists from the instantiation on.</summary>
         public CharacterPreviewView CharacterPreviewView => characterPreviewView;
+
+        /// <summary>Root of the hierarchy, for the presenters that find their elements themselves. Exists only while shown.</summary>
+        public VisualElement Root => root ?? throw new InvalidOperationException("The lobby hierarchy exists only while the view is shown");
 
         /// <summary>Transparent element over the figure taking its hover and click. Exists only while shown.</summary>
         public VisualElement AvatarHitArea => Element<VisualElement>(AVATAR_HIT_AREA_NAME);
@@ -81,8 +97,11 @@ namespace DCL.Lobby
         /// <summary>Unread count over <see cref="NotificationsButton" />. Exists only while shown.</summary>
         public Label UnreadBadge => Element<Label>(UNREAD_BADGE_NAME);
 
-        /// <summary>Exists only while the view is shown.</summary>
-        public Button CloseButton => Element<Button>(CLOSE_NAME);
+        /// <summary>Leaves the lobby, like the Escape key whose name it shows. Exists only while the view is shown.</summary>
+        public Button BackButton => Element<Button>(BACK_NAME);
+
+        /// <summary>Enters and leaves the edit mode of the layout. Exists only while the view is shown.</summary>
+        public Button EditLayoutButton => Element<Button>(EDIT_LAYOUT_NAME);
 
         /// <summary>Exists only while the view is shown.</summary>
         public Label WelcomeText => Element<Label>(WELCOME_TEXT_NAME);
@@ -96,17 +115,35 @@ namespace DCL.Lobby
         /// <summary>Section of the featured places, title and rail. Exists only while the view is shown.</summary>
         public VisualElement FeaturedPlaces => Section(FEATURED_PLACES_NAME);
 
+        /// <summary>Four-column section of the recently visited places: title and row of cards. Exists only while shown.</summary>
+        public VisualElement RecentPlaces4By2 => Section(RECENT_PLACES_4_BY_2_NAME);
+
+        /// <summary>Four-column section of the featured places, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement FeaturedPlaces4By2 => Section(FEATURED_PLACES_4_BY_2_NAME);
+
+        /// <summary>Section of the user's communities, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Communities => Section(COMMUNITIES_NAME);
+
+        /// <summary>Four-column section of the user's communities, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Communities4By2 => Section(COMMUNITIES_4_BY_2_NAME);
+
+        /// <summary>Section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Gallery => Section(GALLERY_NAME);
+
+        /// <summary>Four-column section of the user's camera reel photos, title and rail. Exists only while the view is shown.</summary>
+        public VisualElement Gallery4By2 => Section(GALLERY_4_BY_2_NAME);
+
         /// <summary>Section of the online friends, header and rail. Exists only while the view is shown.</summary>
         public VisualElement Friends => Section(FRIENDS_NAME);
 
-        /// <summary>Section of the events, title and the two rows below. Exists only while the view is shown.</summary>
-        public VisualElement Events => Section(EVENTS_NAME);
-
-        /// <summary>Row of the live events inside <see cref="Events" />. Exists only while the view is shown.</summary>
+        /// <summary>Section of the live events, title and rail. Exists only while the view is shown.</summary>
         public VisualElement LiveEvents => Section(LIVE_EVENTS_NAME);
 
-        /// <summary>Row of the upcoming events inside <see cref="Events" />. Exists only while shown.</summary>
+        /// <summary>Section of the upcoming events, title and rail. Exists only while the view is shown.</summary>
         public VisualElement UpcomingEvents => Section(UPCOMING_EVENTS_NAME);
+
+        /// <summary>Field of the go-to row a destination is typed in. Exists only while the view is shown.</summary>
+        public LobbyGoToElement GoToField => Element<LobbyGoToElement>(GO_TO_FIELD_NAME);
 
         /// <summary>
         ///     Moves <see cref="Credits" /> and <see cref="Profile" /> into their slots. A no-op while the renderer
