@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using Decentraland.Pulse;
 using Pulse.Transport;
@@ -24,6 +25,12 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly Dictionary<ServerMessage.MessageOneofCase, IncomingMessageHandler> syncHandlers = new ();
 
+        /// <summary>
+        ///     Guards <see cref="sessionCts" />, <see cref="connectAttempt" /> and <see cref="teardown" />:
+        ///     attempts are started from the main thread and from the thread-pool routing loop.
+        /// </summary>
+        private readonly object sessionLock = new ();
+
         private Action? beforeMessageHandler;
         private DisconnectHandler? disconnectHandler;
         private HandshakeHandler? handshakeHandler;
@@ -42,6 +49,12 @@ namespace DCL.Multiplayer.Connections.Pulse
         ///     own task because several callers await it at once.
         /// </summary>
         private UniTaskCompletionSource<bool>? connectAttempt;
+
+        /// <summary>
+        ///     The transport teardown of the last <see cref="DisconnectAsync" />, still in progress.
+        ///     A new attempt waits for it before connecting the transport again.
+        /// </summary>
+        private UniTaskCompletionSource? teardown;
         private volatile bool isAuthenticated;
 
         public PulseMultiplayerService(
@@ -59,9 +72,14 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Dispose()
         {
             isAuthenticated = false;
-            sessionCts.SafeCancelAndDispose();
-            sessionCts = null;
-            connectAttempt = null;
+
+            lock (sessionLock)
+            {
+                sessionCts.SafeCancelAndDispose();
+                sessionCts = null;
+                connectAttempt = null;
+            }
+
             connectionLifeCycleCts.SafeCancelAndDispose();
             UnregisterAllHandlers();
             transport.Dispose();
@@ -97,34 +115,64 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
-            if (connectAttempt != null)
-                return connectAttempt.Task;
+            UniTaskCompletionSource<bool>? inFlight;
+            CancellationToken sessionCt = default;
 
-            if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
-                return UniTask.FromResult(true);
+            lock (sessionLock)
+            {
+                inFlight = connectAttempt;
 
-            sessionCts = sessionCts.SafeRestartLinked(ct);
-            return StartAttempt(sessionCts.Token, maxAttempts);
+                if (inFlight == null)
+                {
+                    // Without a session the transport may still be connected only because its teardown is in progress
+                    if (sessionCts != null && transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
+                        return UniTask.FromResult(true);
+
+                    sessionCts = sessionCts.SafeRestartLinked(ct);
+                    sessionCt = sessionCts.Token;
+                }
+            }
+
+            if (inFlight != null)
+                return ct.CanBeCanceled ? inFlight.Task.AttachExternalCancellation(ct) : inFlight.Task;
+
+            return StartAttempt(sessionCt, maxAttempts);
         }
 
         public async UniTask DisconnectAsync()
         {
-            if (sessionCts == null)
-                return;
+            UniTaskCompletionSource ownTeardown;
 
-            // Cleared before the transport teardown so a ConnectAsync issued meanwhile starts a fresh session
-            // instead of joining the attempt being cancelled
-            sessionCts.SafeCancelAndDispose();
-            sessionCts = null;
-            connectAttempt = null;
+            lock (sessionLock)
+            {
+                if (sessionCts == null)
+                    return;
+
+                sessionCts.SafeCancelAndDispose();
+                sessionCts = null;
+                connectAttempt = null;
+                teardown = ownTeardown = new UniTaskCompletionSource();
+            }
+
             connectionLifeCycleCts.SafeCancelAndDispose();
 
-            // Waits for the ENet listen loop to exit, so no further event reaches the routing loop
-            // (already cancelled above) before the disconnect handler clears the peer collections
-            await transport.DisconnectAsync(DisconnectReason.GRACEFUL);
+            try
+            {
+                await transport.DisconnectAsync(DisconnectReason.GRACEFUL);
 
-            isAuthenticated = false;
-            disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
+                isAuthenticated = false;
+                disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
+            }
+            finally
+            {
+                lock (sessionLock)
+                {
+                    if (ReferenceEquals(teardown, ownTeardown))
+                        teardown = null;
+                }
+
+                ownTeardown.TrySetResult();
+            }
         }
 
         /// <summary>
@@ -154,24 +202,39 @@ namespace DCL.Multiplayer.Connections.Pulse
         /// </summary>
         private UniTask<bool> StartAttempt(CancellationToken sessionCt, int maxAttempts)
         {
-            if (connectAttempt != null)
-                return connectAttempt.Task;
+            UniTaskCompletionSource<bool> attempt;
+            UniTaskCompletionSource? pendingTeardown;
 
-            // The session may have been ended between the caller's check and this point
-            if (sessionCt.IsCancellationRequested)
-                return UniTask.FromCanceled<bool>(sessionCt);
+            lock (sessionLock)
+            {
+                if (connectAttempt != null)
+                    return connectAttempt.Task;
 
-            var attempt = new UniTaskCompletionSource<bool>();
-            connectAttempt = attempt;
-            RunAttemptAsync(attempt, sessionCt, maxAttempts).Forget();
+                // The session may have been ended between the caller's check and this point
+                if (sessionCt.IsCancellationRequested)
+                    return UniTask.FromCanceled<bool>(sessionCt);
+
+                attempt = new UniTaskCompletionSource<bool>();
+                connectAttempt = attempt;
+                pendingTeardown = teardown;
+            }
+
+            RunAttemptAsync(attempt, pendingTeardown, sessionCt, maxAttempts).Forget();
             return attempt.Task;
         }
 
-        private async UniTaskVoid RunAttemptAsync(UniTaskCompletionSource<bool> attempt, CancellationToken sessionCt, int maxAttempts)
+        private async UniTaskVoid RunAttemptAsync(UniTaskCompletionSource<bool> attempt, UniTaskCompletionSource? pendingTeardown, CancellationToken sessionCt, int maxAttempts)
         {
             bool connected;
 
-            try { connected = await ConnectWithRetriesAsync(sessionCt, maxAttempts); }
+            try
+            {
+                // The transport is connected again only once the previous session's teardown has finished
+                if (pendingTeardown != null)
+                    await pendingTeardown.Task.AttachExternalCancellation(sessionCt);
+
+                connected = await ConnectWithRetriesAsync(sessionCt, maxAttempts);
+            }
             catch (Exception e)
             {
                 ReleaseAttempt(attempt);
@@ -189,14 +252,15 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         /// <summary>
-        ///     Cleared before the attempt is settled, so an awaiter that reacts by starting a new attempt
-        ///     gets a fresh one. A DisconnectAsync that ran meanwhile already cleared it and may have been
-        ///     followed by a newer session whose attempt must stay registered.
+        ///     Clears the slot only if it still holds this attempt.
         /// </summary>
         private void ReleaseAttempt(UniTaskCompletionSource<bool> attempt)
         {
-            if (ReferenceEquals(connectAttempt, attempt))
-                connectAttempt = null;
+            lock (sessionLock)
+            {
+                if (ReferenceEquals(connectAttempt, attempt))
+                    connectAttempt = null;
+            }
         }
 
         /// <summary>
@@ -205,14 +269,13 @@ namespace DCL.Multiplayer.Connections.Pulse
         /// </summary>
         private async UniTask ReconnectAsync(CancellationToken sessionCt)
         {
-            UniTaskCompletionSource<bool>? inFlight = connectAttempt;
+            UniTaskCompletionSource<bool>? inFlight;
+
+            lock (sessionLock)
+                inFlight = connectAttempt;
 
             if (inFlight != null)
-            {
-                // Its outcome belongs to the callers that started it; only its completion matters here
-                try { await inFlight.Task; }
-                catch (Exception) { }
-            }
+                await inFlight.Task.SuppressToResultAsync();
 
             await StartAttempt(sessionCt, int.MaxValue);
         }

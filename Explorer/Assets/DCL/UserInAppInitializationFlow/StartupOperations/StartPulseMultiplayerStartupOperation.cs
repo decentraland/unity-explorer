@@ -42,7 +42,7 @@ namespace DCL.UserInAppInitializationFlow
             if (!pulseActivation.IsActive)
                 return;
 
-            // Single-player realm: Pulse stays active but unconnected, so leaving the realm can still connect it.
+            // Single-player realm: no comms to connect.
             if (realmData.IsCommsOffline())
             {
                 ReportHub.Log(ReportCategory.MULTIPLAYER, "Start realm comms adapter is offline; Pulse is not connected.");

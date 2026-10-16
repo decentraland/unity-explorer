@@ -47,7 +47,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
-            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), new PulseRealm(realmData), realmData);
+            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
             EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
@@ -62,7 +62,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         {
             // Arrange
             realmData.CommsAdapter.Returns(OFFLINE_ADAPTER);
-            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), new PulseRealm(realmData), realmData);
+            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(true), realmData);
 
             // Act
             EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
@@ -77,7 +77,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         {
             // Arrange
             realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
-            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(false), new PulseRealm(realmData), realmData);
+            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, new PulseActivation(false), realmData);
 
             // Act
             EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();

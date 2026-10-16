@@ -16,32 +16,21 @@ namespace DCL.RealmNavigation.TeleportOperations
     {
         private readonly IPulseMultiplayerService pulseMultiplayerService;
         private readonly PulseActivation pulseActivation;
-        private readonly PulseRealm pulseRealm;
         private readonly IRealmData realmData;
 
-        public ConnectPulseTeleportOperation(IPulseMultiplayerService pulseMultiplayerService, PulseActivation pulseActivation, PulseRealm pulseRealm, IRealmData realmData)
+        public ConnectPulseTeleportOperation(IPulseMultiplayerService pulseMultiplayerService, PulseActivation pulseActivation, IRealmData realmData)
         {
             this.pulseMultiplayerService = pulseMultiplayerService;
             this.pulseActivation = pulseActivation;
-            this.pulseRealm = pulseRealm;
             this.realmData = realmData;
         }
 
-        protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            if (!pulseActivation.IsActive || realmData.IsCommsOffline())
-                return;
+            if (pulseActivation.IsActive && !realmData.IsCommsOffline())
+                ConnectAsync().Forget();
 
-            // The realm ships in the handshake's initial state, and an empty one violates the server contract
-            await pulseRealm.EnsureResolvedAsync(ct);
-
-            if (string.IsNullOrEmpty(pulseRealm.Value))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, "Pulse realm could not be resolved; Pulse is not connected for this realm.");
-                return;
-            }
-
-            ConnectAsync().Forget();
+            return UniTask.CompletedTask;
         }
 
         private async UniTaskVoid ConnectAsync()
@@ -49,9 +38,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             try
             {
                 ReportHub.Log(ReportCategory.MULTIPLAYER, $"Connecting Pulse for realm {realmData.RealmName}");
-
-                if (!await pulseMultiplayerService.ConnectAsync(CancellationToken.None))
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection failed terminally for realm {realmData.RealmName}");
+                await pulseMultiplayerService.ConnectAsync(CancellationToken.None);
             }
             catch (OperationCanceledException) { }
             catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.MULTIPLAYER); }

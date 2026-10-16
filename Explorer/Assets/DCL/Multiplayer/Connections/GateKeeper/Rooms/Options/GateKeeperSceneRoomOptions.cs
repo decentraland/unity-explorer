@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public string GetAdapterURL(string sceneID)
+        public string GetAdapterUrl(string sceneID)
         {
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 return decentralandUrlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter);

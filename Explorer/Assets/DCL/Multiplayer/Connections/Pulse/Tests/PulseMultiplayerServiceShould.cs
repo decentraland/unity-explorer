@@ -12,11 +12,11 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
     [TestFixture]
     public class PulseMultiplayerServiceShould
     {
-        private ITransport transport;
-        private IDecentralandUrlsSource urlsSource;
-        private MessagePipe pipe;
-        private PulseMultiplayerService service;
-        private CancellationTokenSource cts;
+        private ITransport transport = null!;
+        private IDecentralandUrlsSource urlsSource = null!;
+        private MessagePipe pipe = null!;
+        private PulseMultiplayerService service = null!;
+        private CancellationTokenSource cts = null!;
 
         [SetUp]
         public void SetUp()
@@ -115,7 +115,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsFalse(connected);
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -149,18 +149,18 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsFalse(connected);
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
         public void RouteDisconnectToDisconnectHandlerAfterSuccessfulHandshake()
         {
             // Arrange
-            using var disconnectHandled = new ManualResetEventSlim(false);
+            var disconnectHandled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             service.RegisterDisconnectHandler(_ =>
             {
-                disconnectHandled.Set();
+                disconnectHandled.TrySetResult(true);
                 return (false, TimeSpan.Zero);
             });
 
@@ -177,14 +177,23 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsTrue(connected);
             Assert.IsTrue(service.IsAuthenticated);
-            Assert.IsTrue(disconnectHandled.Wait(TimeSpan.FromSeconds(5)), "Post-handshake disconnects must reach the disconnect handler");
+            Assert.IsTrue(disconnectHandled.Task.Wait(TimeSpan.FromSeconds(5)), "Post-handshake disconnects must reach the disconnect handler");
         }
 
         [Test]
         public async Task NotReconnectAfterExplicitDisconnect()
         {
             // Arrange
-            service.RegisterDisconnectHandler(_ => (true, TimeSpan.FromMilliseconds(100)));
+            var serverDisconnectHandled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            service.RegisterDisconnectHandler(reason =>
+            {
+                if (reason == DisconnectReason.AUTH_TIMEOUT)
+                    serverDisconnectHandled.TrySetResult(true);
+
+                return (true, TimeSpan.FromMilliseconds(100));
+            });
+
             RegisterSettlingHandshakeHandler();
             await service.ConnectAsync(cts.Token, maxAttempts: 1);
 
@@ -192,12 +201,14 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // The routing loop schedules the automatic reconnection after the handler's delay;
             // the explicit disconnect that follows ends the session before that delay elapses.
             pipe.OnDisconnected(DisconnectReason.AUTH_TIMEOUT);
+            Task handled = await Task.WhenAny(serverDisconnectHandled.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.AreSame(serverDisconnectHandled.Task, handled, "The server disconnect must reach the reconnection path first");
             await service.DisconnectAsync();
             await Task.Delay(300);
 
             // Assert
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -217,7 +228,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
 
             // Assert
             Assert.IsFalse(disconnectHandlerCalled, "Disconnecting without a session must not reach the disconnect handler");
-            transport.DidNotReceive().DisconnectAsync(Arg.Any<DisconnectReason>());
+            _ = transport.DidNotReceive().DisconnectAsync(Arg.Any<DisconnectReason>());
         }
 
         [Test]
@@ -234,7 +245,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
 
             // Assert
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
+            _ = transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
         }
 
         [Test]
@@ -262,7 +273,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             Assert.IsTrue(firstConnected);
             Assert.IsTrue(secondConnected);
             Assert.IsTrue(service.IsAuthenticated);
-            transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -279,7 +290,34 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             // Assert
             Assert.IsTrue(reconnected);
             Assert.IsTrue(service.IsAuthenticated);
-            transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            _ = transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task WaitForTeardownBeforeConnectingAgain()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            await service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            var teardownFinished = new UniTaskCompletionSource();
+            transport.DisconnectAsync(Arg.Any<DisconnectReason>()).Returns(teardownFinished.Task);
+            transport.State.Returns(ITransport.TransportState.Connected);
+
+            // Act
+            UniTask disconnect = service.DisconnectAsync();
+            UniTask<bool> reconnect = service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            // The transport must not be connected again while its teardown is in progress
+            _ = transport.Received(1).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+
+            teardownFinished.TrySetResult();
+            await disconnect;
+            bool reconnected = await reconnect;
+
+            // Assert
+            Assert.IsTrue(reconnected);
+            _ = transport.Received(2).ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -295,7 +333,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
 
             // Assert
             Assert.IsFalse(service.IsAuthenticated);
-            transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
+            _ = transport.Received(1).DisconnectAsync(DisconnectReason.GRACEFUL);
         }
 
         /// <summary>

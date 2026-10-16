@@ -56,8 +56,7 @@ namespace DCL.RealmNavigation
             IMVCManager mvcManager,
             StartParcel startParcel,
             IPulseMultiplayerService pulseMultiplayerService,
-            PulseActivation pulseActivation,
-            PulseRealm pulseRealm)
+            PulseActivation pulseActivation)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
@@ -86,7 +85,7 @@ namespace DCL.RealmNavigation
                     new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                     new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData, roomHub),
-                    new ConnectPulseTeleportOperation(pulseMultiplayerService, pulseActivation, pulseRealm, staticContainer.RealmData),
+                    new ConnectPulseTeleportOperation(pulseMultiplayerService, pulseActivation, staticContainer.RealmData),
                     new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 },
                 ReportCategory.SCENE_LOADING,
