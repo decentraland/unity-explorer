@@ -43,8 +43,8 @@ namespace CRDT.CRDTTests.Protocol
             crdt.ProcessMessage(Put(1, new byte[] { 1, 2, 3 }));
 
             // Act & Assert
-            Assert.That(crdt.IsIdenticalToLWWState(Put(2, new byte[] { 1, 2, 3 })), Is.True);
-            Assert.That(crdt.IsIdenticalToLWWState(Put(2, new byte[] { 1, 2, 4 })), Is.False);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(2, new byte[] { 1, 2, 3 })), Is.True);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(2, new byte[] { 1, 2, 4 })), Is.False);
         }
 
         [Test]
@@ -54,7 +54,7 @@ namespace CRDT.CRDTTests.Protocol
             var crdt = new CRDTProtocol();
 
             // Act & Assert
-            Assert.That(crdt.IsIdenticalToLWWState(Put(1, new byte[] { 1, 2, 3 })), Is.False);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(1, new byte[] { 1, 2, 3 })), Is.False);
         }
 
         [Test]
@@ -66,8 +66,8 @@ namespace CRDT.CRDTTests.Protocol
             crdt.ProcessMessage(new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 100, 2, EmptyMemoryOwner<byte>.EMPTY));
 
             // Act & Assert
-            Assert.That(crdt.IsIdenticalToLWWState(new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 100, 3, EmptyMemoryOwner<byte>.EMPTY)), Is.True);
-            Assert.That(crdt.IsIdenticalToLWWState(Put(3, new byte[] { 1, 2, 3 })), Is.False);
+            Assert.That(crdt.IsIdenticalToLwwState(new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 100, 3, EmptyMemoryOwner<byte>.EMPTY)), Is.True);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(3, new byte[] { 1, 2, 3 })), Is.False);
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace CRDT.CRDTTests.Protocol
             crdt.ProcessMessage(append);
 
             // Act & Assert
-            Assert.That(crdt.IsIdenticalToLWWState(new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[] { 9 }))), Is.False);
+            Assert.That(crdt.IsIdenticalToLwwState(new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[] { 9 }))), Is.False);
         }
 
         private CRDTMessage Put(int timestamp, byte[] data) =>

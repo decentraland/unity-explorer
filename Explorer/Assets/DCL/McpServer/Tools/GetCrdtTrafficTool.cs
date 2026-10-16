@@ -293,7 +293,8 @@ namespace DCL.McpServer.Tools
                     : "wasted: rewrites identical values";
 
             if (counts.Wasted == entry.Messages)
-                return "wasted: every message was a no-op (stale timestamp, duplicate, or deleted entity)";
+                return $"wasted: every message changed nothing ({counts[CrdtTrafficOutcome.RedundantIdenticalData]} identical rewrites, "
+                       + $"{counts.Wasted - counts[CrdtTrafficOutcome.RedundantIdenticalData]} stale, duplicate, deleted-entity or Creator Hub)";
 
             return everyTick
                 ? $"mixed: written every tick, {counts.Wasted} of {entry.Messages} wasted"
@@ -305,7 +306,7 @@ namespace DCL.McpServer.Tools
 
         /// <summary>
         ///     Resolves the engine entity and a short description for every writer the report lists. Runs on the
-        ///     main thread, after the capture, where the scene world is not being written.
+        ///     main thread without the scene world's sync lock, like the existing debug tooling, so labels are a diagnostic snapshot.
         /// </summary>
         private static Dictionary<int, EntityInfo> ResolveEntities(World world, List<CrdtTrafficProbe.EntrySnapshot> fromScene,
             List<CrdtTrafficProbe.EntrySnapshot> toScene, int limit)
@@ -333,7 +334,7 @@ namespace DCL.McpServer.Tools
             {
                 bool resolved = engineEntities.TryGetValue(entityId, out Entity entity);
                 string? label = SceneEntityLabel.Reserved(entityId) ?? (resolved ? SceneEntityLabel.Describe(world, entity, parts) : null);
-                entities[entityId] = new EntityInfo(resolved ? entity.Id : (int?)null, label);
+                entities[entityId] = new EntityInfo(resolved ? entity.Id : null, label);
             }
 
             return entities;

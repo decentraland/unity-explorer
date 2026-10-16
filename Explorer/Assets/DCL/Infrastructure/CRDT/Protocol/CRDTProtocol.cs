@@ -133,7 +133,7 @@ namespace CRDT.Protocol
             UpdateLWWState(in message, overrideEffect, newComponentEffect);
         }
 
-        public bool IsIdenticalToLWWState(in CRDTMessage message)
+        public bool IsIdenticalToLwwState(in CRDTMessage message)
         {
             switch (message.Type)
             {

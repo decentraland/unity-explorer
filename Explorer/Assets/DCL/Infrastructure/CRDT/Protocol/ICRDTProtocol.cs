@@ -27,7 +27,7 @@ namespace CRDT.Protocol
         ///     a PUT whose payload equals the stored payload, or a DELETE of a component already deleted.
         ///     Timestamps are ignored. Pure read, false for non-LWW message types.
         /// </summary>
-        bool IsIdenticalToLWWState(in CRDTMessage message);
+        bool IsIdenticalToLwwState(in CRDTMessage message);
 
         /// <summary>
         ///     <inheritdoc cref="CRDTMessagesFactory.CreateMessagesFromTheCurrentState" />

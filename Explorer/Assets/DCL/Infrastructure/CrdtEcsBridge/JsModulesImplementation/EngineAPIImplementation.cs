@@ -143,7 +143,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     }
 
                     // Must be read before ProcessMessage replaces or disposes the stored payload
-                    bool identicalData = capturing && crdtProtocol.IsIdenticalToLWWState(in message);
+                    bool identicalData = capturing && crdtProtocol.IsIdenticalToLwwState(in message);
 
                     if (capturing)
                         stageStart = Stopwatch.GetTimestamp();
@@ -184,10 +184,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             worldSyncBufferSampler.End();
 
-            ApplySyncCommandBuffer(worldSyncBuffer);
+            ApplySyncCommandBuffer(worldSyncBuffer, capturing);
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
+            return returnData ? SerializeOutgoingCRDTMessages(capturing) : PoolableByteArray.EMPTY;
         }
 
         public PoolableByteArray CrdtGetState()
@@ -239,13 +239,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
 
-        private PoolableByteArray SerializeOutgoingCRDTMessages()
+        private PoolableByteArray SerializeOutgoingCRDTMessages(bool capturing)
         {
             try
             {
                 outgoingMessagesSampler.Begin();
 
-                bool capturing = metrics.Traffic.IsCapturing;
                 long outgoingStart = capturing ? Stopwatch.GetTimestamp() : 0;
 
                 PoolableByteArray serializationBufferPoolable;
@@ -303,7 +302,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 CRDTMessage message = outgoingMessages[i].message;
 
-                CrdtTrafficOutcome outcome = crdtProtocol.IsIdenticalToLWWState(in message)
+                CrdtTrafficOutcome outcome = crdtProtocol.IsIdenticalToLwwState(in message)
                     ? CrdtTrafficOutcome.RedundantIdenticalData
                     : CrdtTrafficOutcome.Applied;
 
@@ -342,7 +341,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
 
-        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool capturing)
         {
             // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
             // abort only on a throw before delegation (e.g. mutex acquisition)
@@ -353,7 +352,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
 
                 // Timed after the lock is acquired: waiting for the main thread is not bridge work
-                bool capturing = metrics.Traffic.IsCapturing;
                 long applyStart = capturing ? Stopwatch.GetTimestamp() : 0;
 
                 applyBufferSampler.Begin();

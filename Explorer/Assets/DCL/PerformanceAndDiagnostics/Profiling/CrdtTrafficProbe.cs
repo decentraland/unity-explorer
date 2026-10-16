@@ -7,9 +7,9 @@ namespace DCL.Profiling
     /// <summary>
     ///     Aggregates the CRDT messages exchanged between a scene and the renderer per
     ///     (direction, entity, component) while a capture is running, classifying each one
-    ///     by <see cref="CrdtTrafficOutcome" />. Idle, it costs the writer one volatile read per message.
+    ///     by <see cref="CrdtTrafficOutcome" />. Idle, it costs the bridge up to three volatile reads per scene tick.
     ///     Written from the scene background thread, read from the Unity main thread when the capture stops.
-    ///     Entries are kept between captures so a warmed-up probe records without allocating.
+    ///     Entries are cleared at the start of each capture.
     /// </summary>
     public sealed class CrdtTrafficProbe
     {
@@ -46,8 +46,7 @@ namespace DCL.Profiling
                 applyTicks = 0;
                 outgoingTicks = 0;
 
-                foreach (Entry entry in entries.Values)
-                    entry.Reset();
+                entries.Clear();
 
                 DCLInterlocked.Exchange(ref capturing, 1);
                 return true;
@@ -301,13 +300,6 @@ namespace DCL.Profiling
             public Entry(Key key)
             {
                 Key = key;
-            }
-
-            public void Reset()
-            {
-                Messages = 0;
-                Bytes = 0;
-                Counts = default(OutcomeCounts);
             }
         }
     }

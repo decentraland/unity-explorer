@@ -22,7 +22,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
     public class EngineAPIImplementationShould
     {
-        private static readonly byte[] OUTPUT = { 10, 20, 30, 20, 10, 0 };
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
         private ISharedPoolsProvider sharedPoolsProvider;
@@ -35,7 +34,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         private EngineAPIImplementation engineAPIImplementation;
-        private SceneRuntimeMetrics metrics;
+        private SceneRuntimeMetrics metrics = null!;
 
         private List<CRDTMessage> crdtMessages;
         private List<ProcessedCRDTMessage> outgoingMessages;
@@ -144,7 +143,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         public void ClassifyIdenticalRewritesAsRedundant()
         {
             // Arrange
-            crdtProtocol.IsIdenticalToLWWState(Arg.Any<CRDTMessage>()).Returns(true);
+            crdtProtocol.IsIdenticalToLwwState(Arg.Any<CRDTMessage>()).Returns(true);
             crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>()).Returns(_ => new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedTimestamp, CRDTReconciliationEffect.ComponentModified));
             metrics.Traffic.TryStartCapture();
 
@@ -165,7 +164,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             engineAPIImplementation.CrdtSendToRenderer(INPUT);
 
             // Assert
-            crdtProtocol.DidNotReceive().IsIdenticalToLWWState(Arg.Any<CRDTMessage>());
+            crdtProtocol.DidNotReceive().IsIdenticalToLwwState(Arg.Any<CRDTMessage>());
         }
 
         [Test]
