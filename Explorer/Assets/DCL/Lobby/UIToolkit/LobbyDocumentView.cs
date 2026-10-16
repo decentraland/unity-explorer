@@ -36,7 +36,7 @@ namespace DCL.Lobby
         private const string PROFILE_SLOT_NAME = "ProfileSlot";
         private const string NOTIFICATIONS_NAME = "Notifications";
         private const string UNREAD_BADGE_NAME = "UnreadBadge";
-        private const string CLOSE_NAME = "Close";
+        private const string BACK_NAME = "Back";
         private const string EDIT_LAYOUT_NAME = "EditLayout";
         private const string GO_TO_FIELD_NAME = "GoToField";
 
@@ -97,8 +97,8 @@ namespace DCL.Lobby
         /// <summary>Unread count over <see cref="NotificationsButton" />. Exists only while shown.</summary>
         public Label UnreadBadge => Element<Label>(UNREAD_BADGE_NAME);
 
-        /// <summary>Exists only while the view is shown.</summary>
-        public Button CloseButton => Element<Button>(CLOSE_NAME);
+        /// <summary>Leaves the lobby, like the Escape key whose name it shows. Exists only while the view is shown.</summary>
+        public Button BackButton => Element<Button>(BACK_NAME);
 
         /// <summary>Enters and leaves the edit mode of the layout. Exists only while the view is shown.</summary>
         public Button EditLayoutButton => Element<Button>(EDIT_LAYOUT_NAME);

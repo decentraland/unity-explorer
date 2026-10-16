@@ -170,8 +170,9 @@ namespace DCL.Lobby
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        // At startup the lobby is the only way into the world, so it cannot be dismissed before a destination is picked
-        public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed;
+        // At startup the lobby is the only way into the world, so it cannot be dismissed before a destination is picked;
+        // while the layout is edited Escape leaves edit mode instead, which the editor handles itself
+        public override bool CanBeClosedByEscape => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && !layoutEditor.IsEditing;
 
         /// <summary>The panel is on screen; true at the startup show, false when opened from the world.</summary>
         public event Action<bool>? Opened;
@@ -322,9 +323,9 @@ namespace DCL.Lobby
             viewInstance.Profile.Clicked = ShowProfileMenu;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
-            viewInstance.CloseButton.clicked -= RequestClose;
-            viewInstance.CloseButton.clicked += RequestClose;
-            viewInstance.CloseButton.SetDisplayed(!inputData.IsStartup);
+            viewInstance.BackButton.clicked -= RequestClose;
+            viewInstance.BackButton.clicked += RequestClose;
+            viewInstance.BackButton.SetDisplayed(!inputData.IsStartup);
             viewInstance.EditLayoutButton.clicked -= ToggleLayoutEditing;
             viewInstance.EditLayoutButton.clicked += ToggleLayoutEditing;
             profileButtonPresenter.LoadProfile();

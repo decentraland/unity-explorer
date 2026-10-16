@@ -112,10 +112,35 @@
     color: var(--dcl-color-snow);
 }
 
-.lobby__close-icon {
-    width: 12px;
-    height: 12px;
-    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+/* The Back pill of the top bar, sized and coloured like the round buttons beside it */
+.lobby__top-bar-back-button {
+    height: 40px;
+    margin-left: 10px;
+    padding: 0 16px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 20px;
+    border-color: rgba(255, 255, 255, 0.03);
+    background-color: black;
+    transition: background-color 0.1s;
+}
+
+.lobby__top-bar-back-button:hover {
+    background-color: rgb(31, 31, 31);
+}
+
+.lobby__top-bar-back-button:active {
+    background-color: black;
+}
+
+/* The key that does the same as the pill, dimmed beside its text */
+.lobby__back-key {
+    margin-left: 8px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-silver);
 }
 
 /* The modal takes over while the layout is edited, with its own Cancel and Save, so the button steps aside for Back */

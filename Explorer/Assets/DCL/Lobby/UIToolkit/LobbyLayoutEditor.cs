@@ -68,6 +68,9 @@ namespace DCL.Lobby
         private Button? backButton;
         private Button? saveButton;
 
+        /// <summary>The root of the panel, where a key press lands while nothing is focused and bubbles up otherwise.</summary>
+        private VisualElement? panelRoot;
+
         /// <summary>The source of the drag in progress: the handle of a placed widget or the row of an unplaced family.</summary>
         private LobbyWidgetHandleElement? draggedHandle;
         private LobbyWidgetCardElement? draggedCard;
@@ -159,6 +162,9 @@ namespace DCL.Lobby
             cancelButton.clicked += Hide;
             backButton.clicked += Hide;
             saveButton.clicked += Save;
+            panelRoot = newRoot.panel.visualTree;
+            panelRoot.RegisterCallback<KeyDownEvent>(OnKeyDown);
+            panelRoot.RegisterCallback<NavigationCancelEvent>(OnNavigationCancel);
 
             opening.Clear();
             opening.AddRange(RequireLayout().Placements);
@@ -286,6 +292,9 @@ namespace DCL.Lobby
             cancelButton!.clicked -= Hide;
             backButton!.clicked -= Hide;
             saveButton!.clicked -= Save;
+            panelRoot!.UnregisterCallback<KeyDownEvent>(OnKeyDown);
+            panelRoot.UnregisterCallback<NavigationCancelEvent>(OnNavigationCancel);
+            panelRoot = null;
             root.RemoveFromClassList(USS_EDITING);
             root = null;
             dragLayer = null;
@@ -295,6 +304,23 @@ namespace DCL.Lobby
             cancelButton = null;
             backButton = null;
             saveButton = null;
+        }
+
+        // Escape leaves like the Back and Cancel buttons; it comes as a key press and, from the input module, as a
+        // navigation cancel, and the second of the two finds the editor already closed
+        private void OnKeyDown(KeyDownEvent evt)
+        {
+            if (evt.keyCode != KeyCode.Escape)
+                return;
+
+            evt.StopPropagation();
+            Hide();
+        }
+
+        private void OnNavigationCancel(NavigationCancelEvent evt)
+        {
+            evt.StopPropagation();
+            Hide();
         }
 
         private void RestoreOpening()

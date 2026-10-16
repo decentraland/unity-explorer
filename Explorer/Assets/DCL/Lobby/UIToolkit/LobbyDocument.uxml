@@ -26,10 +26,11 @@
             <ui:Button name="EditLayout" class="lobby__edit-layout-button">
                 <ui:VisualElement name="Icon" class="lobby__edit-layout-icon" picking-mode="Ignore" />
             </ui:Button>
-            <!-- Takes the place of the edit button while the layout is edited; it leaves like Cancel, dropping the changes -->
+            <!-- Takes the place of the edit button while the layout is edited; it leaves like Cancel and Escape, dropping the changes -->
             <ui:Button name="BackFromLayout" class="lobby__back-button">
                 <ui:VisualElement name="Icon" class="lobby__back-icon" picking-mode="Ignore" />
                 <ui:Label name="Text" text="Back" class="lobby__back-text" picking-mode="Ignore" />
+                <ui:Label name="Key" text="ESC" class="lobby__back-key" picking-mode="Ignore" />
             </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
@@ -39,8 +40,11 @@
                 <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
             </ui:Button>
             <ui:VisualElement name="ProfileSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
-            <ui:Button name="Close" class="lobby__top-bar-button">
-                <ui:VisualElement name="Icon" class="lobby__close-icon" picking-mode="Ignore" />
+            <!-- Leaves the lobby like Escape does, whose name it shows; hidden at startup, when there is no world to go back to -->
+            <ui:Button name="Back" class="lobby__top-bar-back-button">
+                <ui:VisualElement name="Icon" class="lobby__back-icon" picking-mode="Ignore" />
+                <ui:Label name="Text" text="Back" class="lobby__back-text" picking-mode="Ignore" />
+                <ui:Label name="Key" text="ESC" class="lobby__back-key" picking-mode="Ignore" />
             </ui:Button>
         </ui:VisualElement>
         <!-- The grids the widget sections are moved onto at runtime (see LobbyWidgetHost); the top ones stop short of the avatar -->
