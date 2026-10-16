@@ -64,11 +64,6 @@ namespace Global.AppArgs
         public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
-
-        /// <summary>
-        ///     Base URL of the satellite map's streamed tiles and their manifest, overriding <c>DecentralandUrl.SatelliteMapTiles</c>
-        /// </summary>
-        public const string SATELLITE_MAP_URL = "satellite-map-url";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
 
         /// <summary>

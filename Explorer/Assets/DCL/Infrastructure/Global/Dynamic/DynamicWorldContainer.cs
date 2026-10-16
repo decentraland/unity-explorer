@@ -399,7 +399,6 @@ namespace Global.Dynamic
                         identityCache,
                         placesAndEventsContainer.HomePlaceEventBus,
                         chatContainer.ChatEventBus,
-                        appArgs,
                         ct
                     );
 

@@ -226,17 +226,6 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
-### `satellite-map-url`
-**Type:** String (URL)
-**Description:** Base URL the map and minimap stream the satellite map's 1024 px KTX2 tiles (levels 3 to 8) from, overriding the default `DecentralandUrl.SatelliteMapTiles`. The client reads `<url>/manifest.json` once per session, which lists a version per section (one level-3 tile and every finer tile under it), and reads tiles from `<url>/sections/<sx>,<sy>/<version>/<level>/<i>,<j>.ktx2`; when the manifest answers 404, tiles are read from `<url>/<level>/<i>,<j>.ktx2`. Tiles must be served with `Content-Type: image/ktx2`. Useful to test a staging or local upload, e.g. a folder served with `python -m http.server`. Denied for deep links by `DeepLinkAllowlist`: a link carrying it only takes effect if the user accepts the startup warning, whose line says the server can see where they are on the map.
-
-**Usage:**
-```bash
---satellite-map-url http://localhost:8000
-```
-
----
-
 ## Authentication Flags
 
 ### `skip-auth-screen`

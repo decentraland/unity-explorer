@@ -84,7 +84,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             return true;
         }
 
-        // Server schema: written by the map capture tool's pyramid scripts; layout in docs/app-arguments.md § satellite-map-url.
+        // Server schema: written by the map capture tool's pyramid scripts.
         public class Dto
         {
             // ReSharper disable InconsistentNaming
