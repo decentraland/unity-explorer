@@ -15,7 +15,6 @@ namespace DCL.Lobby
     {
         private const string USS_BLOCK = "lobby-widget-card";
         private const string USS_GRIP = USS_BLOCK + "__grip";
-        private const string USS_GRIP_COLUMN = USS_BLOCK + "__grip-column";
         private const string USS_ICON = USS_BLOCK + "__icon";
         private const string USS_ICON_LANDING = USS_ICON + "--landing";
         private const string USS_ICON_LIVE_EVENTS = USS_ICON + "--live-events";
@@ -31,8 +30,6 @@ namespace DCL.Lobby
         private const string USS_SIZE_TOGGLE = USS_BLOCK + "__size-toggle";
         private const string USS_SIZE_TOGGLE_SELECTED = USS_SIZE_TOGGLE + "--selected";
         private const string USS_DRAGGING = USS_BLOCK + "--dragging";
-
-        private const int GRIP_COLUMNS = 2;
 
         /// <summary>The size of the family the drag carries and the panel position it started at.</summary>
         public Action<LobbyWidgetCardElement, LobbyWidgetId, Vector2>? DragStarted;
@@ -66,14 +63,6 @@ namespace DCL.Lobby
 
             var grip = new VisualElement { name = "Grip", pickingMode = PickingMode.Ignore };
             grip.AddToClassList(USS_GRIP);
-
-            for (var i = 0; i < GRIP_COLUMNS; i++)
-            {
-                var column = new VisualElement { pickingMode = PickingMode.Ignore };
-                column.AddToClassList(USS_GRIP_COLUMN);
-                grip.Add(column);
-            }
-
             Add(grip);
 
             var icon = new VisualElement { name = "Icon", pickingMode = PickingMode.Ignore };

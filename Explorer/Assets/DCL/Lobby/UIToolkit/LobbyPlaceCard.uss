@@ -2,11 +2,11 @@
     --place-card-hover-duration: 0.3s;
 }
 
-/* 256x146 with 24px corners: the thumbnail fills the card and a gradient darkens its bottom under the texts */
+/* 256x146 with 16px corners: the thumbnail fills the card and a gradient darkens its bottom under the texts */
 .lobby-place-card {
     width: 256px;
     height: 146px;
-    border-radius: 24px;
+    border-radius: var(--lobby-card-radius);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -46,7 +46,7 @@
 }
 
 .lobby-place-card:hover .lobby-place-card__gradient {
-    height: 124px;
+    height: 132px;
 }
 
 /* The counter's margin spaces the friends row that follows it */
@@ -54,18 +54,18 @@
     position: absolute;
     top: 12px;
     left: 12px;
-    height: 28px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
 }
 
 .lobby-place-card__online {
-    height: 28px;
-    margin-right: 8px;
+    height: 26px;
+    margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }
@@ -106,7 +106,7 @@
 }
 
 .lobby-place-card:hover .lobby-place-card__footer {
-    height: 79px;
+    height: 87px;
 }
 
 .lobby-place-card__title {
@@ -144,7 +144,7 @@
     left: 7px;
     right: 7px;
     bottom: 2px;
-    height: 38px;
+    height: 46px;
     padding: 0 0 6px;
     flex-direction: row;
     align-items: center;
@@ -170,8 +170,8 @@
 }
 
 .lobby-place-card__jump-in-text {
-    margin-right: 4px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
@@ -179,7 +179,7 @@
 }
 
 .lobby-place-card__jump-in-icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-image: url('/Assets/Textures/Common/JumpInOutline.png');
 }

@@ -18,6 +18,7 @@ namespace DCL.Lobby
         private const string USS_REMOVE = USS_BLOCK + "__remove";
         private const string USS_REMOVE_ICON = USS_BLOCK + "__remove-icon";
         private const string USS_UNDERLAY = USS_BLOCK + "__underlay";
+        private const string USS_UNDERLAY_HOVERED = USS_UNDERLAY + "--hovered";
         private const string USS_DRAGGING = USS_BLOCK + "--dragging";
         private const string USS_PUSHED = USS_BLOCK + "--pushed";
 
@@ -79,7 +80,17 @@ namespace DCL.Lobby
             };
 
             this.AddManipulator(gesture);
+
+            // The underlay is no descendant of the frame, so the hover of the frame is passed on to it by hand
+            RegisterCallback<PointerEnterEvent>(OnPointerEnter);
+            RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
         }
+
+        private void OnPointerEnter(PointerEnterEvent _) =>
+            Underlay.AddToClassList(USS_UNDERLAY_HOVERED);
+
+        private void OnPointerLeave(PointerLeaveEvent _) =>
+            Underlay.RemoveFromClassList(USS_UNDERLAY_HOVERED);
 
         /// <summary>Puts the frame over the cells of the widget at the cell, in the space of its grid.</summary>
         public void PlaceAt(Vector2Int cell)

@@ -1,23 +1,27 @@
 /* Layout of the lobby at 1920x1080: the 50px side margins of the uGUI lobby (LobbyUI.prefab) and the vertical anchors of the
-   design, the top grids 31px under the top bar and the bottom ones 26px off the bottom edge. The widgets keep their content
-   10px inside their cells, so the grids sit that much further out sideways for the content to land on the margins */
+   design, the top grids 24px under the top bar and the bottom ones 26px off the bottom edge. The widgets keep their content
+   10px inside their cells sideways, so the grids sit that much further out for the content to land on the margins */
 :root {
     --lobby-margin: 50px;
     --lobby-widget-inset: 10px;
     --lobby-grid-margin: 40px;
-    --lobby-grid-top: 104px;
+    --lobby-grid-top: 97px;
     --lobby-bottom-margin: 26px;
     --lobby-card-color: rgba(20, 20, 26, 0.9);
     --lobby-card-border-color: rgba(255, 255, 255, 0.1);
+    --lobby-card-radius: 16px;
     --lobby-title-color: white;
-    --lobby-subtitle-color: rgb(191, 191, 199);
+    --lobby-subtitle-color: rgb(207, 205, 212);
     --lobby-jump-in-color: rgb(255, 45, 85);
     --lobby-jump-in-hover-color: rgb(255, 77, 111);
     --lobby-jump-in-pressed-color: rgb(200, 35, 67);
     --lobby-thumbnail-fade-duration: 0.3s;
+    --lobby-outline-duration: 0.2s;
     /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
     --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
     --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
+    /* The gradient a hovered hero or photo card is outlined with */
+    --lobby-outline-gradient-image: url('/Assets/Textures/Common/RainbowGradient.png');
 }
 
 .lobby {
@@ -28,15 +32,14 @@
     bottom: 0;
 }
 
-/* Drawn with the sprite's 9-slice border: a 140px soft fade, a stretched middle and a 42px opaque strip along the bottom edge */
-.lobby__gradient {
+/* Darkens the stage and the figure under the whole screen, so the widgets read over any background */
+.lobby__overlay {
     position: absolute;
     left: 0;
+    top: 0;
     right: 0;
     bottom: 0;
-    height: 338px;
-    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 /* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */
@@ -129,10 +132,11 @@
 
 /* A widget section is placed by LobbyWidgetHost: its left, top, width and height are inline, from its cell and its span.
    The inset keeps the content off the edges of the cells, which the edit-mode frame runs along, so the content has to
-   fit the cells less the inset (the title rows and the rails below add up to the span) */
+   fit the cells less the inset (the title rows and the rails below add up to the span). The two-row widgets fill their
+   cells to the last pixel, so the inset is 5px at the top and none at the bottom, as in the design */
 .lobby__widget {
     position: absolute;
-    padding: var(--lobby-widget-inset);
+    padding: 5px var(--lobby-widget-inset) 0;
 }
 
 /* The four-column sections show two cards in the room of the seven-column ones' three: the cards of both fill their row,
@@ -147,80 +151,121 @@
     display: none;
 }
 
-.lobby__welcome-title,
-.lobby__events-title,
-.lobby__friends-title,
-.lobby__places-title,
-.lobby__communities-title,
-.lobby__gallery-title {
-    font-size: 24px;
-    -unity-font-definition: var(--dcl-font-inter-bold);
-    color: var(--lobby-title-color);
-}
-
-.lobby__friends-title {
-    height: 30px;
-    -unity-text-align: middle-left;
-}
-
-/* The label is as tall as its font, the glyphs overflowing it; the cards start 32px under the title, as the design has it */
-.lobby__places-title,
-.lobby__communities-title,
-.lobby__gallery-title {
-    height: 24px;
-    margin-bottom: 8px;
-    -unity-text-align: upper-left;
-}
-
-.lobby__welcome-title,
-.lobby__events-title {
-    height: 29px;
-    -unity-text-align: upper-left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.lobby__welcome-title {
-    margin-bottom: 10px;
-}
-
-.lobby__friends-header {
-    height: 30px;
+/* The title row of a section: the title on the left and, where there is a panel listing everything, View All on the right */
+.lobby__section-header {
+    height: 32px;
     flex-direction: row;
     align-items: center;
 }
 
+.lobby__section-title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 32px;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}
+
+/* The vertical gaps of each section follow the design: the title 10px over the live card and 5px over the place cards */
+.lobby__section-header--live {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.lobby__section-header--upcoming {
+    margin-bottom: 8px;
+}
+
+.lobby__section-header--places {
+    margin-bottom: 5px;
+}
+
+.lobby__section-header--friends {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.lobby__view-all {
+    flex-shrink: 0;
+    height: 28px;
+    margin: 0 0 0 10px;
+    padding: 0 10px 0 12px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 0;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: background-color 0.1s;
+}
+
+.lobby__view-all:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.lobby__view-all:active {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.lobby__view-all-text {
+    margin-right: 6px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby__view-all-icon {
+    width: 7px;
+    height: 12px;
+    background-image: url('/Assets/Textures/Common/ArrowRight.png');
+}
+
+/* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */
+.lobby__welcome-title {
+    height: 60px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 30px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}
+
 .lobby__friends-online-count {
-    margin-left: 15px;
-    font-size: 12px;
+    flex-shrink: 0;
+    margin-left: 12px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
     color: var(--lobby-subtitle-color);
 }
 
-/* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 32px
+/* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 42px
    pager band of LobbyRail.uss */
 
-/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps; spaced off the 30px header
-   so the cards sit where the design has them */
+/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps */
 .lobby__friends-rail {
-    margin-top: 16px;
     width: 439px;
-    height: 149px;
+    height: 159px;
 }
 
 .lobby__friends-rail .lobby-rail__card {
     margin-right: 9px;
 }
 
-.lobby__events-title {
-    margin-bottom: 8px;
-}
-
 .lobby__live-events-rail {
     width: 326px;
-    height: 231px;
+    height: 241px;
 }
 
 /* The viewport bleeds as far as the live cards' shadow (6px sideways, 10px down) so it clips at the shadow's edge instead of the
@@ -234,10 +279,14 @@
     left: 6px;
 }
 
-/* With the title band it fills the two rows of its section */
+/* With the title band it fills the two rows of its section, so its pager sits two pixels closer than the others' */
 .lobby__upcoming-events-rail {
     width: 326px;
-    height: 171px;
+    height: 179px;
+}
+
+.lobby__upcoming-events-rail .lobby-rail__pager {
+    margin-top: 8px;
 }
 
 /* With the title band it fills the two rows of its section; the communities and gallery rails share the metrics as their
@@ -246,7 +295,7 @@
 .lobby__communities-rail,
 .lobby__gallery-rail {
     width: 790px;
-    height: 178px;
+    height: 188px;
 }
 
 .lobby__places-rail--4x2,
@@ -265,7 +314,7 @@
 .lobby__places-row {
     flex-direction: row;
     height: 146px;
-    margin-bottom: 32px;
+    margin-bottom: 42px;
 }
 
 .lobby__places-row > .lobby-place-card {

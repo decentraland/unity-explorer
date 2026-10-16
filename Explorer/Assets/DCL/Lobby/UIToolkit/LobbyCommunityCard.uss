@@ -2,12 +2,12 @@
     --community-card-hover-duration: 0.3s;
 }
 
-/* Same footprint as the place card (256x146, 24px corners): the thumbnail fills the card and a gradient darkens its bottom
+/* Same footprint as the place card (256x146, 16px corners): the thumbnail fills the card and a gradient darkens its bottom
    under the texts; hovering zooms the thumbnail */
 .lobby-community-card {
     width: 256px;
     height: 146px;
-    border-radius: 24px;
+    border-radius: var(--lobby-card-radius);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -51,11 +51,11 @@
     position: absolute;
     top: 12px;
     left: 12px;
-    height: 28px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
     padding: 0 8px 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }

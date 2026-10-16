@@ -6,10 +6,10 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     A horizontal strip of cards that pages by the mouse wheel or the arrows, and scrolls freely by dragging; a
-    ///     released drag settles on the nearest card. The arrows wrap round past either end; the wheel stops there.
-    ///     The cards are its children; the chrome is built here and styled by LobbyRail.uss, which also owns the snap
-    ///     through a USS transition of the translate.
+    ///     A horizontal strip of cards that pages by the mouse wheel, the arrows or the dots, and scrolls freely by
+    ///     dragging; a released drag settles on the nearest card. The arrows wrap round past either end; the wheel stops
+    ///     there and each dot goes to its page. The cards are its children; the chrome is built here and styled by
+    ///     LobbyRail.uss, which also owns the snap through a USS transition of the translate.
     /// </summary>
     [UxmlElement]
     public partial class LobbyRailElement : VisualElement
@@ -228,11 +228,11 @@ namespace DCL.Lobby
             SnapToCard(card, PageAt(CardOffset(card)));
         }
 
-        // Presses on the arrows are theirs: dragging from one would steal the click
+        // Presses on the arrows and the dots are theirs: dragging from one would steal the click
         private void OnPointerDown(PointerDownEvent evt)
         {
             if (evt.button != 0) return;
-            if (evt.target is VisualElement target && (previous.Contains(target) || next.Contains(target))) return;
+            if (evt.target is VisualElement target && (previous.Contains(target) || next.Contains(target) || dots.Contains(target))) return;
 
             // A press still tracked here is stale: its release went to an element the rail could not hear
             EndPress(0f);
@@ -476,13 +476,19 @@ namespace DCL.Lobby
 
             for (int i = dots.childCount; i < visibleDots; i++)
             {
-                var dot = new VisualElement { pickingMode = PickingMode.Ignore };
+                var dot = new VisualElement();
                 dot.AddToClassList(USS_DOT);
+                dot.AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
+                dot.RegisterCallback<ClickEvent>(OnDotClicked);
                 dots.Add(dot);
             }
 
             for (var i = 0; i < dots.childCount; i++)
                 dots[i].SetDisplayed(i < visibleDots);
         }
+
+        // The dot stands at the index of its page
+        private void OnDotClicked(ClickEvent evt) =>
+            SnapTo(dots.IndexOf((VisualElement)evt.currentTarget));
     }
 }

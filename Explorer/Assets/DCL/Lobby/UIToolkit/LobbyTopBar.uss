@@ -112,7 +112,7 @@
     color: var(--dcl-color-snow);
 }
 
-/* The Back pill of the top bar, sized and coloured like the round buttons beside it */
+/* The Back pill of the top bar, sized like the round buttons beside it and coloured like the design's pills */
 .lobby__top-bar-back-button {
     height: 40px;
     margin-left: 10px;
@@ -121,23 +121,23 @@
     align-items: center;
     border-width: 2px;
     border-radius: 20px;
-    border-color: rgba(255, 255, 255, 0.03);
-    background-color: black;
+    border-color: var(--dcl-color-white-10);
+    background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
 }
 
 .lobby__top-bar-back-button:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: rgba(31, 31, 31, 0.8);
 }
 
 .lobby__top-bar-back-button:active {
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
-/* The key that does the same as the pill, dimmed beside its text */
+/* The key that does the same as the pill, in brackets and dimmed beside its text */
 .lobby__back-key {
-    margin-left: 8px;
-    font-size: 14px;
+    margin-left: 6px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-center;
     color: var(--dcl-color-silver);
@@ -153,13 +153,13 @@
     display: none;
     height: 42px;
     margin-left: 12px;
-    padding: 0 20px 0 16px;
+    padding: 0 16px 0 14px;
     flex-direction: row;
     align-items: center;
     border-width: 2px;
     border-radius: 21px;
     border-color: var(--dcl-color-white-10);
-    background-color: var(--dcl-color-black-70);
+    background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
 }
 
@@ -168,11 +168,11 @@
 }
 
 .lobby__back-button:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: rgba(31, 31, 31, 0.8);
 }
 
 .lobby__back-button:active {
-    background-color: var(--dcl-color-black-70);
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 .lobby__back-icon {

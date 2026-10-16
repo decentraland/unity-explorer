@@ -15,12 +15,12 @@ using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
+using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
-using DCL.InWorldCamera.ReelActions;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
@@ -45,7 +45,6 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -80,8 +79,8 @@ namespace DCL.Lobby
         /// <summary>How many of the user's latest photos the rails page through.</summary>
         private const int MAX_PHOTOS = 10;
 
-        /// <summary>The day a photo was taken, as its card captions it.</summary>
-        private const string PHOTO_DATE_FORMAT = "MMM d, yyyy";
+        /// <summary>The button in the title row of a section that opens the panel listing everything the section shows.</summary>
+        private const string VIEW_ALL_NAME = "ViewAll";
 
         private static readonly Comparison<EventDTO> BY_START_TIME = static (a, b) => a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed);
 
@@ -380,6 +379,16 @@ namespace DCL.Lobby
             galleryRail.Show(viewInstance.Gallery);
             gallery4By2Rail.Show(viewInstance.Gallery4By2);
 
+            // The panels the View All buttons open need the world, like the Back button, so they wait for it at startup
+            WireViewAll(viewInstance.LiveEvents, ExploreSections.Events);
+            WireViewAll(viewInstance.UpcomingEvents, ExploreSections.Events);
+            WireViewAll(viewInstance.FeaturedPlaces, ExploreSections.Places);
+            WireViewAll(viewInstance.FeaturedPlaces4By2, ExploreSections.Places);
+            WireViewAll(viewInstance.Communities, ExploreSections.Communities);
+            WireViewAll(viewInstance.Communities4By2, ExploreSections.Communities);
+            WireViewAll(viewInstance.Gallery, ExploreSections.CameraReel);
+            WireViewAll(viewInstance.Gallery4By2, ExploreSections.CameraReel);
+
             // Before the places: a cached landing place binds its card synchronously
             friendsCts = friendsCts.SafeRestart();
             friends?.Show(viewInstance.Friends, friendsCts.Token);
@@ -522,6 +531,19 @@ namespace DCL.Lobby
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
         }
+
+        // Registered again on every show against the kept hierarchy, so the previous registration goes first
+        private void WireViewAll(VisualElement section, ExploreSections target)
+        {
+            Button button = section.Q<Button>(VIEW_ALL_NAME);
+            button.UnregisterCallback<ClickEvent, ExploreSections>(OnViewAllClicked);
+            button.RegisterCallback<ClickEvent, ExploreSections>(OnViewAllClicked, target);
+            button.SetDisplayed(!inputData.IsStartup);
+        }
+
+        // The panel opens over the lobby, which is back once it closes
+        private void OnViewAllClicked(ClickEvent _, ExploreSections target) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(target)));
 
         private void ToggleLayoutEditing()
         {
@@ -872,15 +894,7 @@ namespace DCL.Lobby
             rail.SetCount(photos.Count, rewind);
 
             for (var i = 0; i < photos.Count; i++)
-                ShowPhotoCard(rail.Cards[i], photos[i], ct);
-        }
-
-        private void ShowPhotoCard(LobbyGalleryCardElement card, CameraReelResponseCompact photo, CancellationToken ct)
-        {
-            DateTime takenAt = ReelUtility.GetDateTimeFromString(photo.dateTime);
-            card.DateText = takenAt == default ? string.Empty : takenAt.ToString(PHOTO_DATE_FORMAT, CultureInfo.InvariantCulture);
-
-            LoadThumbnailAsync(card, photo.thumbnailUrl, ReportCategory.CAMERA_REEL, ct).Forget();
+                LoadThumbnailAsync(rail.Cards[i], photos[i].thumbnailUrl, ReportCategory.CAMERA_REEL, ct).Forget();
         }
 
         // The detail pages through the same list the rails show, so its arrows stay within the lobby's photos

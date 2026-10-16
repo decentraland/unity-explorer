@@ -31,7 +31,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    border-radius: 24px;
+    border-radius: var(--lobby-card-radius);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -75,20 +75,20 @@
 
 .lobby-live-event-card__badges {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    height: 28px;
+    top: 16px;
+    left: 16px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
 }
 
 .lobby-live-event-card__live {
-    height: 28px;
+    height: 26px;
     margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 8px 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: rgb(255, 0, 0);
 }
 
@@ -109,12 +109,12 @@
 
 /* Spaces the friends row that follows it in the badges strip */
 .lobby-live-event-card__attendees {
-    height: 28px;
-    margin-right: 8px;
+    height: 26px;
+    margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }

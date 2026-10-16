@@ -1,11 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGalleryCard.uss" />
-    <DCL.Lobby.LobbyGalleryCardElement name="GalleryCard" date-text="">
-        <ui:VisualElement name="Thumbnail" class="lobby-gallery-card__thumbnail" picking-mode="Ignore" />
-        <ui:VisualElement name="Gradient" class="lobby-gallery-card__gradient" picking-mode="Ignore" />
-        <ui:VisualElement name="Footer" class="lobby-gallery-card__footer" picking-mode="Ignore">
-            <ui:VisualElement name="DateIcon" class="lobby-gallery-card__date-icon" picking-mode="Ignore" />
-            <ui:Label name="Date" text="" class="lobby-gallery-card__date" picking-mode="Ignore" />
+    <!-- The outline hangs past the card, so the body clips the photo instead of the card itself -->
+    <DCL.Lobby.LobbyGalleryCardElement name="GalleryCard">
+        <ui:VisualElement name="Outline" class="lobby-gallery-card__outline" picking-mode="Ignore" />
+        <ui:VisualElement name="Body" class="lobby-gallery-card__body" picking-mode="Ignore">
+            <ui:VisualElement name="Thumbnail" class="lobby-gallery-card__thumbnail" picking-mode="Ignore" />
         </ui:VisualElement>
     </DCL.Lobby.LobbyGalleryCardElement>
 </ui:UXML>

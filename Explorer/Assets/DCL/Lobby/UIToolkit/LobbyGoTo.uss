@@ -20,9 +20,10 @@
     border-color: white;
 }
 
+/* The pin sprite is taller than wide (36x43), so the box keeps its shape */
 .lobby-goto__icon {
     flex-shrink: 0;
-    width: 20px;
+    width: 17px;
     height: 20px;
     margin-right: 12px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
@@ -63,20 +64,20 @@
     color: var(--lobby-subtitle-color);
 }
 
-/* The go button is stripped of the Button chrome into a jump-in disc, shown only while the field holds a destination */
+/* The go button is stripped of the Button chrome into the design's jump-in disc, shown only while the field holds a
+   destination; the sprite carries the arrow, so the icon inside has nothing to draw */
 .lobby-goto__go {
     display: none;
     flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     margin: 0 0 0 8px;
     padding: 0;
     border-width: 0;
-    border-radius: 12px;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--lobby-jump-in-color);
-    transition: background-color 0.1s;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url('/Assets/DCL/Lobby/Textures/JumpInRounded.png');
+    -unity-background-image-tint-color: white;
+    transition: -unity-background-image-tint-color 0.1s;
 }
 
 .lobby-goto--with-destination .lobby-goto__go {
@@ -84,15 +85,13 @@
 }
 
 .lobby-goto__go:hover {
-    background-color: var(--lobby-jump-in-hover-color);
+    -unity-background-image-tint-color: rgb(255, 230, 235);
 }
 
 .lobby-goto__go:active {
-    background-color: var(--lobby-jump-in-pressed-color);
+    -unity-background-image-tint-color: rgb(200, 200, 200);
 }
 
 .lobby-goto__go-icon {
-    width: 8px;
-    height: 13px;
-    background-image: url('/Assets/Textures/Common/ArrowRight.png');
+    display: none;
 }

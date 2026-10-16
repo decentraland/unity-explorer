@@ -6,7 +6,7 @@
 .lobby-upcoming-event-card {
     width: 326px;
     height: 139px;
-    border-radius: 24px;
+    border-radius: var(--lobby-card-radius);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -16,7 +16,7 @@
     background-color: rgba(8, 8, 10, 0.95);
 }
 
-/* The card's own 24px corners cut its outer ones */
+/* The card's own 16px corners cut its outer ones */
 .lobby-upcoming-event-card__thumbnail {
     position: absolute;
     top: 0;

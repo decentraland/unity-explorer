@@ -36,7 +36,6 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             card.Title = "Genesis Plaza";
-            card.Creator = "creator";
             card.OnlineCount = 7;
             card.CanJumpIn = false;
 
@@ -45,7 +44,6 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual("Genesis Plaza", card.Q<Label>("Title").text);
-            Assert.AreEqual("creator", card.Q<Label>("Creator").text);
             Assert.AreEqual("7", card.Q<Label>("OnlineCount").text);
             Assert.IsFalse(card.Q<Button>("JumpIn").enabledSelf);
         }

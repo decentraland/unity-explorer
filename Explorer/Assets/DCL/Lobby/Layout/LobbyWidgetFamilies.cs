@@ -60,7 +60,7 @@ namespace DCL.Lobby
                 LobbyWidgetFamily.JumpBackIn => "Jump Back In",
                 LobbyWidgetFamily.RecommendedPlaces => "Recommended Places",
                 LobbyWidgetFamily.Communities => "My Communities",
-                LobbyWidgetFamily.Gallery => "My Gallery",
+                LobbyWidgetFamily.Gallery => "Gallery",
                 LobbyWidgetFamily.GoTo => "Go to",
                 _ => throw new ArgumentOutOfRangeException(nameof(family), family, null),
             };

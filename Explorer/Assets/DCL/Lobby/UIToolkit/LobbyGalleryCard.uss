@@ -2,12 +2,35 @@
     --gallery-card-hover-duration: 0.3s;
 }
 
-/* Same footprint as the place card (256x146, 24px corners): the photo fills the card and a gradient darkens its bottom
-   under the date; hovering zooms the photo */
+/* Same footprint as the place card (256x146) but square-cornered, so the photos stand apart from the place and event
+   cards: the photo fills the card with nothing over it; hovering zooms it and outlines the card with the gradient */
 .lobby-gallery-card {
     width: 256px;
     height: 146px;
-    border-radius: 24px;
+}
+
+/* Two pixels past the body on every side, showing only while hovered */
+.lobby-gallery-card__outline {
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    background-image: var(--lobby-outline-gradient-image);
+    opacity: 0;
+    transition: opacity var(--lobby-outline-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__outline {
+    opacity: 1;
+}
+
+.lobby-gallery-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -32,47 +55,4 @@
 .lobby-gallery-card--loading .lobby-gallery-card__thumbnail {
     opacity: 0;
     transition: opacity 0s;
-}
-
-/* The place card's sprite and slices: a 52px fade into a flat strip under the date */
-.lobby-gallery-card__gradient {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 100px;
-    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
-    -unity-slice-top: 52;
-    -unity-slice-bottom: 44;
-}
-
-.lobby-gallery-card__footer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 36px;
-    flex-direction: row;
-    align-items: center;
-    padding: 0 10px 8px;
-}
-
-.lobby-gallery-card__date-icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    margin-right: 4px;
-    background-image: url('/Assets/Textures/Common/CalendarIcn.png');
-    -unity-background-image-tint-color: var(--lobby-subtitle-color);
-}
-
-.lobby-gallery-card__date {
-    flex-shrink: 1;
-    font-size: 12px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: middle-left;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
