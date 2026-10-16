@@ -97,6 +97,7 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         UniTask IMapLayerController.Disable(CancellationToken cancellationToken)
         {
             instantiationParent.gameObject.SetActive(false);
+            detailTiles?.ReleaseFinerTiles();
             return UniTask.CompletedTask;
         }
 

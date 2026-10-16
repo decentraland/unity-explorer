@@ -39,6 +39,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         /// <summary>Longer than the settle wait, so a refresh that requests nothing has had its chance.</summary>
         private static readonly TimeSpan GRACE = TimeSpan.FromMilliseconds(500);
 
+        private static readonly string LEVEL_3_TILE_URL = TileUrl(0, 0, SatelliteDetailTiles.BASE_LEVEL);
         private static readonly string LEVEL_4_TILE_URL = TileUrl(0, 0, SatelliteDetailTiles.BASE_LEVEL + 1);
         private static readonly string FIXTURE_PATH = Path.Combine(Application.dataPath, "DCL/MapRenderer/Tests/SatelliteAtlas/SatelliteTileFixture.bytes");
 
@@ -165,6 +166,9 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         [Test]
         public async Task DownloadAndStoreATileMissingFromTheDiskCache()
         {
+            // Arrange
+            tiles.decodeOverride = (_, url) => UniTask.FromResult(NewDecodedTexture(url));
+
             // Act
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
             await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to download");
@@ -287,6 +291,68 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             // Assert
             Assert.IsTrue(decodedTextures[LEVEL_4_TILE_URL] == null, "The texture of a tile out of view is destroyed once a camera is released");
             Assert.IsFalse(IsShown(LEVEL_4_TILE_URL));
+        }
+
+        [Test]
+        public async Task NotStoreADownloadThatFailsToDecode()
+        {
+            // Arrange
+            tiles.decodeOverride = (_, _) => UniTask.FromException<Texture2D>(new Exception("not a KTX2 file"));
+
+            // Act
+            tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
+            await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to download");
+            await Task.Delay(GRACE);
+
+            // Assert
+            await diskCache.DidNotReceive().PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
+            Assert.AreEqual(0, removedCachedFiles, "A downloaded file was never stored, so there is nothing to remove");
+        }
+
+        [Test]
+        public async Task ReleaseTheFinerTilesButKeepTheBaseLevelWhenTheLayerIsHidden()
+        {
+            // Arrange
+            tiles.decodeOverride = (_, url) => UniTask.FromResult(NewDecodedTexture(url));
+
+            tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
+            await UntilAsync(() => IsShown(LEVEL_3_TILE_URL) && IsShown(LEVEL_4_TILE_URL), "the level-3 and level-4 tiles to show");
+
+            // Act
+            tiles.ReleaseFinerTiles();
+
+            // Assert
+            Assert.IsTrue(decodedTextures[LEVEL_4_TILE_URL] == null, "The texture of a finer tile is destroyed once the layer is hidden");
+            Assert.IsTrue(IsShown(LEVEL_3_TILE_URL));
+        }
+
+        [Test]
+        public void StartWithEveryBaseTileMissingFromASynchronousDiskCache()
+        {
+            // Arrange
+            var sections = new Dictionary<string, string?>();
+
+            for (var y = 0; y < 8; y++)
+            for (var x = 0; x < 8; x++)
+                sections[$"{x},{y}"] = "v1";
+
+            webRequestController
+               .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>, SatelliteManifest.Dto>(
+                    Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
+                    Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>>())
+               .Returns(UniTask.FromResult(new SatelliteManifest.Dto { sections = sections }));
+
+            Exception? unobserved = null;
+            void Capture(Exception e) => unobserved ??= e;
+            UniTaskScheduler.UnobservedTaskException += Capture;
+
+            // Act
+            try { tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE); }
+            finally { UniTaskScheduler.UnobservedTaskException -= Capture; }
+
+            // Assert
+            Assert.IsNull(unobserved, "Loads that complete synchronously must not break the pump");
+            Assert.AreEqual(0, tiles.ActiveLoads);
         }
 
         private static string TileUrl(int i, int j, int level) =>

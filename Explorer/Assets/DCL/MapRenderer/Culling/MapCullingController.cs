@@ -20,9 +20,9 @@ namespace DCL.MapRenderer.Culling
         private readonly Dictionary<IMapPositionProvider, TrackedState> trackedObjs = new ();
 
         private int dirtyCamerasFlag = 0;
+        private CancellationTokenSource disposingCts = new ();
 
         public event Action? CamerasChanged;
-        private CancellationTokenSource disposingCts = new ();
 
         internal MapCullingController(IMapCullingVisibilityChecker cullingVisibilityChecker)
         {
