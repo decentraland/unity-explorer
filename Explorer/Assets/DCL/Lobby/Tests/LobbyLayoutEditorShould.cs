@@ -16,6 +16,7 @@ namespace DCL.Lobby.Tests
         private const string EDITING_CLASS = "lobby--editing";
         private const string DRAGGING_CLASS = "lobby-widget-handle--dragging";
         private const string CARD_DRAGGING_CLASS = "lobby-widget-card--dragging";
+        private const string SIZE_SELECTED_CLASS = "lobby-widget-card__size-toggle--selected";
         private const string LIFTED_CLASS = "lobby__widget--lifted";
 
         private static readonly FieldInfo PREFS_FIELD = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -193,17 +194,21 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual("Live Events", liveEvents.Q<Label>("Title").text);
             Assert.IsNotNull(liveEvents.Q("Grip"));
             Assert.IsNotNull(liveEvents.Q("Icon"));
-            Assert.IsNull(liveEvents.Q("Sizes"), "A family of one size has no size buttons");
+            Assert.IsNull(liveEvents.Q("Sizes"), "A family of one size has no size toggles");
+            Assert.AreEqual(LobbyWidgetId.LiveEvents3By3, liveEvents.SelectedVariant);
             Assert.IsNull(liveEvents.Q<LobbyWidgetPreviewElement>(), "The rows show no preview");
 
             LobbyWidgetCardElement jumpBackIn = Card(LobbyWidgetFamily.JumpBackIn);
             Assert.AreEqual("Jump Back In", jumpBackIn.Q<Label>("Title").text);
             VisualElement sizes = jumpBackIn.Q("Sizes");
-            Assert.AreEqual(2, sizes.childCount, "A family of several sizes has a button per size");
+            Assert.AreEqual(2, sizes.childCount, "A family of several sizes has a toggle per size");
             Assert.AreEqual("x2", ((Label)sizes[0]).text, "A size reads as the cards it shows, the smaller first");
             Assert.AreEqual(LobbyWidgetId.JumpBackIn4By2.ToString(), sizes[0].name);
             Assert.AreEqual("x3", ((Label)sizes[1]).text);
             Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2.ToString(), sizes[1].name);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn4By2, jumpBackIn.SelectedVariant, "The smaller size starts selected");
+            Assert.IsTrue(sizes[0].ClassListContains(SIZE_SELECTED_CLASS));
+            Assert.IsFalse(sizes[1].ClassListContains(SIZE_SELECTED_CLASS));
 
             LobbyWidgetPreviewElement preview = jumpBackIn.Preview(LobbyWidgetId.JumpBackIn6By2);
             Assert.IsNull(preview.parent, "The stand-ins wait out of the hierarchy until a drag lifts one");
@@ -457,27 +462,74 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void LiftTheSizePickedOnTheRowWhileDragging()
+        public void SelectTheSizeOfAPressedToggle()
         {
             //Arrange
             host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
-            VisualElement sizeButton = card.Q(LobbyWidgetId.JumpBackIn4By2.ToString());
+            VisualElement sizes = card.Q("Sizes");
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
 
             //Act
-            Press(sizeButton, 100f);
-            Move(sizeButton, 130f);
+            Press(larger, 100f);
+            Release(larger, 100f);
 
             //Assert
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn4By2);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn4By2.Span());
-            Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent, "The stand-in of the picked size is lifted");
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2, card.SelectedVariant);
+            Assert.IsTrue(sizes[1].ClassListContains(SIZE_SELECTED_CLASS));
+            Assert.IsFalse(sizes[0].ClassListContains(SIZE_SELECTED_CLASS), "One size at a time");
+            Assert.AreEqual(0, root.Q("LayoutDragLayer").childCount, "A click lifts nothing");
+            Assert.IsFalse(card.ClassListContains(CARD_DRAGGING_CLASS));
+        }
+
+        [Test]
+        public void LiftTheSelectedSizeOffTheRowWhileDragging()
+        {
+            //Arrange
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Apply();
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
+            Press(larger, 100f);
+            Release(larger, 100f);
+
+            //Act
+            Press(card, 100f);
+            Move(card, 130f);
+
+            //Assert
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn6By2);
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn6By2.Span());
+            Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent, "The stand-in of the selected size is lifted");
             Assert.AreEqual(130f - (size.x * 0.5f), preview.style.left.value.value);
-            Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn6By2).parent, "The other size stays away");
+            Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn4By2).parent, "The other size stays away");
             Assert.IsTrue(card.ClassListContains(CARD_DRAGGING_CLASS));
             Assert.AreEqual(2, root.Q("LayoutDragLayer").childCount, "The frame and the stand-in: the row itself does not drag along");
+        }
+
+        [Test]
+        public void LiftTheSizeOfTheToggleADragStartsOn()
+        {
+            //Arrange
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Apply();
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
+
+            //Act
+            Press(larger, 100f);
+            Move(larger, 130f);
+
+            //Assert
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2, card.SelectedVariant, "The press selects the size before the drag carries it");
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn6By2);
+            Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent);
+            Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn4By2).parent, "The other size stays away");
+            Assert.IsTrue(card.ClassListContains(CARD_DRAGGING_CLASS));
         }
 
         [Test]

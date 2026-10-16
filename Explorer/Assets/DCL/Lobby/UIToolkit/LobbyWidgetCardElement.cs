@@ -6,11 +6,10 @@ using Utility.UIToolkit;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Row of the widget modal for a widget family off the grids: a grip, the icon of the family and its title. A drag
-    ///     off the row carries the first size of the family; a family of several sizes also shows a button per size at the
-    ///     right end of the row while hovered, and a drag off a button carries that size. The row keeps a stand-in of each
-    ///     size for the drag to lift (see <see cref="Preview" />) and reports its drags with itself as the source.
-    ///     Positions are in panel space.
+    ///     Row of the widget modal for a widget family off the grids: a grip, the icon of the family, its title and, for a
+    ///     family of several sizes, a toggle per size. A drag off the row carries the selected size, the smallest by default.
+    ///     The row keeps a stand-in of each size for the drag to lift (see <see cref="Preview" />) and reports its drags
+    ///     with itself as the source. Positions are in panel space.
     /// </summary>
     public class LobbyWidgetCardElement : VisualElement
     {
@@ -29,7 +28,8 @@ namespace DCL.Lobby
         private const string USS_ICON_GO_TO = USS_ICON + "--go-to";
         private const string USS_TITLE = USS_BLOCK + "__title";
         private const string USS_SIZES = USS_BLOCK + "__sizes";
-        private const string USS_SIZE_BUTTON = USS_BLOCK + "__size-button";
+        private const string USS_SIZE_TOGGLE = USS_BLOCK + "__size-toggle";
+        private const string USS_SIZE_TOGGLE_SELECTED = USS_SIZE_TOGGLE + "--selected";
         private const string USS_DRAGGING = USS_BLOCK + "--dragging";
 
         private const int GRIP_COLUMNS = 2;
@@ -42,9 +42,13 @@ namespace DCL.Lobby
         public Action<LobbyWidgetCardElement, Vector2>? DragEnded;
 
         private readonly LobbyWidgetPreviewElement[] previews;
-        private readonly ClickOrDragManipulator[] gestures;
+        private readonly ClickOrDragManipulator gesture;
+        private readonly VisualElement? sizes;
 
         public LobbyWidgetFamily Family { get; }
+
+        /// <summary>The size of the family a drag off the row carries.</summary>
+        public LobbyWidgetId SelectedVariant { get; private set; }
 
         public LobbyWidgetCardElement(LobbyWidgetFamily family)
         {
@@ -81,36 +85,48 @@ namespace DCL.Lobby
             titleLabel.AddToClassList(USS_TITLE);
             Add(titleLabel);
 
-            // The first gesture is the row's own and carries the first size; the others belong to the size buttons
-            gestures = new ClickOrDragManipulator[variants.Length == 1 ? 1 : variants.Length + 1];
-            gestures[0] = NewGesture(variants[0]);
-            this.AddManipulator(gestures[0]);
+            SelectedVariant = variants[0];
+
+            gesture = new ClickOrDragManipulator
+            {
+                DragStarted = position => DragStarted?.Invoke(this, SelectedVariant, position),
+                Dragged = (position, delta) => Dragged?.Invoke(this, position, delta),
+                DragEnded = position => DragEnded?.Invoke(this, position),
+            };
+
+            this.AddManipulator(gesture);
 
             if (variants.Length == 1)
                 return;
 
-            var sizes = new VisualElement { name = "Sizes", pickingMode = PickingMode.Ignore };
+            sizes = new VisualElement { name = "Sizes", pickingMode = PickingMode.Ignore };
             sizes.AddToClassList(USS_SIZES);
             Add(sizes);
 
             // A size reads as the cards it shows, the smaller first
             for (var i = 0; i < variants.Length; i++)
             {
-                int cardCount = variants[i].CardCount();
-                var button = new Label($"x{cardCount}") { name = variants[i].ToString(), userData = cardCount };
-                button.AddToClassList(USS_SIZE_BUTTON);
-                // A press on a size button must not reach the gesture of the row, or both would drag
-                button.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
-                gestures[i + 1] = NewGesture(variants[i]);
-                button.AddManipulator(gestures[i + 1]);
+                LobbyWidgetId variant = variants[i];
+                int cardCount = variant.CardCount();
+                var toggle = new Label($"x{cardCount}") { name = variant.ToString(), userData = variant };
+                toggle.AddToClassList(USS_SIZE_TOGGLE);
+                toggle.AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
+                // Not stopped: the press goes on to the gesture of the row, so a drag off a toggle carries its size
+                toggle.RegisterCallback<PointerDownEvent>(evt =>
+                {
+                    if (evt.button == 0)
+                        Select(variant);
+                });
 
                 var at = 0;
 
-                while (at < sizes.childCount && (int)sizes[at].userData < cardCount)
+                while (at < sizes.childCount && ((LobbyWidgetId)sizes[at].userData).CardCount() < cardCount)
                     at++;
 
-                sizes.Insert(at, button);
+                sizes.Insert(at, toggle);
             }
+
+            Select((LobbyWidgetId)sizes[0].userData);
         }
 
         /// <summary>
@@ -132,24 +148,24 @@ namespace DCL.Lobby
                 previews[i].RemoveFromHierarchy();
         }
 
-        /// <summary>Marks the row while one of its sizes is on the move: it dims and keeps its size buttons out.</summary>
+        /// <summary>Marks the row while one of its sizes is on the move: it dims.</summary>
         public void SetDragging(bool dragging) =>
             EnableInClassList(USS_DRAGGING, dragging);
 
         /// <summary>Forgets a press in progress; a drag ends where the pointer last was.</summary>
-        public void Cancel()
-        {
-            for (var i = 0; i < gestures.Length; i++)
-                gestures[i].Cancel();
-        }
+        public void Cancel() =>
+            gesture.Cancel();
 
-        private ClickOrDragManipulator NewGesture(LobbyWidgetId variant) =>
-            new ()
-            {
-                DragStarted = position => DragStarted?.Invoke(this, variant, position),
-                Dragged = (position, delta) => Dragged?.Invoke(this, position, delta),
-                DragEnded = position => DragEnded?.Invoke(this, position),
-            };
+        private void Select(LobbyWidgetId variant)
+        {
+            SelectedVariant = variant;
+
+            if (sizes == null)
+                return;
+
+            for (var i = 0; i < sizes.childCount; i++)
+                sizes[i].EnableInClassList(USS_SIZE_TOGGLE_SELECTED, (LobbyWidgetId)sizes[i].userData == variant);
+        }
 
         private static string IconClass(LobbyWidgetFamily family) =>
             family switch

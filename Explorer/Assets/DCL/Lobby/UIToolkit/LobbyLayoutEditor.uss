@@ -91,20 +91,22 @@
 }
 
 /* A row of the widget modal (LobbyWidgetCardElement): the grip, the icon and the title of a family off the grids; it dims
-   while one of its sizes is on the move */
+   while one of its sizes is on the move. The hover border is part of the box, so the padding gives it its pixel back */
 .lobby-widget-card {
     flex-direction: row;
     align-items: center;
     height: 44px;
     margin-bottom: 4px;
-    padding: 10px 20px 10px 4px;
+    padding: 9px 19px 9px 3px;
+    border-width: 1px;
     border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: background-color 0.1s, opacity 0.1s;
+    border-color: rgba(255, 255, 255, 0);
+    background-color: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.1s, opacity 0.1s;
 }
 
 .lobby-widget-card:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .lobby-widget-card--dragging {
@@ -179,36 +181,32 @@
     color: var(--lobby-title-color);
 }
 
-/* The size buttons of a family of several sizes show while the row is hovered, and stay while a drag off one is on; they
-   keep taking the pointer while faded out, which only matters under the pointer, where they show */
+/* The size toggles of a family of several sizes, at the right end of the row */
 .lobby-widget-card__sizes {
     flex-direction: row;
-    opacity: 0;
-    transition: opacity 0.1s;
-}
-
-.lobby-widget-card:hover .lobby-widget-card__sizes,
-.lobby-widget-card--dragging .lobby-widget-card__sizes {
-    opacity: 1;
-}
-
-.lobby-widget-card__size-button {
-    margin-left: 6px;
-    padding: 3px 10px;
-    border-width: 1px;
+    padding: 2px;
     border-radius: 12px;
-    border-color: rgba(255, 255, 255, 0.35);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.lobby-widget-card__size-toggle {
+    padding: 2px 8px;
+    border-width: 0;
+    border-radius: 10px;
     font-size: 12px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
-    color: var(--lobby-title-color);
-    transition: border-color 0.1s, background-color 0.1s;
+    color: var(--dcl-color-silver);
+    transition: background-color 0.1s, color 0.1s;
 }
 
-.lobby-widget-card__size-button:hover {
-    border-color: rgba(255, 255, 255, 0.8);
-    background-color: rgb(31, 31, 31);
+.lobby-widget-card__size-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.lobby-widget-card__size-toggle--selected {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--lobby-title-color);
 }
 
 /* Stand-in of a widget off the grids (LobbyWidgetPreviewElement), lifted while dragged off its row: its title over blank
@@ -263,7 +261,7 @@
     border-width: 1px;
     border-radius: 24px;
     border-color: rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.98);
     transition: border-color 0.1s, background-color 0.1s;
 }
 
