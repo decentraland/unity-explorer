@@ -209,7 +209,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(string sceneId, MetaData meta, CancellationToken token)
         {
-            string url = options.GetAdapterURL(sceneId);
+            string url = options.GetAdapterUrl(sceneId);
 
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
                 $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");

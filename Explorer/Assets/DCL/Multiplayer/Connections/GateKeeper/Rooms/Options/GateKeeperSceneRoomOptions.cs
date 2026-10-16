@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
         public IRealmData RealmData { get; }
         public string HardwareFingerprint { get; }
 
-        public bool IsCommsOffline => RealmData.CommsAdapter.Contains("offline:offline");
+        public bool IsCommsOffline => RealmData.IsCommsOffline();
 
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public string GetAdapterURL(string sceneID)
+        public string GetAdapterUrl(string sceneID)
         {
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 return decentralandUrlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter);

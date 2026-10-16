@@ -23,6 +23,18 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Send(OutgoingMessage message) =>
             outgoingChannel.Writer.TryWrite(message);
 
+        /// <summary>
+        ///     Drops the events and outgoing messages left over from a closed connection.
+        /// </summary>
+        public void DiscardPending()
+        {
+            while (eventChannel.Reader.TryRead(out MessagePipeEvent evt))
+                evt.Dispose();
+
+            while (outgoingChannel.Reader.TryRead(out OutgoingMessage message))
+                message.Dispose();
+        }
+
         public void OnDisconnected(DisconnectReason reason) =>
             eventChannel.Writer.TryWrite(MessagePipeEvent.FromDisconnectEvent(reason));
 
