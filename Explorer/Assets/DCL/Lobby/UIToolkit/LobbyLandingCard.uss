@@ -2,9 +2,9 @@
     --landing-card-hover-duration: 0.3s;
 }
 
-/* Fills what its section leaves under the title, with 24px corners and the thumbnail filling it */
 .lobby-landing-card {
-    flex-grow: 1;
+    width: 442px;
+    height: 248px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
     overflow: hidden;

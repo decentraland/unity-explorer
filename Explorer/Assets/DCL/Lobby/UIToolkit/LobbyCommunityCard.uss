@@ -2,11 +2,11 @@
     --community-card-hover-duration: 0.3s;
 }
 
-/* Same footprint as the place card (280x165, 24px corners): the thumbnail fills the card and a gradient darkens its bottom
+/* Same footprint as the place card (256x146, 24px corners): the thumbnail fills the card and a gradient darkens its bottom
    under the texts; hovering zooms the thumbnail */
 .lobby-community-card {
-    width: 280px;
-    height: 165px;
+    width: 256px;
+    height: 146px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
     overflow: hidden;

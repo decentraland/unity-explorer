@@ -36,11 +36,10 @@
     margin-right: 8px;
 }
 
-/* The row under the cards is as tall as the dots; the pill is centred over it and overflows it, so the arrows and the
-   background that come up on hover add nothing to the layout of the rail */
+/* Holds the pill whole; with its margin a 32px band that the rail heights of LobbyDocument.uss count in */
 .lobby-rail__pager {
-    height: 8px;
-    margin-top: 8px;
+    height: 28px;
+    margin-top: 4px;
 }
 
 .lobby-rail__pager-pill {
@@ -48,9 +47,9 @@
     top: 50%;
     left: 50%;
     translate: -50% -50%;
-    height: 32px;
+    height: 28px;
     padding: 0 4px;
-    border-radius: 16px;
+    border-radius: 14px;
     flex-direction: row;
     align-items: center;
     background-color: rgba(0, 0, 0, 0);

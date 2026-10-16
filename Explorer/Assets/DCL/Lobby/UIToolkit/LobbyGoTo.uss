@@ -3,12 +3,14 @@
 .lobby-goto {
     flex-direction: row;
     align-items: center;
-    height: 56px;
+    width: 440px;
+    height: 46px;
+    margin-left: 10px;
     padding: 0 20px;
-    border-width: 2px;
-    border-radius: 28px;
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(20, 20, 26, 0.35);
+    border-width: 1px;
+    border-radius: 23px;
+    border-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(20, 20, 26, 0.5);
     transition: border-color 0.1s;
 }
 

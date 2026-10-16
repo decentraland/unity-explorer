@@ -4,10 +4,9 @@
     --friend-card-status-offline: var(--dcl-color-silver);
 }
 
-/* The friend card of the uGUI lobby: 124x132 with 24px corners, darker while hovered */
 .lobby-friend-card {
-    width: 124px;
-    height: 132px;
+    width: 103px;
+    height: 117px;
     border-radius: 24px;
     background-color: var(--lobby-card-color);
     transition: background-color 0.1s;
@@ -20,8 +19,8 @@
 /* The profile color, its lighter border and the picture are set inline by the element */
 .lobby-friend-card__picture {
     position: absolute;
-    top: 10px;
-    left: 40px;
+    top: 8px;
+    left: 30px;
     width: 44px;
     height: 44px;
     border-radius: 22px;
@@ -40,8 +39,8 @@
 
 .lobby-friend-card__online {
     position: absolute;
-    top: 43px;
-    left: 73px;
+    top: 41px;
+    left: 63px;
     width: 12px;
     height: 12px;
     border-radius: 6px;
@@ -60,7 +59,7 @@
 
 .lobby-friend-card__user-name {
     position: absolute;
-    top: 58px;
+    top: 55px;
     left: 8px;
     right: 8px;
     height: 20px;
@@ -112,7 +111,7 @@
     position: absolute;
     left: 6px;
     right: 6px;
-    bottom: 10px;
+    bottom: 8px;
     height: 16px;
     flex-direction: row;
     align-items: center;
@@ -144,9 +143,9 @@
 .lobby-friend-card__join {
     display: none;
     position: absolute;
-    left: 16px;
-    bottom: 8px;
-    width: 92px;
+    left: 12px;
+    bottom: 6px;
+    width: 79px;
     height: 24px;
     flex-direction: row;
     align-items: center;

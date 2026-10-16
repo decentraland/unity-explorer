@@ -165,11 +165,6 @@
     margin-bottom: 10px;
 }
 
-/* The template container of the landing card: it takes the rows left under the title and the card fills it */
-.lobby__welcome-card {
-    flex-grow: 1;
-}
-
 .lobby__friends-header {
     height: 30px;
     flex-direction: row;
@@ -184,19 +179,28 @@
     color: var(--lobby-subtitle-color);
 }
 
-/* 132px cards plus the dots row under the viewport */
+/* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 32px
+   pager band of LobbyRail.uss */
+
+/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps */
 .lobby__friends-rail {
     margin-top: 2px;
-    height: 148px;
+    width: 439px;
+    height: 149px;
 }
 
+.lobby__friends-rail .lobby-rail__card {
+    margin-right: 9px;
+}
+
+/* Lets the upcoming events fit the two rows of their section */
 .lobby__events-title {
-    margin-bottom: 9px;
+    margin-bottom: 8px;
 }
 
-/* 214px cards plus the dots row under the viewport */
 .lobby__live-events-rail {
-    height: 230px;
+    width: 326px;
+    height: 231px;
 }
 
 /* The viewport bleeds as far as the live cards' shadow (6px sideways, 10px down) so it clips at the shadow's edge instead of the
@@ -210,44 +214,46 @@
     left: 6px;
 }
 
-/* 135px cards plus the dots row under the viewport */
 .lobby__upcoming-events-rail {
-    height: 155px;
+    width: 326px;
+    height: 171px;
 }
 
-.lobby__upcoming-events-rail .lobby-rail__pager {
-    margin-top: 12px;
-}
-
-/* 165px cards plus the dots row under the viewport: with the 30px title it fills the two rows of the section; the
-   communities and gallery rails share the metrics as their cards are the size of the place cards */
+/* The communities and gallery rails share the metrics as their cards are the size of the place cards */
 .lobby__places-rail,
 .lobby__communities-rail,
 .lobby__gallery-rail {
+    width: 790px;
     height: 178px;
 }
 
-.lobby__places-rail .lobby-rail__pager,
-.lobby__communities-rail .lobby-rail__pager,
-.lobby__gallery-rail .lobby-rail__pager {
-    margin-top: 5px;
+.lobby__places-rail--4x2,
+.lobby__communities-rail--4x2,
+.lobby__gallery-rail--4x2 {
+    width: 523px;
 }
 
-/* The recent row has no dots: its cards are padded to the height of the rail so both rows line up along the bottom */
+.lobby__places-rail .lobby-rail__card,
+.lobby__communities-rail .lobby-rail__card,
+.lobby__gallery-rail .lobby-rail__card {
+    margin-right: 11px;
+}
+
+/* The recent row has no dots: its cards are padded by the pager band of the rail so both rows line up along the bottom */
 .lobby__places-row {
     flex-direction: row;
-    height: 165px;
-    margin-bottom: 13px;
+    height: 146px;
+    margin-bottom: 32px;
 }
 
 .lobby__places-row > .lobby-place-card {
-    margin-right: 8px;
+    margin-right: 11px;
 }
 
-/* The go-to row: its question over the pill, which takes the rest of its single row of cells */
+/* Inset past the pill (LobbyGoTo.uss) so the question lines up with the icon inside it */
 .lobby__goto-title {
     height: 26px;
-    margin-bottom: 10px;
+    margin: 0 10px 10px 20px;
     font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;

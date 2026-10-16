@@ -46,6 +46,9 @@ namespace DCL.Lobby
         // Slack under which the strip counts as having reached its end
         private const float END_TOLERANCE = 0.5f;
 
+        // How far the layout's rounding of every edge to the pixel grid can put the measured end of the strip off a card
+        private const float PIXEL_ROUNDING = 4f;
+
         /// <summary>Cards per page until the UXML sets cards-per-page.</summary>
         private const int DEFAULT_CARDS_PER_PAGE = 3;
 
@@ -379,9 +382,27 @@ namespace DCL.Lobby
         private float CardStride() =>
             content.childCount > 1 ? content[1].layout.x - content[0].layout.x : 0f;
 
-        // Measured against the viewport's content box: its padding is room for the shadows of the edge cards
-        private float MaxOffset() =>
-            Mathf.Max(0f, content.layout.width - viewport.contentRect.width);
+        // Laid out rather than a multiple of the stride, whose pixel rounding would multiply up with the card index
+        private float CardX(int card) =>
+            card < content.childCount ? content[card].layout.x : 0f;
+
+        // The strip ends at the last shown card, not at the trailing margin the content runs on by; an end measured within
+        // the pixel rounding of a card is put on that card, so it is not one more step past it
+        private float MaxOffset()
+        {
+            int lastShown = Mathf.Min(shownCount, content.childCount) - 1;
+            if (lastShown < 0) return 0f;
+
+            float max = Mathf.Max(0f, content[lastShown].layout.xMax - viewport.contentRect.width);
+
+            for (var i = 0; i <= lastShown; i++)
+            {
+                float x = CardX(i);
+                if (Mathf.Abs(x - max) <= PIXEL_ROUNDING) return x;
+            }
+
+            return max;
+        }
 
         // A drag can settle nearest to the last page while the strip has not reached its end; before the first layout
         // pass nothing is measured and the strip counts as at its end
@@ -393,15 +414,15 @@ namespace DCL.Lobby
 
         // The content cannot slide past its end, so the last cards share the offset of the end
         private float CardOffset(int card) =>
-            Mathf.Min(card * CardStride(), MaxOffset());
+            Mathf.Min(CardX(card), MaxOffset());
 
         private int CardAt(float at) =>
-            Nearest(at, shownCount, CardStride());
+            Nearest(at, shownCount, 1);
 
         private int PageAt(float at) =>
-            Nearest(at, PageCount, cardsPerPage * CardStride());
+            Nearest(at, PageCount, cardsPerPage);
 
-        private int Nearest(float at, int count, float step)
+        private int Nearest(float at, int count, int cardsPerStep)
         {
             float max = MaxOffset();
             var nearest = 0;
@@ -409,7 +430,7 @@ namespace DCL.Lobby
 
             for (var i = 0; i < count; i++)
             {
-                float distance = Mathf.Abs(at - Mathf.Min(i * step, max));
+                float distance = Mathf.Abs(at - Mathf.Min(CardX(i * cardsPerStep), max));
                 if (distance >= nearestDistance) continue;
 
                 nearestDistance = distance;

@@ -5,10 +5,8 @@
 
 /* It casts a shadow past its edges, so the card does not clip and the body rounds the layers instead */
 .lobby-live-event-card {
-    /* As wide as the three columns of its widget (LobbyGridElement cells), so one card fills the rail and the next starts
-       past the clip */
-    width: 424px;
-    height: 214px;
+    width: 326px;
+    height: 199px;
 }
 
 /* The 24px shadow sprite (see LobbyDocument.uss) hangs 6px past the sides and 10px under the card; tinted like the card, as the thumbnail covers it only once loaded */
