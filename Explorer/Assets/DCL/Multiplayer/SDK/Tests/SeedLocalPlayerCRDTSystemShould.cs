@@ -9,8 +9,6 @@ using DCL.Profiles;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -18,11 +16,11 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-        private World globalWorld;
+        private World globalWorld = null!;
         private Entity localPlayerEntity;
         private Entity persistentPlayerEntity;
         private PersistentEntities persistentEntities;
-        private CharacterDataPropagationUtility characterDataPropagationUtility;
+        private CharacterDataPropagationUtility characterDataPropagationUtility = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -67,7 +65,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
 
-            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile sdkProfile));
+            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile? sdkProfile));
             Assert.AreEqual(FAKE_USER_ID, sdkProfile!.UserId);
         }
 
@@ -79,6 +77,53 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Initialize();
 
             Assert.IsFalse(world.Has<PlayerSceneCRDTEntity>(persistentPlayerEntity));
+        }
+
+        [Test]
+        public void LeaveTalkingUnsetWithoutNearbyVoiceChat()
+        {
+            // Act
+            system.Initialize();
+            system.Update(0);
+
+            // Assert
+            Assert.IsNull(world.Get<SDKTalking>(persistentPlayerEntity).Value);
+        }
+
+        [Test]
+        public void MirrorLocalPlayerTalking()
+        {
+            // Arrange
+            globalWorld.Add(localPlayerEntity, new TalkingComponent { IsTalking = true });
+
+            // Act
+            system.Initialize();
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(true, world.Get<SDKTalking>(persistentPlayerEntity).Value);
+
+            // Act
+            globalWorld.Get<TalkingComponent>(localPlayerEntity).IsTalking = false;
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(false, world.Get<SDKTalking>(persistentPlayerEntity).Value);
+        }
+
+        [Test]
+        public void NotFailWhenProfileArrivesAfterInitializeWithoutDirtyFlag()
+        {
+            // Arrange
+            Profile profile = globalWorld.Get<Profile>(localPlayerEntity);
+            globalWorld.Remove<Profile>(localPlayerEntity);
+            system.Initialize();
+            profile.IsDirty = false;
+            globalWorld.Add(localPlayerEntity, profile, new TalkingComponent { IsTalking = true });
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => system.Update(0));
+            Assert.IsFalse(world.Has<SDKTalking>(persistentPlayerEntity));
         }
     }
 }

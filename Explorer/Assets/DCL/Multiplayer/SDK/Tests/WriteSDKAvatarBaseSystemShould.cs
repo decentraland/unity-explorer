@@ -18,8 +18,8 @@ namespace DCL.Multiplayer.SDK.Tests
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
         private Entity entity;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private SDKProfile profile;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private SDKProfile profile = null!;
         private PlayerSceneCRDTEntity playerCRDTEntity;
 
         [OneTimeSetUp]
@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
-            entity = world.Create(playerCRDTEntity);
+            entity = world.Create(playerCRDTEntity, new SDKTalking());
         }
 
         protected override void OnTearDown()
@@ -59,9 +59,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, SDKProfile>>(),
+                                Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(),
                                 playerCRDTEntity.CRDTEntity,
-                                profile);
+                                (profile, (bool?)null));
 
             ecsToCRDTWriter.ClearReceivedCalls();
             profile.Name = "newName";
@@ -72,9 +72,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, SDKProfile>>(),
+                                Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(),
                                 playerCRDTEntity.CRDTEntity,
-                                profile);
+                                (profile, (bool?)null));
         }
 
         [Test]
