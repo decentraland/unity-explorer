@@ -196,7 +196,7 @@ namespace Global.Dynamic
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
-            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper, staticContainer.SingleSceneMode);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, roadCoordinates, realmData, urlsSource);
@@ -225,6 +225,7 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
+            UpdateSingleSceneAnchorSystem updateSingleSceneAnchorSystem = UpdateSingleSceneAnchorSystem.InjectToWorld(ref builder, staticContainer.SingleSceneMode, playerEntity);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);
@@ -240,7 +241,9 @@ namespace Global.Dynamic
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), sceneLoadingLimit),
+                updateSingleSceneAnchorSystem,
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), sceneLoadingLimit,
+                    staticContainer.SingleSceneMode),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

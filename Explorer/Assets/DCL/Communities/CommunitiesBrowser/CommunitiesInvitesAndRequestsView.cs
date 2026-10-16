@@ -76,7 +76,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
         private CommunitiesBrowserStateService? communitiesBrowserStateService;
         private ThumbnailLoader? thumbnailLoader;
-        private int currentInvitesAndRequestsCounter = 0;
+        private int currentInvitesAndRequestsCounter;
 
         private void Awake()
         {
