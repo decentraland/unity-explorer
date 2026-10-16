@@ -303,7 +303,7 @@ namespace SceneRunner.Tests
             // Act
             UniTask updateLoop = sceneFacade.StartUpdateLoopAsync(0, cancellationTokenSource.Token);
             await Task.Delay(FROZEN_DURATION);
-            sceneFacade.SetTargetFPS(60);
+            sceneFacade.SetTargetFps(60);
             await updateLoop;
 
             // Assert: ticks resumed after the frozen period (the frozen period contributes exactly one tick)
