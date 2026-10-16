@@ -112,7 +112,6 @@ namespace DCL.BugReporting.UI
             viewInstance.ShareLogsToggle.onValueChanged.AddListener(OnFormChanged);
             viewInstance.SubmitButton.onClick.AddListener(OnSubmitClicked);
             viewInstance.CancelButton.onClick.AddListener(RequestClose);
-            viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.SuccessDoneButton.onClick.AddListener(RequestClose);
             viewInstance.AttachScreenshotButton.onClick.AddListener(OnAttachScreenshotClicked);
 

@@ -14,6 +14,7 @@ namespace DCL.UI.ProfileElements
     {
         private const string USS_BLOCK = "profile-widget";
         private const string USS_LOADING = USS_BLOCK + "--loading";
+        private const string USS_OPEN = USS_BLOCK + "--open";
         private const string USS_PICTURE = USS_BLOCK + "__picture";
         private const string USS_TEXTS = USS_BLOCK + "__texts";
         private const string USS_NAME = USS_BLOCK + "__name";
@@ -56,6 +57,15 @@ namespace DCL.UI.ProfileElements
         ///     True while a picture is being fetched and there is no previous one to show meanwhile.
         /// </summary>
         public bool IsLoading => ClassListContains(USS_LOADING);
+
+        /// <summary>
+        ///     Keeps the pill lit, as on hover, while the menu it opens is up.
+        /// </summary>
+        public bool IsMenuOpen
+        {
+            get => ClassListContains(USS_OPEN);
+            set => EnableInClassList(USS_OPEN, value);
+        }
 
         public ProfileWidgetElement()
         {
