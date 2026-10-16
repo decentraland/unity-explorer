@@ -39,6 +39,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         internal const int MAX_TILES_PER_CAMERA = 64;
         internal const int MAX_CONCURRENT_LOADS = 8;
         private const int TILE_PIXELS = 1024;
+        private const float SHARPNESS_BIAS = 0.4f;
         private const int MAX_CACHED_TILES = 16;
         private const string MANIFEST_FILE = "manifest.json";
         private const string CACHE_EXTENSION = "ktx2";
@@ -194,13 +195,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
-        ///     The level whose pixel density is nearest to <paramref name="screenPixelsPerUnit" /> on a log scale, so a tile is shown
-        ///     between 0.71x and 1.41x its size: the next sharper level would cost four times the bytes for the same view.
+        ///     The level whose pixel density is nearest to <paramref name="screenPixelsPerUnit" /> on a log scale after a
+        ///     <see cref="SHARPNESS_BIAS" /> toward the sharper level, so a tile is shown between 0.54x and 1.07x its size: magnified
+        ///     tiles look soft, while the next sharper level would cost four times the bytes for the same view.
         ///     <paramref name="baseLevelPixelsPerUnit" /> is the density of a <see cref="BASE_LEVEL" /> tile.
         /// </summary>
         internal static int LevelFor(float screenPixelsPerUnit, float baseLevelPixelsPerUnit)
         {
-            int level = BASE_LEVEL + Mathf.RoundToInt(Mathf.Log(screenPixelsPerUnit / baseLevelPixelsPerUnit, 2f));
+            int level = BASE_LEVEL + Mathf.RoundToInt(Mathf.Log(screenPixelsPerUnit / baseLevelPixelsPerUnit, 2f) + SHARPNESS_BIAS);
             return Mathf.Clamp(level, BASE_LEVEL, MAX_LEVEL);
         }
 

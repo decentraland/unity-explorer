@@ -38,8 +38,9 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 
         [TestCase(BASE_LEVEL_PIXELS_PER_UNIT / 8f, 3)] // never coarser than the base level
         [TestCase(BASE_LEVEL_PIXELS_PER_UNIT, 3)]
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.4f, 3)]
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.5f, 4)]
+        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.05f, 3)]
+        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.1f, 4)] // switches before a tile is magnified much
+        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 16f, 7)]
         [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 32f, 8)]
         [TestCase(100f, 8)]
         public void PickTheLevelNearestToTheScreenSharpness(float screenPixelsPerUnit, int expectedLevel)
