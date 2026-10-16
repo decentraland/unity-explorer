@@ -416,13 +416,13 @@ namespace DCL.SDKComponents.MediaStream
 
         private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
         {
-            if (!component.OpenMediaPromise.IsResolved) return false;
-            if (component.OpenMediaPromise.IsConsumed) return false;
+            if (component.OpenMediaPromise is not { IsResolved: true, IsConsumed: false }) return false;
 
             // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
             // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
             // the gap still pays for delaying the Nth stream by N × the MediaOpenThrottle interval.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
+            float timeSinceLastOpen = MediaOpenThrottle.SecondsSinceLastOpen(currentTime);
 
             if (!MediaOpenThrottle.CanOpen(currentTime))
                 return false;
@@ -447,7 +447,7 @@ namespace DCL.SDKComponents.MediaStream
                     resolvedForLog = $"{resolvedForLog[..160]}… ({resolvedForLog.Length} chars)";
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}");
+                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
                 Profiler.BeginSample("MediaPlayer.OpenMedia");
 

@@ -14,7 +14,13 @@ namespace DCL.SDKComponents.MediaStream
         ///     Whether at least half a second passed since the last <see cref="MarkOpened" />.
         /// </summary>
         internal static bool CanOpen(float now) =>
-            now - lastOpenedAt >= MIN_OPEN_INTERVAL_SECONDS;
+            SecondsSinceLastOpen(now) >= MIN_OPEN_INTERVAL_SECONDS;
+
+        /// <summary>
+        ///     The seconds from the last <see cref="MarkOpened" /> to <paramref name="now" />; infinite before the first one.
+        /// </summary>
+        internal static float SecondsSinceLastOpen(float now) =>
+            now - lastOpenedAt;
 
         /// <summary>
         ///     Records an open at <paramref name="now" />.

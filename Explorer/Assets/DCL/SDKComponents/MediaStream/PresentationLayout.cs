@@ -23,6 +23,7 @@ namespace DCL.SDKComponents.MediaStream
         private const string CLIENT_SOURCE = "client";
         private const double SEEK_THRESHOLD_SECONDS = 2.0;
         private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
+        private const long MAX_VIDEO_POSITION_MS = 100_000_000_000_000;
 
         private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
 
@@ -36,8 +37,8 @@ namespace DCL.SDKComponents.MediaStream
         /// <returns>
         ///     <c>null</c> for empty or malformed input, or for a <c>slide</c> without a url, with a url longer than
         ///     <c>MAX_SLIDE_URL_LENGTH</c> or with a size outside <c>[1, MAX_SLIDE_SIZE]</c>. An invalid
-        ///     <c>presenterIdentity</c>, an <c>overlay</c> with non-finite coordinates and a negative
-        ///     <c>videoPositionMs</c> or <c>videoPositionAt</c> are dropped to <c>null</c>.
+        ///     <c>presenterIdentity</c>, an <c>overlay</c> with non-finite coordinates and a <c>videoPositionMs</c> or
+        ///     <c>videoPositionAt</c> outside <c>[0, MAX_VIDEO_POSITION_MS]</c> are dropped to <c>null</c>.
         /// </returns>
         public static PresentationBotMetadata? Parse(string? json)
         {
@@ -58,10 +59,10 @@ namespace DCL.SDKComponents.MediaStream
             if (metadata.overlay != null && (!double.IsFinite(metadata.overlay.x) || !double.IsFinite(metadata.overlay.y)))
                 metadata.overlay = null;
 
-            if (metadata.videoPositionMs < 0)
+            if (metadata.videoPositionMs is < 0 or > MAX_VIDEO_POSITION_MS)
                 metadata.videoPositionMs = null;
 
-            if (metadata.videoPositionAt < 0)
+            if (metadata.videoPositionAt is < 0 or > MAX_VIDEO_POSITION_MS)
                 metadata.videoPositionAt = null;
 
             PresentationSlide? slide = metadata.slide;
@@ -158,6 +159,9 @@ namespace DCL.SDKComponents.MediaStream
         public static bool ShouldSeek(double currentSeconds, double? targetSeconds, bool isLive, bool isBusy, float now, float lastSeekAt) =>
             !isBusy && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
+        /// <summary>
+        ///     Whether <c>videoState</c> is playing; paused, loading and idle are not.
+        /// </summary>
         public static bool IsVideoPlaying(PresentationBotMetadata metadata) =>
             metadata.videoState == PLAYING_STATE;
 

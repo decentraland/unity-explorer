@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            if (!IsMediaOpened(current))
+            if (!IsMediaOpened(current) || current.IsBuffering)
                 return;
 
             finished |= current.IsFinished;
@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.MediaStream
                     current.Pause();
             }
 
-            if (targetSeconds is { } target && PresentationLayout.ShouldSeek(current.CurrentTime, target, isLive, current.IsBuffering || current.IsSeeking, now, lastSeekAt))
+            if (targetSeconds is { } target && PresentationLayout.ShouldSeek(current.CurrentTime, target, isLive, current.IsSeeking, now, lastSeekAt))
             {
                 lastSeekAt = now;
                 current.TrySeek(target);
@@ -136,6 +136,9 @@ namespace DCL.SDKComponents.MediaStream
             LivePlayer()?.PlaceAt(position);
         }
 
+        /// <summary>
+        ///     Pauses the video, or destroys its media player when the media isn't open yet, so the next <see cref="Update" /> opens it again.
+        /// </summary>
         public void Pause()
         {
             if (LivePlayer() is not { } current)
@@ -212,7 +215,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void Open(string url, bool playing, float now)
         {
-            var opened = MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(pool.GetOrCreateReusableMediaPlayer(url), pool));
+            var opened = MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(pool.CreateMediaPlayer(), pool));
             player = opened;
             MediaOpenThrottle.MarkOpened(now);
 
@@ -230,7 +233,15 @@ namespace DCL.SDKComponents.MediaStream
         private void Fail(string? url)
         {
             failedUrl = url;
-            string shown = url is { Length: > MAX_LOGGED_URL_LENGTH } ? $"{url[..(MAX_LOGGED_URL_LENGTH - 1)]}…" : url ?? string.Empty;
+            string shown = url ?? string.Empty;
+            int query = shown.IndexOf('?');
+
+            if (query >= 0)
+                shown = shown[..query];
+
+            if (shown.Length > MAX_LOGGED_URL_LENGTH)
+                shown = $"{shown[..(MAX_LOGGED_URL_LENGTH - 1)]}…";
+
             ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Presentation client video could not be played: {shown}");
         }
 

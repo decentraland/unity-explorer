@@ -70,7 +70,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private MediaPlayerCustomPool mediaPlayerPool = null!;
         private IUrlResolverService resolver = null!;
         private List<CancellationToken> resolves = null!;
-        private PresentationUrlVideo urlVideo = null!;
         private float now;
         private bool roomRunning;
 
@@ -109,7 +108,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
                          resolves.Add(ci.Arg<CancellationToken>());
                          return new UniTaskCompletionSource<ResolvedMediaUrl>().Task;
                      });
-            urlVideo = new PresentationUrlVideo(mediaPlayerPool, resolver);
             MediaOpenThrottle.MarkOpened(float.PositiveInfinity);
             now = 0f;
             roomRunning = true;
@@ -893,48 +891,60 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("paused")]
         public void ResolveClientVideo_WhenMetadataPlaysOrPausesIt(string videoState)
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata(videoState));
             LivekitPlayer p = NewClientVideoPlayer();
 
+            // Act
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.AreEqual(1, resolves.Count);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenMetadataTurnsIdle()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             SetMetadata(bot, V2("null", "idle", slideVideo: CLIENT_VIDEO));
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenStreamEntryPlays()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             SetMetadata(bot, V2("0", "playing", slideVideo: STREAM_VIDEO));
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void ReplayClientVideo_WhenSlideChanges()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             SetMetadata(bot, V2("0", "playing", currentSlide: 1, slideUrl: OTHER_SLIDE_URL, slideVideo: CLIENT_VIDEO, positionMs: POSITION_MS, positionAt: POSITION_AT_MS));
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
             Assert.AreEqual(2, resolves.Count);
         }
@@ -942,11 +952,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void KeepClientVideo_WhenPlaybackIsSteady()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.AreEqual(1, resolves.Count);
             Assert.IsFalse(resolves[0].IsCancellationRequested);
         }
@@ -954,82 +967,105 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void KeepClientVideo_WhenPlayerIsPaused()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             p.Pause();
 
+            // Assert
             Assert.IsFalse(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void FlipClientVideo_WhenTopRowIsNotFirst()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
-            AssertComposite(p.LastTexture());
+            // Act
+            Texture? composite = p.LastTexture();
 
+            // Assert
+            AssertComposite(composite);
             Assert.AreEqual(1f, p.compositorVideoFlip);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenPlayerIsClosed()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             p.CloseCurrentStream();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenPlayerIsStopped()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             p.Stop();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenRoomStopsRunning()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
+            // Act
             roomRunning = false;
             p.EnsureVideoIsPlaying();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void ReleaseClientVideo_WhenDisposed()
         {
+            // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
             players.Remove(p);
 
+            // Act
             p.Dispose();
 
+            // Assert
             Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
         public void NeverResolveClientVideo_WhenSourceIsStream()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, V2("0", "playing", slideVideo: STREAM_VIDEO, positionMs: POSITION_MS, positionAt: POSITION_AT_MS));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
             LivekitPlayer p = NewClientVideoPlayer();
 
+            // Act
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
-            AssertComposite(p.LastTexture());
+            Texture? composite = p.LastTexture();
 
+            // Assert
+            AssertComposite(composite);
             Assert.AreEqual(0, resolves.Count);
             video.Received().DecodeLastFrame();
         }
@@ -1037,26 +1073,34 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void NeverDecodeBotTrack_WhenClientEntryIsLoading()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, V2("0", "loading", slideVideo: CLIENT_VIDEO));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
             LivekitPlayer p = NewClientVideoPlayer();
 
+            // Act
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
+            Texture? composite = p.LastTexture();
 
-            AssertComposite(p.LastTexture());
+            // Assert
+            AssertComposite(composite);
             video.DidNotReceive().DecodeLastFrame();
         }
 
         [Test]
         public void NeverDecodeBotTrack_WhenClientVideoPlays()
         {
+            // Arrange
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
             LivekitPlayer p = PlayClientVideo();
 
-            AssertComposite(p.LastTexture());
+            // Act
+            Texture? composite = p.LastTexture();
 
+            // Assert
+            AssertComposite(composite);
             video.DidNotReceive().DecodeLastFrame();
         }
 
@@ -1162,7 +1206,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => true, null, slideCache, material, urlVideo);
+            var p = new LivekitPlayer(room, () => true, null, slideCache, material, new PresentationUrlVideo(mediaPlayerPool, resolver));
             players.Add(p);
             return p;
         }
@@ -1171,7 +1215,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, urlVideo, static () => NOW_MS);
+            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, new PresentationUrlVideo(mediaPlayerPool, resolver), static () => NOW_MS);
             players.Add(p);
             return p;
         }

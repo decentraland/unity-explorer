@@ -37,10 +37,16 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.gameObject.SetActive(true);
             }
             else
-                mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
+                mediaPlayer = CreateMediaPlayer();
 
             return mediaPlayer;
         }
+
+        /// <summary>
+        ///     Instantiates a new player, never a parked one. Release it with <see cref="DestroyMediaPlayer" />.
+        /// </summary>
+        public MediaPlayer CreateMediaPlayer() =>
+            Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
 
         private async UniTask TryUnloadAsync()
         {
@@ -96,7 +102,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Closes and destroys a player taken from <see cref="GetOrCreateReusableMediaPlayer" /> instead of parking it for reuse.
+        ///     Closes and destroys a player instead of parking it for reuse.
         /// </summary>
         public void DestroyMediaPlayer(MediaPlayer mediaPlayer)
         {

@@ -243,8 +243,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ParseClientVideoFields_WhenPresent()
         {
+            // Act
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", YOUTUBE_URL) + ",\"videoPositionMs\":1500,\"videoPositionAt\":1700000000000}");
 
+            // Assert
             Assert.AreEqual("playing", metadata.videoState);
             Assert.AreEqual(1500L, metadata.videoPositionMs);
             Assert.AreEqual(1700000000000L, metadata.videoPositionAt);
@@ -255,8 +257,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void DropVideoPosition_WhenNegative()
         {
+            // Act
             PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoPositionMs\":-1,\"videoPositionAt\":-5}}");
 
+            // Assert
             Assert.IsFalse(metadata.videoPositionMs.HasValue);
             Assert.IsFalse(metadata.videoPositionAt.HasValue);
         }
@@ -264,8 +268,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void DropVideoPosition_WhenBeyondRange()
         {
+            // Act
             PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoPositionMs\":9223372036854775807,\"videoPositionAt\":100000000000001}}");
 
+            // Assert
             Assert.IsFalse(metadata.videoPositionMs.HasValue);
             Assert.IsFalse(metadata.videoPositionAt.HasValue);
         }
@@ -276,10 +282,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("paused", "https://player.vimeo.com/external/123456.m3u8")]
         public void ReturnClientVideoUrl_WhenUrlIsCanonical(string state, string url)
         {
+            // Arrange
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo(state, "client", url) + "}");
 
+            // Act
             bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
 
+            // Assert
             Assert.IsTrue(found);
             Assert.AreEqual(url, clientUrl);
         }
@@ -297,10 +306,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("https://player.vimeo.com/external/123456.m3u8?")]
         public void ReturnNoClientVideoUrl_WhenUrlIsNotCanonical(string url)
         {
+            // Arrange
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
 
+            // Act
             bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
 
+            // Assert
             Assert.IsFalse(found);
             Assert.AreEqual(string.Empty, clientUrl);
         }
@@ -309,11 +321,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(513, false)]
         public void ReturnClientVideoUrl_OnlyWhenVimeoQueryIsAtMost512Chars(int queryLength, bool expected)
         {
+            // Arrange
             string url = "https://player.vimeo.com/external/123456.m3u8?" + new string('a', queryLength);
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
 
+            // Act
             bool found = PresentationLayout.TryClientVideoUrl(metadata, out _);
 
+            // Assert
             Assert.AreEqual(expected, found);
         }
 
@@ -325,10 +340,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("{\"videoState\":\"playing\",\"playingVideoIndex\":0,\"slideVideos\":[null]}")]
         public void ReturnNoClientVideoUrl_WhenVideoIsNotAPlayingClientVideo(string json)
         {
+            // Arrange
             PresentationBotMetadata metadata = ParseOrFail(json);
 
+            // Act
             bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
 
+            // Assert
             Assert.IsFalse(found);
             Assert.AreEqual(string.Empty, clientUrl);
         }
@@ -338,36 +356,46 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("playing", 10_000L, 1.0)]
         public void ComputeTargetPosition_FromAnchor(string state, long nowEpochMs, double expectedSeconds)
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { videoState = state, videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
+            // Act
             double? target = PresentationLayout.TargetPositionSeconds(metadata, nowEpochMs);
 
+            // Assert
             Assert.AreEqual(expectedSeconds, target);
         }
 
         [Test]
         public void ReturnNoTargetPosition_WhenAnchorIsMissing()
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000 };
 
+            // Act & Assert
             Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
         }
 
         [Test]
         public void ReturnNoTargetPosition_WhenVideoIsLoading()
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { videoState = "loading", videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
+            // Act & Assert
             Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
         }
 
         [Test]
         public void ReturnNoTargetPosition_WhenAnchorIsInTheFuture()
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
+            // Act
             double? target = PresentationLayout.TargetPositionSeconds(metadata, 8_000);
 
+            // Assert
             Assert.IsNull(target);
         }
 
@@ -377,10 +405,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(null, false)]
         public void ReportVideoPlaying_OnlyWhilePlaying(string? state, bool expected)
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { videoState = state };
 
+            // Act
             bool playing = PresentationLayout.IsVideoPlaying(metadata);
 
+            // Assert
             Assert.AreEqual(expected, playing);
         }
 
@@ -391,6 +422,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase("client", -1, false)]
         public void DetectClientEntry_AtPlayingVideoIndex_WhateverTheState(string? source, int index, bool expected)
         {
+            // Arrange
             var metadata = new PresentationBotMetadata
             {
                 videoState = "loading",
@@ -398,18 +430,23 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 slideVideos = new PresentationSlideVideo?[] { new () { source = source } },
             };
 
+            // Act
             bool isClient = PresentationLayout.IsClientEntry(metadata);
 
+            // Assert
             Assert.AreEqual(expected, isClient);
         }
 
         [Test]
         public void DetectNoClientEntry_WhenNoVideoIsPlaying()
         {
+            // Arrange
             var metadata = new PresentationBotMetadata { slideVideos = new PresentationSlideVideo?[] { new () { source = "client" } } };
 
+            // Act
             bool isClient = PresentationLayout.IsClientEntry(metadata);
 
+            // Assert
             Assert.IsFalse(isClient);
         }
 
@@ -419,8 +456,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(30.0, 10.0, true, false)]
         public void DetectRewind_OnlyWhenTargetIsMoreThanTwoSecondsBehind(double currentSeconds, double targetSeconds, bool isLive, bool expected)
         {
+            // Act
             bool rewind = PresentationLayout.IsRewind(currentSeconds, targetSeconds, isLive);
 
+            // Assert
             Assert.AreEqual(expected, rewind);
         }
 
@@ -430,24 +469,30 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(3f, false, true, false)]
         public void Seek_AtMostEveryThreeSeconds_WhenIdleAndOnDemand(float secondsSinceLastSeek, bool isBusy, bool isLive, bool expected)
         {
+            // Act
             bool seek = PresentationLayout.ShouldSeek(10.0, 20.0, isLive, isBusy, 100f, 100f - secondsSinceLastSeek);
 
+            // Assert
             Assert.AreEqual(expected, seek);
         }
 
         [Test]
         public void SkipSeek_WhenDriftIsWithinThreshold()
         {
+            // Act
             bool seek = PresentationLayout.ShouldSeek(10.0, 11.0, false, false, 100f, float.NegativeInfinity);
 
+            // Assert
             Assert.IsFalse(seek);
         }
 
         [Test]
         public void DetectNoRewind_WithoutTarget()
         {
+            // Act
             bool rewind = PresentationLayout.IsRewind(30.0, null, false);
 
+            // Assert
             Assert.IsFalse(rewind);
         }
 
@@ -455,6 +500,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(11.9, 10.0)]
         public void SkipSeek_WhenDriftIsWithinTwoSeconds(double currentSeconds, double targetSeconds)
         {
+            // Act & Assert
             Assert.IsFalse(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
         }
 
@@ -462,18 +508,21 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [TestCase(12.1, 10.0)]
         public void RequireSeek_WhenDriftExceedsTwoSeconds(double currentSeconds, double targetSeconds)
         {
+            // Act & Assert
             Assert.IsTrue(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
         }
 
         [Test]
         public void ReturnFalse_WhenLive()
         {
+            // Act & Assert
             Assert.IsFalse(PresentationLayout.NeedsSeek(0, 100, true));
         }
 
         [Test]
         public void ReturnFalse_WhenTargetIsNull()
         {
+            // Act & Assert
             Assert.IsFalse(PresentationLayout.NeedsSeek(0, null, false));
         }
 

@@ -87,7 +87,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public PlayerState State => playerState;
 
-        public bool IsVideoOpened => isComposing || (cvs.HasValue && cvs.Value.videoStream.Resource.Has);
+        public bool IsVideoOpened => isComposing || (cvs.HasValue && cvs.Value.VideoStream.Resource.Has);
 
         // Live LiveKit frames are vertically flipped; the camera-off placeholder and the presentation composite are upright.
         public Vector2 CurrentTextureScale =>
@@ -326,7 +326,7 @@ namespace DCL.SDKComponents.MediaStream
 
             // Switch only if the best source actually changed; re-allocating cvs every frame would
             // reset the speaker-hold timer and re-wrap a healthy stream (e.g. while a screen share holds it).
-            if (targetKey != null && cvs?.key.Equals(targetKey.Value) != true)
+            if (targetKey != null && cvs?.Key.Equals(targetKey.Value) != true)
             {
                 var currentVideoStream = room.VideoStreams.ActiveStream(targetKey.Value);
                 cvs = CurrentVideoStreamInfo.New(targetKey.Value, currentVideoStream);
@@ -344,7 +344,7 @@ namespace DCL.SDKComponents.MediaStream
             // try pick up another key if presentation bot and screen share are unavailable
             if (targetKey == null)
             {
-                float lastSwitch = cvs?.switchedAtTime ?? 0;
+                float lastSwitch = cvs?.SwitchedAtTime ?? 0;
                 float delta = UnityEngine.Time.realtimeSinceStartup - lastSwitch;
 
                 // attempt to switch only if hold exceeds
@@ -352,7 +352,7 @@ namespace DCL.SDKComponents.MediaStream
                 {
                     foreach (string activeSpeaker in room.ActiveSpeakers)
                     {
-                        if (activeSpeaker == cvs?.fromIdentity)
+                        if (activeSpeaker == cvs?.FromIdentity)
                             break; // we don't need to switch if he is already playing
 
                         targetKey = FindVideoTrackForParticipant(activeSpeaker);
@@ -536,7 +536,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private static bool IsUnresolved(CurrentVideoStreamInfo? stream) =>
-            stream.HasValue && !stream.Value.videoStream.Resource.Has;
+            stream.HasValue && !stream.Value.VideoStream.Resource.Has;
 
         private StreamKey? FindVideoTrack(string identity, Func<TrackPublication, bool> match)
         {
@@ -560,7 +560,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!key.HasValue)
                 return null;
 
-            if (held.HasValue && held.Value.key.Equals(key.Value) && held.Value.videoStream.Resource.Has)
+            if (held.HasValue && held.Value.Key.Equals(key.Value) && held.Value.VideoStream.Resource.Has)
                 return held;
 
             return CurrentVideoStreamInfo.New(key.Value, room.VideoStreams.ActiveStream(key.Value));
@@ -570,7 +570,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!stream.HasValue) return;
 
-            room.VideoStreams.Release(stream.Value.key);
+            room.VideoStreams.Release(stream.Value.Key);
             stream = null;
         }
 
@@ -614,11 +614,11 @@ namespace DCL.SDKComponents.MediaStream
                 return composedTexture;
             }
 
-            if (!cvs.HasValue || !cvs.Value.videoStream.Resource.Has)
+            if (!cvs.HasValue || !cvs.Value.VideoStream.Resource.Has)
                 return null;
 
             CurrentVideoStreamInfo videoInfo = cvs.Value;
-            return CameraOffPlaceholder(videoInfo) ?? videoInfo.videoStream.Resource.Value.DecodeLastFrame();
+            return CameraOffPlaceholder(videoInfo) ?? videoInfo.VideoStream.Resource.Value.DecodeLastFrame();
         }
 
         private Texture? ComposePresentation()
@@ -655,7 +655,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private static Texture2D? DecodeLastFrame(CurrentVideoStreamInfo? stream) =>
-            stream.HasValue && stream.Value.videoStream.Resource.Has ? stream.Value.videoStream.Resource.Value.DecodeLastFrame() : null;
+            stream.HasValue && stream.Value.VideoStream.Resource.Has ? stream.Value.VideoStream.Resource.Value.DecodeLastFrame() : null;
 
         private bool IsPresenterCameraLive() =>
             presenterCamera.HasValue && PublicationOf(presenterCamera.Value) is { Muted: false };
@@ -671,13 +671,13 @@ namespace DCL.SDKComponents.MediaStream
 
         private TrackPublication? PublicationOf(CurrentVideoStreamInfo videoInfo)
         {
-            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
-            return participant != null && participant.Tracks.TryGetValue(videoInfo.key.sid, out TrackPublication track) ? track : null;
+            var participant = room.Participants.RemoteParticipant(videoInfo.FromIdentity);
+            return participant != null && participant.Tracks.TryGetValue(videoInfo.Key.sid, out TrackPublication track) ? track : null;
         }
 
         private string? StreamerName(CurrentVideoStreamInfo videoInfo)
         {
-            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
+            var participant = room.Participants.RemoteParticipant(videoInfo.FromIdentity);
             return participant == null || string.IsNullOrEmpty(participant.Name) ? null : participant.Name;
         }
 
@@ -774,6 +774,7 @@ namespace DCL.SDKComponents.MediaStream
             playerState = PlayerState.Paused;
             urlVideo.Pause();
 
+            // There is no "pause" for a streaming source.
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();
         }
@@ -831,20 +832,20 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly struct CurrentVideoStreamInfo
         {
-            public readonly StreamKey key;
-            public readonly Weak<IVideoStream> videoStream;
-            public readonly float switchedAtTime;
+            public readonly StreamKey Key;
+            public readonly Weak<IVideoStream> VideoStream;
+            public readonly float SwitchedAtTime;
 
-            public string fromIdentity => key.identity;
+            public string FromIdentity => Key.identity;
 
             private CurrentVideoStreamInfo(
                     StreamKey key,
                     Weak<IVideoStream> videoStream,
                     float switchedAtTime)
             {
-                this.key = key;
-                this.videoStream = videoStream;
-                this.switchedAtTime = switchedAtTime;
+                Key = key;
+                VideoStream = videoStream;
+                SwitchedAtTime = switchedAtTime;
             }
 
             public static CurrentVideoStreamInfo New(
@@ -860,7 +861,7 @@ namespace DCL.SDKComponents.MediaStream
 
             public bool IsFromPresentationBot()
             {
-                return key.identity.IsPresentationBotIdentity();
+                return Key.identity.IsPresentationBotIdentity();
             }
         }
     }
