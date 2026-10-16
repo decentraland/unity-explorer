@@ -282,23 +282,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        /// <summary>
-        ///     An explicit attempt that was in flight when the transport dropped is awaited first: joining it
-        ///     would report its outcome for a connection that is already gone.
-        /// </summary>
-        private async UniTask ReconnectAsync(CancellationToken sessionCt)
-        {
-            UniTaskCompletionSource<bool>? inFlight;
-
-            lock (sessionLock)
-                inFlight = connectAttempt;
-
-            if (inFlight != null)
-                await inFlight.Task.SuppressToResultAsync();
-
-            await StartAttempt(sessionCt, int.MaxValue);
-        }
-
         private async UniTask<bool> ConnectWithRetriesAsync(CancellationToken ct, int maxAttempts)
         {
             var attempt = 1;
@@ -439,6 +422,23 @@ namespace DCL.Multiplayer.Connections.Pulse
                         catch (OperationCanceledException) { }
                     }, configureAwait: false, cancellationToken: connectionCt)
                    .Forget();
+        }
+
+        /// <summary>
+        ///     An explicit attempt that was in flight when the transport dropped is awaited first: joining it
+        ///     would report its outcome for a connection that is already gone.
+        /// </summary>
+        private async UniTask ReconnectAsync(CancellationToken sessionCt)
+        {
+            UniTaskCompletionSource<bool>? inFlight;
+
+            lock (sessionLock)
+                inFlight = connectAttempt;
+
+            if (inFlight != null)
+                await inFlight.Task.SuppressToResultAsync();
+
+            await StartAttempt(sessionCt, int.MaxValue);
         }
     }
 }
