@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly SlideTextureCache slideCache;
         private readonly PresentationCompositor compositor;
-        private readonly IPresentationUrlVideo urlVideo;
+        private readonly PresentationUrlVideo urlVideo;
         private readonly Func<long> nowEpochMs;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.MediaStream
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
         internal LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache slideCache, Material compositorMaterial, IPresentationUrlVideo urlVideo, Func<long>? nowEpochMs = null)
+            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlVideo urlVideo, Func<long>? nowEpochMs = null)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;

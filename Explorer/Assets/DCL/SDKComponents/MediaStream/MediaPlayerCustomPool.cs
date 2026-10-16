@@ -94,6 +94,17 @@ namespace DCL.SDKComponents.MediaStream
 
             queue.Enqueue(info);
         }
+
+        /// <summary>
+        ///     Closes and destroys a player taken from <see cref="GetOrCreateReusableMediaPlayer" /> instead of parking it for reuse.
+        /// </summary>
+        public void DestroyMediaPlayer(MediaPlayer mediaPlayer)
+        {
+            if (UnityObjectUtils.IsQuitting || mediaPlayer == null) return;
+
+            mediaPlayer.CloseMedia();
+            Object.Destroy(mediaPlayer.gameObject);
+        }
     }
 
     public class MediaPlayerInfo

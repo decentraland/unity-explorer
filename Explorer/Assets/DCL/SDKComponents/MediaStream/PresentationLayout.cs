@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.MediaStream
         private const string PAUSED_STATE = "paused";
         private const string CLIENT_SOURCE = "client";
         private const double SEEK_THRESHOLD_SECONDS = 2.0;
+        private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
 
         private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
 
@@ -150,8 +151,12 @@ namespace DCL.SDKComponents.MediaStream
         public static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
             targetSeconds < currentSeconds && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
+        /// <summary>
+        ///     Whether a player that last sought at <paramref name="lastSeekAt" /> seeks now: it isn't busy buffering or seeking, at least three
+        ///     seconds passed since that seek, and <see cref="NeedsSeek" /> holds.
+        /// </summary>
         public static bool ShouldSeek(double currentSeconds, double? targetSeconds, bool isLive, bool isBusy, float now, float lastSeekAt) =>
-            false;
+            !isBusy && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
         public static bool IsVideoPlaying(PresentationBotMetadata metadata) =>
             metadata.videoState == PLAYING_STATE;

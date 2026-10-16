@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Rooms.Nulls;
@@ -18,8 +19,10 @@ using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UUAV.Compat;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream.Tests
@@ -50,6 +53,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const long NOW_MS = 1_700_000_010_000;
         private const long POSITION_AT_MS = 1_700_000_000_000;
         private const long POSITION_MS = 5_000;
+        private const string MEDIA_PLAYER_POOL_CONTAINER = "POOL_CONTAINER_MEDIA_PLAYER";
 
         private static readonly Vector2 FLIPPED = new (1f, -1f);
 
@@ -62,9 +66,27 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private List<Object> created = null!;
         private List<SlideTextureCache> slideCaches = null!;
         private List<LivekitPlayer> players = null!;
-        private FakeUrlVideo urlVideo = null!;
+        private MediaPlayer mediaPlayerPrefab = null!;
+        private MediaPlayerCustomPool mediaPlayerPool = null!;
+        private IUrlResolverService resolver = null!;
+        private List<CancellationToken> resolves = null!;
+        private PresentationUrlVideo urlVideo = null!;
         private float now;
         private bool roomRunning;
+
+        [OneTimeSetUp]
+        public void CreateMediaPlayerPool()
+        {
+            mediaPlayerPrefab = new GameObject().AddComponent<MediaPlayer>();
+            mediaPlayerPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
+        }
+
+        [OneTimeTearDown]
+        public void DestroyMediaPlayerPool()
+        {
+            Object.DestroyImmediate(mediaPlayerPrefab.gameObject);
+            Object.DestroyImmediate(GameObject.Find(MEDIA_PLAYER_POOL_CONTAINER));
+        }
 
         [SetUp]
         public void SetUp()
@@ -79,7 +101,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
             created = new List<Object>();
             slideCaches = new List<SlideTextureCache>();
             players = new List<LivekitPlayer>();
-            urlVideo = new FakeUrlVideo();
+            resolves = new List<CancellationToken>();
+            resolver = Substitute.For<IUrlResolverService>();
+            resolver.ResolveAsync(CLIENT_VIDEO_URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>())
+                    .Returns(ci =>
+                     {
+                         resolves.Add(ci.Arg<CancellationToken>());
+                         return new UniTaskCompletionSource<ResolvedMediaUrl>().Task;
+                     });
+            urlVideo = new PresentationUrlVideo(mediaPlayerPool, resolver);
+            MediaOpenThrottle.MarkOpened(float.PositiveInfinity);
             now = 0f;
             roomRunning = true;
 
@@ -103,6 +134,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             foreach (Object obj in created)
                 Object.DestroyImmediate(obj);
+
+            MediaOpenThrottle.MarkOpened(float.NegativeInfinity);
         }
 
         [Test]
@@ -856,28 +889,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.IsTrue(shown != null);
         }
 
-        [Test]
-        public void UpdateClientVideo_WhenMetadataPlaysClientVideo()
+        [TestCase("playing")]
+        [TestCase("paused")]
+        public void ResolveClientVideo_WhenMetadataPlaysOrPausesIt(string videoState)
         {
-            AddParticipant(BOT, ClientVideoMetadata("playing"));
+            AddParticipant(BOT, ClientVideoMetadata(videoState));
             LivekitPlayer p = NewClientVideoPlayer();
 
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
 
-            Assert.AreEqual((CLIENT_VIDEO_URL, (double?)15.0, true), urlVideo.LastUpdate);
-        }
-
-        [Test]
-        public void UpdateClientVideoPaused_WhenMetadataIsPaused()
-        {
-            AddParticipant(BOT, ClientVideoMetadata("paused"));
-            LivekitPlayer p = NewClientVideoPlayer();
-
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-
-            Assert.AreEqual((CLIENT_VIDEO_URL, (double?)(POSITION_MS / 1000.0), false), urlVideo.LastUpdate);
+            Assert.AreEqual(1, resolves.Count);
         }
 
         [Test]
@@ -889,7 +911,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SetMetadata(bot, V2("null", "idle", slideVideo: CLIENT_VIDEO));
             p.EnsureVideoIsPlaying();
 
-            Assert.Greater(urlVideo.Releases, 0);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
@@ -901,21 +923,20 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SetMetadata(bot, V2("0", "playing", slideVideo: STREAM_VIDEO));
             p.EnsureVideoIsPlaying();
 
-            Assert.Greater(urlVideo.Releases, 0);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
-        public void ReleaseClientVideo_WhenSlideChanges()
+        public void ReplayClientVideo_WhenSlideChanges()
         {
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
-            int releasesWhilePlaying = urlVideo.Releases;
 
             SetMetadata(bot, V2("0", "playing", currentSlide: 1, slideUrl: OTHER_SLIDE_URL, slideVideo: CLIENT_VIDEO, positionMs: POSITION_MS, positionAt: POSITION_AT_MS));
             p.EnsureVideoIsPlaying();
 
-            Assert.AreEqual(releasesWhilePlaying + 1, urlVideo.Releases);
-            Assert.AreEqual(2, urlVideo.Updates);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
+            Assert.AreEqual(2, resolves.Count);
         }
 
         [Test]
@@ -923,26 +944,33 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
-            int releasesWhilePlaying = urlVideo.Releases;
 
             p.EnsureVideoIsPlaying();
 
-            Assert.AreEqual(2, urlVideo.Updates);
-            Assert.AreEqual(releasesWhilePlaying, urlVideo.Releases);
+            Assert.AreEqual(1, resolves.Count);
+            Assert.IsFalse(resolves[0].IsCancellationRequested);
         }
 
-        [TestCase(true, 0f)]
-        [TestCase(false, 1f)]
-        public void FlipClientVideo_OnlyWhenTopRowIsNotFirst(bool isTopRowFirst, float expectedFlip)
+        [Test]
+        public void KeepClientVideo_WhenPlayerIsPaused()
         {
             AddParticipant(BOT, ClientVideoMetadata("playing"));
-            urlVideo.Frame = NewFrame();
-            urlVideo.IsTopRowFirst = isTopRowFirst;
+            LivekitPlayer p = PlayClientVideo();
+
+            p.Pause();
+
+            Assert.IsFalse(resolves[0].IsCancellationRequested);
+        }
+
+        [Test]
+        public void FlipClientVideo_WhenTopRowIsNotFirst()
+        {
+            AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
 
             AssertComposite(p.LastTexture());
 
-            Assert.AreEqual(expectedFlip, p.compositorVideoFlip);
+            Assert.AreEqual(1f, p.compositorVideoFlip);
         }
 
         [Test]
@@ -953,7 +981,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             p.CloseCurrentStream();
 
-            Assert.Greater(urlVideo.Releases, 0);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
@@ -964,7 +992,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             p.Stop();
 
-            Assert.Greater(urlVideo.Releases, 0);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
@@ -976,7 +1004,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             roomRunning = false;
             p.EnsureVideoIsPlaying();
 
-            Assert.Greater(urlVideo.Releases, 0);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
@@ -988,23 +1016,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             p.Dispose();
 
-            Assert.Greater(urlVideo.Releases, 0);
-            Assert.AreEqual(1, urlVideo.Disposals);
+            Assert.IsTrue(resolves[0].IsCancellationRequested);
         }
 
         [Test]
-        public void PauseClientVideo_WhenPlayerIsPaused()
-        {
-            AddParticipant(BOT, ClientVideoMetadata("playing"));
-            LivekitPlayer p = PlayClientVideo();
-
-            p.Pause();
-
-            Assert.AreEqual(1, urlVideo.Pauses);
-        }
-
-        [Test]
-        public void NeverUpdateClientVideo_WhenSourceIsStream()
+        public void NeverResolveClientVideo_WhenSourceIsStream()
         {
             LKParticipant bot = AddParticipant(BOT, V2("0", "playing", slideVideo: STREAM_VIDEO, positionMs: POSITION_MS, positionAt: POSITION_AT_MS));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
@@ -1014,8 +1030,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             p.EnsureVideoIsPlaying();
             AssertComposite(p.LastTexture());
 
-            Assert.AreEqual(0, urlVideo.Updates);
-            Assert.AreEqual(0, urlVideo.TextureReads);
+            Assert.AreEqual(0, resolves.Count);
             video.Received().DecodeLastFrame();
         }
 
@@ -1034,30 +1049,15 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void ComposeClientTexture_WhenClientVideoPlays()
+        public void NeverDecodeBotTrack_WhenClientVideoPlays()
         {
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             IVideoStream video = Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
-            urlVideo.Frame = NewFrame();
             LivekitPlayer p = PlayClientVideo();
 
             AssertComposite(p.LastTexture());
 
-            Assert.Greater(urlVideo.TextureReads, 0);
             video.DidNotReceive().DecodeLastFrame();
-        }
-
-        [Test]
-        public void ForwardVolumeAndPosition_ToClientVideo()
-        {
-            AddParticipant(BOT, ClientVideoMetadata("playing"));
-            LivekitPlayer p = PlayClientVideo();
-
-            p.SetVolume(0.3f);
-            p.PlaceAudioAt(new Vector3(1f, 2f, 3f));
-
-            Assert.AreEqual(0.3f, urlVideo.Volume);
-            Assert.AreEqual(new Vector3(1f, 2f, 3f), urlVideo.Position);
         }
 
         private LivekitPlayer PlayClientVideo()
@@ -1065,7 +1065,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LivekitPlayer p = NewClientVideoPlayer();
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
-            Assert.AreEqual(1, urlVideo.Updates);
+            Assert.AreEqual(1, resolves.Count);
             return p;
         }
 
@@ -1194,61 +1194,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var slideCache = new SlideTextureCache(Substitute.For<IWebRequestController>(), decentralandUrlsSource);
             slideCaches.Add(slideCache);
             return slideCache;
-        }
-
-        private sealed class FakeUrlVideo : IPresentationUrlVideo
-        {
-            public (string url, double? targetSeconds, bool playing) LastUpdate;
-            public int Updates;
-            public int Releases;
-            public int Pauses;
-            public int Disposals;
-            public int TextureReads;
-            public float? Volume;
-            public Vector3? Position;
-            public Texture? Frame;
-
-            public Texture? Texture
-            {
-                get
-                {
-                    TextureReads++;
-                    return Frame;
-                }
-            }
-
-            public bool IsTopRowFirst { get; set; }
-
-            public void Dispose()
-            {
-                Disposals++;
-            }
-
-            public void Update(string url, double? targetSeconds, bool playing, float now)
-            {
-                Updates++;
-                LastUpdate = (url, targetSeconds, playing);
-            }
-
-            public void SetVolume(float volume)
-            {
-                Volume = volume;
-            }
-
-            public void PlaceAudioAt(Vector3 position)
-            {
-                Position = position;
-            }
-
-            public void Pause()
-            {
-                Pauses++;
-            }
-
-            public void Release()
-            {
-                Releases++;
-            }
         }
     }
 }

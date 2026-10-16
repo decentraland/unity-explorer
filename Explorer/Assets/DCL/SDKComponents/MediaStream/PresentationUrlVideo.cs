@@ -9,46 +9,11 @@ using UUAV.Compat;
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    ///     A presentation video played by the client from its url. Main-thread only.
+    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a media player taken from
+    ///     <see cref="MediaPlayerCustomPool" />, opening it through <see cref="MediaOpenThrottle" />. Main-thread only.
     /// </summary>
-    internal interface IPresentationUrlVideo : IDisposable
+    internal sealed class PresentationUrlVideo : IDisposable
     {
-        /// <summary>
-        ///     The current frame, or <c>null</c> while nothing is decoded.
-        /// </summary>
-        Texture? Texture { get; }
-
-        /// <summary>
-        ///     Whether the first row of <see cref="Texture" /> is the top of the image, as in LiveKit frames, so Unity would draw it upside down.
-        /// </summary>
-        bool IsTopRowFirst { get; }
-
-        /// <summary>
-        ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and keeps it within two seconds of
-        ///     <paramref name="targetSeconds" />. A resolved url that expires before it opens is resolved again.
-        /// </summary>
-        void Update(string url, double? targetSeconds, bool playing, float now);
-
-        void SetVolume(float volume);
-
-        void PlaceAudioAt(Vector3 position);
-
-        void Pause();
-
-        /// <summary>
-        ///     Cancels any pending resolve, returns the player to its pool and forgets a url that failed, so its next
-        ///     <see cref="Update" /> retries it.
-        /// </summary>
-        void Release();
-    }
-
-    /// <summary>
-    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a pooled media player,
-    ///     opening it through <see cref="MediaOpenThrottle" />. Main-thread only.
-    /// </summary>
-    internal sealed class PresentationUrlVideo : IPresentationUrlVideo
-    {
-        private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
         private const int MAX_LOGGED_URL_LENGTH = 120;
 
         private readonly MediaPlayerCustomPool pool;
@@ -67,8 +32,14 @@ namespace DCL.SDKComponents.MediaStream
         private float targetVolume;
         private Vector3 audioPosition;
 
+        /// <summary>
+        ///     The current frame, or <c>null</c> while nothing is decoded.
+        /// </summary>
         public Texture? Texture => LivePlayer()?.LastTexture();
 
+        /// <summary>
+        ///     Whether the first row of <see cref="Texture" /> is the top of the image, as in LiveKit frames, so Unity would draw it upside down.
+        /// </summary>
         public bool IsTopRowFirst => LivePlayer() is { } current && current.TextureScale.y < 0f;
 
         public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
@@ -82,6 +53,10 @@ namespace DCL.SDKComponents.MediaStream
             Release();
         }
 
+        /// <summary>
+        ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and keeps it within two seconds of
+        ///     <paramref name="targetSeconds" />. A resolved url that expires before it opens is resolved again.
+        /// </summary>
         public void Update(string url, double? targetSeconds, bool playing, float now)
         {
             if (url != currentUrl)
@@ -142,9 +117,7 @@ namespace DCL.SDKComponents.MediaStream
                     current.Pause();
             }
 
-            if (targetSeconds is { } target && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS
-                && !current.IsBuffering && !current.IsSeeking
-                && PresentationLayout.NeedsSeek(current.CurrentTime, target, isLive))
+            if (targetSeconds is { } target && PresentationLayout.ShouldSeek(current.CurrentTime, target, isLive, current.IsBuffering || current.IsSeeking, now, lastSeekAt))
             {
                 lastSeekAt = now;
                 current.TrySeek(target);
@@ -171,9 +144,12 @@ namespace DCL.SDKComponents.MediaStream
             if (IsMediaOpened(current))
                 current.Pause();
             else
-                ReturnPlayerToPool();
+                DestroyPlayer();
         }
 
+        /// <summary>
+        ///     Cancels any pending resolve, destroys the media player and forgets a url that failed, so its next <see cref="Update" /> retries it.
+        /// </summary>
         public void Release()
         {
             ReleasePlayer();
@@ -191,18 +167,18 @@ namespace DCL.SDKComponents.MediaStream
             currentUrl = null;
             finished = false;
             lastSeekAt = float.NegativeInfinity;
-            ReturnPlayerToPool();
+            DestroyPlayer();
             directUrl = null;
             expiresAt = 0f;
         }
 
-        private void ReturnPlayerToPool()
+        private void DestroyPlayer()
         {
             MultiMediaPlayer? released = player;
             player = null;
 
-            if (released is { } local && directUrl != null)
-                local.Dispose(MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(directUrl)));
+            if (released is { } local && local.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+                pool.DestroyMediaPlayer(urlMediaPlayer.MediaPlayer);
         }
 
         private async UniTaskVoid ResolveAsync(string url, int gen, CancellationToken ct)
