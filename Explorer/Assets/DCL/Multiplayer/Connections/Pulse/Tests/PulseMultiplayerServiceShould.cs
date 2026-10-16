@@ -321,6 +321,86 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         }
 
         [Test]
+        public async Task WaitForTheCancelledAttemptBeforeConnectingAgain()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            var cancelledConnectCleanedUp = new UniTaskCompletionSource();
+            var connectCalls = 0;
+
+            transport
+               .ConnectAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+               .Returns(call => ++connectCalls == 1 ? ConnectUntilCancelledAsync(call.ArgAt<CancellationToken>(2)) : UniTask.CompletedTask);
+
+            _ = service.ConnectAsync(cts.Token);
+
+            // Act
+            await service.DisconnectAsync();
+            UniTask<bool> reconnect = service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            // The cancelled attempt is still cleaning up its transport connection
+            Assert.AreEqual(1, connectCalls);
+
+            cancelledConnectCleanedUp.TrySetResult();
+            bool reconnected = await reconnect;
+
+            // Assert
+            Assert.IsTrue(reconnected);
+            Assert.AreEqual(2, connectCalls);
+
+            async UniTask ConnectUntilCancelledAsync(CancellationToken ct)
+            {
+                try { await UniTask.Never(ct); }
+                catch (OperationCanceledException)
+                {
+                    await cancelledConnectCleanedUp.Task;
+                    throw;
+                }
+            }
+        }
+
+        [Test]
+        public async Task DiscardEventsLeftByTheClosedConnection()
+        {
+            // Arrange
+            RegisterSettlingHandshakeHandler();
+            await service.ConnectAsync(cts.Token, maxAttempts: 1);
+
+            // The transport queues a disconnect event while the session is being torn down
+            transport.DisconnectAsync(Arg.Any<DisconnectReason>()).Returns(_ =>
+            {
+                pipe.OnDisconnected(DisconnectReason.AUTH_TIMEOUT);
+                return UniTask.CompletedTask;
+            });
+
+            await service.DisconnectAsync();
+
+            var staleDisconnectRouted = false;
+
+            service.RegisterDisconnectHandler(reason =>
+            {
+                if (reason == DisconnectReason.AUTH_TIMEOUT)
+                    staleDisconnectRouted = true;
+
+                return (false, TimeSpan.Zero);
+            });
+
+            service.RegisterHandshakeHandler(async (handshakeReceived, _) =>
+            {
+                handshakeReceived.TrySetResult((true, null));
+                await handshakeReceived.Task;
+            });
+
+            // Act
+            bool reconnected = await service.ConnectAsync(cts.Token, maxAttempts: 1);
+            await Task.Delay(200);
+
+            // Assert
+            Assert.IsTrue(reconnected);
+            Assert.IsFalse(staleDisconnectRouted, "A disconnect of the closed connection must not reach the next session");
+        }
+
+        [Test]
         public async Task TolerateDisconnectTwice()
         {
             // Arrange

@@ -87,6 +87,23 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
             pulseMultiplayerService.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
         }
 
+        [Test]
+        public void FallBackToLiveKitWhenConnectionFailsTerminally()
+        {
+            // Arrange
+            realmData.CommsAdapter.Returns(ONLINE_ADAPTER);
+            pulseMultiplayerService.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(false));
+            var activation = new PulseActivation(true);
+            var operation = new ConnectPulseTeleportOperation(pulseMultiplayerService, activation, realmData);
+
+            // Act
+            EnumResult<TaskError> result = operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.IsTrue(result.Success);
+            Assert.IsFalse(activation.IsActive);
+        }
+
         private TeleportParams MakeParams() =>
             new (
                 URLDomain.EMPTY,

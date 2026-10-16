@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private UniTaskCompletionSource<bool>? connectAttempt;
 
         /// <summary>
-        ///     The transport teardown of the last <see cref="DisconnectAsync" />, still in progress.
+        ///     The teardown of the last <see cref="DisconnectAsync" /> (transport and cancelled attempt), still in progress.
         ///     A new attempt waits for it before connecting the transport again.
         /// </summary>
         private UniTaskCompletionSource? teardown;
@@ -72,13 +72,18 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Dispose()
         {
             isAuthenticated = false;
+            UniTaskCompletionSource<bool>? abandonedAttempt;
 
             lock (sessionLock)
             {
                 sessionCts.SafeCancelAndDispose();
                 sessionCts = null;
+                abandonedAttempt = connectAttempt;
                 connectAttempt = null;
             }
+
+            // The transport is disposed below without waiting for the attempt to observe the cancellation
+            abandonedAttempt?.TrySetCanceled();
 
             connectionLifeCycleCts.SafeCancelAndDispose();
             UnregisterAllHandlers();
@@ -142,12 +147,14 @@ namespace DCL.Multiplayer.Connections.Pulse
         public async UniTask DisconnectAsync()
         {
             UniTaskCompletionSource ownTeardown;
+            UniTaskCompletionSource<bool>? cancelledAttempt;
 
             lock (sessionLock)
             {
                 if (sessionCts == null)
                     return;
 
+                cancelledAttempt = connectAttempt;
                 sessionCts.SafeCancelAndDispose();
                 sessionCts = null;
                 connectAttempt = null;
@@ -160,19 +167,31 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 await transport.DisconnectAsync(DisconnectReason.GRACEFUL);
 
+                // Events and messages of the closed connection must not reach the next session
+                pipe.DiscardPending();
+
                 isAuthenticated = false;
                 disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
             }
-            finally
-            {
-                lock (sessionLock)
-                {
-                    if (ReferenceEquals(teardown, ownTeardown))
-                        teardown = null;
-                }
+            finally { CompleteTeardownAsync(ownTeardown, cancelledAttempt).Forget(); }
+        }
 
-                ownTeardown.TrySetResult();
+        /// <summary>
+        ///     The teardown also covers the cancelled attempt, which may still be cleaning up the transport it was connecting.
+        ///     Detached from <see cref="DisconnectAsync" />, which may run inside that very attempt.
+        /// </summary>
+        private async UniTaskVoid CompleteTeardownAsync(UniTaskCompletionSource ownTeardown, UniTaskCompletionSource<bool>? cancelledAttempt)
+        {
+            if (cancelledAttempt != null)
+                await cancelledAttempt.Task.SuppressToResultAsync();
+
+            lock (sessionLock)
+            {
+                if (ReferenceEquals(teardown, ownTeardown))
+                    teardown = null;
             }
+
+            ownTeardown.TrySetResult();
         }
 
         /// <summary>

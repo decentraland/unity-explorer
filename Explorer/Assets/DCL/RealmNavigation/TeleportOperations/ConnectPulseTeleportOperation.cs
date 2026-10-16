@@ -38,7 +38,13 @@ namespace DCL.RealmNavigation.TeleportOperations
             try
             {
                 ReportHub.Log(ReportCategory.MULTIPLAYER, $"Connecting Pulse for realm {realmData.RealmName}");
-                await pulseMultiplayerService.ConnectAsync(CancellationToken.None);
+
+                // With unbounded retries a failure is terminal (e.g. the handshake is rejected): same fallback as at start-up
+                if (!await pulseMultiplayerService.ConnectAsync(CancellationToken.None))
+                {
+                    pulseActivation.Deactivate();
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, "Pulse connection failed terminally; falling back to LiveKit-only.");
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.MULTIPLAYER); }
