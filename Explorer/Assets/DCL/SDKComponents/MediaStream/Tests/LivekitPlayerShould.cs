@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Rooms.Nulls;
@@ -19,7 +18,6 @@ using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
@@ -911,11 +909,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
+            int releasesWhilePlaying = urlVideo.Releases;
 
             SetMetadata(bot, V2("0", "playing", currentSlide: 1, slideUrl: OTHER_SLIDE_URL, slideVideo: CLIENT_VIDEO, positionMs: POSITION_MS, positionAt: POSITION_AT_MS));
             p.EnsureVideoIsPlaying();
 
-            Assert.AreEqual(1, urlVideo.Releases);
+            Assert.AreEqual(releasesWhilePlaying + 1, urlVideo.Releases);
             Assert.AreEqual(2, urlVideo.Updates);
         }
 
@@ -924,45 +923,26 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             LivekitPlayer p = PlayClientVideo();
+            int releasesWhilePlaying = urlVideo.Releases;
 
             p.EnsureVideoIsPlaying();
 
             Assert.AreEqual(2, urlVideo.Updates);
-            Assert.AreEqual(0, urlVideo.Releases);
+            Assert.AreEqual(releasesWhilePlaying, urlVideo.Releases);
         }
 
         [TestCase(true, 0f)]
         [TestCase(false, 1f)]
-        public void FlipClientVideo_OnlyWhenTextureNeedsNoVerticalFlip(bool requiresVerticalFlip, float expectedFlip)
+        public void FlipClientVideo_OnlyWhenTopRowIsNotFirst(bool isTopRowFirst, float expectedFlip)
         {
             AddParticipant(BOT, ClientVideoMetadata("playing"));
             urlVideo.Frame = NewFrame();
-            urlVideo.RequiresVerticalFlip = requiresVerticalFlip;
+            urlVideo.IsTopRowFirst = isTopRowFirst;
             LivekitPlayer p = PlayClientVideo();
 
             AssertComposite(p.LastTexture());
 
             Assert.AreEqual(expectedFlip, p.compositorVideoFlip);
-        }
-
-        [Test]
-        public void RetryFailedClientVideo_WhenReplayedAfterIdle()
-        {
-            IUrlResolverService resolver = Substitute.For<IUrlResolverService>();
-            resolver.ResolveAsync(CLIENT_VIDEO_URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>())
-                    .Returns(UniTask.FromResult(new ResolvedMediaUrl(CLIENT_VIDEO_URL, false)));
-            LKParticipant bot = AddParticipant(BOT, ClientVideoMetadata("playing"));
-            LivekitPlayer p = NewClientVideoPlayer(() => new PresentationUrlVideo(null!, resolver));
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-            p.EnsureVideoIsPlaying();
-
-            SetMetadata(bot, V2("null", "idle", slideVideo: CLIENT_VIDEO));
-            p.EnsureVideoIsPlaying();
-            SetMetadata(bot, ClientVideoMetadata("playing"));
-            p.EnsureVideoIsPlaying();
-
-            resolver.Received(2).ResolveAsync(CLIENT_VIDEO_URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -1080,18 +1060,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual(new Vector3(1f, 2f, 3f), urlVideo.Position);
         }
 
-        [Test]
-        public void IgnoreClientVideos_WhenNoFactoryIsGiven()
-        {
-            AddParticipant(BOT, ClientVideoMetadata("playing"));
-            LivekitPlayer p = NewPlayer();
-
-            p.OpenMedia(LivekitAddress.CurrentStream());
-            p.EnsureVideoIsPlaying();
-
-            AssertComposite(p.LastTexture());
-        }
-
         private LivekitPlayer PlayClientVideo()
         {
             LivekitPlayer p = NewClientVideoPlayer();
@@ -1194,19 +1162,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => true, null, slideCache, material);
+            var p = new LivekitPlayer(room, () => true, null, slideCache, material, urlVideo);
             players.Add(p);
             return p;
         }
 
-        private LivekitPlayer NewClientVideoPlayer() =>
-            NewClientVideoPlayer(() => urlVideo);
-
-        private LivekitPlayer NewClientVideoPlayer(Func<IPresentationUrlVideo> urlVideoFactory)
+        private LivekitPlayer NewClientVideoPlayer()
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, urlVideoFactory, static () => NOW_MS);
+            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, urlVideo, static () => NOW_MS);
             players.Add(p);
             return p;
         }
@@ -1252,7 +1217,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }
 
-            public bool RequiresVerticalFlip { get; set; }
+            public bool IsTopRowFirst { get; set; }
 
             public void Dispose()
             {

@@ -120,7 +120,10 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     The presenter's playback position: the anchor plus the time elapsed since it while playing, the anchor itself while paused.
         /// </summary>
-        /// <returns><c>null</c> unless <c>videoState</c> is playing or paused and both position fields are present; never negative.</returns>
+        /// <returns>
+        ///     <c>null</c> unless <c>videoState</c> is playing or paused and both position fields are present, and while playing with an anchor
+        ///     later than <paramref name="nowEpochMs" />, whose clock skew is unknown; never negative.
+        /// </returns>
         public static double? TargetPositionSeconds(PresentationBotMetadata metadata, long nowEpochMs)
         {
             if (metadata.videoPositionMs is not { } positionMs || metadata.videoPositionAt is not { } positionAt)
@@ -128,7 +131,8 @@ namespace DCL.SDKComponents.MediaStream
 
             return metadata.videoState switch
                    {
-                       PLAYING_STATE => Math.Max(0, positionMs + nowEpochMs - positionAt) / 1000.0,
+                       PLAYING_STATE when nowEpochMs >= positionAt => Math.Max(0, positionMs + nowEpochMs - positionAt) / 1000.0,
+                       PLAYING_STATE => null,
                        PAUSED_STATE => Math.Max(0, positionMs) / 1000.0,
                        _ => null,
                    };
@@ -140,14 +144,20 @@ namespace DCL.SDKComponents.MediaStream
         public static bool NeedsSeek(double currentSeconds, double? targetSeconds, bool isLive) =>
             !isLive && targetSeconds is { } target && Math.Abs(currentSeconds - target) > SEEK_THRESHOLD_SECONDS;
 
+        /// <summary>
+        ///     Whether <paramref name="targetSeconds" /> is more than two seconds behind <paramref name="currentSeconds" />. A live stream never rewinds.
+        /// </summary>
         public static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
-            false;
+            targetSeconds < currentSeconds && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
         public static bool IsVideoPlaying(PresentationBotMetadata metadata) =>
-            false;
+            metadata.videoState == PLAYING_STATE;
 
+        /// <summary>
+        ///     Whether the <c>slideVideos</c> entry at <c>playingVideoIndex</c> has <c>source</c> <c>client</c>, whatever <c>videoState</c> is.
+        /// </summary>
         public static bool IsClientEntry(PresentationBotMetadata metadata) =>
-            false;
+            metadata.slideVideos is { } videos && metadata.playingVideoIndex is { } index && index >= 0 && index < videos.Length && videos[index]?.source == CLIENT_SOURCE;
 
         /// <summary>
         ///     The presenter camera circle's bounding square, computed in integer pixels exactly as the server does.

@@ -51,6 +51,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IUrlResolverService urlResolverService;
+        private readonly IUrlResolverService presentationUrlResolver;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
@@ -72,9 +73,8 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
 
-            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
-                new UrlResolverService(webRequestController),
-                analyticsController);
+            presentationUrlResolver = new UrlResolverService(webRequestController);
+            urlResolverService = new UrlResolverServiceAnalyticsDecorator(presentationUrlResolver, analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -178,10 +178,10 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(url);
 
             MultiMediaPlayer player = address.Match(
-                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, urlResolverService),
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, presentationUrlResolver),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
-                    () => new PresentationUrlVideo(ctx.mediaPlayerPool, ctx.urlResolverService)))
+                    new PresentationUrlVideo(ctx.mediaPlayerPool, ctx.presentationUrlResolver)))
             );
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

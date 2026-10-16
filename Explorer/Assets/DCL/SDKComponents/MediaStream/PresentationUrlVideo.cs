@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
@@ -20,11 +21,11 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Whether the first row of <see cref="Texture" /> is the top of the image, as in LiveKit frames, so Unity would draw it upside down.
         /// </summary>
-        bool RequiresVerticalFlip { get; }
+        bool IsTopRowFirst { get; }
 
         /// <summary>
         ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and keeps it within two seconds of
-        ///     <paramref name="targetSeconds" />.
+        ///     <paramref name="targetSeconds" />. A resolved url that expires before it opens is resolved again.
         /// </summary>
         void Update(string url, double? targetSeconds, bool playing, float now);
 
@@ -59,15 +60,16 @@ namespace DCL.SDKComponents.MediaStream
         private CancellationTokenSource? cts;
         private MultiMediaPlayer? player;
         private string? directUrl;
+        private float expiresAt;
         private bool isLive;
         private bool finished;
         private float lastSeekAt = float.NegativeInfinity;
-        private float volume;
+        private float targetVolume;
         private Vector3 audioPosition;
 
         public Texture? Texture => LivePlayer()?.LastTexture();
 
-        public bool RequiresVerticalFlip => LivePlayer() is { } current && current.TextureScale.y < 0f;
+        public bool IsTopRowFirst => LivePlayer() is { } current && current.TextureScale.y < 0f;
 
         public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
         {
@@ -98,14 +100,19 @@ namespace DCL.SDKComponents.MediaStream
 
             if (player == null)
             {
-                if (directUrl != null && MediaOpenThrottle.CanOpen(now))
+                if (expiresAt > 0f && now >= expiresAt)
+                    ReleasePlayer();
+                else if (directUrl != null && MediaOpenThrottle.CanOpen(now))
                     Open(directUrl, playing, now);
 
                 return;
             }
 
             if (LivePlayer() is not { } current)
+            {
+                ReleasePlayer();
                 return;
+            }
 
             if (current.GetLastError() != ErrorCode.None)
             {
@@ -120,7 +127,12 @@ namespace DCL.SDKComponents.MediaStream
             finished |= current.IsFinished;
 
             if (finished)
-                return;
+            {
+                if (!PresentationLayout.IsRewind(current.CurrentTime, targetSeconds, isLive))
+                    return;
+
+                finished = false;
+            }
 
             if (playing != current.IsPlaying)
             {
@@ -141,7 +153,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void SetVolume(float volume)
         {
-            this.volume = volume;
+            targetVolume = volume;
             LivePlayer()?.UpdateVolume(volume);
         }
 
@@ -168,28 +180,20 @@ namespace DCL.SDKComponents.MediaStream
             failedUrl = null;
         }
 
-        private MultiMediaPlayer? LivePlayer()
-        {
-            if (player is { IsValid: true } current)
-                return current;
-
-            if (player != null)
-                ReleasePlayer();
-
-            return null;
-        }
+        private MultiMediaPlayer? LivePlayer() =>
+            player is { IsValid: true } current ? current : null;
 
         private void ReleasePlayer()
         {
             generation++;
-            cts?.Cancel();
-            cts?.Dispose();
+            cts.SafeCancelAndDispose();
             cts = null;
             currentUrl = null;
             finished = false;
             lastSeekAt = float.NegativeInfinity;
             ReturnPlayerToPool();
             directUrl = null;
+            expiresAt = 0f;
         }
 
         private void ReturnPlayerToPool()
@@ -226,6 +230,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             directUrl = resolved.DirectUrl;
+            expiresAt = resolved.ExpiresAtRealtimeSinceStartup;
             isLive = resolved.IsLiveStream;
         }
 
@@ -242,7 +247,7 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            opened.UpdateVolume(volume);
+            opened.UpdateVolume(targetVolume);
             opened.PlaceAt(audioPosition);
         }
 
