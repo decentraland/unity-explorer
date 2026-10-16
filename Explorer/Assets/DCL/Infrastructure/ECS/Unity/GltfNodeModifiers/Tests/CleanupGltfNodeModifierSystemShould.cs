@@ -22,14 +22,14 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 {
     public class CleanupGltfNodeModifierSystemShould : UnitySystemTestBase<CleanupGltfNodeModifierSystem>
     {
-        private GameObject rootGameObject;
-        private GameObject childGameObject;
-        private MeshRenderer rootRenderer;
-        private MeshRenderer childRenderer;
-        private Material originalRootMaterial;
-        private Material originalChildMaterial;
-        private Material testMaterial;
-        private Material secondTestMaterial;
+        private GameObject rootGameObject = null!;
+        private GameObject childGameObject = null!;
+        private MeshRenderer rootRenderer = null!;
+        private MeshRenderer childRenderer = null!;
+        private Material originalRootMaterial = null!;
+        private Material originalChildMaterial = null!;
+        private Material testMaterial = null!;
+        private Material secondTestMaterial = null!;
 
         [SetUp]
         public void SetUp()
@@ -104,7 +104,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Remove PBGltfNodeModifiers to trigger HandleComponentRemoval query
@@ -147,7 +147,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Add DeleteEntityIntention to trigger HandleEntityDestruction query
@@ -193,7 +193,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.yellow), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Simulate GltfContainerComponent change event
@@ -238,6 +238,27 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(world.IsAlive(secondNode), Is.False);
             Assert.That(rootRenderer.sharedMaterial, Is.EqualTo(originalRootMaterial));
             Assert.That(childRenderer.sharedMaterial, Is.EqualTo(originalChildMaterial));
+        }
+
+        [Test]
+        public void KeepModifiersWhenContainerFinishesLoading()
+        {
+            // Arrange
+            var eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1);
+            var cleanupSystem = new CleanupGltfNodeModifierSystem(world, eventBuffer);
+
+            Entity container = CreateContainerWithMaterialOverride(childRenderer, originalChildMaterial, testMaterial, out Entity nodeEntity);
+            var gltfContainerComponent = new GltfContainerComponent { State = LoadingState.Finished };
+            world.Add(container, gltfContainerComponent, new PBGltfContainer());
+
+            // Act
+            eventBuffer.Add(container, gltfContainerComponent);
+            cleanupSystem.Update(0);
+
+            // Assert
+            Assert.That(world.Has<Components.GltfNodeModifiers>(container), Is.True);
+            Assert.That(world.Has<PBMaterial>(nodeEntity), Is.True);
+            Assert.That(childRenderer.sharedMaterial, Is.EqualTo(testMaterial));
         }
 
         private Entity CreateContainerWithMaterialOverride(Renderer renderer, Material originalMaterial, Material nodeMaterial, out Entity nodeEntity)

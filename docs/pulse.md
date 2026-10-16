@@ -64,7 +64,7 @@ When Pulse is inactive (`FeatureId.Pulse` off, `--pulse false`, or after a start
 
 - All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against a `Dummy` (or disconnected) service.
 - Incoming proxies' `Fill(...)` / `Bunch()` calls include empty Pulse lists.
-- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `MultiplayerContainer.OnSelfProfilePropagated` also gates on `IsActive`.
+- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `PropagateSelfProfileSystem` also gates on `IsActive`.
 - `LiveKitMessagesBroadcaster` broadcasts to all peers (its original serialization mode).
 
 The effective runtime cost of Pulse when disabled is a few dummy virtual calls per frame.
@@ -667,52 +667,21 @@ The struct exists purely to keep the app layer from assuming "peer identifier ==
 
 ### `PeerIdCache`
 
-`Connections/Pulse/PeerIdCache.cs` — a thread-safe bidirectional map `uint ↔ Web3Address`:
+[`PeerIdCache`](../Explorer/Assets/DCL/Multiplayer/Connections/Pulse/PeerIdCache.cs) retains each announced peer's wallet and realm until that peer leaves. One peer per wallet is selected for movement, profile and emote routing. Reads, membership changes and selection share a lock.
 
-```csharp
-public class PeerIdCache
-{
-    private readonly object sync = new();
-    private readonly Dictionary<uint, Web3Address> peersByWallet = new();
-    private readonly Dictionary<Web3Address, uint> walletsByPeerId = new();
+The newest **new-peer** announcement selects the peer for a wallet. Reannouncing or teleporting an already-known shadow peer preserves selection. Announcement order does not prove session ownership, so either session can temporarily drive the avatar during overlap.
 
-    public void Set(Web3Address wallet, uint peerId) { lock (sync) { peersByWallet[peerId] = wallet; walletsByPeerId[wallet] = peerId; } }
-    public void Remove(uint peerId) { lock (sync) { if (peersByWallet.Remove(peerId, out var wallet)) walletsByPeerId.Remove(wallet); } }
-    public bool TryGetWallet(uint peerId, out Web3Address wallet) { lock (sync) return peersByWallet.TryGetValue(peerId, out wallet); }
-    public bool TryGetPeerId(Web3Address wallet, out uint peerId) { lock (sync) return walletsByPeerId.TryGetValue(wallet, out peerId); }
+Keep the avatar while any peer for its wallet remains in the current realm. When the selected peer leaves, select the newest eligible survivor and restore its cached pose and emote. Teleports and realm cleanup follow the same membership rule; disconnect removes each wallet once. A join that selects the peer in the current realm cancels any still-queued removal for that wallet.
 
-    public void RemoveAll(Action<string> onWalletRemoved)
-    {
-        lock (sync)
-        {
-            foreach (string wallet in peersByWallet.Values) onWalletRemoved(wallet);
-            peersByWallet.Clear();
-            walletsByPeerId.Clear();
-        }
-    }
-}
-```
-
-All mutation and reads are serialized on a single `lock`. The cache is populated from `PlayerJoined` messages (in `PulseMultiplayerBus.PlayerState.cs` → `HandlePlayerJoined`) and evicted from `PlayerLeft` or full-disconnect events.
+Shadow state updates refresh the cache without driving the avatar. Promotion also requests the survivor's current pose through the existing resync path to cover missed updates. Changing peers resets the local movement timeline: a stationary survivor's timestamp can precede the departing peer's last movement and would otherwise be discarded as stale.
 
 > **Note:** The field names `peersByWallet` / `walletsByPeerId` are **inverted** relative to the actual key types (`peersByWallet` is keyed by `uint` peer-id, not by wallet). Be careful reading call sites — trust the types, not the names.
 
 ### `RemoveAll` and disconnect fan-out
 
-`RemoveAll(onWalletRemoved)` is the critical path when the transport disconnects. Called from `PulseMultiplayerBus.RemoveAllPeers`:
+On disconnect, `PulseMultiplayerBus.RemoveAllPeers` calls `RemoveAll` to enqueue one Pulse removal per wallet, then clears movement baselines, pending resyncs, cached emotes and queued intentions. Clearing retry generations also invalidates batches already collected by the main thread.
 
-```csharp
-private void RemoveAllPeers()
-{
-    peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
-
-    lastMovementMessages.Clear();
-    pendingResyncs.Clear();
-    emotingSubjects.Clear();
-}
-```
-
-Under a single `lock`, every known peer is enqueued as a `RemoveIntention(wallet, RoomSource.PULSE)` and the internal dictionaries are cleared. The callback runs inside the lock — which means `removeIntentions.Enqueue` must not take a lock that could deadlock against `sync`. In practice it writes into a thread-safe collection with a separate lock, so this is safe.
+Cache callbacks run inside its lock. Keep lock ordering one-way: code holding an emote or removal-queue lock must not acquire the cache lock.
 
 ### `SELF_MIRROR_WALLET_ID` — self-mirror sentinel
 
@@ -736,7 +705,7 @@ This is a debug/testing affordance: it lets a developer run Pulse end-to-end on 
 
 The only caller is `HandlePlayerJoined` in `PulseMultiplayerBus.PlayerState.cs` — once the wallet is resolved at join time, the rest of the bus treats the mirrored peer as any other remote player.
 
-> **Warning:** If the real local wallet is *also* present on the server under its own user id, the client will see two entries for the same wallet from two different peer-ids — `EntityParticipantTable` expects wallet uniqueness, so this would conflict. The sentinel is only meant for isolated dev environments.
+Use the sentinel in isolated development environments. If the same wallet is also announced as a regular peer, the normal overlap-selection rules apply.
 
 ---
 
@@ -750,10 +719,10 @@ The only caller is `HandlePlayerJoined` in `PulseMultiplayerBus.PlayerState.cs` 
 | `.PlayerState.cs` | Movement send, handlers for `PlayerJoined` / `PlayerLeft` / `PlayerStateFull` / `PlayerStateDelta`, the resync state machine, proto ↔ `NetworkMovementMessage` marshalling. |
 | `.Teleports.cs` | `BroadcastTeleport` and `HandleTeleport`. |
 | `.Profiles.cs` | `HandleProfileAnnouncement`. |
-| `.Emotes.cs` | `IEmotesMessageBus` surface (`Send`, `SendStop`, intention bunches, retry), `HandleEmoteStarted` / `HandleEmoteStopped`, `emotingSubjects` set. |
+| `.Emotes.cs` | `IEmotesMessageBus` surface (`Send`, `SendStop`, intention bunches, retry), emote handlers and per-peer emote cache. |
 | `.Disconnects.cs` | `HandleDisconnect` — reconnect-or-bail decision. |
 
-Shared state lives on the main partial: `lastMovementMessages` (per-peer sequence + last known `NetworkMovementMessage`), `pendingResyncs`, `emotingSubjects`, `emoteIntentions` / `emoteStopIntentions` with a `MutexSync`. All of this runs on a single thread at a time (the routing loop), so the non-emote state uses plain `Dictionary`/`HashSet` without locks.
+The routing loop updates per-peer movement baselines, pending resyncs and `peerEmotes`. Emote intention queues and retry generations share `emoteSync`, since main-thread consumers collect batches and return deferred intentions.
 
 ### `.cs` — subscription wiring
 
@@ -771,14 +740,7 @@ pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped,   
 pulseService.RegisterDisconnectHandler(HandleDisconnect);
 ```
 
-`RemoveAllPeers` — used by `HandleDisconnect` and, if needed, by any caller that wants to purge known peers:
-
-```csharp
-peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
-lastMovementMessages.Clear();
-pendingResyncs.Clear();
-emotingSubjects.Clear();
-```
+`HandleDisconnect` calls `RemoveAllPeers` for the shared teardown described above.
 
 ### `.PlayerState.cs` — movement send and receive
 
@@ -799,11 +761,11 @@ public void Send(NetworkMovementMessage message)
 
 > **Note:** There's a `// TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1` — the intent is to collapse queued duplicate movement messages at the pipe level so the worker thread only ships the newest one per flush. Not implemented today.
 
-**Receive: `HandlePlayerJoined`** — caches the wallet↔subject-id pairing, enqueues an initial profile announcement, builds a `NetworkMovementMessage` from the joined `PlayerState`, stores it in `lastMovementMessages[subjectId] = (sequence, message)`, and ships it to the inbox.
+**Receive: `HandlePlayerJoined`** — registers the peer and caches its initial pose. Selected peers enqueue the profile and pose; known shadows keep their cached state without taking over routing.
 
-**Receive: `HandlePlayerLeft`** — reverses: removes peer from all local maps, enqueues a `RemoveIntention`, drops any `emotingSubjects` entry.
+**Receive: `HandlePlayerLeft`** — removes the registration and its cached state. It restores a selected survivor or enqueues avatar removal when no registration remains in the current realm.
 
-**Receive: `HandlePlayerStateFull`** — updates `lastMovementMessages` (and clears any pending resync for the subject) and forwards the message to the inbox. `PlayerStateFull` carries a complete snapshot and resets the sequence tracking.
+**Receive: `HandlePlayerStateFull`** — updates the cached sequence and pose, completing eligible recovery. Only the selected peer forwards movement to the inbox.
 
 **Receive: `HandlePlayerStateDelta`** — the heart of the sequence-based resync logic:
 
@@ -822,7 +784,7 @@ Interleaving is deliberate: `STATE_DELTA` travels on `UNRELIABLE_SEQUENCED` (cha
 
 `MergeIntoNetworkMovementMessage(last, delta)` applies the `Has…` flags from the delta: every quantized field is optional in the proto, so the bus copies just the fields that changed, keeping the rest from `last`. Movement blend and velocity get their derived bookkeeping (`velocitySqrMagnitude`, `movementKind` inferred from blend value) recomputed.
 
-`TryUpdateLastMovementAndCompleteResync(serverTick, subjectId, sequence, movement, allowOverrides)` centralizes the "update `lastMovementMessages` if the sequence is newer, and clear any pending resync" pattern — called from `PlayerStateFull`, `EmoteStarted`, `EmoteStopped`, and the teleport handler.
+`TryUpdateLastMovementAndCompleteResync` updates the per-peer movement baseline and completes packet-loss recovery. Promotion recovery remains pending until a full state or a consecutive delta can reset the selected peer's timeline. Shadow peers cache consecutive updates but wait until promotion to request missing state.
 
 ### `.Teleports.cs` — teleport broadcast and reception
 
@@ -838,7 +800,7 @@ teleport.Realm = realmName;
 pulseService.Send(outgoing);
 ```
 
-**Receive** — `HandleTeleport` builds a `NetworkMovementMessage` with `isInstant: true` (so the receiving [`RemotePlayersMovementSystem`](multiplayer.md#receive-pipeline) snaps rather than interpolates), updates the per-peer baseline, and ships to the inbox.
+**Receive** — `HandleTeleport` updates the per-peer baseline with `isInstant: true`. Only the selected peer's pose reaches the inbox, where [`RemotePlayersMovementSystem`](multiplayer.md#receive-pipeline) snaps rather than interpolates.
 
 ### `.Profiles.cs` — profile version announcements
 
@@ -847,7 +809,7 @@ A one-method partial. When the server says "peer *X* now has profile version *V*
 ### `.Emotes.cs` — emote send/receive and `IEmotesMessageBus` surface
 
 **State**:
-- `emotingSubjects: HashSet<uint>` — peers currently mid-emote (main thread access only).
+- `peerEmotes` — each peer's latest emote sequence, URN, mask and active flag, retained until its registration is purged. The payload is copied out of the pooled incoming message.
 - `emoteIntentions: HashSet<RemoteEmoteIntention>` + `emoteStopIntentions: HashSet<RemoteEmoteStopIntention>` — per-frame outbound batches consumed by the emote proxy; both guarded by a shared `MutexSync` (see [multiplayer.md → Deduplication & Concurrency Primitives](multiplayer.md#deduplication--concurrency-primitives) for `OwnedBunch` / `MutexSync`).
 
 **`IEmotesMessageBus.Send(urn, loopCyclePassed, mask, durationMs, playerState)`** — skips when `loopCyclePassed` is true (the local emote already finished a loop cycle, the server doesn't need to know again), builds a reliable `EmoteStart` with the emote urn, optional duration, and optional embedded `PlayerStateInput` so the server can fold a movement state update into the emote.
@@ -856,20 +818,13 @@ A one-method partial. When the server says "peer *X* now has profile version *V*
 
 **`OnPlayerRemoved(walletId)`** — no-op on Pulse (LiveKit clears a scheduler here; Pulse doesn't have one). The method exists to satisfy the interface.
 
-**`SaveForRetry`** / `EnqueueEmoteIntention` — add an intention into the corresponding set under the `MutexSync` scope. These are the re-drop points used when a consumer couldn't apply an intention and wants to try again next frame.
+**`SaveForRetry`** returns an intention to its originating bus. Pulse accepts it under `emoteSync` only if its local generation still matches the wallet's current emote. Selection changes, later emote events and cleanup invalidate older retries, including intentions already collected by the main thread. Source and generation are local metadata; payload equality still deduplicates equivalent transport messages.
 
-**`HandleEmoteStarted`** — marks `emotingSubjects.Add(subjectId)`, builds a `NetworkMovementMessage` with `isInstant: true` from the emote's embedded `PlayerState`, updates the sequence baseline with `allowOverrides = true` (because an emote-started may arrive with the same sequence as a teleport or delta — it's authoritative in that case), fixes up any stored "isEmoting=false" state from a racing delta, and enqueues a `RemoteEmoteIntention` into the bunch:
+**`HandleEmoteStarted` / `HandleEmoteStopped`** update the peer's cached emote and movement state. Pulse advances the snapshot sequence for each accepted [emote start](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Peers/Simulation/PeerSnapshotPublisher.cs#L49) and [stop](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Messaging/EmoteStopHandler.cs#L36), including stationary peers. A start can share a movement snapshot's sequence, but a new start cannot reuse its preceding stop's sequence; a stop therefore wins over a replayed start at the same sequence. A reliable start can override an equal-sequence movement snapshot; `emoteStateMismatchCount` records correction of a racing delta's inactive flag. A stop clears that flag even when its embedded pose is older than the cached pose.
 
-```csharp
-double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp, AvatarEmoteMask.AemFullBody));
-```
+Only selected peers emit avatar intentions. On selection changes, `RestorePeerEmote` replaces queued intentions for the wallet with the survivor's current emote or an explicit stop. Retaining the URN and mask matters: movement resync does not replay an emote start already delivered by Pulse.
 
-The `EmoteStateMismatchCount` counter increments whenever the fix-up path had to run — useful for observing how often the unreliable `STATE_DELTA` races the reliable `EmoteStarted`.
-
-**`HandleEmoteStopped`** — removes from `emotingSubjects`, enqueues a `RemoteEmoteStopIntention` with the server-tick timestamp, and — if the message carries an updated `PlayerState` — runs the same `TryUpdateLastMovementAndCompleteResync` routine. If no state is embedded, it patches `lastMovementMessages[subjectId].isEmoting = false` in place so the next delta arrives with the correct baseline.
-
-**`IsPeerEmoting(Web3Address wallet)`** — internal helper used by the debug system; cheap `peerIdCache.TryGetPeerId` + `emotingSubjects.Contains`.
+**`IsPeerEmoting(Web3Address wallet)`** reports the selected peer's cached active flag to the debug system.
 
 ### `.Disconnects.cs` — reconnect-or-bail
 
@@ -930,7 +885,7 @@ Key facts:
 
 ### Where it's called from
 
-`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` is the main (and currently only regular) caller:
+`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` announces the first version at connect:
 
 ```csharp
 protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
@@ -943,15 +898,28 @@ protected override async UniTask InternalExecuteAsync(IStartupOperation.Params a
         return;
     }
 
-    Profile? profile = await selfProfile.ProfileAsync(ct);
-    profilePropagation.Propagate(profile!);
+    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+    if (read.IsCancelled)
+        throw new OperationCanceledException(ct);
+
+    if (!read.IsOk(out _))
+        throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
+
+    // Only the version the catalyst confirmed is propagated, never a pending edit's.
+    Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+
+    if (!confirmed.Has)
+        return;
+
     await UniTask.SwitchToMainThread();
+    profilePropagation.PropagateIfNewVersion(confirmed.Value);
 }
 ```
 
-On startup, connect to Pulse, fetch the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). The propagate is a **one-shot** at connect — there's no debounce mechanism like `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously. (LiveKit's broadcast runs on every profile change; Pulse only fires at connect time today.)
+On startup, connect to Pulse, read the host's profile, and announce the version the catalyst confirmed; while the first deploy is still in flight nothing is confirmed yet and the announcement is left to `PropagateSelfProfileSystem`. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
 
-`MultiplayerContainer` does also subscribe to `ISelfProfile.ProfilePropagated` and invoke `ProfilePropagation.Propagate(profile)` for later updates — so subsequent profile changes do reach Pulse. But there's no timer-based throttle wrapping that call, so the cadence is whatever `ISelfProfile` chooses to fire at.
+Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` and calls `PropagateIfNewVersion`. The confirmed profile is the one the catalyst holds: while an edit is deploying it stays at the previous version, so peers are never told about a version they cannot fetch yet, and a failed deploy needs no retraction. `PulseProfilePropagationBus` sends only when the user or the version differs from the last announcement (and records nothing while unauthenticated), so the per-frame poll costs one comparison and no throttle is needed.
 
 ---
 
@@ -1098,7 +1066,7 @@ Note: `pulseMultiplayerService.Dispose()` disposes the underlying `ENetTransport
 | Movement encoding | `NetworkMessageEncoder` bit-packing (160 bits per frame) when `UseCompression` is on | `PlayerStateInput` proto with quantized fields + delta encoding (`PlayerStateDeltaTier0`) |
 | Identity | Per-room participants keyed by wallet (`LKParticipant.Identity`) | Server-assigned `PeerId uint` mapped to wallets via `PeerIdCache` |
 | Movement loss handling | Periodic full-state via send system's adaptive rate | Sequence-baselined deltas with on-demand `ResyncRequest` when a gap is detected |
-| Profile announcement trigger | `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously | One-shot at connect from `StartPulseMultiplayerStartupOperation` |
+| Profile announcement trigger | `MultiplayerProfilesSystem` calls `IProfileBroadcast.NotifyRemotes()` each update, throttled by `DebounceLiveKitProfileBroadcast`; the broadcast reads `SelfProfile.ProfileAsync` | `StartPulseMultiplayerStartupOperation` at connect, then `PropagateSelfProfileSystem` polling `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` with version dedupe in the bus |
 | Profile wire payload | Version only (`AnnounceProfileVersion`) | Version only (`ProfileVersionAnnouncement`) |
 | Disconnect semantics | `IConnectiveRoom` state machine with per-room reconnection; `DuplicateIdentity` stops the loop | Single-connection; reconnect only on `NONE` (timeout) or `GRACEFUL` disconnect reasons |
 | Voice chat | `VoiceChatActivatableConnectiveRoom` (on-demand room) | ❌ Not supported — no voice track plumbing on Pulse |

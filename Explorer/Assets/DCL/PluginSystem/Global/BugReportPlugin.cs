@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             Arch.Core.World globalWorld,
             Entity playerEntity,
