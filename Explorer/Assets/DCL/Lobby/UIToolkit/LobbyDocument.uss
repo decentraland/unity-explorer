@@ -32,13 +32,25 @@
     bottom: 0;
 }
 
-/* Darkens the stage and the figure under the whole screen, so the widgets read over any background */
+/* Drawn with the sprite's 9-slice border: a 140px soft fade, a stretched middle and a 42px opaque strip along the bottom edge */
+.lobby__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 338px;
+    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Darkens the stage and the figure under the whole screen while the layout is edited (see LobbyLayoutEditor.uss) */
 .lobby__overlay {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
+    display: none;
     background-color: rgba(0, 0, 0, 0.6);
 }
 
@@ -151,7 +163,7 @@
     display: none;
 }
 
-/* The title row of a section: the title on the left and, where there is a panel listing everything, View All on the right */
+/* The title row of a section */
 .lobby__section-header {
     height: 32px;
     flex-direction: row;
@@ -191,41 +203,6 @@
     margin-bottom: 10px;
 }
 
-.lobby__view-all {
-    flex-shrink: 0;
-    height: 28px;
-    margin: 0 0 0 10px;
-    padding: 0 10px 0 12px;
-    flex-direction: row;
-    align-items: center;
-    border-width: 0;
-    border-radius: 14px;
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: background-color 0.1s;
-}
-
-.lobby__view-all:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-.lobby__view-all:active {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.lobby__view-all-text {
-    margin-right: 6px;
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-text-align: middle-center;
-    color: var(--dcl-color-snow);
-}
-
-.lobby__view-all-icon {
-    width: 7px;
-    height: 12px;
-    background-image: url('/Assets/Textures/Common/ArrowRight.png');
-}
-
 /* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */
 .lobby__welcome-title {
     height: 60px;
@@ -239,15 +216,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--lobby-title-color);
-}
-
-.lobby__friends-online-count {
-    flex-shrink: 0;
-    margin-left: 12px;
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-regular);
-    -unity-text-align: middle-left;
-    color: var(--lobby-subtitle-color);
 }
 
 /* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 42px
@@ -308,6 +276,19 @@
 .lobby__communities-rail .lobby-rail__card,
 .lobby__gallery-rail .lobby-rail__card {
     margin-right: 11px;
+}
+
+/* The viewport bleeds the 2px of the hover outline of the photos on every side, so the outline shows whole instead of
+   clipping at the cards' edges; the padding keeps the cards in place */
+.lobby__gallery-rail .lobby-rail__viewport {
+    margin: -2px;
+    padding: 2px;
+}
+
+.lobby__gallery-rail .lobby-rail__content {
+    left: 2px;
+    top: 2px;
+    bottom: 2px;
 }
 
 /* The recent row has no dots: its cards are padded by the pager band of the rail so both rows line up along the bottom */

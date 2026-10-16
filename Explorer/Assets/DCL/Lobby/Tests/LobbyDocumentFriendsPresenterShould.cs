@@ -98,7 +98,6 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.None, section.style.display.value);
-            Assert.AreEqual("0 Online", OnlineCount().text);
         }
 
         [Test]
@@ -117,7 +116,6 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
-            Assert.AreEqual("2 Online", OnlineCount().text);
             Assert.AreEqual("Amy", card.UserName);
             Assert.AreEqual("Zed", Card(1).UserName);
             Assert.AreEqual(LOCATING, initialLocation);
@@ -211,7 +209,6 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.None, section.style.display.value);
-            Assert.AreEqual("0 Online", OnlineCount().text);
         }
 
         [Test]
@@ -255,9 +252,6 @@ namespace DCL.Lobby.Tests
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)section.Q<LobbyRailElement>()[index];
 
-        private Label OnlineCount() =>
-            section.Q<Label>("OnlineCount");
-
         private void SetOnlineUsers(params OnlineUserData[] users) =>
             onlineUsers.GetAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
                        .Returns(UniTask.FromResult<IReadOnlyCollection<OnlineUserData>>(users));
@@ -282,7 +276,6 @@ namespace DCL.Lobby.Tests
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
-            friendsSection.Add(new Label { name = "OnlineCount", text = "0 Online" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

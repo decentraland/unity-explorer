@@ -11,6 +11,11 @@
     transition-property: none;
 }
 
+/* The overlay of LobbyDocument.uss darkens the whole screen only while the layout is edited */
+.lobby--editing .lobby__overlay {
+    display: flex;
+}
+
 .lobby__layout-drag-layer {
     position: absolute;
     left: 0;
@@ -112,13 +117,13 @@
     border-width: 2px;
     border-radius: 12px;
     border-color: rgba(255, 255, 255, 0);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.02);
     transition: border-color 0.15s ease-out, background-color 0.15s ease-out, opacity 0.1s;
 }
 
 .lobby-widget-card:hover {
     border-color: rgba(255, 255, 255, 0.6);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 .lobby-widget-card--dragging {

@@ -23,7 +23,7 @@ namespace DCL.Lobby
 
         private const float ANCHOR_DOT_RADIUS = 1f;
         private const float ANCHOR_DOT_INSET = 1.5f;
-        private static readonly Color ANCHOR_DOT_COLOR = new (1f, 1f, 1f, 0.6f);
+        private static readonly Color ANCHOR_DOT_COLOR = new (1f, 1f, 1f, 0.25f);
         private static readonly Color VALID_DOT_COLOR = new (52f / 255f, 206f / 255f, 119f / 255f);
         private static readonly Color INVALID_DOT_COLOR = new (1f, 45f / 255f, 85f / 255f);
 

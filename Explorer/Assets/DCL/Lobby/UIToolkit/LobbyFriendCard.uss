@@ -124,8 +124,8 @@
 /* The pin sprite is taller than wide (36x43), so the box keeps its shape */
 .lobby-friend-card__location-icon {
     flex-shrink: 0;
-    width: 12px;
-    height: 14px;
+    width: 10px;
+    height: 12px;
     margin-right: 5px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
     -unity-background-image-tint-color: var(--lobby-subtitle-color);

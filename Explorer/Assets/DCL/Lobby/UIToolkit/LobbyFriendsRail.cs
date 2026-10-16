@@ -9,11 +9,6 @@ namespace DCL.Lobby
     /// </summary>
     public class LobbyFriendsRail : LobbyCardRail<LobbyFriendCardElement>
     {
-        private const string ONLINE_COUNT_SUFFIX = " Online";
-        private const string ONLINE_COUNT_NAME = "OnlineCount";
-
-        private int shownOnlineCount = -1;
-
         public Action<int>? CardClicked;
         public Action<int>? CardJoinClicked;
 
@@ -23,14 +18,6 @@ namespace DCL.Lobby
         {
             card.Clicked = () => CardClicked?.Invoke(index);
             card.JoinClicked = () => CardJoinClicked?.Invoke(index);
-        }
-
-        protected override void OnCountChanged(int count)
-        {
-            if (count == shownOnlineCount) return;
-
-            section!.Q<Label>(ONLINE_COUNT_NAME).text = string.Concat(count.ToString(), ONLINE_COUNT_SUFFIX);
-            shownOnlineCount = count;
         }
     }
 }
