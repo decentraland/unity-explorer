@@ -176,5 +176,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ChainRpc = 106,
 
         LodAssetBundlesCDN = 107,
+
+        CastPresenterService = 108,
     }
 }
