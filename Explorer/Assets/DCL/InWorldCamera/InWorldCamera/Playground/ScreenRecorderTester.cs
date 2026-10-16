@@ -95,6 +95,7 @@ namespace DCL.InWorldCamera.Playground
                         new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false)
                 ),
                 web3IdentityCache,
+                realmData,
                 new EquippedWearables(),
                 new WearableStorage(),
                 new MemoryEmotesStorage(),

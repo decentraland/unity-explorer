@@ -9,6 +9,7 @@ using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -43,6 +44,7 @@ namespace DCL.Profiles.Tests
         private IProfileRepository profileRepository = null!;
         private IProfileCache profileCache = null!;
         private MemoryWeb3IdentityCache identityCache = null!;
+        private IRealmData realmData = null!;
         private IWearableStorage wearableStorage = null!;
         private IEmoteStorage emoteStorage = null!;
         private IEquippedWearables equippedWearables = null!;
@@ -61,6 +63,7 @@ namespace DCL.Profiles.Tests
             profileRepository = Substitute.For<IProfileRepository>();
             profileCache = Substitute.For<IProfileCache>();
             identityCache = new MemoryWeb3IdentityCache();
+            realmData = new IRealmData.Fake();
             wearableStorage = Substitute.For<IWearableStorage>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             emoteStorage.BaseEmotesUrns.Returns(new List<URN> { BASE_EMOTE });
@@ -143,6 +146,23 @@ namespace DCL.Profiles.Tests
             Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
             Assert.That(msg.Address, Is.EqualTo(ALICE));
             Assert.That(msg.Failure.Exception, Is.SameAs(error));
+        }
+
+        [Test]
+        public void HoldTheFetchUntilTheRealmIsConfigured()
+        {
+            // Arrange
+            realmData = Substitute.For<IRealmData>();
+            realmData.Configured.Returns(false);
+            executor.Dispose();
+            executor = NewExecutor(new ForcedWearables());
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
+            Assert.That(inbox.Sent, Is.Empty);
         }
 
         [Test]
@@ -655,7 +675,7 @@ namespace DCL.Profiles.Tests
         }
 
         private SelfProfileCmdExecutor NewExecutor(ForcedWearables forcedWearables) =>
-            new (profileRepository, profileCache, identityCache, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
+            new (profileRepository, profileCache, identityCache, realmData, wearableStorage, emoteStorage, equippedWearables, equippedEmotes,
                 forcedWearables, forcedEmotes: null, world, playerEntity);
 
         private static IWeb3Identity NewIdentity(LoginMethod method)
