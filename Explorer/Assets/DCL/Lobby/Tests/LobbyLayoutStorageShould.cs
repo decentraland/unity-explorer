@@ -60,7 +60,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void PutTheRequiredWidgetBackIntoAStoredLayoutWithoutIt()
+        public void LoadAStoredEmptyLayoutAsEmpty()
         {
             //Arrange
             layout.Clear();
@@ -71,10 +71,7 @@ namespace DCL.Lobby.Tests
             LobbyLayoutStorage.Load(layout);
 
             //Assert
-            Assert.AreEqual(1, layout.Placements.Count, "Only the required widget is put back");
-            Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out LobbyWidgetPlacement placement));
-            Assert.AreEqual(LobbyGridCorner.TopLeft, placement.Corner);
-            Assert.AreEqual(Vector2Int.zero, placement.Cell);
+            Assert.AreEqual(0, layout.Placements.Count, "A stored layout without widgets is not the default one");
         }
 
         [Test]
@@ -93,10 +90,9 @@ namespace DCL.Lobby.Tests
             LobbyLayoutStorage.Load(layout);
 
             //Assert
-            Assert.AreEqual(2, layout.Placements.Count, "The known entry and the required widget put back");
+            Assert.AreEqual(1, layout.Placements.Count, "Only the known entry");
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn7By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.BottomRight, placement.Corner);
-            Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out _));
         }
 
         [Test]

@@ -12,9 +12,6 @@ namespace DCL.Lobby
     {
         public const int CORNER_COUNT = 4;
 
-        /// <summary>The widget no layout goes without; <see cref="EnsureRequiredWidget" /> puts it back.</summary>
-        public const LobbyWidgetId REQUIRED_WIDGET = LobbyWidgetId.Landing4By3;
-
         private static readonly LobbyWidgetPlacement[] DEFAULT_PLACEMENTS =
         {
             new (LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0)),
@@ -110,22 +107,6 @@ namespace DCL.Lobby
                 LobbyWidgetPlacement placement = DEFAULT_PLACEMENTS[i];
                 TryPlace(placement.WidgetId, placement.Corner, placement.Cell);
             }
-        }
-
-        /// <summary>
-        ///     Places <see cref="REQUIRED_WIDGET" /> at its shipped cell if it is not placed, the widgets in its way making
-        ///     room as <see cref="TryPlacePushing" /> resolves; when they cannot, the whole layout goes back to the shipped
-        ///     one.
-        /// </summary>
-        public void EnsureRequiredWidget()
-        {
-            if (IndexOf(REQUIRED_WIDGET) >= 0)
-                return;
-
-            LobbyWidgetPlacement shipped = ShippedPlacement(REQUIRED_WIDGET);
-
-            if (!TryPlacePushing(shipped.WidgetId, shipped.Corner, shipped.Cell))
-                ResetToDefault();
         }
 
         /// <summary>
@@ -267,15 +248,6 @@ namespace DCL.Lobby
                     return i;
 
             return -1;
-        }
-
-        private static LobbyWidgetPlacement ShippedPlacement(LobbyWidgetId widgetId)
-        {
-            for (var i = 0; i < DEFAULT_PLACEMENTS.Length; i++)
-                if (DEFAULT_PLACEMENTS[i].WidgetId == widgetId)
-                    return DEFAULT_PLACEMENTS[i];
-
-            throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, "The widget is not in the shipped layout");
         }
 
         /// <summary>

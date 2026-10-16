@@ -374,17 +374,6 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void GiveTheRequiredWidgetNoRemoveButton()
-        {
-            //Act
-            editor.Show(root);
-
-            //Assert
-            Assert.IsNull(Handle(LobbyLayout.REQUIRED_WIDGET).Q<Button>("Remove"), "The landing stays on a grid");
-            Assert.IsNotNull(Handle(LobbyWidgetId.FriendsOnline4By2).Q<Button>("Remove"));
-        }
-
-        [Test]
         public void PutTheShippedLayoutUpOnReset()
         {
             //Arrange

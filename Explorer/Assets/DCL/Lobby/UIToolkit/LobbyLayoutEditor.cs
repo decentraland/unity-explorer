@@ -13,8 +13,7 @@ namespace DCL.Lobby
     ///     drop takes only when the whole widget fits inside one grid; the widgets in its way make room by moving off the
     ///     side it covers, and they slide to where they would go, without their handles, while the drag hovers over them.
     ///     A release of a placed widget with the pointer over the modal takes it off its grid, as does the button in the
-    ///     corner of its handle; <see cref="LobbyLayout.REQUIRED_WIDGET" /> has no such button and never targets the
-    ///     modal. Any other release leaves every widget where it was. Every change shows at once but is
+    ///     corner of its handle. Any other release leaves every widget where it was. Every change shows at once but is
     ///     stored only by the Save button of the modal, which leaves edit mode; Cancel and the Back button of the header,
     ///     like <see cref="Hide" />, put the layout back as it was on entry, and Reset to Default puts the shipped layout
     ///     up for saving.
@@ -104,7 +103,7 @@ namespace DCL.Lobby
             {
                 LobbyWidgetId widgetId = WIDGETS[i];
 
-                handles[(int)widgetId] = new LobbyWidgetHandleElement(widgetId, removable: widgetId != LobbyLayout.REQUIRED_WIDGET)
+                handles[(int)widgetId] = new LobbyWidgetHandleElement(widgetId)
                 {
                     name = widgetId.ToString(),
                     DragStarted = OnHandleDragStarted,
@@ -466,15 +465,14 @@ namespace DCL.Lobby
         }
 
         // The modal is the target of a placed widget while the pointer is over it, as it is far smaller than most
-        // widgets; an unplaced one has nothing to leave and the required widget never leaves, so neither targets the
-        // modal. Otherwise the grid under the middle of the lifted widget is the target. The cell nearest to the top-left
-        // corner of the widget must then hold the whole widget inside that grid, so a widget straddling two grids has no
-        // valid cell
+        // widgets; an unplaced one has nothing to leave, so it never targets the modal. Otherwise the grid under the
+        // middle of the lifted widget is the target. The cell nearest to the top-left corner of the widget must then
+        // hold the whole widget inside that grid, so a widget straddling two grids has no valid cell
         private void UpdateTarget(Vector2 panelPosition)
         {
             Vector2Int span = draggedWidgetId.Span();
             Vector2 topLeft = panelPosition - grabOffset;
-            bool overModal = draggedHandle != null && draggedWidgetId != LobbyLayout.REQUIRED_WIDGET && RequireModal().worldBound.Contains(panelPosition);
+            bool overModal = draggedHandle != null && RequireModal().worldBound.Contains(panelPosition);
             LobbyGridElement? grid = overModal ? null : GridAt(topLeft + (LobbyGridElement.SpanToSize(span) * 0.5f));
             SetTargetModal(overModal);
 
