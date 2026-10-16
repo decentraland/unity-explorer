@@ -238,13 +238,11 @@
 }
 
 .lobby-profile-menu__sign-out-icon {
-    background-image: url('/Assets/Textures/Common/LogOutIcn.png');
+    background-image: url('/Assets/Textures/Common/SignOutIcn.png');
 }
 
-/* The door sits left of centre in the texture, so it is nudged right to line up with the other glyphs */
 .lobby-profile-menu__exit-icon {
-    background-image: url('/Assets/DCL/Communities/Textures/LeaveIcon.png');
-    translate: 2px 0;
+    background-image: url('/Assets/Textures/Common/LeaveIcon.png');
 }
 
 /* Negative margins reach the panel edges; the panel clips the corners */
