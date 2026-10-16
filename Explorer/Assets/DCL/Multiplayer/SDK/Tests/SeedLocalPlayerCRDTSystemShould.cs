@@ -9,8 +9,6 @@ using DCL.Profiles;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -18,11 +16,11 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-        private World globalWorld;
+        private World globalWorld = null!;
         private Entity localPlayerEntity;
         private Entity persistentPlayerEntity;
         private PersistentEntities persistentEntities;
-        private CharacterDataPropagationUtility characterDataPropagationUtility;
+        private CharacterDataPropagationUtility characterDataPropagationUtility = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -67,7 +65,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
 
-            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile sdkProfile));
+            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile? sdkProfile));
             Assert.AreEqual(FAKE_USER_ID, sdkProfile!.UserId);
         }
 

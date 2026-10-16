@@ -9,7 +9,6 @@ using DCL.PluginSystem.World;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
-using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
