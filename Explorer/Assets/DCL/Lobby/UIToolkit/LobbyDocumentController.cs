@@ -353,7 +353,7 @@ namespace DCL.Lobby
             landingCard.JumpInClicked = OnLandingJumpInClicked;
             viewInstance.GoToField.Submitted = OnGoToSubmitted;
 
-            // The four-column sections list the same places as the six-column ones, so their rails share the lists
+            // The four-column sections list the same places as the seven-column ones, so their rails share the lists
             recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
             recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
             featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
@@ -368,13 +368,13 @@ namespace DCL.Lobby
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
 
-            // The four-column rail lists the same communities as the six-column one
+            // The four-column rail lists the same communities as the seven-column one
             communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
             communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
             communitiesRail.Show(viewInstance.Communities);
             communities4By2Rail.Show(viewInstance.Communities4By2);
 
-            // The four-column rail lists the same photos as the six-column one
+            // The four-column rail lists the same photos as the seven-column one
             galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
             gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
             galleryRail.Show(viewInstance.Gallery);

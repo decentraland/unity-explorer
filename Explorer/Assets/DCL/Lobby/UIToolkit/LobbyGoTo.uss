@@ -3,9 +3,7 @@
 .lobby-goto {
     flex-direction: row;
     align-items: center;
-    width: 440px;
     height: 46px;
-    margin-left: 10px;
     padding: 0 11px 0 20px;
     border-width: 1px;
     border-radius: 23px;

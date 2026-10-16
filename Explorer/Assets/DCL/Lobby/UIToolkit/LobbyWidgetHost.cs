@@ -55,13 +55,13 @@ namespace DCL.Lobby
             sections[(int)LobbyWidgetId.LiveEvents3By3] = Find<VisualElement>(root, LIVE_EVENTS_NAME);
             sections[(int)LobbyWidgetId.UpcomingEvents3By2] = Find<VisualElement>(root, UPCOMING_EVENTS_NAME);
             sections[(int)LobbyWidgetId.FriendsOnline4By2] = Find<VisualElement>(root, FRIENDS_NAME);
-            sections[(int)LobbyWidgetId.JumpBackIn6By2] = Find<VisualElement>(root, RECENT_PLACES_NAME);
-            sections[(int)LobbyWidgetId.RecommendedPlaces6By2] = Find<VisualElement>(root, FEATURED_PLACES_NAME);
+            sections[(int)LobbyWidgetId.JumpBackIn7By2] = Find<VisualElement>(root, RECENT_PLACES_NAME);
+            sections[(int)LobbyWidgetId.RecommendedPlaces7By2] = Find<VisualElement>(root, FEATURED_PLACES_NAME);
             sections[(int)LobbyWidgetId.JumpBackIn4By2] = Find<VisualElement>(root, RECENT_PLACES_4_BY_2_NAME);
             sections[(int)LobbyWidgetId.RecommendedPlaces4By2] = Find<VisualElement>(root, FEATURED_PLACES_4_BY_2_NAME);
-            sections[(int)LobbyWidgetId.Communities6By2] = Find<VisualElement>(root, COMMUNITIES_NAME);
+            sections[(int)LobbyWidgetId.Communities7By2] = Find<VisualElement>(root, COMMUNITIES_NAME);
             sections[(int)LobbyWidgetId.Communities4By2] = Find<VisualElement>(root, COMMUNITIES_4_BY_2_NAME);
-            sections[(int)LobbyWidgetId.Gallery6By2] = Find<VisualElement>(root, GALLERY_NAME);
+            sections[(int)LobbyWidgetId.Gallery7By2] = Find<VisualElement>(root, GALLERY_NAME);
             sections[(int)LobbyWidgetId.Gallery4By2] = Find<VisualElement>(root, GALLERY_4_BY_2_NAME);
             sections[(int)LobbyWidgetId.GoTo4By1] = Find<VisualElement>(root, GO_TO_NAME);
 

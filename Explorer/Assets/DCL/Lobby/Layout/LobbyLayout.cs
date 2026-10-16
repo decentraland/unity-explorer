@@ -21,8 +21,8 @@ namespace DCL.Lobby
             new (LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 3)),
             new (LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopRight, new Vector2Int(1, 0)),
             new (LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopRight, new Vector2Int(1, 3)),
-            new (LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0)),
-            new (LobbyWidgetId.RecommendedPlaces6By2, LobbyGridCorner.BottomRight, new Vector2Int(0, 0)),
+            new (LobbyWidgetId.JumpBackIn7By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0)),
+            new (LobbyWidgetId.RecommendedPlaces7By2, LobbyGridCorner.BottomRight, new Vector2Int(0, 0)),
         };
 
         /// <summary>Down, right, up and left in grid space; the order breaks ties between equally cheap pushes.</summary>

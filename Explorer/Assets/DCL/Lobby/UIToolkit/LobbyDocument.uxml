@@ -50,8 +50,8 @@
         <!-- The grids the widget sections are moved onto at runtime (see LobbyWidgetHost); the top ones stop short of the avatar -->
         <DCL.Lobby.LobbyGridElement name="TopLeftGrid" class="lobby__grid lobby__grid--top-left" corner="TopLeft" columns="4" rows="6" picking-mode="Ignore" />
         <DCL.Lobby.LobbyGridElement name="TopRightGrid" class="lobby__grid lobby__grid--top-right" corner="TopRight" columns="4" rows="6" picking-mode="Ignore" />
-        <DCL.Lobby.LobbyGridElement name="BottomLeftGrid" class="lobby__grid lobby__grid--bottom-left" corner="BottomLeft" columns="6" rows="2" picking-mode="Ignore" />
-        <DCL.Lobby.LobbyGridElement name="BottomRightGrid" class="lobby__grid lobby__grid--bottom-right" corner="BottomRight" columns="6" rows="2" picking-mode="Ignore" />
+        <DCL.Lobby.LobbyGridElement name="BottomLeftGrid" class="lobby__grid lobby__grid--bottom-left" corner="BottomLeft" columns="7" rows="2" picking-mode="Ignore" />
+        <DCL.Lobby.LobbyGridElement name="BottomRightGrid" class="lobby__grid lobby__grid--bottom-right" corner="BottomRight" columns="7" rows="2" picking-mode="Ignore" />
         <!-- The sections start here and the host moves the placed ones onto their grid; whatever stays here is never drawn -->
         <ui:VisualElement name="UnplacedWidgets" class="lobby__unplaced-widgets" picking-mode="Ignore">
             <ui:VisualElement name="Welcome" class="lobby__widget lobby__welcome" picking-mode="Ignore">
@@ -84,11 +84,11 @@
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
             <!-- The four-column versions of the places sections list the same places, two cards wide -->
-            <ui:VisualElement name="RecentPlaces4x2" class="lobby__widget lobby__places" style="display: none;">
+            <ui:VisualElement name="RecentPlaces4x2" class="lobby__widget lobby__widget--narrow lobby__places" style="display: none;">
                 <ui:Label name="Title" text="Jump Back In" class="lobby__places-title" picking-mode="Ignore" />
                 <ui:VisualElement name="Cards" class="lobby__places-row" />
             </ui:VisualElement>
-            <ui:VisualElement name="FeaturedPlaces4x2" class="lobby__widget lobby__places" style="display: none;">
+            <ui:VisualElement name="FeaturedPlaces4x2" class="lobby__widget lobby__widget--narrow lobby__places" style="display: none;">
                 <ui:Label name="Title" text="Recommended Places" class="lobby__places-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail lobby__places-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
@@ -97,7 +97,7 @@
                 <ui:Label name="Title" text="My Communities" class="lobby__communities-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <ui:VisualElement name="Communities4x2" class="lobby__widget lobby__communities" style="display: none;">
+            <ui:VisualElement name="Communities4x2" class="lobby__widget lobby__widget--narrow lobby__communities" style="display: none;">
                 <ui:Label name="Title" text="My Communities" class="lobby__communities-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail lobby__communities-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
@@ -106,7 +106,7 @@
                 <ui:Label name="Title" text="My Gallery" class="lobby__gallery-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__gallery-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <ui:VisualElement name="Gallery4x2" class="lobby__widget lobby__gallery" style="display: none;">
+            <ui:VisualElement name="Gallery4x2" class="lobby__widget lobby__widget--narrow lobby__gallery" style="display: none;">
                 <ui:Label name="Title" text="My Gallery" class="lobby__gallery-title" picking-mode="Ignore" />
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__gallery-rail lobby__gallery-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>

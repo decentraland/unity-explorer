@@ -9,7 +9,7 @@ namespace DCL.Lobby.Tests
     public class LobbyLayoutStorageShould
     {
         private static readonly Vector2Int TOP_GRID = new (4, 6);
-        private static readonly Vector2Int BOTTOM_GRID = new (6, 2);
+        private static readonly Vector2Int BOTTOM_GRID = new (7, 2);
 
         private static readonly FieldInfo PREFS_FIELD = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
 
@@ -48,7 +48,7 @@ namespace DCL.Lobby.Tests
             //Arrange
             layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 1));
             layout.TryPlace(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopRight, new Vector2Int(0, 2));
-            layout.TryPlace(LobbyWidgetId.RecommendedPlaces6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.RecommendedPlaces7By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
             var loaded = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
 
             //Act
@@ -87,14 +87,14 @@ namespace DCL.Lobby.Tests
                 "{\"Corner\":\"Middle\",\"Widget\":\"LiveEvents3By3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"7\",\"Widget\":\"Landing4By3\",\"X\":0,\"Y\":0}," +
                 "{\"Corner\":\"TopLeft\",\"Widget\":\"42\",\"X\":0,\"Y\":0}," +
-                "{\"Corner\":\"BottomRight\",\"Widget\":\"JumpBackIn6By2\",\"X\":0,\"Y\":0}]}");
+                "{\"Corner\":\"BottomRight\",\"Widget\":\"JumpBackIn7By2\",\"X\":0,\"Y\":0}]}");
 
             //Act
             LobbyLayoutStorage.Load(layout);
 
             //Assert
             Assert.AreEqual(2, layout.Placements.Count, "The known entry and the required widget put back");
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6By2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn7By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.BottomRight, placement.Corner);
             Assert.IsTrue(layout.TryGetPlacement(LobbyLayout.REQUIRED_WIDGET, out _));
         }

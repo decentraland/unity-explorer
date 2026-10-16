@@ -19,7 +19,7 @@
     bottom: 0;
 }
 
-/* Under the lifted widget, reaching past its cells like a handle: the handle frame, brighter */
+/* Under the lifted widget, along its cells like a handle: the handle frame, brighter */
 .lobby-drag-frame {
     position: absolute;
     border-width: 2px;
@@ -210,11 +210,12 @@
 }
 
 /* Stand-in of a widget off the grids (LobbyWidgetPreviewElement), lifted while dragged off its row: its title over blank
-   cards at the size of its span, laid out like a section so the drag frame fits around it */
+   cards at the size of its span, laid out and inset like a section so the drag frame fits around it */
 .lobby-widget-preview {
     position: absolute;
     left: 0;
     top: 0;
+    padding: var(--lobby-widget-inset);
 }
 
 .lobby-widget-preview__title {
@@ -246,18 +247,17 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Over the avatar, between the top grids and as tall as them (640px, their six rows of cells). The design draws it 598px
-   wide between 472px grids; the 136px cells make the grids 568px, so it is narrowed to leave the same room on each side.
-   It goes green while a dragged widget would drop into it */
+/* Over the avatar, between the top grids and as tall as them (694px, their six rows of cells). It goes green while a
+   dragged widget would drop into it */
 .lobby__widget-modal {
     display: none;
     position: absolute;
     left: 50%;
-    top: var(--lobby-columns-top);
-    width: 480px;
-    height: 640px;
+    top: var(--lobby-grid-top);
+    width: 598px;
+    height: 694px;
     translate: -50% 0;
-    padding: 40px 36px;
+    padding: 40px 60px;
     border-width: 1px;
     border-radius: 24px;
     border-color: rgba(255, 255, 255, 0.1);
@@ -366,7 +366,7 @@
 }
 
 .lobby__widget-modal-button--fixed {
-    width: 110px;
+    width: 120px;
     margin-left: 12px;
     padding: 0;
 }

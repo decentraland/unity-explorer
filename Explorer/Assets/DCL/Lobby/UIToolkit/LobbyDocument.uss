@@ -1,8 +1,12 @@
-/* Layout of the uGUI lobby (LobbyUI.prefab) at 1920x1080: 50px margins, a 100px header band and the side columns at 180px */
+/* Layout of the lobby at 1920x1080: the 50px side margins of the uGUI lobby (LobbyUI.prefab) and the vertical anchors of the
+   design, the top grids 31px under the top bar and the bottom ones 26px off the bottom edge. The widgets keep their content
+   10px inside their cells, so the grids sit that much further out sideways for the content to land on the margins */
 :root {
     --lobby-margin: 50px;
-    --lobby-columns-top: 180px;
-    --lobby-bottom-margin: 13px;
+    --lobby-widget-inset: 10px;
+    --lobby-grid-margin: 40px;
+    --lobby-grid-top: 104px;
+    --lobby-bottom-margin: 26px;
     --lobby-card-color: rgba(20, 20, 26, 0.9);
     --lobby-card-border-color: rgba(255, 255, 255, 0.1);
     --lobby-title-color: white;
@@ -102,31 +106,41 @@
     background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
 }
 
-/* The grids size themselves from their cells; each one is pinned to its corner, the bottom ones as low as the places were */
+/* The grids size themselves from their cells; each one is pinned to its corner */
 .lobby__grid--top-left {
-    left: var(--lobby-margin);
-    top: var(--lobby-columns-top);
+    left: var(--lobby-grid-margin);
+    top: var(--lobby-grid-top);
 }
 
 .lobby__grid--top-right {
-    right: var(--lobby-margin);
-    top: var(--lobby-columns-top);
+    right: var(--lobby-grid-margin);
+    top: var(--lobby-grid-top);
 }
 
 .lobby__grid--bottom-left {
-    left: var(--lobby-margin);
+    left: var(--lobby-grid-margin);
     bottom: var(--lobby-bottom-margin);
 }
 
 .lobby__grid--bottom-right {
-    right: var(--lobby-margin);
+    right: var(--lobby-grid-margin);
     bottom: var(--lobby-bottom-margin);
 }
 
-/* A widget section is placed by LobbyWidgetHost: its left, top, width and height are inline, from its cell and its span, so
-   its content has to fit the cells (the title rows and the rails below add up to the span) */
+/* A widget section is placed by LobbyWidgetHost: its left, top, width and height are inline, from its cell and its span.
+   The inset keeps the content off the edges of the cells, which the edit-mode frame runs along, so the content has to
+   fit the cells less the inset (the title rows and the rails below add up to the span) */
 .lobby__widget {
     position: absolute;
+    padding: var(--lobby-widget-inset);
+}
+
+/* The four-column sections show two cards in the room of the seven-column ones' three: the cards of both fill their row,
+   so they are narrower in the four-column ones (441px holds two, 790px holds three, 11px apart) */
+.lobby__widget--narrow .lobby-place-card,
+.lobby__widget--narrow .lobby-community-card,
+.lobby__widget--narrow .lobby-gallery-card {
+    width: 215px;
 }
 
 .lobby__unplaced-widgets {
@@ -144,12 +158,18 @@
     color: var(--lobby-title-color);
 }
 
-.lobby__friends-title,
+.lobby__friends-title {
+    height: 30px;
+    -unity-text-align: middle-left;
+}
+
+/* The label is as tall as its font, the glyphs overflowing it; the cards start 32px under the title, as the design has it */
 .lobby__places-title,
 .lobby__communities-title,
 .lobby__gallery-title {
-    height: 30px;
-    -unity-text-align: middle-left;
+    height: 24px;
+    margin-bottom: 8px;
+    -unity-text-align: upper-left;
 }
 
 .lobby__welcome-title,
@@ -182,9 +202,10 @@
 /* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 32px
    pager band of LobbyRail.uss */
 
-/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps */
+/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps; spaced off the 30px header
+   so the cards sit where the design has them */
 .lobby__friends-rail {
-    margin-top: 2px;
+    margin-top: 16px;
     width: 439px;
     height: 149px;
 }
@@ -193,7 +214,6 @@
     margin-right: 9px;
 }
 
-/* Lets the upcoming events fit the two rows of their section */
 .lobby__events-title {
     margin-bottom: 8px;
 }
@@ -214,12 +234,14 @@
     left: 6px;
 }
 
+/* With the title band it fills the two rows of its section */
 .lobby__upcoming-events-rail {
     width: 326px;
     height: 171px;
 }
 
-/* The communities and gallery rails share the metrics as their cards are the size of the place cards */
+/* With the title band it fills the two rows of its section; the communities and gallery rails share the metrics as their
+   cards are the size of the place cards */
 .lobby__places-rail,
 .lobby__communities-rail,
 .lobby__gallery-rail {
@@ -230,7 +252,7 @@
 .lobby__places-rail--4x2,
 .lobby__communities-rail--4x2,
 .lobby__gallery-rail--4x2 {
-    width: 523px;
+    width: 441px;
 }
 
 .lobby__places-rail .lobby-rail__card,

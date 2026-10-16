@@ -8,10 +8,10 @@ namespace DCL.Lobby
         private static readonly LobbyWidgetId[] LIVE_EVENTS = { LobbyWidgetId.LiveEvents3By3 };
         private static readonly LobbyWidgetId[] UPCOMING_EVENTS = { LobbyWidgetId.UpcomingEvents3By2 };
         private static readonly LobbyWidgetId[] FRIENDS_ONLINE = { LobbyWidgetId.FriendsOnline4By2 };
-        private static readonly LobbyWidgetId[] JUMP_BACK_IN = { LobbyWidgetId.JumpBackIn6By2, LobbyWidgetId.JumpBackIn4By2 };
-        private static readonly LobbyWidgetId[] RECOMMENDED_PLACES = { LobbyWidgetId.RecommendedPlaces6By2, LobbyWidgetId.RecommendedPlaces4By2 };
-        private static readonly LobbyWidgetId[] COMMUNITIES = { LobbyWidgetId.Communities6By2, LobbyWidgetId.Communities4By2 };
-        private static readonly LobbyWidgetId[] GALLERY = { LobbyWidgetId.Gallery6By2, LobbyWidgetId.Gallery4By2 };
+        private static readonly LobbyWidgetId[] JUMP_BACK_IN = { LobbyWidgetId.JumpBackIn7By2, LobbyWidgetId.JumpBackIn4By2 };
+        private static readonly LobbyWidgetId[] RECOMMENDED_PLACES = { LobbyWidgetId.RecommendedPlaces7By2, LobbyWidgetId.RecommendedPlaces4By2 };
+        private static readonly LobbyWidgetId[] COMMUNITIES = { LobbyWidgetId.Communities7By2, LobbyWidgetId.Communities4By2 };
+        private static readonly LobbyWidgetId[] GALLERY = { LobbyWidgetId.Gallery7By2, LobbyWidgetId.Gallery4By2 };
         private static readonly LobbyWidgetId[] GO_TO = { LobbyWidgetId.GoTo4By1 };
 
         /// <summary>The sizes of the family, the first one being the one it takes when none is picked.</summary>
@@ -37,13 +37,13 @@ namespace DCL.Lobby
                 LobbyWidgetId.LiveEvents3By3 => LobbyWidgetFamily.LiveEvents,
                 LobbyWidgetId.UpcomingEvents3By2 => LobbyWidgetFamily.UpcomingEvents,
                 LobbyWidgetId.FriendsOnline4By2 => LobbyWidgetFamily.FriendsOnline,
-                LobbyWidgetId.JumpBackIn6By2 => LobbyWidgetFamily.JumpBackIn,
+                LobbyWidgetId.JumpBackIn7By2 => LobbyWidgetFamily.JumpBackIn,
                 LobbyWidgetId.JumpBackIn4By2 => LobbyWidgetFamily.JumpBackIn,
-                LobbyWidgetId.RecommendedPlaces6By2 => LobbyWidgetFamily.RecommendedPlaces,
+                LobbyWidgetId.RecommendedPlaces7By2 => LobbyWidgetFamily.RecommendedPlaces,
                 LobbyWidgetId.RecommendedPlaces4By2 => LobbyWidgetFamily.RecommendedPlaces,
-                LobbyWidgetId.Communities6By2 => LobbyWidgetFamily.Communities,
+                LobbyWidgetId.Communities7By2 => LobbyWidgetFamily.Communities,
                 LobbyWidgetId.Communities4By2 => LobbyWidgetFamily.Communities,
-                LobbyWidgetId.Gallery6By2 => LobbyWidgetFamily.Gallery,
+                LobbyWidgetId.Gallery7By2 => LobbyWidgetFamily.Gallery,
                 LobbyWidgetId.Gallery4By2 => LobbyWidgetFamily.Gallery,
                 LobbyWidgetId.GoTo4By1 => LobbyWidgetFamily.GoTo,
                 _ => throw new ArgumentOutOfRangeException(nameof(widgetId), widgetId, null),

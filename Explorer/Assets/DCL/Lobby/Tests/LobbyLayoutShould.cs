@@ -8,7 +8,7 @@ namespace DCL.Lobby.Tests
     public class LobbyLayoutShould
     {
         private static readonly Vector2Int TOP_GRID = new (4, 6);
-        private static readonly Vector2Int BOTTOM_GRID = new (6, 2);
+        private static readonly Vector2Int BOTTOM_GRID = new (7, 2);
 
         private LobbyLayout layout = null!;
         private List<LobbyWidgetPlacement> pushed = null!;
@@ -110,17 +110,17 @@ namespace DCL.Lobby.Tests
         public void RemoveAPlacement()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn7By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
-            bool removed = layout.Remove(LobbyWidgetId.JumpBackIn6By2);
-            bool removedAgain = layout.Remove(LobbyWidgetId.JumpBackIn6By2);
+            bool removed = layout.Remove(LobbyWidgetId.JumpBackIn7By2);
+            bool removedAgain = layout.Remove(LobbyWidgetId.JumpBackIn7By2);
 
             //Assert
             Assert.IsTrue(removed);
             Assert.IsFalse(removedAgain);
             Assert.AreEqual(0, layout.Placements.Count);
-            Assert.IsTrue(layout.IsFree(LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), LobbyWidgetId.JumpBackIn6By2.Span()));
+            Assert.IsTrue(layout.IsFree(LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), LobbyWidgetId.JumpBackIn7By2.Span()));
         }
 
         [Test]
@@ -241,6 +241,7 @@ namespace DCL.Lobby.Tests
         public void PushSidewaysOnAGridTooShortToPushDown()
         {
             //Arrange
+            layout = new LobbyLayout(TOP_GRID, TOP_GRID, new Vector2Int(6, 2), BOTTOM_GRID);
             layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
@@ -250,7 +251,7 @@ namespace DCL.Lobby.Tests
             Assert.IsFalse(resolved, "Right would leave a six-column grid and down a two-row one");
 
             //Act
-            layout = new LobbyLayout(TOP_GRID, TOP_GRID, new Vector2Int(7, 2), BOTTOM_GRID);
+            layout = new LobbyLayout(TOP_GRID, TOP_GRID, BOTTOM_GRID, BOTTOM_GRID);
             layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
             resolved = layout.TryResolvePush(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0), pushed);
 
@@ -321,7 +322,7 @@ namespace DCL.Lobby.Tests
             layout.TryPlace(LobbyWidgetId.LiveEvents3By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0));
             layout.TryPlace(LobbyWidgetId.UpcomingEvents3By2, LobbyGridCorner.TopLeft, new Vector2Int(4, 0));
             layout.TryPlace(LobbyWidgetId.FriendsOnline4By2, LobbyGridCorner.TopLeft, new Vector2Int(0, 6));
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn7By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
             bool resolved = layout.TryResolvePush(LobbyWidgetId.Landing4By3, LobbyGridCorner.TopLeft, new Vector2Int(0, 0), pushed);
@@ -459,7 +460,7 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.IsTrue(found);
-            Assert.AreEqual(new Vector2Int(3, 1), cell);
+            Assert.AreEqual(new Vector2Int(4, 1), cell);
         }
 
         [Test]
@@ -487,7 +488,7 @@ namespace DCL.Lobby.Tests
         public void FailToSnapWhenTheGridIsFull()
         {
             //Arrange
-            layout.TryPlace(LobbyWidgetId.JumpBackIn6By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
+            layout.TryPlace(LobbyWidgetId.JumpBackIn7By2, LobbyGridCorner.BottomLeft, new Vector2Int(0, 0));
 
             //Act
             bool found = layout.TryFindSnapCell(LobbyGridCorner.BottomLeft, new Vector2Int(1, 1), new Vector2(2f, 1f), out _);
@@ -510,8 +511,8 @@ namespace DCL.Lobby.Tests
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.FriendsOnline4By2, out LobbyWidgetPlacement friends));
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.LiveEvents3By3, out LobbyWidgetPlacement liveEvents));
             Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.UpcomingEvents3By2, out LobbyWidgetPlacement upcomingEvents));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn6By2, out LobbyWidgetPlacement recent));
-            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6By2, out LobbyWidgetPlacement featured));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.JumpBackIn7By2, out LobbyWidgetPlacement recent));
+            Assert.IsTrue(layout.TryGetPlacement(LobbyWidgetId.RecommendedPlaces7By2, out LobbyWidgetPlacement featured));
             Assert.AreEqual(LobbyGridCorner.TopLeft, landing.Corner);
             Assert.AreEqual(LobbyGridCorner.TopLeft, friends.Corner);
             Assert.AreEqual(LobbyGridCorner.TopRight, liveEvents.Corner);

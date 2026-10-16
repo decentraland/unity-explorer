@@ -4,24 +4,25 @@ using UnityEngine.UIElements;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     One of the four corner grids the widgets sit on. The cell unit is shared by every grid and lives here; the UXML
+    ///     One of the four corner grids the widgets sit on. The cell unit, the square cell of the design, is shared by every grid and lives here; the UXML
     ///     declares the corner and the cells of each grid and the element sizes itself from them. While editing, a backdrop
-    ///     tints the area of the grid and anchor dots are drawn at the corners of every cell; the dots of the cells a drop
-    ///     would take are tinted by whether it can take them.
+    ///     tints the area of the grid and anchor dots are drawn just inside the corners of every cell, so the dots of
+    ///     neighbouring cells stay apart across the gutter; the dots of the cells a drop would take are tinted by whether it
+    ///     can take them.
     /// </summary>
     [UxmlElement]
     public partial class LobbyGridElement : VisualElement
     {
-        public const float CELL_WIDTH = 136f;
-        public const float CELL_HEIGHT = 100f;
-        public const float GUTTER = 8f;
+        public const float CELL_SIZE = 114f;
+        public const float GUTTER = 2f;
 
         private const string USS_BLOCK = "lobby-grid";
         private const string USS_HIGHLIGHTED = USS_BLOCK + "--highlighted";
         private const string USS_EDITING = USS_BLOCK + "--editing";
         private const string USS_BACKDROP = USS_BLOCK + "__backdrop";
 
-        private const float ANCHOR_DOT_RADIUS = 2.5f;
+        private const float ANCHOR_DOT_RADIUS = 1f;
+        private const float ANCHOR_DOT_INSET = 1.5f;
         private static readonly Color ANCHOR_DOT_COLOR = new (1f, 1f, 1f, 0.6f);
         private static readonly Color VALID_DOT_COLOR = new (52f / 255f, 206f / 255f, 119f / 255f);
         private static readonly Color INVALID_DOT_COLOR = new (1f, 45f / 255f, 85f / 255f);
@@ -67,7 +68,7 @@ namespace DCL.Lobby
         public bool HasDropHint { get; private set; }
 
         /// <summary>Distance between the same corners of two neighbouring cells.</summary>
-        public static Vector2 CellPitch => new (CELL_WIDTH + GUTTER, CELL_HEIGHT + GUTTER);
+        public static Vector2 CellPitch => new (CELL_SIZE + GUTTER, CELL_SIZE + GUTTER);
 
         public LobbyGridElement()
         {
@@ -84,15 +85,15 @@ namespace DCL.Lobby
 
         /// <summary>Pixel size of a widget spanning the given cells, gutters between them included.</summary>
         public static Vector2 SpanToSize(Vector2Int span) =>
-            new ((span.x * CELL_WIDTH) + ((span.x - 1) * GUTTER), (span.y * CELL_HEIGHT) + ((span.y - 1) * GUTTER));
+            new ((span.x * CELL_SIZE) + ((span.x - 1) * GUTTER), (span.y * CELL_SIZE) + ((span.y - 1) * GUTTER));
 
         /// <summary>Position of the top-left corner of the cell in the space of the grid.</summary>
         public static Vector2 CellToLocal(Vector2Int cell) =>
-            new (cell.x * (CELL_WIDTH + GUTTER), cell.y * (CELL_HEIGHT + GUTTER));
+            new (cell.x * (CELL_SIZE + GUTTER), cell.y * (CELL_SIZE + GUTTER));
 
         /// <summary>The fractional cell whose top-left corner would sit at the position, in the space of the grid.</summary>
         public static Vector2 LocalToCell(Vector2 local) =>
-            new (local.x / (CELL_WIDTH + GUTTER), local.y / (CELL_HEIGHT + GUTTER));
+            new (local.x / (CELL_SIZE + GUTTER), local.y / (CELL_SIZE + GUTTER));
 
         /// <summary>The cell whose top-left corner is nearest to the position; it may lie outside the grid.</summary>
         public static Vector2Int NearestCell(Vector2 local)
@@ -164,18 +165,21 @@ namespace DCL.Lobby
             painter.BeginPath();
 
             for (var y = 0; y < rows; y++)
+            for (var x = 0; x < columns; x++)
             {
-                for (var x = 0; x < columns; x++)
-                {
-                    if (IsHinted(x, y) != hinted)
-                        continue;
+                if (IsHinted(x, y) != hinted)
+                    continue;
 
-                    Vector2 corner = CellToLocal(new Vector2Int(x, y));
-                    AddDot(painter, corner);
-                    AddDot(painter, new Vector2(corner.x + CELL_WIDTH, corner.y));
-                    AddDot(painter, new Vector2(corner.x + CELL_WIDTH, corner.y + CELL_HEIGHT));
-                    AddDot(painter, new Vector2(corner.x, corner.y + CELL_HEIGHT));
-                }
+                Vector2 corner = CellToLocal(new Vector2Int(x, y));
+                float left = corner.x + ANCHOR_DOT_INSET;
+                float right = corner.x + CELL_SIZE - ANCHOR_DOT_INSET;
+                float top = corner.y + ANCHOR_DOT_INSET;
+                float bottom = corner.y + CELL_SIZE - ANCHOR_DOT_INSET;
+
+                AddDot(painter, new Vector2(left, top));
+                AddDot(painter, new Vector2(right, top));
+                AddDot(painter, new Vector2(right, bottom));
+                AddDot(painter, new Vector2(left, bottom));
             }
 
             painter.Fill();

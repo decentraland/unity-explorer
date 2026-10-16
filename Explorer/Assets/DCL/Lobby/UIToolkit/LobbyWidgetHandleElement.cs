@@ -7,16 +7,13 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     Edit-mode frame of a placed widget that takes the pointer and reports its drags with itself as the source. It
-    ///     covers the cells of the widget over its section, reaching a little past them, with a button in its top-right
-    ///     corner that asks for the widget to leave its grid, when the widget is removable. Its tint goes in a separate
-    ///     <see cref="Underlay" /> meant to sit under the section, so the widget itself is not tinted. Positions are in
-    ///     panel space.
+    ///     covers the cells of the widget over its section (whose content stays inset from them), with a button in its
+    ///     top-right corner that asks for the widget to leave its grid, when the widget is removable. Its tint goes in a
+    ///     separate <see cref="Underlay" /> meant to sit under the section, so the widget itself is not tinted. Positions
+    ///     are in panel space.
     /// </summary>
     public class LobbyWidgetHandleElement : VisualElement
     {
-        /// <summary>How far the frame reaches past the cells of the widget on each side.</summary>
-        public const float OUTSET = 3f;
-
         private const string USS_BLOCK = "lobby-widget-handle";
         private const string USS_REMOVE = USS_BLOCK + "__remove";
         private const string USS_REMOVE_ICON = USS_BLOCK + "__remove-icon";
@@ -43,8 +40,8 @@ namespace DCL.Lobby
         /// </summary>
         public VisualElement Underlay { get; }
 
-        /// <summary>Panel position of the top-left corner of the cells of the widget, inside the frame.</summary>
-        public Vector2 WidgetPosition => worldBound.position + new Vector2(OUTSET, OUTSET);
+        /// <summary>Panel position of the top-left corner of the cells of the widget, where the frame starts.</summary>
+        public Vector2 WidgetPosition => worldBound.position;
 
         public LobbyWidgetHandleElement(LobbyWidgetId widgetId, bool removable)
         {
@@ -54,8 +51,8 @@ namespace DCL.Lobby
             AddToClassList(VisualElementsExtensions.INTERACTABLE_CLASS);
 
             Vector2 size = LobbyGridElement.SpanToSize(widgetId.Span());
-            style.width = size.x + (OUTSET * 2f);
-            style.height = size.y + (OUTSET * 2f);
+            style.width = size.x;
+            style.height = size.y;
 
             Underlay = new VisualElement { name = "WidgetUnderlay", pickingMode = PickingMode.Ignore };
             Underlay.AddToClassList(USS_UNDERLAY);
@@ -84,12 +81,12 @@ namespace DCL.Lobby
             this.AddManipulator(gesture);
         }
 
-        /// <summary>Puts the frame around the cells of the widget at the cell, in the space of its grid.</summary>
+        /// <summary>Puts the frame over the cells of the widget at the cell, in the space of its grid.</summary>
         public void PlaceAt(Vector2Int cell)
         {
             Vector2 local = LobbyGridElement.CellToLocal(cell);
-            style.left = local.x - OUTSET;
-            style.top = local.y - OUTSET;
+            style.left = local.x;
+            style.top = local.y;
             Underlay.style.left = style.left;
             Underlay.style.top = style.top;
         }

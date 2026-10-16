@@ -36,7 +36,7 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(new Vector2Int(4, 6), host.Layout!.GridSize(LobbyGridCorner.TopLeft));
-            Assert.AreEqual(new Vector2Int(6, 2), host.Layout.GridSize(LobbyGridCorner.BottomRight));
+            Assert.AreEqual(new Vector2Int(7, 2), host.Layout.GridSize(LobbyGridCorner.BottomRight));
         }
 
         [Test]
@@ -77,7 +77,7 @@ namespace DCL.Lobby.Tests
         public void ParkAnUnplacedSectionInTheHiddenContainer()
         {
             //Arrange
-            var stored = new LobbyLayout(new Vector2Int(4, 6), new Vector2Int(4, 6), new Vector2Int(6, 2), new Vector2Int(6, 2));
+            var stored = new LobbyLayout(new Vector2Int(4, 6), new Vector2Int(4, 6), new Vector2Int(7, 2), new Vector2Int(7, 2));
             stored.ResetToDefault();
             stored.Remove(LobbyWidgetId.LiveEvents3By3);
             LobbyLayoutStorage.Save(stored);
@@ -157,8 +157,8 @@ namespace DCL.Lobby.Tests
             var lobby = new VisualElement { name = "Lobby" };
             lobby.Add(new LobbyGridElement { name = "TopLeftGrid", Corner = LobbyGridCorner.TopLeft, Columns = 4, Rows = 6 });
             lobby.Add(new LobbyGridElement { name = "TopRightGrid", Corner = LobbyGridCorner.TopRight, Columns = 4, Rows = 6 });
-            lobby.Add(new LobbyGridElement { name = "BottomLeftGrid", Corner = LobbyGridCorner.BottomLeft, Columns = 6, Rows = 2 });
-            lobby.Add(new LobbyGridElement { name = "BottomRightGrid", Corner = LobbyGridCorner.BottomRight, Columns = 6, Rows = 2 });
+            lobby.Add(new LobbyGridElement { name = "BottomLeftGrid", Corner = LobbyGridCorner.BottomLeft, Columns = 7, Rows = 2 });
+            lobby.Add(new LobbyGridElement { name = "BottomRightGrid", Corner = LobbyGridCorner.BottomRight, Columns = 7, Rows = 2 });
 
             var unplaced = new VisualElement { name = "UnplacedWidgets" };
             lobby.Add(unplaced);

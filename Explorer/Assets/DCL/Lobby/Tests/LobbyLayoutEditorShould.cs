@@ -68,12 +68,11 @@ namespace DCL.Lobby.Tests
 
             LobbyWidgetHandleElement friends = Handle(LobbyWidgetId.FriendsOnline4By2);
             Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.FriendsOnline4By2.Span());
-            const float OUTSET = LobbyWidgetHandleElement.OUTSET;
             Assert.AreSame(root.Q("TopLeftGrid"), friends.parent);
-            Assert.AreEqual(-OUTSET, friends.style.left.value.value, "The frame reaches past the cells");
-            Assert.AreEqual((3 * LobbyGridElement.CellPitch.y) - OUTSET, friends.style.top.value.value);
-            Assert.AreEqual(size.x + (2 * OUTSET), friends.style.width.value.value);
-            Assert.AreEqual(size.y + (2 * OUTSET), friends.style.height.value.value);
+            Assert.AreEqual(0f, friends.style.left.value.value, "The frame covers the cells");
+            Assert.AreEqual(3 * LobbyGridElement.CellPitch.y, friends.style.top.value.value);
+            Assert.AreEqual(size.x, friends.style.width.value.value);
+            Assert.AreEqual(size.y, friends.style.height.value.value);
             Assert.IsNotNull(friends.Q<Button>("Remove"));
         }
 
@@ -173,7 +172,7 @@ namespace DCL.Lobby.Tests
         public void ListEveryFamilyWithNoSizePlacedInTheModalOnShow()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
             host.Layout.Remove(LobbyWidgetId.LiveEvents3By3);
             host.Apply();
 
@@ -205,16 +204,16 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual("x2", ((Label)sizes[0]).text, "A size reads as the cards it shows, the smaller first");
             Assert.AreEqual(LobbyWidgetId.JumpBackIn4By2.ToString(), sizes[0].name);
             Assert.AreEqual("x3", ((Label)sizes[1]).text);
-            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2.ToString(), sizes[1].name);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn7By2.ToString(), sizes[1].name);
             Assert.AreEqual(LobbyWidgetId.JumpBackIn4By2, jumpBackIn.SelectedVariant, "The smaller size starts selected");
             Assert.IsTrue(sizes[0].ClassListContains(SIZE_SELECTED_CLASS));
             Assert.IsFalse(sizes[1].ClassListContains(SIZE_SELECTED_CLASS));
 
-            LobbyWidgetPreviewElement preview = jumpBackIn.Preview(LobbyWidgetId.JumpBackIn6By2);
+            LobbyWidgetPreviewElement preview = jumpBackIn.Preview(LobbyWidgetId.JumpBackIn7By2);
             Assert.IsNull(preview.parent, "The stand-ins wait out of the hierarchy until a drag lifts one");
             Assert.AreEqual("Jump Back In", preview.Q<Label>("Title").text);
             Assert.AreEqual(3, preview.Q("Cards").childCount);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn6By2.Span());
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn7By2.Span());
             Assert.AreEqual(size.x, preview.style.width.value.value);
             Assert.AreEqual(size.y, preview.style.height.value.value);
         }
@@ -233,7 +232,7 @@ namespace DCL.Lobby.Tests
 
             //Act
             editor.Hide();
-            host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces6By2);
+            host.Layout!.Remove(LobbyWidgetId.RecommendedPlaces7By2);
             host.Apply();
             editor.Show(root);
 
@@ -270,9 +269,9 @@ namespace DCL.Lobby.Tests
             LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.Landing4By3);
             Assert.AreSame(root.Q("TopRightGrid"), handle.parent);
             Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span());
-            Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.width.value.value);
-            Assert.AreEqual(size.y + (2 * LobbyWidgetHandleElement.OUTSET), handle.style.height.value.value);
-            Assert.AreEqual(LobbyGridElement.CellPitch.y - LobbyWidgetHandleElement.OUTSET, handle.style.top.value.value);
+            Assert.AreEqual(size.x, handle.style.width.value.value);
+            Assert.AreEqual(size.y, handle.style.height.value.value);
+            Assert.AreEqual(LobbyGridElement.CellPitch.y, handle.style.top.value.value);
             Assert.AreEqual(5, root.Q("WidgetModalItems").childCount, "The two event rows and the three off by default are left off the grids");
         }
 
@@ -428,8 +427,8 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(dragLayer, frame.parent);
             Assert.Less(dragLayer.IndexOf(frame), dragLayer.IndexOf(welcome), "The frame draws under the widget");
             Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.Landing4By3.Span());
-            Assert.AreEqual(size.x + (2 * LobbyWidgetHandleElement.OUTSET), frame.style.width.value.value);
-            Assert.AreEqual(welcome.style.left.value.value - LobbyWidgetHandleElement.OUTSET, frame.style.left.value.value);
+            Assert.AreEqual(size.x, frame.style.width.value.value);
+            Assert.AreEqual(welcome.style.left.value.value, frame.style.left.value.value);
             Assert.IsTrue(welcome.ClassListContains(LIFTED_CLASS));
             Assert.IsTrue(handle.ClassListContains(DRAGGING_CLASS));
             Assert.IsTrue(handle.Underlay.ClassListContains(DRAGGING_CLASS), "The underlay hides with the handle");
@@ -465,19 +464,19 @@ namespace DCL.Lobby.Tests
         public void SelectTheSizeOfAPressedToggle()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
             VisualElement sizes = card.Q("Sizes");
-            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn7By2.ToString());
 
             //Act
             Press(larger, 100f);
             Release(larger, 100f);
 
             //Assert
-            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2, card.SelectedVariant);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn7By2, card.SelectedVariant);
             Assert.IsTrue(sizes[1].ClassListContains(SIZE_SELECTED_CLASS));
             Assert.IsFalse(sizes[0].ClassListContains(SIZE_SELECTED_CLASS), "One size at a time");
             Assert.AreEqual(0, root.Q("LayoutDragLayer").childCount, "A click lifts nothing");
@@ -488,11 +487,11 @@ namespace DCL.Lobby.Tests
         public void LiftTheSelectedSizeOffTheRowWhileDragging()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
-            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn7By2.ToString());
             Press(larger, 100f);
             Release(larger, 100f);
 
@@ -501,8 +500,8 @@ namespace DCL.Lobby.Tests
             Move(card, 130f);
 
             //Assert
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn6By2);
-            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn6By2.Span());
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn7By2);
+            Vector2 size = LobbyGridElement.SpanToSize(LobbyWidgetId.JumpBackIn7By2.Span());
             Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent, "The stand-in of the selected size is lifted");
             Assert.AreEqual(130f - (size.x * 0.5f), preview.style.left.value.value);
             Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn4By2).parent, "The other size stays away");
@@ -514,19 +513,19 @@ namespace DCL.Lobby.Tests
         public void LiftTheSizeOfTheToggleADragStartsOn()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
-            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn6By2.ToString());
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn7By2.ToString());
 
             //Act
             Press(larger, 100f);
             Move(larger, 130f);
 
             //Assert
-            Assert.AreEqual(LobbyWidgetId.JumpBackIn6By2, card.SelectedVariant, "The press selects the size before the drag carries it");
-            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn6By2);
+            Assert.AreEqual(LobbyWidgetId.JumpBackIn7By2, card.SelectedVariant, "The press selects the size before the drag carries it");
+            LobbyWidgetPreviewElement preview = card.Preview(LobbyWidgetId.JumpBackIn7By2);
             Assert.AreSame(root.Q("LayoutDragLayer"), preview.parent);
             Assert.IsNull(card.Preview(LobbyWidgetId.JumpBackIn4By2).parent, "The other size stays away");
             Assert.IsTrue(card.ClassListContains(CARD_DRAGGING_CLASS));
@@ -536,7 +535,7 @@ namespace DCL.Lobby.Tests
         public void PutTheSizeAwayOnADropOutsideEveryGrid()
         {
             //Arrange
-            host.Layout!.Remove(LobbyWidgetId.JumpBackIn6By2);
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
             host.Apply();
             editor.Show(root);
             LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
@@ -607,7 +606,7 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             editor.Show(root);
-            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces6By2);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces7By2);
             Press(handle, 100f);
             Move(handle, 130f);
 
@@ -615,7 +614,7 @@ namespace DCL.Lobby.Tests
             editor.Hide();
 
             //Assert
-            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.RecommendedPlaces6By2, out LobbyWidgetPlacement placement));
+            Assert.IsTrue(host.Layout!.TryGetPlacement(LobbyWidgetId.RecommendedPlaces7By2, out LobbyWidgetPlacement placement));
             Assert.AreEqual(LobbyGridCorner.BottomRight, placement.Corner);
             VisualElement featuredPlaces = root.Q("FeaturedPlaces");
             Assert.AreSame(root.Q("BottomRightGrid"), featuredPlaces.parent);
@@ -689,8 +688,8 @@ namespace DCL.Lobby.Tests
             var lobby = new VisualElement { name = "Lobby" };
             lobby.Add(new LobbyGridElement { name = "TopLeftGrid", Corner = LobbyGridCorner.TopLeft, Columns = 4, Rows = 6 });
             lobby.Add(new LobbyGridElement { name = "TopRightGrid", Corner = LobbyGridCorner.TopRight, Columns = 4, Rows = 6 });
-            lobby.Add(new LobbyGridElement { name = "BottomLeftGrid", Corner = LobbyGridCorner.BottomLeft, Columns = 6, Rows = 2 });
-            lobby.Add(new LobbyGridElement { name = "BottomRightGrid", Corner = LobbyGridCorner.BottomRight, Columns = 6, Rows = 2 });
+            lobby.Add(new LobbyGridElement { name = "BottomLeftGrid", Corner = LobbyGridCorner.BottomLeft, Columns = 7, Rows = 2 });
+            lobby.Add(new LobbyGridElement { name = "BottomRightGrid", Corner = LobbyGridCorner.BottomRight, Columns = 7, Rows = 2 });
 
             var unplaced = new VisualElement { name = "UnplacedWidgets" };
             lobby.Add(unplaced);

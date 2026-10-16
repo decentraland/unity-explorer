@@ -379,8 +379,8 @@ namespace DCL.Lobby
             Vector2 size = LobbyGridElement.SpanToSize(widgetId.Span());
             dropMarker.style.width = size.x;
             dropMarker.style.height = size.y;
-            dragFrame.style.width = size.x + (LobbyWidgetHandleElement.OUTSET * 2f);
-            dragFrame.style.height = size.y + (LobbyWidgetHandleElement.OUTSET * 2f);
+            dragFrame.style.width = size.x;
+            dragFrame.style.height = size.y;
 
             element.AddToClassList(USS_WIDGET_LIFTED);
             RequireDragLayer().Add(dragFrame);
@@ -461,8 +461,8 @@ namespace DCL.Lobby
             Vector2 local = RequireDragLayer().WorldToLocal(panelPosition - grabOffset);
             lifted.style.left = local.x;
             lifted.style.top = local.y;
-            dragFrame.style.left = local.x - LobbyWidgetHandleElement.OUTSET;
-            dragFrame.style.top = local.y - LobbyWidgetHandleElement.OUTSET;
+            dragFrame.style.left = local.x;
+            dragFrame.style.top = local.y;
         }
 
         // The modal is the target of a placed widget while the pointer is over it, as it is far smaller than most

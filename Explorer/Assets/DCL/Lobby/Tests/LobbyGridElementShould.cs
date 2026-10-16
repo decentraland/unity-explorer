@@ -19,8 +19,8 @@ namespace DCL.Lobby.Tests
         {
             //Assert
             Assert.AreEqual(new Vector2Int(4, 6), grid.Size);
-            Assert.AreEqual((4 * LobbyGridElement.CELL_WIDTH) + (3 * LobbyGridElement.GUTTER), grid.style.width.value.value);
-            Assert.AreEqual((6 * LobbyGridElement.CELL_HEIGHT) + (5 * LobbyGridElement.GUTTER), grid.style.height.value.value);
+            Assert.AreEqual((4 * LobbyGridElement.CELL_SIZE) + (3 * LobbyGridElement.GUTTER), grid.style.width.value.value);
+            Assert.AreEqual((6 * LobbyGridElement.CELL_SIZE) + (5 * LobbyGridElement.GUTTER), grid.style.height.value.value);
         }
 
         [Test]
@@ -31,8 +31,8 @@ namespace DCL.Lobby.Tests
             grid.Rows = 2;
 
             //Assert
-            Assert.AreEqual((6 * LobbyGridElement.CELL_WIDTH) + (5 * LobbyGridElement.GUTTER), grid.style.width.value.value);
-            Assert.AreEqual((2 * LobbyGridElement.CELL_HEIGHT) + LobbyGridElement.GUTTER, grid.style.height.value.value);
+            Assert.AreEqual((6 * LobbyGridElement.CELL_SIZE) + (5 * LobbyGridElement.GUTTER), grid.style.width.value.value);
+            Assert.AreEqual((2 * LobbyGridElement.CELL_SIZE) + LobbyGridElement.GUTTER, grid.style.height.value.value);
         }
 
         [Test]
@@ -44,8 +44,8 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(new Vector2Int(1, 1), grid.Size);
-            Assert.AreEqual(LobbyGridElement.CELL_WIDTH, grid.style.width.value.value);
-            Assert.AreEqual(LobbyGridElement.CELL_HEIGHT, grid.style.height.value.value);
+            Assert.AreEqual(LobbyGridElement.CELL_SIZE, grid.style.width.value.value);
+            Assert.AreEqual(LobbyGridElement.CELL_SIZE, grid.style.height.value.value);
         }
 
         [Test]
@@ -55,8 +55,8 @@ namespace DCL.Lobby.Tests
             Vector2 size = LobbyGridElement.SpanToSize(new Vector2Int(3, 4));
 
             //Assert
-            Assert.AreEqual((3 * LobbyGridElement.CELL_WIDTH) + (2 * LobbyGridElement.GUTTER), size.x);
-            Assert.AreEqual((4 * LobbyGridElement.CELL_HEIGHT) + (3 * LobbyGridElement.GUTTER), size.y);
+            Assert.AreEqual((3 * LobbyGridElement.CELL_SIZE) + (2 * LobbyGridElement.GUTTER), size.x);
+            Assert.AreEqual((4 * LobbyGridElement.CELL_SIZE) + (3 * LobbyGridElement.GUTTER), size.y);
         }
 
         [Test]
