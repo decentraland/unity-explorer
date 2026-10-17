@@ -98,9 +98,9 @@
   },
   {
    "number": 10456,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "design change across modules: skinning (ComputeSkinningBufferContainer), spring bones (AttachmentAssetUtility.BuildSpringBoneData, SpringBoneRegistrationSystem) and reused instances all assume joint index == base bone index; a skinning-only remap leaves spring bones broken, and it needs the reporter's GLBs plus an avatar-rendering owner"
   },
   {
    "number": 10439,
@@ -116,15 +116,15 @@
   },
   {
    "number": 10480,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "looks like a broken install, not code: 5 Sentry events from one user on one machine in 10 minutes, the login music clip streams from disk and FMOD could not open it; monitor in Sentry and close if it does not recur"
   },
   {
    "number": 10445,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "not an Explorer defect: the Creator Hub default video URL (Vimeo 552481870.m3u8) now returns HTTP 404; replace it in the Creator Hub asset pack video player/screen and have scenes redeploy (Explorer's MediaStreaming test scene uses it too)"
   },
   {
    "number": 9445,
