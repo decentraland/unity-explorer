@@ -38,8 +38,8 @@
   },
   {
    "number": 10459,
-   "status": "pending",
-   "commit": null,
+   "status": "fixed",
+   "commit": "cf9ed5d6bec1d885a70e0aa0e148f9e0e6cfde50",
    "note": ""
   },
   {
@@ -68,15 +68,15 @@
   },
   {
    "number": 10422,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "root cause not identifiable: the NRE is thrown inside EngineAPIImplementation.CrdtSendToRenderer with no C# line or deeper frame, every field there is set in the constructor; 5 events from one user, needs a build with line numbers or a repro on the scene at 143,-148"
   },
   {
    "number": 10468,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "regression of #8130 still on v0.188 (13 events, 8 users) not covered by #9828's guard, but no second caller of StartUpdateLoopAsync could be found in code; logging the scene id at the throw would identify it"
   },
   {
    "number": 10454,
@@ -92,9 +92,9 @@
   },
   {
    "number": 10367,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "design change across the native Rust Segment queue and startup: every instance shares persistentDataPath/analytics_queue_v1.sqlite3 and Segment starts before the single-instance check, and nothing repairs a corrupt DB; needs a native rebuild (recreate on DatabaseCorrupt) and/or a per-instance queue file"
   },
   {
    "number": 10456,
