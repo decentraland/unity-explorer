@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
+using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.Nametags;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -20,6 +21,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility.Arch;
 using static DCL.Nametags.SceneAvatarTagComponent;
+using PendingScan = DCL.Multiplayer.SDK.Systems.SceneWorld.ScenePlayerAvatarResolver.PendingScan;
+using ResolveResult = DCL.Multiplayer.SDK.Systems.SceneWorld.ScenePlayerAvatarResolver.Result;
 
 namespace DCL.SDKComponents.AvatarNametag.Systems
 {
@@ -40,18 +43,16 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
     public partial class PropagateSceneAvatarTagSystem : BaseUnityLoopSystem, ISceneIsCurrentListener, IFinalizeWorldSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World globalWorld;
-        private readonly Entity globalPlayerEntity;
+        private readonly ScenePlayerAvatarResolver avatarResolver;
         private readonly List<PendingScan> pendingScans = new ();
 
         internal PropagateSceneAvatarTagSystem(World world, ISceneStateProvider sceneStateProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, Entity globalPlayerEntity) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
-            this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
-            this.globalPlayerEntity = globalPlayerEntity;
+            avatarResolver = new ScenePlayerAvatarResolver(globalWorld, globalPlayerEntity, entityParticipantTable);
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -132,17 +133,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         }
 
         [Query]
-        private void MatchPendingPlayers(Entity entity, in PlayerSceneCRDTEntity playerCrdtEntity)
-        {
-            for (var i = 0; i < pendingScans.Count; i++)
-            {
-                if (pendingScans[i].CrdtEntity.Id != playerCrdtEntity.CRDTEntity.Id) continue;
-
-                PendingScan scan = pendingScans[i];
-                scan.PlayerEntity = entity;
-                pendingScans[i] = scan;
-            }
-        }
+        private void MatchPendingPlayers(Entity entity, in PlayerSceneCRDTEntity playerCrdtEntity) =>
+            ScenePlayerAvatarResolver.MatchPlayer(pendingScans, entity, in playerCrdtEntity);
 
         internal void ResolvePendingScans()
         {
@@ -155,19 +147,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
                 if (!World.IsAlive(scan.SceneEntity) || !World.TryGet(scan.SceneEntity, out PBAvatarNametag? pbNametag) || pbNametag == null)
                     continue;
 
-                // No player entity carries this id: it is a plain scene entity, or a player who left and
-                // handed the reserved id back to the pool.
-                if (scan.PlayerEntity == Entity.Null)
-                {
-                    pbNametag.IsDirty = false;
-                    continue;
-                }
-
-                string userId = World.TryGet(scan.PlayerEntity, out SDKProfile? bridgeProfile)
-                    ? bridgeProfile?.UserId ?? string.Empty
-                    : string.Empty;
-
-                ResolveResult resolveResult = ResolveByUserId(userId, out Entity target);
+                ResolveResult resolveResult = avatarResolver.ResolveScannedPlayer(World, in scan, out Entity target);
 
                 if (resolveResult == ResolveResult.Unreachable)
                 {
@@ -189,13 +169,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
         private ResolveResult ResolveTarget(Entity sceneEntity, in CRDTEntity crdtEntity, out Entity target)
         {
-            target = Entity.Null;
-
             if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY)
-            {
-                target = globalPlayerEntity;
-                return globalWorld.IsAlive(target) ? ResolveResult.Resolved : ResolveResult.Unreachable;
-            }
+                return avatarResolver.ResolveLocalPlayer(out target);
 
             // A scene-spawned avatar keeps a handle to its global-world twin on the very same scene entity.
             if (World.TryGet(sceneEntity, out SDKAvatarShapeComponent sdkAvatarShape))
@@ -204,32 +179,14 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
                 return globalWorld.IsAlive(target) ? ResolveResult.Resolved : ResolveResult.Unreachable;
             }
 
-            // A shape without a twin is an avatar mid-creation, not an absent one.
-            if (World.Has<PBAvatarShape>(sceneEntity))
+            // A shape without a twin is an avatar mid-creation, not an absent one; a player's entity never gets a twin.
+            if (World.Has<PBAvatarShape>(sceneEntity) && !SpecialEntitiesID.IsOtherPlayerEntity(crdtEntity.EntityNumber))
+            {
+                target = Entity.Null;
                 return ResolveResult.Pending;
+            }
 
-            // One player has two scene entities that share nothing but the CRDT id: the CRDT bridge's,
-            // which the scene writes to, and the multiplayer bridge's, which holds the SDKProfile.
-            if (World.TryGet(sceneEntity, out SDKProfile? ownProfile))
-                return ResolveByUserId(ownProfile?.UserId ?? string.Empty, out target);
-
-            return ResolveResult.NeedsPlayerScan;
-        }
-
-        private ResolveResult ResolveByUserId(string userId, out Entity target)
-        {
-            target = Entity.Null;
-
-            // A player entity without a profile is mid-setup, not gone.
-            if (string.IsNullOrEmpty(userId))
-                return ResolveResult.Pending;
-
-            if (!entityParticipantTable.TryGet(userId, out IReadOnlyEntityParticipantTable.Entry entry)
-                || !globalWorld.IsAlive(entry.Entity))
-                return ResolveResult.Unreachable;
-
-            target = entry.Entity;
-            return ResolveResult.Resolved;
+            return avatarResolver.ResolveRemotePlayer(World, sceneEntity, out target);
         }
 
         private void ApplyPlate(Entity entity, PBAvatarNametag pbNametag, Entity target)
@@ -261,34 +218,6 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             if (exists)
                 plate.IsRemoving = true;
-        }
-
-        private enum ResolveResult
-        {
-            Resolved,
-
-            /// <summary>The avatar behind the scene entity does not exist yet, but still can.</summary>
-            Pending,
-
-            /// <summary>No avatar backs the scene entity, and none ever will.</summary>
-            Unreachable,
-
-            /// <summary>Only a scan over the player entities can tell which of the other outcomes applies.</summary>
-            NeedsPlayerScan,
-        }
-
-        private struct PendingScan
-        {
-            public readonly Entity SceneEntity;
-            public readonly CRDTEntity CrdtEntity;
-            public Entity PlayerEntity;
-
-            public PendingScan(Entity sceneEntity, CRDTEntity crdtEntity)
-            {
-                SceneEntity = sceneEntity;
-                CrdtEntity = crdtEntity;
-                PlayerEntity = Entity.Null;
-            }
         }
 
         /// <summary>

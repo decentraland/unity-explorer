@@ -1,9 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -14,6 +16,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
+using System.Collections.Generic;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -35,6 +38,7 @@ namespace DCL.AvatarRendering.AvatarShape
             UpdateAvatarFromSDKComponentQuery(World);
             UpdateMainPlayerAvatarFromProfileQuery(World);
             UpdateAvatarFromProfileQuery(World);
+            UpdateAvatarFromSceneWearablesQuery(World);
 
             CreateAvatarShapeFromSDKComponentQuery(World);
             CreateMainPlayerAvatarShapeFromProfileQuery(World);
@@ -62,7 +66,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape), typeof(PlayerComponent))]
         private void CreateAvatarShapeFromProfile(Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
+            WearablePromise wearablePromise = CreateWearablePromise(profile, partition, ConsumeSceneWearablesOverride(entity));
             var avatarShape = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
             World.Add(entity, avatarShape, new AvatarHighlightComponent());
         }
@@ -72,7 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape))]
         private void CreateMainPlayerAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
+            WearablePromise wearablePromise = CreateWearablePromise(profile, partition, ConsumeSceneWearablesOverride(entity));
 
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
 
@@ -111,12 +115,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateAvatarFromProfile(Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!profile.IsDirty)
                 return;
 
-            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            ApplyProfileToAvatarShape(profile, ConsumeSceneWearablesOverride(entity), ref avatarShapeComponent, ref partition);
             profile.IsDirty = false;
         }
 
@@ -128,18 +132,29 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!profile.IsDirty)
                 return;
 
-            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            ApplyProfileToAvatarShape(profile, ConsumeSceneWearablesOverride(entity), ref avatarShapeComponent, ref partition);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
             LoadAllEmotes(profile, partition);
             profile.IsDirty = false;
         }
 
-        private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        [Query]
+        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        private void UpdateAvatarFromSceneWearables(ref SceneWearablesOverride sceneWearables, in Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
+            if (!sceneWearables.IsDirty)
+                return;
+
+            sceneWearables.IsDirty = false;
+            ApplyProfileToAvatarShape(profile, sceneWearables.Urns, ref avatarShapeComponent, ref partition);
+        }
+
+        private void ApplyProfileToAvatarShape(Profile profile, IReadOnlyList<URN>? sceneWearables, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
-            WearablePromise newPromise = CreateWearablePromise(profile, partition);
+            WearablePromise newPromise = CreateWearablePromise(profile, partition, sceneWearables);
             avatarShapeComponent.ID = profile.UserId;
             avatarShapeComponent.Name = profile.Name;
             avatarShapeComponent.WearablePromise = newPromise;
@@ -155,13 +170,27 @@ namespace DCL.AvatarRendering.AvatarShape
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
-        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition)
+        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition, IReadOnlyList<URN>? sceneWearables = null)
         {
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
-            return WearablePromise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
-                partition);
+            GetWearablesByPointersIntention intention = WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender);
+
+            if (sceneWearables != null)
+                for (var i = 0; i < sceneWearables.Count; i++)
+                    intention.Pointers.Add(sceneWearables[i]);
+
+            return WearablePromise.Create(World, intention, partition);
+        }
+
+        private IReadOnlyList<URN>? ConsumeSceneWearablesOverride(Entity entity)
+        {
+            ref SceneWearablesOverride sceneWearables = ref World.TryGetRef<SceneWearablesOverride>(entity, out bool exists);
+
+            if (!exists) return null;
+
+            sceneWearables.IsDirty = false;
+            return sceneWearables.Urns;
         }
 
         private void LoadAllEmotes(Profile profile, PartitionComponent partition)
