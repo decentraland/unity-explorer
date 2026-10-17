@@ -22,6 +22,8 @@ CBUFFER_START(UnityPerMaterial)
     float _RevealEnabled;
 CBUFFER_END
 
+#include "../DCL_AvatarTeleport.hlsl"
+
 #ifdef UNITY_DOTS_INSTANCING_ENABLED
     UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
         UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
