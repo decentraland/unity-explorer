@@ -110,9 +110,9 @@
   },
   {
    "number": 10444,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "backend, not client: the community place picker shows everything /destinations?owner= returns, and the places API matches owned Genesis parcels only through places.owner (mostly null) or lands-permissions (operator grants only); fix belongs in decentraland/places (also match /lambdas/users/:addr/lands)"
   },
   {
    "number": 10480,
@@ -128,15 +128,15 @@
   },
   {
    "number": 9445,
-   "status": "pending",
-   "commit": null,
+   "status": "fixed",
+   "commit": "437ce105d29ceaf96760a912558c77b242ed13c7",
    "note": ""
   },
   {
    "number": 8794,
-   "status": "pending",
+   "status": "skipped",
    "commit": null,
-   "note": ""
+   "note": "already fixed on dev by #8821 (350440a47): the attached logs show Dictionary.Add throwing in SceneCommunicationPipe.AddSceneMessageHandler during scene creation, which dev now replaces via the indexer; QA to verify on a current build and close"
   },
   {
    "number": 10376,
