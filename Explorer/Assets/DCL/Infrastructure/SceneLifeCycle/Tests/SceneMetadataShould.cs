@@ -32,5 +32,46 @@ namespace DCL.SceneLifeCycle.Tests
             // Assert
             Assert.AreEqual(value, metadata.landscapeTerrain);
         }
+
+        [Test]
+        public void DeserializeRequiredPermissionsAsEmptyWhenAbsent()
+        {
+            // Arrange
+            const string JSON = @"{""main"": ""bin/index.js""}";
+
+            // Act
+            SceneMetadata metadata = JsonConvert.DeserializeObject<SceneMetadata>(JSON)!;
+
+            // Assert
+            Assert.IsNotNull(metadata.requiredPermissions);
+            Assert.IsEmpty(metadata.requiredPermissions);
+        }
+
+        [Test]
+        public void DeserializeRequiredPermissionsWhenPresent()
+        {
+            // Arrange
+            const string JSON = @"{""main"": ""bin/index.js"", ""requiredPermissions"": [""USE_WEB3_API"", ""OPEN_EXTERNAL_LINK""]}";
+
+            // Act
+            SceneMetadata metadata = JsonConvert.DeserializeObject<SceneMetadata>(JSON)!;
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { "USE_WEB3_API", "OPEN_EXTERNAL_LINK" }, metadata.requiredPermissions);
+        }
+
+        [Test]
+        public void DeserializeAllowedMediaHostnamesAsEmptyWhenAbsent()
+        {
+            // Arrange
+            const string JSON = @"{""main"": ""bin/index.js""}";
+
+            // Act
+            SceneMetadata metadata = JsonConvert.DeserializeObject<SceneMetadata>(JSON)!;
+
+            // Assert
+            Assert.IsNotNull(metadata.allowedMediaHostnames);
+            Assert.IsEmpty(metadata.allowedMediaHostnames);
+        }
     }
 }
