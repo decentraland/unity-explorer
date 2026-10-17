@@ -1,0 +1,138 @@
+using Cysharp.Threading.Tasks;
+using NSubstitute;
+using NUnit.Framework;
+
+namespace MVC.Tests
+{
+    public class WindowsStackManagerShould
+    {
+        private WindowStackManager manager = null!;
+        private IController controller = null!;
+
+        [SetUp]
+        public void Setup()
+        {
+            manager = new WindowStackManager();
+            controller = Substitute.For<IController>();
+        }
+
+        [Test]
+        public void PushPopup()
+        {
+            manager.PushPopup(controller);
+
+            Assert.AreEqual(1, manager.popupStack.Count);
+        }
+
+        [Test]
+        public void PopPopup()
+        {
+            manager.PushPopup(controller);
+            manager.PopPopup(controller);
+
+            Assert.AreEqual(0, manager.popupStack.Count);
+        }
+
+        [Test]
+        public void PushPopupWithPrevious()
+        {
+            var previousController = Substitute.For<IController>();
+
+            manager.PushPopup(previousController);
+            var pushInfo = manager.PushPopup(controller);
+
+            Assert.AreEqual(404, pushInfo.ControllerOrdering.OrderInLayer);
+            Assert.AreEqual(403, pushInfo.PopupCloserOrdering.OrderInLayer);
+            Assert.AreSame(previousController, pushInfo.PreviousController);
+        }
+
+        [Test]
+        public void PushFullscreen()
+        {
+            manager.PushFullscreen(controller);
+
+            Assert.AreSame(controller, manager.fullscreenController);
+        }
+
+        [Test]
+        public void PopFullscreenWhenClosingItPopsAnotherWindowReentrantly()
+        {
+            // Arrange
+            var otherController = Substitute.For<IController>();
+            manager.PushFullscreen(otherController);
+            manager.PushFullscreen(controller);
+
+            // Completing the closure resumes the controller's show flow synchronously, which here pops the earlier window
+            manager.GetControllerClosure(controller)!.Task.ContinueWith(() => manager.PopFullscreen(otherController)).Forget();
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => manager.PopFullscreen(controller));
+            Assert.IsNull(manager.GetControllerClosure(controller));
+            Assert.IsNull(manager.GetControllerClosure(otherController));
+        }
+
+        [Test]
+        public void PopFullscreen()
+        {
+            manager.PushFullscreen(controller);
+
+            manager.PopFullscreen(controller);
+
+            Assert.IsNull(manager.fullscreenController);
+        }
+
+        [Test]
+        public void PopFullscreenOfReplacedControllerKeepsCurrent()
+        {
+            IController replacement = Substitute.For<IController>();
+            manager.PushFullscreen(controller);
+            manager.PushFullscreen(replacement);
+
+            manager.PopFullscreen(controller);
+
+            Assert.AreSame(replacement, manager.fullscreenController);
+        }
+
+        [Test]
+        public void PopFullscreenWhoseClosureRunsItsOwnPopInline()
+        {
+            // A view that hides without an animation reaches its own pop while the closure completed by this one is still running
+            manager.PushFullscreen(controller);
+            manager.GetControllerClosure(controller)!.Task.ContinueWith(() => manager.PopFullscreen(controller)).Forget();
+
+            Assert.DoesNotThrow(() => manager.PopFullscreen(controller));
+            Assert.IsNull(manager.fullscreenController);
+        }
+
+        [Test]
+        public void PushPersistent()
+        {
+            manager.PushPersistent(controller);
+
+            Assert.AreEqual(1, manager.persistentStack.Count);
+        }
+
+        [Test]
+        public void PushTop()
+        {
+            manager.PushOverlay(controller);
+
+            Assert.AreSame(controller, manager.overlayController);
+        }
+
+        [Test]
+        public void PopTop()
+        {
+            manager.PushOverlay(controller);
+
+            manager.PopOverlay(controller);
+
+            Assert.IsNull(manager.overlayController);
+        }
+    }
+    public class TestInputData2 { }
+
+    public class TestView2 : ViewBase, IView
+    {
+    }
+}

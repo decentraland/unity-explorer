@@ -1,0 +1,431 @@
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
+using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Global.Dynamic;
+using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
+using ECS;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using DCL.RealmNavigation;
+using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Systems;
+using Global.AppArgs;
+using LiveKit.Internal.FFIClients.Requests;
+using Unity.Mathematics;
+using UnityEngine;
+using DCL.UserInAppInitializationFlow.StartupOperations;
+using Utility;
+using Utility.Multithreading;
+
+namespace Global.Dynamic
+{
+    public class RealmController : IGlobalRealmController
+    {
+        // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
+        // TODO construct player/camera entities again and allocate more memory. Evaluate
+        // Realms + Promises
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, EmptySceneComponent>()
+                                                                                     .WithNone<PortableExperienceComponent, SmartWearableId>();
+        private static readonly QueryDescription CLEAR_UNFINISHED_QUERY = new QueryDescription()
+                                                                         .WithAll<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLoadingState>()
+                                                                         .WithNone<DeleteEntityIntention, ISceneFacade>();
+
+        private static readonly QueryDescription INVALIDATE_PARTITIONS = new QueryDescription()
+                                                                        .WithAll<PartitionComponent, ISceneFacade>()
+                                                                        .WithNone<PortableExperienceComponent, SmartWearableId>();
+
+        private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
+        private readonly ServerAbout serverAbout = new ();
+        private readonly DCLSemaphoreSlim realmChangeSemaphore = new ();
+        private readonly IWebRequestController webRequestController;
+        private readonly IReadOnlyList<int2> staticLoadPositions;
+        private readonly RealmData realmData;
+        private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
+        private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
+        private readonly TeleportController teleportController;
+        private readonly PartitionDataContainer partitionDataContainer;
+        private readonly IScenesCache scenesCache;
+        private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+        private readonly bool isLocalSceneDevelopment;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly IAppArgs appArgs;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly DecentralandEnvironment environment;
+        private readonly WorldManifestProvider worldManifestProvider;
+
+        private GlobalWorld? globalWorld;
+        private Entity realmEntity;
+        private IReadOnlyList<int2> localSceneParcels = Array.Empty<int2>();
+
+        public IRealmData RealmData => realmData;
+
+        public URLDomain? CurrentDomain { get; private set; }
+
+        public GlobalWorld GlobalWorld
+        {
+            get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
+            set
+            {
+                globalWorld = value;
+                teleportController.World = globalWorld.EcsWorld;
+            }
+        }
+
+        public RealmController(
+            IWebRequestController webRequestController,
+            TeleportController teleportController,
+            RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
+            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
+            IReadOnlyList<int2> staticLoadPositions,
+            RealmData realmData,
+            IScenesCache scenesCache,
+            PartitionDataContainer partitionDataContainer,
+            IComponentPool<PartitionComponent> partitionComponentPool,
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment,
+            IAppArgs appArgs,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment environment,
+            WorldManifestProvider worldManifestProvider)
+        {
+            this.webRequestController = webRequestController;
+            this.staticLoadPositions = staticLoadPositions;
+            this.realmData = realmData;
+            this.teleportController = teleportController;
+            this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
+            this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
+            this.scenesCache = scenesCache;
+            this.partitionDataContainer = partitionDataContainer;
+            this.partitionComponentPool = partitionComponentPool;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
+            this.appArgs = appArgs;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.environment = environment;
+            this.worldManifestProvider = worldManifestProvider;
+        }
+
+        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        {
+            // Realm changes must be mutually exclusive: overlapping changes can leave more than one
+            // realm entity (and scene-pointer dedup pipeline) alive after the unload phase
+            await realmChangeSemaphore.WaitAsync(ct);
+
+            try { await SetRealmExclusiveAsync(realm, ct); }
+            finally { realmChangeSemaphore.Release(); }
+        }
+
+        private async UniTask SetRealmExclusiveAsync(URLDomain realm, CancellationToken ct)
+        {
+            World world = globalWorld!.EcsWorld;
+
+            try { await UnloadCurrentRealmAsync(); }
+            catch (ObjectDisposedException) { }
+            catch (Exception e) { throw new RealmChangeException("Cannot unload current realm", e); }
+
+            await UniTask.SwitchToMainThread();
+
+            URLAddress url = realm.Append(new URLPath("/about"));
+
+            try
+            {
+                serverAbout.Clear();
+
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
+
+                // Custom Catalyst realms are Genesis realms, but they do not have the static Genesis City
+                // manifest hosted by the production environment. Use the local scene pointers advertised by
+                // /about to generate the minimal terrain manifest needed by the Genesis landscape pipeline.
+                if (worldManifest.IsEmpty && result.configurations.scenesUrn.Count == 0 && localSceneParcels.Count > 0)
+                {
+                    worldManifest = WorldManifest.Create(new List<int2>(localSceneParcels).ToArray(), persist: true);
+                    ReportHub.Log(ReportCategory.REALM, $"Using {localSceneParcels.Count} local scene parcel(s) as the Genesis terrain manifest.");
+                }
+
+                string hostname = ResolveHostname(realm, result);
+
+                float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
+                    ? result.configurations.skybox.fixedHour
+                    : null;
+
+                realmData.Reconfigure(
+                    new IpfsRealm(realm, result),
+                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                    result.configurations.networkId,
+                    ResolveCommsAdapter(result),
+                    result.comms?.protocol ?? "v3",
+                    hostname,
+                    isLocalSceneDevelopment,
+                    worldManifest,
+                    skyboxFixedHour,
+                    realm
+                );
+
+                // CommsContainer is created before the starting realm is loaded. Set the loopback ICE policy only
+                // after RealmData has been configured, and recompute it on every realm change so a remote world
+                // cannot inherit the local direct-ICE workaround.
+                FFIBridgeExtensions.UseTransportAllForLoopbackUrls = LocalUntrustedRealmCommsPolicy.ShouldUseTransportAll(
+                    appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM),
+                    realmData.Ipfs.CatalystBaseUrl.Value);
+
+                UnityDiagnosticsCenter.Instance.SetRealmInfo(
+                    realmData.Ipfs.CatalystBaseUrl.Value,
+                    realmData.Ipfs.ContentBaseUrl.Value,
+                    realmData.Ipfs.LambdasBaseUrl.Value);
+
+                // Add the realm component
+                var realmComp = new RealmComponent(realmData);
+
+                realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
+
+                if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
+                    ComplimentWithVolatilePointers(world, realmEntity);
+
+                IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
+                sceneProviderStrategy.World = globalWorld.EcsWorld;
+
+                teleportController.SceneProviderStrategy = sceneProviderStrategy;
+                partitionDataContainer.Restart();
+
+                CurrentDomain = realm;
+
+                realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
+                    result.content.publicUrl);
+            }
+            // The previous realm is already unloaded at this point: cancellation must propagate
+            // so callers don't treat a half-configured realm as a successful change
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
+                throw new RealmChangeException($"Failed to connect to '{url}'", e);
+            }
+        }
+
+        public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
+            await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
+
+        public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out FixedScenePointers fixedScenePointers)
+                                          && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
+
+            return GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmEntity).SceneResults;
+        }
+
+        public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
+        {
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+            if (positions.Count == 0)
+                return null;
+
+            World world = GlobalWorld.EcsWorld;
+
+            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(positions.Count), positions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (ct.IsCancellationRequested || !promise.TryGetResult(world, out var result) || !result.Succeeded) return null;
+
+            var sceneDefinitions = result.Asset;
+            if (world.TryGet(realmEntity, out SmartWearablePreviewScene smartWearablePreviewScene) && smartWearablePreviewScene.Value != Entity.Null)
+            {
+                // In local scene development we can be loading a Smart Wearable preview scene
+                // In that case the scene definition cannot be found at the standard active entities endpoint
+                // But, we can retrieve it from the Smart Wearable preview scene component that's already been created
+                var sceneDefinitionComponent = world.Get<SceneDefinitionComponent>(smartWearablePreviewScene.Value);
+                sceneDefinitions.Value.Add(sceneDefinitionComponent.Definition);
+            }
+
+            return sceneDefinitions;
+        }
+
+        public void DisposeGlobalWorld()
+        {
+            List<ISceneFacade> loadedScenes = allScenes;
+
+            if (globalWorld != null)
+            {
+                RemoveUnfinishedScenes(globalWorld.EcsWorld);
+
+                loadedScenes = FindLoadedScenesAndClearSceneCache(true);
+
+                // Destroy everything without awaiting as it's Application Quit
+                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
+            }
+
+            foreach (ISceneFacade scene in loadedScenes)
+
+                // Scene Info is contained in the ReportData, don't include it into the exception
+                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
+        }
+
+        private async UniTask UnloadCurrentRealmAsync()
+        {
+            //No need to dispose if we are quitting. Pools and assets may be destroyed by Unity, creating unnecessarily null-refs on exit
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
+            if (globalWorld == null) return;
+
+            World world = globalWorld.EcsWorld;
+
+            RemoveUnfinishedScenes(world);
+
+            InvalidateScenePartitions(world);
+
+            List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
+
+            // release pooled entities
+            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+
+            // Clear the world from everything connected to the current realm
+            world.Destroy(in CLEAR_QUERY);
+
+            globalWorld.Clear();
+
+            teleportController.InvalidateRealm();
+            realmData.Invalidate();
+
+            await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
+
+            CurrentDomain = null;
+
+            // Collect garbage, good moment to do it
+            GC.Collect();
+        }
+
+        private void InvalidateScenePartitions(World world)
+        {
+            world.Query(in INVALIDATE_PARTITIONS,
+                (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
+        }
+
+        private static List<int2> ParseLocalSceneParcels(List<string> parcels)
+        {
+            if (parcels.Count == 0)
+                return new List<int2>();
+
+            var parsed = new List<int2>(parcels.Count);
+
+            foreach (string parcelStr in parcels)
+                if (RealmHelper.TryParseParcelFromString(parcelStr, out Vector2Int parcel))
+                    parsed.Add(parcel.ToInt2());
+
+            return parsed;
+        }
+
+        private void ComplimentWithVolatilePointers(World world, Entity targetRealmEntity)
+        {
+            world.Add(targetRealmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
+        }
+
+        private bool ComplimentWithStaticPointers(World world, Entity targetRealmEntity)
+        {
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+
+            if (positions is { Count: > 0 })
+            {
+                // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
+                world.Add(targetRealmEntity, new StaticScenePointers(positions));
+                return true;
+            }
+
+            return false;
+        }
+
+        private void RemoveUnfinishedScenes(World world)
+        {
+            // See https://github.com/decentraland/unity-explorer/issues/4935
+            // The scene load process it is disrupted due to internet issues remaining in an invalid state
+            // We need to remove them and reload them, otherwise they will keep in an inconsistent state forever
+            world.Query(CLEAR_UNFINISHED_QUERY,
+                (Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneLoadingState sceneLoadingState) =>
+                {
+                    if (promise is { IsConsumed: true, Result: { Succeeded: false } })
+                    {
+                        world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                        world.Add<DeleteEntityIntention>(entity);
+                        sceneLoadingState.VisualSceneState = VisualSceneState.Uninitialized;
+                        sceneLoadingState.PromiseCreated = false;
+                    }
+                });
+        }
+
+        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache(bool findPortableExperiences = false)
+        {
+            allScenes.Clear();
+            allScenes.AddRange(scenesCache.Scenes);
+            if (findPortableExperiences) allScenes.AddRange(scenesCache.PortableExperiencesScenes);
+
+            // Dispose all scenes
+            scenesCache.ClearScenes(findPortableExperiences);
+
+            return allScenes;
+        }
+
+        private string ResolveHostname(URLDomain realm, ServerAbout about)
+        {
+            string hostname;
+
+            if (about.configurations.realmName.IsEns())
+            {
+                var uri = new Uri(realm.Value);
+                hostname = $"{uri.Host}{uri.AbsolutePath}";
+            }
+            else if (about.comms != null)
+                hostname = new Uri(realm.Value).Host;
+            else
+            {
+                // Consider it as the "main" realm which shares the comms with many catalysts
+                string realmProviderDomain = environment switch
+                                             {
+                                                 // A custom deployment runs its own realm provider; grouping its comms
+                                                 // under decentraland.org would drop its players into decentraland's
+                                                 // main-realm island.
+                                                 DecentralandEnvironment.Custom => decentralandUrlsSource.BaseDomain,
+
+                                                 // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
+                                                 _ => IDecentralandUrlsSource.ORG_DOMAIN,
+                                             };
+
+                hostname = "realm-provider." + realmProviderDomain;
+            }
+
+            return hostname;
+        }
+
+        private string ResolveCommsAdapter(ServerAbout about)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.COMMS_ADAPTER, out string? arg) && !string.IsNullOrEmpty(arg))
+                return arg;
+
+            //"offline property like in previous implementation"
+            return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
+        }
+    }
+}

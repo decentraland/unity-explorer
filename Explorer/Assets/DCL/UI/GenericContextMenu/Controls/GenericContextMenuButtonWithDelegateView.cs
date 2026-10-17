@@ -1,0 +1,36 @@
+using DCL.UI.Controls.Configs;
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
+
+namespace DCL.UI.Controls
+{
+    public abstract class GenericContextMenuButtonWithDelegateView<T> : GenericContextMenuComponentBase
+    {
+        [field: SerializeField] public Button ButtonComponent { get; private set; }
+        [field: SerializeField] public TMP_Text TextComponent { get; private set; }
+        [field: SerializeField] public Image ImageComponent { get; private set; }
+
+        public void Configure(ButtonWithDelegateContextMenuControlSettings<T> settings)
+        {
+            TextComponent.SetText(settings.buttonText);
+            TextComponent.color = settings.buttonTextColor;
+            ImageComponent.sprite = settings.buttonIcon;
+            ImageComponent.color = settings.buttonIconColor;
+            HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
+            RegisterListener(settings.callback, settings.data);
+        }
+
+        public override void UnregisterListeners() =>
+            ButtonComponent.onClick.RemoveAllListeners();
+
+        private void RegisterListener(Delegate listener, T data) =>
+            ButtonComponent.onClick.AddListener(() => listener.DynamicInvoke(data));
+        public override void RegisterCloseListener(Action listener) =>
+            ButtonComponent.onClick.AddListener(new UnityAction(listener));
+    }
+}

@@ -1,0 +1,106 @@
+using Cysharp.Threading.Tasks;
+using DCL.Events;
+using DCL.EventsApi;
+using MVC;
+using System;
+using System.Threading;
+using Utility;
+
+namespace DCL.Communities.EventInfo
+{
+    public class EventDetailPanelController : ControllerBase<EventDetailPanelView, EventDetailPanelParameter>
+    {
+        private readonly EventCardActionsController eventCardActionsController;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        private readonly ThumbnailLoader? eventCardThumbnailLoader;
+        private CancellationTokenSource panelCts = new ();
+        private CancellationTokenSource eventCardOperationsCts = new ();
+        private UniTaskCompletionSource? handedOverCloseIntent;
+
+        public EventDetailPanelController(ViewFactoryMethod viewFactory,
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController)
+            : base(viewFactory)
+        {
+            eventCardThumbnailLoader = thumbnailLoader;
+            this.eventCardActionsController = eventCardActionsController;
+        }
+
+        public override void Dispose()
+        {
+            panelCts.SafeCancelAndDispose();
+            eventCardOperationsCts.SafeCancelAndDispose();
+
+            if (viewInstance == null) return;
+
+            viewInstance.InterestedButtonClicked -= OnInterestedButtonClicked;
+            viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
+            viewInstance.AddToCalendarButtonClicked -= OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked -= OnAddRecurrentDateToCalendarButtonClicked;
+            viewInstance.EventShareButtonClicked -= OnEventShareButtonClicked;
+            viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            handedOverCloseIntent = new UniTaskCompletionSource();
+            return UniTask.WhenAny(UniTask.WhenAny(viewInstance!.GetCloseTasks()), handedOverCloseIntent.Task);
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
+            viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
+            viewInstance.AddToCalendarButtonClicked += OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked += OnAddRecurrentDateToCalendarButtonClicked;
+            viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
+            viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            panelCts = panelCts.SafeRestart();
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, eventCardThumbnailLoader!, panelCts.Token);
+        }
+
+        protected override void OnViewClose()
+        {
+            panelCts.SafeCancelAndDispose();
+            handedOverCloseIntent = null;
+        }
+
+        private void OnEventCopyLinkButtonClicked(IEventDTO eventData) =>
+            eventCardActionsController.CopyEventLink(eventData);
+
+        private void OnAddToCalendarButtonClicked(IEventDTO eventData) =>
+            eventCardActionsController.AddEventToCalendar(eventData);
+
+        private void OnAddRecurrentDateToCalendarButtonClicked(IEventDTO eventData, DateTime utcStart) =>
+            eventCardActionsController.AddEventToCalendar(eventData, utcStart);
+
+        private void OnEventShareButtonClicked(IEventDTO eventData) =>
+            eventCardActionsController.ShareEvent(eventData);
+
+        private void OnJumpInButtonClicked(IEventDTO eventData)
+        {
+            if (inputData.JumpInHandler != null)
+            {
+                // The summoner takes it from here, the panel has nothing left to show
+                inputData.JumpInHandler(eventData);
+                handedOverCloseIntent?.TrySetResult();
+                return;
+            }
+
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
+        }
+
+        private void OnInterestedButtonClicked(IEventDTO eventData)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.SetEventAsInterestedAsync(eventData, inputData.SummonerEventCard, viewInstance, eventCardOperationsCts.Token).Forget();
+        }
+    }
+}

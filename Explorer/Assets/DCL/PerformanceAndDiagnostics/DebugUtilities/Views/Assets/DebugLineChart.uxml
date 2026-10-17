@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <DCL.DebugUtilities.Views.DebugLineChartElement>
+        <ui:VisualElement class="line-chart">
+            <ui:VisualElement class="line-chart__header">
+                <ui:Label name="Title" class="line-chart__title" text="" />
+                <ui:Label name="Value" class="line-chart__value" text="" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Plot" class="line-chart__plot" />
+        </ui:VisualElement>
+    </DCL.DebugUtilities.Views.DebugLineChartElement>
+</ui:UXML>

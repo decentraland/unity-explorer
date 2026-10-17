@@ -1,0 +1,64 @@
+using DCL.Notifications.NotificationEntry;
+using MVC;
+using UnityEngine;
+using UnityEngine.Serialization;
+
+namespace DCL.Notifications.NewNotification
+{
+    public class NewNotificationView : ViewBase, IView
+    {
+        [field: SerializeField]
+        public NotificationView NotificationView { get; private set; }
+
+        [field: SerializeField]
+        public SystemNotificationView SystemNotificationView { get; private set; }
+
+        [field: FormerlySerializedAs("<CommunityNotificationView>k__BackingField")]
+        [field: SerializeField]
+        public CommunityNotificationView CommunityVoiceChatNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup CommunityNotificationCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup NotificationViewCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup SystemNotificationViewCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public BadgeNotificationView BadgeNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public Animator BadgeNotificationAnimator { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup BadgeNotificationViewCanvasGroup { get; private set; }
+
+        [field: Header("Gift Toast")]
+        [field: SerializeField]
+        public GiftToastView GiftToastView { get; private set; }
+
+        [field: SerializeField]
+        public Animator GiftToastAnimator { get; private set; }
+
+        [field: SerializeField]
+        public FriendsNotificationView FriendsNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup FriendsNotificationViewCanvasGroup { get; private set; }
+
+        [field: SerializeField] public GiftNotificationView GiftNotificationView { get; private set; }
+
+        [field: SerializeField] public CanvasGroup GiftNotificationCanvasGroup { get; private set; }
+        
+        [field: SerializeField]
+        public MarketplaceCreditsNotificationView MarketplaceCreditsNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public Animator MarketplaceCreditsNotificationAnimator { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup MarketplaceCreditsNotificationViewCanvasGroup { get; private set; }
+    }
+}

@@ -1,0 +1,142 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Time;
+using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.RequestsHub;
+using Sentry;
+using Sentry.Unity;
+using System;
+using System.Text;
+using System.Threading;
+using UnityEngine.Networking;
+using Utility.Multithreading;
+
+namespace DCL.WebRequests
+{
+    public class WebRequestController : IWebRequestController
+    {
+        private const string DATE_HEADER = "Date";
+
+        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
+        private readonly IWebRequestsAnalyticsContainer analyticsContainer;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IRequestHub requestHub;
+        private readonly RealmClock realmClock;
+
+        private readonly WebRequestBudget budget;
+
+        IRequestHub IWebRequestController.RequestHub => requestHub;
+
+        public WebRequestController(
+            IWebRequestsAnalyticsContainer analyticsContainer,
+            IWeb3IdentityCache web3IdentityCache,
+            IRequestHub requestHub,
+            WebRequestBudget budget,
+            RealmClock realmClock)
+        {
+            this.analyticsContainer = analyticsContainer;
+            this.web3IdentityCache = web3IdentityCache;
+            this.requestHub = requestHub;
+            this.budget = budget;
+            this.realmClock = realmClock;
+        }
+
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
+            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
+            TWebRequestOp op,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null)
+            where TWebRequestArgs: struct
+            where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
+
+            RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
+            int attemptNumber = 0;
+
+            // ensure disposal of headersInfo
+            using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
+
+            while (true)
+            {
+                // If signed request is required but identity is not available (e.g., during sign-out), return default
+                if (envelope.signInfo.HasValue && web3IdentityCache.Identity == null)
+                    return default(TResult?);
+
+                TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
+                bool idempotent = request.IsIdempotent(envelope.signInfo);
+
+                // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
+                using UnityWebRequest wr = request.UnityWebRequest;
+
+                try
+                {
+                    analyticsContainer.OnBeforeBudgeting(in envelope, request);
+
+                    // Budget the web request itself only:
+                    // There is no harm to execute pre-processing as it's lightweight
+                    // and content processing as it's off the main thread
+                    using (await budget.AcquireAsync(envelope.Ct))
+                    {
+                        attemptNumber++;
+
+                        analyticsContainer.OnRequestStarted(in envelope, request);
+
+                        await request.SendRequestAsync(envelope.Ct, expectedContentLength, progressReporter);
+                        analyticsContainer.OnRequestFinished(request);
+                    }
+
+                    if (!realmClock.HasSample)
+                        realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));
+
+                    try
+                    {
+                        // if no exception is thrown Request is successful and the continuation op can be executed
+                        return await op.ExecuteAsync(request, envelope.Ct);
+                    }
+                    finally { analyticsContainer.OnProcessDataFinished(request); }
+
+                    // After the operation is executed, the flow may continue in the background thread
+                }
+                catch (UnityWebRequestException exception)
+                {
+                    analyticsContainer.OnException(request, exception);
+
+                    // No result can be concluded in this case
+                    if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
+                        return default(TResult);
+
+                    if (!envelope.SuppressErrors)
+
+                        // Print verbose
+                        ReportHub.LogError(
+                            envelope.ReportData,
+                            $"Exception (code {exception.ResponseCode}) occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
+                            + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
+                        );
+
+                    (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
+
+                    if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
+                    {
+                        // Ignore the file error as we always try to read from the file first
+                        if (!envelope.CommonArguments.URL.IsFile())
+                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+
+                        throw;
+                    }
+
+                    await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
+                }
+                catch (Exception exception)
+                {
+                    analyticsContainer.OnException(request, exception);
+                    throw;
+                }
+            }
+        }
+    }
+}

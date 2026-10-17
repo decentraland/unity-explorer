@@ -1,0 +1,19 @@
+@import url("unity-theme://default");
+
+@import url("Styles/Sprites-Common.uss");
+@import url("Styles/Sprites-Interaction.uss");
+
+/* "Styles/CommonStyles.uss" has some margin and padding settings that mess scenes UI Labels */
+/* @import url("Styles/CommonStyles.uss"); */
+
+@import url("project://database/Assets/DCL/SDKComponents/SceneUI/ScenesUIStyleSheet.uss");
+
+:root {
+    /* Matches DCLDefaultTheme: Advanced enumerates every OS font on first layout regardless of
+       content. The fallback list is cached per TextSettings, which every panel now shares, so
+       leaving scene UI on Advanced would keep that cost and only move it to the first scene
+       that draws a label. */
+    -unity-text-generator: standard;
+}
+
+

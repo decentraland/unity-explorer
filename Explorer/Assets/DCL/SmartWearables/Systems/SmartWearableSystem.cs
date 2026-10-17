@@ -1,0 +1,511 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.BackpackBus;
+using DCL.Character;
+using DCL.Diagnostics;
+using DCL.Ipfs;
+using DCL.Profiles;
+using DCL.RealmNavigation;
+using DCL.Web3.Identities;
+using ECS;
+using ECS.Abstract;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Systems;
+using MVC;
+using PortableExperiences.Controller;
+using Runtime.Wearables;
+using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using UnityEngine.Pool;
+using Utility;
+using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
+
+namespace DCL.SmartWearables
+{
+    /// <summary>
+    /// Handles initiating loading / unloading scenes tied to smart wearables.
+    /// </summary>
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [LogCategory(ReportCategory.WEARABLE)]
+    public partial class SmartWearableSystem : BaseUnityLoopSystem
+    {
+        private readonly WearableStorage wearableStorage;
+        private readonly SmartWearableCache smartWearableCache;
+        private readonly IBackpackEventBus backpackEventBus;
+        private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly IScenesCache scenesCache;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly IMVCManager mvcManager;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+
+        /// <summary>
+        ///     Promises waiting on the loading flow of a smart wearable scene.
+        /// </summary>
+        private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
+
+        private CancellationTokenSource outfitEquipCts = new ();
+
+        /// <summary>
+        ///     Scopes the per-wearable equip and unequip flows.
+        ///     Restarted on logout so in-flight work cannot touch the cache of the next session.
+        /// </summary>
+        private CancellationTokenSource sessionCts = new ();
+
+        /// <summary>
+        ///     Scopes a single run over the equipped wearables.
+        ///     Restarted on every trigger because the current scene can change many times before a run finishes.
+        /// </summary>
+        private CancellationTokenSource runScenesCts = new ();
+
+        private bool currentSceneDirty;
+
+        public SmartWearableSystem(World world,
+            WearableStorage wearableStorage,
+            SmartWearableCache smartWearableCache,
+            IBackpackEventBus backpackEventBus,
+            IPortableExperiencesController portableExperiencesController,
+            IScenesCache scenesCache,
+            ILoadingStatus loadingStatus,
+            IMVCManager mvcManager,
+            IThumbnailProvider thumbnailProvider,
+            IWeb3IdentityCache web3IdentityCache) : base(world)
+        {
+            this.wearableStorage = wearableStorage;
+            this.smartWearableCache = smartWearableCache;
+            this.backpackEventBus = backpackEventBus;
+            this.portableExperiencesController = portableExperiencesController;
+            this.scenesCache = scenesCache;
+            this.loadingStatus = loadingStatus;
+            this.mvcManager = mvcManager;
+            this.thumbnailProvider = thumbnailProvider;
+            this.web3IdentityCache = web3IdentityCache;
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+            backpackEventBus.EquipWearableEvent += OnEquipWearable;
+            backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
+            backpackEventBus.EquipOutfitEvent += OnEquipOutfit;
+            portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+        }
+
+        protected override void OnDispose()
+        {
+            // Detach first: a handler running after the sources are disposed would fault on their tokens
+            backpackEventBus.EquipWearableEvent -= OnEquipWearable;
+            backpackEventBus.UnEquipWearableEvent -= OnUnEquipWearable;
+            backpackEventBus.EquipOutfitEvent -= OnEquipOutfit;
+            portableExperiencesController.PortableExperienceUnloaded -= OnPortableExperienceUnloaded;
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
+            scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+            web3IdentityCache.OnIdentityCleared -= OnIdentityCleared;
+
+            outfitEquipCts.SafeCancelAndDispose();
+            sessionCts.SafeCancelAndDispose();
+            runScenesCts.SafeCancelAndDispose();
+        }
+
+        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
+        {
+            if (!isManuallyEquipped) return;
+
+            TryRunSmartWearableSceneAsync(wearable, sessionCts.Token).Forget();
+        }
+
+        private async UniTask TryRunSmartWearableSceneAsync(IWearable wearable, CancellationToken ct)
+        {
+            try
+            {
+                bool isSmart = await smartWearableCache.IsSmartAsync(wearable, ct);
+                if (ct.IsCancellationRequested) return;
+
+                if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
+
+                string id = SmartWearableCache.GetCacheId(wearable);
+                if (pendingScenes.ContainsKey(id) ||
+                    smartWearableCache.RunningSmartWearables.Contains(id) ||
+                    // Do not load scenes that were manually killed
+                    // To re-enable a wearable, the user must unequip it and then equip it again
+                    // NOTICE reloading can be triggered whenever moving between scenes too, that's why we need this
+                    smartWearableCache.KilledPortableExperiences.Contains(id)) return;
+
+                string wearableName = wearable.DTO.Metadata.name;
+                ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{wearableName}'. Loading scene...");
+
+                var partition = PartitionComponent.TOP_PRIORITY;
+                var intention = GetSmartWearableSceneIntention.Create(wearable, partition);
+
+                await UniTask.SwitchToMainThread();
+
+                // Re-check after the thread hop, the world must not be touched once the session is over
+                if (ct.IsCancellationRequested) return;
+
+                var promise = ScenePromise.Create(World, intention, partition);
+                World.Add(promise.Entity, promise, new SmartWearableId { Value = id });
+
+                pendingScenes.Add(id, promise);
+            }
+            catch (OperationCanceledException) { /* expected on logout or system disposal */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+        }
+
+        private void OnUnEquipWearable(IWearable wearable) =>
+            StopSmartWearableSceneAsync(wearable, sessionCts.Token).Forget();
+
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
+        {
+            outfitEquipCts = outfitEquipCts.SafeRestart();
+            HandleOutfitEquipAsync(wearables, outfitEquipCts.Token).Forget();
+        }
+
+        private async UniTaskVoid HandleOutfitEquipAsync(IReadOnlyCollection<IWearable> wearables, CancellationToken ct)
+        {
+            try
+            {
+                using var newOutfitScope = HashSetPool<string>.Get(out var newOutfitSmartIds);
+
+                foreach (IWearable wearable in wearables)
+                {
+                    if (ct.IsCancellationRequested) return;
+
+                    if (await smartWearableCache.IsSmartAsync(wearable, ct))
+                        newOutfitSmartIds.Add(SmartWearableCache.GetCacheId(wearable));
+                }
+
+                if (ct.IsCancellationRequested) return;
+
+                // Cancel pending loads for smart wearables that left the outfit
+                using var a = ListPool<string>.Get(out var pendingIds);
+                foreach (var kvp in pendingScenes)
+                    if (!newOutfitSmartIds.Contains(kvp.Key))
+                        pendingIds.Add(kvp.Key);
+
+                foreach (string id in pendingIds)
+                    if (pendingScenes.Remove(id, out var pending))
+                        pending.ForgetLoading(World);
+
+                // Unload running smart wearables that left the outfit; clear kill marker like OnUnEquipWearable does
+                using var b = ListPool<string>.Get(out var runningIds);
+                foreach (string id in smartWearableCache.RunningSmartWearables)
+                    if (!newOutfitSmartIds.Contains(id))
+                        runningIds.Add(id);
+
+                foreach (string id in runningIds)
+                {
+                    smartWearableCache.KilledPortableExperiences.Remove(id);
+                    portableExperiencesController.UnloadPortableExperienceById(id);
+                }
+
+                // Start scenes for smart wearables now in the outfit (auth flow mirrors single-equip path)
+                foreach (IWearable wearable in wearables)
+                {
+                    if (ct.IsCancellationRequested) return;
+
+                    bool isSmart = newOutfitSmartIds.Contains(SmartWearableCache.GetCacheId(wearable));
+                    if (!isSmart) continue;
+
+                    string id = SmartWearableCache.GetCacheId(wearable);
+                    bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
+
+                    if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(id))
+                    {
+                        bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
+                        if (ct.IsCancellationRequested) return;
+
+                        if (authorized)
+                            smartWearableCache.AuthorizedSmartWearables.Add(id);
+                        else
+                            smartWearableCache.KilledPortableExperiences.Add(id);
+                    }
+
+                    await TryRunSmartWearableSceneAsync(wearable, ct);
+                }
+            }
+            catch (OperationCanceledException) { /* expected on rapid outfit replace */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+        }
+
+        private async UniTask StopSmartWearableSceneAsync(IWearable wearable, CancellationToken ct)
+        {
+            try
+            {
+                bool isSmart = await smartWearableCache.IsSmartAsync(wearable, ct);
+                if (ct.IsCancellationRequested) return;
+
+                if (!isSmart) return;
+
+                string id = SmartWearableCache.GetCacheId(wearable);
+
+                // If the user removes the wearable, we can allow reloading its scene the next time it is equipped
+                smartWearableCache.KilledPortableExperiences.Remove(id);
+
+                if (pendingScenes.Remove(id, out var promise))
+                {
+                    promise.ForgetLoading(World);
+                    return;
+                }
+
+                if (!smartWearableCache.RunningSmartWearables.Remove(id)) return;
+
+                string wearableName = wearable.DTO.Metadata.name;
+                ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{wearableName}'. Unloading scene...");
+
+                portableExperiencesController.UnloadPortableExperienceById(id);
+            }
+            catch (OperationCanceledException) { /* expected on logout or system disposal */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+        }
+
+        protected override void Update(float t)
+        {
+            smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables();
+
+            if (smartWearableCache.CurrentSceneAllowsSmartWearables) ResolveScenePromiseQuery(World);
+
+            if (currentSceneDirty)
+            {
+                HandleSceneChange();
+                currentSceneDirty = false;
+            }
+        }
+
+        private bool CurrentSceneAllowsSmartWearables()
+        {
+            var scene = scenesCache.CurrentScene.Value;
+
+            // If we aren't in a scene we just allow Smart Wearables.
+            if (scene == null) return true;
+
+            // Otherwise we check the feature toggles.
+            SceneMetadata.FeatureToggles featureToggles = scene.SceneData.SceneEntityDefinition.metadata.featureToggles;
+            return featureToggles.PortableExperiencesEnabled;
+        }
+
+        [Query]
+        private void ResolveScenePromise(ref ScenePromise promise, in SmartWearableId smartWearableId)
+        {
+            if (!promise.TryConsume(World, out var result)) return;
+
+            pendingScenes.Remove(smartWearableId.Value);
+
+            if (!result.Succeeded)
+            {
+                result.TryLogException(GetReportData());
+                return;
+            }
+
+            Entity scene = World.Create(
+                smartWearableId,
+                promise.LoadingIntention.Partition,
+                result.Asset.SceneDefinition,
+                result.Asset.SceneFacade,
+                SceneLoadingState.CreateBuiltScene());
+
+            AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
+
+            smartWearableCache.RunningSmartWearables.Add(smartWearableId.Value);
+        }
+
+        private void AddPortableExperience(IWearable smartWearable, Entity scene)
+        {
+            string id = SmartWearableCache.GetCacheId(smartWearable);
+
+            var metadata = new PortableExperienceMetadata
+            {
+                Type = PortableExperienceType.SmartWearable,
+                Ens = string.Empty,
+                Id = id,
+                Name = smartWearable.DTO.Metadata.name,
+                ParentSceneId = "avatar"
+            };
+            World.Add(scene, metadata);
+
+            portableExperiencesController.AddPortableExperience(id, scene);
+        }
+
+        private void CancelLoadingAllScenes()
+        {
+            CancelLoadingSceneQuery(World);
+            pendingScenes.Clear();
+        }
+
+        [Query]
+        [All(typeof(SmartWearableId))]
+        private void CancelLoadingScene(ref ScenePromise promise) =>
+            promise.ForgetLoading(World);
+
+        private void OnPortableExperienceUnloaded(string id) =>
+            smartWearableCache.RunningSmartWearables.Remove(id);
+
+        private void OnCurrentSceneChanged(ISceneFacade? scene) =>
+            currentSceneDirty = true;
+
+        private void HandleSceneChange()
+        {
+            bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
+
+            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearablesAllowed);
+
+            if (!smartWearablesAllowed)
+            {
+                UnloadAllSmartWearableScenes();
+                return;
+            }
+
+            if (!TryGetPlayerProfile(out Profile? profile))
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Player profile is not available, skipping the Smart Wearable reload for the current scene");
+                return;
+            }
+
+            // Notice scenes that are already running won't run again, so we can call this safely.
+            // The scene can change again long before a run ends, so the previous one is dropped instead of piling up.
+            runScenesCts = runScenesCts.SafeRestart();
+            RunScenesForEquippedWearablesAsync(profile, AuthorizationAction.SkipAuthorization, runScenesCts.Token).Forget();
+        }
+
+        private void UnloadAllSmartWearableScenes()
+        {
+            CancelLoadingAllScenes();
+
+            if (smartWearableCache.RunningSmartWearables.Count <= 0) return;
+
+            // The reason for this copy is that unloading a PX will also trigger an event that alters the running scenes set
+            using var tempScope = ListPool<string>.Get(out var temp);
+            temp.AddRange(smartWearableCache.RunningSmartWearables);
+
+            foreach (string id in temp) portableExperiencesController.UnloadPortableExperienceById(id);
+        }
+
+        private void OnLoadingStatusChanged(LoadingStatus.LoadingStage stage)
+        {
+            if (stage != LoadingStatus.LoadingStage.Completed) return;
+
+            // The profile is not guaranteed to be resolved when the loading flow completes.
+            // Keep the subscription so the next Completed transition retries the start-up instead of consuming it here.
+            if (!TryGetPlayerProfile(out Profile? profile))
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Player profile is not available, deferring the Smart Wearable start-up to the next completed loading");
+                return;
+            }
+
+            // Do once, then listen to scene changes
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
+            scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
+
+            runScenesCts = runScenesCts.SafeRestart();
+            RunScenesForEquippedWearablesAsync(profile, AuthorizationAction.RequestAuthorization, runScenesCts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Resolves the profile of the local player, which is absent until the initialization flow stores it in the world.
+        /// </summary>
+        /// <remarks>Fixes: https://github.com/decentraland/unity-explorer/issues/9753</remarks>
+        private bool TryGetPlayerProfile([NotNullWhen(true)] out Profile? profile)
+        {
+            profile = null;
+
+            Entity player = World.CachePlayerEntityOrNull();
+            if (player.IsNull()) return false;
+
+            return World.TryGet(player, out profile) && profile?.Avatar != null;
+        }
+
+        private async UniTask RunScenesForEquippedWearablesAsync(Profile profile, AuthorizationAction authorization, CancellationToken ct)
+        {
+            try
+            {
+                foreach (var urn in profile.Avatar.Wearables)
+                {
+                    IWearable wearable;
+
+                    URN shortUrn = urn.Shorten();
+
+                    while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading)
+                        await UniTask.Yield(ct);
+
+                    string id = SmartWearableCache.GetCacheId(wearable);
+
+                    // By design at this point of the flow we only request auth if the wearable uses the Web3 API
+                    // When equipping from the backpack, we request auth for any required permission
+                    bool requiresAuthorization = authorization == AuthorizationAction.RequestAuthorization &&
+                                                 await smartWearableCache.RequiresWeb3APIAsync(wearable, ct);
+
+                    if (ct.IsCancellationRequested) return;
+
+                    if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(id))
+                    {
+                        // Make sure the thumbnail is there
+                        // Needed because we also run this flow on login, and thumbnails are loaded on-demand
+                        await thumbnailProvider.GetAsync(wearable, ct);
+
+                        bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
+                        if (ct.IsCancellationRequested) return;
+
+                        if (authorized)
+                            smartWearableCache.AuthorizedSmartWearables.Add(id);
+                        else
+                        {
+                            smartWearableCache.KilledPortableExperiences.Add(id);
+                            continue;
+                        }
+                    }
+
+                    await TryRunSmartWearableSceneAsync(wearable, ct);
+                    if (ct.IsCancellationRequested) return;
+                }
+            }
+            catch (OperationCanceledException) { /* expected on logout or system disposal */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+        }
+
+        private void OnIdentityCleared()
+        {
+            // Stop every in-flight flow before the cache is cleared, otherwise it would repopulate it for the previous identity
+            outfitEquipCts = outfitEquipCts.SafeRestart();
+            sessionCts = sessionCts.SafeRestart();
+            runScenesCts = runScenesCts.SafeRestart();
+
+            UnloadAllSmartWearableScenes();
+
+            // In addition to unloading the scenes also unload any cached info
+            // Needed for various reasons:
+            // - The cache remembers explicitly killed PX
+            // - The cache remembers authorized Smart Wearables
+            // - The cache stores some metadata associated with Smart Wearables that have been loaded during the session
+            smartWearableCache.Clear();
+
+            // Restore the subscriptions to the state left by Initialize so the next login runs the start-up exactly once.
+            // The loading status handler may still be attached if it never found a profile to run with.
+            scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
+        }
+
+        private enum AuthorizationAction
+        {
+            RequestAuthorization,
+
+            SkipAuthorization
+        }
+    }
+}

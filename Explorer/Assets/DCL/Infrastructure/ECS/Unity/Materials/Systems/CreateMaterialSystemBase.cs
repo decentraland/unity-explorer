@@ -1,0 +1,95 @@
+using Arch.Core;
+using DCL.Optimization.PerformanceBudgeting;
+using ECS.Abstract;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
+using ECS.Unity.Materials.Components;
+using ECS.Unity.Textures.Components;
+using UnityEngine;
+using UnityEngine.Pool;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+
+namespace ECS.Unity.Materials.Systems
+{
+    public abstract class CreateMaterialSystemBase : BaseUnityLoopSystem
+    {
+        private readonly IObjectPool<Material> materialsPool;
+
+        private readonly IPerformanceBudget memoryBudgetProvider;
+        private readonly IPerformanceBudget capFrameBudget;
+
+        protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world)
+        {
+            this.materialsPool = materialsPool;
+            this.capFrameBudget = capFrameBudget;
+            this.memoryBudgetProvider = memoryBudgetProvider;
+        }
+
+        protected bool CanConstructMaterial(MaterialComponent materialComponent)
+        {
+            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
+            {
+                if (capFrameBudget.TrySpendBudget() && memoryBudgetProvider.TrySpendBudget())
+                    return true;
+            }
+            return false;
+        }
+
+        protected Material CreateNewMaterialInstance() =>
+            materialsPool.Get();
+
+        protected void DestroyEntityReferencesForPromises(ref MaterialComponent materialComponent)
+        {
+            DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
+            DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
+            DestroyEntityReference(ref materialComponent.AlphaTexPromise);
+            DestroyEntityReference(ref materialComponent.BumpTexPromise);
+        }
+
+        protected void DestroyEntityReference(ref Promise? promise)
+        {
+            if (promise == null) return;
+            Promise promiseValue = promise.Value;
+            promiseValue.Consume(World);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = promiseValue;
+        }
+
+        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<TextureData> textureResult)
+        {
+            textureResult = default(StreamableLoadingResult<TextureData>);
+
+            if (promise == null)
+                return true;
+
+            Promise value = promise.Value;
+            bool result = value.TryGetResult(World, out textureResult);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = value;
+            return result;
+        }
+
+        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<TextureData> textureResult, int propId, in TextureComponent? textureComponent)
+        {
+            if (!textureResult.Succeeded) return;
+
+            material.SetTexture(propId, textureResult.Asset!);
+
+            if (textureComponent == null)
+            {
+                // When the material is re-used for another texture we need to restore the texture scale
+                // Otherwise in case it was previously a video texture it might have x:1,y:-1 scale which is undesired
+                // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
+                // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
+                material.SetTextureScale(propId, Vector2.one);
+            }
+            else
+            {
+                material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
+                material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
+            }
+        }
+    }
+}

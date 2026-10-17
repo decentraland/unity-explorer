@@ -1,0 +1,291 @@
+﻿using CrdtEcsBridge.PoolsProviders;
+using Cysharp.Threading.Tasks;
+using Microsoft.ClearScript.JavaScript;
+using SceneRuntime;
+using SceneRuntime.Apis.Modules;
+using SceneRuntime.ScenePermissions;
+using System;
+using System.Text;
+using System.Threading;
+using Utility.Multithreading;
+using Utility.Networking;
+
+namespace CrdtEcsBridge.JsModulesImplementation
+{
+    /// <summary>
+    ///     Uses raw .NET ClientWebSocket under the hood
+    /// </summary>
+    public class ClientWebSocketApiImplementation : IWebSocketApi
+    {
+        private static readonly ChunkTransmission CHUNK_TRANSMISSION = new ();
+
+        private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly IJsOperations jsOperations;
+        private readonly IJsApiPermissionsProvider permissionsProvider;
+
+        private readonly DCLConcurrentDictionary<int, WebSocketRental> webSockets = new ();
+
+        private int nextId;
+
+        public ClientWebSocketApiImplementation(IInstancePoolsProvider instancePoolsProvider, IJsOperations jsOperations, IJsApiPermissionsProvider permissionsProvider)
+        {
+            this.instancePoolsProvider = instancePoolsProvider;
+            this.jsOperations = jsOperations;
+            this.permissionsProvider = permissionsProvider;
+        }
+
+        public void Dispose()
+        {
+            foreach (WebSocketRental rental in webSockets.Values)
+                rental.Dispose();
+
+            webSockets.Clear();
+        }
+
+        public int CreateWebSocket(string url)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return 0;
+
+            DCLInterlocked.Increment(ref nextId);
+
+            webSockets[nextId] = new WebSocketRental(); // ClientWebSocket does not support reviving
+            return nextId;
+        }
+
+        public async UniTask ConnectAsync(int websocketId, string url, CancellationToken ct)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
+            await GetInstanceOrThrow(websocketId).WebSocket.ConnectAsync(new Uri(url), ct);
+        }
+
+        public async UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
+            WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
+
+            if (size == 0) return;
+
+            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool((int)size);
+
+            data.ReadBytes(0, size, poolableArray.Array, 0);
+            await CHUNK_TRANSMISSION.SendAsync(webSocket, poolableArray.Memory, WebSocketMessageType.Binary, ct);
+        }
+
+        public async UniTask SendTextAsync(int websocketId, string data, CancellationToken ct)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
+            WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
+
+            int utfBytesCount = Encoding.UTF8.GetByteCount(data);
+
+            if (utfBytesCount == 0) return;
+
+            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool(utfBytesCount);
+
+            Encoding.UTF8.GetBytes(data, poolableArray.Memory.Span);
+            await CHUNK_TRANSMISSION.SendAsync(webSocket, poolableArray.Memory, WebSocketMessageType.Text, ct);
+        }
+
+        public async UniTask CloseAsync(int websocketId, CancellationToken ct)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
+
+            if (!webSockets.TryGetValue(websocketId, out WebSocketRental webSocket))
+                throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
+
+            try
+            {
+                await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected during scene teardown when the close is cancelled mid-flight.
+            }
+        }
+
+        public async UniTask<IWebSocketApi.ReceiveResponse> ReceiveAsync(int websocketId, CancellationToken ct)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return default(IWebSocketApi.ReceiveResponse);
+
+            WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
+
+            try
+            {
+                (PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)
+                    = await CHUNK_TRANSMISSION.ReceiveAsync(webSocket.WebSocket, instancePoolsProvider, ct);
+
+                // by creating a JS array here we can free the result array immediately
+                using (result)
+                {
+                    if (messageType == WebSocketMessageType.Close)
+
+                        // Normal closure does not require an exception
+                        return new IWebSocketApi.ReceiveResponse
+                        {
+                            type = "Close",
+                        };
+
+                    // This closure is abnormal
+                    if (closeStatus != WebSocketCloseStatus.Empty)
+                        throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed with status {closeStatus}");
+
+                    if (messageType == WebSocketMessageType.Text)
+                        return new IWebSocketApi.ReceiveResponse
+                        {
+                            type = "Text",
+                            text = Encoding.UTF8.GetString(result.Span),
+                        };
+
+                    var binary = jsOperations.NewUint8Array(result.Length);
+                    binary.WriteBytes(result.Array, 0ul, (ulong)result.Length, 0ul);
+
+                    return new IWebSocketApi.ReceiveResponse
+                    {
+                        type = "Binary",
+                        binary = binary
+                    };
+                }
+            }
+            catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException
+                                      || e.InnerException is ObjectDisposedException)
+            {
+                // it is expected if the web socket was already disposed of (from Dispose method)
+                // or cancellation was requested from the wrapper layer,
+                // finish gracefully
+                return new IWebSocketApi.ReceiveResponse
+                {
+                    type = "Close"
+                    // don't call any other APIs as they can be already disposed of
+                };
+            }
+        }
+
+        public IWebSocketApi.JSWebSocketState GetState(int webSocketId)
+        {
+            if (!permissionsProvider.CanInvokeWebSocketsAPI()) return default(IWebSocketApi.JSWebSocketState);
+
+            WebSocketRental dotNetState = GetInstanceOrThrow(webSocketId);
+
+            switch (dotNetState.WebSocket.State)
+            {
+                case WebSocketState.Aborted:
+                case WebSocketState.Closed:
+                    return IWebSocketApi.JSWebSocketState.CLOSED;
+                case WebSocketState.Connecting:
+                    return IWebSocketApi.JSWebSocketState.CONNECTING;
+                case WebSocketState.CloseSent:
+                case WebSocketState.CloseReceived:
+                    return IWebSocketApi.JSWebSocketState.CLOSING;
+                case WebSocketState.Open:
+                    return IWebSocketApi.JSWebSocketState.OPEN;
+                default:
+                    throw new WebSocketException($"Unknown WebSocket state: {dotNetState.WebSocket.State}");
+            }
+        }
+
+        private WebSocketRental GetInstanceOrThrow(int websocketId)
+        {
+            // TODO add meaningful exception handling on the wrapper level
+
+            if (!webSockets.TryGetValue(websocketId, out WebSocketRental webSocket))
+                throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
+
+            return webSocket;
+        }
+
+        /// <summary>
+        ///     Handles Sending and Receiving in chunks, tightly coupled with WebSocket APIs
+        /// </summary>
+        private class ChunkTransmission
+        {
+            private const int SIZE8_K = 8 * 1024;
+
+            private readonly int receiveChunkSize;
+            private readonly int sendChunkSize;
+
+            public ChunkTransmission(int receiveChunkSize = SIZE8_K, int sendChunkSize = SIZE8_K)
+            {
+                this.receiveChunkSize = receiveChunkSize;
+                this.sendChunkSize = sendChunkSize;
+            }
+
+            public async UniTask SendAsync(WebSocketRental rental, ReadOnlyMemory<byte> data, WebSocketMessageType messageType, CancellationToken ct)
+            {
+                try
+                {
+                    await rental.SendLock.WaitAsync(ct);
+
+                    var pages = (int)Math.Ceiling(data.Length * 1.0 / sendChunkSize);
+
+                    for (var i = 0; i < pages; i++)
+                    {
+                        int offset = i * sendChunkSize;
+                        int length = sendChunkSize;
+
+                        if (offset + length > data.Length) length = data.Length - offset;
+
+                        ReadOnlyMemory<byte> subBuffer = data.Slice(offset, length);
+                        bool endOfMessage = pages - 1 == i;
+                        await rental.WebSocket.SendAsync(subBuffer, messageType, endOfMessage, ct);
+                    }
+                }
+                finally { rental.SendLock.Release(); }
+            }
+
+            public async UniTask<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(DCLWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
+            {
+                PoolableByteArray finalBuffer = PoolableByteArray.EMPTY;
+
+                try
+                {
+                    using PoolableByteArray chunkBuffer = instancePoolsProvider.GetAPIRawDataPool(receiveChunkSize);
+
+                    WebSocketMessageType messageType;
+
+                    while (true)
+                    {
+                        WebSocketReceiveResult? chunkResult = await webSocket.ReceiveAsync(chunkBuffer.Array, ct);
+
+                        if (chunkResult.CloseStatus != null && chunkResult.CloseStatus != WebSocketCloseStatus.Empty)
+                            return (finalBuffer, WebSocketMessageType.Close, chunkResult.CloseStatus!.Value);
+
+                        int oldLength = finalBuffer.Length;
+
+                        finalBuffer = instancePoolsProvider.Expand(finalBuffer, oldLength + chunkResult.Count);
+
+                        // copy new data starting from the oldLength
+                        Array.Copy(chunkBuffer.Array, 0, finalBuffer.Array, oldLength, chunkResult.Count);
+
+                        messageType = chunkResult.MessageType;
+
+                        if (chunkResult.EndOfMessage)
+                            break;
+                    }
+
+                    return (finalBuffer, messageType, WebSocketCloseStatus.Empty);
+                }
+                catch (Exception)
+                {
+                    // if exception occurs we need to dispose the buffer here, otherwise it's returned to the upper layer
+                    finalBuffer.Dispose();
+                    throw;
+                }
+            }
+        }
+
+        private class WebSocketRental : IDisposable
+        {
+            public readonly DCLSemaphoreSlim SendLock = new ();
+            public readonly DCLWebSocket WebSocket = new ();
+
+            public void Dispose()
+            {
+                WebSocket.Dispose();
+                SendLock.Dispose();
+            }
+        }
+    }
+}

@@ -1,0 +1,116 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Utility.Types;
+using DCL.WebRequests;
+using LiveKit.Proto;
+using DCL.LiveKit.Public;
+using System;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
+{
+    public class ChatConnectiveRoom : ConnectiveRoom, IActivatableConnectiveRoom
+    {
+        private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
+
+        private readonly IWebRequestController webRequests;
+        private readonly URLAddress adapterAddress;
+        private readonly string hardwareFingerprint;
+
+        public bool Activated { get; private set; }
+
+        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, Option<HardwareFingerprintProvider> hardwareFingerprintProvider)
+        {
+            this.webRequests = webRequests;
+            this.adapterAddress = adapterAddress;
+            hardwareFingerprint = hardwareFingerprintProvider.Has ? hardwareFingerprintProvider.Value.Fingerprint : string.Empty;
+        }
+
+        public async UniTask ActivateAsync()
+        {
+            if (Activated)
+                return;
+
+            Activated = true;
+            await this.StartIfNotAsync();
+        }
+
+        public async UniTask DeactivateAsync()
+        {
+            if (!Activated)
+                return;
+
+            Activated = false;
+            await this.StopIfNotAsync();
+        }
+
+        protected override UniTask PrewarmAsync(CancellationToken token)
+        {
+            SendConnectionStatusAsync(token).Forget();
+            return UniTask.CompletedTask;
+        }
+
+        protected override async UniTask CycleStepAsync(CancellationToken token)
+        {
+            if (CurrentState() is not IConnectiveRoom.State.Running // CurrentState will be != Running at start, so we need to connect
+                || Room().Info.ConnectionState != LKConnectionState.ConnConnected) // If the room was running but our connection was lost (or stuck reconnecting), we need to reconnect
+            {
+                string connectionString = await ConnectionStringAsync(token);
+                await TryConnectToRoomAsync(connectionString, token);
+            }
+        }
+
+        private async UniTaskVoid SendConnectionStatusAsync(CancellationToken ct)
+        {
+            while (ct.IsCancellationRequested == false)
+            {
+                try
+                {
+                    if (CurrentState() == IConnectiveRoom.State.Running)
+                        ((InteriorRoom)Room()).SimulateConnectionStateChanged();
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.LIVEKIT);
+                }
+
+                await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
+            }
+        }
+
+        private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
+        {
+            string metadata = new FixedMetadata
+            {
+                signer = "dcl:explorer",
+                deviceIdentifier = hardwareFingerprint,
+            }.ToJson();
+
+            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
+            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            return response.adapter;
+        }
+
+        [Serializable]
+        private struct FixedMetadata
+        {
+            public string signer;
+            public string deviceIdentifier;
+
+            public string ToJson() =>
+                JsonUtility.ToJson(this)!;
+        }
+
+        [Serializable]
+        private struct AdapterResponse
+        {
+            public string adapter;
+        }
+    }
+}

@@ -1,0 +1,325 @@
+﻿using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.Settings;
+using System;
+using Unity.Mathematics;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Multiplayer.Movement
+{
+    /// <summary>
+    ///     Encoder for compressed LiveKit movement
+    /// </summary>
+    public class NetworkMessageEncoder
+    {
+        private readonly MessageEncodingSettings encodingSettings;
+        private readonly TimestampEncoder timestampEncoder;
+        private readonly ParcelEncoder parcelEncoder;
+
+        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, ParcelEncoder parcelEncoder)
+        {
+            this.encodingSettings = encodingSettings;
+            this.timestampEncoder = new TimestampEncoder(encodingSettings);
+            this.parcelEncoder = parcelEncoder;
+        }
+
+        public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
+            new ()
+            {
+                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
+                movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
+                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch),
+                pointAtData = CompressPointAtData(message.isPointingAt, message.pointAtWorldHitPoint - message.position)
+            };
+
+        private int CompressTemporalData(double timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
+            float rotationY, int tier)
+        {
+            int temporalData = timestampEncoder.Compress(Math.Abs(timestamp));
+
+            // Animations
+            temporalData |= ((int)movementKind & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
+            if (isSliding) temporalData |= 1 << encodingSettings.SLIDING_BIT;
+            if (isStunned) temporalData |= 1 << encodingSettings.STUNNED_BIT;
+            if (animState.IsGrounded) temporalData |= 1 << encodingSettings.GROUNDED_BIT;
+            temporalData |= (animState.JumpCount & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.JUMP_COUNT_BIT;
+            if (animState.IsLongJump) temporalData |= 1 << encodingSettings.LONG_JUMP_BIT;
+            if (animState.IsFalling) temporalData |= 1 << encodingSettings.FALLING_BIT;
+            if (animState.IsLongFall) temporalData |= 1 << encodingSettings.LONG_FALL_BIT;
+
+            int compressedRotation = FloatQuantizer.Compress(NormalizeAngle(rotationY), 0f, 360f, encodingSettings.ROTATION_Y_BITS);
+            temporalData |= compressedRotation << encodingSettings.ROTATION_START_BIT;
+
+            temporalData |= (tier & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.TIER_START_BIT;
+
+            return temporalData;
+        }
+
+        private long CompressMovementData(Vector3 position, Vector3 velocity, MovementEncodingConfig settings)
+        {
+            Vector2Int parcel = position.ToParcel();
+
+            int parcelIndex = parcelEncoder.Encode(parcel);
+
+            var relativePosition = new Vector2(
+                position.x - (parcel.x * ParcelMathHelper.PARCEL_SIZE),
+                position.z - (parcel.y * ParcelMathHelper.PARCEL_SIZE) // Y is Z in this case
+            );
+
+            byte xzBits = settings.XZ__BITS;
+            byte yBits = settings.Y__BITS;
+
+            int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
+            int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
+            int compressedY = FloatQuantizer.Compress(position.y, 0, settings.Y__MAX, yBits);
+
+            int maxVelocity = settings.MAX__VELOCITY;
+            byte velocityBits = settings.VELOCITY_AXIS_FIELD_SIZE_IN_BITS;
+
+            const float SAFE_ZONE = 0.05f;
+            if (velocity.sqrMagnitude < SAFE_ZONE) velocity = Vector3.zero;
+
+            int compressedVelocityX = CompressedVelocity(velocity.x, maxVelocity, velocityBits);
+            int compressedVelocityY = CompressedVelocity(velocity.y, maxVelocity, velocityBits);
+            int compressedVelocityZ = CompressedVelocity(velocity.z, maxVelocity, velocityBits);
+
+            return (uint)parcelIndex
+                   | ((long)compressedX << MessageEncodingSettings.PARCEL_BITS)
+                   | ((long)compressedZ << (MessageEncodingSettings.PARCEL_BITS + xzBits))
+                   | ((long)compressedY << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits))
+                   | ((long)compressedVelocityX << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits))
+                   | ((long)compressedVelocityY << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits))
+                   | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
+        }
+
+        private int CompressHeadSyncData(bool yawEnabled, bool pitchEnabled, Vector2 headLookAt)
+        {
+            int value = 0;
+            if (!yawEnabled && !pitchEnabled) return value;
+
+            const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
+            int yaw = FloatQuantizer.Compress(NormalizeAngle(headLookAt.x), 0, 360, ROTATION_BITS);
+            int pitch = FloatQuantizer.Compress(NormalizeAngle(headLookAt.y), 0, 360, ROTATION_BITS);
+
+            value = pitch;
+            value |= yaw << ROTATION_BITS;
+            if (pitchEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS);
+            if (yawEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS + 1);
+
+            return value;
+        }
+
+        private int CompressPointAtData(bool isPointing, Vector3 relativeHitPoint)
+        {
+            if (!isPointing) return 0;
+
+            const int AXIS_BITS = 10;
+            float maxDist = encodingSettings.POINT_AT_MAX_DISTANCE;
+
+            int x = CompressPointAtAxis(relativeHitPoint.x, maxDist, AXIS_BITS);
+            int y = CompressPointAtAxis(relativeHitPoint.y, maxDist, AXIS_BITS);
+            int z = CompressPointAtAxis(relativeHitPoint.z, maxDist, AXIS_BITS);
+
+            int value = x;
+            value |= y << AXIS_BITS;
+            value |= z << (AXIS_BITS * 2);
+            if (isPointing) value |= 1 << 30;
+
+            return value;
+        }
+
+        private void DecompressPointAtData(int data, out bool isPointing, out Vector3 relativeHitPoint)
+        {
+            isPointing = (data & (1 << 30)) != 0;
+
+            if (!isPointing)
+            {
+                relativeHitPoint = Vector3.zero;
+                return;
+            }
+
+            const int AXIS_BITS = 10;
+            const int AXIS_MASK = (1 << AXIS_BITS) - 1;
+            float maxDist = encodingSettings.POINT_AT_MAX_DISTANCE;
+
+            float x = DecompressPointAtAxis(data & AXIS_MASK, maxDist, AXIS_BITS);
+            float y = DecompressPointAtAxis((data >> AXIS_BITS) & AXIS_MASK, maxDist, AXIS_BITS);
+            float z = DecompressPointAtAxis((data >> (AXIS_BITS * 2)) & AXIS_MASK, maxDist, AXIS_BITS);
+
+            relativeHitPoint = new Vector3(x, y, z);
+        }
+
+        public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
+        {
+            int compressedTemporalData = compressedMessage.temporalData;
+            int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
+
+            (Vector3 position, Vector3 correctedVelocity) = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
+
+            int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
+            int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
+            double timestamp = timestampEncoder.Decompress(compressedTemporalData);
+
+            var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
+
+            DecompressHeadIK(compressedMessage, out float2 headYawAndPitch, out bool headIKYawEnabled, out bool headIKPitchEnabled);
+            DecompressPointAtData(compressedMessage.pointAtData, out bool isPointing, out Vector3 relativeHitPoint);
+
+            return new NetworkMovementMessage
+            {
+                velocityTier = (byte)tier,
+
+                // Decompressed movement data
+                position = position,
+                velocity = correctedVelocity,
+                velocitySqrMagnitude = correctedVelocity.sqrMagnitude,
+                rotationY = FloatQuantizer.Decompress(compressedRotation, 0f, 360f, encodingSettings.ROTATION_Y_BITS),
+
+                // Decompress temporal data
+                timestamp = timestamp,
+                movementKind = movementKind,
+
+                animState = new AnimationStates
+                {
+                    MovementBlendValue = 0f,
+                    SlideBlendValue = 0f,
+
+                    IsGrounded = (compressedTemporalData & (1 << encodingSettings.GROUNDED_BIT)) != 0,
+                    JumpCount = (compressedTemporalData >> encodingSettings.JUMP_COUNT_BIT) & MessageEncodingSettings.TWO_BITS_MASK,
+                    IsLongJump = (compressedTemporalData & (1 << encodingSettings.LONG_JUMP_BIT)) != 0,
+                    IsFalling = (compressedTemporalData & (1 << encodingSettings.FALLING_BIT)) != 0,
+                    IsLongFall = (compressedTemporalData & (1 << encodingSettings.LONG_FALL_BIT)) != 0,
+                },
+
+                isStunned = (compressedTemporalData & (1 << encodingSettings.STUNNED_BIT)) != 0,
+                isSliding = (compressedTemporalData & (1 << encodingSettings.SLIDING_BIT)) != 0,
+
+                // Decompressed head sync data
+                headIKYawEnabled = headIKYawEnabled,
+                headIKPitchEnabled = headIKPitchEnabled,
+                headYawAndPitch = headYawAndPitch,
+
+                isPointingAt = isPointing,
+                pointAtWorldHitPoint = position + relativeHitPoint
+            };
+        }
+
+        private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
+        {
+            const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
+            const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
+
+            int xzBits = settings.XZ__BITS;
+            int xzMask = (1 << xzBits) - 1;
+
+            int yBits = settings.Y__BITS;
+            int yMax = settings.Y__MAX;
+            int yMask = (1 << yBits) - 1;
+
+            int maxVelocity = settings.MAX__VELOCITY;
+            int velocityBits = settings.VELOCITY_AXIS_FIELD_SIZE_IN_BITS;
+            int velocityMask = (1 << velocityBits) - 1;
+
+            Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
+
+            var extractedX = (int)((movementData >> PARCEL_BITS) & xzMask);
+            var extractedZ = (int)((movementData >> (PARCEL_BITS + xzBits)) & xzMask);
+            var extractedY = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits)) & yMask);
+
+            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
+            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, ParcelMathHelper.PARCEL_SIZE, xzBits);
+            float decompressedY = FloatQuantizer.Decompress(extractedY, 0, yMax, yBits);
+
+            var worldPosition = new Vector3(
+                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + decompressedX,
+                decompressedY,
+                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + decompressedZ
+            );
+
+            var extractedVelocityX = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits)) & velocityMask);
+            var extractedVelocityY = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits)) & velocityMask);
+            var extractedVelocityZ = (int)((movementData >> (PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits)) & velocityMask);
+
+            float decompressedVelocityX = DecompressedVelocity(extractedVelocityX, maxVelocity, velocityBits);
+            float decompressedVelocityY = DecompressedVelocity(extractedVelocityY, maxVelocity, velocityBits);
+            float decompressedVelocityZ = DecompressedVelocity(extractedVelocityZ, maxVelocity, velocityBits);
+
+            return (worldPosition, velocity: new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ));
+        }
+
+        private static int CompressedVelocity(float velocity, int range, int sizeInBits)
+        {
+            int withoutSignBits = sizeInBits - 1;
+            float absVelocity = Mathf.Abs(velocity);
+            int compressed = FloatQuantizer.Compress(absVelocity, 0, range, withoutSignBits);
+            compressed <<= 1;
+            compressed |= NegativeSignFlag(velocity);
+            return compressed;
+        }
+
+        private static float DecompressedVelocity(int compressed, int range, int sizeInBits)
+        {
+            bool negativeSign = (compressed & 1) == 1;
+            int withoutSign = compressed >> 1;
+            int withoutSignBits = sizeInBits - 1;
+            float decompressed = FloatQuantizer.Decompress(withoutSign, 0, range, withoutSignBits);
+            if (negativeSign) decompressed *= -1;
+            return decompressed;
+        }
+
+        private static float NormalizeAngle(float angle)
+        {
+            while (angle < 0f)
+                angle += 360f;
+            while (angle >= 360f)
+                angle -= 360f;
+            return angle;
+        }
+
+        private static byte NegativeSignFlag(float value) =>
+            value < 0
+                ? (byte)1
+                : (byte)0;
+
+        private void DecompressHeadIK(in CompressedNetworkMovementMessage compressedMessage, out float2 yawAndPitch, out bool yawEnabled, out bool pitchEnabled)
+        {
+            const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
+            const int ROTATION_MASK = (1 << ROTATION_BITS) - 1;
+            const int ENABLED_MASK = 1;
+
+            int data = compressedMessage.headSyncData;
+
+            int compressedPitch = data & ROTATION_MASK;
+            int compressedYaw = (data >> ROTATION_BITS) & ROTATION_MASK;
+            pitchEnabled = ((data >> (ROTATION_BITS + ROTATION_BITS)) & ENABLED_MASK) != 0;
+            yawEnabled = ((data >> (ROTATION_BITS + ROTATION_BITS + 1)) & ENABLED_MASK) != 0;
+
+            float pitch = FloatQuantizer.Decompress(compressedPitch, 0, 360, ROTATION_BITS);
+            float yaw = FloatQuantizer.Decompress(compressedYaw, 0, 360, ROTATION_BITS);
+            yawAndPitch = new Vector2(yaw, pitch);
+        }
+
+        private static int CompressPointAtAxis(float value, float maxDist, int sizeInBits)
+        {
+            int withoutSignBits = sizeInBits - 1;
+            float absNormalized = Mathf.Clamp01(Mathf.Abs(value) / maxDist);
+            float sqrtNormalized = Mathf.Sqrt(absNormalized);
+            int maxStep = (1 << withoutSignBits) - 1;
+            int compressed = Mathf.RoundToInt(sqrtNormalized * maxStep);
+            compressed <<= 1;
+            compressed |= value < 0 ? 1 : 0;
+            return compressed;
+        }
+
+        private static float DecompressPointAtAxis(int compressed, float maxDist, int sizeInBits)
+        {
+            bool negativeSign = (compressed & 1) == 1;
+            int withoutSign = compressed >> 1;
+            int withoutSignBits = sizeInBits - 1;
+            float maxStep = (1 << withoutSignBits) - 1f;
+            float sqrtNormalized = withoutSign / maxStep;
+            float value = sqrtNormalized * sqrtNormalized * maxDist;
+            return negativeSign ? -value : value;
+        }
+    }
+}

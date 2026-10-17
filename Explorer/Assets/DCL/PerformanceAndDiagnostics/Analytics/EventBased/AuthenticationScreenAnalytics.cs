@@ -1,0 +1,159 @@
+using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.UI.UpgradeGuestAccountPopup;
+using Newtonsoft.Json.Linq;
+using System;
+using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
+
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
+{
+    public class AuthenticationScreenAnalytics : IDisposable
+    {
+        private readonly IAnalyticsController analytics;
+        private readonly AuthenticationScreenController controller;
+        private readonly PendingGuestUpgrade pendingGuestUpgrade;
+
+        public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController controller, PendingGuestUpgrade pendingGuestUpgrade)
+        {
+            this.analytics = analytics;
+            this.controller = controller;
+            this.pendingGuestUpgrade = pendingGuestUpgrade;
+            controller.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
+            controller.DiscordButtonClicked += OnDiscordButtonClicked;
+            controller.OTPVerified += OnOTPVerified;
+            controller.OTPResend += OnOTPResend;
+            controller.ProfileFinalized += OnProfileFinalized;
+            controller.AvatarSelected += OnAvatarSelected;
+        }
+
+        public void Dispose()
+        {
+            controller.CurrentState.OnUpdate -= OnAuthenticationScreenStateChanged;
+            controller.DiscordButtonClicked -= OnDiscordButtonClicked;
+            controller.OTPVerified -= OnOTPVerified;
+            controller.OTPResend -= OnOTPResend;
+            controller.ProfileFinalized -= OnProfileFinalized;
+            controller.AvatarSelected -= OnAvatarSelected;
+        }
+
+        private void OnAuthenticationScreenStateChanged(AuthStatus state)
+        {
+            switch (state)
+            {
+                // Triggered WHEN the entry screen is shown
+                case AuthStatus.GuestOrSignUpScreen:
+                    analytics.Track(Authentication.ENTRY_SCREEN);
+
+                    // Coming back here abandons the upgrade the popup sent the user away to complete
+                    pendingGuestUpgrade.Clear();
+                    break;
+
+                // Triggered WHEN login screen is shown
+                case AuthStatus.LoginSelectionScreen:
+                    analytics.Track(Authentication.LOGIN_SELECTION_SCREEN);
+                    break;
+
+                // Triggered WHEN the user press one of the login buttons in the Login Selection Screen
+                case AuthStatus.LoginRequested:
+                    analytics.Track(Authentication.LOGIN_REQUESTED);
+                    break;
+
+                // Triggered WHEN verification screen is shown (dapp code or OTP)
+                case AuthStatus.VerificationRequested:
+                    analytics.Track(Authentication.VERIFICATION_REQUESTED, new JObject
+                    {
+                        { "requestID", controller.CurrentRequestId },
+                    });
+                    break;
+
+                case AuthStatus.ProfileFetching:
+                    analytics.Track(Authentication.PROFILE_FETCHING);
+                    // Auth flow finished and the engine is now resolving the profile. Pair this
+                    // with LOGIN_REQUESTED to measure the auth-attempt → auth-success conversion;
+                    // a LOGIN_REQUESTED with no AUTH_COMPLETED within a session = failed auth.
+                    analytics.Track(Authentication.AUTH_COMPLETED, new JObject
+                    {
+                        { "is_cached", false },
+                    });
+                    break;
+                case AuthStatus.AvatarSelection:
+                    analytics.Track(Authentication.AVATAR_SELECTION_SCREEN);
+                    break;
+
+                case AuthStatus.LoggedIn: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
+                    analytics.Track(Authentication.LOGGED_IN, new JObject
+                    {
+                        { "method", controller.CurrentLoginMethod.ToString() },
+                        { "is_new_account", controller.IsCurrentlyNewAccount },
+                    }, isInstant: true);
+                    if (controller.IsCurrentlyNewAccount)
+                    {
+                        // isInstant: true — this is the start of the in-Explorer onboarding step
+                        // and pairs with PROFILE_FINALIZED. We need both endpoints of the
+                        // onboarding measurement to be guaranteed-flushed; otherwise an early
+                        // abandon (close client during avatar customization) can drop the start
+                        // event and leave us with a profile_finalized that has no opener.
+                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, isInstant: true);
+                    }
+                    break;
+
+                // CACHED FLOW - when the user is already logged in (has valid Identity)
+                case AuthStatus.ProfileFetchingCached:
+                    analytics.Track(Authentication.PROFILE_FETCHING_CACHED);
+                    analytics.Track(Authentication.AUTH_COMPLETED, new JObject
+                    {
+                        { "is_cached", true },
+                    });
+                    break;
+                case AuthStatus.LoggedInCached: // Triggered WHEN the login completes (welcome step or straight to the Lobby panel)
+                    analytics.Track(Authentication.LOGGED_IN_CACHED, new JObject
+                    {
+                        { "is_new_account", controller.IsCurrentlyNewAccount },
+                        { "method", controller.CurrentLoginMethod.ToString() },
+                    }, isInstant: true);
+                    if (controller.IsCurrentlyNewAccount)
+                    {
+                        // isInstant: true — same reasoning as the LoggedIn branch.
+                        analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, isInstant: true);
+                    }
+                    break;
+
+                default: throw new ArgumentOutOfRangeException(nameof(state), state, null);
+            }
+        }
+
+        private void OnAvatarSelected(BodyShape bodyType, int presetSlot) =>
+            analytics.Track(Authentication.AVATAR_COMPLETE, new JObject
+            {
+                { "body_type", bodyType.Equals(BodyShape.MALE) ? "male" : "female" },
+                { "preset_slot", presetSlot },
+            }, isInstant: true);
+
+        private void OnProfileFinalized()
+        {
+            // isInstant: true because this fires moments before the auth screen tears down
+            // and the FSM transitions to InitAuthState. Without flushing immediately the event
+            // can sit in the buffer past the screen disposal and never make it to Segment.
+            analytics.Track(Authentication.PROFILE_FINALIZED, isInstant: true);
+
+            // An account created after the upgrade popup sent the user here is the end of that funnel
+            if (pendingGuestUpgrade.TryConsume(out GuestUpgradeTrigger trigger))
+                analytics.Track(Authentication.GUEST_UPGRADE_COMPLETED, new JObject { { "trigger", trigger.ToString() } }, isInstant: true);
+        }
+
+        private void OnOTPVerified(string email, bool success)
+        {
+            analytics.Track(success ? Authentication.OTP_VERIFICATION_SUCCESS : Authentication.OTP_VERIFICATION_FAILURE, new JObject
+            {
+                { "email", email },
+            });
+        }
+
+        private void OnOTPResend() =>
+            analytics.Track(Authentication.OTP_RESEND);
+
+        private void OnDiscordButtonClicked() =>
+            analytics.Track(Authentication.CLICK_COMMUNITY_GUIDANCE);
+    }
+}

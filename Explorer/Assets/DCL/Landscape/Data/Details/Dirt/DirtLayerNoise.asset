@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0488ab1caa9420ab61e97ee71c3d310, type: 3}
+  m_Name: DirtLayerNoise
+  m_EditorClassIdentifier: 
+  settings:
+    invert: 0
+    normalize: 1
+    scale: 17.5
+    octaves: 3
+    persistance: 0.313
+    lacunarity: 4
+    seed: 1
+    offset: {x: 0, y: 0}
+    cutoff: 0
+    noiseType: 0
+    baseValue: 0
+    multiplyValue: 1
+    divideValue: 1
+  operations:
+  - operation: 2
+    noise: {fileID: 11400000, guid: 1c1f90fed75a0814fa18f6709cd477eb, type: 2}
+    disable: 0
+  - operation: 3
+    noise: {fileID: 11400000, guid: 4caf4b28cdb32fa408e08915effbb6bb, type: 2}
+    disable: 1
+  simpleOperations: []
+  finalCutOff: 0

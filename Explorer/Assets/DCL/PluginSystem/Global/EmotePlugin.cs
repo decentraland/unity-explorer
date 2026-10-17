@@ -1,0 +1,221 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Load;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
+using DCL.EmotesWheel;
+using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles.Self;
+using DCL.ResourcesUnloading;
+using DCL.WebRequests;
+using ECS;
+using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Cache;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using ECS.SceneLifeCycle;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using Utility;
+using DCL.AvatarRendering.Emotes.Play;
+using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
+using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
+using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
+using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
+
+namespace DCL.PluginSystem.Global
+{
+    public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
+    {
+        private static readonly URLSubdirectory EMOTES_COMPLEMENT_URL = URLSubdirectory.FromString("/emotes/");
+        private static readonly URLSubdirectory EMOTES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Emotes/");
+
+        private readonly IWebRequestController webRequestController;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IRealmData realmData;
+        private readonly IEmotesMessageBus messageBus;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly SelfProfile selfProfile;
+        private readonly IMVCManager mvcManager;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly AudioClipsCache audioClipsCache;
+        private readonly string builderContentUrl;
+        private readonly ICursor cursor;
+        private readonly IInputBlock inputBlock;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
+        private readonly EmotePlayer emotePlayer;
+        private readonly bool localSceneDevelopment;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IScenesCache scenesCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        private readonly EntitiesAnalytics entitiesAnalytics;
+
+        private readonly IEventBus emotesEventBus;
+
+        private EmotesWheelController? emotesWheelController;
+        private IDisposable? requestOpenEmoteWheelSubscription;
+
+        private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
+        private TimeSpan batchHeartbeat;
+
+
+        public EmotePlugin(IWebRequestController webRequestController,
+            IEmoteStorage emoteStorage,
+            IRealmData realmData,
+            IEmotesMessageBus messageBus,
+            IAssetsProvisioner assetsProvisioner,
+            SelfProfile selfProfile,
+            IMVCManager mvcManager,
+            CacheCleaner cacheCleaner,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            ICursor cursor,
+            IInputBlock inputBlock,
+            Arch.Core.World world,
+            Entity playerEntity,
+            string builderContentUrl,
+            IThumbnailProvider thumbnailProvider,
+            IScenesCache scenesCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            EntitiesAnalytics entitiesAnalytics,
+            IEventBus emotesEventBus,
+            ITrimmedEmoteStorage trimmedEmoteStorage,
+            EmotePlayer emotePlayer)
+        {
+            this.emotePlayer = emotePlayer;
+            this.messageBus = messageBus;
+            this.assetsProvisioner = assetsProvisioner;
+            this.selfProfile = selfProfile;
+            this.mvcManager = mvcManager;
+            this.entityParticipantTable = entityParticipantTable;
+            this.builderContentUrl = builderContentUrl;
+            this.webRequestController = webRequestController;
+            this.emoteStorage = emoteStorage;
+            this.realmData = realmData;
+            this.cursor = cursor;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.inputBlock = inputBlock;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
+            this.thumbnailProvider = thumbnailProvider;
+            this.scenesCache = scenesCache;
+            this.entitiesAnalytics = entitiesAnalytics;
+            this.emotesEventBus = emotesEventBus;
+            this.trimmedEmoteStorage = trimmedEmoteStorage;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+
+            audioClipsCache = new AudioClipsCache();
+            cacheCleaner.Register(audioClipsCache);
+        }
+
+        public void Dispose()
+        {
+            requestOpenEmoteWheelSubscription?.Dispose();
+            emotesWheelController?.Dispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
+
+            LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
+                new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
+                emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics, localSceneDevelopment);
+
+            BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
+
+            LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
+                new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
+                emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
+                decentralandUrlsSource, builderContentUrl);
+
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, emotePlayer, localSceneDevelopment, scenesCache);
+
+            LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
+
+            RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
+
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY);
+        }
+
+        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
+        {
+            batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+
+            IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
+
+            // Initialize the embedded emote URN mapping for legacy emote conversion
+            EmoteComponentsUtils.InitializeLegacyToOnChainEmoteMapping(baseEmotesUrns);
+
+            // Set default emotes (used in case of empty emote wheel)
+            emoteStorage.SetBaseEmotesUrns(baseEmotesUrns);
+
+            EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
+
+            // TODO: convert into an async operation so we don't increment the loading times at app's startup
+            IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
+
+            foreach (IEmote embeddedEmote in embeddedEmotes)
+                emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
+
+            EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
+                                               .Value.GetComponent<EmotesWheelView>();
+
+            NftTypeIconSO emoteWheelRarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteWheelRarityBackgrounds, ct)).Value;
+
+            emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
+                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
+                inputBlock, cursor, mvcManager);
+
+            mvcManager.RegisterController(emotesWheelController);
+
+            requestOpenEmoteWheelSubscription = emotesEventBus.Subscribe<RequestToggleEmoteWheelEvent>(OnEmoteWheelShortcutPerformed);
+        }
+
+        private void OnEmoteWheelShortcutPerformed(RequestToggleEmoteWheelEvent _)
+        {
+            if (emotesWheelController == null) return;
+
+            if (emotesWheelController.State == ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
+            else
+                emotesWheelController.Close();
+        }
+
+        [Serializable]
+        public class EmoteSettings : IDCLPluginSettings
+        {
+            [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
+
+            [Serializable]
+            public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>
+            {
+                public EmbeddedEmotesReference(string guid) : base(guid) { }
+            }
+
+            /// <summary>
+            /// Ordered list of base emote URNs.
+            /// The order defines the default emote order for users with no equipped emotes.
+            /// </summary>
+            [field: SerializeField] public string[] BaseEmotes { get; private set; } = null!;
+
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() => BaseEmotes.Select(s => new URN(s)).ToArray();
+        }
+    }
+}

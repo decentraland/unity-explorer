@@ -1,0 +1,153 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DG.Tweening;
+using System;
+using Utility;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.UI
+{
+    public class ImageController : IDisposable
+    {
+        private static readonly Color LOADING_COLOR = new (0, 0, 0, 0);
+
+        private const int PIXELS_PER_UNIT = 50;
+        private readonly ImageView view;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly Color defaultColor = Color.white;
+        private Texture2DRef? currentTextureRef;
+        private CancellationTokenSource cts = new();
+        public event Action<Sprite>? SpriteLoaded;
+
+        public ImageController(ImageView view, ImageControllerProvider imageControllerProvider)
+        {
+            this.view = view;
+            this.imageControllerProvider = imageControllerProvider;
+        }
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        {
+            RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage, defaultSprite);
+        }
+
+        public void RequestImage(string uri, Color targetColor, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        {
+            if (removePrevious)
+                view.Image.sprite = null;
+
+            if (hideImageWhileLoading)
+                view.Image.enabled = false;
+
+            cts = cts.SafeRestart();
+            RequestImageAsync(uri, useKtx, targetColor, cts.Token, fitAndCenterImage, defaultSprite).Forget();
+        }
+
+        public void SetVisible(bool isVisible)
+        {
+            view.gameObject.SetActive(isVisible);
+        }
+
+        private async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        {
+            DisposeCurrentTexture();
+
+            try
+            {
+                view.Image.color = LOADING_COLOR;
+
+                view.IsLoading = true;
+
+                // Nothing to fetch (e.g. a place that carries no thumbnail url): show the placeholder rather than
+                // firing a request that can only fail.
+                if (string.IsNullOrEmpty(uri))
+                {
+                    TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
+                    return;
+                }
+
+                Sprite? sprite = null;
+
+                var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
+
+                if (textureRef.HasValue)
+                {
+                    currentTextureRef = textureRef;
+
+                    sprite = Sprite.Create(
+                        textureRef.Value.Texture,
+                        new Rect(0, 0, textureRef.Value.Texture.width, textureRef.Value.Texture.height),
+                        VectorUtilities.OneHalf,
+                        PIXELS_PER_UNIT,
+                        0,
+                        SpriteMeshType.FullRect,
+                        Vector4.one,
+                        false
+                    );
+                }
+
+                if (sprite != null)
+                {
+                    view.SetImage(sprite, fitAndCenterImage);
+                    SpriteLoaded?.Invoke(sprite);
+                    view.Image.enabled = true;
+                    _ = view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
+                }
+                else if (defaultSprite != null)
+                    TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ENGINE);
+
+                TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
+            }
+            finally
+            {
+                view.IsLoading = false;
+                view.Image.enabled = true;
+
+                if (ct.IsCancellationRequested)
+                    DisposeCurrentTexture();
+            }
+        }
+
+        private void DisposeCurrentTexture()
+        {
+            if (currentTextureRef != null)
+                currentTextureRef.Value.Dispose();
+
+            currentTextureRef = null;
+        }
+
+        private void TryApplyDefaultSprite(Sprite? defaultSprite, bool fitAndCenterImage)
+        {
+            if (defaultSprite == null) return;
+
+            SetImage(defaultSprite, fitAndCenterImage);
+            view.Image.enabled = true;
+            view.Image.DOColor(defaultColor, view.imageLoadingFadeDuration);
+        }
+
+        public void SetImage(Sprite sprite, bool fitAndCenterImage = false)
+        {
+            DisposeCurrentTexture();
+            view.SetImage(sprite, fitAndCenterImage);
+        }
+
+        public void StopLoading()
+        {
+            cts.SafeCancelAndDispose();
+            DisposeCurrentTexture();
+            view.Image.DOKill(true);
+            view.IsLoading = false;
+        }
+
+        public void Dispose()
+        {
+            StopLoading();
+        }
+    }
+}

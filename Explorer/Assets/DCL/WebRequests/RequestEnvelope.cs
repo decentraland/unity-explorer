@@ -1,0 +1,221 @@
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
+using DCL.WebRequests.RequestsHub;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using UnityEngine.Networking;
+using Utility.Networking;
+
+namespace DCL.WebRequests
+{
+    public struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
+    {
+        public readonly ReportData ReportData;
+        public readonly CommonArguments CommonArguments;
+        public readonly CancellationToken Ct;
+        public readonly bool SuppressErrors;
+        public readonly bool IgnoreIrrecoverableErrors;
+        private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
+        internal TWebRequestArgs args;
+        private readonly DownloadHandler? customDownloadHandler;
+        internal readonly WebRequestHeadersInfo headersInfo;
+        internal readonly WebRequestSignInfo? signInfo;
+        private readonly ISet<long>? responseCodeIgnores;
+
+        private const string NONE = "NONE";
+
+        public RequestEnvelope(
+            InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,
+            CommonArguments commonArguments, TWebRequestArgs args,
+            CancellationToken ct,
+            ReportData reportData,
+            WebRequestHeadersInfo headersInfo,
+            WebRequestSignInfo? signInfo,
+            ISet<long>? responseCodeIgnores = null,
+            bool suppressErrors = false,
+            DownloadHandler? customDownloadHandler = null,
+            bool ignoreIrrecoverableErrors = false
+        )
+        {
+            this.initializeRequest = initializeRequest;
+            CommonArguments = commonArguments;
+            this.args = args;
+            Ct = ct;
+            ReportData = reportData;
+            this.headersInfo = headersInfo;
+            this.signInfo = signInfo;
+            SuppressErrors = suppressErrors;
+            this.customDownloadHandler = customDownloadHandler;
+            this.responseCodeIgnores = responseCodeIgnores;
+            IgnoreIrrecoverableErrors = ignoreIrrecoverableErrors;
+        }
+
+        public override string ToString() =>
+            "RequestEnvelope:"
+            + $"\nWebRequestType: {typeof(TWebRequest).Name}"
+            + $"\nWebRequestArgs: {typeof(TWebRequest).Name}"
+            + $"\nCommonArguments: {CommonArguments}"
+            + $"\nArgs: {args}"
+            + $"\nCancellation Token cancelled: {Ct.IsCancellationRequested}"
+            + $"\nReportCategory: {ReportData}"
+            + $"\nHeaders: {headersInfo.ToString()}"
+            + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
+
+        /// <summary>
+        ///     A simplified representation of the request envelope:
+        ///     URL
+        ///     Headers: {headers} if present
+        ///     SignInfo: {signInfo} if present
+        /// </summary>
+        /// <returns></returns>
+        public string GetBreadcrumbString(StringBuilder sb)
+        {
+            sb.Clear();
+
+            sb.AppendLine(CommonArguments.ToString());
+
+            if (headersInfo.Value.Count != 0)
+            {
+                sb.Append("Headers: ");
+                sb.AppendLine(headersInfo.ToString());
+            }
+
+            if (signInfo.HasValue)
+            {
+                sb.Append("SignInfo: ");
+                sb.AppendLine(signInfo.Value.ToString());
+            }
+
+            return sb.ToString();
+        }
+
+        public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
+        {
+            TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
+            UnityWebRequest unityWebRequest = request.UnityWebRequest;
+
+            CertificateHandler? certificateHandler = LocalCertificateValidation.CreateCertificateHandler(unityWebRequest.url);
+            if (certificateHandler != null)
+                unityWebRequest.certificateHandler = certificateHandler;
+
+            AssignTimeout(unityWebRequest);
+            AssignHeaders(unityWebRequest, web3IdentityCache);
+            AssignDownloadHandler(unityWebRequest);
+
+            return request;
+        }
+
+        public void Dispose()
+        {
+            // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
+            headersInfo.Dispose();
+        }
+
+        public bool ShouldIgnoreResponseError(UnityWebRequest webRequest)
+        {
+            if (webRequest.result is UnityWebRequest.Result.Success)
+                return true;
+
+            return responseCodeIgnores?.Contains(webRequest.responseCode) ?? false;
+        }
+
+        private void AssignHeaders(UnityWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
+        {
+            SignRequest(unityWebRequest, web3IdentityCache);
+            SetHeaders(unityWebRequest);
+        }
+
+        public readonly PoolExtensions.Scope<Dictionary<string, string>> Headers(out Dictionary<string, string> headers) =>
+            headersInfo.AsPooledDictionary(out headers);
+
+        private void AssignDownloadHandler(UnityWebRequest unityWebRequest)
+        {
+            if (customDownloadHandler != null)
+                unityWebRequest.downloadHandler = customDownloadHandler;
+        }
+
+        private void AssignTimeout(UnityWebRequest unityWebRequest)
+        {
+            unityWebRequest.timeout = CommonArguments.Timeout;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SetHeaders(UnityWebRequest unityWebRequest)
+        {
+            IReadOnlyList<WebRequestHeader> info = headersInfo.Value;
+            int count = info.Count;
+
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < count; i++)
+            {
+                WebRequestHeader header = info[i];
+
+                try { unityWebRequest.SetRequestHeader(header.Name, header.Value); }
+                catch (InvalidOperationException e) { throw new Exception($"Cannot set header: {header.Name} - {header.Value}", e); }
+            }
+        }
+
+        private void SignRequest(UnityWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)
+        {
+            if (signInfo.HasValue == false)
+                return;
+
+            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.Value.StringToSign);
+
+            var i = 0;
+#if DEBUG
+            var sb = new StringBuilder();
+#endif
+
+            foreach (AuthLink link in authChain)
+            {
+                string name = AuthChainHeaderNames.Get(i);
+                string value = link.ToJson();
+                unityWebRequest.SetRequestHeader(name, value);
+#if DEBUG
+                sb.AppendLine($"Header {name}: {value}");
+#endif
+                i++;
+            }
+#if DEBUG
+            ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, sb);
+#endif
+        }
+    }
+
+    /// <remarks>
+    ///     Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}" /> is generic, we have
+    ///     to put this out here, else we get a copy for every specific type of it we create.
+    /// </remarks>
+    internal static class AuthChainHeaderNames
+    {
+        private static string[] names = Build(Enum.GetNames(typeof(AuthLinkType)).Length);
+
+        private static string[] Build(int count)
+        {
+            var result = new string[count];
+
+            for (var i = 0; i < count; i++)
+                result[i] = $"x-identity-auth-chain-{i}";
+
+            return result;
+        }
+
+        public static string Get(int index)
+        {
+            string[] snapshot = names;
+
+            if (index < snapshot.Length)
+                return snapshot[index];
+
+            var grown = Build(index + 1);
+            names = grown;
+            return grown[index];
+        }
+    }
+}

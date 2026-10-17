@@ -1,0 +1,137 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Input;
+using DCL.PlacesAPIService;
+using DCL.UI;
+using MVC;
+using System;
+using System.Threading;
+using UnityEngine;
+using Utility;
+
+namespace DCL.TeleportPrompt
+{
+    public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
+    {
+
+        private readonly ICursor cursor;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly TeleportPromptBus teleportPromptBus;
+        private ImageController? placeImageController;
+        private Action<TeleportPromptResultType> resultCallback;
+        private CancellationTokenSource cts;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public TeleportPromptController(
+            ViewFactoryMethod viewFactory,
+            ICursor cursor,
+            ImageControllerProvider imageControllerProvider,
+            IPlacesAPIService placesAPIService,
+            TeleportPromptBus teleportPromptBus
+        ) : base(viewFactory)
+        {
+            this.cursor = cursor;
+            this.imageControllerProvider = imageControllerProvider;
+            this.placesAPIService = placesAPIService;
+            this.teleportPromptBus = teleportPromptBus;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            placeImageController = imageControllerProvider.Create(viewInstance.placeImage);
+            viewInstance.cancelButton.onClick.AddListener(Dismiss);
+            viewInstance.continueButton.onClick.AddListener(Approve);
+        }
+
+        protected override void OnViewShow()
+        {
+            cursor.Unlock();
+
+            RequestTeleport(inputData.Coords, result =>
+            {
+                if (result != TeleportPromptResultType.Approved)
+                    return;
+
+                teleportPromptBus.ApproveTeleport(inputData.Coords);
+            });
+        }
+
+        protected override void OnViewClose() =>
+            cts.SafeCancelAndDispose();
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            placeImageController?.Dispose();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.WhenAny(
+                viewInstance.cancelButton.OnClickAsync(ct),
+                viewInstance.continueButton.OnClickAsync(ct));
+
+        private void RequestTeleport(Vector2Int coords, Action<TeleportPromptResultType> result)
+        {
+            resultCallback = result;
+
+            cts = cts.SafeRestart();
+            GetPlaceInfoAsync(coords, cts.Token).Forget();
+        }
+
+        private void Dismiss() =>
+            resultCallback?.Invoke(TeleportPromptResultType.Canceled);
+
+        private void Approve() =>
+            resultCallback?.Invoke(TeleportPromptResultType.Approved);
+
+        private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel, CancellationToken ct)
+        {
+            try
+            {
+                placeImageController.SetImage(viewInstance.defaultImage);
+                SetPopupAsLoading(true);
+                await UniTask.Delay(300, cancellationToken: ct);
+                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, ct);
+
+                if (placeInfo == null)
+                    SetEmptyPlaceInfo(parcel);
+                else
+                    SetPlaceInfo(placeInfo);
+            }
+            catch (Exception e)
+            {
+                SetEmptyPlaceInfo(parcel);
+
+                if (e is not OperationCanceledException)
+                    ReportHub.LogException(e, ReportCategory.UI);
+            }
+        }
+
+        private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)
+        {
+            SetPopupAsLoading(false);
+            placeImageController.RequestImage(placeInfo.image, defaultSprite: viewInstance.defaultImage);
+            viewInstance.placeName.text = placeInfo.title;
+            viewInstance.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+            viewInstance.location.text = placeInfo.base_position;
+        }
+
+        private void SetEmptyPlaceInfo(Vector2Int parcel)
+        {
+            SetPopupAsLoading(false);
+            viewInstance.placeName.text = "Empty parcel";
+            viewInstance.placeCreator.text = "created by <b>Unknown</b>";
+            viewInstance.location.text = parcel.ToString();
+        }
+
+        private void SetPopupAsLoading(bool isLoading)
+        {
+            viewInstance.loadingSpinner.SetActive(isLoading);
+            viewInstance.loadingPlaceContainer.SetActive(isLoading);
+            viewInstance.placeInfoContainer.SetActive(!isLoading);
+            viewInstance.cancelButton.interactable = !isLoading;
+            viewInstance.continueButton.interactable = !isLoading;
+        }
+    }
+}

@@ -1,0 +1,25 @@
+using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.HealthChecks.Struct;
+using DCL.Utility.Types;
+using System;
+using System.Threading;
+
+namespace DCL.Multiplayer.HealthChecks
+{
+    public interface IHealthCheck
+    {
+        UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct);
+
+        class AlwaysFails : IHealthCheck
+        {
+            public UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct) =>
+                UniTask.FromResult(Result.ErrorResult(nameof(AlwaysFails)))!;
+        }
+    }
+
+    public static class HealthCheckExtensions
+    {
+        public static IHealthCheck WithRetries(this IHealthCheck origin, int? retriesCount = null, TimeSpan? delayBetweenRetries = null) =>
+            new RetriesHealthCheck(origin, retriesCount, delayBetweenRetries);
+    }
+}

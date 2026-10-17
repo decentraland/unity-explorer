@@ -1,0 +1,82 @@
+using Cysharp.Threading.Tasks;
+using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.UI;
+using System.Threading;
+using Utility;
+
+namespace DCL.Backpack
+{
+    public class BackpackSearchController
+    {
+        private const int SEARCH_AWAIT_TIME = 1000;
+        private readonly SearchBarView view;
+        private readonly IBackpackCommandBus commandBus;
+        private readonly IInputBlock inputBlock;
+
+        private CancellationTokenSource? searchCancellationToken;
+
+        public BackpackSearchController(SearchBarView view,
+            IBackpackCommandBus commandBus,
+            IBackpackEventBus backpackEventBus,
+            IInputBlock inputBlock)
+        {
+            this.view = view;
+            this.commandBus = commandBus;
+            this.inputBlock = inputBlock;
+
+            backpackEventBus.FilterEvent += OnFilterEvent;
+
+            view.inputField.onSelect.AddListener(DisableShortcutsInput);
+            view.inputField.onDeselect.AddListener(RestoreInput);
+            view.inputField.onValueChanged.AddListener(OnValueChanged);
+            view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.clearSearchButton.gameObject.SetActive(false);
+        }
+
+        private void RestoreInput(string text) =>
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+
+        private void DisableShortcutsInput(string text) =>
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+
+        public void Clear()
+        {
+            if (view.inputField.isFocused)
+                RestoreInput(string.Empty);
+        }
+
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
+        {
+            if(string.IsNullOrEmpty(searchText))
+                ClearSearch();
+        }
+
+        private void ClearSearch()
+        {
+            view.inputField.text = string.Empty;
+            view.clearSearchButton.gameObject.SetActive(false);
+        }
+
+        private void OnValueChanged(string searchText)
+        {
+            view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
+
+            searchCancellationToken = searchCancellationToken.SafeRestart();
+            AwaitAndSendSearchAsync(searchText, searchCancellationToken.Token).Forget();
+        }
+
+        private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct)
+        {
+            await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
+            var command = new BackpackFilterCommand(
+                string.IsNullOrEmpty(searchText) ? null : string.Empty,
+                string.IsNullOrEmpty(searchText) ? null : AvatarWearableCategoryEnum.Body,
+                searchText
+            );
+            commandBus.SendCommand(command);
+        }
+    }
+}

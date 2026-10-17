@@ -1,0 +1,32 @@
+﻿using DCL.UI;
+using System.Text;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.Places
+{
+    public class PlaceCategoryButton : MonoBehaviour
+    {
+        [SerializeField] private Image iconImage = null!;
+        [SerializeField] private TMP_Text text = null!;
+        [SerializeField] public ButtonWithSelectableStateView buttonView = null!;
+
+        public void Configure(PlaceCategoriesSO.PlaceCategoryData placeData)
+        {
+            text.text = RemoveNonAsciiCharacters(placeData.name).ToUpper().Trim();
+            iconImage.sprite = placeData.icon;
+            iconImage.gameObject.SetActive(iconImage.sprite != null);
+        }
+
+        private static string RemoveNonAsciiCharacters(string text)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char c in text)
+                if (c <= 127) sb.Append(c);
+
+            return sb.ToString();
+        }
+    }
+}

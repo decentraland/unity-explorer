@@ -1,0 +1,69 @@
+:root {
+    --dcl-color-snow: rgb(252, 252, 252);
+    --dcl-color-pale-black: rgb(67, 64, 74);
+    --dcl-color-orange: rgb(255, 116, 57);
+    --dcl-color-orange-transparent: rgba(255, 116, 57, 0);
+    --dcl-color-rarity-unique: rgb(254, 162, 23);
+    --dcl-color-black-40: rgba(0, 0, 0, 0.4);
+    --dcl-color-black-70: rgba(0, 0, 0, 0.7);
+    --dcl-color-black-80: rgba(0, 0, 0, 0.8);
+    --dcl-color-white-10: rgba(255, 255, 255, 0.1);
+    --dcl-color-white-70: rgba(255, 255, 255, 0.7);
+    --dcl-color-silver: #A09BA8;
+    --dcl-color-shadow: #161518;
+    --dcl-color-green: #12E34D;
+    
+    --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
+    --dcl-font-inter-regular: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');
+    --dcl-font-inter-semibold: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-SemiBold SDF.asset');
+    --dcl-font-inter-bold: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Bold SDF.asset');
+
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--dcl-color-snow);
+}
+
+/* We reset some of the default Unity styles because they just get in the way */
+.unity-label {
+    margin: 0;
+    padding: 0;
+}
+
+.unity-button {
+    border-width: initial;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.dcl-clickable {
+    transition-property: scale;
+    transition-duration: 0.2s;
+}
+
+.dcl-clickable:hover {
+    scale: 0.95;
+}
+
+.dcl-clickable:active {
+    scale: 0.9;
+}
+
+/* Dropdown popup menus inherit the white text above, so they get a light box with dark text to stay readable. */
+.unity-base-dropdown__container-outer {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(18, 0, 131, 0.59);
+    border-width: 2px;
+    border-radius: 3px;
+}
+
+.unity-base-dropdown__item:hover {
+    background-color: rgba(18, 0, 131, 0.15);
+}
+
+.unity-base-dropdown__label {
+    color: rgb(46, 46, 46);
+}
+
+.unity-base-dropdown__checkmark {
+    -unity-background-image-tint-color: rgb(46, 46, 46);
+}

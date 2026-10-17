@@ -1,0 +1,9 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+# Linguist overrides
+
+TestResources/* linguist-vendored
+Assets/StreamingAssets/* linguist-vendored

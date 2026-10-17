@@ -1,0 +1,188 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Animation;
+using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Movement.Settings;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using UnityEngine;
+using Utility.Animations;
+using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
+
+namespace DCL.Multiplayer.Movement
+{
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(RemotePlayersMovementSystem))]
+    [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
+    public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
+    {
+        private readonly RemotePlayerExtrapolationSettings extrapolationSettings;
+        private readonly IMultiplayerMovementSettings movementSettings;
+
+        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings extrapolationSettings, IMultiplayerMovementSettings movementSettings) : base(world)
+        {
+            this.extrapolationSettings = extrapolationSettings;
+            this.movementSettings = movementSettings;
+        }
+
+        protected override void Update(float t)
+        {
+            UpdatePlayersAnimationQuery(World);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention), typeof(HiddenPlayerComponent))]
+        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref CharacterEmoteComponent emote,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
+        {
+            // When we finally pass the message, we set all Animator parameters from this snapshot
+            if (remotePlayerMovement.WasPassedThisFrame)
+            {
+                remotePlayerMovement.WasPassedThisFrame = false;
+
+                if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
+                    emote.StopEmote = true;
+
+                UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
+            }
+
+            if (intComp.Enabled)
+                InterpolateAnimations(view, ref anim, intComp);
+            else if (extComp.Enabled)
+                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, extrapolationSettings.LinearTime);
+            else
+            {
+                anim.States.MovementBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
+                anim.States.SlideBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
+
+                anim.States.MovementBlendValue = Mathf.Max(MovementBlend.MIN, anim.States.MovementBlendValue);
+                anim.States.SlideBlendValue = Mathf.Max(0, anim.States.SlideBlendValue);
+
+                view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, anim.States.MovementBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+                view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, anim.States.SlideBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+            }
+        }
+
+        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, ref NetworkMovementMessage message)
+        {
+            if (animationComponent.States.Equals(message.animState))
+                return;
+
+            // movement blend
+            animationComponent.States.MovementBlendValue = message.animState.MovementBlendValue;
+            SetAnimatorParameters(ref animationComponent, view, message.animState.IsGrounded, (int)message.movementKind);
+
+            // slide
+            animationComponent.States.IsSliding = message.isSliding;
+            animationComponent.States.SlideBlendValue = message.animState.SlideBlendValue;
+            AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
+
+            // other states
+            bool jumpTriggered = message.animState.JumpCount > animationComponent.States.JumpCount;
+            bool glidingTriggered = message.animState.GlideState == GlideStateValue.OpeningProp && animationComponent.States.GlideState != GlideStateValue.OpeningProp;
+            animationComponent.States.IsGrounded = message.animState.IsGrounded;
+            animationComponent.States.JumpCount = message.animState.JumpCount;
+            animationComponent.States.IsLongJump = message.animState.IsLongJump;
+            animationComponent.States.IsFalling = message.animState.IsFalling;
+            animationComponent.States.IsLongFall = message.animState.IsLongFall;
+            animationComponent.States.GlideState = message.animState.GlideState;
+            animationComponent.States.IsStunned = message.isStunned;
+            AnimationStatesLogic.SetAnimatorParameters(view, animationComponent.States, jumpTriggered, glidingTriggered);
+        }
+
+        private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
+        {
+            if (intComp.End.animState.JumpCount > anim.States.JumpCount && Mathf.Abs(intComp.Start.position.y - intComp.End.position.y) > RemotePlayerUtils.JUMP_EPSILON)
+                AnimateFutureJump(view, ref anim, intComp.End.animState);
+
+            AnimationStates startAnimStates = intComp.Start.animState;
+            AnimationStates endAnimStates = intComp.End.animState;
+
+            bool bothPointBlendsAreNotZero = !(startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
+                                                                                                  && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON);
+
+            if (bothPointBlendsAreNotZero)
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
+                anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
+
+                anim.States.MovementBlendValue = Mathf.Clamp(anim.States.MovementBlendValue, MovementBlend.MIN, MovementBlend.MAX);
+                anim.States.SlideBlendValue = Mathf.Max(0, anim.States.SlideBlendValue);
+            }
+            else if (Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON &&
+                     intComp.End.timestamp - intComp.Start.timestamp > RemotePlayerUtils.TIME_EPSILON)
+                BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
+
+            UpdateLocalBlends(view, anim.States);
+        }
+
+        private static void BlendBetweenTwoZeroMovementPoints(ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
+        {
+            float speed = Vector3.Distance(intComp.Start.position, intComp.End.position) / intComp.TotalDuration;
+
+            // 3 - run, 2 - jog, 1 - walk.
+            float midPointBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
+
+            float lerpValue = intComp.Time / intComp.TotalDuration;
+
+            if (intComp.Time < intComp.TotalDuration / 2)
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(intComp.Start.animState.MovementBlendValue, midPointBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(intComp.Start.animState.SlideBlendValue, midPointBlendValue, lerpValue);
+            }
+            else
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.MovementBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.SlideBlendValue, lerpValue);
+            }
+        }
+
+        private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
+        {
+            anim.States.IsGrounded = animState.IsGrounded;
+            anim.States.JumpCount = animState.JumpCount;
+
+            view.SetAnimatorTrigger(AnimationHashes.JUMP);
+
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, anim.States.IsGrounded);
+            view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, anim.States.JumpCount);
+        }
+
+        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, float time, float totalMoveDuration, float linearTime)
+        {
+            if (time >= totalMoveDuration)
+            {
+                anim.States.MovementBlendValue = MovementBlend.MIN;
+                anim.States.SlideBlendValue = 0f;
+            }
+            else if (time > linearTime && time < totalMoveDuration)
+            {
+                float dampDuration = totalMoveDuration - linearTime;
+                float dampTime = time - linearTime;
+
+                anim.States.MovementBlendValue = Mathf.Max(MovementBlend.MIN, Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration));
+                anim.States.SlideBlendValue = Mathf.Max(0, Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration));
+            }
+
+            UpdateLocalBlends(view, anim.States);
+        }
+
+        private static void UpdateLocalBlends(IAvatarView view, in AnimationStates animStates)
+        {
+            if (!animStates.IsGrounded)
+                return;
+
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+        }
+    }
+}

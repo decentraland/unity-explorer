@@ -1,0 +1,334 @@
+using Cysharp.Threading.Tasks;
+using DCL.Audio;
+using DCL.BugReporting.UI;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.Prefs;
+using DCL.Utilities.Extensions;
+using DG.Tweening;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
+using Utility.Storage;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
+namespace DCL.SceneLoadingScreens
+{
+    public partial class SceneLoadingScreenController : ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>
+    {
+        private readonly ISceneTipsProvider sceneTipsProvider;
+        private readonly TimeSpan minimumDisplayDuration;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
+        private readonly IInputBlock inputBlock;
+        private readonly IMVCManager mvcManager;
+        private readonly List<UniTask> fadingTasks = new ();
+        private readonly PersistentSetting<int> currentTip =
+            PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
+
+        private SceneTips tips;
+        private CancellationTokenSource? tipsRotationCancellationToken;
+        private CancellationTokenSource? tipsFadeCancellationToken;
+        private bool inputsBlocked;
+
+        // IntVariable causes deadlock occasionally.
+        // There is a similar issue reported on the forum:https://discussions.unity.com/t/deadlock-freezing-issue-with-localizationsettings-stringdatabase-getlocalizedstring-under-multiple-concurrent-calls-on-mobile/1566794
+        // private IntVariable? progressLabel;
+        private string progressLocalizationString = string.Empty;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+
+        public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
+            ISceneTipsProvider sceneTipsProvider,
+            TimeSpan minimumDisplayDuration,
+            AudioMixerVolumesController audioMixerVolumesController,
+            IInputBlock inputBlock,
+            IMVCManager mvcManager) : base(viewFactory)
+        {
+            this.sceneTipsProvider = sceneTipsProvider;
+            this.minimumDisplayDuration = minimumDisplayDuration;
+            this.audioMixerVolumesController = audioMixerVolumesController;
+            this.inputBlock = inputBlock;
+            this.mvcManager = mvcManager;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            tipsRotationCancellationToken?.SafeCancelAndDispose();
+            tipsFadeCancellationToken?.SafeCancelAndDispose();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewInstance!.ShowNextButton.onClick.AddListener(() =>
+            {
+                ShowTipWithFade(currentTip.Value + 1);
+                tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
+                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+            });
+
+            viewInstance.ShowPreviousButton.onClick.AddListener(() =>
+            {
+                ShowTipWithFade(currentTip.Value - 1);
+                tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
+                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+            });
+
+            viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
+
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
+
+            UpdateLocalizedTextAsync().Forget();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try
+            {
+                await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(showAboveOverlays: true)));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+        }
+
+        private async UniTaskVoid UpdateLocalizedTextAsync()
+        {
+            AsyncOperationHandle<string> handle =
+                viewInstance!.ProgressLabel.StringReference!.GetLocalizedStringAsync();
+
+            await handle;
+
+            if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
+                progressLocalizationString = handle.Result.EnsureNotNull();
+            else
+                ReportHub.LogError(ReportCategory.UI, "SceneLoadingScreenController cannot load localized text");
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            tipsFadeCancellationToken = tipsFadeCancellationToken.SafeRestart();
+            BlockUnwantedInputs();
+            SetLoadProgress(0);
+            viewInstance!.ClearTips();
+
+            // Fetched synchronously, so `tips` is populated before the view can show
+            tips = sceneTipsProvider.Get();
+
+            if (tips.Random)
+                tips.Tips.Shuffle();
+        }
+
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            viewInstance!.RootCanvasGroup.alpha = 1f;
+            viewInstance.ContentCanvasGroup.alpha = 1f;
+
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            // Fetch fresh localization string on loading screen show event
+            UpdateLocalizedTextAsync().Forget();
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+
+            // Runs first, before any statement that can throw: input must be unblocked on every close path
+            UnblockUnwantedInputs();
+
+            tipsRotationCancellationToken?.SafeCancelAndDispose();
+            tipsFadeCancellationToken?.SafeCancelAndDispose();
+
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            viewInstance!.ClearTips();
+            tips.Release();
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            await LoadTipsAsync();
+
+            ShowTip(currentTip.Value);
+
+            tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
+            RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+
+            // Can't create cancellation token from the finished task, it will throw an exception immediately
+            if (inputData.AsyncLoadProcessReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
+            {
+                // Waiting should spin no longer than the async load report itself, the life-cycle of the load report is secured by the upper layer
+                var combinedToken = inputData.AsyncLoadProcessReport.WaitUntilFinishedAsync(ReportCategory.SCENE_LOADING).ToCancellationToken(ct);
+
+                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, combinedToken), WaitTimeThresholdAsync(0.2f, combinedToken))
+                             .SuppressCancellationThrow();
+            }
+
+            // Fade should be performed if loadingProcess is finished but the "hard" token is still ok
+            if (!ct.IsCancellationRequested)
+                await FadeOutAsync(ct);
+        }
+
+        private async UniTask FadeOutAsync(CancellationToken ct)
+        {
+            var contentTask = viewInstance!.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
+            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
+            await UniTask.WhenAll(contentTask, rootTask);
+            UnblockUnwantedInputs();
+        }
+
+        private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)
+        {
+            float t = 0;
+
+            while (t < 1f && !ct.IsCancellationRequested)
+            {
+                float time = UnityEngine.Time.realtimeSinceStartup;
+                await UniTask.NextFrame(cancellationToken: ct);
+                float dt = (UnityEngine.Time.realtimeSinceStartup - time) / (float)minimumDisplayDuration.TotalSeconds;
+                t += dt;
+                AddLoadProgress(dt * progressProportion);
+            }
+        }
+
+        private async UniTask LoadTipsAsync()
+        {
+            using var scope = ListPool<UniTask<SceneTips.LoadedTip>>.Get(out var tasks);
+            foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
+            var loaded = await UniTask.WhenAll(tasks!);
+
+            foreach (SceneTips.LoadedTip tip in loaded) viewInstance!.AddTip(tip);
+        }
+
+        private async UniTask WaitUntilWorldIsLoadedAsync(float progressProportion, CancellationToken ct)
+        {
+            async UniTask UpdateProgressBarAsync()
+            {
+                var prevProgress = 0f;
+
+                await foreach (float progress in inputData.AsyncLoadProcessReport.ProgressCounter.WithCancellation(ct))
+                {
+                    float delta = progress - prevProgress;
+                    prevProgress = progress;
+                    await UniTask.SwitchToMainThread(ct);
+                    AddLoadProgress(delta * progressProportion);
+                }
+            }
+
+            await UpdateProgressBarAsync();
+        }
+
+        private void SetLoadProgress(float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            viewInstance!.ProgressBar.normalizedValue = progress;
+
+            var value = (int)(progress * 100);
+            string formatted = progressLocalizationString.Replace("0", value.ToString());
+            viewInstance.LoadingPercentageText.SetText(formatted);
+        }
+
+        private void AddLoadProgress(float progress) =>
+            SetLoadProgress(viewInstance!.ProgressBar.normalizedValue + progress);
+
+        private void ShowTip(int index)
+        {
+            if (tips.Tips.Count == 0) return;
+
+            if (index < 0)
+                index = tips.Tips.Count - 1;
+
+            index %= tips.Tips.Count;
+
+            viewInstance!.HideAllTips();
+            viewInstance.ShowTip(index);
+
+            currentTip.Value = index;
+        }
+
+        private void ShowTipWithFade(int index)
+        {
+            const float DURATION = 0.3f;
+
+            UniTask FadeOthers(CancellationToken ct)
+            {
+                fadingTasks.Clear();
+
+                for (var i = 0; i < tips.Tips.Count; i++)
+                    fadingTasks.Add(viewInstance!.HideTipWithFadeAsync(i, DURATION, ct));
+
+                return UniTask.WhenAll(fadingTasks);
+            }
+
+            async UniTaskVoid ShowTipWithFadeAsync(CancellationToken ct)
+            {
+                if (tips.Tips.Count == 0) return;
+
+                if (index < 0)
+                    index = tips.Tips.Count - 1;
+
+                index %= tips.Tips.Count;
+
+                currentTip.Value = index;
+
+                await FadeOthers(ct);
+                await viewInstance!.ShowTipWithFadeAsync(index, DURATION, ct);
+            }
+
+            ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
+        }
+
+        private async UniTaskVoid RotateTipsOverTimeAsync(TimeSpan frequency, CancellationToken ct)
+        {
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    await UniTask.Delay(frequency, cancellationToken: ct);
+
+                    ShowTipWithFade(currentTip.Value + 1);
+                }
+            }
+            catch (OperationCanceledException) { }
+        }
+
+        private void BlockUnwantedInputs()
+        {
+            if (inputsBlocked) return;
+
+            inputsBlocked = true;
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        private void UnblockUnwantedInputs()
+        {
+            if (!inputsBlocked) return;
+
+            inputsBlocked = false;
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+    }
+}

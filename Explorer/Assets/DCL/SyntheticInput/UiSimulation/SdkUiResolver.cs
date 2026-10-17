@@ -1,0 +1,241 @@
+using Arch.Core;
+using CRDT;
+using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using ECS.SceneLifeCycle;
+using Newtonsoft.Json.Linq;
+using SceneRunner.Scene;
+using System.Diagnostics.CodeAnalysis;
+using UnityEngine.UIElements;
+
+namespace DCL.SyntheticInput.UiSimulation
+{
+    /// <summary>Resolves SDK scene-UI elements by CRDT entity id in the current scene world.</summary>
+    public class SdkUiResolver
+    {
+        private static readonly QueryDescription UI_ELEMENTS = new QueryDescription().WithAll<UITransformComponent, CRDTEntity>();
+
+        private readonly IScenesCache scenesCache;
+
+        public SdkUiResolver(IScenesCache scenesCache)
+        {
+            this.scenesCache = scenesCache;
+        }
+
+        public bool TryResolve(int crdtId, out SdkUiElement element, [NotNullWhen(false)] out string? failure)
+        {
+            element = default(SdkUiElement);
+
+            if (!TryGetRunningSceneWorld(out World? world, out failure))
+                return false;
+
+            Entity found = Entity.Null;
+            UITransformComponent? transform = null;
+
+            // TODO: resolve through CrdtEcsSynchronizer.EntitiesMap (O(1)) instead of scanning; done together
+            // with the same scan in SyntheticPointerEventSystem/WorldInfo.
+            world.Query(in UI_ELEMENTS, (Entity entity, ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
+            {
+                if (crdtEntity.Id != crdtId)
+                    return;
+
+                found = entity;
+                transform = uiTransform;
+            });
+
+            if (found == Entity.Null || transform == null)
+            {
+                failure = $"no UI entity with CRDT id {crdtId} in the current scene";
+                return false;
+            }
+
+            world.TryGet(found, out UIInputComponent? input);
+            world.TryGet(found, out UIDropdownComponent? dropdown);
+
+            element = new SdkUiElement(transform, input, dropdown);
+            return true;
+        }
+
+        /// <summary>
+        ///     The UITransform whose element is the picked element or its closest ancestor. Null when no entity of the
+        ///     current scene owns the element.
+        /// </summary>
+        public UITransformComponent? ResolveComponent(VisualElement element) =>
+            ResolveComponent(element, out _);
+
+        /// <summary>Also reports the owner's CRDT id, or -1 when there is no owner.</summary>
+        public UITransformComponent? ResolveComponent(VisualElement element, out int crdtId)
+        {
+            crdtId = -1;
+            if (!TryGetRunningSceneWorld(out World? world, out _))
+                return null;
+
+            UITransformComponent? closest = null;
+            var closestDistance = int.MaxValue;
+
+            var closestId = -1;
+
+            world.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
+            {
+                var distance = 0;
+
+                for (VisualElement? current = element; current != null; current = current.parent, distance++)
+                {
+                    if (!ReferenceEquals(uiTransform.Transform, current))
+                        continue;
+
+                    if (distance < closestDistance)
+                    {
+                        closest = uiTransform;
+                        closestId = crdtEntity.Id;
+                        closestDistance = distance;
+                    }
+
+                    return;
+                }
+            });
+
+            crdtId = closestId;
+            return closest;
+        }
+
+        /// <summary>
+        ///     Whether the current scene's UI covers a screen point (Unity screen coordinates), and which entity does.
+        /// </summary>
+        public bool TryFindCoverAt(UnityEngine.Vector2 screenPoint, [NotNullWhen(true)] out string? cover)
+        {
+            cover = null;
+
+            if (!TryGetScenePanel(out IPanel? panel, out _))
+                return false;
+
+            return TryDescribeCoverIn(panel, screenPoint, out cover);
+        }
+
+        /// <summary>As <see cref="TryFindCoverAt" />, inside a panel the caller already identified.</summary>
+        public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, [NotNullWhen(true)] out string? cover)
+        {
+            cover = null;
+
+            UnityEngine.Vector2 panelPoint = UiScreenGeometry.ImageToPanelPoint(panel, UiScreenGeometry.ScreenToImagePoint(screenPoint));
+            VisualElement? picked = panel.Pick(panelPoint);
+
+            if (picked == null || ResolveComponent(picked, out int crdtId) == null)
+                return false;
+
+            cover = CoverDescription(crdtId);
+            return true;
+        }
+
+        internal static string CoverDescription(int crdtId) =>
+            crdtId >= 0 ? $"the scene's UI (crdtId {crdtId})" : "the scene's UI";
+
+        /// <summary>Any attached element identifies the panel, because a scene renders its UI into one panel.</summary>
+        public bool TryGetScenePanel([NotNullWhen(true)] out IPanel? panel, [NotNullWhen(false)] out string? failure)
+        {
+            panel = null;
+
+            if (!TryGetRunningSceneWorld(out World? world, out failure))
+                return false;
+
+            IPanel? found = null;
+
+            world.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity _) =>
+            {
+                found ??= uiTransform.Transform.panel;
+            });
+
+            if (found == null)
+            {
+                failure = "the current scene has no UI attached to a panel";
+                return false;
+            }
+
+            panel = found;
+            return true;
+        }
+
+        public JArray ListInteractable()
+        {
+            var entries = new JArray();
+
+            if (!TryGetRunningSceneWorld(out World? world, out _))
+                return entries;
+
+            world.Query(in UI_ELEMENTS, (Entity entity, ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
+            {
+                if (uiTransform.IsHidden || uiTransform.Transform.panel == null)
+                    return;
+
+                bool hasInput = world.TryGet(entity, out UIInputComponent? input);
+                bool hasDropdown = world.TryGet(entity, out UIDropdownComponent? dropdown);
+                bool hasScroll = uiTransform.InnerScrollView != null;
+                bool hasPointerEvents = world.TryGet(entity, out PBPointerEvents? pointerEvents) && pointerEvents != null;
+
+                if (!hasInput && !hasDropdown && !hasScroll && !hasPointerEvents)
+                    return;
+
+                UnityEngine.Rect rect = UiScreenGeometry.PanelRectToImageRect(uiTransform.Transform.panel, uiTransform.Transform.worldBound);
+
+                var entry = new JObject
+                {
+                    ["stack"] = "sdk",
+                    ["crdtId"] = crdtEntity.Id,
+                    ["kind"] = hasInput ? "input" : hasDropdown ? "dropdown" : hasPointerEvents ? "pointerTarget" : "scroll",
+                    ["screenRect"] = UiDiscovery.RectJson(rect),
+                    ["center"] = UiDiscovery.CenterJson(rect),
+                };
+
+                if ((hasInput && input != null && !input.TextField.enabledInHierarchy)
+                    || (hasDropdown && dropdown != null && !dropdown.DropdownField.enabledInHierarchy))
+                    entry["disabled"] = true;
+
+                if (hasPointerEvents)
+                {
+                    var declaredEvents = new JArray();
+
+                    foreach (PBPointerEvents.Types.Entry? pointerEvent in pointerEvents!.PointerEvents)
+                        declaredEvents.Add(pointerEvent!.EventType.ToString());
+
+                    entry["pointerEventTypes"] = declaredEvents;
+                }
+
+                entries.Add(entry);
+            });
+
+            return entries;
+        }
+
+        private bool TryGetRunningSceneWorld([NotNullWhen(true)] out World? world, [NotNullWhen(false)] out string? failure)
+        {
+            world = null;
+            failure = null;
+
+            ISceneFacade? scene = scenesCache.CurrentScene.Value;
+
+            if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
+            {
+                failure = "no running current scene";
+                return false;
+            }
+
+            world = scene.EcsExecutor.World;
+            return true;
+        }
+    }
+
+    /// <summary>A resolved SDK scene-UI element: the entity's runtime UI components in its scene world.</summary>
+    public readonly struct SdkUiElement
+    {
+        public readonly UITransformComponent Transform;
+        public readonly UIInputComponent? Input;
+        public readonly UIDropdownComponent? Dropdown;
+
+        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown)
+        {
+            Transform = transform;
+            Input = input;
+            Dropdown = dropdown;
+        }
+    }
+}

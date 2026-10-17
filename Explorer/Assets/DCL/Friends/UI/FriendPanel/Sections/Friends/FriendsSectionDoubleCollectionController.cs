@@ -1,0 +1,138 @@
+using Cysharp.Threading.Tasks;
+using DCL.Chat;
+using DCL.Multiplayer.Connectivity;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Passport;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using System;
+using System.Threading;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Friends.UI.FriendPanel.Sections.Friends
+{
+    public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
+    {
+        private const float DELAY_BETWEEN_CLICKS = 0.5f;
+
+        private readonly IPassportBridge passportBridge;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private CancellationTokenSource openPassportCts = new ();
+        private bool elementClicked;
+        private CancellationTokenSource? popupCts;
+
+        internal event Action<string>? OnlineFriendClicked;
+        internal event Action<string, Vector2Int>? JumpInClicked;
+        internal event Action<Web3Address>? OpenConversationClicked;
+
+        public FriendsSectionDoubleCollectionController(FriendsSectionView view,
+            IFriendsService friendsService,
+            IFriendsEventBus friendEventBus,
+            IMVCManager mvcManager,
+            FriendListPagedDoubleCollectionRequestManager doubleCollectionRequestManager,
+            IPassportBridge passportBridge,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker)
+            : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
+        {
+            this.passportBridge = passportBridge;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
+
+            doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
+            doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
+            doubleCollectionRequestManager.ChatClicked += OnChatButtonClicked;
+            doubleCollectionRequestManager.NoFriendsInCollections += ShowEmptyState;
+            doubleCollectionRequestManager.AtLeastOneFriendInCollections += HideEmptyState;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            requestManager.ContextMenuClicked -= OnContextMenuClicked;
+            requestManager.JumpInClicked -= OnJumpInClicked;
+            requestManager.ChatClicked -= OnChatButtonClicked;
+            requestManager.NoFriendsInCollections -= ShowEmptyState;
+            requestManager.AtLeastOneFriendInCollections -= HideEmptyState;
+            jumpToFriendLocationCts.SafeCancelAndDispose();
+        }
+
+        private void ShowEmptyState()
+        {
+            view.SetEmptyState(true);
+            view.SetScrollViewState(false);
+        }
+
+        private void HideEmptyState()
+        {
+            view.SetEmptyState(false);
+            view.SetScrollViewState(true);
+        }
+
+        protected override void ElementClicked(Profile.CompactInfo profile)
+        {
+            if (elementClicked)
+            {
+                OpenConversationClicked?.Invoke(profile.Address);
+                openPassportCts.Cancel();
+                elementClicked = false;
+            }
+            else
+            {
+                openPassportCts = openPassportCts.SafeRestart();
+                WaitAndOpenPassportAsync(profile, openPassportCts.Token).Forget();
+            }
+        }
+
+        private async UniTaskVoid WaitAndOpenPassportAsync(Profile.CompactInfo profile, CancellationToken ct)
+        {
+            elementClicked = true;
+
+            if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.Offline)
+                OnlineFriendClicked?.Invoke(profile.Address);
+
+            await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BETWEEN_CLICKS), cancellationToken: ct);
+            elementClicked = false;
+
+            await passportBridge.ShowAsync(profile.Address);
+        }
+
+        private void OnContextMenuClicked(Profile.CompactInfo friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
+        {
+            popupCts = popupCts.SafeRestart();
+            elementView.CanUnHover = false;
+
+            bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.UserId) != OnlineStatus.Offline;
+
+            if (isFriendOnline)
+                OnlineFriendClicked?.Invoke(friendProfile.UserId);
+
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId),
+                buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: panelLifecycleTask!.Task, onHide: () => elementView.CanUnHover = true
+                ,anchorPoint: MenuAnchorPoint.TopRight).Forget();
+        }
+
+        private void OnJumpInClicked(Profile.CompactInfo profile)
+        {
+            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
+        }
+
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(elementViewUserProfile.Address);
+    }
+}

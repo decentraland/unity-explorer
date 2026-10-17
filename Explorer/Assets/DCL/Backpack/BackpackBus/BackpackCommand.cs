@@ -1,0 +1,140 @@
+using DCL.CharacterPreview;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using UnityEngine;
+
+namespace DCL.Backpack.BackpackBus
+{
+    public readonly struct BackpackEmoteSlotSelectCommand
+    {
+        public readonly int Slot;
+
+        public BackpackEmoteSlotSelectCommand(int slot)
+        {
+            Slot = slot;
+        }
+    }
+
+    public readonly struct BackpackEquipEmoteCommand
+    {
+        public readonly string Id;
+        public readonly int? Slot;
+        public readonly bool IsManuallyEquipped; // It will be true when the user manually equip an emote from the emotes grid
+        public readonly Action? EndAction;
+
+        public BackpackEquipEmoteCommand(string id, int? slot, bool isManuallyEquipped, Action? endAction = null)
+        {
+            Id = id;
+            Slot = slot;
+            IsManuallyEquipped = isManuallyEquipped;
+            EndAction = endAction;
+        }
+    }
+
+    public readonly struct BackpackUnEquipEmoteCommand
+    {
+        public readonly string? Id;
+        public readonly int? Slot;
+
+        public BackpackUnEquipEmoteCommand(string? id = null, int? slot = null)
+        {
+            Id = id;
+            Slot = slot;
+        }
+    }
+
+    public readonly struct BackpackEquipWearableCommand
+    {
+        public readonly string Id;
+        public readonly bool IsManuallyEquipped; // True when the wearable is equipped 'manually' from the user in the backpack UI
+        public readonly Action? EndAction;
+
+        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped, Action? endAction = null)
+        {
+            Id = id;
+            IsManuallyEquipped = isManuallyEquipped;
+            EndAction = endAction;
+        }
+    }
+
+    public readonly struct BackpackUnEquipWearableCommand
+    {
+        public readonly string Id;
+
+        public BackpackUnEquipWearableCommand(string id)
+        {
+            Id = id;
+        }
+    }
+
+    public readonly struct BackpackSelectWearableCommand
+    {
+        public readonly string Id;
+        public readonly Action? EndAction;
+
+        public BackpackSelectWearableCommand(string id, Action? endAction = null)
+        {
+            Id = id;
+            EndAction = endAction;
+        }
+    }
+
+    public readonly struct BackpackSelectEmoteCommand
+    {
+        public readonly string Id;
+        public readonly Action? EndAction;
+
+        public BackpackSelectEmoteCommand(string id, Action? endAction = null)
+        {
+            Id = id;
+            EndAction = endAction;
+        }
+    }
+
+    public readonly struct BackpackHideCommand
+    {
+        public readonly IReadOnlyCollection<string> ForceRender;
+        public readonly bool IsInitialHide;
+
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender, bool isInitialHide = false)
+        {
+            ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
+            IsInitialHide = isInitialHide;
+        }
+    }
+
+    public readonly struct BackpackFilterCommand
+    {
+        public readonly string? Category;
+        public readonly AvatarWearableCategoryEnum? CategoryEnum;
+        public readonly string? SearchText;
+
+        public BackpackFilterCommand(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
+        {
+            Category = category;
+            CategoryEnum = categoryEnum;
+            SearchText = searchText;
+        }
+    }
+
+    public readonly struct BackpackChangeColorCommand
+    {
+        public readonly Color NewColor;
+        public readonly string Category;
+
+        public BackpackChangeColorCommand(Color newColor, string category)
+        {
+            NewColor = newColor;
+            Category = category;
+        }
+    }
+
+    public readonly struct BackpackUnEquipAllCommand { }
+    public readonly struct BackpackPublishProfileCommand { }
+
+    public readonly struct BackpackUnEquipAllWearablesCommand
+    {
+    }
+}

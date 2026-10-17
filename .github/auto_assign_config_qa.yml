@@ -1,0 +1,14 @@
+addReviewers: true
+numberOfReviewers: 1
+useReviewGroups: true
+
+reviewGroups:
+  qa:
+    - Ludmilafantaniella
+    - anicalbano
+    - dafgreco
+
+filterLabels:
+  exclude:
+    - "no QA needed"
+    - "no review"

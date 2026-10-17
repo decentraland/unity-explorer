@@ -1,0 +1,66 @@
+﻿using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using CrdtEcsBridge.UpdateGate;
+using DCL.Interaction.Utility;
+using DCL.Profiling;
+using ECS.Abstract;
+using ECS.Prioritization.Components;
+using ECS.Unity.ExplorerUiEvents;
+using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
+using System.Collections.Generic;
+using Utility.Multithreading;
+
+namespace DCL.PluginSystem.World.Dependencies
+{
+    public readonly struct ECSWorldInstanceSharedDependencies
+    {
+        public readonly ISceneData SceneData;
+        public readonly IPartitionComponent ScenePartition;
+        public readonly IECSToCRDTWriter EcsToCRDTWriter;
+        public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
+        public readonly ISceneExceptionsHandler SceneExceptionsHandler;
+        public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
+        public readonly ISceneStateProvider SceneStateProvider;
+        public readonly EntityEventsBuilder EntityEventsBuilder;
+        public readonly MultiThreadSync MultiThreadSync;
+        public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
+        public readonly ISystemsUpdateGate EcsSystemsGate;
+        public readonly SceneRuntimeMetrics RuntimeMetrics;
+
+        /// <summary>
+        ///     Explore panel life cycle events this scene's own openExplorerUi calls produced, filled by the
+        ///     restricted actions API and drained by WriteExplorerUiEventsSystem. Main thread only on both ends.
+        /// </summary>
+        public readonly Queue<ExplorerUiEvent> ExplorerUiEvents;
+
+        public ECSWorldInstanceSharedDependencies(
+            ISceneData sceneData,
+            IPartitionComponent scenePartition,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            Dictionary<CRDTEntity, Entity> entitiesMap,
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
+            ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
+            MultiThreadSync multiThreadSync,
+            ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
+            SceneRuntimeMetrics runtimeMetrics,
+            Queue<ExplorerUiEvent> explorerUiEvents)
+        {
+            SceneData = sceneData;
+            EcsToCRDTWriter = ecsToCRDTWriter;
+            EntitiesMap = entitiesMap;
+            MultiThreadSync = multiThreadSync;
+            ScenePartition = scenePartition;
+            SceneStateProvider = sceneStateProvider;
+            SceneExceptionsHandler = sceneExceptionsHandler;
+            EntityCollidersSceneCache = entityCollidersSceneCache;
+            EcsGroupThrottler = ecsGroupThrottler;
+            EcsSystemsGate = ecsSystemsGate;
+            EntityEventsBuilder = entityEventsBuilder;
+            RuntimeMetrics = runtimeMetrics;
+            ExplorerUiEvents = explorerUiEvents;
+        }
+    }
+}

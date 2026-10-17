@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Tracked pre-commit hook. Git does not run hooks from the repo automatically; enable this
+# directory once per clone with:
+#
+#     bash scripts/install-git-hooks.sh        (sets `git config core.hooksPath .githooks`)
+#
+# Runs the Claude-based comment clean-up over the staged C# files when the commit adds comment
+# lines, shows the proposed trims and asks whether to keep them (see
+# scripts/lint/clean-up-excessive-ai-comments.sh for modes, options and exit codes).
+#
+# Bypass for one commit: `git commit --no-verify` or `SKIP_AI_COMMENT_CLEANUP=1 git commit ...`.
+# Missing Claude Code CLI never blocks the commit.
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+bash "$ROOT/scripts/lint/clean-up-excessive-ai-comments.sh" interactive --staged
+rc=$?
+
+if [ "$rc" -eq 2 ]; then
+    echo "pre-commit: commit aborted by the comment clean-up." >&2
+    exit 1
+fi
+
+# Any other outcome (kept, discarded, nothing to do, tooling missing) lets the commit through.
+exit 0

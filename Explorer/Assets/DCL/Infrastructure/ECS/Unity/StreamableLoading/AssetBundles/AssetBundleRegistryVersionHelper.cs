@@ -1,0 +1,103 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
+using DCL.WebRequests;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using UnityEngine.Pool;
+
+namespace ECS.StreamableLoading.AssetBundles
+{
+    public static class AssetBundleRegistryVersionHelper
+    {
+        private static readonly IExtendedObjectPool<StringBuilder> STRING_BUILDER_POOL = new ExtendedObjectPool<StringBuilder>(() => new StringBuilder(), sb => sb.Clear(), defaultCapacity: 2);
+        private static readonly ThreadSafeListPool<ABVersionsResponse> DTO_POOL = new (25, 50);
+
+        public static async UniTask<AssetBundlesVersions> GetABRegistryVersionsByPointersAsync(
+            IReadOnlyList<URN> pointers,
+            IWebRequestController webRequestController,
+            string assetBundleRegistryVersionURL,
+            ReportData reportCategory,
+            CancellationToken ct)
+        {
+            // Early exit if we have no pointers to query so we avoid the 400 response
+            if (pointers.Count == 0)
+                return AssetBundlesVersions.Create();
+
+            using var sbScope = STRING_BUILDER_POOL.Get(out var bodyBuilder);
+
+            bodyBuilder.Append("{\"pointers\":[");
+
+            for (int i = 0; i < pointers.Count; ++i)
+            {
+                bodyBuilder.Append('\"');
+                bodyBuilder.Append(pointers[i].LowerCaseUrn());
+                bodyBuilder.Append('\"');
+
+                if (i != pointers.Count - 1)
+                    bodyBuilder.Append(",");
+            }
+
+            bodyBuilder.Append("]}");
+
+            return await GetABRegistryVersionsByPointersAsync(GenericPostArguments.CreateJson(bodyBuilder.ToString()), webRequestController, assetBundleRegistryVersionURL, reportCategory, ct);
+        }
+
+        public static async UniTask<AssetBundlesVersions> GetABRegistryVersionsByPointersAsync(
+            GenericPostArguments jsonBody,
+            IWebRequestController webRequestController,
+            string assetBundleRegistryVersionURL,
+            ReportData reportCategory,
+            CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var result = AssetBundlesVersions.Create();
+
+            using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleRegistryVersionURL, out URLBuilder urlBuilder);
+
+            var url = urlBuilder.Build();
+            using var dtoPooledList = DTO_POOL.AutoScope();
+
+            try
+            {
+                await webRequestController.PostAsync(new CommonArguments(url), jsonBody, ct, reportCategory)
+                    .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, reportCategory);
+                return result;
+            }
+
+            foreach (var element in dtoPooledList.Value)
+            {
+                if (element.pointers.Length == 0)
+                {
+                    ReportHub.LogException(new Exception("Received an element with no pointers from the AB registry versions endpoint"), reportCategory);
+                    continue;
+                }
+
+                result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
+                {
+                    mac = new AssetBundlesVersions.VersionInfo
+                    {
+                        version = element.versions.assets.mac.version, buildDate = element.versions.assets.mac.buildDate
+                    },
+                    windows = new AssetBundlesVersions.VersionInfo
+                    {
+                        version = element.versions.assets.windows.version, buildDate = element.versions.assets.windows.buildDate
+                    }
+                });
+            }
+
+            return result;
+        }
+    }
+}

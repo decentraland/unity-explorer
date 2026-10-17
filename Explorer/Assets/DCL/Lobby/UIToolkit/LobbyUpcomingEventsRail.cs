@@ -1,0 +1,27 @@
+using System;
+using UnityEngine.UIElements;
+
+namespace DCL.Lobby
+{
+    /// <summary>
+    ///     The upcoming events carousel, one <see cref="LobbyUpcomingEventCardElement" /> per event; it only reports
+    ///     which card, or which card's button, was clicked.
+    /// </summary>
+    public class LobbyUpcomingEventsRail : LobbyCardRail<LobbyUpcomingEventCardElement>
+    {
+        public Action<int>? CardClicked;
+        public Action<int>? CardInterestedClicked;
+        public Action<int>? CardAddToCalendarClicked;
+        public Action<int>? CardShareClicked;
+
+        public LobbyUpcomingEventsRail(VisualTreeAsset cardTemplate) : base(cardTemplate) { }
+
+        protected override void OnCardCreated(LobbyUpcomingEventCardElement card, int index)
+        {
+            card.Clicked = () => CardClicked?.Invoke(index);
+            card.InterestedClicked = () => CardInterestedClicked?.Invoke(index);
+            card.AddToCalendarClicked = () => CardAddToCalendarClicked?.Invoke(index);
+            card.ShareClicked = () => CardShareClicked?.Invoke(index);
+        }
+    }
+}

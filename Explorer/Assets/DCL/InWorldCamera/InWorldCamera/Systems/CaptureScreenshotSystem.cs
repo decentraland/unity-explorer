@@ -1,0 +1,193 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.Character.Components;
+using DCL.CharacterCamera;
+using DCL.Diagnostics;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.UI;
+using DCL.Multiplayer.Profiles.Entities;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
+using ECS.Abstract;
+using System;
+using System.Threading;
+using UnityEngine;
+using Utility;
+
+namespace DCL.InWorldCamera.Systems
+{
+    [UpdateInGroup(typeof(CameraGroup))]
+    [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]
+    [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
+    public sealed partial class CaptureScreenshotSystem : BaseUnityLoopSystem
+    {
+        private const float SPLASH_FX_DURATION = 0.5f;
+        private const float MIDDLE_PAUSE_FX_DURATION = 0.1f;
+        private const float IMAGE_TRANSITION_FX_DURATION = 0.5f;
+        private const string SCREENSHOT_UPLOAD_ERROR_MESSAGE = "There was an error uploading your screenshot.";
+
+        private readonly ScreenRecorder recorder;
+        private readonly ScreenshotMetadataBuilder metadataBuilder;
+
+        private readonly ICoroutineRunner coroutineRunner;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly InWorldCameraController hudController;
+        private readonly CancellationTokenSource ctx;
+        private readonly Entity playerEntity;
+
+        private SingleInstanceEntity camera;
+        private Texture2D? screenshot;
+        private ScreenshotMetadata? metadata;
+        private string currentSource;
+
+        internal CaptureScreenshotSystem(
+            World world,
+            ScreenRecorder recorder,
+            Entity playerEntity,
+            ScreenshotMetadataBuilder metadataBuilder,
+            ICoroutineRunner coroutineRunner,
+            ICameraReelStorageService cameraReelStorageService,
+            InWorldCameraController hudController)
+            : base(world)
+        {
+            this.recorder = recorder;
+            this.playerEntity = playerEntity;
+            this.metadataBuilder = metadataBuilder;
+            this.coroutineRunner = coroutineRunner;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.hudController = hudController;
+
+            ctx = new CancellationTokenSource();
+        }
+
+        public override void Initialize()
+        {
+            camera = World.CacheCamera();
+        }
+
+        protected override void OnDispose()
+        {
+            ctx.SafeCancelAndDispose();
+        }
+
+        protected override void Update(float t)
+        {
+            if (recorder.State == RecordingState.Capturing || hudController.IsVfxInProgress)
+                return;
+
+            if (recorder.State == RecordingState.ScreenshotReady && metadataBuilder.MetadataIsReady)
+            {
+                ProcessCapturedScreenshot();
+                return;
+            }
+
+            if (ScreenshotIsRequested() && cameraReelStorageService.StorageStatus.HasFreeSpace)
+            {
+                hudController.SetViewCanvasActive(false);
+                coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
+                CollectMetadata();
+            }
+        }
+
+        private void ProcessCapturedScreenshot()
+        {
+            screenshot = recorder.GetScreenshotAndReset();
+            metadata = metadataBuilder.GetMetadataAndReset();
+
+            if (screenshot == null)
+            {
+                hudController.SetViewCanvasActive(true);
+                return;
+            }
+
+            ProcessCapturedScreenshotAsync(screenshot, metadata!, currentSource, ctx.Token).Forget();
+
+            hudController.SetViewCanvasActive(true);
+            hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
+            hudController.DebugCapture(screenshot, metadata);
+
+            return;
+
+            async UniTaskVoid ProcessCapturedScreenshotAsync(Texture2D capture, ScreenshotMetadata meta, string source, CancellationToken ct)
+            {
+                try
+                {
+                    await cameraReelStorageService.UploadScreenshotAsync(capture, meta, source, ct);
+                }
+                catch (OperationCanceledException) { }
+                catch (ScreenshotLimitReachedException)
+                {
+                    // Swallowed since the UI already shows that the user reached their limit; this just prevents the camera from closing
+                }
+                catch (Exception e)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(SCREENSHOT_UPLOAD_ERROR_MESSAGE));
+                    ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
+
+                    // Wait for cleanup query
+                    await UniTask.Yield();
+
+                    if (ct.IsCancellationRequested)
+                        return;
+
+                    RequestDisableInWorldCamera();
+                }
+            }
+        }
+
+        private void RequestDisableInWorldCamera()
+        {
+            if (camera.GetCameraComponent(World).CameraInputChangeEnabled && !World.Has<ToggleInWorldCameraRequest>(camera))
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
+        }
+
+        private bool ScreenshotIsRequested()
+        {
+            if (recorder.State != RecordingState.Idle) return false;
+
+            if (World.TryGet(camera, out TakeScreenshotRequest request))
+            {
+                currentSource = request.Source;
+                World.Remove<TakeScreenshotRequest>(camera);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void CollectMetadata()
+        {
+            Camera captureCamera = camera.GetCameraComponent(World).Camera;
+            Plane[] frustumPlanes = CalculatePhotoFrustumPlanes(captureCamera);
+
+            metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes, captureCamera);
+
+            metadataBuilder.AddSelfProfile(UserIsEmoting(playerEntity));
+            AddPeopleInFrameToMetadataQuery(World);
+            metadataBuilder.BuildAsync(ctx.Token).Forget();
+        }
+
+        [Query]
+        private void AddPeopleInFrameToMetadata(in Entity entity, Profile profile, RemoteAvatarCollider avatarCollider)
+        {
+            metadataBuilder.AddProfile(profile, avatarCollider.Collider, UserIsEmoting(entity));
+        }
+
+        private bool UserIsEmoting(Entity entity) =>
+            World.TryGet(entity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
+
+        internal static Plane[] CalculatePhotoFrustumPlanes(Camera camera)
+        {
+            Vector2 frameSize = ScreenRecorder.CalculateNormalizedFrameSize(camera.aspect);
+            float photoFieldOfView = Mathf.Atan(Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2f) * frameSize.y) * 2f * Mathf.Rad2Deg;
+
+            Matrix4x4 photoProjection = Matrix4x4.Perspective(photoFieldOfView, ScreenRecorder.TARGET_ASPECT_RATIO, camera.nearClipPlane, camera.farClipPlane);
+            return GeometryUtility.CalculateFrustumPlanes(photoProjection * camera.worldToCameraMatrix);
+        }
+    }
+}

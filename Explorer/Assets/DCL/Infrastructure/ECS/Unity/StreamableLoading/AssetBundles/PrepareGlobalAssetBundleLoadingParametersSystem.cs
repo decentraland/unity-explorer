@@ -1,0 +1,43 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
+using ECS.StreamableLoading.Common.Components;
+
+namespace ECS.StreamableLoading.AssetBundles
+{
+    /// <summary>
+    ///     Prepares Asset Bundle Parameters for loading Asset Bundle in the global world
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
+    public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
+    {
+        private readonly URLDomain lodAssetBundlesURL;
+
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, URLDomain lodAssetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
+        {
+            this.lodAssetBundlesURL = lodAssetBundlesURL;
+        }
+
+        protected override URLDomain ResolveAssetBundlesUrl(in GetAssetBundleIntention assetBundleIntention) =>
+            assetBundleIntention.AssetBundleManifest.IsLODAsset ? lodAssetBundlesURL : base.ResolveAssetBundlesUrl(in assetBundleIntention);
+
+        protected override void Update(float t)
+        {
+            PrepareCommonArgumentsQuery(World);
+        }
+
+        [Query]
+        [None(typeof(StreamableLoadingResult<AssetBundleData>))]
+
+        // Provides a unique asset bundle manifest for each entity containing an asset bundle
+        private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        {
+            base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
+        }
+
+    }
+}

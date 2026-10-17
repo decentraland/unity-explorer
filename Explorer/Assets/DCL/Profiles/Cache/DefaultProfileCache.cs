@@ -1,0 +1,80 @@
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles.Helpers;
+using DCL.Profiling;
+using System;
+using System.Collections.Generic;
+using Utility.Multithreading;
+
+namespace DCL.Profiles
+{
+    public class DefaultProfileCache : IProfileCache
+    {
+        private readonly DCLConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, string> userNameToIdMap = new ();
+
+        public ProfileTier? Get(string id) =>
+            profiles.GetValueOrDefault(id);
+
+        public bool TryGet(string id, ProfileTier.Kind tier, out ProfileTier profile)
+        {
+            if (profiles.TryGetValue(id, out profile) && profile.GetKind() >= tier)
+                return true;
+
+            profile = default(ProfileTier);
+            return false;
+        }
+
+        public ProfileTier? GetByUserName(string userName)
+        {
+            if (userNameToIdMap.TryGetValue(userName, out string? profileId))
+                return profiles[profileId];
+
+            return null;
+        }
+
+        public void Set(string id, ProfileTier profile)
+        {
+            if (profiles.TryGetValue(id, out ProfileTier existingProfile))
+            {
+                // The cached full profile can be never replaced by the compact version
+               UnityEngine.Assertions.Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
+
+                if (existingProfile != profile)
+                {
+                    ProfileUtils.InheritDynamicState(existingProfile, profile);
+                    existingProfile.Dispose();
+                }
+            }
+
+            profiles[id] = profile;
+            userNameToIdMap[profile.DisplayName] = id;
+
+            UpdateProfilingCounter();
+        }
+
+        public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)
+        {
+            // TODO: clear unused profiles
+
+            UpdateProfilingCounter();
+        }
+
+        public void Remove(string id)
+        {
+            if (profiles.TryGetValue(id, out ProfileTier existingProfile))
+            {
+                userNameToIdMap.TryRemove(existingProfile.DisplayName, out _);
+                existingProfile.Dispose();
+            }
+
+            profiles.TryRemove(id, out _);
+
+            UpdateProfilingCounter();
+        }
+
+        private void UpdateProfilingCounter()
+        {
+            ProfilingCounters.ProfilesInCache.Value = profiles.Count;
+        }
+    }
+}

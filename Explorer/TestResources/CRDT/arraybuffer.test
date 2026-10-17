@@ -1,0 +1,32 @@
+# CRDT Uint8Array should return the same data
+# Messages sent over the wire
+{"type":1,"componentId":7,"entityId":11,"data":"Hola","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"Hola","timestamp":1} => {"state":3,"effect":0}
+# End of messages
+# Final CRDT State
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"Hola"}],"deletedEntities":[]}
+#
+# CRDT Uint8Array should return the bigger raw data
+# Messages sent over the wire
+{"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"a","timestamp":1} => {"state":4,"effect":0}
+# End of messages
+# Final CRDT State
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"b"}],"deletedEntities":[]}
+#
+# CRDT Uint8Array should return the bigger raw data. a.byteLength !== b.byteLength
+# Messages sent over the wire
+{"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"aa","timestamp":1} => {"state":4,"effect":0}
+# End of messages
+# Final CRDT State
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"b"}],"deletedEntities":[]}
+#
+# CRDT Uint8Array should return the bigger raw data. a.byteLength === b.byteLength
+# Messages sent over the wire
+{"type":1,"componentId":7,"entityId":11,"data":"messi","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"messirve","timestamp":1} => {"state":5,"effect":3}
+# End of messages
+# Final CRDT State
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"messirve"}],"deletedEntities":[]}
+#

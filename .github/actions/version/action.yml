@@ -1,0 +1,112 @@
+name: 'Version'
+description: 'Parse, update, and format the given tag for onward operations'
+inputs:
+  tag:
+    description: 'Formatted version tag. If not set, it uses the latest version tag (v[0-9]*)'
+    required: false
+  commit_sha:
+    description: 'The commit SHA to use for versioning'
+    required: true
+outputs:
+  latest_version:
+    description: 'Latest available version tag in repo'
+    value: ${{ steps.get_latest_version_tag.outputs.tag }}
+  full_version:
+    description: 'v1.2.3-name-branch-shortsha'
+    value: ${{ steps.parser.outputs.full_version }}
+  short_version:
+    description: 'v1.2.3-name-branch'
+    value: ${{ steps.parser.outputs.short_version }}
+  tag_version:
+    description: 'v1.2.3-name'
+    value: ${{ steps.parser.outputs.tag_version }}
+  next_full_version:
+    description: 'v1.3.0-name-branch-shortsha'
+    value: ${{ steps.parser.outputs.next_full_version }}
+  next_short_version:
+    description: 'v1.3.0-name-branch'
+    value: ${{ steps.parser.outputs.next_short_version }}
+  next_tag_version:
+    description: 'v1.3.0-name'
+    value: ${{ steps.parser.outputs.next_tag_version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Get latest version tag
+      if: ${{ !inputs.tag }}
+      id: get_latest_version_tag
+      run: |
+        git checkout --detach
+        git fetch origin main:main --tags
+        tag=$(git describe --tags --match='v[0-9]*' --long main)
+        echo "tag=$tag" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Parse version tag
+      id: parser
+      run: |
+        #!/bin/bash
+        TAG=${{ inputs.tag || steps.get_latest_version_tag.outputs.tag }}
+
+        # Extract version components (expecting v1.2.3-name-0-commitsha)
+        if [[ $TAG =~ ^v([0-9]+)\.([0-9]+).([0-9]+)-(.+)-([0-9]+)-(.+)$ ]]; then
+          MAJOR="${BASH_REMATCH[1]}"
+          MINOR="${BASH_REMATCH[2]}"
+          BUILD="${BASH_REMATCH[3]}"
+          NAME="${BASH_REMATCH[4]}"
+
+          echo "Version parsed match:"
+          echo "[Major]: $MAJOR"
+          echo "[Minor]: $MINOR"
+          echo "[Build]: $BUILD"
+          echo "[Name]: $NAME"
+        else
+          echo "Failing! Tag does not match expected format: $TAG"
+          exit 1
+        fi
+
+        # Determine the branch name
+        if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+          BRANCH_NAME="$GITHUB_HEAD_REF"
+        else
+          BRANCH_NAME=$(echo "$GITHUB_REF" | cut -d'/' -f 3)
+        fi
+
+        # Get the shortened commit hash
+        # Use the commit SHA from input or fallback to GITHUB_SHA
+        if [ -n "${{ inputs.commit_sha }}" ]; then
+          SHORT_COMMIT_HASH=$(echo "${{ inputs.commit_sha }}" | cut -c1-7)
+        else
+          SHORT_COMMIT_HASH=$(echo "$GITHUB_SHA" | cut -c1-7)
+        fi
+
+        # Full version with commit hash
+        FULLVER="v${MAJOR}.${MINOR}.$((BUILD))-${NAME}-${BRANCH_NAME}-${SHORT_COMMIT_HASH}"
+        echo "Full version: $FULLVER"
+        echo "full_version=$FULLVER" >> "$GITHUB_OUTPUT"
+
+        # Short version without commit hash
+        SHORTVER="v${MAJOR}.${MINOR}.$((BUILD))-${NAME}-${BRANCH_NAME}"
+        echo "Short version: $SHORTVER"
+        echo "short_version=$SHORTVER" >> "$GITHUB_OUTPUT"
+
+        # Tag version
+        TAGVER="v${MAJOR}.${MINOR}.$((BUILD))-${NAME}"
+        echo "Tag version: $TAGVER"
+        echo "tag_version=$TAGVER" >> "$GITHUB_OUTPUT"
+
+        # Next full version with commit hash
+        NEXT_FULLVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}-${SHORT_COMMIT_HASH}"
+        echo "Next full version: $NEXT_FULLVER"
+        echo "next_full_version=$NEXT_FULLVER" >> "$GITHUB_OUTPUT"
+
+        # Next short version without commit hash
+        NEXT_SHORTVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}"
+        echo "Next short version: $NEXT_SHORTVER"
+        echo "next_short_version=$NEXT_SHORTVER" >> "$GITHUB_OUTPUT"
+        
+        # Next tag version without branch or commit hash
+        NEXT_TAGVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}"
+        echo "Next tag version: $NEXT_TAGVER"
+        echo "next_tag_version=$NEXT_TAGVER" >> "$GITHUB_OUTPUT"
+      shell: bash

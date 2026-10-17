@@ -1,0 +1,61 @@
+name: Unity Cloud Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  get-info:
+    name: Get Info
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.get_version.outputs.next_short_version }}
+      tag_version: ${{ steps.get_version.outputs.next_tag_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        uses: ./.github/actions/version
+
+      - name: Write job summary
+        run: |
+          echo "## Release Build" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.get_version.outputs.next_short_version }}\` | **Tag:** \`${{ steps.get_version.outputs.next_tag_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ If some artefacts are missing please take a look at previous attempts" >> $GITHUB_STEP_SUMMARY
+
+  # Enable cache reuse for release builds: cache_strategy=library turns on the remote
+  # library/shader cache and clean_build=false lets the build consume it. The shared,
+  # dev-isolated release/hotfix/main cache pool (cold genesis) is wired in build.py's
+  # clone_current_target.
+  build:
+    name: Build Unity Cloud
+    needs: get-info
+    # Union of the called workflow's job-level grants — a caller caps its
+    # callee, so this keeps the call working if the repo default tightens.
+    permissions:
+      contents: read
+      statuses: write
+      actions: read
+      pull-requests: write
+    strategy:
+      matrix:
+        install_source: ['launcher', 'epic']
+    uses: ./.github/workflows/build-unitycloud.yml
+    with:
+      profile: none
+      clean_build: false
+      cache_strategy: library
+      version: ${{ needs.get-info.outputs.version }}
+      sentry_enabled: true
+      is_release_build: true
+      install_source: ${{ matrix.install_source }}
+      tag_version: ${{ needs.get-info.outputs.tag_version }}
+    secrets: inherit

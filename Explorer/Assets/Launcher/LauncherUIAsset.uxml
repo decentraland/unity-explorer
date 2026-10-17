@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Launcher/LauncherStyle.uss?fileID=7433441132597879392&amp;guid=fdd6393c00b383a40b11ec9735be36f7&amp;type=3#LauncherStyle" />
+    <ui:VisualElement name="Root" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: column; flex-wrap: wrap-reverse; width: 40%; flex-basis: auto; opacity: 1; flex-shrink: 1; align-self: flex-end;">
+        <ui:VisualElement style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); flex-direction: row; margin-top: 6px;">
+            <ui:DropdownField label="Scenes" index="-1" name="ScenesDropdown" style="flex-basis: auto; flex-grow: 1; flex-direction: row; width: auto; margin-top: 2px;" />
+            <ui:Button text="Stop" display-tooltip-when-elided="true" name="StopButton" />
+        </ui:VisualElement>
+        <ui:IntegerField label="Scene Update FPS" value="30" name="FPS" style="align-self: flex-start;" />
+    </ui:VisualElement>
+</ui:UXML>

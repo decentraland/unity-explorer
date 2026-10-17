@@ -1,0 +1,6 @@
+{
+  "debugLogMatrix": [
+    { "category": "VOICE_CHAT", "severity": "Log" },
+    { "category": "COMMUNITY_VOICE_CHAT", "severity": "Log" }
+  ]
+}
