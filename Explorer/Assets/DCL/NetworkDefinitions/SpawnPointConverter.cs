@@ -28,9 +28,13 @@ namespace DCL.Ipfs
         {
             var token = JToken.Load(reader);
 
-            return token.Type == JTokenType.Array
-                ? new SceneMetadata.SpawnPoint.Coordinate { MultiValue = token.ToObject<float[]>() }
-                : new SceneMetadata.SpawnPoint.Coordinate { SingleValue = token.ToObject<float>() };
+            // Scene metadata is creator-authored: an explicit null is treated the same as an absent coordinate.
+            return token.Type switch
+                   {
+                       JTokenType.Null => default,
+                       JTokenType.Array => new SceneMetadata.SpawnPoint.Coordinate { MultiValue = token.ToObject<float[]>() },
+                       _ => new SceneMetadata.SpawnPoint.Coordinate { SingleValue = token.ToObject<float>() },
+                   };
         }
     }
 }
