@@ -97,10 +97,19 @@ namespace DCL.AvatarRendering.Emotes.Load
             bool success = GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
 
             if (success)
+            {
+                RemoveEmotesWithFailedDTO(resolvedEmotesTmp.List);
                 World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+            }
             else
                 resolvedEmotesTmp.Dispose();
         }
+
+        /// <summary>
+        ///     An emote whose DTO request failed counts as resolved but has no DTO, so it is not part of the result.
+        /// </summary>
+        internal static void RemoveEmotesWithFailedDTO(List<IEmote> emotes) =>
+            emotes.RemoveAll(static emote => !emote.Model.Succeeded);
 
         private void ResolveIntentionWithSuccessfulEmotes(Entity entity,
             GetEmotesByPointersIntention intention,
