@@ -425,17 +425,20 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
-
-            if (ownRead.IsCancelled)
-                throw new OperationCanceledException(ct);
-
-            if (!ownRead.IsOk(out Profile? myProfile))
-                throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
-
             switch (response.ResponseCase)
             {
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
+                    if (!RequiresOwnProfile(response))
+                        break;
+
+                    ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+                    if (ownRead.IsCancelled)
+                        throw new OperationCanceledException(ct);
+
+                    if (!ownRead.IsOk(out Profile? myProfile))
+                        throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
+
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
                         if (rr.Friend == null)
@@ -493,17 +496,20 @@ namespace DCL.Friends
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
-
-            if (ownRead.IsCancelled)
-                throw new OperationCanceledException(ct);
-
-            if (!ownRead.IsOk(out Profile? myProfile))
-                throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
-
             switch (response.ResponseCase)
             {
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
+                    if (!RequiresOwnProfile(response))
+                        break;
+
+                    ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+                    if (ownRead.IsCancelled)
+                        throw new OperationCanceledException(ct);
+
+                    if (!ownRead.IsOk(out Profile? myProfile))
+                        throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
+
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
                         if (rr.Friend == null)
@@ -696,6 +702,13 @@ namespace DCL.Friends
 
             return accepted;
         }
+
+        /// <summary>
+        ///     The own profile only fills the self side of each listed request, so a page without requests is listed without it:
+        ///     an account with no deployed profile yet (onboarding) has nothing to resolve it from.
+        /// </summary>
+        internal static bool RequiresOwnProfile(PaginatedFriendshipRequestsResponse response) =>
+            response.ResponseCase == PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests && response.Requests.Requests.Count > 0;
 
         internal static UpsertFriendshipResponse.Types.Accepted? ToAccepted(UpsertFriendshipResponse response) =>
             response.ResponseCase switch
