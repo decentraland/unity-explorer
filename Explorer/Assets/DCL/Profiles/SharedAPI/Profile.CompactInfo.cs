@@ -81,7 +81,7 @@ namespace DCL.Profiles
                 this.name = name;
                 UpdateUserId(userId);
                 HasClaimedName = hasClaimedName;
-                FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? default(URLAddress) : URLAddress.FromString(faceUrl);
+                FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? URLAddress.EMPTY : URLAddress.FromString(faceUrl);
                 this.claimedNameColor = claimedNameColor;
             }
 
