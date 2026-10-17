@@ -1,0 +1,340 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-10-10T12:02:35Z",
+ "collectedAt": "2026-10-17T12:02:21Z",
+ "groups": [
+  [
+   10376,
+   10467
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10423,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10442,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10449,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10453,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10459,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10470,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10489,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10424,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10427,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10422,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10468,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10454,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10465,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10367,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10456,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10439,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10444,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10480,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10445,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 9445,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 8794,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10376,
+   "status": "skipped",
+   "commit": null,
+   "note": "root cause confirmed in 2026-w41 (SelfProfileModel.Read refetches whenever knowledge is Failed); a back-off needs a time source threaded into the reducer plus Sentry throttling in two layers: design change, not a minimal fix"
+  },
+  {
+   "number": 10467,
+   "status": "skipped",
+   "commit": null,
+   "note": "same failure mode as #10376 (own-profile catalyst fetch timeout retried and reported on every read); design change, not a minimal fix"
+  },
+  {
+   "number": 10436,
+   "status": "skipped",
+   "commit": null,
+   "note": "UI animation polish between onboarding screens; needs design direction and in-editor visual iteration, no defect to fix in code"
+  },
+  {
+   "number": 10437,
+   "status": "skipped",
+   "commit": null,
+   "note": "Mac-only avatar fade during a UI transition; needs in-editor visual verification on macOS, no repro here"
+  },
+  {
+   "number": 10431,
+   "status": "skipped",
+   "commit": null,
+   "note": "product call: a single stored home parcel cannot satisfy both the tag position and the toggle on multi-parcel scenes (follow-up to the reverted #10405 fix); needs a decision on what home means"
+  },
+  {
+   "number": 10416,
+   "status": "skipped",
+   "commit": null,
+   "note": "Genesis Plaza clock tower is scene content (content-team); the clocks are drawn by the scene's own code, not the Explorer"
+  },
+  {
+   "number": 10430,
+   "status": "skipped",
+   "commit": null,
+   "note": "teleport failed on a request timeout to the asset-bundle-registry gateway; network/backend condition, not a client defect"
+  },
+  {
+   "number": 10435,
+   "status": "skipped",
+   "commit": null,
+   "note": "NullReferenceException inside System.Net.Http SendAsync; BCL internal, no explorer frames (as #10378 in 2026-w41)"
+  },
+  {
+   "number": 10434,
+   "status": "skipped",
+   "commit": null,
+   "note": "account-specific Connection Error at 96%; other accounts work on the same machine, needs the affected account and logs to reproduce"
+  },
+  {
+   "number": 10441,
+   "status": "skipped",
+   "commit": null,
+   "note": "tech debt (collapse the UUAV AVProCompat facade); refactor, out of sweep scope"
+  },
+  {
+   "number": 10452,
+   "status": "skipped",
+   "commit": null,
+   "note": "Sentry stub for a bug report log attachment, not a defect (duplicate of #9644)"
+  },
+  {
+   "number": 10466,
+   "status": "skipped",
+   "commit": null,
+   "note": "network: cannot connect to destination host (duplicate of #7767); connectivity condition, not a client defect"
+  },
+  {
+   "number": 10469,
+   "status": "skipped",
+   "commit": null,
+   "note": "Thirdweb bundler request failing with status 0 (duplicate of #7713); network/third-party service failure"
+  },
+  {
+   "number": 10471,
+   "status": "skipped",
+   "commit": null,
+   "note": "Places API returns HTTP 500 (TypeError in the places server, World/utils.js); backend defect"
+  },
+  {
+   "number": 10473,
+   "status": "skipped",
+   "commit": null,
+   "note": "countdown digits turning gray in specific scenes; rendering issue that needs the scenes and an in-world repro, no client root cause identified from the report"
+  },
+  {
+   "number": 10475,
+   "status": "skipped",
+   "commit": null,
+   "note": "plaza floor blinking white; rendering issue that needs in-world repro and GPU profiling, no root cause identifiable from the report"
+  },
+  {
+   "number": 10476,
+   "status": "skipped",
+   "commit": null,
+   "note": "performance tech debt (CRDT bridge re-sends unchanged state); optimisation, out of sweep scope"
+  },
+  {
+   "number": 10484,
+   "status": "skipped",
+   "commit": null,
+   "note": "mesh with NaN/infinite vertices from a content export; content error, not a client defect"
+  },
+  {
+   "number": 10485,
+   "status": "skipped",
+   "commit": null,
+   "note": "feature request (satellite map north strip and world maps); out of sweep scope"
+  },
+  {
+   "number": 6894,
+   "status": "skipped",
+   "commit": null,
+   "note": "Genesis Plaza theater Focus Mode hint is scene content (content-team), not Explorer code"
+  },
+  {
+   "number": 6788,
+   "status": "skipped",
+   "commit": null,
+   "note": "Gaming Quest countdown banner layout belongs to the scene content (content-team), not Explorer code"
+  },
+  {
+   "number": 9581,
+   "status": "skipped",
+   "commit": null,
+   "note": "Aisha NPC bubble and dialogue text are scene content (content-team), not Explorer code"
+  },
+  {
+   "number": 9010,
+   "status": "skipped",
+   "commit": null,
+   "note": "Love Bomb emote props missing; needs the emote assets and an in-world repro to tell asset from client, no root cause from the report"
+  },
+  {
+   "number": 9498,
+   "status": "skipped",
+   "commit": null,
+   "note": "OBS stream switching audio desync in the theater; needs OBS plus admin-tool setup to reproduce, root cause spans streaming and media playback"
+  },
+  {
+   "number": 9515,
+   "status": "skipped",
+   "commit": null,
+   "note": "vending machine UI belongs to the scene, not Explorer code"
+  },
+  {
+   "number": 9440,
+   "status": "skipped",
+   "commit": null,
+   "note": "Genesis Plaza memory growth on macOS; needs profiling sessions, no single root cause identifiable in a sweep"
+  },
+  {
+   "number": 9337,
+   "status": "skipped",
+   "commit": null,
+   "note": "avatars disappearing after World round trip; spans realm switching and avatar loading, too complex for a sweep fix"
+  },
+  {
+   "number": 9308,
+   "status": "skipped",
+   "commit": null,
+   "note": "chat overlapping the theatre screen is a layout/design decision, not a defect with a code root cause"
+  },
+  {
+   "number": 9551,
+   "status": "skipped",
+   "commit": null,
+   "note": "feature request (in-world feedback for broken scenes); out of sweep scope"
+  },
+  {
+   "number": 9751,
+   "status": "skipped",
+   "commit": null,
+   "note": "feature request (offline DMs, duplicate of #4719); out of sweep scope"
+  },
+  {
+   "number": 10402,
+   "status": "skipped",
+   "commit": null,
+   "note": "UI Toolkit internal NRE in GetTextSettingsFrom; Unity engine internal, no explorer frames (as in 2026-w41)"
+  },
+  {
+   "number": 10388,
+   "status": "skipped",
+   "commit": null,
+   "note": "UI Toolkit internal MeshGenerationNode invalid state; Unity engine internal, no explorer frames (as in 2026-w41)"
+  },
+  {
+   "number": 10377,
+   "status": "skipped",
+   "commit": null,
+   "note": "remote party closed the WebSocket without handshake (duplicate of #8797); network condition, not a client defect (as in 2026-w41)"
+  }
+ ]
+}
