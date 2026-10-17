@@ -4,9 +4,15 @@ namespace Utils
 {
     public static class GameObjectUtils
     {
+        // The bounding sphere radius an orthographic subject is scaled to, so every item fills the
+        // same frame.
+        private const float ORTHOGRAPHIC_SUBJECT_RADIUS = 1f;
+
         public static void CenterAndFit(Transform root, Camera mainCamera, float wearablePadding = 0.15f)
         {
             if (!TryGetCombinedBounds(root, out var combined)) return;
+
+            var halfDiagonal = 0.5f * combined.size.magnitude;
 
             // Make it a cube
             var maxSize = Mathf.Max(combined.size.x, Mathf.Max(combined.size.y, combined.size.z));
@@ -22,11 +28,9 @@ namespace Utils
             float scaleFactor;
             if (mainCamera.orthographic)
             {
-                // World-window dimensions for orthographic camera
-                var orthoHeight = mainCamera.orthographicSize * 2f;
-                var orthoWidth = orthoHeight * mainCamera.aspect;
-                var orthoMin = Mathf.Min(orthoWidth, orthoHeight);
-                scaleFactor = orthoMin / size.x;
+                // A fixed sphere rather than the camera window: the Cinemachine lens owns the
+                // orthographic size and fits it to the subject afterwards.
+                scaleFactor = ORTHOGRAPHIC_SUBJECT_RADIUS / halfDiagonal;
             }
             else
             {

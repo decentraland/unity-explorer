@@ -1,13 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Web;
+using Data;
+using JetBrains.Annotations;
 using Services;
 using UnityEngine;
 using Utils;
 
 public class PreviewConfiguration
 {
+    /// <summary>
+    /// The <see cref="Emote"/> value that plays the rig's own idle clip.
+    /// </summary>
+    public const string DEFAULT_EMOTE = "idle";
+
+    /// <summary>
+    /// The <see cref="Emote"/> value that plays none.
+    /// </summary>
+    public const string NO_EMOTE = "none";
+
+    // Babylon's default wheel precision: one unit of wheel delta per 100 of it.
+    public const float DEFAULT_WHEEL_PRECISION = 100f;
+
     public static PreviewConfiguration Instance { get; private set; } = new();
 
     private PreviewConfiguration()
@@ -66,9 +82,25 @@ public class PreviewConfiguration
 
     /// <summary>
     /// The emote that the avatar will play. Default value is idle, other possible values are:
-    /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode
+    /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode.
+    /// <see cref="NO_EMOTE"/> plays none, so the avatar stands in the rig's idle unless a requested
+    /// item is an emote; <see cref="DisableDefaultEmotes"/> reads as that whatever was named.
     /// </summary>
-    public string Emote { get; set; } = "idle";
+    public string Emote
+    {
+        get => DisableDefaultEmotes ? NO_EMOTE : _emote;
+        set => _emote = value;
+    }
+
+    private string _emote = DEFAULT_EMOTE;
+
+    /// <summary>
+    /// The other spelling of "no emote", kept as its own flag so the parameter order never matters.
+    /// </summary>
+    public bool DisableDefaultEmotes { get; private set; }
+
+    public void SetDisableDefaultEmotes(string value) =>
+        DisableDefaultEmotes = ParseToggle(value, "disableDefaultEmotes", DisableDefaultEmotes);
 
     /// <summary>
     /// The base64 encoded GLB to load.
@@ -102,6 +134,55 @@ public class PreviewConfiguration
     public void AddURN(string urn)
     {
         Urns.Add(URNUtils.SanitizeURN(urn));
+    }
+
+    /// <summary>
+    /// URLs of wearable or emote definitions the page hosts, fetched and treated as <see cref="Base64"/>.
+    /// </summary>
+    public IReadOnlyList<string> Urls => _urls;
+
+    private readonly List<string> _urls = new();
+
+    public void AddUrl(string url) => _urls.Add(url);
+
+    public void ClearUrls() => _urls.Clear();
+
+    /// <summary>
+    /// Only the requested items are worn: no profile wearables and no base ones for the empty
+    /// categories, as the Babylon preview's option of the same name.
+    /// </summary>
+    public bool DisableDefaultWearables { get; private set; }
+
+    public void SetDisableDefaultWearables(string value) =>
+        DisableDefaultWearables = ParseToggle(value, "disableDefaultWearables", DisableDefaultWearables);
+
+    /// <summary>
+    /// Hosts for the Catalyst and the Marketplace API, replacing the ones <c>env</c> picks; null
+    /// keeps those.
+    /// </summary>
+    public string PeerUrl { get; private set; }
+
+    public string MarketplaceServerUrl { get; private set; }
+
+    public void SetPeerUrl(string value) => PeerUrl = NormalizeHost(value);
+
+    public void SetMarketplaceServerUrl(string value) => MarketplaceServerUrl = NormalizeHost(value);
+
+    // An empty value goes back to the default host; a trailing slash would double up in the paths.
+    // Only a web address that paths can be appended to is a host, a prefix path included but no
+    // query or fragment: anything else keeps the default, since every request is HTTP.
+    private static string NormalizeHost(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var host = value.Trim().TrimEnd('/');
+
+        if (Uri.TryCreate(host, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+            && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment))
+            return host;
+
+        Debug.LogWarning($"Unknown host [{value}], keeping the default");
+        return null;
     }
 
     /// <summary>
@@ -141,6 +222,8 @@ public class PreviewConfiguration
     public bool Glow { get; private set; } = true;
 
     public void SetGlow(string value) => Glow = ParseToggle(value, "glow", Glow);
+
+    public void SetHideControls(string value) => HideControls = ParseToggle(value, "hideControls", HideControls);
 
     // Accepts both the documented `off` spelling and the bool spelling the other parameters use. An
     // unrecognised value keeps `current` rather than throwing: bool.Parse would abort RecreateFrom
@@ -262,6 +345,221 @@ public class PreviewConfiguration
     public bool DisableSwitcher { get; set; }
 
     /// <summary>
+    /// Hides every in-canvas control (switcher, emote and sound buttons). Opt-in, for embedders that
+    /// draw their own controls around the canvas or capture it for thumbnails. The loader is separate:
+    /// see <see cref="DisableLoader"/>.
+    /// </summary>
+    public bool HideControls { get; private set; }
+
+    /// <summary>
+    /// The camera options of the Babylon preview, kept by name so an app frames both renderers with
+    /// the same values. <see cref="ZoomLevel"/> is 0 to 100 (closest view), <see cref="WheelZoom"/>
+    /// how far the wheel pulls back from it (1 = not at all), <see cref="WheelStart"/> where the
+    /// view begins in that range (100 = closest). Unset zoom and wheel options leave the renderer's
+    /// own wheel range around the fitted view.
+    /// </summary>
+    public float? ZoomLevel { get; private set; }
+
+    public float? WheelZoom { get; private set; }
+
+    public float WheelStart { get; private set; } = 50f;
+
+    /// <summary>
+    /// Static freezes the view: no rotation, zoom or pan, no auto-rotate, and the emote held on its
+    /// first frame.
+    /// </summary>
+    public PreviewCameraKind Camera { get; private set; } = PreviewCameraKind.Interactive;
+
+    /// <summary>
+    /// Per-axis input locks, Babylon's names: alpha is the turntable, beta the tilt, radius the zoom.
+    /// </summary>
+    public bool LockAlpha { get; private set; }
+
+    public bool LockBeta { get; private set; }
+
+    public bool LockRadius { get; private set; }
+
+    /// <summary>
+    /// Whether right-drag pans the view. On by default, as the wrapper defaults it.
+    /// </summary>
+    public bool Panning { get; private set; } = true;
+
+    public bool DisableAutoRotate { get; private set; }
+
+    /// <summary>
+    /// Idle turntable speed in radians per second, Babylon's unit and default.
+    /// </summary>
+    public float AutoRotateSpeed { get; private set; } = 0.2f;
+
+    /// <summary>
+    /// Where the view starts, in metres across and up the screen: the thumbnail editor's slider drives
+    /// the vertical one. Replaces any right-drag pan.
+    /// </summary>
+    public Vector2 Offset { get; private set; }
+
+    /// <summary>
+    /// Draws the centred half of the canvas a square thumbnail keeps, for the Builder's thumbnail editor.
+    /// </summary>
+    public bool ShowThumbnailBoundaries { get; private set; }
+
+    /// <summary>
+    /// Draws the space an avatar's items have to fit in, a 2 m wide, 3 m tall cylinder on a grid
+    /// floor, as the Babylon preview does for the Builder's curators. The same as
+    /// <see cref="ShowAnimationReference"/>, under Babylon's name.
+    /// </summary>
+    public bool ShowSceneBoundaries { get; private set; }
+
+    /// <summary>
+    /// Depth of the offset, Babylon's <c>offsetZ</c>: positive moves the view back from the subject.
+    /// </summary>
+    public float OffsetDepth { get; private set; }
+
+    /// <summary>
+    /// Where the Babylon preview would put its camera, in its world: each axis left unset keeps that
+    /// preview's default for the view, so only what the page changed turns or pulls back the view.
+    /// </summary>
+    public float? CameraX { get; private set; }
+
+    public float? CameraY { get; private set; }
+
+    public float? CameraZ { get; private set; }
+
+    /// <summary>
+    /// How far a wheel notch zooms, Babylon's unit: 100 is the default, a larger value zooms less.
+    /// </summary>
+    public float WheelPrecision { get; private set; } = DEFAULT_WHEEL_PRECISION;
+
+    /// <summary>
+    /// Extra zoom on top of every other zoom option: 2 shows the subject twice as large.
+    /// </summary>
+    public float ZoomScale { get; private set; } = 1f;
+
+    /// <summary>
+    /// Keeps the subject where it stands instead of bringing its middle onto the view axis, so the
+    /// offset and camera options act from the subject's own origin, as they do in the Babylon preview.
+    /// </summary>
+    public bool DisableAutoCenter { get; private set; }
+
+    /// <summary>
+    /// The social emote animation to play: which clip each armature plays, its loop and its audio.
+    /// Unset, a social emote plays one of its outcomes at random, as the Babylon preview does.
+    /// </summary>
+    [CanBeNull] public SocialEmoteAnimation SocialEmote { get; private set; }
+
+    public void SetZoomLevel(string value) => ZoomLevel = ParseOptionalNumber(value, "zoom", ZoomLevel);
+
+    public void SetWheelZoom(string value) => WheelZoom = ParseOptionalNumber(value, "wheelZoom", WheelZoom);
+
+    public void SetWheelStart(string value) => WheelStart = ParseNumber(value, "wheelStart", WheelStart);
+
+    // An unknown value keeps the current camera, for the same reason ParseToggle does.
+    public void SetCamera(string value)
+    {
+        var trimmed = value.Trim();
+
+        if (string.Equals(trimmed, "static", StringComparison.OrdinalIgnoreCase))
+            Camera = PreviewCameraKind.Static;
+        else if (string.Equals(trimmed, "interactive", StringComparison.OrdinalIgnoreCase))
+            Camera = PreviewCameraKind.Interactive;
+        else
+            Debug.LogWarning($"Unknown camera value [{value}], keeping camera {Camera}");
+    }
+
+    public void SetLockAlpha(string value) => LockAlpha = ParseToggle(value, "lockAlpha", LockAlpha);
+
+    public void SetLockBeta(string value) => LockBeta = ParseToggle(value, "lockBeta", LockBeta);
+
+    public void SetLockRadius(string value) => LockRadius = ParseToggle(value, "lockRadius", LockRadius);
+
+    public void SetPanning(string value) => Panning = ParseToggle(value, "panning", Panning);
+
+    public void SetDisableAutoRotate(string value) =>
+        DisableAutoRotate = ParseToggle(value, "disableAutoRotate", DisableAutoRotate);
+
+    public void SetAutoRotateSpeed(string value) =>
+        AutoRotateSpeed = ParseNumber(value, "autoRotateSpeed", AutoRotateSpeed);
+
+    public void SetOffsetX(string value) => Offset = new Vector2(ParseNumber(value, "offsetX", Offset.x), Offset.y);
+
+    public void SetOffsetY(string value) => Offset = new Vector2(Offset.x, ParseNumber(value, "offsetY", Offset.y));
+
+    public void SetOffset(Vector2 offset) => Offset = offset;
+
+    public void SetShowThumbnailBoundaries(string value) =>
+        ShowThumbnailBoundaries = ParseToggle(value, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+
+    public void SetShowSceneBoundaries(string value) =>
+        ShowSceneBoundaries = ParseToggle(value, "showSceneBoundaries", ShowSceneBoundaries);
+
+    public void SetOffsetZ(string value) => OffsetDepth = ParseNumber(value, "offsetZ", OffsetDepth);
+
+    public void SetOffsetDepth(float depth) => OffsetDepth = depth;
+
+    public void SetCameraX(string value) => CameraX = ParseOptionalNumber(value, "cameraX", CameraX);
+
+    public void SetCameraY(string value) => CameraY = ParseOptionalNumber(value, "cameraY", CameraY);
+
+    public void SetCameraZ(string value) => CameraZ = ParseOptionalNumber(value, "cameraZ", CameraZ);
+
+    // Babylon floors it at 1.
+    public void SetWheelPrecision(string value) =>
+        WheelPrecision = Mathf.Max(ParseNumber(value, "wheelPrecision", WheelPrecision), 1f);
+
+    // Babylon takes anything but a positive number as 1.
+    public void SetZoomScale(string value)
+    {
+        var scale = ParseNumber(value, "zoomScale", ZoomScale);
+        ZoomScale = scale > 0f ? scale : 1f;
+    }
+
+    public void SetDisableAutoCenter(string value) =>
+        DisableAutoCenter = ParseToggle(value, "disableAutoCenter", DisableAutoCenter);
+
+    // An empty value goes back to a random outcome; an invalid one keeps the current animation.
+    public void SetSocialEmote(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            SocialEmote = null;
+            return;
+        }
+
+        var animation = SocialEmoteAnimation.FromJson(value);
+
+        if (animation != null)
+            SocialEmote = animation;
+        else
+            Debug.LogWarning($"Unknown socialEmote value [{value}], keeping the current one");
+    }
+
+    /// <summary>
+    /// Parses a finite number the way the page wrote it, with a dot decimal separator whatever the
+    /// locale. NaN and the infinities are rejected: a clamp passes them through and they would stick
+    /// in a zoom or a pan.
+    /// </summary>
+    public static bool TryParseNumber(string value, out float number) =>
+        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number) && float.IsFinite(number);
+
+    // An unparsable value keeps `current`, for the same reason ParseToggle does.
+    private static float ParseNumber(string value, string name, float current)
+    {
+        if (TryParseNumber(value, out var number)) return number;
+
+        Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {current}");
+        return current;
+    }
+
+    // An empty value unsets the option, so a page can go back to the renderer's own range.
+    private static float? ParseOptionalNumber(string value, string name, float? current)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (TryParseNumber(value, out var number)) return number;
+
+        Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {current}");
+        return current;
+    }
+
+    /// <summary>
     /// If we should instruct the browser to pre-fetch certain files. On by default.
     /// </summary>
     public bool UseBrowserPreload { get; set; } = true;
@@ -297,7 +595,9 @@ public class PreviewConfiguration
     /// <summary>
     /// If true, facial features (eyes, eyebrows, mouth) will be hidden on the avatar.
     /// </summary>
-    public bool DisableFace { get; set; }
+    public bool DisableFace { get; private set; }
+
+    public void SetDisableFace(string value) => DisableFace = ParseToggle(value, "disableFace", DisableFace);
 
     public static void RecreateFrom(string url)
     {
@@ -311,7 +611,8 @@ public class PreviewConfiguration
 
         foreach (var parameter in split)
         {
-            var keyValueSplit = parameter.Split('=');
+            // Two parts at most: a URL value may carry its own query string.
+            var keyValueSplit = parameter.Split('=', 2);
             var key = HttpUtility.UrlDecode(keyValueSplit[0]).Trim();
             var value = (keyValueSplit.Length > 1 ? HttpUtility.UrlDecode(keyValueSplit[1]) : string.Empty).Trim();
 
@@ -381,6 +682,75 @@ public class PreviewConfiguration
                 case "disableSwitcher":
                     Instance.DisableSwitcher = bool.Parse(value);
                     break;
+                case "hideControls":
+                    Instance.SetHideControls(value);
+                    break;
+                case "zoom":
+                    Instance.SetZoomLevel(value);
+                    break;
+                case "wheelZoom":
+                    Instance.SetWheelZoom(value);
+                    break;
+                case "wheelStart":
+                    Instance.SetWheelStart(value);
+                    break;
+                case "camera":
+                    Instance.SetCamera(value);
+                    break;
+                case "lockAlpha":
+                    Instance.SetLockAlpha(value);
+                    break;
+                case "lockBeta":
+                    Instance.SetLockBeta(value);
+                    break;
+                case "lockRadius":
+                    Instance.SetLockRadius(value);
+                    break;
+                case "panning":
+                    Instance.SetPanning(value);
+                    break;
+                case "disableAutoRotate":
+                    Instance.SetDisableAutoRotate(value);
+                    break;
+                case "autoRotateSpeed":
+                    Instance.SetAutoRotateSpeed(value);
+                    break;
+                case "offsetX":
+                    Instance.SetOffsetX(value);
+                    break;
+                case "offsetY":
+                    Instance.SetOffsetY(value);
+                    break;
+                case "showThumbnailBoundaries":
+                    Instance.SetShowThumbnailBoundaries(value);
+                    break;
+                case "showSceneBoundaries":
+                    Instance.SetShowSceneBoundaries(value);
+                    break;
+                case "offsetZ":
+                    Instance.SetOffsetZ(value);
+                    break;
+                case "cameraX":
+                    Instance.SetCameraX(value);
+                    break;
+                case "cameraY":
+                    Instance.SetCameraY(value);
+                    break;
+                case "cameraZ":
+                    Instance.SetCameraZ(value);
+                    break;
+                case "wheelPrecision":
+                    Instance.SetWheelPrecision(value);
+                    break;
+                case "zoomScale":
+                    Instance.SetZoomScale(value);
+                    break;
+                case "disableAutoCenter":
+                    Instance.SetDisableAutoCenter(value);
+                    break;
+                case "socialEmote":
+                    Instance.SetSocialEmote(value);
+                    break;
                 case "useBrowserPreload":
                     Instance.UseBrowserPreload = bool.Parse(value);
                     break;
@@ -400,7 +770,22 @@ public class PreviewConfiguration
                     Instance.UninterruptedDeferAgent = bool.Parse(value);
                     break;
                 case "disableFace":
-                    Instance.DisableFace = bool.Parse(value);
+                    Instance.SetDisableFace(value);
+                    break;
+                case "url":
+                    Instance.AddUrl(value);
+                    break;
+                case "disableDefaultWearables":
+                    Instance.SetDisableDefaultWearables(value);
+                    break;
+                case "disableDefaultEmotes":
+                    Instance.SetDisableDefaultEmotes(value);
+                    break;
+                case "peerUrl":
+                    Instance.SetPeerUrl(value);
+                    break;
+                case "marketplaceServerUrl":
+                    Instance.SetMarketplaceServerUrl(value);
                     break;
                 default:
                     Debug.LogWarning($"Unknown parameter in URL: {key}");
@@ -409,50 +794,89 @@ public class PreviewConfiguration
         }
     }
 
+    /// <summary>
+    /// The configuration as a query string <see cref="RecreateFrom"/> reads back: every value is
+    /// encoded, so a URL with its own query, a base64 payload or a name with an ampersand survives.
+    /// </summary>
     public override string ToString()
     {
-        var sb = new StringBuilder("?");
+        var sb = new StringBuilder();
 
-        sb.AppendFormat("mode={0}", Mode.ToString().ToLowerInvariant());
-        if (Type.HasValue)
-            sb.AppendFormat("&type={0}", Type.Value.ToString().ToLowerInvariant());
-        sb.AppendFormat("&profile={0}", Profile);
-        sb.AppendFormat("&emote={0}", Emote);
-        foreach (var urn in Urns)
-            sb.AppendFormat("&urn={0}", urn);
-        sb.AppendFormat("&background={0}", ColorUtility.ToHtmlStringRGBA(Background));
-        sb.AppendFormat("&shadow={0}", Shadow ? "on" : "off");
-        sb.AppendFormat("&glow={0}", Glow ? "on" : "off");
-        if (SkinColor.HasValue)
-            sb.AppendFormat("&skinColor={0}", ColorUtility.ToHtmlStringRGB(SkinColor.Value));
-        if (HairColor.HasValue)
-            sb.AppendFormat("&hairColor={0}", ColorUtility.ToHtmlStringRGB(HairColor.Value));
-        if (EyeColor.HasValue)
-            sb.AppendFormat("&eyeColor={0}", ColorUtility.ToHtmlStringRGB(EyeColor.Value));
-        if (!string.IsNullOrEmpty(BodyShape))
-            sb.AppendFormat("&bodyShape={0}", BodyShape);
-        sb.AppendFormat("&showAnimationReference={0}", ShowAnimationReference);
-        sb.AppendFormat("&projection={0}", Projection);
-        foreach (var bytes in Base64)
-            sb.AppendFormat("&base64={0}", Convert.ToBase64String(bytes));
-        if (!string.IsNullOrEmpty(Contract))
-            sb.AppendFormat("&contract={0}", Contract);
-        if (!string.IsNullOrEmpty(ItemID))
-            sb.AppendFormat("&item={0}", ItemID);
-        if (!string.IsNullOrEmpty(TokenID))
-            sb.AppendFormat("&token={0}", TokenID);
-        sb.AppendFormat("&env={0}", APIService.Environment == "zone" ? "dev" : "prod");
-        sb.AppendFormat("&disableLoader={0}", DisableLoader);
-        sb.AppendFormat("&disableSwitcher={0}", DisableSwitcher);
-        sb.AppendFormat("&useBrowserPreload={0}", UseBrowserPreload);
-        sb.AppendFormat("&username={0}", Username);
-        sb.AppendFormat("&showFPS={0}", ShowFPS);
-        sb.AppendFormat("&fps={0}", Fps);
-        sb.AppendFormat("&sequentialLoad={0}", ConcurrentLoad);
-        sb.AppendFormat("&useUninterruptedDeferAgent={0}", UninterruptedDeferAgent);
+        Append(sb, "mode", Mode.ToString().ToLowerInvariant());
+        if (Type.HasValue) Append(sb, "type", Type.Value.ToString().ToLowerInvariant());
+        Append(sb, "profile", Profile);
+        Append(sb, "emote", _emote);
+        Append(sb, "disableDefaultEmotes", DisableDefaultEmotes);
+        foreach (var urn in Urns) Append(sb, "urn", urn);
+        foreach (var url in Urls) Append(sb, "url", url);
+        Append(sb, "disableDefaultWearables", DisableDefaultWearables);
+        Append(sb, "disableFace", DisableFace);
+        Append(sb, "peerUrl", PeerUrl);
+        Append(sb, "marketplaceServerUrl", MarketplaceServerUrl);
+        Append(sb, "background", ColorUtility.ToHtmlStringRGBA(Background));
+        Append(sb, "shadow", Shadow ? "on" : "off");
+        Append(sb, "glow", Glow ? "on" : "off");
+        if (SkinColor.HasValue) Append(sb, "skinColor", ColorUtility.ToHtmlStringRGB(SkinColor.Value));
+        if (HairColor.HasValue) Append(sb, "hairColor", ColorUtility.ToHtmlStringRGB(HairColor.Value));
+        if (EyeColor.HasValue) Append(sb, "eyeColor", ColorUtility.ToHtmlStringRGB(EyeColor.Value));
+        Append(sb, "bodyShape", BodyShape);
+        Append(sb, "showAnimationReference", ShowAnimationReference);
+        Append(sb, "projection", Projection);
+        foreach (var bytes in Base64) Append(sb, "base64", Convert.ToBase64String(bytes));
+        Append(sb, "contract", Contract);
+        Append(sb, "item", ItemID);
+        Append(sb, "token", TokenID);
+        Append(sb, "env", APIService.Environment == "zone" ? "dev" : "prod");
+        Append(sb, "disableLoader", DisableLoader);
+        Append(sb, "disableSwitcher", DisableSwitcher);
+        Append(sb, "hideControls", HideControls);
+        if (ZoomLevel.HasValue) Append(sb, "zoom", ZoomLevel.Value);
+        if (WheelZoom.HasValue) Append(sb, "wheelZoom", WheelZoom.Value);
+        Append(sb, "wheelStart", WheelStart);
+        Append(sb, "camera", Camera.ToString().ToLowerInvariant());
+        Append(sb, "lockAlpha", LockAlpha);
+        Append(sb, "lockBeta", LockBeta);
+        Append(sb, "lockRadius", LockRadius);
+        Append(sb, "panning", Panning);
+        Append(sb, "disableAutoRotate", DisableAutoRotate);
+        Append(sb, "autoRotateSpeed", AutoRotateSpeed);
+        Append(sb, "offsetX", Offset.x);
+        Append(sb, "offsetY", Offset.y);
+        Append(sb, "showThumbnailBoundaries", ShowThumbnailBoundaries);
+        Append(sb, "showSceneBoundaries", ShowSceneBoundaries);
+        Append(sb, "offsetZ", OffsetDepth);
+        if (CameraX.HasValue) Append(sb, "cameraX", CameraX.Value);
+        if (CameraY.HasValue) Append(sb, "cameraY", CameraY.Value);
+        if (CameraZ.HasValue) Append(sb, "cameraZ", CameraZ.Value);
+        Append(sb, "wheelPrecision", WheelPrecision);
+        Append(sb, "zoomScale", ZoomScale);
+        Append(sb, "disableAutoCenter", DisableAutoCenter);
+        if (SocialEmote != null) Append(sb, "socialEmote", SocialEmote.ToJson());
+        Append(sb, "useBrowserPreload", UseBrowserPreload);
+        Append(sb, "username", Username);
+        Append(sb, "showFPS", ShowFPS);
+        Append(sb, "fps", Fps);
+        Append(sb, "concurrentLoad", ConcurrentLoad);
+        Append(sb, "uninterruptedDeferAgent", UninterruptedDeferAgent);
 
         return sb.ToString();
     }
+
+    // An unset or empty value is no parameter.
+    private static void Append(StringBuilder sb, string key, string value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+
+        sb.Append(sb.Length == 0 ? '?' : '&').Append(key).Append('=').Append(HttpUtility.UrlEncode(value));
+    }
+
+    private static void Append(StringBuilder sb, string key, bool value) => Append(sb, key, value.ToString());
+
+    private static void Append(StringBuilder sb, string key, int value) =>
+        Append(sb, key, value.ToString(CultureInfo.InvariantCulture));
+
+    private static void Append(StringBuilder sb, string key, float value) =>
+        Append(sb, key, value.ToString(CultureInfo.InvariantCulture));
 }
 
 public enum PreviewMode
@@ -473,4 +897,13 @@ public enum PreviewViewType
 {
     Wearable,
     Avatar,
+}
+
+/// <summary>
+/// Mirrors PreviewCamera in @dcl/schemas.
+/// </summary>
+public enum PreviewCameraKind
+{
+    Interactive,
+    Static,
 }
