@@ -393,8 +393,14 @@ namespace DCL.CharacterPreview
 
             await UpdateAvatarAsync(previewAvatarModel, ct);
 
+            OnAvatarLoaded();
             DisableSpinner(spinner);
         }
+
+        /// <summary>
+        ///     Runs once the avatar requested by the model has been instantiated.
+        /// </summary>
+        protected virtual void OnAvatarLoaded() { }
 
         private void DisableSpinner(GameObject spinner)
         {
