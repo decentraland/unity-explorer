@@ -148,7 +148,7 @@ namespace DCL.Backpack.BackpackBus
 
             if (category == null)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {wearable.GetUrn()}");
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {command.Id}");
                 return;
             }
 

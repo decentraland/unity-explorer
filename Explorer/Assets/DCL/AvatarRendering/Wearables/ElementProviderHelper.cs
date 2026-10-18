@@ -31,10 +31,14 @@ namespace DCL.AvatarRendering.Wearables
                 // Element could be in the storage but still loading their data. Wait until they finish loading.
                 await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
 
-                await UniTask.SwitchToMainThread();
-                onElementFetched(element);
+                if (IsResolved<TElementDTO>(element))
+                {
+                    await UniTask.SwitchToMainThread();
+                    onElementFetched(element);
+                    return;
+                }
 
-                return;
+                // A placeholder whose DTO load failed or was cancelled has no DTO: go through the provider, which retries or reports the failure
             }
 
             List<URN> urnRequest = ListPool<URN>.Get();
@@ -49,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables
                 await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 foreach (var result in results)
-                    if (result.GetUrn() == pointer)
+                    if (IsResolved<TElementDTO>(result) && result.GetUrn() == pointer)
                     {
                         await UniTask.SwitchToMainThread();
                         onElementFetched(result);
@@ -66,5 +70,8 @@ namespace DCL.AvatarRendering.Wearables
                 ListPool<TElement>.Release(results);
             }
         }
+
+        internal static bool IsResolved<TElementDTO>(IAvatarAttachment<TElementDTO> element) =>
+            element.Model.Succeeded;
     }
 }
