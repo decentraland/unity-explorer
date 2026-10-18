@@ -1,5 +1,5 @@
 {
-  "status": "pr-open",
+  "status": "done",
   "prUrl": "https://github.com/decentraland/unity-explorer/pull/10415",
   "requester": "U0ADNDHL1T7",
   "originChannel": "C0BB9H2CS5D",
@@ -426,5 +426,6 @@
       "commit": null,
       "note": "NullReferenceException inside the glTFast package (GltfImport.Prepare); third-party package code"
     }
-  ]
+  ],
+  "note": "closed out by 2026-w42 continuation: PR #10415 merged 2026-10-14"
 }
