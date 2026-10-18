@@ -1,5 +1,5 @@
 {
-  "status": "pr-open",
+  "status": "done",
   "prUrl": "https://github.com/decentraland/unity-explorer/pull/10275",
   "authReview": null,
   "requester": "U0ADNDHL1T7",
@@ -294,5 +294,6 @@
       "commit": null,
       "note": "Worlds absent from Recent tab (regression of #9376); may involve backend API ID mismatch; needs investigation beyond client scope"
     }
-  ]
+  ],
+  "note": "closed out by 2026-w42 continuation: PR #10275 merged 2026-09-30"
 }
