@@ -14,6 +14,11 @@ namespace DCL.Profiling
         public readonly SampledCounter MessagesToScene = new ();
 
         /// <summary>
+        ///     Per-message breakdown of the traffic the counters above only total; records only while a capture runs.
+        /// </summary>
+        public readonly CrdtTrafficProbe Traffic = new ();
+
+        /// <summary>
         ///     Unlike the counters above, written and read on the Unity main thread only.
         /// </summary>
         public readonly SceneContentStats ContentStats = new ();
