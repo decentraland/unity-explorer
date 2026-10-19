@@ -64,6 +64,7 @@
 }
 
 .lobby-goto__input > .unity-base-text-field__input--placeholder {
+    -unity-font-definition: var(--dcl-font-inter-regular);
     color: var(--lobby-subtitle-color);
 }
 
