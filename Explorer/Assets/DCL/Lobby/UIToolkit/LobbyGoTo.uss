@@ -1,34 +1,35 @@
-/* The pill of the go-to widget (LobbyGoToElement): the icon, the command, the field and the go button in a row; its frame
-   and its fill both brighten under the pointer and more so while the field is focused */
+/* The pill of the go-to widget (LobbyGoToElement); 19px on the left lands the command at the design's 46px past the pin's margin */
 .lobby-goto {
     flex-direction: row;
     align-items: center;
     height: 46px;
-    padding: 0 11px 0 20px;
-    border-width: 1px;
+    padding: 0 11px 0 19px;
+    border-width: 2px;
     border-radius: 23px;
-    border-color: rgba(255, 255, 255, 0.6);
-    background-color: rgba(20, 20, 26, 0.5);
+    border-color: var(--lobby-white-40);
+    background-color: var(--lobby-black-40);
     transition: border-color 0.1s, background-color 0.1s;
 }
 
+/* Black at zero alpha stands in for the design's 10% white: a fill easing from black to white passes through a grey
+   that flashes brighter than either end */
 .lobby-goto:hover {
-    border-color: rgba(255, 255, 255, 0.8);
-    background-color: rgba(44, 44, 54, 0.65);
+    border-color: var(--lobby-white-60);
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .lobby-goto--focused,
 .lobby-goto--focused:hover {
-    border-color: white;
-    background-color: rgba(58, 58, 70, 0.75);
+    border-color: var(--lobby-white-60);
+    background-color: var(--lobby-black-40);
 }
 
 /* The pin sprite is taller than wide (36x43), so the box keeps its shape */
 .lobby-goto__icon {
     flex-shrink: 0;
-    width: 17px;
-    height: 20px;
-    margin-right: 12px;
+    width: 13px;
+    height: 15px;
+    margin-right: 14px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
     -unity-background-image-tint-color: var(--lobby-title-color);
 }
@@ -37,7 +38,7 @@
     flex-shrink: 0;
     margin-right: 10px;
     font-size: 18px;
-    -unity-font-definition: var(--dcl-font-inter-bold);
+    -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
     color: var(--lobby-title-color);
 }
@@ -64,8 +65,9 @@
 }
 
 .lobby-goto__input > .unity-base-text-field__input--placeholder {
+    font-size: 13px;
     -unity-font-definition: var(--dcl-font-inter-regular);
-    color: var(--lobby-subtitle-color);
+    color: var(--lobby-white-70);
 }
 
 /* The go button is stripped of the Button chrome into the design's jump-in disc, shown only while the field holds a

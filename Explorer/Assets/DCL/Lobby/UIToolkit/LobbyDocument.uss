@@ -11,14 +11,16 @@
     --lobby-card-radius: 16px;
     /* The panel blends in linear light, where a translucent white reads far brighter over the dark stage, and a translucent
        black far lighter, than the same alpha does in the design tool; these are the alphas that look like the design's
-       10%, 20%, 40%, 60% and 80% whites and its 60% black, used wherever the design names one */
+       10%, 20%, 40%, 60%, 70% and 80% whites and its 40% and 60% blacks, used wherever the design names one */
     --lobby-white-2: rgba(255, 255, 255, 0.004);
     --lobby-white-5: rgba(255, 255, 255, 0.01);
     --lobby-white-10: rgba(255, 255, 255, 0.025);
     --lobby-white-20: rgba(255, 255, 255, 0.055);
     --lobby-white-40: rgba(255, 255, 255, 0.14);
     --lobby-white-60: rgba(255, 255, 255, 0.3);
+    --lobby-white-70: rgba(255, 255, 255, 0.46);
     --lobby-white-80: rgba(255, 255, 255, 0.61);
+    --lobby-black-40: rgba(0, 0, 0, 0.67);
     --lobby-black-60: rgba(0, 0, 0, 0.85);
     /* The 1px line just inside the edge of every entry, the design's 10% white */
     --lobby-card-border-color: var(--lobby-white-10);
@@ -338,11 +340,12 @@
 }
 
 .lobby__goto-title {
-    height: 26px;
+    height: 20px;
     margin: 0 10px 10px 0;
-    font-size: 18px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
