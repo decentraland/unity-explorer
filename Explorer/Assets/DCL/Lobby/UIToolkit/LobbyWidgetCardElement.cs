@@ -38,6 +38,9 @@ namespace DCL.Lobby
         public Action<LobbyWidgetCardElement, Vector2, Vector2>? Dragged;
         public Action<LobbyWidgetCardElement, Vector2>? DragEnded;
 
+        /// <summary>Whether the pointer is over the row, size toggles included, where a drag can start.</summary>
+        public Action<LobbyWidgetCardElement, bool>? Hovered;
+
         private readonly LobbyWidgetPreviewElement[] previews;
         private readonly ClickOrDragManipulator gesture;
         private readonly VisualElement? sizes;
@@ -84,6 +87,8 @@ namespace DCL.Lobby
             };
 
             this.AddManipulator(gesture);
+            RegisterCallback<PointerEnterEvent>(OnPointerEnter);
+            RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
 
             if (variants.Length == 1)
                 return;
@@ -144,6 +149,12 @@ namespace DCL.Lobby
         /// <summary>Forgets a press in progress; a drag ends where the pointer last was.</summary>
         public void Cancel() =>
             gesture.Cancel();
+
+        private void OnPointerEnter(PointerEnterEvent _) =>
+            Hovered?.Invoke(this, true);
+
+        private void OnPointerLeave(PointerLeaveEvent _) =>
+            Hovered?.Invoke(this, false);
 
         private void Select(LobbyWidgetId variant)
         {

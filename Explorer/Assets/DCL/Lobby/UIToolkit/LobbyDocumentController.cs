@@ -271,7 +271,7 @@ namespace DCL.Lobby
                 DragEnded = OnAvatarDragEnded,
             };
 
-            layoutEditor = new LobbyLayoutEditor(widgetHost);
+            layoutEditor = new LobbyLayoutEditor(widgetHost, cursor);
 
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;

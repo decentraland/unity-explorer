@@ -1,4 +1,6 @@
+using DCL.Input;
 using DCL.Prefs;
+using NSubstitute;
 using NUnit.Framework;
 using System.Reflection;
 using UnityEngine;
@@ -25,6 +27,7 @@ namespace DCL.Lobby.Tests
         private PanelSettings panelSettings = null!;
         private VisualElement root = null!;
         private LobbyWidgetHost host = null!;
+        private ICursor cursor = null!;
         private LobbyLayoutEditor editor = null!;
 
         private Button FindSaveButton() => root.Q<Button>("SaveLayout");
@@ -44,7 +47,8 @@ namespace DCL.Lobby.Tests
 
             host = new LobbyWidgetHost();
             host.Show(root);
-            editor = new LobbyLayoutEditor(host);
+            cursor = Substitute.For<ICursor>();
+            editor = new LobbyLayoutEditor(host, cursor);
         }
 
         [TearDown]
@@ -657,6 +661,147 @@ namespace DCL.Lobby.Tests
             Assert.IsFalse(card.ClassListContains(CARD_DRAGGING_CLASS));
         }
 
+        [Test]
+        public void ShowTheGrabCursorOverAHandle()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces7By2);
+
+            //Act
+            Enter(handle);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Grab, true);
+
+            //Act
+            Leave(handle);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+        }
+
+        [Test]
+        public void ShowTheGrabCursorOverARow()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(LobbyWidgetFamily.Communities);
+
+            //Act
+            Enter(card);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Grab, true);
+
+            //Act
+            Leave(card);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+        }
+
+        [Test]
+        public void LetTheCursorGoOverTheRemoveButtonOfAHandle()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces7By2);
+            Button remove = handle.Q<Button>("Remove");
+            Enter(handle);
+
+            //Act
+            Enter(remove);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+
+            //Act
+            Leave(remove);
+
+            //Assert
+            cursor.Received(2).SetStyle(CursorStyle.Grab, true);
+
+            //Act
+            Leave(handle);
+
+            //Assert
+            cursor.Received(2).SetStyle(CursorStyle.Normal);
+        }
+
+        [Test]
+        public void ShowTheNotAllowedCursorWhileDraggingOffEveryGrid()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces7By2);
+            Enter(handle);
+            Press(handle, 100f);
+
+            //Act
+            Move(handle, 130f);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.NotAllowed, true);
+            cursor.DidNotReceive().SetStyle(CursorStyle.Dragging, Arg.Any<bool>());
+
+            //Act
+            Release(handle, 130f);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+        }
+
+        [Test]
+        public void ShowTheNotAllowedCursorWhileDraggingARowOffEveryGrid()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(LobbyWidgetFamily.Communities);
+            Press(card, 100f);
+
+            //Act
+            Move(card, 130f);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.NotAllowed, true);
+        }
+
+        [Test]
+        public void LetTheCursorGoOnHideMidHover()
+        {
+            //Arrange
+            editor.Show(root);
+            Enter(Handle(LobbyWidgetId.RecommendedPlaces7By2));
+            cursor.ClearReceivedCalls();
+
+            //Act
+            editor.Hide();
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+            cursor.DidNotReceive().SetStyle(CursorStyle.Grab, Arg.Any<bool>());
+        }
+
+        [Test]
+        public void LetTheCursorGoOnHideMidDrag()
+        {
+            //Arrange
+            editor.Show(root);
+            LobbyWidgetHandleElement handle = Handle(LobbyWidgetId.RecommendedPlaces7By2);
+            Press(handle, 100f);
+            Move(handle, 130f);
+            cursor.ClearReceivedCalls();
+
+            //Act
+            editor.Hide();
+
+            //Assert
+            cursor.Received().SetStyle(CursorStyle.Normal);
+            cursor.DidNotReceive().SetStyle(CursorStyle.Grab, Arg.Any<bool>());
+            cursor.DidNotReceive().SetStyle(CursorStyle.Dragging, Arg.Any<bool>());
+        }
+
         private LobbyWidgetHandleElement Handle(LobbyWidgetId widgetId) =>
             root.Q<LobbyWidgetHandleElement>(widgetId.ToString()) ?? throw new AssertionException($"{widgetId} has no handle");
 
@@ -669,6 +814,20 @@ namespace DCL.Lobby.Tests
             using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();
             evt.target = button;
             button.SendEvent(evt);
+        }
+
+        private static void Enter(VisualElement element)
+        {
+            using PointerEnterEvent evt = PointerEnterEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = new Vector2(10f, 10f) });
+            evt.target = element;
+            element.SendEvent(evt);
+        }
+
+        private static void Leave(VisualElement element)
+        {
+            using PointerLeaveEvent evt = PointerLeaveEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = new Vector2(10f, 10f) });
+            evt.target = element;
+            element.SendEvent(evt);
         }
 
         private static void Press(VisualElement element, float x)

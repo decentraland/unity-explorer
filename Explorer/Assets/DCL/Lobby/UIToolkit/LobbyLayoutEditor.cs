@@ -1,3 +1,4 @@
+using DCL.Input;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,7 +17,8 @@ namespace DCL.Lobby
     ///     corner of its handle. Any other release leaves every widget where it was. Every change shows at once but is
     ///     stored only by the Save button of the modal, which leaves edit mode; Cancel and the Back button of the header,
     ///     like <see cref="Hide" />, put the layout back as it was on entry, and Reset to Default puts the shipped layout
-    ///     up for saving.
+    ///     up for saving. The hardware cursor shows an open hand over a handle or a row, a closed one while a release
+    ///     would place or take off the dragged widget, and a barred one while it would leave everything where it stands.
     /// </summary>
     public class LobbyLayoutEditor
     {
@@ -43,6 +45,7 @@ namespace DCL.Lobby
         private static readonly LobbyGridCorner[] CORNERS = (LobbyGridCorner[])Enum.GetValues(typeof(LobbyGridCorner));
 
         private readonly LobbyWidgetHost host;
+        private readonly ICursor cursor;
         private readonly LobbyWidgetHandleElement[] handles = new LobbyWidgetHandleElement[WIDGETS.Length];
         private readonly LobbyWidgetCardElement[] cards = new LobbyWidgetCardElement[FAMILIES.Length];
 
@@ -87,6 +90,11 @@ namespace DCL.Lobby
         private bool targetValid;
         private bool targetModal;
 
+        private bool hoveringSource;
+
+        // Every pointer move asks for the style again, so repeats are skipped
+        private CursorStyle appliedStyle = CursorStyle.Normal;
+
         public bool IsEditing => root != null;
 
         private LobbyLayout RequireLayout() => host.Layout ?? throw new InvalidOperationException("The layout can be edited only once the widget host is shown");
@@ -97,9 +105,10 @@ namespace DCL.Lobby
 
         private VisualElement RequireModalItems() => modalItems ?? throw new InvalidOperationException("The widget modal exists only while the editor is shown");
 
-        public LobbyLayoutEditor(LobbyWidgetHost host)
+        public LobbyLayoutEditor(LobbyWidgetHost host, ICursor cursor)
         {
             this.host = host;
+            this.cursor = cursor;
 
             for (var i = 0; i < WIDGETS.Length; i++)
             {
@@ -112,6 +121,7 @@ namespace DCL.Lobby
                     Dragged = OnHandleDragged,
                     DragEnded = OnHandleDragEnded,
                     RemoveRequested = OnRemoveRequested,
+                    Hovered = OnHandleHovered,
                 };
             }
 
@@ -125,6 +135,7 @@ namespace DCL.Lobby
                     DragStarted = OnCardDragStarted,
                     Dragged = OnCardDragged,
                     DragEnded = OnCardDragEnded,
+                    Hovered = OnCardHovered,
                 };
             }
 
@@ -305,6 +316,10 @@ namespace DCL.Lobby
             cancelButton = null;
             backButton = null;
             saveButton = null;
+
+            // The handles and rows leave without a pointer leave, so the cursor is let go by hand
+            hoveringSource = false;
+            UpdateCursor();
         }
 
         // Escape leaves like the Back and Cancel buttons; it comes as a key press and, from the input module, as a
@@ -413,15 +428,16 @@ namespace DCL.Lobby
             UpdateTarget(panelPosition);
         }
 
-        private void OnHandleDragEnded(LobbyWidgetHandleElement _, Vector2 __) =>
-            EndDrag();
+        private void OnHandleDragEnded(LobbyWidgetHandleElement _, Vector2 panelPosition) =>
+            EndDrag(panelPosition);
 
-        private void OnCardDragEnded(LobbyWidgetCardElement _, Vector2 __) =>
-            EndDrag();
+        private void OnCardDragEnded(LobbyWidgetCardElement _, Vector2 panelPosition) =>
+            EndDrag(panelPosition);
 
         // The host lands the lifted section where the drop left it: on its grid at the cell the drop took or the one it
-        // came from, or off every grid; a lifted stand-in goes away
-        private void EndDrag()
+        // came from, or off every grid; a lifted stand-in goes away. The handles placed anew under the pointer get no
+        // pointer enter, so the hover is picked afresh
+        private void EndDrag(Vector2 panelPosition)
         {
             if (targetModal)
                 RequireLayout().Remove(draggedWidgetId);
@@ -439,6 +455,52 @@ namespace DCL.Lobby
             draggedCard = null;
             PlaceHandles();
             UpdateSaveButton();
+            hoveringSource = IsDragSource(root?.panel?.Pick(panelPosition));
+            UpdateCursor();
+        }
+
+        private void OnHandleHovered(LobbyWidgetHandleElement _, bool hovered) =>
+            OnSourceHovered(hovered);
+
+        private void OnCardHovered(LobbyWidgetCardElement _, bool hovered) =>
+            OnSourceHovered(hovered);
+
+        private void OnSourceHovered(bool hovered)
+        {
+            hoveringSource = hovered;
+            UpdateCursor();
+        }
+
+        // Forcing keeps the world-driven cursor system out until the normal style lets it back in
+        private void UpdateCursor()
+        {
+            CursorStyle style;
+
+            if (draggedHandle != null || draggedCard != null)
+                style = targetModal || (targetValid && targetGrid != null) ? CursorStyle.Dragging : CursorStyle.NotAllowed;
+            else
+                style = hoveringSource ? CursorStyle.Grab : CursorStyle.Normal;
+
+            if (style == appliedStyle)
+                return;
+
+            appliedStyle = style;
+            cursor.SetStyle(style, style != CursorStyle.Normal);
+        }
+
+        // The only button inside a source is the one in the corner of a handle, which takes the pointer for itself
+        private static bool IsDragSource(VisualElement? element)
+        {
+            for (VisualElement? at = element; at != null; at = at.parent)
+            {
+                switch (at)
+                {
+                    case Button: return false;
+                    case LobbyWidgetHandleElement or LobbyWidgetCardElement: return true;
+                }
+            }
+
+            return false;
         }
 
         // A drag cut short is ended through the gesture it came from with no target left, so the release puts its widget
@@ -506,6 +568,7 @@ namespace DCL.Lobby
             {
                 targetValid = false;
                 ShowPushes();
+                UpdateCursor();
                 return;
             }
 
@@ -519,6 +582,7 @@ namespace DCL.Lobby
             dropMarker.EnableInClassList(USS_DROP_MARKER_VALID, targetValid);
             dropMarker.EnableInClassList(USS_DROP_MARKER_INVALID, !targetValid);
             grid.SetDropHint(targetCell, span, targetValid);
+            UpdateCursor();
         }
 
         private LobbyGridElement? GridAt(Vector2 panelPosition)

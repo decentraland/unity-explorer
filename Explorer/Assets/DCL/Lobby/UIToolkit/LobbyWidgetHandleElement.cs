@@ -30,7 +30,13 @@ namespace DCL.Lobby
         /// <summary>The button in the corner of the handle was clicked: the widget is to leave its grid.</summary>
         public Action<LobbyWidgetHandleElement>? RemoveRequested;
 
+        /// <summary>Whether the pointer is over the frame outside the button in its corner, where a drag can start.</summary>
+        public Action<LobbyWidgetHandleElement, bool>? Hovered;
+
         private readonly ClickOrDragManipulator gesture;
+        private bool frameHovered;
+        private bool removeHovered;
+        private bool reportedHovered;
 
         public LobbyWidgetId WidgetId { get; }
 
@@ -63,6 +69,8 @@ namespace DCL.Lobby
             remove.AddToClassList(USS_REMOVE);
             // A press on the button must not reach the gesture below, or it would start a drag
             remove.RegisterCallback<PointerDownEvent>(static evt => evt.StopPropagation());
+            remove.RegisterCallback<PointerEnterEvent>(OnRemovePointerEnter);
+            remove.RegisterCallback<PointerLeaveEvent>(OnRemovePointerLeave);
             var removeIcon = new VisualElement { name = "Icon", pickingMode = PickingMode.Ignore };
             removeIcon.AddToClassList(USS_REMOVE_ICON);
             remove.Add(removeIcon);
@@ -82,11 +90,43 @@ namespace DCL.Lobby
             RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
         }
 
-        private void OnPointerEnter(PointerEnterEvent _) =>
+        private void OnPointerEnter(PointerEnterEvent _)
+        {
             Underlay.AddToClassList(USS_UNDERLAY_HOVERED);
+            frameHovered = true;
+            ReportHover();
+        }
 
-        private void OnPointerLeave(PointerLeaveEvent _) =>
+        private void OnPointerLeave(PointerLeaveEvent _)
+        {
             Underlay.RemoveFromClassList(USS_UNDERLAY_HOVERED);
+            frameHovered = false;
+            ReportHover();
+        }
+
+        // Entering the button enters no ancestor again, so it keeps a flag of its own
+        private void OnRemovePointerEnter(PointerEnterEvent _)
+        {
+            removeHovered = true;
+            ReportHover();
+        }
+
+        private void OnRemovePointerLeave(PointerLeaveEvent _)
+        {
+            removeHovered = false;
+            ReportHover();
+        }
+
+        private void ReportHover()
+        {
+            bool hovered = frameHovered && !removeHovered;
+
+            if (hovered == reportedHovered)
+                return;
+
+            reportedHovered = hovered;
+            Hovered?.Invoke(this, hovered);
+        }
 
         /// <summary>Puts the frame over the cells of the widget at the cell, in the space of its grid.</summary>
         public void PlaceAt(Vector2Int cell)
