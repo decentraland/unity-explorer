@@ -25,7 +25,8 @@ Measured on v0.185.0-alpha -> v0.186.0-alpha (Windows, 868.9 MB extracted, 130 f
 - Diff **extracted files**, never archives: zip deflate scrambles the bytes.
 - Chunking gains almost nothing: IL2CPP shifts offsets throughout `GameAssembly.dll`, and the
   Addressables bundles are LZ4HC-compressed. A bsdiff-class differ is needed.
-- Patches rebuild byte-identical files, so code signatures stay valid.
+- Patches rebuild byte-identical files, so code signatures stay valid. Verification compares every
+  rebuilt file, mode and link with the release, so it needs no separate signature check.
 - About 16 of 130 files change per release. Three are bundles renamed by their content hash
   (`<name>_<32 hex>.bundle`), which are paired with the old bundle of the same `<name>`.
 
@@ -57,6 +58,11 @@ s3-latest-release.yml       -> releases/latest.json, then prune old delta/ folde
   generate or verify is left out of the manifest; the other bases still ship. A **cancelled** delta
   job (or a lost runner) is different: the run ends `cancelled` and no draft release is created. Use
   "Re-run failed jobs" on the run, or draft the release manually.
+- Every push to `main` before the draft is published builds the same tag (the next tag is derived
+  from the existing ones), and delta runs of one tag queue behind each other. GitHub keeps one
+  pending run per queue, so a third push while one delta run is running and another is pending
+  cancels the pending one: that run ends `cancelled` and creates no draft. The latest run still
+  completes and drafts the release.
 - A new launcher zip invalidates the patch set made for the previous zip of the same unpublished
   tag and platform, so the zip upload in `build-unitycloud.yml` removes `<tag>/delta/<platform>/`
   before it replaces the zip and again after, so a manifest a concurrent run published during the
@@ -81,9 +87,13 @@ zip's sha256 and the encoding generation (`3f9a12bc-e1`), bumped whenever the HD
 its flags or the whole-file rule change the patch bytes. The manifest URL is derived by convention; a 404 means "no delta, use the zip". The
 launcher never derives a patch URL: it follows the `patch` strings of the manifest.
 
-**Immutable once published.** Patches are uploaded with a one-year immutable `Cache-Control`. The
-manifest is uploaded without it: a rebuild of a still-unpublished tag rewrites it under the same
-key, and a CDN edge must not keep serving the old one. Patch keys include the build id, so a
+**Immutable once published.** Patches are uploaded with `@dcl/cdn-uploader --immutable`, the
+manifest without it: a rebuild of a still-unpublished tag rewrites the manifest under the same key,
+so a CDN edge may serve the old one only briefly. The `Cache-Control` values belong to
+`@dcl/cdn-uploader` (its `cacheHeader` function, version locked in
+[`scripts/delta/uploader/package-lock.json`](../scripts/delta/uploader/package-lock.json)), which is
+the source of truth. When last checked (1.5.0) they were `max-age=31536000, immutable` for patches
+and `max-age=120` for the manifest; check the locked version before relying on them. Patch keys include the build id, so a
 rebuild of an unpublished tag with a new zip or a new encoding writes its patches under new keys and an edge that cached the previous
 build's patches is never asked for them again. Nothing is rewritten after the release is
 published: the workflow refuses to generate or upload for a published tag. A missing or broken delta set after publication is not fixed
@@ -246,7 +256,7 @@ answers with the next `Msg`; `Cmd::Complete` asks the runtime to stop.
 | `run::fsm` | `Msg`, `Cmd`, `init`, `update` and `judge`. Pure: no file system, processes or environment. |
 | `run::execute` | `execute(cmd, io) -> Msg`: the only impure part of a run. It never sees the state. |
 | `run::runtime` | The drain loop between them, and the document holding `{ run, cmds }`. |
-| `io` / `shell` | The traits `Releases`, `Bucket`, `Signer` and the concrete `HDiffPatch`; their implementations with `gh`, `aws`, `@dcl/cdn-uploader`, `hdiffz`/`hpatchz`, `osslsigncode`/`codesign`, and with local folders for tests and local runs. |
+| `io` / `shell` | The traits `Releases`, `Bucket` and the concrete `HDiffPatch`; their implementations with `gh`, `aws`, `@dcl/cdn-uploader`, `hdiffz`/`hpatchz`, and with local folders for tests and local runs. |
 
 ### Lifecycle
 
@@ -264,12 +274,12 @@ any       -> Failed (terminal)
 | `Downloaded` | `ExtractArchives` | `ArchivesExtracted` | a base that fails is dropped | `Extracted` |
 | `Extracted` | `ScanBuilds` | `BuildsScanned` | a base that fails is dropped; the `Plan` of every base | `Scanned` |
 | `Scanned` | `EncodePatches` | `PatchesEncoded` | a base that fails is dropped; the replay order | `Encoded` |
-| `Encoded` | `ReplayPatches` | `PatchesReplayed` | `judge`: the rebuilt build must equal the release, signatures included; the `Manifest` and its JSON | `Verified` |
+| `Encoded` | `ReplayPatches` | `PatchesReplayed` | `judge`: the rebuilt build must equal the release; the `Manifest` and its JSON | `Verified` |
 | `Verified` | `PrepareUploadFolder` | `UploadFolderPrepared` | - | `Prepared` |
 | `Prepared` | `RecheckRelease` | `ReleaseRechecked` | still unpublished and the same zip `ETag`, or the run fails | `Rechecked` |
 | `Rechecked` | `UploadPatches` (immutable) | `PatchesUploaded` | - | `PatchesUploaded` |
 | `PatchesUploaded` | `RecheckRelease` | `ReleaseRechecked` | the same check again, seconds before the manifest goes out | `ReadyToPublish` |
-| `ReadyToPublish` | `PublishManifest` (revalidated) | `ManifestPublished` | - | `Published`, `Complete` |
+| `ReadyToPublish` | `PublishManifest` (short-lived) | `ManifestPublished` | - | `Published`, `Complete` |
 | any | | `IntegrityFailure`, or a msg that does not fit | the reason | `Failed`, `Complete` |
 
 `Requested` is created by `delta create-run` from the request (tag, platform, zip, bucket prefix,
@@ -317,7 +327,7 @@ crate is single-threaded: bases are processed one after another.
 ### Local run
 
 `--local <folder>` uses a folder as the bucket (`<folder>/<bucket prefix>/<tag>/<zip>`), with
-nothing published and every signature valid, so no uploader is needed. A run against the real
+nothing published, so no uploader is needed. A run against the real
 bucket requires `CDN_UPLOADER` to name the uploader, which CI installs from the lockfile in
 `scripts/delta/uploader`:
 
@@ -339,7 +349,7 @@ The manifest lands in `/tmp/bucket/releases/v0.186.0-alpha/delta/windows64/`.
 
 `cargo test` runs the unit tests next to each module (every rule of the simple types, `plan`, the
 whole-file rule, the replay order, `differences`, archive member checks, base picking and pruning,
-signature changes, `Manifest` rules, the summary), the lifecycle tests of `run::fsm` (every
+`Manifest` rules, the summary), the lifecycle tests of `run::fsm` (every
 transition from `Requested` to `Published` driven with hand-written msgs and no disk, asserting the
 state and the cmd that come back as a pair: a msg out of order, an integrity failure, both recheck
 refusals, a base dropped, a base listed nowhere, every base dropped, a failed run staying failed,
@@ -347,7 +357,7 @@ and the JSON round trip of the run and its cmd at every state), and `tests/run.r
 builds drained through the real `hdiffz`/`hpatchz` and a folder bucket, covering changed, added,
 deleted, renamed and case-renamed files, the whole-file fallback, paths with spaces, modes, links
 replacing folders and the reverse, a corrupt, a missing and an unsafe base zip (dropped while the
-others ship), changed signatures, a base that only lost files (an empty patch set), a zip replaced
+others ship), a base that only lost files (an empty patch set), a zip replaced
 while the run was paused at `Prepared`, the macOS `build.tar` layout, a missing release zip failing
 before the `--until` state, and the command line pausing at `--until` and resuming to completion.
 The launcher's JSON contract is pinned by a literal fixture in `publishing/contract.rs`. Without

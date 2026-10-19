@@ -106,7 +106,6 @@ jobs:
           - platform: windows64
             runner: ubuntu-latest
             zip: Decentraland_windows64.zip
-          # A macOS runner so the rebuilt .app can be checked with codesign.
           - platform: macos
             runner: macos-latest
             zip: Decentraland_macos.zip
@@ -137,11 +136,6 @@ jobs:
       - name: Install HDiffPatch (pinned)
         timeout-minutes: 5
         run: '"$DELTA" fetch-tools "$RUNNER_TEMP/hdiffpatch" >> "$GITHUB_PATH"'
-
-      - name: Install osslsigncode
-        if: matrix.platform == 'windows64'
-        timeout-minutes: 5
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode > /dev/null
 
       # The uploader runs with the bucket's write credentials, so it is installed from the
       # committed lockfile, not resolved fresh by npx.

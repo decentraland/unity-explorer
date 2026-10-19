@@ -10,9 +10,8 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::builds::signatures::{Signatures, signature_changes};
 use crate::builds::tree::{Build, Tree};
-use crate::builds::values::{RelPath, Sha256};
+use crate::builds::values::Sha256;
 use crate::patching::delta::Delta;
 use crate::patching::plan::{Plan, plan};
 use crate::patching::replay::{Action, Difference, differences, replay_actions};
@@ -21,17 +20,10 @@ use crate::publishing::layout::{UploadLayout, base_folder};
 use crate::publishing::manifest::Manifest;
 use crate::publishing::values::{ETag, ZipRef};
 use crate::releases::bases::Bases;
-use crate::releases::tag::{Platform, Tag};
+use crate::releases::tag::Tag;
 use crate::run::state::{
     Archives, Builds, Candidate, Candidates, DropReason, Dropped, Folders, ReleaseZip, Request, Run, State, Upload,
 };
-
-/// A rebuilt build as the launcher would produce it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Rebuilt {
-    pub tree: Tree,
-    pub signatures: Signatures,
-}
 
 /// A fact from I/O, past tense. Success carries what was produced; a base that failed is listed
 /// with its reason.
@@ -52,7 +44,6 @@ pub enum Msg {
     },
     BuildsScanned {
         release: Build,
-        signatures: Signatures,
         bases: Vec<(Tag, Build)>,
         unreadable: Vec<(Tag, String)>,
     },
@@ -60,8 +51,9 @@ pub enum Msg {
         encoded: Vec<(Tag, Delta)>,
         failed: Vec<(Tag, String)>,
     },
+    /// Each rebuilt build as the launcher would produce it.
     PatchesReplayed {
-        rebuilt: Vec<(Tag, Rebuilt)>,
+        rebuilt: Vec<(Tag, Tree)>,
         failed: Vec<(Tag, String)>,
     },
     UploadFolderPrepared,
@@ -102,14 +94,12 @@ impl fmt::Display for Msg {
             ),
             Msg::BuildsScanned {
                 release,
-                signatures,
                 bases,
                 unreadable,
             } => write!(
                 f,
-                "builds scanned: release has {} entries and {} signed artifacts, {} bases, {} unreadable",
+                "builds scanned: release has {} entries, {} bases, {} unreadable",
                 release.tree.entries().len(),
-                signatures.len(),
                 bases.len(),
                 unreadable.len()
             ),
@@ -171,7 +161,6 @@ pub enum Cmd {
         bases: Vec<(Tag, Unpack)>,
     },
     ScanBuilds {
-        platform: Platform,
         release_root: PathBuf,
         bases: Vec<(Tag, PathBuf)>,
     },
@@ -187,9 +176,7 @@ pub enum Cmd {
     },
     /// Replay consumes the base build and its rebuild folder.
     ReplayPatches {
-        platform: Platform,
         staging: PathBuf,
-        artifacts: Vec<RelPath>,
         bases: Vec<(Tag, Replay)>,
     },
     /// Moves each `(from, to)` into the upload folders and writes `manifest.json`.
@@ -207,7 +194,7 @@ pub enum Cmd {
         folder: PathBuf,
         prefix: String,
     },
-    /// Revalidated: a rebuild of this unpublished release rewrites the manifest.
+    /// Short-lived: a rebuild of this unpublished release rewrites the manifest.
     PublishManifest {
         folder: PathBuf,
         prefix: String,
@@ -344,7 +331,6 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
             State::Extracted(folders),
             Msg::BuildsScanned {
                 release: build,
-                signatures,
                 bases,
                 unreadable,
             },
@@ -363,7 +349,6 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
                 release,
                 zip,
                 build,
-                signatures,
                 bases: remaining(kept, dropped)?,
             };
             let cmd: Cmd = encode_patches(&builds);
@@ -374,7 +359,6 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
                 release,
                 zip,
                 build,
-                signatures,
                 bases: held,
             } = builds;
             let kept: BTreeMap<Tag, Candidate> = settle(held, encoded, failed, DropReason::EncodeFailed, dropped)
@@ -391,7 +375,6 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
                 release,
                 zip,
                 build,
-                signatures,
                 bases: remaining(kept, dropped)?,
             };
             let cmd: Cmd = replay_patches(&candidates);
@@ -402,12 +385,11 @@ fn transition(state: State, msg: Msg, dropped: &mut Vec<Dropped>) -> Result<(Sta
                 release,
                 zip,
                 build,
-                signatures,
                 bases: held,
             } = candidates;
             let mut kept: BTreeMap<Tag, Delta> = BTreeMap::new();
             for (base, (candidate, rebuilt)) in settle(held, rebuilt, failed, DropReason::RebuildFailed, dropped) {
-                match judge(&build.tree, &signatures, &rebuilt.tree, &rebuilt.signatures, cfg!(unix)) {
+                match judge(&build.tree, &rebuilt, cfg!(unix)) {
                     None => {
                         kept.insert(base, candidate.delta);
                     }
@@ -508,7 +490,6 @@ fn extract_archives(archives: &Archives) -> Cmd {
 
 fn scan_builds(folders: &Folders) -> Cmd {
     Cmd::ScanBuilds {
-        platform: folders.release.platform,
         release_root: folders.root.clone(),
         bases: folders
             .bases
@@ -548,9 +529,7 @@ fn encode_patches(builds: &Builds) -> Cmd {
 fn replay_patches(candidates: &Candidates) -> Cmd {
     let release = &candidates.release;
     Cmd::ReplayPatches {
-        platform: release.platform,
         staging: release.staging(),
-        artifacts: candidates.signatures.keys().cloned().collect(),
         bases: candidates
             .bases
             .iter()
@@ -611,26 +590,15 @@ fn prepare_upload_folder(upload: &Upload) -> Result<Cmd, String> {
     })
 }
 
-/// Whether a rebuilt build is the release build: same entries, and every signed artifact
-/// verifies the same way.
-pub fn judge(
-    release: &Tree,
-    signatures: &Signatures,
-    rebuilt: &Tree,
-    rebuilt_signatures: &Signatures,
-    compare_modes: bool,
-) -> Option<DropReason> {
+/// Whether a rebuilt build is the release build: same entries, byte for byte, so every code
+/// signature in it verifies as it does in the release.
+pub fn judge(release: &Tree, rebuilt: &Tree, compare_modes: bool) -> Option<DropReason> {
     let found: Vec<Difference> = differences(release, rebuilt, compare_modes);
-    if !found.is_empty() {
-        return Some(DropReason::rebuild_differs(&found));
+    if found.is_empty() {
+        None
+    } else {
+        Some(DropReason::rebuild_differs(&found))
     }
-    let changed: Vec<RelPath> = signature_changes(signatures, rebuilt_signatures);
-    if !changed.is_empty() {
-        return Some(DropReason::SignaturesChanged(
-            changed.iter().map(ToString::to_string).collect(),
-        ));
-    }
-    None
 }
 
 fn drop_base(base: Tag, reason: DropReason, dropped: &mut Vec<Dropped>) {
@@ -679,8 +647,7 @@ mod tests {
 
     use anyhow::{Context, Result, bail, ensure};
 
-    use super::{Cmd, ENCODING_GENERATION, Msg, Rebuilt, init, judge, update};
-    use crate::builds::signatures::Signatures;
+    use super::{Cmd, ENCODING_GENERATION, Msg, init, judge, update};
     use crate::builds::tree::{Build, Node, Tree};
     use crate::builds::values::{Mode, RelPath, Sha256};
     use crate::patching::delta::{Delta, Whole};
@@ -730,12 +697,6 @@ mod tests {
             root: PathBuf::from(root),
             tree: tree(digit)?,
         })
-    }
-
-    fn signatures(valid: bool) -> Result<Signatures> {
-        let mut signatures: Signatures = Signatures::new();
-        signatures.insert(path(EXE)?, valid);
-        Ok(signatures)
     }
 
     fn delta(base: &str) -> Result<Delta> {
@@ -816,7 +777,6 @@ mod tests {
         }
         Ok(Msg::BuildsScanned {
             release: build("work/release", '1')?,
-            signatures: signatures(true)?,
             bases: found,
             unreadable: vec![],
         })
@@ -833,15 +793,9 @@ mod tests {
         })
     }
 
-    fn replayed(base: &str, digit: char, valid: bool) -> Result<Msg> {
+    fn replayed(base: &str, digit: char) -> Result<Msg> {
         Ok(Msg::PatchesReplayed {
-            rebuilt: vec![(
-                tag(base)?,
-                Rebuilt {
-                    tree: tree(digit)?,
-                    signatures: signatures(valid)?,
-                },
-            )],
+            rebuilt: vec![(tag(base)?, tree(digit)?)],
             failed: vec![],
         })
     }
@@ -862,7 +816,7 @@ mod tests {
             extracted(&[BASE])?,
             scanned(&[BASE])?,
             encoded(&[BASE])?,
-            replayed(BASE, '1', true)?,
+            replayed(BASE, '1')?,
             Msg::UploadFolderPrepared,
             rechecked(false, "e1")?,
             Msg::PatchesUploaded,
@@ -956,13 +910,7 @@ mod tests {
 
         let (run, cmd): (Run, Cmd) = send(run, extracted(&[BASE])?)?;
         ensure!(run.state.name() == "Extracted");
-        ensure!(matches!(
-            cmd,
-            Cmd::ScanBuilds {
-                platform: Platform::Windows64,
-                ..
-            }
-        ));
+        ensure!(matches!(cmd, Cmd::ScanBuilds { .. }));
 
         let (run, cmd): (Run, Cmd) = send(run, scanned(&[BASE])?)?;
         ensure!(run.state.name() == "Scanned");
@@ -991,13 +939,12 @@ mod tests {
 
         let (run, cmd): (Run, Cmd) = send(run, encoded(&[BASE])?)?;
         ensure!(run.state.name() == "Encoded");
-        let Cmd::ReplayPatches { artifacts, bases, .. } = cmd else {
+        let Cmd::ReplayPatches { bases, .. } = cmd else {
             bail!("not a replay: {cmd}")
         };
-        ensure!(artifacts == vec![path(EXE)?]);
         ensure!(bases.first().is_some_and(|(_, r)| !r.actions.is_empty()));
 
-        let (run, cmd): (Run, Cmd) = send(run, replayed(BASE, '1', true)?)?;
+        let (run, cmd): (Run, Cmd) = send(run, replayed(BASE, '1')?)?;
         let State::Verified(upload) = &run.state else {
             bail!("not verified: {:?}", failure(&run))
         };
@@ -1166,14 +1113,13 @@ mod tests {
     }
 
     #[test]
-    fn a_rebuild_that_differs_or_fails_or_changes_signatures_drops_the_base() -> Result<()> {
+    fn a_rebuild_that_differs_or_fails_drops_the_base() -> Result<()> {
         let failed_replay: Msg = Msg::PatchesReplayed {
             rebuilt: vec![],
             failed: vec![(tag(BASE)?, "hpatchz failed".to_owned())],
         };
-        let cases: [(Msg, &str); 3] = [
-            (replayed(BASE, '2', true)?, "rebuilt build differs"),
-            (replayed(BASE, '1', false)?, "signatures changed"),
+        let cases: [(Msg, &str); 2] = [
+            (replayed(BASE, '2')?, "rebuilt build differs"),
             (failed_replay, "rebuild failed"),
         ];
         for (msg, expected) in cases {
@@ -1187,15 +1133,10 @@ mod tests {
 
     #[test]
     fn judge_accepts_an_exact_rebuild_and_names_what_differs() -> Result<()> {
-        let valid: Signatures = signatures(true)?;
-        ensure!(judge(&tree('1')?, &valid, &tree('1')?, &valid, true).is_none());
+        ensure!(judge(&tree('1')?, &tree('1')?, true).is_none());
         ensure!(matches!(
-            judge(&tree('1')?, &valid, &tree('2')?, &valid, true),
+            judge(&tree('1')?, &tree('2')?, true),
             Some(DropReason::RebuildDiffers(_))
-        ));
-        ensure!(matches!(
-            judge(&tree('1')?, &valid, &tree('1')?, &signatures(false)?, true),
-            Some(DropReason::SignaturesChanged(_))
         ));
         Ok(())
     }

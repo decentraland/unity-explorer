@@ -7,9 +7,9 @@ use anyhow::{Context, Result};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::builds::disk::{remove, sha256_file};
-use crate::io::{Bucket, Caching, Releases, Signer};
+use crate::io::{Bucket, Caching, Releases};
 use crate::publishing::values::ETag;
-use crate::releases::tag::{Platform, Tag};
+use crate::releases::tag::Tag;
 
 /// A bucket kept in a folder: key `a/b` is the file `<root>/a/b`. The `ETag` is the file's
 /// sha256. Uploads copy the folder's files under `<root>/<prefix>/` and append the caching of
@@ -73,20 +73,5 @@ pub struct FixedReleases {
 impl Releases for FixedReleases {
     fn is_published(&self, tag: &Tag) -> Result<bool> {
         Ok(self.published.contains(tag))
-    }
-}
-
-/// Every artifact verifies, except those under `invalid_under`.
-#[derive(Debug, Clone, Default)]
-pub struct FixedSigner {
-    pub invalid_under: Option<PathBuf>,
-}
-
-impl Signer for FixedSigner {
-    fn verifies(&self, _platform: Platform, artifact: &Path) -> Result<bool> {
-        Ok(match &self.invalid_under {
-            Some(folder) => !artifact.starts_with(folder),
-            None => true,
-        })
     }
 }

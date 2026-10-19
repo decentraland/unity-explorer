@@ -21,7 +21,6 @@ use delta::run::runtime::drain;
 use delta::run::state::{DropReason, Release, Request, Run, State};
 use delta::shell;
 use delta::shell::hdiff::HDiffPatch;
-use delta::shell::local::FixedSigner;
 
 const BUCKET_PREFIX: &str = "releases";
 const RELEASE: &str = "v1.1.0-alpha";
@@ -342,7 +341,7 @@ fn a_run_publishes_verified_patches_and_the_manifest() -> Result<()> {
 
     let caching: String = fs::read_to_string(fixture.prefix().join(".caching"))?;
     ensure!(
-        caching == "Immutable\nRevalidated\n",
+        caching == "Immutable\nShortLived\n",
         "patches first and immutable, the manifest last: {caching:?}"
     );
     Ok(())
@@ -450,25 +449,6 @@ fn extraction_never_writes_through_a_link_named_in_another_unicode_form() -> Res
         !dir.path().join("payload").exists(),
         "written above the build ({extracted:?})"
     );
-    Ok(())
-}
-
-#[test]
-fn changed_signatures_drop_the_base_and_an_empty_run_fails() -> Result<()> {
-    let Some(differ) = tools()? else { return Ok(()) };
-    let fixture: Fixture = Fixture::new()?;
-    fixture.upload_zips()?;
-    let mut world: World = World::new(&fixture, differ);
-    world.io.signer = Box::new(FixedSigner {
-        invalid_under: Some(fixture.root.join("work").join("rebuild")),
-    });
-    let run: Run = world.run(&fixture.create_run(&[BASE], Platform::Windows64)?, None)?;
-    let reason: &str = failure(&run).context("the run should fail")?;
-    ensure!(
-        reason.contains("no base left") && reason.contains("signatures changed"),
-        "{reason}"
-    );
-    ensure!(!fixture.prefix().join("manifest.json").exists());
     Ok(())
 }
 

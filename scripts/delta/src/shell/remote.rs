@@ -1,6 +1,6 @@
-//! The production I/O: GitHub through `gh`, the bucket through `aws` and `@dcl/cdn-uploader`,
-//! and code signatures through `osslsigncode` and `codesign`. Settings are read from the
-//! environment when a call runs, so they never reach the run document.
+//! The production I/O: GitHub through `gh`, the bucket through `aws` and `@dcl/cdn-uploader`.
+//! Settings are read from the environment when a call runs, so they never reach the run
+//! document.
 
 use std::env;
 use std::path::Path;
@@ -8,10 +8,10 @@ use std::process::Output;
 
 use anyhow::{Context, Result};
 
-use crate::io::{Bucket, Caching, Releases, Signer};
+use crate::io::{Bucket, Caching, Releases};
 use crate::publishing::values::ETag;
 use crate::releases::github::{ReleaseDto, read_published};
-use crate::releases::tag::{Platform, Tag};
+use crate::releases::tag::Tag;
 use crate::shell::process::{capture, path_text, redacted, run, stdout_text};
 
 fn variable(name: &str) -> Result<String> {
@@ -134,25 +134,12 @@ impl Bucket for S3Bucket {
             "--variant",
             "uncompressed",
         ]);
+        // cdn-uploader picks the `Cache-Control` of each mode (docs/delta-updates.md, "Immutable
+        // once published").
         if caching == Caching::Immutable {
             args.push("--immutable");
         }
         run(&program, args)?;
         Ok(())
-    }
-}
-
-/// `osslsigncode verify` (Authenticode) for windows64, `codesign --verify --deep --strict` for macos.
-#[derive(Debug, Default)]
-pub struct SystemSigner;
-
-impl Signer for SystemSigner {
-    fn verifies(&self, platform: Platform, artifact: &Path) -> Result<bool> {
-        let artifact_text: &str = path_text(artifact)?;
-        let output: Output = match platform {
-            Platform::Windows64 => capture("osslsigncode", ["verify", "-in", artifact_text])?,
-            Platform::Macos => capture("codesign", ["--verify", "--deep", "--strict", artifact_text])?,
-        };
-        Ok(output.status.success())
     }
 }

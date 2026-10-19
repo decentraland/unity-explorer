@@ -70,7 +70,7 @@ enum Operation {
         /// Pause once this state is reached; the next `run` resumes from it.
         #[arg(long, value_parser = PossibleValuesParser::new(State::PAUSES))]
         until: Option<String>,
-        /// Use <folder> as the bucket, with nothing published and every signature valid.
+        /// Use <folder> as the bucket, with nothing published.
         #[arg(long)]
         local: Option<PathBuf>,
     },

@@ -10,11 +10,8 @@ use sha2::Digest;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::builds::members::{Member, check_members};
-use crate::builds::signatures::Signatures;
 use crate::builds::tree::{Node, Tree};
 use crate::builds::values::{Mode, RelPath, Sha256};
-use crate::io::Signer;
-use crate::releases::tag::Platform;
 
 const S_IFMT: u32 = 0o170_000;
 const S_IFLNK: u32 = 0o120_000;
@@ -351,21 +348,6 @@ pub fn extract(archive_path: &Path, out_dir: &Path) -> Result<PathBuf> {
         return Ok(out.join("build"));
     }
     Ok(out)
-}
-
-/// The verification result of each artifact under `root`.
-pub fn check_signatures(
-    platform: Platform,
-    root: &Path,
-    artifacts: &[RelPath],
-    signer: &dyn Signer,
-) -> Result<Signatures> {
-    let mut signatures: Signatures = Signatures::new();
-    for artifact in artifacts {
-        let valid: bool = signer.verifies(platform, &artifact.under(root))?;
-        signatures.insert(artifact.clone(), valid);
-    }
-    Ok(signatures)
 }
 
 #[cfg(test)]

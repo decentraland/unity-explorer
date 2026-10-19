@@ -2,6 +2,5 @@
 
 pub mod disk;
 pub mod members;
-pub mod signatures;
 pub mod tree;
 pub mod values;

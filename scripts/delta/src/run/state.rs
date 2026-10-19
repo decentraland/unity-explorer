@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
-use crate::builds::signatures::Signatures;
 use crate::builds::tree::Build;
 use crate::patching::delta::Delta;
 use crate::patching::replay::Difference;
@@ -123,13 +122,12 @@ pub struct Folders {
     pub bases: Bases<PathBuf>,
 }
 
-/// Every build described, and how the release's signed artifacts verify.
+/// Every build described.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Builds {
     pub release: Release,
     pub zip: ReleaseZip,
     pub build: Build,
-    pub signatures: Signatures,
     pub bases: Bases<Build>,
 }
 
@@ -145,7 +143,6 @@ pub struct Candidates {
     pub release: Release,
     pub zip: ReleaseZip,
     pub build: Build,
-    pub signatures: Signatures,
     pub bases: Bases<Candidate>,
 }
 
@@ -178,7 +175,7 @@ pub enum State {
     Extracted(Folders),
     Scanned(Builds),
     Encoded(Candidates),
-    /// Every remaining patch set rebuilt the release build exactly, signatures included; the
+    /// Every remaining patch set rebuilt the release build exactly; the
     /// manifest is built from them.
     Verified(Upload),
     /// The upload folders hold the verified patches and `manifest.json`.
@@ -268,7 +265,6 @@ pub enum DropReason {
     EncodeFailed(String),
     RebuildFailed(String),
     RebuildDiffers(Vec<String>),
-    SignaturesChanged(Vec<String>),
 }
 
 impl DropReason {
@@ -285,7 +281,6 @@ impl fmt::Display for DropReason {
             DropReason::EncodeFailed(detail) => write!(f, "encoding failed: {detail}"),
             DropReason::RebuildFailed(detail) => write!(f, "rebuild failed: {detail}"),
             DropReason::RebuildDiffers(paths) => write!(f, "rebuilt build differs: {}", paths.join(", ")),
-            DropReason::SignaturesChanged(paths) => write!(f, "signatures changed: {}", paths.join(", ")),
         }
     }
 }

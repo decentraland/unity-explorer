@@ -8,41 +8,30 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow};
 
-use crate::builds::disk::{check_signatures, empty_dir, extract, file_size, place, remove, scan, sha256_file};
-use crate::builds::signatures::{Signatures, signed_artifacts};
+use crate::builds::disk::{empty_dir, extract, file_size, place, remove, scan, sha256_file};
 use crate::builds::tree::{Build, Tree};
-use crate::builds::values::RelPath;
 use crate::io::{Caching, Io};
 use crate::patching::delta::Delta;
 use crate::patching::disk::{encode, rebuild};
 use crate::patching::plan::Plan;
 use crate::publishing::layout::{UploadLayout, base_folder};
 use crate::publishing::values::ETag;
-use crate::releases::tag::{Platform, Tag};
-use crate::run::fsm::{Cmd, Fetch, Msg, Rebuilt, Replay, Unpack};
+use crate::releases::tag::Tag;
+use crate::run::fsm::{Cmd, Fetch, Msg, Replay, Unpack};
 
 pub fn execute(cmd: Cmd, io: &Io) -> Msg {
     let produced: Result<Msg> = match cmd {
         Cmd::RemoveStalePatches { prefix } => io.bucket.remove_prefix(&prefix).map(|()| Msg::StalePatchesRemoved),
         Cmd::DownloadArchives { release, bases } => download_archives(&release, bases, io),
         Cmd::ExtractArchives { release, bases } => extract_archives(&release, bases),
-        Cmd::ScanBuilds {
-            platform,
-            release_root,
-            bases,
-        } => scan_builds(platform, &release_root, bases, io),
+        Cmd::ScanBuilds { release_root, bases } => scan_builds(&release_root, bases),
         Cmd::EncodePatches {
             staging,
             build_id,
             release,
             bases,
         } => Ok(encode_patches(&staging, &build_id, &release, bases, io)),
-        Cmd::ReplayPatches {
-            platform,
-            staging,
-            artifacts,
-            bases,
-        } => Ok(replay_patches(platform, &staging, &artifacts, bases, io)),
+        Cmd::ReplayPatches { staging, bases } => Ok(replay_patches(&staging, bases, io)),
         Cmd::PrepareUploadFolder {
             manifest_json,
             layout,
@@ -55,7 +44,7 @@ pub fn execute(cmd: Cmd, io: &Io) -> Msg {
             .map(|()| Msg::PatchesUploaded),
         Cmd::PublishManifest { folder, prefix } => io
             .bucket
-            .upload(&folder, &prefix, Caching::Revalidated)
+            .upload(&folder, &prefix, Caching::ShortLived)
             .map(|()| Msg::ManifestPublished),
         Cmd::Complete => Err(anyhow!("complete asks the runtime to stop; it is not executed")),
     };
@@ -145,10 +134,8 @@ fn extract_archives(release: &Unpack, bases: Vec<(Tag, Unpack)>) -> Result<Msg> 
 }
 
 /// A base that cannot be described is removed.
-fn scan_builds(platform: Platform, release_root: &Path, bases: Vec<(Tag, PathBuf)>, io: &Io) -> Result<Msg> {
+fn scan_builds(release_root: &Path, bases: Vec<(Tag, PathBuf)>) -> Result<Msg> {
     let tree: Tree = scan(release_root).context("cannot describe the release build")?;
-    let artifacts: Vec<RelPath> = signed_artifacts(platform, &tree);
-    let signatures: Signatures = check_signatures(platform, release_root, &artifacts, io.signer.as_ref())?;
     let mut found: Vec<(Tag, Build)> = Vec::new();
     let mut unreadable: Vec<(Tag, String)> = Vec::new();
     for (base, root) in bases {
@@ -162,7 +149,6 @@ fn scan_builds(platform: Platform, release_root: &Path, bases: Vec<(Tag, PathBuf
             root: release_root.to_path_buf(),
             tree,
         },
-        signatures,
         bases: found,
         unreadable,
     })
@@ -184,32 +170,18 @@ fn encode_patches(staging: &Path, build_id: &str, release: &Build, bases: Vec<(T
     Msg::PatchesEncoded { encoded, failed }
 }
 
-fn rebuild_and_describe(
-    platform: Platform,
-    staging: &Path,
-    artifacts: &[RelPath],
-    replay: &Replay,
-    io: &Io,
-) -> Result<Rebuilt> {
+fn rebuild_and_describe(staging: &Path, replay: &Replay, io: &Io) -> Result<Tree> {
     let rebuilt: PathBuf = empty_dir(&replay.rebuild)?;
     rebuild(&replay.actions, &replay.base, staging, &rebuilt, &io.hdiff)?;
-    let tree: Tree = scan(&rebuilt)?;
-    let signatures: Signatures = check_signatures(platform, &rebuilt, artifacts, io.signer.as_ref())?;
-    Ok(Rebuilt { tree, signatures })
+    scan(&rebuilt)
 }
 
 /// The base build and its rebuild folder are removed afterwards, whatever the outcome.
-fn replay_patches(
-    platform: Platform,
-    staging: &Path,
-    artifacts: &[RelPath],
-    bases: Vec<(Tag, Replay)>,
-    io: &Io,
-) -> Msg {
-    let mut rebuilt: Vec<(Tag, Rebuilt)> = Vec::new();
+fn replay_patches(staging: &Path, bases: Vec<(Tag, Replay)>, io: &Io) -> Msg {
+    let mut rebuilt: Vec<(Tag, Tree)> = Vec::new();
     let mut failed: Vec<(Tag, String)> = Vec::new();
     for (base, replay) in bases {
-        let replayed: Result<Rebuilt> = rebuild_and_describe(platform, staging, artifacts, &replay, io);
+        let replayed: Result<Tree> = rebuild_and_describe(staging, &replay, io);
         match replayed {
             Ok(result) => {
                 let failures: Vec<String> = remove_all(&[&replay.rebuild, &replay.base]);
