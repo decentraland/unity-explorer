@@ -730,6 +730,36 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
+        public void LetTheCursorGoOverASizeToggleOfARow()
+        {
+            //Arrange
+            host.Layout!.Remove(LobbyWidgetId.JumpBackIn7By2);
+            host.Apply();
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(LobbyWidgetFamily.JumpBackIn);
+            VisualElement larger = card.Q(LobbyWidgetId.JumpBackIn7By2.ToString());
+            Enter(card);
+
+            //Act
+            Enter(larger);
+
+            //Assert
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+
+            //Act
+            Leave(larger);
+
+            //Assert
+            cursor.Received(2).SetStyle(CursorStyle.Grab, true);
+
+            //Act
+            Leave(card);
+
+            //Assert
+            cursor.Received(2).SetStyle(CursorStyle.Normal);
+        }
+
+        [Test]
         public void ShowTheNotAllowedCursorWhileDraggingOffEveryGrid()
         {
             //Arrange

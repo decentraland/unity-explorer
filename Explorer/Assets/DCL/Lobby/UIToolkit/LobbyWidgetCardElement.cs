@@ -38,12 +38,15 @@ namespace DCL.Lobby
         public Action<LobbyWidgetCardElement, Vector2, Vector2>? Dragged;
         public Action<LobbyWidgetCardElement, Vector2>? DragEnded;
 
-        /// <summary>Whether the pointer is over the row, size toggles included, where a drag can start.</summary>
+        /// <summary>Whether the pointer is over the row outside its size toggles, where a drag can start.</summary>
         public Action<LobbyWidgetCardElement, bool>? Hovered;
 
         private readonly LobbyWidgetPreviewElement[] previews;
         private readonly ClickOrDragManipulator gesture;
         private readonly VisualElement? sizes;
+        private bool rowHovered;
+        private bool toggleHovered;
+        private bool reportedHovered;
 
         public LobbyWidgetFamily Family { get; }
 
@@ -111,6 +114,8 @@ namespace DCL.Lobby
                     if (evt.button == 0)
                         Select(variant);
                 });
+                toggle.RegisterCallback<PointerEnterEvent>(OnTogglePointerEnter);
+                toggle.RegisterCallback<PointerLeaveEvent>(OnTogglePointerLeave);
 
                 var at = 0;
 
@@ -150,11 +155,41 @@ namespace DCL.Lobby
         public void Cancel() =>
             gesture.Cancel();
 
-        private void OnPointerEnter(PointerEnterEvent _) =>
-            Hovered?.Invoke(this, true);
+        private void OnPointerEnter(PointerEnterEvent _)
+        {
+            rowHovered = true;
+            ReportHover();
+        }
 
-        private void OnPointerLeave(PointerLeaveEvent _) =>
-            Hovered?.Invoke(this, false);
+        private void OnPointerLeave(PointerLeaveEvent _)
+        {
+            rowHovered = false;
+            ReportHover();
+        }
+
+        // Entering a toggle enters no ancestor again, so the toggles keep a flag of their own
+        private void OnTogglePointerEnter(PointerEnterEvent _)
+        {
+            toggleHovered = true;
+            ReportHover();
+        }
+
+        private void OnTogglePointerLeave(PointerLeaveEvent _)
+        {
+            toggleHovered = false;
+            ReportHover();
+        }
+
+        private void ReportHover()
+        {
+            bool hovered = rowHovered && !toggleHovered;
+
+            if (hovered == reportedHovered)
+                return;
+
+            reportedHovered = hovered;
+            Hovered?.Invoke(this, hovered);
+        }
 
         private void Select(LobbyWidgetId variant)
         {

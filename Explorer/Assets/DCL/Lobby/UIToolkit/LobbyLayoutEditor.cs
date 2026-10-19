@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Lobby
 {
@@ -488,16 +489,16 @@ namespace DCL.Lobby
             cursor.SetStyle(style, style != CursorStyle.Normal);
         }
 
-        // The only button inside a source is the one in the corner of a handle, which takes the pointer for itself
+        // An interactable inside a source takes the pointer for itself: the button of a handle, a size toggle of a row
         private static bool IsDragSource(VisualElement? element)
         {
             for (VisualElement? at = element; at != null; at = at.parent)
             {
-                switch (at)
-                {
-                    case Button: return false;
-                    case LobbyWidgetHandleElement or LobbyWidgetCardElement: return true;
-                }
+                if (at is LobbyWidgetHandleElement or LobbyWidgetCardElement)
+                    return true;
+
+                if (at is Button || at.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS))
+                    return false;
             }
 
             return false;
