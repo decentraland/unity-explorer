@@ -9,15 +9,14 @@
     height: 248px;
 }
 
-/* Two pixels past the body on every side, showing only while hovered */
+/* The gradient ring (LobbyGradientOutlineElement, 2px thick, its radius the card's plus the 6px) hangs 6px past the
+   body on every side, leaving a 4px gap between it and the card, and shows only while hovered */
 .lobby-landing-card__outline {
     position: absolute;
-    left: -2px;
-    top: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 18px;
-    background-image: var(--lobby-outline-gradient-image);
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
     opacity: 0;
     transition: opacity var(--lobby-outline-duration) ease-out;
 }
@@ -36,7 +35,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    border-width: 2px;
+    border-width: 1px;
     border-radius: var(--lobby-card-radius);
     border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
@@ -137,11 +136,11 @@
     color: var(--dcl-color-snow);
 }
 
-/* The home icon and the place name, 16px over the button; the 2px border of the body is inside its box, so 22px in */
+/* The home icon and the place name, 16px over the button; the 1px border of the body is inside its box, so 21px in */
 .lobby-landing-card__footer {
     position: absolute;
-    left: 22px;
-    right: 22px;
+    left: 21px;
+    right: 21px;
     bottom: 84px;
     height: 24px;
     flex-direction: row;
@@ -172,8 +171,8 @@
    and the label is padded off that strip */
 .lobby-landing-card__jump-in {
     position: absolute;
-    left: 22px;
-    right: 22px;
+    left: 21px;
+    right: 21px;
     bottom: 16px;
     height: 52px;
     padding: 0 0 6px;

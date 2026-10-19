@@ -188,14 +188,15 @@
     color: var(--lobby-title-color);
 }
 
-/* The size toggles of a family of several sizes, at the right end of the row: a 32px pill holding a 30px disc per size */
+/* The size toggles of a family of several sizes, at the right end of the row: a 32px pill holding a 30px disc per size,
+   the design's 10% white with the picked disc its 20% (see LobbyDocument.uss for the alphas) */
 .lobby-widget-card__sizes {
     height: 32px;
     flex-direction: row;
     align-items: center;
     padding: 0 4px;
     border-radius: 16px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--lobby-white-10);
 }
 
 .lobby-widget-card__size-toggle {
@@ -213,26 +214,26 @@
 }
 
 .lobby-widget-card__size-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--lobby-white-5);
 }
 
 .lobby-widget-card__size-toggle--selected {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--lobby-white-20);
     color: var(--dcl-color-snow);
 }
 
 /* Stand-in of a widget off the grids (LobbyWidgetPreviewElement), lifted while dragged off its row: its title over blank
-   cards at the size of its span, laid out and inset like a section so the drag frame fits around it */
+   entries the size of the real cards, with the pager of the widgets that page under them, laid out and inset like the
+   section (LobbyDocument.uss has the metrics of each) so the drag frame fits around it */
 .lobby-widget-preview {
     position: absolute;
     left: 0;
     top: 0;
-    padding: 5px var(--lobby-widget-inset) 10px;
+    padding: 5px var(--lobby-widget-inset) 0;
 }
 
 .lobby-widget-preview__title {
     height: 32px;
-    margin-bottom: 5px;
     font-size: 22px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
@@ -243,21 +244,126 @@
     color: var(--lobby-title-color);
 }
 
-/* The negative margin swallows the trailing gap of the last card */
 .lobby-widget-preview__cards {
-    flex-grow: 1;
     flex-direction: row;
-    margin-right: -8px;
 }
 
+/* An entry is a 10% white shape with no outline, rounded like the card it stands for */
 .lobby-widget-preview__card {
-    flex-grow: 1;
-    flex-basis: 0;
-    margin-right: 8px;
-    border-radius: 16px;
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    border-radius: var(--lobby-card-radius);
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* The pager band of the rails: a 32px row 10px under the entries with three dots standing in for the pages, the first
+   one stretched like the selected dot */
+.lobby-widget-preview__pager {
+    height: 32px;
+    margin-top: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.lobby-widget-preview__pager-dot {
+    width: 14px;
+    height: 14px;
+    margin: 0 4px;
+    border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.lobby-widget-preview__pager-dot--selected {
+    width: 40px;
+}
+
+/* The hero: the welcome line over the single card */
+.lobby-widget-preview--landing .lobby-widget-preview__title {
+    height: 60px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 30px;
+}
+
+.lobby-widget-preview--landing .lobby-widget-preview__card {
+    width: 442px;
+    height: 248px;
+}
+
+.lobby-widget-preview--live-events .lobby-widget-preview__title {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.lobby-widget-preview--live-events .lobby-widget-preview__card {
+    width: 326px;
+    height: 199px;
+}
+
+.lobby-widget-preview--upcoming-events .lobby-widget-preview__title {
+    margin-bottom: 8px;
+}
+
+.lobby-widget-preview--upcoming-events .lobby-widget-preview__card {
+    width: 326px;
+    height: 139px;
+}
+
+.lobby-widget-preview--upcoming-events .lobby-widget-preview__pager {
+    margin-top: 8px;
+}
+
+.lobby-widget-preview--friends .lobby-widget-preview__title {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.lobby-widget-preview--friends .lobby-widget-preview__card {
+    width: 103px;
+    height: 117px;
+    margin-right: 9px;
+    border-radius: 12px;
+}
+
+/* The places, communities and gallery families share the place card's footprint; the photos of the gallery are square */
+.lobby-widget-preview--places .lobby-widget-preview__title,
+.lobby-widget-preview--gallery .lobby-widget-preview__title {
+    margin-bottom: 5px;
+}
+
+.lobby-widget-preview--places .lobby-widget-preview__card,
+.lobby-widget-preview--gallery .lobby-widget-preview__card {
+    width: 256px;
+    height: 146px;
+    margin-right: 11px;
+}
+
+.lobby-widget-preview--narrow .lobby-widget-preview__card {
+    width: 215px;
+}
+
+.lobby-widget-preview--gallery .lobby-widget-preview__card {
+    border-radius: 0;
+}
+
+/* The go-to row: the question over the pill, at the bottom of the row with the inset under it like the section */
+.lobby-widget-preview--go-to {
+    padding-bottom: var(--lobby-widget-inset);
+    justify-content: flex-end;
+}
+
+.lobby-widget-preview--go-to .lobby-widget-preview__title {
+    height: 26px;
+    margin-bottom: 10px;
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.lobby-widget-preview--go-to .lobby-widget-preview__card {
+    width: 442px;
+    height: 46px;
+    border-radius: 23px;
 }
 
 /* Over the avatar, between the top grids and as tall as the design's column (700px). It goes green while a dragged
@@ -322,6 +428,7 @@
     flex-grow: 1;
 }
 
+/* The secondary buttons are the design's 10% white, 20% under the pointer (see LobbyDocument.uss for the alphas) */
 .lobby__widget-modal-button {
     height: 42px;
     padding: 0 16px;
@@ -330,7 +437,7 @@
     justify-content: center;
     border-width: 0;
     border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--lobby-white-10);
     font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-center;
@@ -339,11 +446,11 @@
 }
 
 .lobby__widget-modal-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--lobby-white-20);
 }
 
 .lobby__widget-modal-button:active {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--lobby-white-5);
 }
 
 .lobby__widget-modal-button--fixed {

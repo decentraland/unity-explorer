@@ -26,6 +26,8 @@ namespace DCL.Lobby
     {
         private const string LOBBY_LABEL = "Lobby";
         private const string LOCATING_LABEL = "Locating…";
+        private const string ONLINE_COUNT_NAME = "OnlineCount";
+        private const string ONLINE_COUNT_FORMAT = "{0} Online";
 
         /// <summary>
         ///     Raised with the friend's live position when Join is pressed and the friend is still in the world.
@@ -49,6 +51,10 @@ namespace DCL.Lobby
         private CancellationToken showCt;
         private CancellationTokenSource? jumpCts;
         private bool flushScheduled;
+
+        /// <summary>The counter next to the title of the section; a section without one counts nothing.</summary>
+        private Label? onlineCountLabel;
+        private int shownOnlineCount = -1;
 
         public LobbyDocumentFriendsPresenter(LobbyFriendsRail rail,
             FriendsConnectivityStatusTracker tracker,
@@ -87,6 +93,8 @@ namespace DCL.Lobby
             resolving.Clear();
             pendingIds.Clear();
             flushScheduled = false;
+            onlineCountLabel = section.Q<Label>(ONLINE_COUNT_NAME);
+            shownOnlineCount = -1;
             rail.Show(section);
 
             tracker.OnFriendBecameOnline += OnFriendStatusChanged;
@@ -128,6 +136,7 @@ namespace DCL.Lobby
             FriendsSorter.SortFriendList(onlineFriends);
 
             rail.SetCount(onlineFriends.Count, rewind);
+            ShowOnlineCount(onlineFriends.Count);
 
             for (var i = 0; i < onlineFriends.Count; i++)
                 Bind(i);
@@ -159,6 +168,16 @@ namespace DCL.Lobby
                 ShowLocation(card, LOCATING_LABEL, canJoin: false);
                 QueueLocation(userId);
             }
+        }
+
+        // The text is only built when the count changes
+        private void ShowOnlineCount(int count)
+        {
+            if (onlineCountLabel == null || count == shownOnlineCount)
+                return;
+
+            onlineCountLabel.text = string.Format(ONLINE_COUNT_FORMAT, count);
+            shownOnlineCount = count;
         }
 
         private static void ShowLocation(LobbyFriendCardElement card, string label, bool canJoin)

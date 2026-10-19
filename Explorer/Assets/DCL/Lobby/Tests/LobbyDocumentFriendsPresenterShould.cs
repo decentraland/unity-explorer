@@ -116,6 +116,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual("2 Online", section.Q<Label>("OnlineCount").text, "The title counts the friends online");
             Assert.AreEqual("Amy", card.UserName);
             Assert.AreEqual("Zed", Card(1).UserName);
             Assert.AreEqual(LOCATING, initialLocation);
@@ -276,6 +277,7 @@ namespace DCL.Lobby.Tests
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
+            friendsSection.Add(new Label { name = "OnlineCount" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

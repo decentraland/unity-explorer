@@ -1,5 +1,5 @@
 /* The pill of the go-to widget (LobbyGoToElement): the icon, the command, the field and the go button in a row; its frame
-   brightens while the field is focused */
+   and its fill both brighten under the pointer and more so while the field is focused */
 .lobby-goto {
     flex-direction: row;
     align-items: center;
@@ -9,15 +9,18 @@
     border-radius: 23px;
     border-color: rgba(255, 255, 255, 0.6);
     background-color: rgba(20, 20, 26, 0.5);
-    transition: border-color 0.1s;
+    transition: border-color 0.1s, background-color 0.1s;
 }
 
 .lobby-goto:hover {
-    border-color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(44, 44, 54, 0.65);
 }
 
-.lobby-goto--focused {
+.lobby-goto--focused,
+.lobby-goto--focused:hover {
     border-color: white;
+    background-color: rgba(58, 58, 70, 0.75);
 }
 
 /* The pin sprite is taller than wide (36x43), so the box keeps its shape */
@@ -54,8 +57,8 @@
     border-width: 0;
     border-radius: 0;
     background-color: rgba(0, 0, 0, 0);
-    font-size: 16px;
-    -unity-font-definition: var(--dcl-font-inter-regular);
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-text-align: middle-left;
     color: var(--lobby-title-color);
 }

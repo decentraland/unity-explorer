@@ -6,7 +6,9 @@
 .lobby-upcoming-event-card {
     width: 326px;
     height: 139px;
+    border-width: 1px;
     border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }

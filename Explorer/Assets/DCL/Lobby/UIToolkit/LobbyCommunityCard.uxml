@@ -14,5 +14,8 @@
                 <ui:Label name="Members" text="0 Members" class="lobby-community-card__members" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:Button name="View" class="lobby-community-card__view">
+            <ui:Label name="ViewText" text="VIEW" class="lobby-community-card__view-text" picking-mode="Ignore" />
+        </ui:Button>
     </DCL.Lobby.LobbyCommunityCardElement>
 </ui:UXML>

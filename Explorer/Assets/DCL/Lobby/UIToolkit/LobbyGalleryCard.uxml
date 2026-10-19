@@ -2,7 +2,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGalleryCard.uss" />
     <!-- The outline hangs past the card, so the body clips the photo instead of the card itself -->
     <DCL.Lobby.LobbyGalleryCardElement name="GalleryCard">
-        <ui:VisualElement name="Outline" class="lobby-gallery-card__outline" picking-mode="Ignore" />
+        <DCL.Lobby.LobbyGradientOutlineElement name="Outline" class="lobby-gallery-card__outline" thickness="2" radius="0" />
         <ui:VisualElement name="Body" class="lobby-gallery-card__body" picking-mode="Ignore">
             <ui:VisualElement name="Thumbnail" class="lobby-gallery-card__thumbnail" picking-mode="Ignore" />
         </ui:VisualElement>

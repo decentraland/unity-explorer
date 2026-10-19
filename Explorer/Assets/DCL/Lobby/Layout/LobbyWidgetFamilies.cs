@@ -56,7 +56,7 @@ namespace DCL.Lobby
                 LobbyWidgetFamily.Landing => "Jump In Home",
                 LobbyWidgetFamily.LiveEvents => "Live Events",
                 LobbyWidgetFamily.UpcomingEvents => "Upcoming Events",
-                LobbyWidgetFamily.FriendsOnline => "Online Friends",
+                LobbyWidgetFamily.FriendsOnline => "Friends",
                 LobbyWidgetFamily.JumpBackIn => "Jump Back In",
                 LobbyWidgetFamily.RecommendedPlaces => "Recommended Places",
                 LobbyWidgetFamily.Communities => "My Communities",

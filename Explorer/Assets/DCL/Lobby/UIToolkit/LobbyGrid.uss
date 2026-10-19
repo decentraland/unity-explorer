@@ -5,7 +5,8 @@
 }
 
 /* The backdrop tints the area of the grid while editing, a little past its cells: a child, as a background on the grid
-   itself would stop at them. It brightens while a drag targets the grid */
+   itself would stop at them. Barely there, the design's 2% white, it brightens to its 5% while a drag targets the grid
+   (see LobbyDocument.uss for the alphas) */
 .lobby-grid__backdrop {
     position: absolute;
     left: -6px;
@@ -13,8 +14,8 @@
     right: -6px;
     bottom: -6px;
     display: none;
-    border-radius: 16px;
-    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: 24px;
+    background-color: var(--lobby-white-2);
     transition: background-color 0.1s;
 }
 
@@ -23,5 +24,5 @@
 }
 
 .lobby-grid--highlighted .lobby-grid__backdrop {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--lobby-white-5);
 }

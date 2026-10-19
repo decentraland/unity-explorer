@@ -27,6 +27,8 @@ namespace DCL.Lobby
         private const string CANCEL_BUTTON_NAME = "CancelLayout";
         private const string BACK_BUTTON_NAME = "BackFromLayout";
         private const string SAVE_BUTTON_NAME = "SaveLayout";
+        private const string SECTION_TITLE_NAME = "Title";
+        private const string WELCOME_TITLE_NAME = "WelcomeText";
         private const string USS_EDITING = "lobby--editing";
         private const string USS_WIDGET_LIFTED = "lobby__widget--lifted";
         private const string USS_GRID_SHIELD = "lobby-grid-shield";
@@ -358,12 +360,22 @@ namespace DCL.Lobby
             BeginDrag(handle.WidgetId, host.Section(handle.WidgetId), panelPosition - handle.WidgetPosition, panelPosition);
         }
 
-        // The stand-in of the picked size is lifted hanging from its middle, as the row is far smaller than the widget
+        // The stand-in of the picked size is lifted hanging from its middle, as the row is far smaller than the widget,
+        // titled as the section is so the two read alike
         private void OnCardDragStarted(LobbyWidgetCardElement card, LobbyWidgetId variant, Vector2 panelPosition)
         {
             draggedCard = card;
             card.SetDragging(true);
-            BeginDrag(variant, card.Preview(variant), LobbyGridElement.SpanToSize(variant.Span()) * 0.5f, panelPosition);
+            LobbyWidgetPreviewElement preview = card.Preview(variant);
+            preview.Title = SectionTitle(variant) ?? card.Family.Title();
+            BeginDrag(variant, preview, LobbyGridElement.SpanToSize(variant.Span()) * 0.5f, panelPosition);
+        }
+
+        // The hero section greets the user over its card, whose own title names the place, so the greeting is looked up first
+        private string? SectionTitle(LobbyWidgetId widgetId)
+        {
+            VisualElement section = host.Section(widgetId);
+            return section.Q<Label>(WELCOME_TITLE_NAME)?.text ?? section.Q<Label>(SECTION_TITLE_NAME)?.text;
         }
 
         // The lifted element goes onto the drag layer so it draws over every grid, after the frame that goes under it,

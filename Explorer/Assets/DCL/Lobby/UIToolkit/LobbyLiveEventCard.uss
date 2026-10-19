@@ -31,7 +31,9 @@
     top: 0;
     right: 0;
     bottom: 0;
+    border-width: 1px;
     border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
@@ -187,12 +189,12 @@
     opacity: 0;
 }
 
-/* Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
+/* Spans the card like the hero card's button. Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
 .lobby-live-event-card__jump-in {
     position: absolute;
     left: 16px;
+    right: 16px;
     bottom: 10px;
-    width: 155px;
     height: 46px;
     padding: 0 0 6px;
     flex-direction: row;

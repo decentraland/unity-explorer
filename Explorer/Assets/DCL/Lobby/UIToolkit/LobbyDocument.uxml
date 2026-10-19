@@ -76,6 +76,7 @@
             <ui:VisualElement name="Friends" class="lobby__widget lobby__friends" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--friends" picking-mode="Ignore">
                     <ui:Label name="Title" text="Friends" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Label name="OnlineCount" text="0 Online" class="lobby__section-count" picking-mode="Ignore" />
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__friends-rail" cards-per-page="4" />
             </ui:VisualElement>

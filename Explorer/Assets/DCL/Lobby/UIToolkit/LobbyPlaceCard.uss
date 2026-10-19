@@ -6,7 +6,9 @@
 .lobby-place-card {
     width: 256px;
     height: 146px;
+    border-width: 1px;
     border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }

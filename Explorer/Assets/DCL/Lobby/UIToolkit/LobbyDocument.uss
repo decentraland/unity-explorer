@@ -8,8 +8,19 @@
     --lobby-grid-top: 97px;
     --lobby-bottom-margin: 26px;
     --lobby-card-color: rgba(20, 20, 26, 0.9);
-    --lobby-card-border-color: rgba(255, 255, 255, 0.1);
     --lobby-card-radius: 16px;
+    /* The panel blends in linear light, where a translucent white reads far brighter over the dark stage, and a translucent
+       black far lighter, than the same alpha does in the design tool; these are the alphas that look like the design's
+       10%, 20%, 40% and 60% whites and its 60% black, used wherever the design names one */
+    --lobby-white-2: rgba(255, 255, 255, 0.004);
+    --lobby-white-5: rgba(255, 255, 255, 0.01);
+    --lobby-white-10: rgba(255, 255, 255, 0.025);
+    --lobby-white-20: rgba(255, 255, 255, 0.055);
+    --lobby-white-40: rgba(255, 255, 255, 0.14);
+    --lobby-white-60: rgba(255, 255, 255, 0.3);
+    --lobby-black-60: rgba(0, 0, 0, 0.85);
+    /* The 1px line just inside the edge of every entry, the design's 10% white */
+    --lobby-card-border-color: var(--lobby-white-10);
     --lobby-title-color: white;
     --lobby-subtitle-color: rgb(207, 205, 212);
     --lobby-jump-in-color: rgb(255, 45, 85);
@@ -20,8 +31,6 @@
     /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
     --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
     --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
-    /* The gradient a hovered hero or photo card is outlined with */
-    --lobby-outline-gradient-image: url('/Assets/Textures/Common/RainbowGradient.png');
 }
 
 .lobby {
@@ -43,7 +52,8 @@
     -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
 }
 
-/* Darkens the stage and the figure under the whole screen while the layout is edited (see LobbyLayoutEditor.uss) */
+/* Darkens the stage and the figure under the whole screen while the layout is edited (see LobbyLayoutEditor.uss): the
+   design's 60% black */
 .lobby__overlay {
     position: absolute;
     left: 0;
@@ -51,7 +61,7 @@
     right: 0;
     bottom: 0;
     display: none;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: var(--lobby-black-60);
 }
 
 /* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */
@@ -203,6 +213,22 @@
     margin-bottom: 10px;
 }
 
+/* The friends title is followed by how many are online, so it takes only its own width */
+.lobby__section-header--friends .lobby__section-title {
+    flex-grow: 0;
+}
+
+.lobby__section-count {
+    flex-shrink: 0;
+    height: 32px;
+    margin-left: 15px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    color: var(--lobby-subtitle-color);
+}
+
 /* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */
 .lobby__welcome-title {
     height: 60px;
@@ -278,23 +304,25 @@
     margin-right: 11px;
 }
 
-/* The viewport bleeds the 2px of the hover outline of the photos on every side, so the outline shows whole instead of
-   clipping at the cards' edges; the padding keeps the cards in place */
+/* The viewport bleeds the 6px the hover outline of the photos hangs out on every side (see LobbyGalleryCard.uss), so the
+   outline shows whole instead of clipping at the cards' edges; the padding keeps the cards in place */
 .lobby__gallery-rail .lobby-rail__viewport {
-    margin: -2px;
-    padding: 2px;
+    margin: -6px;
+    padding: 6px;
 }
 
 .lobby__gallery-rail .lobby-rail__content {
-    left: 2px;
-    top: 2px;
-    bottom: 2px;
+    left: 6px;
+    top: 6px;
+    bottom: 6px;
 }
 
-/* The recent row has no dots: its cards are padded by the pager band of the rail so both rows line up along the bottom */
+/* The recent row has no dots: its cards are padded by the pager band of the rail so both rows line up along the bottom.
+   The negative margin swallows the trailing gap of the last card, which would otherwise squeeze the cards narrower */
 .lobby__places-row {
     flex-direction: row;
     height: 146px;
+    margin-right: -11px;
     margin-bottom: 42px;
 }
 
@@ -302,10 +330,15 @@
     margin-right: 11px;
 }
 
-/* Inset past the pill (LobbyGoTo.uss) so the question lines up with the icon inside it */
+/* The pill sits at the bottom of the row with the inset under it, as it has at its sides, and the question over it */
+.lobby__goto {
+    padding-bottom: var(--lobby-widget-inset);
+    justify-content: flex-end;
+}
+
 .lobby__goto-title {
     height: 26px;
-    margin: 0 10px 10px 20px;
+    margin: 0 10px 10px 0;
     font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;

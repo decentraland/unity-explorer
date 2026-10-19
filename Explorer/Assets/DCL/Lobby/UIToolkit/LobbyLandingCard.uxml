@@ -3,7 +3,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <!-- The outline hangs past the card, so the body rounds and clips the layers instead of the card itself -->
     <DCL.Lobby.LobbyLandingCardElement name="LandingCard" title="Place Name" online-count="0" can-jump-in="true" can-open="true">
-        <ui:VisualElement name="Outline" class="lobby-landing-card__outline" picking-mode="Ignore" />
+        <DCL.Lobby.LobbyGradientOutlineElement name="Outline" class="lobby-landing-card__outline" thickness="2" radius="22" />
         <ui:VisualElement name="Body" class="lobby-landing-card__body" picking-mode="Ignore">
             <ui:VisualElement name="Thumbnail" class="lobby-landing-card__thumbnail" picking-mode="Ignore" />
             <ui:VisualElement name="Gradient" class="lobby-landing-card__gradient" picking-mode="Ignore" />

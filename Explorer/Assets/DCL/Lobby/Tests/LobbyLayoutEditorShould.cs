@@ -424,6 +424,26 @@ namespace DCL.Lobby.Tests
             Assert.AreSame(root.Q("TopLeftGrid"), handle.parent, "The handle marks the origin until the drop");
         }
 
+        [TestCase(LobbyWidgetId.Landing4By3, LobbyWidgetFamily.Landing, "Welcome Ace!")]
+        [TestCase(LobbyWidgetId.LiveEvents3By3, LobbyWidgetFamily.LiveEvents, "Live Events")]
+        [TestCase(LobbyWidgetId.UpcomingEvents3By2, LobbyWidgetFamily.UpcomingEvents, "Upcoming Events")]
+        public void TitleTheLiftedStandInLikeTheSection(LobbyWidgetId widgetId, LobbyWidgetFamily family, string expectedTitle)
+        {
+            //Arrange
+            host.Layout!.Remove(widgetId);
+            host.Apply();
+            editor.Show(root);
+            LobbyWidgetCardElement card = Card(family);
+
+            //Act
+            Press(card, 100f);
+            Move(card, 130f);
+
+            //Assert: the greeting of the hero wins over the name of its place, and a section without a title keeps the family's
+            Assert.AreEqual(expectedTitle, card.Preview(widgetId).Title);
+            Assert.AreEqual(expectedTitle, card.Preview(widgetId).Q<Label>("Title").text);
+        }
+
         [Test]
         public void LiftTheFirstSizeOffTheRowWhileDragging()
         {
@@ -682,8 +702,16 @@ namespace DCL.Lobby.Tests
 
             var unplaced = new VisualElement { name = "UnplacedWidgets" };
             lobby.Add(unplaced);
-            unplaced.Add(new VisualElement { name = "Welcome" });
-            unplaced.Add(new VisualElement { name = "LiveEvents" });
+
+            // The hero greets the user over a card that names its place
+            var welcome = new VisualElement { name = "Welcome" };
+            welcome.Add(new Label("Welcome Ace!") { name = "WelcomeText" });
+            welcome.Add(new Label("Genesis Plaza") { name = "Title" });
+            unplaced.Add(welcome);
+
+            var liveEvents = new VisualElement { name = "LiveEvents" };
+            liveEvents.Add(new Label("Live Events") { name = "Title" });
+            unplaced.Add(liveEvents);
             unplaced.Add(new VisualElement { name = "UpcomingEvents" });
             unplaced.Add(new VisualElement { name = "Friends" });
             unplaced.Add(new VisualElement { name = "RecentPlaces" });
