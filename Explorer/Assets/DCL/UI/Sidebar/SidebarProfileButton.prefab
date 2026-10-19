@@ -3261,7 +3261,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4625828311251772225, guid: db3b200a64083014192c5eeb28b38f1e, type: 3}
       propertyPath: m_Name
-      value: ProfileMenuView
+      value: ProfileMenuViewOBSOLETE
       objectReference: {fileID: 0}
     - target: {fileID: 4625828311251772225, guid: db3b200a64083014192c5eeb28b38f1e, type: 3}
       propertyPath: m_IsActive

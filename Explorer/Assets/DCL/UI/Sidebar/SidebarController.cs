@@ -1,11 +1,8 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.BugReporting.UI;
 using DCL.Chat;
 using DCL.Chat.ChatStates;
-using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
@@ -19,71 +16,48 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
-using DCL.UI.Skybox;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.VoiceChat.UI;
+using DCL.Web3.Identities;
 using ECS;
 using MVC;
 using System;
 using System.Threading;
-using DCL.CharacterCamera;
-using DCL.EventsApi;
-using DCL.InWorldCamera;
-using DCL.UI.Buttons;
-using DCL.UI.Sidebar.HelpMenu;
-using DCL.UI.UpgradeGuestAccountPopup;
-using DCL.Utilities;
-using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
-using DCL.Web3.Identities;
-using DCL.VoiceChat;
-using DCL.VoiceChat.UI;
-using ECS.Abstract;
-using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
-        private const string SOURCE_BUTTON = "Button";
-
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
-        private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly IChatHistory chatHistory;
         private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly World globalWorld;
-        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "client");
-        private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
-        private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
-        private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
-        private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
-        private readonly bool isBugReportFeatureEnabled;
-        private readonly HttpEventsApiService eventsApiService;
-
-        private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
+        private readonly bool isDiscoverFeatureEnabled;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
-        private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
+        private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource openPanelCts = new ();
-        private SingleInstanceEntity? cameraInternal;
         private bool isMarketplaceCreditsFeatureEnabled;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        private SimpleHoverableButton? openMenuButton;
+        private GameObject? openMenu;
+        private MenuElementView? highlightedOption;
 
-        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action? PlacesOpened;
         public event Action? EventsOpened;
@@ -91,38 +65,25 @@ namespace DCL.UI.Sidebar
         public SidebarController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             SidebarProfileButtonPresenter profileButtonPresenter,
-            SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             UnityAppWebBrowser webBrowser,
-            IChatHistory chatHistory,
             SelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            World globalWorld,
             ChatEventBus chatEventBus,
-            HttpEventsApiService eventsApiService,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
             IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
-            this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
-            this.chatHistory = chatHistory;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.globalWorld = globalWorld;
-            this.chatEventBus = chatEventBus;
-            this.eventsApiService = eventsApiService;
-            this.communitiesLiveTracker = communitiesLiveTracker;
-            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
-            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
-            isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -132,73 +93,53 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             chatEventBusSubscription.Dispose();
-            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
 
             mvcManager.OnViewShowed -= OnMvcManagerViewShowed;
             mvcManager.OnViewClosed -= OnMvcManagerViewClosed;
 
             if (viewInstance != null)
             {
-                viewInstance.settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
-                viewInstance.communitiesButton.onClick.RemoveListener(OnCommunitiesButtonClicked);
-                viewInstance.autoHideToggle.onValueChanged.RemoveListener(OnAutoHideToggleChanged);
-                viewInstance.helpButton.onClick.RemoveListener(OnHelpButtonClicked);
-                viewInstance.InWorldCameraButton.onClick.RemoveListener(OnOpenCameraButtonClicked);
-                viewInstance.marketplaceButton.onClick.RemoveListener(OnMarketplaceButtonClicked);
-                viewInstance.emotesWheelButton.onClick.RemoveListener(OnEmotesWheelButtonClicked);
-                viewInstance.NotificationsButton.onClick.RemoveListener(OpenNotificationsPanel);
-                viewInstance.skyboxButton.onClick.RemoveListener(OpenSkyboxSettingsPanel);
-                viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfilePanelButtonClicked);
-                viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarConfigButtonClicked);
-                viewInstance.UnreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
-                viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
-                viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
-                viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
-                if (isNearbyVoiceChatEnabled)
-                    viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
-
-                if (isCameraReelFeatureEnabled)
-                    viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
+                viewInstance.MapButton.onClick.RemoveListener(OnMapButtonClicked);
+                viewInstance.DiscoverButton.onClick.RemoveListener(OnDiscoverButtonClicked);
+                viewInstance.ShopButton.onClick.RemoveListener(OnShopButtonClicked);
+                viewInstance.SettingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
+                viewInstance.AudioSettingsButton.onClick.RemoveListener(OnAudioSettingsButtonClicked);
+                viewInstance.GalleryButton.onClick.RemoveListener(OnGalleryButtonClicked);
+                viewInstance.NotificationsButton.onClick.RemoveListener(OnNotificationsButtonClicked);
+                viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfileButtonClicked);
+                viewInstance.EmotesButton.onClick.RemoveListener(OnEmotesButtonClicked);
 
                 if (isFriendsFeatureEnabled)
-                    viewInstance.friendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
+                    viewInstance.FriendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
+
+                if (isNearbyVoiceChatEnabled)
+                    viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
                 if (isMarketplaceCreditsFeatureEnabled)
                     viewInstance.MarketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
 
-                if (isBugReportFeatureEnabled)
-                    viewInstance.bugReportButton?.onClick.RemoveListener(OnBugReportButtonClicked);
+                UnsubscribeFromOption(viewInstance.discoverPlacesOption, OnPlacesOptionClicked);
+                UnsubscribeFromOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
+                UnsubscribeFromOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
+                viewInstance.discoverCloseButton.onClick.RemoveListener(CloseOpenMenu);
             }
 
-            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
-
+            profileWidgetCts.SafeCancelAndDispose();
+            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
-            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
-            checkForLiveEventsCts.SafeCancelAndDispose();
-
-            communitiesLiveBadgeSubscription?.Dispose();
         }
-
-        private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
-            OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.backpackNotificationIndicator.SetActive(false);
-            viewInstance.skyboxButton.Button.interactable = true;
-            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
-            viewInstance.cameraReelButton.gameObject.SetActive(isCameraReelFeatureEnabled);
-            viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
-            viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
-            viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance!.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
+            viewInstance.FriendsButton.gameObject.SetActive(isFriendsFeatureEnabled);
             viewInstance.NearbyVoiceChatButton.gameObject.SetActive(isNearbyVoiceChatEnabled);
-            viewInstance.bugReportButton?.gameObject.SetActive(isBugReportFeatureEnabled);
+            viewInstance.discoverPlacesOption.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.discoverEventsOption.gameObject.SetActive(isDiscoverFeatureEnabled);
 
+            CloseAllMenus();
             SubscribeToEvents();
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
@@ -208,143 +149,12 @@ namespace DCL.UI.Sidebar
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             OnChatViewFoldingChanged(true);
-
-            viewInstance.SetLiveEventsCounter(0);
-
-            viewInstance.communitiesLiveBadge.SetActive(communitiesLiveTracker.HasAnyJoinedCommunityLive.Value);
-            communitiesLiveBadgeSubscription = communitiesLiveTracker.HasAnyJoinedCommunityLive.Subscribe(OnCommunitiesLiveStateChanged);
         }
-
-        private void OnCommunitiesLiveStateChanged(bool hasAnyLive)
-        {
-            if (viewInstance != null)
-                viewInstance.communitiesLiveBadge.SetActive(hasAnyLive);
-        }
-
-        private void SubscribeToEvents()
-        {
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-
-            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
-            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
-
-            viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
-            viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
-            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
-            viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
-            viewInstance.marketplaceButton.onClick.AddListener(OnMarketplaceButtonClicked);
-
-            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClicked);
-            viewInstance.NotificationsButton.onClick.AddListener(OpenNotificationsPanel);
-            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsPanel);
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfilePanelButtonClicked);
-            viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarConfigButtonClicked);
-            viewInstance.UnreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
-
-            viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
-            viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
-            viewInstance.smartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-            if (isNearbyVoiceChatEnabled)
-                viewInstance.NearbyVoiceChatButton.Button.onClick.AddListener(OnNearbyVoiceButtonClicked);
-
-            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
-
-            if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
-            if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
-            if (isBugReportFeatureEnabled) viewInstance.bugReportButton?.onClick.AddListener(OnBugReportButtonClicked);
-
-            if (isDiscoverFeatureEnabled)
-            {
-                viewInstance.placesButton?.onClick.AddListener(OnPlacesButtonClicked);
-                viewInstance.eventsButton.onClick.AddListener(OnEventsButtonClicked);
-            }
-        }
-
-        private void OnMvcManagerViewClosed(IController closedController)
-        {
-            if (!viewInstance) return;
-
-            //When panels are closed through shortcuts we need to be able to de-select the buttons remotely.
-            switch (closedController)
-            {
-                case EmotesWheelController:
-                    viewInstance.emotesWheelButton.Deselect(); break;
-                case FriendsPanelController:
-                    viewInstance.friendsButton.Deselect(); break;
-            }
-        }
-
-        private void OnMvcManagerViewShowed(IController showedController)
-        {
-            if (!viewInstance) return;
-
-            // Panels that are controllers and can be opened using shortcuts, we need to select their buttons remotely.
-            switch (showedController)
-            {
-                case EmotesWheelController:
-                    viewInstance.emotesWheelButton.Select();
-                    break;
-                case FriendsPanelController:
-                    viewInstance.friendsButton.Select();
-                    break;
-            }
-        }
-
-        private void OnReferralNewTierNotificationClicked(object[] parameters)
-        {
-            referralNotificationCts = referralNotificationCts.SafeRestart();
-            OpenReferralWebsiteAsync(referralNotificationCts.Token).Forget();
-            return;
-
-            async UniTaskVoid OpenReferralWebsiteAsync(CancellationToken ct)
-            {
-                try
-                {
-                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile)) return;
-                    // TODO (Nick): do we really need it to be async? Maybe just take the snapshot?
-
-                    urlBuilder.Clear();
-
-                    URLAddress url = urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Host)))
-                                               .AppendPath(URLPath.FromString($"profile/accounts/{myProfile.UserId}/referral"))
-                                               .Build();
-
-                    webBrowser.OpenUrlMainThreadOnly(url);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-            }
-        }
-
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)  =>
-            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
-
-        private void OnChatViewFoldingChanged(bool isUnfolded)
-        {
-            if (isUnfolded)
-                viewInstance?.UnreadMessagesButton.Select();
-            else
-                viewInstance?.UnreadMessagesButton.Deselect();
-        }
-
-        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel) =>
-            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
-
-        private void OnAutoHideToggleChanged(bool value) => viewInstance?.SetAutoHideSidebarStatus(value);
-        private void OnRewardNotificationClicked(object[] parameters) => viewInstance!.backpackNotificationIndicator.SetActive(false);
-        private void OnRewardNotificationReceived(INotification newNotification) => viewInstance!.backpackNotificationIndicator.SetActive(true);
 
         protected override void OnViewShow()
         {
             //We load the data into the profile widget
             profileButtonPresenter.LoadProfile();
-
-            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
-            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -353,77 +163,202 @@ namespace DCL.UI.Sidebar
             profileWidgetCts.SafeCancelAndDispose();
         }
 
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
+        private void SubscribeToEvents()
         {
-            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
-            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
-                return;
+            viewInstance!.MapButton.onClick.AddListener(OnMapButtonClicked);
+            viewInstance.DiscoverButton.onClick.AddListener(OnDiscoverButtonClicked);
+            viewInstance.ShopButton.onClick.AddListener(OnShopButtonClicked);
+            viewInstance.SettingsButton.onClick.AddListener(OnSettingsButtonClicked);
+            viewInstance.AudioSettingsButton.onClick.AddListener(OnAudioSettingsButtonClicked);
+            viewInstance.GalleryButton.onClick.AddListener(OnGalleryButtonClicked);
+            viewInstance.NotificationsButton.onClick.AddListener(OnNotificationsButtonClicked);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfileButtonClicked);
+            viewInstance.EmotesButton.onClick.AddListener(OnEmotesButtonClicked);
 
-            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);
-            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
+            SubscribeToOption(viewInstance.discoverPlacesOption, OnPlacesOptionClicked);
+            SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
+            SubscribeToOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
+            viewInstance.discoverCloseButton.onClick.AddListener(CloseOpenMenu);
 
-            if (isMarketplaceCreditsFeatureEnabled)
-                viewInstance?.MarketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
+            if (isFriendsFeatureEnabled)
+                viewInstance.FriendsButton.onClick.AddListener(OnFriendsButtonClicked);
+
+            if (isNearbyVoiceChatEnabled)
+                viewInstance.NearbyVoiceChatButton.Button.onClick.AddListener(OnNearbyVoiceButtonClicked);
+
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
         }
 
-        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+#region Nav rail menus
+
+        /// <summary>
+        ///     Opens the menu nested under the clicked button, closing whichever menu was open before it.
+        ///     Clicking the button whose menu is already open closes it.
+        /// </summary>
+        private void ToggleMenu(SimpleHoverableButton? button, GameObject menu)
         {
-            viewInstance?.communitiesButton.gameObject.SetActive(false);
-            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
-            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
+            bool shouldOpen = openMenu != menu;
+
+            // Closes any MVC panel opened from the rail, so only one entry is ever selected.
+            openPanelCts = openPanelCts.SafeRestart();
+
+            CloseOpenMenu();
+
+            if (!shouldOpen) return;
+
+            button?.SetSelected(true);
+            menu.SetActive(true);
+
+            openMenuButton = button;
+            openMenu = menu;
+
+            viewInstance!.BlockSidebar();
         }
 
-        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        private void CloseOpenMenu()
         {
-            while (!ct.IsCancellationRequested)
-            {
-                Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
-                                                                                         .SuppressToResultAsync(ReportCategory.EVENTS);
+            if (openMenu == null) return;
 
-                if (ct.IsCancellationRequested)
-                    return;
+            openMenuButton?.SetSelected(false);
+            openMenu.SetActive(false);
 
-                viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
-                await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
-            }
+            openMenuButton = null;
+            openMenu = null;
+
+            ClearHighlightedOption();
+
+            viewInstance!.UnblockSidebar();
         }
 
-#region Sidebar button handlers
-        private void OnOpenCameraButtonClicked()
+#endregion
+
+#region Menu options
+
+        private void SubscribeToOption(MenuElementView option, UnityAction onClick)
         {
-            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
+            option.PointerEntered += OnOptionPointerEntered;
+            option.PointerExited += OnOptionPointerExited;
+            option.Button.onClick.AddListener(onClick);
         }
 
-        private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
-        private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
-        private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
-        private void OnPlacesButtonClicked()
+        private void UnsubscribeFromOption(MenuElementView option, UnityAction onClick)
+        {
+            option.PointerEntered -= OnOptionPointerEntered;
+            option.PointerExited -= OnOptionPointerExited;
+            option.Button.onClick.RemoveListener(onClick);
+        }
+
+        /// <summary>
+        ///     The highlight is owned here rather than by the row, so only one row in the whole rail can carry it
+        ///     even if a pointer-exit is missed.
+        /// </summary>
+        private void OnOptionPointerEntered(MenuElementView option)
+        {
+            if (highlightedOption == option) return;
+
+            highlightedOption?.SetSelected(false);
+            highlightedOption = option;
+            option.SetSelected(true);
+        }
+
+        private void OnOptionPointerExited(MenuElementView option)
+        {
+            if (highlightedOption != option) return;
+
+            ClearHighlightedOption();
+        }
+
+        private void ClearHighlightedOption()
+        {
+            highlightedOption?.SetSelected(false);
+            highlightedOption = null;
+        }
+
+        private void OnPlacesOptionClicked()
         {
             PlacesOpened?.Invoke();
             OpenExplorePanelInSection(ExploreSections.Places);
         }
-        private void OnEventsButtonClicked()
+
+        private void OnEventsOptionClicked()
         {
             EventsOpened?.Invoke();
             OpenExplorePanelInSection(ExploreSections.Events);
         }
 
-        private void OnBackpackButtonClicked()
+        private void OnCommunitiesOptionClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
+
+        private void OpenExplorePanelInSection(ExploreSections section) =>
+            OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section))).Forget();
+
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
-            viewInstance!.backpackNotificationIndicator.SetActive(false);
-            OpenExplorePanelInSection(ExploreSections.Backpack);
+            viewInstance?.discoverCommunitiesOption.gameObject.SetActive(false);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            viewInstance?.discoverCommunitiesOption.gameObject.SetActive(includeCommunities);
         }
-        private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
-        private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
+
+        private void CloseAllMenus()
+        {
+            viewInstance!.discoverMenu.SetActive(false);
+            viewInstance.shopMenu.SetActive(false);
+            viewInstance.systemMenu.SetActive(false);
+            viewInstance.audioMenu.SetActive(false);
+            viewInstance.galleryMenu.SetActive(false);
+            viewInstance.profileMenu.SetActive(false);
+
+            // The minimap keeps whatever visibility the prefab was authored with; the Map button only mirrors it.
+            viewInstance.MapButton.SetSelected(viewInstance.minimapMenu.activeSelf);
+
+            viewInstance.DiscoverButton.SetSelected(false);
+            viewInstance.ShopButton.SetSelected(false);
+            viewInstance.SettingsButton.SetSelected(false);
+            viewInstance.AudioSettingsButton.SetSelected(false);
+            viewInstance.GalleryButton.SetSelected(false);
+            viewInstance.NotificationsButton.SetSelected(false);
+            viewInstance.FriendsButton.SetSelected(false);
+            viewInstance.EmotesButton.SetSelected(false);
+
+            ClearHighlightedOption();
+
+            openMenuButton = null;
+            openMenu = null;
+        }
+
+        /// <summary>
+        ///     The minimap stays usable alongside any other menu, so it is toggled outside the single-menu group.
+        /// </summary>
+        private void OnMapButtonClicked()
+        {
+            bool show = !viewInstance!.MapButton.IsSelected;
+
+            viewInstance.MapButton.SetSelected(show);
+            viewInstance.minimapMenu.SetActive(show);
+        }
+
+        private void OnDiscoverButtonClicked() => ToggleMenu(viewInstance!.DiscoverButton, viewInstance.discoverMenu);
+        private void OnShopButtonClicked() => ToggleMenu(viewInstance!.ShopButton, viewInstance.shopMenu);
+        private void OnSettingsButtonClicked() => ToggleMenu(viewInstance!.SettingsButton, viewInstance.systemMenu);
+        private void OnAudioSettingsButtonClicked() => ToggleMenu(viewInstance!.AudioSettingsButton, viewInstance.audioMenu);
+        private void OnGalleryButtonClicked() => ToggleMenu(viewInstance!.GalleryButton, viewInstance.galleryMenu);
+        private void OnProfileButtonClicked() => ToggleMenu(null, viewInstance!.profileMenu);
+
+#endregion
+
+#region MVC panels
+
+        private void OnEmotesButtonClicked() => OpenPanelAsync(viewInstance!.EmotesButton, EmotesWheelController.IssueCommand()).Forget();
+
         private void OnFriendsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
+            OpenPanelAsync(viewInstance!.FriendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
+
+        private void OnNotificationsButtonClicked() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
 
         private void OnMarketplaceCreditsButtonClicked()
         {
@@ -436,21 +371,6 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.MarketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
         }
-
-        private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
-
-        private void OnBugReportButtonClicked() => OpenPanelAsync(viewInstance!.bugReportButton, BugReportController.IssueCommand(new BugReportParams())).Forget();
-
-        private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
-        private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
-        private void OpenSkyboxSettingsPanel() => OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
-        private void OpenNotificationsPanel() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
-
-        private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar) =>
-            OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection))).Forget();
-
-        private void OnSmartWearablesButtonHover() => OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
-        private void OnSmartWearablesButtonUnhover() => smartWearablesTooltipController.Close();
 
         private void OnNearbyVoiceButtonClicked()
         {
@@ -469,20 +389,14 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(null, NearbyVoicePanelController.IssueCommand()).Forget();
         }
 
-        private void OnMarketplaceButtonClicked()
-        {
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ShopLink)));
-            urlBuilder.AppendParameter(marketplaceSourceParam);
-            webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
-        }
-
         private async UniTaskVoid OpenPanelAsync<TView, TInputData>(
             ISelectableButton? button,
             ShowCommand<TView, TInputData> command)
             where TView: IView
         {
             if (!viewInstance) return;
+
+            CloseOpenMenu();
 
             openPanelCts = openPanelCts.SafeRestart();
             CancellationToken ct = openPanelCts.Token;
@@ -503,6 +417,87 @@ namespace DCL.UI.Sidebar
             }
         }
 
+        private void OnMvcManagerViewClosed(IController closedController)
+        {
+            if (!viewInstance) return;
+
+            //When panels are closed through shortcuts we need to be able to de-select the buttons remotely.
+            switch (closedController)
+            {
+                case EmotesWheelController:
+                    viewInstance.EmotesButton.Deselect(); break;
+                case FriendsPanelController:
+                    viewInstance.FriendsButton.Deselect(); break;
+            }
+        }
+
+        private void OnMvcManagerViewShowed(IController showedController)
+        {
+            if (!viewInstance) return;
+
+            // Panels that are controllers and can be opened using shortcuts, we need to select their buttons remotely.
+            switch (showedController)
+            {
+                case EmotesWheelController:
+                    viewInstance.EmotesButton.Select();
+                    break;
+                case FriendsPanelController:
+                    viewInstance.FriendsButton.Select();
+                    break;
+            }
+        }
+
 #endregion
+
+        private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
+            OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
+
+        private void OnChatViewFoldingChanged(bool isUnfolded)
+        {
+            if (isUnfolded)
+                viewInstance?.UnreadMessagesButton.Select();
+            else
+                viewInstance?.UnreadMessagesButton.Deselect();
+        }
+
+        private void OnReferralNewTierNotificationClicked(object[] parameters)
+        {
+            referralNotificationCts = referralNotificationCts.SafeRestart();
+            OpenReferralWebsiteAsync(referralNotificationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenReferralWebsiteAsync(CancellationToken ct)
+            {
+                try
+                {
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myProfile)) return;
+
+                    urlBuilder.Clear();
+
+                    URLAddress url = urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Host)))
+                                               .AppendPath(URLPath.FromString($"profile/accounts/{myProfile.UserId}/referral"))
+                                               .Build();
+
+                    webBrowser.OpenUrlMainThreadOnly(url);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+            }
+        }
+
+        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
+                return;
+
+            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);
+            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
+
+            if (isMarketplaceCreditsFeatureEnabled)
+                viewInstance?.MarketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
+        }
     }
 }

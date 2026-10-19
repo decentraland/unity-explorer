@@ -64,45 +64,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 8069633883423024809}
   <raycaster>k__BackingField: {fileID: 4233404171620025052}
-  <NotificationsButton>k__BackingField: {fileID: 0}
-  <NotificationsMenuView>k__BackingField: {fileID: 599237097637956580}
-  <backpackNotificationIndicator>k__BackingField: {fileID: 7805156087351757482}
-  <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
-  <profileMenu>k__BackingField: {fileID: 617051157247145518}
-  <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
-  <InWorldCameraButton>k__BackingField: {fileID: 1734187727223042766}
-  <communitiesButton>k__BackingField: {fileID: 9067792495595083366}
-  <placesButton>k__BackingField: {fileID: 5369727375203069159}
-  <backpackButton>k__BackingField: {fileID: 7310006030576766240}
-  <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}
-  <settingsButton>k__BackingField: {fileID: 9220203987770033458}
-  <marketplaceButton>k__BackingField: {fileID: 0}
-  <eventsButton>k__BackingField: {fileID: 8640363549488957318}
-  <liveEventsCounterText>k__BackingField: {fileID: 6115100311075669880}
-  <liveEventsCounterContainer>k__BackingField: {fileID: 6155536193344034618}
-  <communitiesLiveBadge>k__BackingField: {fileID: 1070069918622478095}
+  <MapButton>k__BackingField: {fileID: 5509922065863824249}
+  <minimapMenu>k__BackingField: {fileID: 7853431510012902412}
+  <DiscoverButton>k__BackingField: {fileID: 3121560537287299383}
+  <discoverMenu>k__BackingField: {fileID: 8365220141105737363}
+  <discoverPlacesOption>k__BackingField: {fileID: 3156140564047988800}
+  <discoverEventsOption>k__BackingField: {fileID: 2079476666965182732}
+  <discoverCommunitiesOption>k__BackingField: {fileID: 6006232886007053828}
+  <discoverCloseButton>k__BackingField: {fileID: 6677388511210789796}
+  <ShopButton>k__BackingField: {fileID: 5179272728502281368}
+  <shopMenu>k__BackingField: {fileID: 3634218081091703835}
+  <SettingsButton>k__BackingField: {fileID: 9117111064993892592}
+  <systemMenu>k__BackingField: {fileID: 2459600118286465694}
+  <AudioSettingsButton>k__BackingField: {fileID: 2374968129854425773}
+  <audioMenu>k__BackingField: {fileID: 6973889494588925755}
+  <GalleryButton>k__BackingField: {fileID: 1456494438077899857}
+  <galleryMenu>k__BackingField: {fileID: 4933004527931025400}
+  <FriendsButton>k__BackingField: {fileID: 8319876786927441977}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
-  <friendsButton>k__BackingField: {fileID: 920916011785825721}
-  <skyboxButton>k__BackingField: {fileID: 2422352902479167266}
-  <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
-  <smartWearablesButton>k__BackingField: {fileID: 5578694286419332628}
-  <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
-  <sidebarConfigButton>k__BackingField: {fileID: 7076015699362886066}
-  <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
-  <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
-  <emotesWheelButton>k__BackingField: {fileID: 7515730619705325338}
-  <helpButton>k__BackingField: {fileID: 5555575879091665929}
-  <HelpMenu>k__BackingField: {fileID: 8797854463136211626}
-  <bugReportButton>k__BackingField: {fileID: 1639564196757995840}
+  <EmotesButton>k__BackingField: {fileID: 7309855946106814745}
+  <NotificationsButton>k__BackingField: {fileID: 5377846135955448946}
+  <NotificationsMenuView>k__BackingField: {fileID: 599237097637956580}
+  <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
+  <profileMenu>k__BackingField: {fileID: 4214354569605071032}
   <UnreadMessagesButton>k__BackingField: {fileID: 3472291053238887700}
-  <chatUnreadMessagesNumber>k__BackingField: {fileID: 3554301536170617574}
   <NearbyVoiceChatButton>k__BackingField: {fileID: 3283011950901128146}
   <NearbyVoiceWidget>k__BackingField: {fileID: 3326973332496372382}
   <NearbyVoiceTip>k__BackingField: {fileID: 3278540452595179668}
   <MarketplaceCreditsButton>k__BackingField: {fileID: 2307622500487672837}
   <MarketplaceCreditsButtonAnimator>k__BackingField: {fileID: 8553432859607388883}
   <MarketplaceCreditsButtonAlertMark>k__BackingField: {fileID: 8415137157935535153}
+  <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
+  <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
+  <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
+  <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
+  <HelpMenu>k__BackingField: {fileID: 8797854463136211626}
 --- !u!114 &359438563268453406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,6 +171,119 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5509922065863824249 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4857875164460095426, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &7853431510012902412 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7197157980584671415, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3121560537287299383 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2616465564026230156, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &8365220141105737363 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8866096941222373928, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5179272728502281368 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5259630760311087139, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &3634218081091703835 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4427840264252788896, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9117111064993892592 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8186404348860746827, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &2459600118286465694 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3260551235916889637, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5377846135955448946 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5025029569458249929, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &4214354569605071032 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3846613337499141123, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2374968129854425773 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 66357509914644481, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &6973889494588925755 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4671939977749314967, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1456494438077899857 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3758441744812457725, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!1 &4933004527931025400 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7236060125482745172, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8319876786927441977 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6010063566146142869, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &7309855946106814745 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5003490815528786869, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &3156140564047988800 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2652992136407436539, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &2079476666965182732 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1424903669741784503, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &6006232886007053828 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6649533687937923775, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &6677388511210789796 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6032384975998689055, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
 --- !u!1001 &1089184277027898555
 PrefabInstance:
   m_ObjectHideFlags: 0

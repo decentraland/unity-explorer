@@ -58,9 +58,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 5788814320555291041}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 3666373779486724429}
-  _unhoveredObject: {fileID: 4657709397768793827}
-  _selectedObject: {fileID: 3666373779486724429}
+  hoveredObject: {fileID: 3666373779486724429}
+  unhoveredObject: {fileID: 4657709397768793827}
+  selectedObject: {fileID: 3666373779486724429}
 --- !u!114 &5788814320555291041
 MonoBehaviour:
   m_ObjectHideFlags: 0

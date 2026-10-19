@@ -722,9 +722,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 6813261319799878775}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 4697181099270537760}
-  _unhoveredObject: {fileID: 1173093080329462539}
-  _selectedObject: {fileID: 4495610318215318493}
+  hoveredObject: {fileID: 4697181099270537760}
+  unhoveredObject: {fileID: 1173093080329462539}
+  selectedObject: {fileID: 4495610318215318493}
 --- !u!222 &1875079271416462152
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1105,9 +1105,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 3969820422916149762}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 3941418021258612538}
-  _unhoveredObject: {fileID: 2355890980958583809}
-  _selectedObject: {fileID: 4421060421852954421}
+  hoveredObject: {fileID: 3941418021258612538}
+  unhoveredObject: {fileID: 2355890980958583809}
+  selectedObject: {fileID: 4421060421852954421}
 --- !u!222 &4054762114129564497
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2175,9 +2175,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 6783436222326802867}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 6752552274286527901}
-  _unhoveredObject: {fileID: 579436452785754745}
-  _selectedObject: {fileID: 1029421205819654983}
+  hoveredObject: {fileID: 6752552274286527901}
+  unhoveredObject: {fileID: 579436452785754745}
+  selectedObject: {fileID: 1029421205819654983}
 --- !u!222 &1538962775132771454
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2334,9 +2334,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 5729646839381583567}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 1424848327589944586}
-  _unhoveredObject: {fileID: 5062203953211896177}
-  _selectedObject: {fileID: 8638130255582134214}
+  hoveredObject: {fileID: 1424848327589944586}
+  unhoveredObject: {fileID: 5062203953211896177}
+  selectedObject: {fileID: 8638130255582134214}
 --- !u!222 &6564259296472516235
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4330,10 +4330,6 @@ PrefabInstance:
       propertyPath: m_text
       value: Gallery <color=#797979>[K]</color>
       objectReference: {fileID: 0}
-    - target: {fileID: 8604237840726327661, guid: 82bd2877a75114fff97aab87c1c67bd3, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5149,10 +5145,6 @@ PrefabInstance:
     - target: {fileID: 7758447678353386569, guid: 82bd2877a75114fff97aab87c1c67bd3, type: 3}
       propertyPath: m_text
       value: Take A Shot <color=#797979>[C]</color>
-      objectReference: {fileID: 0}
-    - target: {fileID: 8604237840726327661, guid: 82bd2877a75114fff97aab87c1c67bd3, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

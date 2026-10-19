@@ -7,10 +7,8 @@ using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.UI;
 using MVC;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
-using UnityEngine.UI;
 
 namespace DCL.UI.Sidebar
 {
@@ -21,62 +19,55 @@ namespace DCL.UI.Sidebar
         public event AutohideStatusChangedDelegate? AutohideStatusChanged;
 
         public event BlockStatusChangedDelegate? BlockStatusChanged;
+
+        [field: Header("Map")]
+        [field: SerializeField] public SimpleHoverableButton MapButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject minimapMenu { get; private set; } = null!;
+
+        [field: Header("Discover")]
+        [field: SerializeField] public SimpleHoverableButton DiscoverButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject discoverMenu { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView discoverPlacesOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView discoverEventsOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView discoverCommunitiesOption { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView discoverCloseButton { get; private set; } = null!;
+
+        [field: Header("Shop")]
+        [field: SerializeField] public SimpleHoverableButton ShopButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject shopMenu { get; private set; } = null!;
+
+        [field: Header("System Settings")]
+        [field: SerializeField] public SimpleHoverableButton SettingsButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject systemMenu { get; private set; } = null!;
+
+        [field: Header("Audio Settings")]
+        [field: SerializeField] public SimpleHoverableButton AudioSettingsButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject audioMenu { get; private set; } = null!;
+
+        [field: Header("Gallery")]
+        [field: SerializeField] public SimpleHoverableButton GalleryButton { get; private set; } = null!;
+        [field: SerializeField] internal GameObject galleryMenu { get; private set; } = null!;
+
+        [field: Header("Friends")]
+        [field: SerializeField] public SimpleHoverableButton FriendsButton { get; private set; } = null!;
+        [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
+        [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; } = null!;
+
+        [field: Header("Emotes")]
+        [field: SerializeField] public SimpleHoverableButton EmotesButton { get; private set; } = null!;
+
         [field: Header("Notifications")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator NotificationsButton { get; private set; } = null!;
+        [field: SerializeField] public SimpleHoverableButton NotificationsButton { get; private set; } = null!;
         [field: SerializeField] public NotificationsMenuView NotificationsMenuView { get; private set; } = null!;
-        [field: SerializeField] internal GameObject backpackNotificationIndicator { get; private set; } = null!;
 
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; } = null!;
         [field: SerializeField] internal GameObject profileMenu { get; private set; } = null!;
-        [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
-
-        [field: Header("Explore Panel Shortcuts")]
-        [field: SerializeField] public Button InWorldCameraButton { get; private set; } = null!;
-        [field: SerializeField] internal Button communitiesButton { get; private set; } = null!;
-        [field: SerializeField] internal Button? placesButton { get; private set; } = null!;
-        [field: SerializeField] internal Button backpackButton { get; private set; } = null!;
-        [field: SerializeField] internal Button cameraReelButton { get; private set; } = null!;
-        [field: SerializeField] internal Button settingsButton { get; private set; } = null!;
-        [field: SerializeField] internal Button marketplaceButton { get; private set; } = null!;
-        [field: SerializeField] internal Button eventsButton { get; private set; } = null!;
-        [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
-        [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; } = null!;
-        [field: SerializeField] internal GameObject communitiesLiveBadge { get; private set; } = null!;
-
-        [field: Header("Friends")]
-        [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
-        [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; } = null!;
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator friendsButton { get; private set; } = null!;
-
-        [field: Header("Skybox")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator skyboxButton { get; private set; } = null!;
-        [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; } = null!;
-
-        [field: Header("Smart Wearables")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator smartWearablesButton { get; private set; } = null!;
-        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
-
-        [field: Header("Sidebar Config")]
-        [field: SerializeField] internal ButtonView sidebarConfigButton { get; private set; } = null!;
-        [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
-        [field: SerializeField] internal Toggle autoHideToggle { get; private set; } = null!;
-
-        [field: Header("Emotes")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator emotesWheelButton { get; private set; } = null!;
-
-        [field: Header("Help")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator helpButton { get; private set; } = null!;
-        [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
-
-        [field: Header("Bug Report")]
-        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator? bugReportButton { get; private set; } = null!;
 
         [field: Header("Chat")]
         [field: SerializeField]
         [field: FormerlySerializedAs("<unreadMessagesButton>k__BackingField")]
         public HoverableAndSelectableButtonWithAnimator UnreadMessagesButton { get; private set; } = null!;
-        [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; } = null!;
 
         [field: Header("Nearby Voice Chat")]
         [field: SerializeField] public NearbyVoiceChatButtonView NearbyVoiceChatButton { get; private set; } = null!;
@@ -96,6 +87,13 @@ namespace DCL.UI.Sidebar
         [field: FormerlySerializedAs("<marketplaceCreditsButtonAlertMark>k__BackingField")]
         public GameObject MarketplaceCreditsButtonAlertMark { get; private set; } = null!;
 
+        [field: Header("Pending Port")]
+        [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
+        [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; } = null!;
+        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
+        [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
+        [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
+
         public void BlockSidebar()
         {
             BlockStatusChanged?.Invoke(true);
@@ -109,12 +107,6 @@ namespace DCL.UI.Sidebar
         public void UnblockSidebar()
         {
             BlockStatusChanged?.Invoke(false);
-        }
-
-        public void SetLiveEventsCounter(int count)
-        {
-            liveEventsCounterText.text = count.ToString();
-            liveEventsCounterContainer.SetActive(count > 0);
         }
     }
 }
