@@ -135,8 +135,6 @@ namespace DCL.Prefs
 
         public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
 
-        public const string SETTINGS_SINGLE_SCENE_MODE = "Settings_SingleSceneMode";
-
         // The placements of the lobby widgets on the corner grids, as one JSON string (see LobbyLayoutStorage)
         public const string LOBBY_LAYOUT = "Lobby_Layout";
     }
