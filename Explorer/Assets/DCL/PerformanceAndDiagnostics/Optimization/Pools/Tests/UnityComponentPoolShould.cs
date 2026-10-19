@@ -20,7 +20,7 @@ namespace DCL.Optimization.Pools.Tests
             gameObjectPool.Clear();
         }
 
-        private GameObjectPool<Transform> gameObjectPool;
+        private GameObjectPool<Transform> gameObjectPool = null!;
         private int onGetCallCount;
 
         [Test]
@@ -82,6 +82,32 @@ namespace DCL.Optimization.Pools.Tests
             Assert.AreEqual(2, onGetCallCount);
 
             gameObjectPool.Release(result);
+        }
+
+        [Test]
+        public void ResetTransformToIdentityOnRelease()
+        {
+            // Arrange: an owner leaves its local transform on the pooled instance
+            Transform pooled = gameObjectPool.Get();
+            var scaledParent = new GameObject();
+            scaledParent.transform.localScale = new Vector3(128, 40, 128);
+            pooled.SetParent(scaledParent.transform, worldPositionStays: true);
+            pooled.SetLocalPositionAndRotation(Vector3.one * 50, Quaternion.Euler(45, 45, 45));
+
+            //Act
+            gameObjectPool.Release(pooled);
+            Transform reused = gameObjectPool.Get();
+            reused.GetLocalPositionAndRotation(out Vector3 reusedPosition, out Quaternion reusedRotation);
+            Vector3 reusedScale = reused.localScale;
+
+            gameObjectPool.Release(reused);
+            Object.DestroyImmediate(scaledParent);
+
+            //Assert
+            Assert.AreSame(pooled, reused);
+            Assert.AreEqual(Vector3.zero, reusedPosition);
+            Assert.AreEqual(0f, Quaternion.Angle(Quaternion.identity, reusedRotation), 1e-3f);
+            Assert.AreEqual(Vector3.one, reusedScale);
         }
     }
 }

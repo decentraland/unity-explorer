@@ -21,7 +21,7 @@ using Utility;
 
 namespace DCL.Settings
 {
-    public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
+    public class SettingsController : IHostableSection, IDisposable, ISettingsModuleEventListener
     {
         public enum SettingsSection
         {
@@ -42,7 +42,7 @@ namespace DCL.Settings
         private readonly SingleSceneMode singleSceneMode;
         private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly IUserBlockingCache userBlockingCache;
@@ -51,6 +51,12 @@ namespace DCL.Settings
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
+
+        private bool isSectionActivated;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
 
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
         public event Action<bool, bool>? LobbyEnabledChanged;
@@ -87,7 +93,7 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
             {
@@ -108,11 +114,13 @@ namespace DCL.Settings
         public void Activate()
         {
             view.gameObject.SetActive(true);
+            isSectionActivated = true;
         }
 
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+            isSectionActivated = false;
         }
 
         public void Toggle(SettingsSection section)
@@ -135,8 +143,23 @@ namespace DCL.Settings
             view.HeaderAnimator.Update(0);
         }
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            SectionHosting.MoveUnder(viewRect, host);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
         {

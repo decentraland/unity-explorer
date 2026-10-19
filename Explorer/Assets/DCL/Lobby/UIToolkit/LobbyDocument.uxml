@@ -15,6 +15,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGalleryCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGoTo.uss" />
+    <ui:Template name="LobbyProfileMenu" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uxml?fileID=9197481963319205126&amp;guid=35655be02a234b9ea1b138ab6323062c&amp;type=3#LobbyProfileMenu" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
         <ui:VisualElement name="BottomGradient" class="lobby__gradient" picking-mode="Ignore" />
@@ -36,6 +37,18 @@
             </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement name="TopBar" class="lobby__top-bar" picking-mode="Ignore">
+            <ui:Button name="MapButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__map-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Map" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="PlacesButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__places-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Places" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
+            <ui:Button name="EventsButton" class="lobby__top-bar-pill">
+                <ui:VisualElement name="Icon" class="lobby__top-bar-pill-icon lobby__events-icon" picking-mode="Ignore" />
+                <ui:Label name="Label" text="Events" class="lobby__top-bar-pill-label" picking-mode="Ignore" />
+            </ui:Button>
             <ui:VisualElement name="CreditsSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
             <ui:Button name="Notifications" class="lobby__top-bar-button">
                 <ui:VisualElement name="Icon" class="lobby__notifications-icon" picking-mode="Ignore" />
@@ -156,6 +169,8 @@
         </ui:VisualElement>
         <!-- A dragged widget section hangs here while the layout is edited (see LobbyLayoutEditor) -->
         <ui:VisualElement name="LayoutDragLayer" class="lobby__layout-drag-layer" picking-mode="Ignore" />
+        <!-- Before the tooltips so they still draw on top -->
+        <ui:Instance template="LobbyProfileMenu" name="ProfileMenuSlot" class="lobby__profile-menu" picking-mode="Ignore" />
         <!-- Last so it draws over everything else -->
         <ui:VisualElement name="AvatarTooltip" class="lobby__avatar-tooltip" picking-mode="Ignore" style="display: none;">
             <ui:VisualElement name="Icon" class="lobby__avatar-tooltip-icon" picking-mode="Ignore" />

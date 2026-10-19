@@ -3,13 +3,11 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
-using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
@@ -19,14 +17,15 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIPointerEventsSystemShould : UnitySystemTestBase<UIPointerEventsSystem>
     {
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
-        private ISceneStateProvider sceneStateProvider;
-        private IECSToCRDTWriter ecsToCRDTWriter;
+        private UITransformComponent uiTransformComponent = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
 
         [SetUp]
         public void SetUp()
         {
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns(123u);
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
             system = new UIPointerEventsSystem(world, sceneStateProvider, ecsToCRDTWriter);
@@ -36,11 +35,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        [TestCase(PointerEventType.PetDown)]
-        [TestCase(PointerEventType.PetUp)]
-        [TestCase(PointerEventType.PetHoverEnter)]
-        [TestCase(PointerEventType.PetHoverLeave)]
-        public void TriggerPointerEvents(PointerEventType eventType)
+        [TestCase(PointerEventType.PetDown, true)]
+        [TestCase(PointerEventType.PetUp, true)]
+        [TestCase(PointerEventType.PetHoverEnter, false)]
+        [TestCase(PointerEventType.PetHoverLeave, false)]
+        public void TriggerPointerEvents(PointerEventType eventType, bool isUserGesture)
         {
             // Arrange
             var input = new PBPointerEvents { IsDirty = true };
@@ -79,6 +78,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<int>(),
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
             Assert.IsNull(uiTransformComponent.PointerEventTriggered);
+
+            if (isUserGesture)
+                sceneStateProvider.Received(1).LastUserInputTick = 123u;
+            else
+                sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
         }
 
         [Test]

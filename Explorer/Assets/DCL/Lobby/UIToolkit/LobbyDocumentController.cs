@@ -15,6 +15,8 @@ using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
+using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -34,7 +36,6 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -47,6 +48,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using Utility;
 using Utility.UIToolkit;
@@ -106,6 +108,7 @@ namespace DCL.Lobby
         private readonly StartParcel startParcel;
         private readonly ISpriteCache spriteCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly LobbyProfileMenuPresenter profileMenu;
         private readonly NotificationsPanelController<LobbyPopupParameter> notificationsPanel;
         private readonly List<PlacesData.PlaceInfo> recentPlaces = new ();
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
@@ -125,6 +128,7 @@ namespace DCL.Lobby
         private readonly ClickOrDragManipulator avatarGesture;
         private readonly LobbyWidgetHost widgetHost = new ();
         private readonly LobbyLayoutEditor layoutEditor;
+        private readonly bool includeDiscover;
 
         private LobbyPlacesRail? recentPlacesRail;
         private LobbyPlacesRail? recentPlaces4By2Rail;
@@ -160,6 +164,8 @@ namespace DCL.Lobby
         private CancellationTokenSource? galleryCts;
         private CancellationTokenSource? deletePhotoCts;
         private CancellationTokenSource? jumpInCts;
+        private CancellationTokenSource? profileMenuCts;
+        private CancellationTokenSource? notificationsCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
 
@@ -190,6 +196,9 @@ namespace DCL.Lobby
         /// <summary>The user is on their way to a friend, with the parcel the friend was at.</summary>
         public event Action<string, Vector2Int>? FriendJoined;
 
+        /// <summary>A top bar button opened an explore section over the panel.</summary>
+        public event Action<ExploreSections>? ExploreSectionOpened;
+
         public LobbyDocumentController(ViewFactoryMethod viewFactory,
             IInputBlock inputBlock,
             ICursor cursor,
@@ -214,6 +223,7 @@ namespace DCL.Lobby
             StartParcel startParcel,
             ISpriteCache spriteCache,
             SidebarProfileButtonPresenter profileButtonPresenter,
+            LobbyProfileMenuPresenter profileMenu,
             NotificationsPanelController<LobbyPopupParameter> notificationsPanel,
             LobbyDocumentFriendsPresenter? friends,
             LobbyConnectedFriendsPresenter? connectedFriends,
@@ -244,12 +254,14 @@ namespace DCL.Lobby
             this.startParcel = startParcel;
             this.spriteCache = spriteCache;
             this.profileButtonPresenter = profileButtonPresenter;
+            this.profileMenu = profileMenu;
             this.notificationsPanel = notificationsPanel;
             this.friends = friends;
             this.connectedFriends = connectedFriends;
             this.communitiesProvider = communitiesProvider;
             this.cameraReel = cameraReel;
             this.identityCache = identityCache;
+            includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
 
             avatarGesture = new ClickOrDragManipulator
             {
@@ -263,6 +275,8 @@ namespace DCL.Lobby
 
             if (friends != null)
                 friends.JoinRequested = OnFriendJoin;
+
+            profileMenu.SettingsRequested = ShowSettings;
         }
 
         public override void Dispose()
@@ -277,6 +291,9 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+            profileMenu.SettingsRequested = null;
+            profileMenu.OpenChanged = null;
 
             if (friends != null)
                 friends.JoinRequested = null;
@@ -289,6 +306,8 @@ namespace DCL.Lobby
             galleryCts.SafeCancelAndDispose();
             deletePhotoCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
+            profileMenuCts.SafeCancelAndDispose();
+            notificationsCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
             closeIntent?.TrySetCanceled();
         }
@@ -315,15 +334,34 @@ namespace DCL.Lobby
             // The renderer keeps the hierarchy across hides, so every handler is removed before it is added again
             viewInstance!.AttachTopBarWidgets();
             widgetHost.Show(viewInstance.Root);
-            viewInstance.Profile.Clicked = ShowProfileMenu;
+            viewInstance.Profile.Clicked = profileMenu.Toggle;
+            profileMenu.OpenChanged = SetProfileMenuOpen;
             viewInstance.NotificationsButton.clicked -= ShowNotifications;
             viewInstance.NotificationsButton.clicked += ShowNotifications;
+            viewInstance.MapButton.clicked -= ShowMap;
+            viewInstance.MapButton.clicked += ShowMap;
+            viewInstance.PlacesButton.clicked -= ShowPlaces;
+            viewInstance.PlacesButton.clicked += ShowPlaces;
+            viewInstance.PlacesButton.SetDisplayed(includeDiscover);
+            viewInstance.EventsButton.clicked -= ShowEvents;
+            viewInstance.EventsButton.clicked += ShowEvents;
+            viewInstance.EventsButton.SetDisplayed(includeDiscover);
             viewInstance.BackButton.clicked -= RequestClose;
             viewInstance.BackButton.clicked += RequestClose;
-            viewInstance.BackButton.SetDisplayed(!inputData.IsStartup);
+            viewInstance.SetBackButtonDisplayed(!inputData.IsStartup);
             viewInstance.EditLayoutButton.clicked -= ToggleLayoutEditing;
             viewInstance.EditLayoutButton.clicked += ToggleLayoutEditing;
             profileButtonPresenter.LoadProfile();
+
+            profileMenuCts = profileMenuCts.SafeRestart();
+            profileMenu.Show(viewInstance.ProfileMenu, profileMenuCts.Token);
+
+            // The UI map stays disabled until the first world loads, so the one action the popups need is enabled on its own.
+            if (inputData.IsStartup)
+                DCLInput.Instance.UI.Close.Enable();
+
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
 
             notificationsPanel.UnreadCountChanged += ShowUnreadCount;
             ShowUnreadCount(notificationsPanel.UnreadCount);
@@ -417,6 +455,17 @@ namespace DCL.Lobby
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
+            DCLInput.Instance.UI.Close.performed -= OnUIClose;
+
+            // Undoes the startup-only enable, which bypassed the still disabled UI map.
+            if (inputData.IsStartup)
+                DCLInput.Instance.UI.Close.Disable();
+
+            profileMenu.Hide();
+            profileMenuCts.SafeCancelAndDispose();
+            profileMenuCts = null;
+            notificationsCts.SafeCancelAndDispose();
+            notificationsCts = null;
 
             // The next show starts outside edit mode, like the first one
             layoutEditor.Hide();
@@ -537,6 +586,9 @@ namespace DCL.Lobby
             string? name = profile?.ValidatedName;
             viewInstance!.WelcomeText.text = string.IsNullOrEmpty(name) ? WELCOME_FALLBACK : string.Format(WELCOME_FORMAT, name);
         }
+
+        private void SetProfileMenuOpen(bool open) =>
+            viewInstance!.Profile.IsMenuOpen = open;
 
         private void ShowUnreadCount(int count)
         {
@@ -1184,11 +1236,46 @@ namespace DCL.Lobby
         private static string WorldName(string name) =>
             name.IsEns() || name.EndsWith(WORLD_SUFFIX, StringComparison.OrdinalIgnoreCase) ? name : name + WORLD_SUFFIX;
 
-        private void ShowProfileMenu() =>
-            mvcManager.ShowAndForget(ProfileMenuController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
+        private void OnUIClose(InputAction.CallbackContext _) =>
+            profileMenu.Dismiss();
+
+        private void ShowSettings() =>
+            ShowExploreSection(ExploreSections.Settings);
 
         private void ShowNotifications() =>
-            mvcManager.ShowAndForget(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()));
+            ShowNotificationsAsync().Forget();
+
+        // A click while the panel is up restarts the show, as in the sidebar
+        private async UniTaskVoid ShowNotificationsAsync()
+        {
+            CancellationTokenSource cts = notificationsCts = notificationsCts.SafeRestart();
+            viewInstance!.SetNotificationsPanelOpen(true);
+
+            try { await mvcManager.ShowAsync(NotificationsPanelController<LobbyPopupParameter>.IssueCommand(new LobbyPopupParameter()), cts.Token); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            finally
+            {
+                // A restart owns the state from then on
+                if (ReferenceEquals(cts, notificationsCts))
+                    viewInstance.SetNotificationsPanelOpen(false);
+            }
+        }
+
+        private void ShowMap() =>
+            ShowExploreSection(ExploreSections.Navmap);
+
+        private void ShowPlaces() =>
+            ShowExploreSection(ExploreSections.Places);
+
+        private void ShowEvents() =>
+            ShowExploreSection(ExploreSections.Events);
+
+        private void ShowExploreSection(ExploreSections section)
+        {
+            ExploreSectionOpened?.Invoke(section);
+            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section)));
+        }
 
         private void RequestClose()
         {
