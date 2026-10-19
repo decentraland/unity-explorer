@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
@@ -11,12 +12,17 @@ namespace DCL.Lobby
     public abstract class LobbyCardRail<TCard> where TCard: VisualElement
     {
         private const string CARDS_NAME = "Cards";
+        private const string VIEW_ALL_NAME = "ViewAll";
+
+        /// <summary>The View all of the section was clicked; a section without one never reports it.</summary>
+        public Action? ViewAllClicked;
 
         private readonly VisualTreeAsset cardTemplate;
         private readonly List<TCard> cards = new ();
 
         private VisualElement? strip;
         private LobbyRailElement? rail;
+        private Button? viewAll;
 
         /// <summary>
         ///     Every card cloned so far, shown or hidden; cards are only ever appended, so indices stay stable.
@@ -39,9 +45,14 @@ namespace DCL.Lobby
         /// </summary>
         public void Show(VisualElement newSection)
         {
+            DetachViewAll();
             section = newSection;
             rail = newSection.Q<LobbyRailElement>();
             strip = rail ?? newSection.Q(CARDS_NAME);
+            viewAll = newSection.Q<Button>(VIEW_ALL_NAME);
+
+            if (viewAll != null)
+                viewAll.clicked += OnViewAllClicked;
 
             for (var i = 0; i < cards.Count; i++)
             {
@@ -82,6 +93,7 @@ namespace DCL.Lobby
 
         public void Hide()
         {
+            DetachViewAll();
             section = null;
             strip = null;
             rail = null;
@@ -90,6 +102,18 @@ namespace DCL.Lobby
         protected abstract void OnCardCreated(TCard card, int index);
 
         protected virtual void OnCountChanged(int count) { }
+
+        private void OnViewAllClicked() =>
+            ViewAllClicked?.Invoke();
+
+        // The hierarchy outlives the rail's hold of it, so a handed-back section must stop reporting
+        private void DetachViewAll()
+        {
+            if (viewAll == null) return;
+
+            viewAll.clicked -= OnViewAllClicked;
+            viewAll = null;
+        }
 
         // The document imports the card's stylesheet, so the card can leave the template's container
         private TCard CreateCard(int index)

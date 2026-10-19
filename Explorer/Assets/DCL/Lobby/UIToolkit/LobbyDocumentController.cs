@@ -396,7 +396,7 @@ namespace DCL.Lobby
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
             featuredPlaces4By2Rail.Show(viewInstance.FeaturedPlaces4By2);
 
-            liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked, CardJumpInClicked = OnLiveEventJumpInClicked };
+            liveEventsRail ??= new LobbyLiveEventsRail(viewInstance.LiveEventCardTemplate) { CardClicked = OnLiveEventClicked, CardJumpInClicked = OnLiveEventJumpInClicked, ViewAllClicked = ShowEvents };
             upcomingEventsRail ??= CreateUpcomingEventsRail();
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
@@ -764,6 +764,7 @@ namespace DCL.Lobby
             {
                 CardClicked = index => OnPlaceClicked(places[index], origin),
                 CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
+                ViewAllClicked = ShowPlaces,
             };
 
         // A failed fetch keeps the last successful places, so the rows only hide while none have ever arrived; the four-column
@@ -962,6 +963,7 @@ namespace DCL.Lobby
                 CardInterestedClicked = OnUpcomingEventInterested,
                 CardAddToCalendarClicked = OnUpcomingEventAddToCalendar,
                 CardShareClicked = OnUpcomingEventShare,
+                ViewAllClicked = ShowEvents,
             };
 
         // A failed fetch keeps the last upcoming events but drops the live ones: a stale LIVE badge is a false claim

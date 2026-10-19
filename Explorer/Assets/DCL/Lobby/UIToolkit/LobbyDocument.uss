@@ -29,6 +29,7 @@
     --lobby-jump-in-color: rgb(255, 45, 85);
     --lobby-jump-in-hover-color: rgb(255, 77, 111);
     --lobby-jump-in-pressed-color: rgb(200, 35, 67);
+    --lobby-view-all-arrow-color: rgb(204, 29, 44);
     --lobby-thumbnail-fade-duration: 0.3s;
     --lobby-outline-duration: 0.2s;
     /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
@@ -230,6 +231,52 @@
     -unity-text-align: middle-left;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     color: var(--lobby-white-80);
+}
+
+/* USS has no text underline, so the hover one is the bottom border of the label */
+.lobby__view-all {
+    flex-shrink: 0;
+    height: 32px;
+    margin: 0;
+    padding: 0 0 0 14px;
+    border-width: 0;
+    border-radius: 12px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* The theme tints a hovered or pressed button */
+.lobby__view-all:hover,
+.lobby__view-all:active {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.lobby__view-all-label {
+    margin: 0;
+    padding: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    color: var(--dcl-color-snow);
+}
+
+.lobby__view-all:hover .lobby__view-all-label {
+    border-bottom-color: var(--dcl-color-snow);
+}
+
+/* The sprite is 75x128, drawn at the design's 7x12 chevron in the middle of its box */
+.lobby__view-all-icon {
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    background-image: url('/Assets/Textures/Common/ArrowRight.png');
+    background-size: 7px 12px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--lobby-view-all-arrow-color);
 }
 
 /* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */

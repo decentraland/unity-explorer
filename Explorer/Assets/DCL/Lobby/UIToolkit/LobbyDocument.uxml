@@ -77,12 +77,20 @@
             <ui:VisualElement name="LiveEvents" class="lobby__widget lobby__events" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--live" picking-mode="Ignore">
                     <ui:Label name="Title" text="Live Events" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__live-events-rail" cards-per-page="1" />
             </ui:VisualElement>
             <ui:VisualElement name="UpcomingEvents" class="lobby__widget lobby__events" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--upcoming" picking-mode="Ignore">
                     <ui:Label name="Title" text="Upcoming Events" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__upcoming-events-rail" cards-per-page="1" />
             </ui:VisualElement>
@@ -97,12 +105,20 @@
             <ui:VisualElement name="RecentPlaces" class="lobby__widget lobby__places" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Jump Back In" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement name="Cards" class="lobby__places-row" />
             </ui:VisualElement>
             <ui:VisualElement name="FeaturedPlaces" class="lobby__widget lobby__places" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Recommended Places" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
@@ -110,12 +126,20 @@
             <ui:VisualElement name="RecentPlaces4x2" class="lobby__widget lobby__widget--narrow lobby__places" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Jump Back In" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement name="Cards" class="lobby__places-row" />
             </ui:VisualElement>
             <ui:VisualElement name="FeaturedPlaces4x2" class="lobby__widget lobby__widget--narrow lobby__places" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Recommended Places" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail lobby__places-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
