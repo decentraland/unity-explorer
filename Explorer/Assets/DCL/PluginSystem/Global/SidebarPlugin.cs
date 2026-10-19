@@ -180,6 +180,7 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 decentralandUrls,
                 chatEventBus,
+                supportRequestService,
                 web3IdentityCache
                 );
 

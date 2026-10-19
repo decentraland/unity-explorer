@@ -39,6 +39,13 @@ namespace DCL.UI.Sidebar
         [field: Header("System Settings")]
         [field: SerializeField] public SimpleHoverableButton SettingsButton { get; private set; } = null!;
         [field: SerializeField] internal GameObject systemMenu { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemSettingsOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemControlsOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemContactSupportOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemReportBugOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemDiscordOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView systemFaqOption { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView systemCloseButton { get; private set; } = null!;
 
         [field: Header("Audio Settings")]
         [field: SerializeField] public SimpleHoverableButton AudioSettingsButton { get; private set; } = null!;

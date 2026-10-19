@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.BugReporting.UI;
 using DCL.Chat;
 using DCL.Chat.ChatStates;
 using DCL.Communities;
@@ -17,6 +18,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
+using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.VoiceChat.UI;
@@ -45,6 +47,8 @@ namespace DCL.UI.Sidebar
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
         private readonly bool isDiscoverFeatureEnabled;
+        private readonly bool isBugReportFeatureEnabled;
+        private readonly SupportRequestService supportRequestService;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
@@ -70,9 +74,11 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
+            SupportRequestService supportRequestService,
             IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
+            this.supportRequestService = supportRequestService;
             this.mvcManager = mvcManager;
             this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
@@ -84,6 +90,7 @@ namespace DCL.UI.Sidebar
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
+            isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -122,6 +129,16 @@ namespace DCL.UI.Sidebar
                 UnsubscribeFromOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
                 UnsubscribeFromOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
                 viewInstance.discoverCloseButton.onClick.RemoveListener(CloseOpenMenu);
+
+                UnsubscribeFromOption(viewInstance.systemSettingsOption, OnSettingsOptionClicked);
+                UnsubscribeFromOption(viewInstance.systemControlsOption, OnControlsOptionClicked);
+                UnsubscribeFromOption(viewInstance.systemContactSupportOption, OnContactSupportOptionClicked);
+                UnsubscribeFromOption(viewInstance.systemDiscordOption, OnDiscordOptionClicked);
+                UnsubscribeFromOption(viewInstance.systemFaqOption, OnFaqOptionClicked);
+                viewInstance.systemCloseButton.onClick.RemoveListener(CloseOpenMenu);
+
+                if (isBugReportFeatureEnabled)
+                    UnsubscribeFromOption(viewInstance.systemReportBugOption, OnReportBugOptionClicked);
             }
 
             profileWidgetCts.SafeCancelAndDispose();
@@ -138,6 +155,7 @@ namespace DCL.UI.Sidebar
             viewInstance.NearbyVoiceChatButton.gameObject.SetActive(isNearbyVoiceChatEnabled);
             viewInstance.discoverPlacesOption.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.discoverEventsOption.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.systemReportBugOption.gameObject.SetActive(isBugReportFeatureEnabled);
 
             CloseAllMenus();
             SubscribeToEvents();
@@ -185,6 +203,16 @@ namespace DCL.UI.Sidebar
             SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
             SubscribeToOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
             viewInstance.discoverCloseButton.onClick.AddListener(CloseOpenMenu);
+
+            SubscribeToOption(viewInstance.systemSettingsOption, OnSettingsOptionClicked);
+            SubscribeToOption(viewInstance.systemControlsOption, OnControlsOptionClicked);
+            SubscribeToOption(viewInstance.systemContactSupportOption, OnContactSupportOptionClicked);
+            SubscribeToOption(viewInstance.systemDiscordOption, OnDiscordOptionClicked);
+            SubscribeToOption(viewInstance.systemFaqOption, OnFaqOptionClicked);
+            viewInstance.systemCloseButton.onClick.AddListener(CloseOpenMenu);
+
+            if (isBugReportFeatureEnabled)
+                SubscribeToOption(viewInstance.systemReportBugOption, OnReportBugOptionClicked);
 
             if (isFriendsFeatureEnabled)
                 viewInstance.FriendsButton.onClick.AddListener(OnFriendsButtonClicked);
@@ -293,6 +321,28 @@ namespace DCL.UI.Sidebar
         }
 
         private void OnCommunitiesOptionClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
+
+        private void OnSettingsOptionClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
+
+        private void OnControlsOptionClicked() => OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
+
+        private void OnReportBugOptionClicked() => OpenPanelAsync(null, BugReportController.IssueCommand(new BugReportParams())).Forget();
+
+        private void OnContactSupportOptionClicked()
+        {
+            CloseOpenMenu();
+            supportRequestService.OpenSupport();
+        }
+
+        private void OnDiscordOptionClicked() => OpenWebUrl(DecentralandUrl.Discord);
+
+        private void OnFaqOptionClicked() => OpenWebUrl(DecentralandUrl.Faqs);
+
+        private void OpenWebUrl(DecentralandUrl url)
+        {
+            CloseOpenMenu();
+            webBrowser.OpenUrlMainThreadOnly(url);
+        }
 
         private void OpenExplorePanelInSection(ExploreSections section) =>
             OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section))).Forget();
