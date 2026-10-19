@@ -1,12 +1,12 @@
 /* Translucent black pill with the outline of the other lobby top bar buttons, a shade lighter than the fill; the fill lifts to grey on hover while top-up is possible */
 .credits-panel {
     width: 112px;
-    height: 46px;
+    height: 42px;
     flex-direction: row;
     align-items: center;
     padding-left: 19px;
     border-width: 2px;
-    border-radius: 23px;
+    border-radius: 21px;
     border-color: rgba(40, 40, 40, 0.55);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;

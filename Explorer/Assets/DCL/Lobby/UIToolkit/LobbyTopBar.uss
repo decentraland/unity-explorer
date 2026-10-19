@@ -1,5 +1,6 @@
 /* Both bars are centred in the 100px header band: the header on the left holds the wordmark, the title and the edit button,
-   the top bar on the right the widgets and the round buttons */
+   the top bar on the right the widgets and the round buttons. As in the design, every pill is 42px tall and centred in the
+   46px band that only the profile widget fills */
 .lobby__header {
     position: absolute;
     top: 27px;
@@ -26,7 +27,7 @@
 .lobby__edit-layout-button {
     width: 42px;
     height: 42px;
-    margin-left: 12px;
+    margin-left: 16px;
     align-items: center;
     justify-content: center;
     border-width: 2px;
@@ -72,13 +73,13 @@
 
 /* Pill opening an explore section over the lobby: the shape and the fill of the profile widget beside it */
 .lobby__top-bar-pill {
-    height: 46px;
+    height: 42px;
     margin-left: 10px;
     padding: 0 18px 0 14px;
     flex-direction: row;
     align-items: center;
     border-width: 2px;
-    border-radius: 23px;
+    border-radius: 21px;
     border-color: rgba(40, 40, 40, 0.55);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
@@ -117,13 +118,13 @@
 }
 
 .lobby__top-bar-button {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     margin-left: 10px;
     align-items: center;
     justify-content: center;
     border-width: 2px;
-    border-radius: 23px;
+    border-radius: 21px;
     border-color: rgba(40, 40, 40, 0.55);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
@@ -171,15 +172,15 @@
     color: var(--dcl-color-snow);
 }
 
-/* The Back pill of the top bar, sized like the round buttons beside it and coloured like the design's pills */
+/* The Back pill of the top bar, sized like the pills beside it and coloured like the design's pills */
 .lobby__top-bar-back-button {
-    height: 40px;
+    height: 42px;
     margin-left: 10px;
     padding: 0 16px 0 14px;
     flex-direction: row;
     align-items: center;
     border-width: 2px;
-    border-radius: 20px;
+    border-radius: 21px;
     border-color: var(--dcl-color-white-10);
     background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
@@ -211,7 +212,7 @@
 .lobby__back-button {
     display: none;
     height: 42px;
-    margin-left: 12px;
+    margin-left: 16px;
     padding: 0 16px 0 14px;
     flex-direction: row;
     align-items: center;
