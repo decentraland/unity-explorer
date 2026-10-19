@@ -99,6 +99,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void LogUnreachableYouTubeUrl_WithItsVideoId()
+        {
+            // Arrange
+            Resolve().Returns(UniTask.FromResult(new ResolvedMediaUrl(URL, false)));
+            LogAssert.Expect(LogType.Warning, new Regex(@"watch\?v=dQw4w9WgXcQ$"));
+
+            // Act & Assert
+            video.Update(URL, null, true, 0f);
+        }
+
+        [Test]
         public void ReResolve_WhenResolvedUrlExpiresBeforeOpening()
         {
             // Arrange

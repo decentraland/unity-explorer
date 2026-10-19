@@ -109,7 +109,7 @@ namespace DCL.SDKComponents.MediaStream
             if (UnityObjectUtils.IsQuitting || mediaPlayer == null) return;
 
             mediaPlayer.CloseMedia();
-            Object.Destroy(mediaPlayer.gameObject);
+            UnityObjectUtils.SafeDestroyGameObject(mediaPlayer);
         }
     }
 

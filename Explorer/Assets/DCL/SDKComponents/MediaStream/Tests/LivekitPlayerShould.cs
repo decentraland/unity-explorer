@@ -50,7 +50,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string CLIENT_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
         private const string CLIENT_VIDEO = "{\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540},\"url\":\"" + CLIENT_VIDEO_URL + "\",\"source\":\"client\"}";
         private const string STREAM_VIDEO = "{\"geometry\":{\"x\":480,\"y\":270,\"width\":960,\"height\":540},\"url\":\"" + CLIENT_VIDEO_URL + "\",\"source\":\"stream\"}";
-        private const long NOW_MS = 1_700_000_010_000;
         private const long POSITION_AT_MS = 1_700_000_000_000;
         private const long POSITION_MS = 5_000;
         private const string MEDIA_PLAYER_POOL_CONTAINER = "POOL_CONTAINER_MEDIA_PLAYER";
@@ -979,7 +978,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void FlipClientVideo_WhenTopRowIsNotFirst()
+        public void KeepClientVideoUnflipped_UntilItDecodes()
         {
             // Arrange
             AddParticipant(BOT, ClientVideoMetadata("playing"));
@@ -990,7 +989,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Assert
             AssertComposite(composite);
-            Assert.AreEqual(1f, p.compositorVideoFlip);
+            Assert.AreEqual(0f, p.compositorVideoFlip);
         }
 
         [Test]
@@ -1215,7 +1214,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, new PresentationUrlVideo(mediaPlayerPool, resolver), static () => NOW_MS);
+            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, new PresentationUrlVideo(mediaPlayerPool, resolver));
             players.Add(p);
             return p;
         }

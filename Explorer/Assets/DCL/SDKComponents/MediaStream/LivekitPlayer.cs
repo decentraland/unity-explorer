@@ -41,7 +41,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly SlideTextureCache slideCache;
         private readonly PresentationCompositor compositor;
         private readonly PresentationUrlVideo urlVideo;
-        private readonly Func<long> nowEpochMs;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
         private string? clientVideoUrl;
@@ -114,7 +113,7 @@ namespace DCL.SDKComponents.MediaStream
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
         internal LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlVideo urlVideo, Func<long>? nowEpochMs = null)
+            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlVideo urlVideo)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
@@ -122,7 +121,6 @@ namespace DCL.SDKComponents.MediaStream
             this.slideCache = slideCache;
             compositor = new PresentationCompositor(compositorMaterial);
             this.urlVideo = urlVideo;
-            this.nowEpochMs = nowEpochMs ?? (static () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -530,7 +528,7 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateClientVideo()
         {
             if (presentation is { } metadata && clientVideoUrl != null)
-                urlVideo.Update(clientVideoUrl, PresentationLayout.TargetPositionSeconds(metadata, nowEpochMs()), PresentationLayout.IsVideoPlaying(metadata), UnityEngine.Time.realtimeSinceStartup);
+                urlVideo.Update(clientVideoUrl, PresentationLayout.TargetPositionSeconds(metadata, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), PresentationLayout.IsVideoPlaying(metadata), UnityEngine.Time.realtimeSinceStartup);
             else
                 urlVideo.Release();
         }
@@ -649,7 +647,7 @@ namespace DCL.SDKComponents.MediaStream
             Vector4 cameraRect = PresentationLayout.CameraRect(metadata.overlay, slide.width, slide.height);
             Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive() ? DecodeLastFrame(presenterCamera) : null;
 
-            bool flipVideo = clientEntry && !urlVideo.IsTopRowFirst;
+            bool flipVideo = clientEntry && urlVideo.RequiresCompositorFlip;
 
             return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect, flipVideo);
         }

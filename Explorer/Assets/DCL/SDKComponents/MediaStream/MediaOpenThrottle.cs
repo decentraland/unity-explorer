@@ -8,7 +8,7 @@ namespace DCL.SDKComponents.MediaStream
     {
         private const float MIN_OPEN_INTERVAL_SECONDS = 0.5f;
 
-        private static float lastOpenedAt = float.NegativeInfinity;
+        private static float lastOpenedAt;
 
         /// <summary>
         ///     Whether at least half a second passed since the last <see cref="MarkOpened" />.
@@ -17,7 +17,7 @@ namespace DCL.SDKComponents.MediaStream
             SecondsSinceLastOpen(now) >= MIN_OPEN_INTERVAL_SECONDS;
 
         /// <summary>
-        ///     The seconds from the last <see cref="MarkOpened" /> to <paramref name="now" />; infinite before the first one.
+        ///     The seconds from the last <see cref="MarkOpened" />, or from startup before the first one, to <paramref name="now" />.
         /// </summary>
         internal static float SecondsSinceLastOpen(float now) =>
             now - lastOpenedAt;

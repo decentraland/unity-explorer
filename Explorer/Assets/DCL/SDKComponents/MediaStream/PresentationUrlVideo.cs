@@ -9,8 +9,8 @@ using UUAV.Compat;
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a media player taken from
-    ///     <see cref="MediaPlayerCustomPool" />, opening it through <see cref="MediaOpenThrottle" />. Main-thread only.
+    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a media player created by
+    ///     <see cref="MediaPlayerCustomPool.CreateMediaPlayer" />, opening it through <see cref="MediaOpenThrottle" />. Main-thread only.
     /// </summary>
     internal sealed class PresentationUrlVideo : IDisposable
     {
@@ -38,9 +38,10 @@ namespace DCL.SDKComponents.MediaStream
         public Texture? Texture => LivePlayer()?.LastTexture();
 
         /// <summary>
-        ///     Whether the first row of <see cref="Texture" /> is the top of the image, as in LiveKit frames, so Unity would draw it upside down.
+        ///     Whether <see cref="Texture" /> has Unity's bottom-left origin, so the compositor must flip it to match LiveKit frames;
+        ///     <c>false</c> while there is no media player.
         /// </summary>
-        public bool IsTopRowFirst => LivePlayer() is { } current && current.TextureScale.y < 0f;
+        public bool RequiresCompositorFlip => LivePlayer() is { } current && current.TextureScale.y >= 0f;
 
         public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
         {
@@ -54,8 +55,9 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and keeps it within two seconds of
-        ///     <paramref name="targetSeconds" />. A resolved url that expires before it opens is resolved again.
+        ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and seeks it to
+        ///     <paramref name="targetSeconds" /> when <see cref="PresentationLayout.ShouldSeek" /> holds. A resolved url that expires before it
+        ///     opens, or errors after it expired, is resolved again.
         /// </summary>
         public void Update(string url, double? targetSeconds, bool playing, float now)
         {
@@ -91,7 +93,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (current.GetLastError() != ErrorCode.None)
             {
-                Fail(url);
+                if (expiresAt <= 0f || now < expiresAt)
+                    Fail(url);
+
                 ReleasePlayer();
                 return;
             }
@@ -137,7 +141,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Pauses the video, or destroys its media player when the media isn't open yet, so the next <see cref="Update" /> opens it again.
+        ///     Pauses the video, or destroys its media player when the media isn't open yet.
         /// </summary>
         public void Pause()
         {
@@ -151,7 +155,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Cancels any pending resolve, destroys the media player and forgets a url that failed, so its next <see cref="Update" /> retries it.
+        ///     Cancels any pending resolve, destroys the media player and forgets a url that failed.
         /// </summary>
         public void Release()
         {
@@ -234,7 +238,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             failedUrl = url;
             string shown = url ?? string.Empty;
-            int query = shown.IndexOf('?');
+            int query = shown.IsYouTubeUrl() ? -1 : shown.IndexOf('?');
 
             if (query >= 0)
                 shown = shown[..query];

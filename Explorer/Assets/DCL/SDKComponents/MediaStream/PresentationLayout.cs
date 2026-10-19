@@ -24,6 +24,7 @@ namespace DCL.SDKComponents.MediaStream
         private const double SEEK_THRESHOLD_SECONDS = 2.0;
         private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
         private const long MAX_VIDEO_POSITION_MS = 100_000_000_000_000;
+        private const double MS_PER_SECOND = 1000.0;
 
         private static readonly Regex PRESENTER_IDENTITY = new (@"^(stream:\S{1,121}|0x[0-9a-fA-F]{40})\z", RegexOptions.Compiled);
 
@@ -81,12 +82,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             rect = default;
             PresentationSlide? slide = metadata.slide;
-            PresentationSlideVideo?[]? videos = metadata.slideVideos;
 
-            if (slide == null || videos == null || metadata.playingVideoIndex is not { } index || index < 0 || index >= videos.Length)
+            if (slide == null)
                 return false;
 
-            PresentationRect? geometry = videos[index]?.geometry;
+            PresentationRect? geometry = PlayingVideo(metadata)?.geometry;
 
             if (geometry == null || !float.IsFinite(geometry.x) || !float.IsFinite(geometry.y) || !float.IsFinite(geometry.width) || !float.IsFinite(geometry.height)
                 || !(geometry.width > 0) || !(geometry.height > 0))
@@ -107,12 +107,8 @@ namespace DCL.SDKComponents.MediaStream
         public static bool TryClientVideoUrl(PresentationBotMetadata metadata, out string url)
         {
             url = string.Empty;
-            PresentationSlideVideo?[]? videos = metadata.slideVideos;
 
-            if (!IsPlayingOrPaused(metadata.videoState) || videos == null || metadata.playingVideoIndex is not { } index || index < 0 || index >= videos.Length)
-                return false;
-
-            if (videos[index] is not { source: CLIENT_SOURCE, url: { } candidate } || !CLIENT_VIDEO_URL.IsMatch(candidate))
+            if (!IsPlayingOrPaused(metadata.videoState) || PlayingVideo(metadata) is not { source: CLIENT_SOURCE, url: { } candidate } || !CLIENT_VIDEO_URL.IsMatch(candidate))
                 return false;
 
             url = candidate;
@@ -133,28 +129,30 @@ namespace DCL.SDKComponents.MediaStream
 
             return metadata.videoState switch
                    {
-                       PLAYING_STATE when nowEpochMs >= positionAt => Math.Max(0, positionMs + nowEpochMs - positionAt) / 1000.0,
+                       PLAYING_STATE when nowEpochMs >= positionAt => Math.Max(0, positionMs + nowEpochMs - positionAt) / MS_PER_SECOND,
                        PLAYING_STATE => null,
-                       PAUSED_STATE => Math.Max(0, positionMs) / 1000.0,
+                       PAUSED_STATE => Math.Max(0, positionMs) / MS_PER_SECOND,
                        _ => null,
                    };
         }
 
         /// <summary>
-        ///     Whether the player has drifted more than two seconds from <paramref name="targetSeconds" />. A live stream never needs a seek.
+        ///     Whether the player has drifted more than <see cref="SEEK_THRESHOLD_SECONDS" /> from <paramref name="targetSeconds" />. A live
+        ///     stream never needs a seek.
         /// </summary>
         public static bool NeedsSeek(double currentSeconds, double? targetSeconds, bool isLive) =>
             !isLive && targetSeconds is { } target && Math.Abs(currentSeconds - target) > SEEK_THRESHOLD_SECONDS;
 
         /// <summary>
-        ///     Whether <paramref name="targetSeconds" /> is more than two seconds behind <paramref name="currentSeconds" />. A live stream never rewinds.
+        ///     Whether <paramref name="targetSeconds" /> is more than <see cref="SEEK_THRESHOLD_SECONDS" /> behind <paramref name="currentSeconds" />.
+        ///     A live stream never rewinds.
         /// </summary>
         public static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
             targetSeconds < currentSeconds && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
         /// <summary>
-        ///     Whether a player that last sought at <paramref name="lastSeekAt" /> seeks now: it isn't busy buffering or seeking, at least three
-        ///     seconds passed since that seek, and <see cref="NeedsSeek" /> holds.
+        ///     Whether a player that last sought at <paramref name="lastSeekAt" /> seeks now: it isn't busy buffering or seeking, at least
+        ///     <see cref="MIN_SEEK_INTERVAL_SECONDS" /> passed since that seek, and <see cref="NeedsSeek" /> holds.
         /// </summary>
         public static bool ShouldSeek(double currentSeconds, double? targetSeconds, bool isLive, bool isBusy, float now, float lastSeekAt) =>
             !isBusy && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS && NeedsSeek(currentSeconds, targetSeconds, isLive);
@@ -169,7 +167,7 @@ namespace DCL.SDKComponents.MediaStream
         ///     Whether the <c>slideVideos</c> entry at <c>playingVideoIndex</c> has <c>source</c> <c>client</c>, whatever <c>videoState</c> is.
         /// </summary>
         public static bool IsClientEntry(PresentationBotMetadata metadata) =>
-            metadata.slideVideos is { } videos && metadata.playingVideoIndex is { } index && index >= 0 && index < videos.Length && videos[index]?.source == CLIENT_SOURCE;
+            PlayingVideo(metadata)?.source == CLIENT_SOURCE;
 
         /// <summary>
         ///     The presenter camera circle's bounding square, computed in integer pixels exactly as the server does.
@@ -193,6 +191,9 @@ namespace DCL.SDKComponents.MediaStream
 
             return new Vector4((float)left / slideWidth, (float)top / slideHeight, (float)diameter / slideWidth, (float)diameter / slideHeight);
         }
+
+        private static PresentationSlideVideo? PlayingVideo(PresentationBotMetadata metadata) =>
+            metadata.slideVideos is { } videos && metadata.playingVideoIndex is { } index && index >= 0 && index < videos.Length ? videos[index] : null;
 
         private static bool IsPlayingOrPaused(string? videoState) =>
             videoState is PLAYING_STATE or PAUSED_STATE;
