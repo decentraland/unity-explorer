@@ -12,17 +12,32 @@
     overflow: hidden;
 }
 
-.lobby-upcoming-event-card__thumbnail {
+/* Clips the zooming picture so the panel's rounded corners keep their size */
+.lobby-upcoming-event-card__thumbnail-frame {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     width: 136px;
     border-radius: 16px;
+    overflow: hidden;
+}
+
+.lobby-upcoming-event-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    transition: scale var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__thumbnail {
+    scale: 1.05;
 }
 
 .lobby-upcoming-event-card--loading .lobby-upcoming-event-card__thumbnail {

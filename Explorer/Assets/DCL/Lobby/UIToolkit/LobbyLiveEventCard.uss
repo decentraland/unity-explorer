@@ -48,7 +48,11 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__thumbnail {
+    scale: 1.05;
 }
 
 /* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */

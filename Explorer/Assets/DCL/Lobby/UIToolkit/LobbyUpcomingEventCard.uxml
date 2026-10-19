@@ -1,7 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyUpcomingEventCard.uss" />
     <DCL.Lobby.LobbyUpcomingEventCardElement name="UpcomingEventCard" title="Event Name" host="Host" starts-in="In 2 hours">
-        <ui:VisualElement name="Thumbnail" class="lobby-upcoming-event-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="ThumbnailFrame" class="lobby-upcoming-event-card__thumbnail-frame" picking-mode="Ignore">
+            <ui:VisualElement name="Thumbnail" class="lobby-upcoming-event-card__thumbnail" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement name="Info" class="lobby-upcoming-event-card__info" picking-mode="Ignore">
             <ui:VisualElement name="Texts" class="lobby-upcoming-event-card__texts" picking-mode="Ignore">
                 <ui:Label name="Title" text="Event Name" enable-rich-text="false" class="lobby-upcoming-event-card__title" picking-mode="Ignore" />
