@@ -14,6 +14,8 @@ using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using DCL.UI.Controls;
+using DCL.MarketplaceCredits;
+using DCL.Credits;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -63,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly SupportRequestService supportRequestService;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -74,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
+        private ICreditsPanelController? shopCreditsPanelController;
 
         private CancellationTokenSource? controlsShortcutCts;
 
@@ -100,7 +104,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
-            SupportRequestService supportRequestService)
+            SupportRequestService supportRequestService,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -125,6 +130,7 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.chatEventBus = chatEventBus;
             this.supportRequestService = supportRequestService;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void Dispose()
@@ -142,6 +148,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
+            shopCreditsPanelController?.Dispose();
             helpMenuController?.Dispose();
         }
 
@@ -166,6 +173,9 @@ namespace DCL.PluginSystem.Global
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUiView.SidebarView.NearbyVoiceWidget);
             helpMenuController = new HelpMenuController(() => mainUiView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
+
+            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(
+                mainUiView.SidebarView.ShopCreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
 
             sidebarController = new SidebarController(() =>
                 {

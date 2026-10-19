@@ -35,6 +35,11 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
+        private const string SHOP_ITEMS_PATH = "items";
+        private const string SHOP_CATEGORY_PARAM = "category";
+        private const string EMOTE_CATEGORY = "emote";
+        private const string WEARABLE_CATEGORY = "wearable";
+
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -130,6 +135,10 @@ namespace DCL.UI.Sidebar
                 UnsubscribeFromOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
                 viewInstance.discoverCloseButton.onClick.RemoveListener(CloseOpenMenu);
 
+                viewInstance.shopEmotesBanner.onClick.RemoveListener(OnExploreEmotesClicked);
+                viewInstance.shopWearablesBanner.onClick.RemoveListener(OnExploreWearablesClicked);
+                viewInstance.shopCloseButton.onClick.RemoveListener(CloseOpenMenu);
+
                 UnsubscribeFromOption(viewInstance.systemSettingsOption, OnSettingsOptionClicked);
                 UnsubscribeFromOption(viewInstance.systemControlsOption, OnControlsOptionClicked);
                 UnsubscribeFromOption(viewInstance.systemContactSupportOption, OnContactSupportOptionClicked);
@@ -203,6 +212,10 @@ namespace DCL.UI.Sidebar
             SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
             SubscribeToOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
             viewInstance.discoverCloseButton.onClick.AddListener(CloseOpenMenu);
+
+            viewInstance.shopEmotesBanner.onClick.AddListener(OnExploreEmotesClicked);
+            viewInstance.shopWearablesBanner.onClick.AddListener(OnExploreWearablesClicked);
+            viewInstance.shopCloseButton.onClick.AddListener(CloseOpenMenu);
 
             SubscribeToOption(viewInstance.systemSettingsOption, OnSettingsOptionClicked);
             SubscribeToOption(viewInstance.systemControlsOption, OnControlsOptionClicked);
@@ -321,6 +334,24 @@ namespace DCL.UI.Sidebar
         }
 
         private void OnCommunitiesOptionClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
+
+        private void OnExploreEmotesClicked() => OpenShopCategory(EMOTE_CATEGORY);
+
+        private void OnExploreWearablesClicked() => OpenShopCategory(WEARABLE_CATEGORY);
+
+        private void OpenShopCategory(string category)
+        {
+            CloseOpenMenu();
+
+            urlBuilder.Clear();
+
+            URLAddress url = urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ShopLink)))
+                                       .AppendPath(URLPath.FromString(SHOP_ITEMS_PATH))
+                                       .AppendParameter(new URLParameter(SHOP_CATEGORY_PARAM, category))
+                                       .Build();
+
+            webBrowser.OpenUrlMainThreadOnly(url);
+        }
 
         private void OnSettingsOptionClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
 

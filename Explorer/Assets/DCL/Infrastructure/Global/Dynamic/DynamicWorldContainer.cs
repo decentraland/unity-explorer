@@ -596,7 +596,8 @@ namespace Global.Dynamic
                     uiShellContainer.PassportBridge,
                     chatContainer.ChatEventBus,
                     staticContainer.SmartWearableCache,
-                    uiShellContainer.SupportRequestService),
+                    uiShellContainer.SupportRequestService,
+                    marketplaceCreditsApiClient),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,

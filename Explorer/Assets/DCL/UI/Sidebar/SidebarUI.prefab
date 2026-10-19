@@ -74,6 +74,10 @@ MonoBehaviour:
   <discoverCloseButton>k__BackingField: {fileID: 6677388511210789796}
   <ShopButton>k__BackingField: {fileID: 5179272728502281368}
   <shopMenu>k__BackingField: {fileID: 3634218081091703835}
+  <shopEmotesBanner>k__BackingField: {fileID: 713774481650121677}
+  <shopWearablesBanner>k__BackingField: {fileID: 3687985340279997113}
+  <ShopCreditsPanel>k__BackingField: {fileID: 7677642888121936574}
+  <shopCloseButton>k__BackingField: {fileID: 1602982816888720525}
   <SettingsButton>k__BackingField: {fileID: 9117111064993892592}
   <systemMenu>k__BackingField: {fileID: 2459600118286465694}
   <systemSettingsOption>k__BackingField: {fileID: 3596874691164709611}
@@ -330,6 +334,30 @@ MonoBehaviour:
 --- !u!114 &8603036728969572028 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8681162200207780359, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &713774481650121677 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 502812507384987510, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &3687985340279997113 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4338044464377136642, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &1602982816888720525 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1811431341859096630, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &7677642888121936574 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7318904455213067781, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

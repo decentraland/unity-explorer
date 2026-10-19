@@ -1,6 +1,7 @@
 ﻿using DCL.Friends.UI.FriendPanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
+using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Sidebar.HelpMenu;
@@ -35,6 +36,10 @@ namespace DCL.UI.Sidebar
         [field: Header("Shop")]
         [field: SerializeField] public SimpleHoverableButton ShopButton { get; private set; } = null!;
         [field: SerializeField] internal GameObject shopMenu { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView shopEmotesBanner { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView shopWearablesBanner { get; private set; } = null!;
+        [field: SerializeField] public CreditsPanelView ShopCreditsPanel { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView shopCloseButton { get; private set; } = null!;
 
         [field: Header("System Settings")]
         [field: SerializeField] public SimpleHoverableButton SettingsButton { get; private set; } = null!;

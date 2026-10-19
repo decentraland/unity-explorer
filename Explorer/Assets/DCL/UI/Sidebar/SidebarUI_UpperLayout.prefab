@@ -503,6 +503,7 @@ GameObject:
   - component: {fileID: 4517076153175878320}
   - component: {fileID: 3351354020482825603}
   - component: {fileID: 2120551009973024492}
+  - component: {fileID: 7318904455213067781}
   m_Layer: 5
   m_Name: CreditsContainer
   m_TagString: Untagged
@@ -2990,7 +2991,7 @@ GameObject:
   - component: {fileID: 904486148714491277}
   - component: {fileID: 5519248671337887724}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: CreditsCounter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3577,7 +3578,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5733610417493058074
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5333,7 +5334,7 @@ GameObject:
   - component: {fileID: 2264386819187692410}
   - component: {fileID: 4182750854885397615}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10524,3 +10525,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 599045850955965450, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
   m_PrefabInstance: {fileID: 8170452885602400466}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7318904455213067781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 711072212633616518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 505be21afa5241828abcda912532627d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <CurrentCredits>k__BackingField: {fileID: 5519248671337887724}
+  <GetCreditsButton>k__BackingField: {fileID: 4811487694950370944}
