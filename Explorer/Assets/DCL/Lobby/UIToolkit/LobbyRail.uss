@@ -3,14 +3,13 @@
     --rail-arrow-fade-duration: 0.15s;
     --rail-dot-duration: 0.2s;
     --rail-dot-selected-color: rgb(255, 45, 85);
-    /* The design's 20%, 40% and 60% whites (see LobbyDocument.uss for the alphas) */
+    /* The design's translucent whites and black (see LobbyDocument.uss for the alphas) */
     --rail-dot-color: var(--lobby-white-20);
-    --rail-dot-hover-color: var(--lobby-white-40);
-    --rail-dot-pressed-color: var(--lobby-white-60);
-    --rail-arrow-color: var(--dcl-color-silver);
-    --rail-arrow-hover-color: white;
-    --rail-arrow-pressed-color: var(--rail-dot-selected-color);
-    --rail-pill-color: var(--dcl-color-black-70);
+    --rail-dot-hover-color: var(--lobby-white-60);
+    --rail-arrow-color: var(--dcl-color-snow);
+    --rail-arrow-fill: var(--lobby-white-10);
+    --rail-arrow-hover-fill: var(--lobby-white-20);
+    --rail-pill-color: var(--lobby-black-60);
 }
 
 .lobby-rail {
@@ -55,7 +54,7 @@
     left: 50%;
     translate: -50% -50%;
     height: 32px;
-    padding: 0 4px;
+    padding: 0 2px;
     border-radius: 16px;
     flex-direction: row;
     align-items: center;
@@ -67,39 +66,38 @@
     background-color: var(--rail-pill-color);
 }
 
-/* The arrows show while the rail is hovered; their glyph brightens under the pointer and goes the selected colour while pressed */
 .lobby-rail__arrow {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     margin: 0;
     padding: 0;
     border-width: 0;
-    border-radius: 12px;
+    border-radius: 14px;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0);
+    background-color: var(--rail-arrow-fill);
     opacity: 0;
-    transition: opacity var(--rail-arrow-fade-duration) ease-out;
+    transition: opacity var(--rail-arrow-fade-duration) ease-out, background-color 0.1s ease-out;
 }
 
 .lobby-rail:hover .lobby-rail__arrow {
     opacity: 1;
 }
 
+.lobby-rail__arrow:hover {
+    background-color: var(--rail-arrow-hover-fill);
+}
+
+.lobby-rail__arrow:active {
+    background-color: var(--rail-arrow-fill);
+}
+
+/* The sprite is 75x128, so the box keeps its shape at the design's 16px height */
 .lobby-rail__arrow-icon {
-    width: 9px;
-    height: 14px;
+    width: 9.4px;
+    height: 16px;
     background-image: url('/Assets/Textures/Common/ArrowLeft.png');
     -unity-background-image-tint-color: var(--rail-arrow-color);
-    transition: -unity-background-image-tint-color 0.1s ease-out;
-}
-
-.lobby-rail__arrow:hover .lobby-rail__arrow-icon {
-    -unity-background-image-tint-color: var(--rail-arrow-hover-color);
-}
-
-.lobby-rail__arrow:active .lobby-rail__arrow-icon {
-    -unity-background-image-tint-color: var(--rail-arrow-pressed-color);
 }
 
 .lobby-rail__arrow--next .lobby-rail__arrow-icon {
@@ -112,8 +110,6 @@
     align-items: center;
 }
 
-/* The design's index: 14px dots 8px apart, the selected one stretched to 40px in the primary colour; a dot is a button to
-   its page and tints under the pointer and while pressed */
 .lobby-rail__dot {
     width: 14px;
     height: 14px;
@@ -127,13 +123,8 @@
     background-color: var(--rail-dot-hover-color);
 }
 
-.lobby-rail__dot:active {
-    background-color: var(--rail-dot-pressed-color);
-}
-
 .lobby-rail__dot--selected,
-.lobby-rail__dot--selected:hover,
-.lobby-rail__dot--selected:active {
+.lobby-rail__dot--selected:hover {
     width: 40px;
     background-color: var(--rail-dot-selected-color);
 }
