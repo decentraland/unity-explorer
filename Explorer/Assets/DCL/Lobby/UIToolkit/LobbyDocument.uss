@@ -11,13 +11,14 @@
     --lobby-card-radius: 16px;
     /* The panel blends in linear light, where a translucent white reads far brighter over the dark stage, and a translucent
        black far lighter, than the same alpha does in the design tool; these are the alphas that look like the design's
-       10%, 20%, 40% and 60% whites and its 60% black, used wherever the design names one */
+       10%, 20%, 40%, 60% and 80% whites and its 60% black, used wherever the design names one */
     --lobby-white-2: rgba(255, 255, 255, 0.004);
     --lobby-white-5: rgba(255, 255, 255, 0.01);
     --lobby-white-10: rgba(255, 255, 255, 0.025);
     --lobby-white-20: rgba(255, 255, 255, 0.055);
     --lobby-white-40: rgba(255, 255, 255, 0.14);
     --lobby-white-60: rgba(255, 255, 255, 0.3);
+    --lobby-white-80: rgba(255, 255, 255, 0.61);
     --lobby-black-60: rgba(0, 0, 0, 0.85);
     /* The 1px line just inside the edge of every entry, the design's 10% white */
     --lobby-card-border-color: var(--lobby-white-10);
@@ -221,12 +222,12 @@
 .lobby__section-count {
     flex-shrink: 0;
     height: 32px;
-    margin-left: 15px;
-    font-size: 14px;
+    margin-left: 12px;
+    font-size: 16px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-    color: var(--lobby-subtitle-color);
+    color: var(--lobby-white-80);
 }
 
 /* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */

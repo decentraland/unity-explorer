@@ -1,22 +1,22 @@
 :root {
-    --friend-card-status-online: rgb(48, 205, 0);
+    --friend-card-status-online: rgb(52, 206, 119);
     --friend-card-status-away: rgb(255, 162, 90);
     --friend-card-status-offline: var(--dcl-color-silver);
+    --friend-card-status-ring-color: rgb(22, 21, 24);
+    /* Solid so the hover does not depend on what the stage shows behind the card */
+    --friend-card-hover-color: rgb(37, 33, 42);
 }
 
-/* 103x117 with 12px corners over a 60% black fill: the picture, the name and the place stack down the middle */
 .lobby-friend-card {
     width: 103px;
     height: 117px;
-    border-width: 1px;
     border-radius: 12px;
-    border-color: var(--lobby-card-border-color);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: var(--lobby-black-60);
     transition: background-color 0.1s;
 }
 
 .lobby-friend-card:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--friend-card-hover-color);
 }
 
 /* The profile color, its lighter border and the picture are set inline by the element */
@@ -28,7 +28,7 @@
     height: 40px;
     border-radius: 20px;
     border-width: 3px;
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: var(--lobby-white-40);
     background-color: white;
     background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
     background-size: cover;
@@ -40,16 +40,15 @@
     background-image: none;
 }
 
-/* On the top-right of the picture */
 .lobby-friend-card__online {
     position: absolute;
-    top: 12px;
-    left: 61px;
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
+    top: 10px;
+    left: 62px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
     border-width: 2px;
-    border-color: black;
+    border-color: var(--friend-card-status-ring-color);
     background-color: var(--friend-card-status-offline);
 }
 
@@ -64,9 +63,9 @@
 .lobby-friend-card__user-name {
     position: absolute;
     top: 58px;
-    left: 8px;
-    right: 8px;
-    height: 20px;
+    left: 10px;
+    right: 10px;
+    height: 17px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -101,8 +100,8 @@
 .lobby-friend-card__verified {
     display: none;
     flex-shrink: 0;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     margin-left: 2px;
     background-image: var(--sprite-common__icon-verified);
 }
@@ -113,9 +112,9 @@
 
 .lobby-friend-card__location {
     position: absolute;
-    left: 6px;
-    right: 6px;
-    bottom: 10px;
+    left: 8px;
+    right: 8px;
+    top: 81px;
     height: 18px;
     flex-direction: row;
     align-items: center;
@@ -123,14 +122,14 @@
     overflow: hidden;
 }
 
-/* The pin sprite is taller than wide (36x43), so the box keeps its shape */
+/* The pin sprite is taller than wide (36x43), so the box keeps its shape at the design's 14px height */
 .lobby-friend-card__location-icon {
     flex-shrink: 0;
-    width: 10px;
-    height: 12px;
-    margin-right: 5px;
+    width: 12px;
+    height: 14px;
+    margin-right: 2px;
     background-image: url('/Assets/Textures/Common/LocationIcn.png');
-    -unity-background-image-tint-color: var(--lobby-subtitle-color);
+    -unity-background-image-tint-color: var(--dcl-color-silver);
 }
 
 .lobby-friend-card__location-text {
@@ -148,15 +147,15 @@
 .lobby-friend-card__join {
     display: none;
     position: absolute;
-    left: 12px;
-    bottom: 6px;
-    width: 79px;
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
     height: 24px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    background-color: rgb(255, 45, 85);
+    border-radius: 7px;
+    background-color: var(--lobby-jump-in-color);
     transition: background-color 0.1s;
 }
 
@@ -169,24 +168,23 @@
 }
 
 .lobby-friend-card__join:hover {
-    background-color: rgb(255, 77, 111);
+    background-color: var(--lobby-jump-in-hover-color);
 }
 
 .lobby-friend-card__join:active {
-    background-color: rgb(200, 35, 67);
+    background-color: var(--lobby-jump-in-pressed-color);
 }
 
 .lobby-friend-card__join-text {
     margin-right: 4px;
-    font-size: 11px;
+    font-size: 10px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: middle-center;
     color: var(--dcl-color-snow);
 }
 
 .lobby-friend-card__join-icon {
-    width: 13px;
-    height: 12px;
-    background-image: url('/Assets/Textures/Common/JumpInSolid.png');
+    width: 16px;
+    height: 16px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
 }
