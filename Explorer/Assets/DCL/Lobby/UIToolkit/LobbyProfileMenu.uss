@@ -1,0 +1,277 @@
+/* Solid colors throughout: translucent white blends in linear space here and renders far lighter than the design's sRGB mix */
+.lobby-profile-menu {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --profile-menu-raised-color: rgb(34, 33, 36);
+    --profile-menu-pressed-color: rgb(45, 42, 51);
+    --profile-menu-separator-color: rgb(42, 41, 44);
+}
+
+.lobby-profile-menu__backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Opaque so the lobby never shows through; top and right come from the hosting document */
+.lobby-profile-menu__panel {
+    position: absolute;
+    width: 370px;
+    padding: 20px 20px 0 20px;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: var(--profile-menu-raised-color);
+    background-color: var(--dcl-color-shadow);
+    overflow: hidden;
+}
+
+.lobby-profile-menu__header {
+    margin-bottom: 24px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+.lobby-profile-menu__identity {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* The profile color, its lighter border and the picture are set inline by the element */
+.lobby-profile-menu__picture {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: white;
+    background-image: url('/Assets/DCL/Chat/Textures/DefaultProfileThumbnail.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.lobby-profile-menu__picture--loading {
+    background-image: none;
+}
+
+.lobby-profile-menu__texts {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 16px;
+    overflow: hidden;
+}
+
+.lobby-profile-menu__name-row {
+    flex-direction: row;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* The name takes the profile color, set inline by the element */
+.lobby-profile-menu__name {
+    flex-shrink: 1;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-profile-menu__verified {
+    display: none;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: 6px;
+    background-image: var(--sprite-common__icon-verified);
+}
+
+.lobby-profile-menu--verified .lobby-profile-menu__verified {
+    display: flex;
+}
+
+.lobby-profile-menu__caption {
+    margin-top: 2px;
+    font-size: 15px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--dcl-color-silver);
+}
+
+.lobby-profile-menu__address-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.lobby-profile-menu__address {
+    font-size: 15px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--dcl-color-snow);
+}
+
+/* Only the glyph responds to the hover, never a button rect */
+.lobby-profile-menu__copy {
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
+    background-color: transparent;
+    background-image: var(--sprite-common__icon-copy);
+    -unity-background-image-tint-color: var(--dcl-color-silver);
+    transition: -unity-background-image-tint-color 0.1s;
+}
+
+.lobby-profile-menu__copy:hover {
+    background-color: transparent;
+    -unity-background-image-tint-color: var(--dcl-color-snow);
+}
+
+.lobby-profile-menu__copy:active {
+    background-color: transparent;
+    -unity-background-image-tint-color: var(--dcl-color-silver);
+}
+
+/* Mirrors the passport's copied toast */
+.lobby-profile-menu__copied {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    height: 24px;
+    margin-left: 6px;
+    translate: 0 -50%;
+    padding: 0 10px;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 8px;
+    background-color: var(--dcl-color-shadow);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.lobby-profile-menu--copied .lobby-profile-menu__copied {
+    opacity: 1;
+}
+
+.lobby-profile-menu__copied-icon {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    background-image: url('/Assets/Textures/Common/CheckmarkIcnThin.png');
+}
+
+.lobby-profile-menu__copied-label {
+    font-size: 12px;
+    white-space: nowrap;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--dcl-color-snow);
+}
+
+/* Negative side margins reach past the panel padding */
+.lobby-profile-menu__separator {
+    height: 1px;
+    margin: 12px -20px;
+    background-color: var(--profile-menu-separator-color);
+}
+
+.lobby-profile-menu__separator--identity {
+    margin-top: 24px;
+}
+
+/* Negative side margins put the icon on the panel padding, in line with the header and the picture */
+.lobby-profile-menu__item {
+    height: 46px;
+    margin: 0 -12px;
+    padding: 0 12px;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 12px;
+    transition: background-color 0.1s;
+}
+
+.lobby-profile-menu__item:hover {
+    background-color: var(--profile-menu-raised-color);
+}
+
+.lobby-profile-menu__item:active {
+    background-color: var(--profile-menu-pressed-color);
+}
+
+.lobby-profile-menu__item--report-bug {
+    display: none;
+}
+
+.lobby-profile-menu--with-bug-report .lobby-profile-menu__item--report-bug {
+    display: flex;
+}
+
+.lobby-profile-menu__item-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+}
+
+.lobby-profile-menu__item-label {
+    margin-left: 12px;
+    font-size: 17px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+.lobby-profile-menu__profile-icon {
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-profile-menu__settings-icon {
+    background-image: url('/Assets/Textures/ExplorePanel/SettingsOff.png');
+}
+
+.lobby-profile-menu__bug-icon {
+    background-image: var(--sprite-common__icon-debug);
+}
+
+.lobby-profile-menu__sign-out-icon {
+    background-image: url('/Assets/Textures/Common/SignOutIcn.png');
+}
+
+.lobby-profile-menu__exit-icon {
+    background-image: url('/Assets/Textures/Common/LeaveIcon.png');
+}
+
+/* Negative margins reach the panel edges; the panel clips the corners */
+.lobby-profile-menu__footer {
+    height: 38px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 12px -20px 0 -20px;
+    padding: 0 20px;
+    background-color: var(--profile-menu-raised-color);
+}
+
+/* Only the text responds to the hover, never a button rect */
+.lobby-profile-menu__link {
+    margin: 0 26px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--dcl-color-silver);
+    background-color: transparent;
+    transition: color 0.1s;
+}
+
+.lobby-profile-menu__link:hover {
+    color: var(--dcl-color-snow);
+    background-color: transparent;
+}
+
+.lobby-profile-menu__link:active {
+    color: var(--dcl-color-silver);
+    background-color: transparent;
+}
