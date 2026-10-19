@@ -57,7 +57,10 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(1, Rail().CurrentPage);
-            Assert.AreEqual(6, Rail().childCount);
+            Assert.AreEqual(6, friends.Count);
+            Assert.AreEqual(9, Rail().childCount, "Cards are cloned once and kept for the next fill");
+            Assert.AreEqual(DisplayStyle.Flex, Card(5).style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Card(6).style.display.value);
         }
 
         [Test]

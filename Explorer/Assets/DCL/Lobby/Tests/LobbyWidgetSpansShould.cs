@@ -8,7 +8,7 @@ namespace DCL.Lobby.Tests
     [TestFixture]
     public class LobbyWidgetSpansShould
     {
-        private static readonly Regex SPAN_SUFFIX = new (@"(\d+)x(\d+)$");
+        private static readonly Regex SPAN_SUFFIX = new (@"(\d+)By(\d+)$");
 
         [Test]
         public void DeclareTheSpanEncodedInEveryName()
