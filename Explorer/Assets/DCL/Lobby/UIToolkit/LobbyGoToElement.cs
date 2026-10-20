@@ -79,6 +79,13 @@ namespace DCL.Lobby
             input.RegisterCallback<FocusOutEvent>(OnFocusOut);
         }
 
+        /// <summary>Empties the field and drops its focus, so the placeholder shows and no key lands in it.</summary>
+        public void Reset()
+        {
+            input.Blur();
+            Text = string.Empty;
+        }
+
         // The field takes its own presses; the rest of the pill hands them over
         private void OnPointerDown(PointerDownEvent evt)
         {

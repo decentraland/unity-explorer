@@ -580,7 +580,10 @@ namespace DCL.Lobby
             if (layoutEditor.IsEditing)
                 layoutEditor.Hide();
             else
-                layoutEditor.Show(viewInstance!.Root);
+            {
+                viewInstance!.GoToField.Reset();
+                layoutEditor.Show(viewInstance.Root);
+            }
         }
 
         private void OnProfileUpdated(Profile profile)

@@ -160,6 +160,23 @@ namespace DCL.Lobby.Tests
             Assert.IsFalse(element.ClassListContains(FOCUSED_CLASS));
         }
 
+        [Test]
+        public void EmptyTheFieldAndDropTheFocusOnReset()
+        {
+            //Arrange
+            element.Text = "3,-5";
+            input.Focus();
+
+            //Act
+            element.Reset();
+
+            //Assert
+            Assert.AreEqual(string.Empty, element.Text);
+            Assert.IsFalse(element.ClassListContains(WITH_DESTINATION_CLASS));
+            Assert.IsFalse(element.ClassListContains(FOCUSED_CLASS));
+            Assert.AreEqual(0, submitted.Count);
+        }
+
         private void Press(KeyCode keyCode)
         {
             using KeyDownEvent evt = KeyDownEvent.GetPooled('\0', keyCode, EventModifiers.None);
