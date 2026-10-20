@@ -16,6 +16,11 @@
     display: flex;
 }
 
+/* The sections are only moved around while the layout is edited, so their View all steps aside like the edit button */
+.lobby--editing .lobby__view-all {
+    display: none;
+}
+
 .lobby__layout-drag-layer {
     position: absolute;
     left: 0;
