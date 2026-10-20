@@ -580,13 +580,19 @@ namespace DCL.Lobby
             if (landingPlace == null) return;
 
             // Before the world loads the card mirrors the destination already picked, so there is nothing to reassign
-            if (startParcel.IsConsumed())
-                OnPlaceJumpIn(landingPlace, LobbyCardOrigin.Landing);
-            else
+            if (!startParcel.IsConsumed())
             {
                 PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
                 RequestClose();
             }
+            // The saved home is a parcel the user stood on, so the jump lands on it rather than on its scene's spawn point
+            else if (startParcel.Source == StartParcelSource.Home && landingDestination is { WorldName: null } home)
+            {
+                PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
+                PickDestination(null, home.Parcel, landOnParcel: true);
+            }
+            else
+                OnPlaceJumpIn(landingPlace, LobbyCardOrigin.Landing);
         }
 
         private void OnAvatarClicked() =>
@@ -906,7 +912,7 @@ namespace DCL.Lobby
             else
             {
                 startParcel.AssignRealm(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)));
-                startParcel.Assign(parcel);
+                startParcel.Assign(parcel, landOnParcel: landOnParcel);
             }
 
             RequestClose();

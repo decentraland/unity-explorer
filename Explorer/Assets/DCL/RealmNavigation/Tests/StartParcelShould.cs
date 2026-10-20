@@ -194,6 +194,58 @@ namespace DCL.RealmNavigation.Tests
         }
 
         [Test]
+        public void CarryTheLandOnParcelRequestOfTheLaunchDestination()
+        {
+            // Arrange & Act
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
+        }
+
+        [Test]
+        public void TakeTheLandOnParcelRequestWithAnAssignedParcel()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+
+            // Act
+            startParcel.TryTakeAsStartupDestination(null, new Vector2Int(-4, 1), landOnParcel: true);
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(-4, 1)));
+        }
+
+        [Test]
+        public void DropTheLandOnParcelRequestWhenARealmIsAssigned()
+        {
+            // Arrange: a realm pick lands on the realm's own spawn
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+
+            // Act
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.False);
+        }
+
+        [Test]
+        public void RestoreTheLaunchLandOnParcelRequestOnReset()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.Reset();
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
+        }
+
+        [Test]
         public void DropAnEarlierParcelWhenARealmIsAssigned()
         {
             // Arrange

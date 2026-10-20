@@ -47,7 +47,7 @@ namespace DCL.Navmap
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct,
-            bool isFromSearchResults = false, Vector2Int? originalParcel = null)
+            bool isFromSearchResults = false, Vector2Int? originalParcel = null, bool landOnOriginalParcel = false)
         {
             INavmapCommand<AdditionalParams> command = showPlaceInfoFactory.Invoke(place);
 
@@ -57,7 +57,7 @@ namespace DCL.Navmap
             if (!place.IsWorld)
                 MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
 
-            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel), ct);
+            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel, landOnOriginalParcel), ct);
 
             AddCommand(command);
         }

@@ -49,20 +49,28 @@ namespace DCL.RealmNavigation
     {
         private readonly Vector2Int launchValue;
         private readonly string? launchSpawnPointName;
+        private readonly bool launchLandOnParcel;
 
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default)
+        public StartParcel(Vector2Int value, string? spawnPointName = null, StartParcelSource source = StartParcelSource.Default, bool landOnParcel = false)
         {
             launchValue = value;
             launchSpawnPointName = spawnPointName;
+            launchLandOnParcel = landOnParcel;
             this.value = value;
             SpawnPointName = spawnPointName;
+            LandOnParcel = landOnParcel;
             Source = source;
         }
 
         public string? SpawnPointName { get; private set; }
+
+        /// <summary>
+        ///     When true, the startup teleport lands on the parcel itself instead of the spawn point of the scene that contains it.
+        /// </summary>
+        public bool LandOnParcel { get; private set; }
 
         public StartParcelSource Source { get; }
 
@@ -84,11 +92,12 @@ namespace DCL.RealmNavigation
         public bool IsConsumed() =>
             consumed;
 
-        public AssignResult Assign(Vector2Int newParcel, string? newSpawnPointName = null)
+        public AssignResult Assign(Vector2Int newParcel, string? newSpawnPointName = null, bool landOnParcel = false)
         {
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
             SpawnPointName = newSpawnPointName;
+            LandOnParcel = landOnParcel;
             IsParcelAssigned = true;
             return AssignResult.Ok;
         }
@@ -99,6 +108,7 @@ namespace DCL.RealmNavigation
             Realm = realm;
             SpawnPointName = spawnPointName;
             value = launchValue;
+            LandOnParcel = false;
             IsParcelAssigned = false;
             return AssignResult.Ok;
         }
@@ -114,7 +124,7 @@ namespace DCL.RealmNavigation
         ///     Makes the destination the startup one and raises the jump-in request. An unset realm keeps the bootstrap one; an unset parcel lands on the realm's spawn.
         /// </summary>
         /// <returns>False once the startup teleport consumed the parcel.</returns>
-        public bool TryTakeAsStartupDestination(URLDomain? realm, Vector2Int? parcel, string? spawnPointName = null)
+        public bool TryTakeAsStartupDestination(URLDomain? realm, Vector2Int? parcel, string? spawnPointName = null, bool landOnParcel = false)
         {
             if (consumed) return false;
 
@@ -122,7 +132,7 @@ namespace DCL.RealmNavigation
                 AssignRealm(startRealm, spawnPointName);
 
             if (parcel is { } startParcel)
-                Assign(startParcel, spawnPointName);
+                Assign(startParcel, spawnPointName, landOnParcel);
 
             RequestJumpIn();
             return true;
@@ -155,6 +165,7 @@ namespace DCL.RealmNavigation
         {
             value = launchValue;
             SpawnPointName = launchSpawnPointName;
+            LandOnParcel = launchLandOnParcel;
             Realm = null;
             IsParcelAssigned = false;
             IsRealmApplied = false;
