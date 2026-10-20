@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!sceneWorld.TryGet(sceneEntity, out SDKProfile? profileSDKSubProduct))
             {
                 profileSDKSubProduct = profileSDKSubProductPool.Get();
-                sceneWorld.Add(sceneEntity, profileSDKSubProduct, new SDKTalking());
+                sceneWorld.Add(sceneEntity, profileSDKSubProduct);
             }
 
             profileSDKSubProduct!.OverrideWith(profile);

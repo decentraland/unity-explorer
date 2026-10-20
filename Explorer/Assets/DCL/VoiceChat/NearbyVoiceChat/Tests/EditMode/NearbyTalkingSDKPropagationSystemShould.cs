@@ -60,11 +60,19 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             written = null;
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>()))
+            ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, SDKProfile>>(), Arg.Any<CRDTEntity>(), Arg.Any<SDKProfile>()))
                            .Do(call =>
                             {
                                 var message = new PBAvatarBase();
-                                call.Arg<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>()(message, call.Arg<(SDKProfile profile, bool? talking)>());
+                                call.Arg<Action<PBAvatarBase, SDKProfile>>()(message, call.Arg<SDKProfile>());
+                                written = message;
+                            });
+
+            ecsToCRDTWriter.When(w => w.PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool talking)>()))
+                           .Do(call =>
+                            {
+                                var message = new PBAvatarBase();
+                                call.Arg<Action<PBAvatarBase, (SDKProfile profile, bool talking)>>()(message, call.Arg<(SDKProfile profile, bool talking)>());
                                 written = message;
                             });
 
@@ -138,7 +146,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Tick();
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool talking)>());
         }
 
         [Test]
@@ -173,8 +181,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Assert
             Assert.That(written?.HasTalking, Is.True);
             Assert.That(written?.Talking, Is.True);
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Is<CRDTEntity>(e => e.Id == SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1), Arg.Any<(SDKProfile profile, bool? talking)>());
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool? talking)>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool talking)>>(), Arg.Is<CRDTEntity>(e => e.Id == SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1), Arg.Any<(SDKProfile profile, bool talking)>());
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool talking)>>(), Arg.Any<CRDTEntity>(), Arg.Any<(SDKProfile profile, bool talking)>());
         }
 
         [Test]
@@ -242,8 +250,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Act
             var sdkProfile = new SDKProfile();
             sdkProfile.OverrideWith(Profile.NewRandomProfile(REMOTE_WALLET));
-            sdkProfile.IsDirty = false;
-            sceneWorld.Add(sceneEntity, sdkProfile, new SDKTalking());
+            sceneWorld.Add(sceneEntity, sdkProfile);
             Tick();
 
             // Assert
@@ -292,7 +299,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             sdkProfile.OverrideWith(profile);
             sdkProfile.IsDirty = false;
 
-            return sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile, new SDKTalking());
+            return sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile);
         }
 
         private void Tick()

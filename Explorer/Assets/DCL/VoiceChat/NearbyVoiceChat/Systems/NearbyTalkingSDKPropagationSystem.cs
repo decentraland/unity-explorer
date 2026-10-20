@@ -15,7 +15,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     /// <summary>
     ///     Mirrors Nearby voice activity into <c>PBAvatarBase.talking</c>.
     ///     A remote player's <see cref="IsActivelySpeakingTag" /> state is written every frame to the <see cref="SDKTalking" />
-    ///     of the scene the player stands in; <see cref="SDKTalking.Set" /> raises it only when the value changes.
+    ///     of the scene the player stands in, adding the component on the first frame after the scene assignment.
     ///     The local player's value is written to <see cref="TalkingComponent" /> on the global player entity.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -53,10 +53,15 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             if (!playerCRDTEntity.AssignedToScene) return;
 
-            ref SDKTalking sdkTalking = ref playerCRDTEntity.SceneFacade!.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
+            World sceneWorld = playerCRDTEntity.SceneFacade!.EcsExecutor.World;
+            bool talking = World.Has<IsActivelySpeakingTag>(entity);
+
+            ref SDKTalking sdkTalking = ref sceneWorld.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
 
             if (exists)
-                sdkTalking.Set(World.Has<IsActivelySpeakingTag>(entity));
+                sdkTalking.Set(talking);
+            else
+                sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, new SDKTalking(talking));
         }
     }
 }

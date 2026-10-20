@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
-            entity = world.Create(playerCRDTEntity, new SDKTalking());
+            entity = world.Create(playerCRDTEntity);
         }
 
         protected override void OnTearDown()
@@ -59,9 +59,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(),
+                                Arg.Any<Action<PBAvatarBase, SDKProfile>>(),
                                 playerCRDTEntity.CRDTEntity,
-                                (profile, (bool?)null));
+                                profile);
 
             ecsToCRDTWriter.ClearReceivedCalls();
             profile.Name = "newName";
@@ -72,9 +72,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, (SDKProfile profile, bool? talking)>>(),
+                                Arg.Any<Action<PBAvatarBase, SDKProfile>>(),
                                 playerCRDTEntity.CRDTEntity,
-                                (profile, (bool?)null));
+                                profile);
         }
 
         [Test]

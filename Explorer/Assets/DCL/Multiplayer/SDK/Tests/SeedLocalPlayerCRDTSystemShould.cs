@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             // Assert
-            Assert.IsNull(world.Get<SDKTalking>(persistentPlayerEntity).Value);
+            Assert.IsFalse(world.Has<SDKTalking>(persistentPlayerEntity));
         }
 
         [Test]
@@ -101,14 +101,14 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(true, world.Get<SDKTalking>(persistentPlayerEntity).Value);
+            Assert.IsTrue(world.Get<SDKTalking>(persistentPlayerEntity).IsTalking);
 
             // Act
             globalWorld.Get<TalkingComponent>(localPlayerEntity).IsTalking = false;
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(false, world.Get<SDKTalking>(persistentPlayerEntity).Value);
+            Assert.IsFalse(world.Get<SDKTalking>(persistentPlayerEntity).IsTalking);
         }
 
         [Test]
@@ -123,7 +123,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => system.Update(0));
-            Assert.IsFalse(world.Has<SDKTalking>(persistentPlayerEntity));
+            Assert.IsTrue(world.Get<SDKTalking>(persistentPlayerEntity).IsTalking);
         }
     }
 }
