@@ -11,6 +11,7 @@ using DCL.Web3.Identities;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace DCL.Lobby.Tests
         private IOnlineUsersProvider onlineUsers = null!;
         private IPlacesAPIService places = null!;
         private IPassportBridge passport = null!;
+        private IFriendsService friendsService = null!;
         private VisualElement section = null!;
         private CancellationTokenSource cts = null!;
         private LobbyDocumentFriendsPresenter presenter = null!;
@@ -72,12 +74,14 @@ namespace DCL.Lobby.Tests
             places.GetWorldAsync(Arg.Any<Vector2Int>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(null));
             passport = Substitute.For<IPassportBridge>();
             passport.ShowAsync(Arg.Any<string>()).Returns(UniTask.CompletedTask);
+            friendsService = Substitute.For<IFriendsService>();
+            SetTotalFriends(3);
 
             section = CreateSection();
             cts = new CancellationTokenSource();
 
             var rail = new LobbyFriendsRail(AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(CARD_TEMPLATE_PATH));
-            presenter = new LobbyDocumentFriendsPresenter(rail, tracker, onlineUsers, places, passport);
+            presenter = new LobbyDocumentFriendsPresenter(rail, tracker, friendsService, onlineUsers, places, passport);
         }
 
         [TearDown]
@@ -91,13 +95,76 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideSectionWithoutOnlineFriends()
+        public async Task ShowNoFriendsOnlineWhileEveryFriendIsOffline()
         {
             // Act
             presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
 
             // Assert
-            Assert.AreEqual(DisplayStyle.None, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("Empty").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q("NoFriends").style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q<Label>("OnlineCount").style.display.value, "A banner says it already");
+        }
+
+        [Test]
+        public async Task ShowTheMakeFriendsBannerWithoutAnyFriend()
+        {
+            // Arrange
+            SetTotalFriends(0);
+
+            // Act
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q("NoFriendsOnline").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriends").style.display.value);
+        }
+
+        [Test]
+        public async Task KeepTheNoFriendsOnlineBannerUntilTheTotalArrives()
+        {
+            // Arrange
+            var pending = new UniTaskCompletionSource<PaginatedFriendsResult>();
+            friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(_ => pending.Task);
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+            DisplayStyle onlineBannerBefore = section.Q("NoFriendsOnline").style.display.value;
+            DisplayStyle emptyBannerBefore = section.Q("NoFriends").style.display.value;
+
+            // Act
+            pending.TrySetResult(new PaginatedFriendsResult(Array.Empty<Profile.CompactInfo>(), 0));
+            await UniTask.DelayFrame(2);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.Flex, onlineBannerBefore);
+            Assert.AreEqual(DisplayStyle.None, emptyBannerBefore);
+            Assert.AreEqual(DisplayStyle.None, section.Q("NoFriendsOnline").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriends").style.display.value);
+        }
+
+        [Test]
+        public async Task IgnoreATotalResolvedAfterHiding()
+        {
+            // Arrange
+            var pending = new UniTaskCompletionSource<PaginatedFriendsResult>();
+            friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(_ => pending.Task);
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+
+            // Act
+            presenter.Hide();
+            cts.Cancel();
+            pending.TrySetResult(new PaginatedFriendsResult(Array.Empty<Profile.CompactInfo>(), 0));
+            await UniTask.DelayFrame(2);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q("NoFriends").style.display.value);
         }
 
         [Test]
@@ -116,7 +183,9 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q("Empty").style.display.value);
             Assert.AreEqual("2 Online", section.Q<Label>("OnlineCount").text, "The title counts the friends online");
+            Assert.AreEqual(DisplayStyle.Flex, section.Q<Label>("OnlineCount").style.display.value);
             Assert.AreEqual("Amy", card.UserName);
             Assert.AreEqual("Zed", Card(1).UserName);
             Assert.AreEqual(LOCATING, initialLocation);
@@ -195,21 +264,25 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public async Task RemoveFriendsGoingOfflineAndHideAtZero()
+        public async Task RemoveFriendsGoingOfflineAndShowTheBannerAtZero()
         {
             // Arrange
             Profile.CompactInfo amy = Friend(AMY_ID, "Amy");
             eventBus.BroadcastFriendConnected(amy);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
             presenter.Show(section, cts.Token);
-            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            DisplayStyle emptyWhileOnline = section.Q("Empty").style.display.value;
 
             // Act
             eventBus.BroadcastFriendDisconnected(amy);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
 
             // Assert
-            Assert.AreEqual(DisplayStyle.None, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, emptyWhileOnline);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, section.Q<LobbyRailElement>().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("Empty").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
         }
 
         [Test]
@@ -253,6 +326,10 @@ namespace DCL.Lobby.Tests
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)section.Q<LobbyRailElement>()[index];
 
+        private void SetTotalFriends(int total) =>
+            friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                          .Returns(_ => UniTask.FromResult(new PaginatedFriendsResult(Array.Empty<Profile.CompactInfo>(), total)));
+
         private void SetOnlineUsers(params OnlineUserData[] users) =>
             onlineUsers.GetAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
                        .Returns(UniTask.FromResult<IReadOnlyCollection<OnlineUserData>>(users));
@@ -278,6 +355,10 @@ namespace DCL.Lobby.Tests
         {
             var friendsSection = new VisualElement { name = "Friends" };
             friendsSection.Add(new Label { name = "OnlineCount" });
+            var empty = new VisualElement { name = "Empty" };
+            empty.Add(new VisualElement { name = "NoFriendsOnline" });
+            empty.Add(new VisualElement { name = "NoFriends" });
+            friendsSection.Add(empty);
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

@@ -7,20 +7,24 @@ namespace DCL.Lobby
 {
     /// <summary>
     ///     The card strip of a lobby section, filled with clones of a card template. The section is handed over on
-    ///     every <see cref="Show" /> and the cards outlive it.
+    ///     every <see cref="Show" /> and the cards outlive it. Without cards a rail hides its section, or, when it shows
+    ///     an empty state, swaps the strip for the section's element named Empty.
     /// </summary>
     public abstract class LobbyCardRail<TCard> where TCard: VisualElement
     {
         private const string CARDS_NAME = "Cards";
         private const string VIEW_ALL_NAME = "ViewAll";
+        private const string EMPTY_NAME = "Empty";
 
         /// <summary>The View all of the section was clicked; a section without one never reports it.</summary>
         public Action? ViewAllClicked;
 
         private readonly VisualTreeAsset cardTemplate;
         private readonly List<TCard> cards = new ();
+        private readonly bool showsEmptyState;
 
         private VisualElement? strip;
+        private VisualElement? empty;
         private LobbyRailElement? rail;
         private Button? viewAll;
 
@@ -34,9 +38,10 @@ namespace DCL.Lobby
 
         protected VisualElement? section { get; private set; }
 
-        protected LobbyCardRail(VisualTreeAsset cardTemplate)
+        protected LobbyCardRail(VisualTreeAsset cardTemplate, bool showsEmptyState = false)
         {
             this.cardTemplate = cardTemplate;
+            this.showsEmptyState = showsEmptyState;
         }
 
         /// <summary>
@@ -49,6 +54,7 @@ namespace DCL.Lobby
             section = newSection;
             rail = newSection.Q<LobbyRailElement>();
             strip = rail ?? newSection.Q(CARDS_NAME);
+            empty = showsEmptyState ? newSection.Q(EMPTY_NAME) : null;
             viewAll = newSection.Q<Button>(VIEW_ALL_NAME);
 
             if (viewAll != null)
@@ -61,15 +67,12 @@ namespace DCL.Lobby
             }
 
             rail?.SetCardCount(Count);
-
-            // A section of a rebuilt hierarchy starts in the state its template authored
-            if (Count > 0)
-                section.SetDisplayed(true);
+            ApplyDisplay(Count);
         }
 
         /// <summary>
         ///     Shows the first <paramref name="count" /> cards, cloning the missing ones, and hides the rest.
-        ///     The section hides when there is nothing to list.
+        ///     Without cards the section hides, or shows its banner when the rail has an empty state.
         /// </summary>
         public void SetCount(int count, bool rewind = true)
         {
@@ -87,7 +90,7 @@ namespace DCL.Lobby
                 cards[i].SetDisplayed(false);
 
             rail?.SetCardCount(count, rewind);
-            section!.SetDisplayed(count > 0);
+            ApplyDisplay(count);
             OnCountChanged(count);
         }
 
@@ -96,6 +99,7 @@ namespace DCL.Lobby
             DetachViewAll();
             section = null;
             strip = null;
+            empty = null;
             rail = null;
         }
 
@@ -105,6 +109,22 @@ namespace DCL.Lobby
 
         private void OnViewAllClicked() =>
             ViewAllClicked?.Invoke();
+
+        // A section of a rebuilt hierarchy starts as its template authored it, so every show settles the display again
+        private void ApplyDisplay(int count)
+        {
+            bool hasCards = count > 0;
+
+            if (!showsEmptyState)
+            {
+                section!.SetDisplayed(hasCards);
+                return;
+            }
+
+            section!.SetDisplayed(true);
+            strip!.SetDisplayed(hasCards);
+            empty?.SetDisplayed(!hasCards);
+        }
 
         // The hierarchy outlives the rail's hold of it, so a handed-back section must stop reporting
         private void DetachViewAll()

@@ -1,0 +1,200 @@
+/* The banners the friends, communities and gallery sections show in place of their card strip while they have nothing to
+   list (see LobbyCardRail): the design's 60% black and 10% white (the alphas of LobbyDocument.uss); nothing in them reacts
+   to the pointer */
+:root {
+    --lobby-empty-banner-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.lobby-empty-banner {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    border-width: 1.5px;
+    border-color: var(--lobby-card-border-color);
+    border-radius: var(--lobby-card-radius);
+    background-color: var(--lobby-black-60);
+}
+
+.lobby-empty-banner-slot {
+    flex-direction: column;
+}
+
+/* As wide as the rails they stand in for (see LobbyDocument.uss) and as tall as one card, so they sit where the cards do
+   and leave the pager band clear */
+.lobby-empty-banner--friends-online,
+.lobby-empty-banner--friends {
+    width: 439px;
+    height: 117px;
+}
+
+.lobby-empty-banner--gallery,
+.lobby-empty-banner--communities {
+    width: 790px;
+    height: 146px;
+}
+
+.lobby-empty-banner--friends-online {
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 10px;
+}
+
+.lobby-empty-banner__friends-icon {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 5px;
+    background-image: url('/Assets/DCL/Lobby/Textures/FriendsIcon.png');
+    -unity-background-image-tint-color: var(--lobby-subtitle-color);
+}
+
+.lobby-empty-banner__caption {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-center;
+    text-shadow: var(--lobby-empty-banner-text-shadow);
+    color: var(--lobby-subtitle-color);
+}
+
+/* The design's blurred discs behind the figure are baked into a picture: the panel cannot blur */
+.lobby-empty-banner--friends {
+    padding: 12px 30px 12px 10px;
+    overflow: hidden;
+    background-image: url('/Assets/DCL/Lobby/Textures/FriendsEmptyGlow.png');
+    background-size: 100% 100%;
+}
+
+.lobby-empty-banner__friends-image {
+    width: 102px;
+    height: 117px;
+    flex-shrink: 0;
+    margin-right: 20px;
+    background-image: url('/Assets/DCL/Lobby/Textures/FriendsEmptyImage.png');
+    background-size: 100% 100%;
+}
+
+.lobby-empty-banner--gallery {
+    justify-content: center;
+    padding: 12px 100px 12px 50px;
+}
+
+.lobby-empty-banner__gallery-image {
+    width: 146px;
+    height: 90px;
+    flex-shrink: 0;
+    margin-right: 25px;
+    background-image: url('/Assets/DCL/Lobby/Textures/GalleryEmptyImage.png');
+    background-size: 100% 100%;
+}
+
+/* Narrower right padding than the design's 100px: the panel's Inter and emoji sprites run wider, and with the design's
+   the tags would take a row each and overflow the frame */
+.lobby-empty-banner--communities {
+    padding: 12px 30px;
+}
+
+/* The design's soft-edged disc is baked into the picture's alpha */
+.lobby-empty-banner__communities-image {
+    width: 143px;
+    height: 143px;
+    flex-shrink: 0;
+    margin-right: 30px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CommunitiesEmptyImage.png');
+    background-size: 100% 100%;
+}
+
+.lobby-empty-banner__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    justify-content: center;
+}
+
+.lobby-empty-banner__title {
+    margin-bottom: 10px;
+    font-size: 20px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    white-space: normal;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-empty-banner__title--small {
+    font-size: 16px;
+}
+
+.lobby-empty-banner__title--nowrap {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-empty-banner__body {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    white-space: normal;
+    text-shadow: var(--lobby-empty-banner-text-shadow);
+    color: var(--lobby-subtitle-color);
+}
+
+.lobby-empty-banner__body--small {
+    font-size: 12px;
+}
+
+/* The negative margin swallows the gap under the last row of tags */
+.lobby-empty-banner__tags {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: -10px;
+}
+
+/* The design's 10% white */
+.lobby-empty-banner__tag {
+    margin: 0 10px 10px 0;
+    padding: 6px 16px;
+    border-left-width: 3px;
+    border-left-color: var(--lobby-jump-in-color);
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    background-color: var(--lobby-white-10);
+    font-size: 13px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    white-space: nowrap;
+    color: var(--dcl-color-snow);
+}
+
+/* The design frames only the seven-column banners; at four columns their paddings and illustrations leave the texts no
+   room, so both give way and the texts wrap */
+.lobby__widget--narrow .lobby-empty-banner--gallery,
+.lobby__widget--narrow .lobby-empty-banner--communities {
+    width: 441px;
+    padding: 10px 20px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__gallery-image {
+    width: 120px;
+    height: 74px;
+    margin-right: 20px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__communities-image {
+    width: 100px;
+    height: 100px;
+    margin-right: 16px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__title {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__body {
+    font-size: 13px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__tags {
+    margin-bottom: -6px;
+}
+
+.lobby__widget--narrow .lobby-empty-banner__tag {
+    margin: 0 0 6px 0;
+    padding: 4px 10px;
+    font-size: 12px;
+}

@@ -168,6 +168,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? notificationsCts;
         private UniTaskCompletionSource? closeIntent;
         private bool leaving;
+        private bool communitiesSectionsShown;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -401,17 +402,23 @@ namespace DCL.Lobby
             liveEventsRail.Show(viewInstance.LiveEvents);
             upcomingEventsRail.Show(viewInstance.UpcomingEvents);
 
-            // The four-column rail lists the same communities as the seven-column one
+            // The four-column rail lists the same communities as the seven-column one; only a user the feature admits gets
+            // the sections, which a verdict still pending here brings up from the fetch
             communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
             communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
-            communitiesRail.Show(viewInstance.Communities);
-            communities4By2Rail.Show(viewInstance.Communities4By2);
+
+            if (communitiesProvider != null && CommunitiesFeatureAccess.Instance.IsUserAllowedCached())
+                ShowCommunitiesSections();
 
             // The four-column rail lists the same photos as the seven-column one
             galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
             gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
-            galleryRail.Show(viewInstance.Gallery);
-            gallery4By2Rail.Show(viewInstance.Gallery4By2);
+
+            if (cameraReel != null && identityCache.Identity != null)
+            {
+                galleryRail.Show(viewInstance.Gallery);
+                gallery4By2Rail.Show(viewInstance.Gallery4By2);
+            }
 
             // Before the places: a cached landing place binds its card synchronously
             friendsCts = friendsCts.SafeRestart();
@@ -498,6 +505,7 @@ namespace DCL.Lobby
             upcomingEventsRail?.Hide();
             communitiesRail?.Hide();
             communities4By2Rail?.Hide();
+            communitiesSectionsShown = false;
             galleryRail?.Hide();
             gallery4By2Rail?.Hide();
 
@@ -838,8 +846,8 @@ namespace DCL.Lobby
             card.Thumbnail = sprite;
         }
 
-        // A failed fetch keeps the last communities, so the rows only hide while none have ever arrived; a user the feature
-        // flag leaves out gets none
+        // A failed fetch keeps the last communities, so the banner only shows while none have ever arrived; a user the
+        // feature flag leaves out gets none
         private async UniTaskVoid ShowCommunitiesAsync(CancellationToken ct)
         {
             if (communitiesProvider == null) return;
@@ -847,6 +855,8 @@ namespace DCL.Lobby
             Result<bool> allowed = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested || !allowed.Success || !allowed.Value) return;
+
+            ShowCommunitiesSections();
 
             Result<GetUserCommunitiesResponse> result = await communitiesProvider.GetUserCommunitiesAsync(string.Empty, onlyMemberOf: true, pageNumber: 1, elementsPerPage: MAX_COMMUNITIES, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -864,6 +874,15 @@ namespace DCL.Lobby
 
             ShowCommunityCards(communitiesRail!, ct);
             ShowCommunityCards(communities4By2Rail!, ct);
+        }
+
+        private void ShowCommunitiesSections()
+        {
+            if (communitiesSectionsShown) return;
+
+            communitiesSectionsShown = true;
+            communitiesRail!.Show(viewInstance!.Communities);
+            communities4By2Rail!.Show(viewInstance.Communities4By2);
         }
 
         private void ShowCommunityCards(LobbyCommunitiesRail rail, CancellationToken ct)
@@ -887,8 +906,8 @@ namespace DCL.Lobby
         private void OnCommunityClicked(int index) =>
             mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communities[index].id, spriteCache)));
 
-        // A failed fetch keeps the last photos, so the rows only hide while none have ever arrived; the reel lists the
-        // latest first, as the rails do
+        // A failed fetch keeps the last photos, so the banner only shows while none have ever arrived; the reel lists
+        // the latest first, as the rails do
         private async UniTaskVoid ShowGalleryAsync(CancellationToken ct)
         {
             if (cameraReel == null) return;

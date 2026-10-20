@@ -16,6 +16,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using Utility;
+using Utility.UIToolkit;
 
 namespace DCL.Lobby
 {
@@ -28,6 +29,11 @@ namespace DCL.Lobby
         private const string LOCATING_LABEL = "Locating…";
         private const string ONLINE_COUNT_NAME = "OnlineCount";
         private const string ONLINE_COUNT_FORMAT = "{0} Online";
+        private const string NO_FRIENDS_ONLINE_NAME = "NoFriendsOnline";
+        private const string NO_FRIENDS_NAME = "NoFriends";
+
+        // Only the total of the page is read, so the smallest one is asked for
+        private const int TOTAL_PROBE_PAGE_SIZE = 1;
 
         /// <summary>
         ///     Raised with the friend's live position when Join is pressed and the friend is still in the world.
@@ -36,6 +42,7 @@ namespace DCL.Lobby
 
         private readonly LobbyFriendsRail rail;
         private readonly FriendsConnectivityStatusTracker tracker;
+        private readonly IFriendsService friendsService;
         private readonly IOnlineUsersProvider onlineUsers;
         private readonly IPlacesAPIService places;
         private readonly IPassportBridge passport;
@@ -56,14 +63,22 @@ namespace DCL.Lobby
         private Label? onlineCountLabel;
         private int shownOnlineCount = -1;
 
+        private VisualElement? noFriendsOnline;
+        private VisualElement? noFriends;
+
+        // Null until the service has told; kept across shows, like the cards, so a reopen does not flash the other banner
+        private int? totalFriends;
+
         public LobbyDocumentFriendsPresenter(LobbyFriendsRail rail,
             FriendsConnectivityStatusTracker tracker,
+            IFriendsService friendsService,
             IOnlineUsersProvider onlineUsers,
             IPlacesAPIService places,
             IPassportBridge passport)
         {
             this.rail = rail;
             this.tracker = tracker;
+            this.friendsService = friendsService;
             this.onlineUsers = onlineUsers;
             this.places = places;
             this.passport = passport;
@@ -95,6 +110,8 @@ namespace DCL.Lobby
             flushScheduled = false;
             onlineCountLabel = section.Q<Label>(ONLINE_COUNT_NAME);
             shownOnlineCount = -1;
+            noFriendsOnline = section.Q(NO_FRIENDS_ONLINE_NAME);
+            noFriends = section.Q(NO_FRIENDS_NAME);
             rail.Show(section);
 
             tracker.OnFriendBecameOnline += OnFriendStatusChanged;
@@ -104,6 +121,7 @@ namespace DCL.Lobby
             tracker.OnReset += OnTrackerReset;
 
             Rebuild(rewind: true);
+            FetchTotalFriendsAsync(ct).Forget();
         }
 
         public void Hide()
@@ -137,6 +155,7 @@ namespace DCL.Lobby
 
             rail.SetCount(onlineFriends.Count, rewind);
             ShowOnlineCount(onlineFriends.Count);
+            ShowEmptyVariant();
 
             for (var i = 0; i < onlineFriends.Count; i++)
                 Bind(i);
@@ -170,14 +189,38 @@ namespace DCL.Lobby
             }
         }
 
-        // The text is only built when the count changes
+        // The text is only built when the count changes; a banner already says nobody is online
         private void ShowOnlineCount(int count)
         {
             if (onlineCountLabel == null || count == shownOnlineCount)
                 return;
 
             onlineCountLabel.text = string.Format(ONLINE_COUNT_FORMAT, count);
+            onlineCountLabel.SetDisplayed(count > 0);
             shownOnlineCount = count;
+        }
+
+        // Until the total is known the gentler claim stands: nobody is online right now
+        private void ShowEmptyVariant()
+        {
+            bool hasNoFriends = totalFriends == 0;
+            noFriendsOnline?.SetDisplayed(!hasNoFriends);
+            noFriends?.SetDisplayed(hasNoFriends);
+        }
+
+        // A failure keeps the last known total
+        private async UniTaskVoid FetchTotalFriendsAsync(CancellationToken ct)
+        {
+            Result<PaginatedFriendsResult> result = await friendsService.GetFriendsAsync(0, TOTAL_PROBE_PAGE_SIZE, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+
+            if (!result.Success) return;
+
+            using PaginatedFriendsResult page = result.Value;
+
+            if (ct.IsCancellationRequested) return;
+
+            totalFriends = page.TotalAmount;
+            ShowEmptyVariant();
         }
 
         private static void ShowLocation(LobbyFriendCardElement card, string label, bool canJoin)

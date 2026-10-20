@@ -20,14 +20,27 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheSectionWithoutOnlineFriends()
+        public void ShowTheBannerInsteadOfTheRailWithoutOnlineFriends()
         {
             //Act
             friends.Show(section);
             friends.SetCount(0);
 
             //Assert
-            Assert.AreEqual(DisplayStyle.None, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
+        }
+
+        [Test]
+        public void ShowTheBannerAsSoonAsItTakesTheSectionOver()
+        {
+            //Act
+            friends.Show(section);
+
+            //Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
         }
 
         [Test]
@@ -41,7 +54,25 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Empty().style.display.value);
             Assert.AreEqual(2, Rail().childCount);
+        }
+
+        [Test]
+        public void SwapTheCardsForTheBannerWhenTheLastFriendGoesOffline()
+        {
+            //Arrange
+            friends.Show(section);
+            friends.SetCount(2);
+
+            //Act
+            friends.SetCount(0, rewind: false);
+
+            //Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
         }
 
         [Test]
@@ -86,12 +117,16 @@ namespace DCL.Lobby.Tests
         private LobbyRailElement Rail() =>
             section.Q<LobbyRailElement>();
 
+        private VisualElement Empty() =>
+            section.Q("Empty");
+
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)Rail()[index];
 
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
+            friendsSection.Add(new VisualElement { name = "Empty" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

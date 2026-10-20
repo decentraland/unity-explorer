@@ -15,6 +15,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGalleryCard.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyGoTo.uss" />
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyEmptyBanner.uss" />
     <ui:Template name="LobbyProfileMenu" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyProfileMenu.uxml?fileID=9197481963319205126&amp;guid=35655be02a234b9ea1b138ab6323062c&amp;type=3#LobbyProfileMenu" />
     <ui:Template name="LobbyLandingCard" src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyLandingCard.uxml?fileID=9197481963319205126&amp;guid=f260689364e4454c8f4a329cd3e46b06&amp;type=3#LobbyLandingCard" />
     <ui:VisualElement name="Lobby" class="lobby">
@@ -99,9 +100,23 @@
                     <ui:Label name="Title" text="Friends" class="lobby__section-title" picking-mode="Ignore" />
                     <ui:Label name="OnlineCount" text="0 Online" class="lobby__section-count" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <!-- Two banners for the two ways of having nobody online: friends who are all offline, or no friends at all -->
+                <ui:VisualElement name="Empty" class="lobby-empty-banner-slot" picking-mode="Ignore" style="display: none;">
+                    <ui:VisualElement name="NoFriendsOnline" class="lobby-empty-banner lobby-empty-banner--friends-online" picking-mode="Ignore">
+                        <ui:VisualElement name="Icon" class="lobby-empty-banner__friends-icon" picking-mode="Ignore" />
+                        <ui:Label name="Caption" text="No Friends Online" class="lobby-empty-banner__caption" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="NoFriends" class="lobby-empty-banner lobby-empty-banner--friends" picking-mode="Ignore" style="display: none;">
+                        <ui:VisualElement name="Image" class="lobby-empty-banner__friends-image" picking-mode="Ignore" />
+                        <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
+                            <ui:Label name="Title" text="Time to make some friends!" class="lobby-empty-banner__title lobby-empty-banner__title--small" picking-mode="Ignore" />
+                            <ui:Label name="Body" text="Visit someone&apos;s profile or click their name in Chat to add them as a friend. They&apos;ll show up here when they&apos;re online." class="lobby-empty-banner__body lobby-empty-banner__body--small" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__friends-rail" cards-per-page="4" />
             </ui:VisualElement>
-            <!-- The sections start hidden and come up once they have cards -->
+            <!-- The places sections start hidden and come up once they have cards -->
             <ui:VisualElement name="RecentPlaces" class="lobby__widget lobby__places" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Jump Back In" class="lobby__section-title" picking-mode="Ignore" />
@@ -143,10 +158,21 @@
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail lobby__places-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <!-- The communities the user belongs to, in the two widths of the places sections; hidden while there are none -->
+            <!-- The communities the user belongs to, in the two widths of the places sections; a banner while there are none -->
             <ui:VisualElement name="Communities" class="lobby__widget lobby__communities" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
+                    <ui:VisualElement name="Image" class="lobby-empty-banner__communities-image" picking-mode="Ignore" />
+                    <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
+                        <ui:Label name="Title" text="✨ Discover and Join Communities ✨" class="lobby-empty-banner__title lobby-empty-banner__title--nowrap" picking-mode="Ignore" />
+                        <ui:VisualElement name="Tags" class="lobby-empty-banner__tags" picking-mode="Ignore">
+                            <ui:Label text="💬 Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🎯 Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🔔 Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
@@ -154,18 +180,43 @@
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
+                    <ui:VisualElement name="Image" class="lobby-empty-banner__communities-image" picking-mode="Ignore" />
+                    <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
+                        <ui:Label name="Title" text="✨ Discover and Join Communities ✨" class="lobby-empty-banner__title lobby-empty-banner__title--nowrap" picking-mode="Ignore" />
+                        <ui:VisualElement name="Tags" class="lobby-empty-banner__tags" picking-mode="Ignore">
+                            <ui:Label text="💬 Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🎯 Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🔔 Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail lobby__communities-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <!-- The user's latest camera reel photos, in the two widths of the places sections; hidden while there are none -->
+            <!-- The user's latest camera reel photos, in the two widths of the places sections; a banner while there are none -->
             <ui:VisualElement name="Gallery" class="lobby__widget lobby__gallery" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">
+                    <ui:VisualElement name="Image" class="lobby-empty-banner__gallery-image" picking-mode="Ignore" />
+                    <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
+                        <ui:Label name="Title" text="You Haven&apos;t Taken Any Photos Yet" class="lobby-empty-banner__title" picking-mode="Ignore" />
+                        <ui:Label name="Body" text="Your photos will appear here. Jump in now and start capturing moments with your friends using the Camera!" class="lobby-empty-banner__body" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__gallery-rail" cards-per-page="3" arrows-move-one-card="true" />
             </ui:VisualElement>
             <ui:VisualElement name="Gallery4x2" class="lobby__widget lobby__widget--narrow lobby__gallery" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">
+                    <ui:VisualElement name="Image" class="lobby-empty-banner__gallery-image" picking-mode="Ignore" />
+                    <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
+                        <ui:Label name="Title" text="You Haven&apos;t Taken Any Photos Yet" class="lobby-empty-banner__title" picking-mode="Ignore" />
+                        <ui:Label name="Body" text="Your photos will appear here. Jump in now and start capturing moments with your friends using the Camera!" class="lobby-empty-banner__body" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__gallery-rail lobby__gallery-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>

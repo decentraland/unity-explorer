@@ -7,7 +7,8 @@ namespace DCL.Lobby
     /// <summary>
     ///     Keeps the widget sections where the layout places them: a placed section hangs from the grid of its corner, at the
     ///     position of its cell and as big as its span; an unplaced one hangs from a hidden container, whatever its own
-    ///     display is. The sections keep hiding themselves while empty.
+    ///     display is. The sections settle their own display: the events and places ones hide while empty, the friends,
+    ///     communities and gallery ones show a banner instead.
     /// </summary>
     public class LobbyWidgetHost
     {

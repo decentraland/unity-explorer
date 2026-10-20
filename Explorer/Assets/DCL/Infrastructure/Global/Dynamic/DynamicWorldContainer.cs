@@ -856,7 +856,7 @@ namespace Global.Dynamic
                     placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, chatContainer.ChatMessagesBus, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
                     userLogout, marketplaceCreditsApiClient, notificationsRequestController,
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
                     communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

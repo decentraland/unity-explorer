@@ -75,6 +75,7 @@ namespace DCL.PluginSystem.Global
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
+        private readonly IFriendsService? friendsService;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly CommunitiesDataProvider? communitiesDataProvider;
         private readonly CameraReelContainer? cameraReelContainer;
@@ -120,6 +121,7 @@ namespace DCL.PluginSystem.Global
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             NotificationsRequestController notificationsRequestController,
             FriendsConnectivityStatusTracker? friendsConnectivity,
+            IFriendsService? friendsService,
             IOnlineUsersProvider onlineUsersProvider,
             CommunitiesDataProvider? communitiesDataProvider,
             CameraReelContainer? cameraReelContainer)
@@ -154,6 +156,7 @@ namespace DCL.PluginSystem.Global
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.notificationsRequestController = notificationsRequestController;
             this.friendsConnectivity = friendsConnectivity;
+            this.friendsService = friendsService;
             this.onlineUsersProvider = onlineUsersProvider;
             this.communitiesDataProvider = communitiesDataProvider;
             this.cameraReelContainer = cameraReelContainer;
@@ -216,8 +219,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
-            friendsPresenter = friendsConnectivity != null
-                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
+            friendsPresenter = friendsConnectivity != null && friendsService != null
+                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, friendsService, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
             connectedFriendsPresenter = friendsConnectivity != null ? new LobbyConnectedFriendsPresenter(friendsConnectivity) : null;
