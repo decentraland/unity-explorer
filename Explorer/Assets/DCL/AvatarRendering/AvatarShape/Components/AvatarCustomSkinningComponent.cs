@@ -148,6 +148,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
+            // Dispose released the bones buffer and returned the compute shader to its pool: writing the bones into
+            // the released buffer throws from the native side, and the pooled shader may already drive another avatar.
+            if (disposed)
+            {
+                return Result.ErrorResult("ComputeSkinning error: the skinning component is disposed");
+            }
+
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
                 return Result.ErrorResult("Attempt to process an invalid avatar");
