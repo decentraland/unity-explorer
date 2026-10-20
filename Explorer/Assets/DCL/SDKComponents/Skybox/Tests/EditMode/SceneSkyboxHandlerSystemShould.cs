@@ -4,7 +4,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.Skybox.Systems;
 using DCL.SkyBox;
 using DCL.SkyBox.Components;
@@ -14,16 +13,15 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
-using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
 using Object = UnityEngine.Object;
 using Texture = UnityEngine.Texture;
+using TextureWrapMode = UnityEngine.TextureWrapMode;
 using TextureSlot = DCL.SDKComponents.Skybox.SceneSkyboxComponent.TextureSlot;
 using Vector3 = UnityEngine.Vector3;
 
@@ -33,7 +31,6 @@ namespace DCL.SDKComponents.Skybox.Tests
     {
         private const string SRC_A = "images/a.png";
         private const string SRC_B = "images/b.png";
-        private const int VIDEO_PLAYER_A = 512;
 
         // The base fixture's scene world holds SceneShortInfo((0,0), "TEST"); the other scene shares the base parcel like a portable experience
         private static readonly SceneShortInfo OWN_SCENE = new (Vector2Int.zero, "TEST");
@@ -44,8 +41,8 @@ namespace DCL.SDKComponents.Skybox.Tests
         private World globalWorld = null!;
         private Entity globalSkyboxEntity;
         private Entity rootEntity;
+        private ISceneData sceneData = null!;
         private ISceneStateProvider sceneStateProvider = null!;
-        private IMediaFactory mediaFactory = null!;
 
         [SetUp]
         public void SetUp()
@@ -53,7 +50,7 @@ namespace DCL.SDKComponents.Skybox.Tests
             globalWorld = World.Create();
             globalSkyboxEntity = globalWorld.Create(new SceneSkyboxOverrides());
 
-            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData = Substitute.For<ISceneData>();
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
@@ -72,11 +69,9 @@ namespace DCL.SDKComponents.Skybox.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            mediaFactory = Substitute.For<IMediaFactory>();
-
             rootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY));
 
-            system = new SceneSkyboxHandlerSystem(world, globalWorld, rootEntity, sceneData, PartitionComponent.TOP_PRIORITY, sceneStateProvider, mediaFactory);
+            system = new SceneSkyboxHandlerSystem(world, globalWorld, rootEntity, sceneData, PartitionComponent.TOP_PRIORITY, sceneStateProvider);
             system.Initialize();
         }
 
@@ -94,7 +89,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void CreatePromiseWhenDirty()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
 
             // Act
             system.Update(0);
@@ -111,7 +106,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void PushOverrideAndOwnerWhenResolvedAndCurrent()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             system.Update(0);
             TextureData data = ResolvePromise();
 
@@ -131,7 +126,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         {
             // Arrange
             sceneStateProvider.IsCurrent.Returns(false);
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
 
             // Act
             system.Update(0);
@@ -145,7 +140,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void ReapplyLoadedTextureOnBecomingCurrentWithoutNewPromise()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             system.Update(0);
             TextureData data = ResolvePromise();
             system.Update(0);
@@ -186,7 +181,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void ClearAndReleaseSlotOnComponentRemoval()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             system.Update(0);
             TextureData data = ResolvePromise();
             system.Update(0);
@@ -205,7 +200,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void ForgetUnresolvedPromiseAndClearOnFinalize()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             world.Add(rootEntity, new PBSun { IsDirty = true, Intensity = 2f });
             system.Update(0);
             Entity pendingPromise = Slot().LoadingPromise!.Value.Entity;
@@ -222,68 +217,104 @@ namespace DCL.SDKComponents.Skybox.Tests
         }
 
         [Test]
-        public void IgnoreAvatarTextures()
+        public void RequestTheSkyTextureWithRepeatWrapAndBilinearFilter()
         {
             // Arrange
-            AddPbSkybox(new TextureUnion { AvatarTexture = new AvatarTexture { UserId = "0xdeadbeef" } });
+            AddPbSkybox(SRC_A);
 
             // Act
             system.Update(0);
 
             // Assert
-            Assert.That(Slot().LoadingPromise, Is.Null);
-            Assert.That(Slot().IsVideoTexture, Is.False);
-            mediaFactory.DidNotReceive().TryAddScreenSpaceConsumer(Arg.Any<CRDTEntity>(), out Arg.Any<TextureData?>());
-            AssertGlobalCleared();
+            GetTextureIntention intention = Slot().LoadingPromise!.Value.LoadingIntention;
+            Assert.That(intention.Src, Is.EqualTo(SRC_A));
+            Assert.That(intention.FileHash, Is.EqualTo(SRC_A + "-hash"));
+            Assert.That(intention.WrapMode, Is.EqualTo(TextureWrapMode.Repeat));
+            Assert.That(intention.FilterMode, Is.EqualTo(FilterMode.Bilinear));
         }
 
-        [Test]
-        public void IgnoreVideoTextures()
-        {
-            // Arrange: the video player is ready, so only the disabled switch keeps the consumer from being added
-            TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-            AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-
-            // Act
-            system.Update(0);
-            system.Update(0);
-
-            // Assert
-            mediaFactory.DidNotReceive().TryAddScreenSpaceConsumer(Arg.Any<CRDTEntity>(), out Arg.Any<TextureData?>());
-            Assert.That(data.CanBeDisposed(), Is.True, "no consumer may reference the video texture");
-            TextureSlot slot = Slot();
-            Assert.That(slot.IsVideoTexture, Is.False);
-            Assert.That(slot.LoadingPromise, Is.Null);
-            Assert.That(slot.TextureData, Is.Null);
-            AssertGlobalCleared();
-        }
-
-        [Test]
-        public void ReleaseFileTextureWhenSourceChangesToVideo()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ReleaseTheSlotWhenTheSkyboxTextureIsUnsetOrEmpty(bool unset)
         {
             // Arrange
-            PBSkybox pbSkybox = AddPbSkybox(FileTexture(SRC_A));
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
             system.Update(0);
             TextureData data = ResolvePromise();
             system.Update(0);
 
             // Act
-            pbSkybox.SkyboxTexture = VideoTexture(VIDEO_PLAYER_A);
+            if (unset)
+                pbSkybox.ClearSkyboxTexture();
+            else
+                pbSkybox.SkyboxTexture = string.Empty;
+
             pbSkybox.IsDirty = true;
             system.Update(0);
 
             // Assert
             Assert.That(data.CanBeDisposed(), Is.True);
             Assert.That(Slot().TextureData, Is.Null);
+            Assert.That(Slot().LoadingPromise, Is.Null);
             Assert.That(Overrides().SkyboxTexture, Is.Null);
-            mediaFactory.DidNotReceive().TryAddScreenSpaceConsumer(Arg.Any<CRDTEntity>(), out Arg.Any<TextureData?>());
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void ReleaseAndKeepDefaultsWhenTheSrcCannotBeResolved()
+        {
+            // Arrange
+            sceneData.TryGetMediaUrl(SRC_B, out Arg.Any<URLAddress>())
+                     .Returns(c =>
+                      {
+                          c[1] = URLAddress.EMPTY;
+                          return false;
+                      });
+
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
+            system.Update(0);
+            TextureData data = ResolvePromise();
+            system.Update(0);
+
+            // Act
+            pbSkybox.SkyboxTexture = SRC_B;
+            pbSkybox.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            Assert.That(data.CanBeDisposed(), Is.True);
+            Assert.That(Slot().TextureData, Is.Null);
+            Assert.That(Slot().LoadingPromise, Is.Null);
+            Assert.That(Overrides().SkyboxTexture, Is.Null);
+            Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void NotReloadALoadedTextureForTheSameSrc()
+        {
+            // Arrange
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
+            system.Update(0);
+            TextureData data = ResolvePromise();
+            system.Update(0);
+
+            // Act
+            pbSkybox.SkyboxTexture = SRC_A;
+            pbSkybox.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            Assert.That(Slot().LoadingPromise, Is.Null);
+            Assert.That(Slot().TextureData, Is.SameAs(data));
+            Assert.That(data.CanBeDisposed(), Is.False);
+            Assert.That(Overrides().SkyboxTexture, Is.SameAs(data.EnsureTexture2D()));
         }
 
         [Test]
         public void KeepPromiseWhenIntentionIsUnchanged()
         {
             // Arrange
-            PBSkybox pbSkybox = AddPbSkybox(FileTexture(SRC_A));
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
             system.Update(0);
             Entity promiseEntity = Slot().LoadingPromise!.Value.Entity;
 
@@ -300,12 +331,12 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void CreateNewPromiseWhenSrcChanges()
         {
             // Arrange
-            PBSkybox pbSkybox = AddPbSkybox(FileTexture(SRC_A));
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
             system.Update(0);
             Entity oldPromiseEntity = Slot().LoadingPromise!.Value.Entity;
 
             // Act
-            pbSkybox.SkyboxTexture = FileTexture(SRC_B);
+            pbSkybox.SkyboxTexture = SRC_B;
             pbSkybox.IsDirty = true;
             system.Update(0);
 
@@ -320,7 +351,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void KeepDefaultsWhenLoadingFails()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             system.Update(0);
             FailPromise();
 
@@ -374,211 +405,6 @@ namespace DCL.SDKComponents.Skybox.Tests
         //     Assert.That(Overrides().ReflectionMap, Is.SameAs(reflectionData.EnsureTexture2D()));
         //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(skyboxData.EnsureTexture2D()));
         //     Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
-        // }
-
-        // Next iteration: video sources are disabled (SceneSkyboxHandlerSystem.VIDEO_TEXTURES_ENABLED) until their cost is
-        // measured on mobile. The video slot code is unchanged; re-enable these together with the switch.
-        // [Test]
-        // public void ResolveVideoTextureThroughMediaFactory()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //
-        //     // Act
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).TryAddScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A), out Arg.Any<TextureData?>());
-        //     TextureSlot slot = Slot();
-        //     Assert.That(slot.IsVideoTexture, Is.True);
-        //     Assert.That(slot.VideoPlayerEntity, Is.EqualTo(new CRDTEntity(VIDEO_PLAYER_A)));
-        //     Assert.That(slot.LoadingPromise, Is.Null);
-        //     Assert.That(slot.TextureData, Is.SameAs(data));
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(data.Asset.Texture));
-        //     Assert.That(Overrides().SkyboxTexture, Is.InstanceOf<RenderTexture>());
-        //     Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
-        // }
-        //
-        // [Test]
-        // public void RetryVideoConsumerUntilVideoPlayerIsReady()
-        // {
-        //     // Arrange
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //
-        //     // Act
-        //     system.Update(0);
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(2).TryAddScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A), out Arg.Any<TextureData?>());
-        //     Assert.That(Slot().IsVideoTexture, Is.True);
-        //     Assert.That(Slot().TextureData, Is.Null);
-        //     AssertGlobalCleared();
-        //
-        //     // Act
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(Slot().TextureData, Is.SameAs(data));
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(data.Asset.Texture));
-        // }
-        //
-        // [Test]
-        // public void DropVideoTextureWhenVideoPlayerIsDeletedAndRetry()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(data.Asset.Texture));
-        //
-        //     // Act: the video player entity is gone
-        //     mediaFactory.HasVideoTexture(new CRDTEntity(VIDEO_PLAYER_A)).Returns(false);
-        //     mediaFactory.TryAddScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A), out Arg.Any<TextureData?>()).Returns(false);
-        //     system.Update(0);
-        //
-        //     // Assert: texture released, the slot keeps waiting for the same video player
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     Assert.That(data.CanBeDisposed(), Is.True);
-        //     Assert.That(Slot().IsVideoTexture, Is.True);
-        //     Assert.That(Slot().TextureData, Is.Null);
-        //     Assert.That(Overrides().SkyboxTexture, Is.Null);
-        //
-        //     // Act: the video player entity comes back
-        //     TextureData recreated = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(recreated.Asset.Texture));
-        // }
-        //
-        // [Test]
-        // public void NotReAddVideoConsumerForTheSameVideoPlayer()
-        // {
-        //     // Arrange
-        //     SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     PBSkybox pbSkybox = AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     pbSkybox.SkyboxTexture = VideoTexture(VIDEO_PLAYER_A);
-        //     pbSkybox.IsDirty = true;
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).TryAddScreenSpaceConsumer(Arg.Any<CRDTEntity>(), out Arg.Any<TextureData?>());
-        //     mediaFactory.DidNotReceive().RemoveScreenSpaceConsumer(Arg.Any<CRDTEntity>());
-        // }
-        //
-        // [Test]
-        // public void RemoveVideoConsumerWhenSourceChangesToFile()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     PBSkybox pbSkybox = AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     pbSkybox.SkyboxTexture = FileTexture(SRC_A);
-        //     pbSkybox.IsDirty = true;
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     Assert.That(data.CanBeDisposed(), Is.True);
-        //     TextureSlot slot = Slot();
-        //     Assert.That(slot.IsVideoTexture, Is.False);
-        //     Assert.That(slot.TextureData, Is.Null);
-        //     Assert.That(slot.LoadingPromise!.Value.LoadingIntention.Src, Is.EqualTo(SRC_A));
-        //     Assert.That(Overrides().SkyboxTexture, Is.Null);
-        // }
-        //
-        // [Test]
-        // public void SwitchVideoConsumerWhenVideoPlayerChanges()
-        // {
-        //     // Arrange
-        //     TextureData dataA = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     TextureData dataB = SetUpVideoPlayer(VIDEO_PLAYER_A + 1);
-        //     PBSkybox pbSkybox = AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     pbSkybox.SkyboxTexture = VideoTexture(VIDEO_PLAYER_A + 1);
-        //     pbSkybox.IsDirty = true;
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     mediaFactory.Received(1).TryAddScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A + 1), out Arg.Any<TextureData?>());
-        //     Assert.That(dataA.CanBeDisposed(), Is.True);
-        //     Assert.That(Slot().TextureData, Is.SameAs(dataB));
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(dataB.Asset.Texture));
-        // }
-        //
-        // [Test]
-        // public void RemoveVideoConsumerOnComponentRemoval()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     world.Remove<PBSkybox>(rootEntity);
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     Assert.That(data.CanBeDisposed(), Is.True);
-        //     Assert.That(Slot().IsVideoTexture, Is.False);
-        //     AssertGlobalCleared();
-        // }
-        //
-        // [Test]
-        // public void RemoveVideoConsumerOnLeaveAndReAddOnReturn()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     system.OnSceneIsCurrentChanged(false);
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     Assert.That(Slot().IsVideoTexture, Is.False);
-        //     Assert.That(Slot().TextureData, Is.Null);
-        //     AssertGlobalCleared();
-        //
-        //     // Act
-        //     system.OnSceneIsCurrentChanged(true);
-        //
-        //     // Assert
-        //     mediaFactory.Received(2).TryAddScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A), out Arg.Any<TextureData?>());
-        //     Assert.That(Slot().TextureData, Is.SameAs(data));
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(data.Asset.Texture));
-        //     Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
-        // }
-        //
-        // [Test]
-        // public void RemoveVideoConsumerOnFinalize()
-        // {
-        //     // Arrange
-        //     TextureData data = SetUpVideoPlayer(VIDEO_PLAYER_A);
-        //     AddPbSkybox(VideoTexture(VIDEO_PLAYER_A));
-        //     system.Update(0);
-        //
-        //     // Act
-        //     system.FinalizeComponents(world.Query(new QueryDescription().WithAll<CRDTEntity>()));
-        //
-        //     // Assert
-        //     mediaFactory.Received(1).RemoveScreenSpaceConsumer(new CRDTEntity(VIDEO_PLAYER_A));
-        //     Assert.That(data.CanBeDisposed(), Is.True);
-        //     Assert.That(Slot().TextureData, Is.Null);
-        //     AssertGlobalCleared();
         // }
 
         [Test]
@@ -728,7 +554,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void RebuildProfileWhenOnlyPBSunIsDirty()
         {
             // Arrange
-            PBSkybox pbSkybox = AddPbSkybox(FileTexture(SRC_A));
+            PBSkybox pbSkybox = AddPbSkybox(SRC_A);
             PBSun pbSun = AddSun(1f);
             system.Update(0);
             Entity promiseEntity = Slot().LoadingPromise!.Value.Entity;
@@ -772,7 +598,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void ReleaseSkyboxTextureButKeepOwnershipWhenOnlyPBSkyboxIsRemoved()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             PBSun pbSun = AddSun(2f);
             system.Update(0);
             TextureData data = ResolvePromise();
@@ -929,7 +755,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         public void PushNullEnvironmentWhenAllGroupsUnset()
         {
             // Arrange
-            AddPbSkybox(FileTexture(SRC_A));
+            AddPbSkybox(SRC_A);
             system.Update(0);
             ResolvePromise();
 
@@ -942,21 +768,15 @@ namespace DCL.SDKComponents.Skybox.Tests
             Assert.That(Component().Environment, Is.Null);
         }
 
-        private static TextureUnion FileTexture(string src) =>
-            new () { Texture = new Decentraland.Common.Texture { Src = src } };
-
-        private static TextureUnion VideoTexture(int videoPlayerEntity) =>
-            new () { VideoTexture = new VideoTexture { VideoPlayerEntity = (uint)videoPlayerEntity } };
-
         private static ColorGradient Gradient(Color color) =>
             new ()
             {
                 Keys = { new ColorKey { Time = 0f, Color = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a } } },
             };
 
-        private PBSkybox AddPbSkybox(TextureUnion texture)
+        private PBSkybox AddPbSkybox(string src)
         {
-            var pbSkybox = new PBSkybox { IsDirty = true, SkyboxTexture = texture };
+            var pbSkybox = new PBSkybox { IsDirty = true, SkyboxTexture = src };
             world.Add(rootEntity, pbSkybox);
             return pbSkybox;
         }
@@ -989,40 +809,6 @@ namespace DCL.SDKComponents.Skybox.Tests
             var texture = new Texture2D(2, 2);
             textures.Add(texture);
             return texture;
-        }
-
-        /// <summary>
-        ///     Builds the texture data a video player entity would hold: a pooled render texture wrapped as a video texture.
-        /// </summary>
-        private TextureData CreateVideoTextureData()
-        {
-            var renderTexture = new RenderTexture(2, 2, 0);
-            textures.Add(renderTexture);
-
-            IObjectPool<RenderTexture> pool = Substitute.For<IObjectPool<RenderTexture>>();
-            pool.Get().Returns(renderTexture);
-
-            return new TextureData(AnyTexture.FromVideoTextureData(new VideoTextureData(new VideoTextureConsumer(pool), default(MediaPlayerComponent))));
-        }
-
-        /// <summary>
-        ///     Makes the media factory resolve the video player, referencing the texture data on every consumer it adds.
-        /// </summary>
-        private TextureData SetUpVideoPlayer(int videoPlayerEntity)
-        {
-            TextureData data = CreateVideoTextureData();
-
-            mediaFactory.HasVideoTexture(new CRDTEntity(videoPlayerEntity)).Returns(true);
-
-            mediaFactory.TryAddScreenSpaceConsumer(new CRDTEntity(videoPlayerEntity), out Arg.Any<TextureData?>())
-                        .Returns(c =>
-                         {
-                             data.AcquireRef();
-                             c[1] = data;
-                             return true;
-                         });
-
-            return data;
         }
 
         private TextureData ResolvePromise()

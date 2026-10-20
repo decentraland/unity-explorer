@@ -3,7 +3,6 @@ using Decentraland.Common;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using Texture = Decentraland.Common.Texture;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.SkyBox.Tests
@@ -14,7 +13,7 @@ namespace DCL.SkyBox.Tests
         public void ReturnNullWhenNothingIsSet()
         {
             // Arrange
-            var pbSkybox = new PBSkybox { SkyboxTexture = new TextureUnion { Texture = new Texture { Src = "images/sky.png" } } };
+            var pbSkybox = new PBSkybox { SkyboxTexture = "images/sky.png" };
 
             // Act & Assert
             Assert.That(SceneEnvironmentProfile.FromProto(pbSkybox, null, null), Is.Null);

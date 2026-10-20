@@ -71,7 +71,7 @@ A scene overrides the environment through three LWW components, valid on its roo
 
 | Component | ID | Fields |
 |---|---|---|
-| `PBSkybox` | 1223 | `skybox_texture` (equirect 2:1, file textures only), `sky_colors` {zenith, horizon, nadir, rim}, `clouds` {opacity, speed, color}, `stars` {brightness} |
+| `PBSkybox` | 1223 | `skybox_texture` (source path string, equirect 2:1), `sky_colors` {zenith, horizon, nadir, rim}, `clouds` {opacity, speed, color}, `stars` {brightness} |
 | `PBSun` | 1224 | `color`, `visible`, `intensity` (multiplier on the time-of-day intensity, negative → 0), `direction` (direction the light travels in scene space; unset or zero = time-of-day path) |
 | `PBEnvironmentFog` | 1225 | `color`, `density` (exponential, negative → 0) |
 
@@ -90,7 +90,7 @@ SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) →
 - `SkyboxLookPreset` exposes `internal` setters for exactly the preset values; the asset is never written, only the runtime copy.
 - SDK gradients are protocol `ColorGradient`s converted by `ColorGradientConverter`. `UnityEngine.Gradient` holds at most 8 colour keys, so a gradient with more keys is resampled at 8 evenly spaced times.
 - The per-frame code has no override branches beyond the sun multiplier and direction: it evaluates `preset.*` as for any other look. The texture paths outside the preset are `SetSkyboxOverride`, which swaps `RenderSettings.skybox` to the `DCL/PanoramicSkybox` material while the time-of-day values keep going to the Genesis material (which is why those writes target the cached material, not `RenderSettings.skybox`), and the reflection override of `SkyboxToCubemapRendererFeature`. Reflections are always derived from `skybox_texture` (`SceneSkyboxOverrides.ReflectionSource`).
-- **Video sources are disabled** (`SceneSkyboxHandlerSystem.VIDEO_TEXTURES_ENABLED`) until their cost is measured on mobile: a `VideoTexture` logs a warning and is ignored. The supporting code stays for the next iteration: the handler's video slot, `IMediaFactory.TryAddScreenSpaceConsumer`/`RemoveScreenSpaceConsumer`/`HasVideoTexture` (a screen-space consumer is never culled by `UpdateMediaPlayerPrioritizationSystem`), and the sliced reflection regeneration `SkyboxToCubemapRendererFeature` keeps up while the override is a `RenderTexture`.
+- `PBSkybox.skybox_texture` is a source path string, resolved like `Texture.src` (`ISceneData.TryGetMediaUrl` / `TryGetMediaFileHash`). The handler loads it through `AssetPromise<TextureData>` with a fixed **Repeat** wrap (the panorama's u=0/1 edge is a continuous seam) and **Bilinear** filter; scenes can't choose either. A source that can't be resolved, an empty or unset value, and a failed load all keep the defaults. While a texture override is active, the reflection cubemap generated when it was set stays valid and is not regenerated until the override changes.
 - `SceneSkyboxOverrides.Owner` is the scene identity that owns the overrides: a `SceneShortInfo`, not a base parcel, since portable experiences share `0,0`. Any of the three components on the current scene makes it the owner as soon as something is published, whatever fields it sets, so a scene with only a `skybox_texture` also runs on the Legacy base.
 
 ## Feature flag

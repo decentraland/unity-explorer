@@ -55,7 +55,6 @@ namespace DCL.SkyBox.Tests
         private Material genesisCopy = null!;
         private Material panoramicCopy = null!;
         private Texture2D skyboxTexture = null!;
-        private RenderTexture videoTexture = null!;
 
         private Material? previousSkybox;
         private Light? previousSun;
@@ -91,7 +90,6 @@ namespace DCL.SkyBox.Tests
             genesisMaterial = new Material(AssetDatabase.LoadAssetAtPath<Material>(GENESIS_MATERIAL_PATH)) { name = GENESIS_NAME };
             panoramicMaterial = new Material(Shader.Find("Skybox/Panoramic")) { name = PANORAMIC_NAME };
             skyboxTexture = new Texture2D(2, 2);
-            videoTexture = new RenderTexture(2, 2, 0);
 
             feature = ScriptableObject.CreateInstance<SkyboxToCubemapRendererFeature>();
             rendererFeaturesCache = Substitute.For<IRendererFeaturesCache>();
@@ -147,7 +145,6 @@ namespace DCL.SkyBox.Tests
             Object.DestroyImmediate(genesisMaterial);
             Object.DestroyImmediate(panoramicMaterial);
             Object.DestroyImmediate(skyboxTexture);
-            Object.DestroyImmediate(videoTexture);
         }
 
         [Test]
@@ -379,23 +376,6 @@ namespace DCL.SkyBox.Tests
         //     Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
         //     Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(skyboxTexture));
         // }
-
-        [Test]
-        public void PushVideoRenderTextureToSkyAndReflections()
-        {
-            // Arrange
-            Overrides().SkyboxTexture = videoTexture;
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(RenderSettings.skybox.name, Is.EqualTo(PANORAMIC_NAME));
-            Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(videoTexture));
-            Assert.That(feature.ReflectionOverride, Is.SameAs(videoTexture));
-            Assert.That(Overrides().AppliedSkyboxTexture, Is.SameAs(videoTexture));
-            Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(videoTexture));
-        }
 
         [Test]
         public void ApplyConstantFogColorAtFrozenTime()

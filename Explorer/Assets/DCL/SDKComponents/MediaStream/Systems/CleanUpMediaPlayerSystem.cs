@@ -77,8 +77,6 @@ namespace DCL.SDKComponents.MediaStream
 
         /// <summary>
         ///     Prevents CPU and memory leaks by cleaning up video textures and media players that are not being used anymore.
-        ///     The <see cref="TextureData" /> goes with the consumer: it wraps the released render texture, so keeping it
-        ///     would hand that texture to the next consumer added after the video player gets a new consumer.
         /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -87,7 +85,7 @@ namespace DCL.SDKComponents.MediaStream
             if (textureData.referenceCount == 0)
             {
                 CleanUpVideoTexture(ref textureConsumer);
-                World.Remove<VideoTextureConsumer, TextureData>(entity);
+                World.Remove<VideoTextureConsumer>(entity);
             }
         }
 

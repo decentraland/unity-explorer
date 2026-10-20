@@ -25,29 +25,28 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CihkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94LnByb3RvEhtk",
-            "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIWRlY2VudHJhbGFuZC9jb21t",
-            "b24vdGV4dHVyZS5wcm90bxoiZGVjZW50cmFsYW5kL2NvbW1vbi9ncmFkaWVu",
-            "dC5wcm90byKlBgoIUEJTa3lib3gSPgoOc2t5Ym94X3RleHR1cmUYASABKAsy",
-            "IS5kZWNlbnRyYWxhbmQuY29tbW9uLlRleHR1cmVVbmlvbkgAiAEBEkgKCnNr",
-            "eV9jb2xvcnMYAiABKAsyLy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
-            "UEJTa3lib3guU2t5Q29sb3JzSAGIAQESQQoGY2xvdWRzGAMgASgLMiwuZGVj",
-            "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCU2t5Ym94LkNsb3Vkc0gCiAEB",
-            "Ej8KBXN0YXJzGAQgASgLMisuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRz",
-            "LlBCU2t5Ym94LlN0YXJzSAOIAQEalQIKCVNreUNvbG9ycxI3CgZ6ZW5pdGgY",
-            "ASABKAsyIi5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRIAIgB",
-            "ARI4Cgdob3Jpem9uGAIgASgLMiIuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xv",
-            "ckdyYWRpZW50SAGIAQESNgoFbmFkaXIYAyABKAsyIi5kZWNlbnRyYWxhbmQu",
-            "Y29tbW9uLkNvbG9yR3JhZGllbnRIAogBARI0CgNyaW0YBCABKAsyIi5kZWNl",
-            "bnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRIA4gBAUIJCgdfemVuaXRo",
-            "QgoKCF9ob3Jpem9uQggKBl9uYWRpckIGCgRfcmltGooBCgZDbG91ZHMSFAoH",
-            "b3BhY2l0eRgBIAEoAkgAiAEBEhIKBXNwZWVkGAIgASgCSAGIAQESNgoFY29s",
-            "b3IYAyABKAsyIi5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRI",
-            "AogBAUIKCghfb3BhY2l0eUIICgZfc3BlZWRCCAoGX2NvbG9yGi8KBVN0YXJz",
-            "EhcKCmJyaWdodG5lc3MYASABKAJIAIgBAUINCgtfYnJpZ2h0bmVzc0IRCg9f",
-            "c2t5Ym94X3RleHR1cmVCDQoLX3NreV9jb2xvcnNCCQoHX2Nsb3Vkc0IICgZf",
-            "c3RhcnNCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaImRlY2VudHJhbGFuZC9jb21t",
+            "b24vZ3JhZGllbnQucHJvdG8iggYKCFBCU2t5Ym94EhsKDnNreWJveF90ZXh0",
+            "dXJlGAEgASgJSACIAQESSAoKc2t5X2NvbG9ycxgCIAEoCzIvLmRlY2VudHJh",
+            "bGFuZC5zZGsuY29tcG9uZW50cy5QQlNreWJveC5Ta3lDb2xvcnNIAYgBARJB",
+            "CgZjbG91ZHMYAyABKAsyLC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
+            "UEJTa3lib3guQ2xvdWRzSAKIAQESPwoFc3RhcnMYBCABKAsyKy5kZWNlbnRy",
+            "YWxhbmQuc2RrLmNvbXBvbmVudHMuUEJTa3lib3guU3RhcnNIA4gBARqVAgoJ",
+            "U2t5Q29sb3JzEjcKBnplbml0aBgBIAEoCzIiLmRlY2VudHJhbGFuZC5jb21t",
+            "b24uQ29sb3JHcmFkaWVudEgAiAEBEjgKB2hvcml6b24YAiABKAsyIi5kZWNl",
+            "bnRyYWxhbmQuY29tbW9uLkNvbG9yR3JhZGllbnRIAYgBARI2CgVuYWRpchgD",
+            "IAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFkaWVudEgCiAEB",
+            "EjQKA3JpbRgEIAEoCzIiLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JHcmFk",
+            "aWVudEgDiAEBQgkKB196ZW5pdGhCCgoIX2hvcml6b25CCAoGX25hZGlyQgYK",
+            "BF9yaW0aigEKBkNsb3VkcxIUCgdvcGFjaXR5GAEgASgCSACIAQESEgoFc3Bl",
+            "ZWQYAiABKAJIAYgBARI2CgVjb2xvchgDIAEoCzIiLmRlY2VudHJhbGFuZC5j",
+            "b21tb24uQ29sb3JHcmFkaWVudEgCiAEBQgoKCF9vcGFjaXR5QggKBl9zcGVl",
+            "ZEIICgZfY29sb3IaLwoFU3RhcnMSFwoKYnJpZ2h0bmVzcxgBIAEoAkgAiAEB",
+            "Qg0KC19icmlnaHRuZXNzQhEKD19za3lib3hfdGV4dHVyZUINCgtfc2t5X2Nv",
+            "bG9yc0IJCgdfY2xvdWRzQggKBl9zdGFyc0IUqgIRRENMLkVDU0NvbXBvbmVu",
+            "dHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.GradientReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.GradientReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox), global::DCL.ECSComponents.PBSkybox.Parser, new[]{ "SkyboxTexture", "SkyColors", "Clouds", "Stars" }, new[]{ "SkyboxTexture", "SkyColors", "Clouds", "Stars" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.SkyColors), global::DCL.ECSComponents.PBSkybox.Types.SkyColors.Parser, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, new[]{ "Zenith", "Horizon", "Nadir", "Rim" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkybox.Types.Clouds), global::DCL.ECSComponents.PBSkybox.Types.Clouds.Parser, new[]{ "Opacity", "Speed", "Color" }, new[]{ "Opacity", "Speed", "Color" }, null, null, null),
@@ -104,7 +103,7 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBSkybox(PBSkybox other) : this() {
-      skyboxTexture_ = other.skyboxTexture_ != null ? other.skyboxTexture_.Clone() : null;
+      skyboxTexture_ = other.skyboxTexture_;
       skyColors_ = other.skyColors_ != null ? other.skyColors_.Clone() : null;
       clouds_ = other.clouds_ != null ? other.clouds_.Clone() : null;
       stars_ = other.stars_ != null ? other.stars_.Clone() : null;
@@ -119,21 +118,35 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "skybox_texture" field.</summary>
     public const int SkyboxTextureFieldNumber = 1;
-    private global::Decentraland.Common.TextureUnion skyboxTexture_;
+    private readonly static string SkyboxTextureDefaultValue = "";
+
+    private string skyboxTexture_;
     /// <summary>
-    /// Replaces the visible sky with an equirectangular (latitude-longitude) image with a 2:1 aspect ratio.
-    /// The image centre faces +Z, the top row is the zenith and the bottom row the nadir.
+    /// Replaces the visible sky with an image, given as its source path with the same rules as `Texture.src`.
+    /// It must be an equirectangular (latitude-longitude) image with a 2:1 aspect ratio:
+    /// the image centre faces +Z, the top row is the zenith and the bottom row the nadir.
     /// Cube cross, 3x2 and six-face layouts are not supported.
-    /// Only `Texture.src` is read: wrap/filter/offset/tiling, AvatarTexture and VideoTexture are ignored.
     /// The sun, the fog and the ambient lighting do not change: the ambient still follows `sky_colors`.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.TextureUnion SkyboxTexture {
-      get { return skyboxTexture_; }
+    public string SkyboxTexture {
+      get { return skyboxTexture_ ?? SkyboxTextureDefaultValue; }
       set {
-        skyboxTexture_ = value;
+        skyboxTexture_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
+    }
+    /// <summary>Gets whether the "skybox_texture" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSkyboxTexture {
+      get { return skyboxTexture_ != null; }
+    }
+    /// <summary>Clears the value of the "skybox_texture" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSkyboxTexture() {
+      skyboxTexture_ = null;
     }
 
     /// <summary>Field number for the "sky_colors" field.</summary>
@@ -197,7 +210,7 @@ namespace DCL.ECSComponents {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!object.Equals(SkyboxTexture, other.SkyboxTexture)) return false;
+      if (SkyboxTexture != other.SkyboxTexture) return false;
       if (!object.Equals(SkyColors, other.SkyColors)) return false;
       if (!object.Equals(Clouds, other.Clouds)) return false;
       if (!object.Equals(Stars, other.Stars)) return false;
@@ -208,7 +221,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (skyboxTexture_ != null) hash ^= SkyboxTexture.GetHashCode();
+      if (HasSkyboxTexture) hash ^= SkyboxTexture.GetHashCode();
       if (skyColors_ != null) hash ^= SkyColors.GetHashCode();
       if (clouds_ != null) hash ^= Clouds.GetHashCode();
       if (stars_ != null) hash ^= Stars.GetHashCode();
@@ -230,9 +243,9 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (skyboxTexture_ != null) {
+      if (HasSkyboxTexture) {
         output.WriteRawTag(10);
-        output.WriteMessage(SkyboxTexture);
+        output.WriteString(SkyboxTexture);
       }
       if (skyColors_ != null) {
         output.WriteRawTag(18);
@@ -256,9 +269,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (skyboxTexture_ != null) {
+      if (HasSkyboxTexture) {
         output.WriteRawTag(10);
-        output.WriteMessage(SkyboxTexture);
+        output.WriteString(SkyboxTexture);
       }
       if (skyColors_ != null) {
         output.WriteRawTag(18);
@@ -282,8 +295,8 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (skyboxTexture_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SkyboxTexture);
+      if (HasSkyboxTexture) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SkyboxTexture);
       }
       if (skyColors_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(SkyColors);
@@ -306,11 +319,8 @@ namespace DCL.ECSComponents {
       if (other == null) {
         return;
       }
-      if (other.skyboxTexture_ != null) {
-        if (skyboxTexture_ == null) {
-          SkyboxTexture = new global::Decentraland.Common.TextureUnion();
-        }
-        SkyboxTexture.MergeFrom(other.SkyboxTexture);
+      if (other.HasSkyboxTexture) {
+        SkyboxTexture = other.SkyboxTexture;
       }
       if (other.skyColors_ != null) {
         if (skyColors_ == null) {
@@ -350,10 +360,7 @@ namespace DCL.ECSComponents {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            if (skyboxTexture_ == null) {
-              SkyboxTexture = new global::Decentraland.Common.TextureUnion();
-            }
-            input.ReadMessage(SkyboxTexture);
+            SkyboxTexture = input.ReadString();
             break;
           }
           case 18: {
@@ -397,10 +404,7 @@ namespace DCL.ECSComponents {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            if (skyboxTexture_ == null) {
-              SkyboxTexture = new global::Decentraland.Common.TextureUnion();
-            }
-            input.ReadMessage(SkyboxTexture);
+            SkyboxTexture = input.ReadString();
             break;
           }
           case 18: {
