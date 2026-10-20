@@ -11,7 +11,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Entity = Arch.Core.Entity;
 using Object = UnityEngine.Object;
-using Texture = UnityEngine.Texture;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.SkyBox.Tests
 {
@@ -38,6 +39,7 @@ namespace DCL.SkyBox.Tests
         private const string SUN_COLOR = "_SunColor";
         private const string CLOUDS_COLOR = "_CloudsColor";
         private const string CLOUDS_CUBEMAP = "_Clouds_Cubemap";
+        private const string SUN_DIRECTION = "_DclSunDirection";
         private const float TIME_OF_DAY = 0.5f;
 
         private static readonly SceneShortInfo OWNER = new (new Vector2Int(2, 2), "reflection-map");
@@ -52,9 +54,7 @@ namespace DCL.SkyBox.Tests
         private Material panoramicMaterial = null!;
         private Material genesisCopy = null!;
         private Material panoramicCopy = null!;
-        private Texture2D reflectionMap = null!;
         private Texture2D skyboxTexture = null!;
-        private Texture2D cloudsTexture = null!;
         private RenderTexture videoTexture = null!;
 
         private Material? previousSkybox;
@@ -72,6 +72,7 @@ namespace DCL.SkyBox.Tests
         private SkyboxRenderController? sunController;
         private Material? sunGenesisCopy;
         private Material? sunPanoramicCopy;
+        private SkyboxLookPreset? customSceneLook;
 
         [SetUp]
         public void SetUp()
@@ -89,9 +90,7 @@ namespace DCL.SkyBox.Tests
 
             genesisMaterial = new Material(AssetDatabase.LoadAssetAtPath<Material>(GENESIS_MATERIAL_PATH)) { name = GENESIS_NAME };
             panoramicMaterial = new Material(Shader.Find("Skybox/Panoramic")) { name = PANORAMIC_NAME };
-            reflectionMap = new Texture2D(2, 2);
             skyboxTexture = new Texture2D(2, 2);
-            cloudsTexture = new Texture2D(2, 2);
             videoTexture = new RenderTexture(2, 2, 0);
 
             feature = ScriptableObject.CreateInstance<SkyboxToCubemapRendererFeature>();
@@ -138,15 +137,16 @@ namespace DCL.SkyBox.Tests
             if (sunPanoramicCopy != null)
                 Object.DestroyImmediate(sunPanoramicCopy);
 
+            if (customSceneLook != null)
+                Object.DestroyImmediate(customSceneLook);
+
             Object.DestroyImmediate(skyboxRenderController.gameObject);
             Object.DestroyImmediate(feature);
             Object.DestroyImmediate(genesisCopy);
             Object.DestroyImmediate(panoramicCopy);
             Object.DestroyImmediate(genesisMaterial);
             Object.DestroyImmediate(panoramicMaterial);
-            Object.DestroyImmediate(reflectionMap);
             Object.DestroyImmediate(skyboxTexture);
-            Object.DestroyImmediate(cloudsTexture);
             Object.DestroyImmediate(videoTexture);
         }
 
@@ -231,29 +231,31 @@ namespace DCL.SkyBox.Tests
             Assert.That(skyboxRenderController.Preset, Is.SameAs(legacyPreset));
         }
 
+        // Next iteration: the explicit reflection map (PBSkybox.reflection_map) was removed from the protocol and
+        // SceneSkyboxOverrides; reflections are always derived from the skybox texture. Restore with that field.
+        // [Test]
+        // public void PushReflectionMapOnChange()
+        // {
+        //     // Arrange
+        //     Overrides().ReflectionMap = reflectionMap;
+        //
+        //     // Act
+        //     system.Update(0);
+        //
+        //     // Assert
+        //     Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
+        //     Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(reflectionMap));
+        // }
+
         [Test]
-        public void PushReflectionMapOnChange()
+        public void ClearDerivedReflectionWhenSkyboxTextureIsCleared()
         {
             // Arrange
-            Overrides().ReflectionMap = reflectionMap;
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
-            Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(reflectionMap));
-        }
-
-        [Test]
-        public void ClearReflectionOnRemoval()
-        {
-            // Arrange
-            Overrides().ReflectionMap = reflectionMap;
+            Overrides().SkyboxTexture = skyboxTexture;
             system.Update(0);
 
             // Act
-            Overrides().ReflectionMap = null;
+            Overrides().SkyboxTexture = null;
             system.Update(0);
 
             // Assert
@@ -265,7 +267,7 @@ namespace DCL.SkyBox.Tests
         public void NotTouchFeatureWhenUnchanged()
         {
             // Arrange
-            Overrides().ReflectionMap = reflectionMap;
+            Overrides().SkyboxTexture = skyboxTexture;
             system.Update(0);
             rendererFeaturesCache.ClearReceivedCalls();
 
@@ -281,7 +283,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             rendererFeaturesCache.GetRendererFeature<SkyboxToCubemapRendererFeature>().Returns((SkyboxToCubemapRendererFeature?)null);
-            Overrides().ReflectionMap = reflectionMap;
+            Overrides().SkyboxTexture = skyboxTexture;
 
             // Act
             system.Update(0);
@@ -295,8 +297,8 @@ namespace DCL.SkyBox.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
-            Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(reflectionMap));
+            Assert.That(feature.ReflectionOverride, Is.SameAs(skyboxTexture));
+            Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(skyboxTexture));
         }
 
         [Test]
@@ -348,7 +350,7 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
-        public void DeriveReflectionFromSkyboxTextureWhenReflectionMapIsNull()
+        public void DeriveReflectionFromSkyboxTexture()
         {
             // Arrange
             Overrides().SkyboxTexture = skyboxTexture;
@@ -361,20 +363,22 @@ namespace DCL.SkyBox.Tests
             Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(skyboxTexture));
         }
 
-        [Test]
-        public void PreferReflectionMapOverSkyboxTexture()
-        {
-            // Arrange
-            Overrides().SkyboxTexture = skyboxTexture;
-            Overrides().ReflectionMap = reflectionMap;
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
-            Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(skyboxTexture));
-        }
+        // Next iteration: the explicit reflection map (PBSkybox.reflection_map) was removed from the protocol and
+        // SceneSkyboxOverrides; reflections are always derived from the skybox texture. Restore with that field.
+        // [Test]
+        // public void PreferReflectionMapOverSkyboxTexture()
+        // {
+        //     // Arrange
+        //     Overrides().SkyboxTexture = skyboxTexture;
+        //     Overrides().ReflectionMap = reflectionMap;
+        //
+        //     // Act
+        //     system.Update(0);
+        //
+        //     // Assert
+        //     Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
+        //     Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(skyboxTexture));
+        // }
 
         [Test]
         public void PushVideoRenderTextureToSkyAndReflections()
@@ -394,94 +398,11 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
-        public void TrackAppliedCloudsTextureAndRestoreLegacyCubemapOnClear()
-        {
-            // Arrange
-            Texture? legacyCubemap = legacyPreset.CloudsCubemap;
-            Assert.That(legacyCubemap, Is.Not.Null);
-            Control();
-            Overrides().CloudsTexture = cloudsTexture;
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(Overrides().AppliedCloudsTexture, Is.SameAs(cloudsTexture));
-
-            // Act
-            Overrides().CloudsTexture = null;
-            system.Update(0);
-
-            // Assert
-            Assert.That(Overrides().AppliedCloudsTexture, Is.Null);
-            Assert.That(genesisCopy.GetTexture(CLOUDS_CUBEMAP), Is.SameAs(legacyCubemap));
-            Assert.That(skyboxRenderController.Preset.CloudsCubemap, Is.SameAs(legacyCubemap));
-        }
-
-        [Test]
-        public void BindProjectedCubemapToGenesisMaterialAndSceneLook()
-        {
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
-                Assert.Ignore("The equirect-to-cube projection needs a graphics device");
-
-            // Arrange
-            Control();
-            Overrides().CloudsTexture = cloudsTexture;
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Texture bound = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
-            Assert.That(bound, Is.InstanceOf<RenderTexture>());
-            Assert.That(((RenderTexture)bound).dimension, Is.EqualTo(TextureDimension.Cube));
-            Assert.That(bound.width, Is.EqualTo(256));
-            Assert.That(skyboxRenderController.Preset.CloudsCubemap, Is.SameAs(bound), "a look refresh must keep the projected clouds");
-        }
-
-        [Test]
-        public void KeepProjectedCloudsThroughAnEnvironmentChange()
-        {
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
-                Assert.Ignore("The equirect-to-cube projection needs a graphics device");
-
-            // Arrange
-            Control();
-            Overrides().CloudsTexture = cloudsTexture;
-            system.Update(0);
-            Texture projected = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
-
-            // Act: a new profile rewrites the scene look
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
-            system.Update(0);
-
-            // Assert
-            Assert.That(genesisCopy.GetTexture(CLOUDS_CUBEMAP), Is.SameAs(projected));
-        }
-
-        [Test]
-        public void NotReprojectCloudsWhenReferenceUnchanged()
-        {
-            // Arrange
-            Control();
-            Overrides().CloudsTexture = cloudsTexture;
-            system.Update(0);
-            Texture applied = genesisCopy.GetTexture(CLOUDS_CUBEMAP);
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(genesisCopy.GetTexture(CLOUDS_CUBEMAP), Is.SameAs(applied));
-            Assert.That(Overrides().AppliedCloudsTexture, Is.SameAs(cloudsTexture));
-        }
-
-        [Test]
         public void ApplyConstantFogColorAtFrozenTime()
         {
             // Arrange
             Control();
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
 
             // Act
             system.Update(0);
@@ -498,7 +419,7 @@ namespace DCL.SkyBox.Tests
             Control();
             system.Update(0);
             Color legacyFog = RenderSettings.fogColor;
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
             system.Update(0);
 
             // Act
@@ -515,7 +436,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             Control();
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Density = 0.02f });
 
             // Act
             system.Update(0);
@@ -532,7 +453,7 @@ namespace DCL.SkyBox.Tests
             Control();
             system.Update(0);
             float legacyFogDensity = RenderSettings.fogDensity;
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = legacyFogDensity + 0.5f } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Density = legacyFogDensity + 0.5f });
             system.Update(0);
 
             // Act
@@ -549,7 +470,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             Control();
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.black), (1f, Color.white)) } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.black), (1f, Color.white)) });
 
             // Act
             system.Update(0);
@@ -654,7 +575,7 @@ namespace DCL.SkyBox.Tests
             system.Update(0);
             Color legacyRim = genesisCopy.GetColor(RIM_COLOR);
             Color legacyClouds = genesisCopy.GetColor(CLOUDS_COLOR);
-            Overrides().Environment = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
 
             // Act
             system.Update(0);
@@ -733,7 +654,7 @@ namespace DCL.SkyBox.Tests
         public void NotReapplyWhenReferenceUnchanged()
         {
             // Arrange
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+            SceneEnvironmentProfile profile = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
             Control();
             Overrides().Environment = profile;
             Overrides().AppliedEnvironment = profile;
@@ -754,7 +675,7 @@ namespace DCL.SkyBox.Tests
             Light sunLight = CreateSunController(lensFlareEnabled: false);
             sunController!.SetSceneLook(true, null);
             Color legacyLightColor = sunLight.color;
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Sun = new PBSkybox.Types.Sun { Color = Gradient((0f, Color.red)) } });
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Color = Gradient((0f, Color.red)) });
 
             // Act
             sunController.SetSceneLook(true, profile);
@@ -779,7 +700,7 @@ namespace DCL.SkyBox.Tests
             sunController!.SetSceneLook(true, null);
             float legacySunOpacity = sunGenesisCopy!.GetFloat(SUN_OPACITY);
             Assert.That(legacySunOpacity, Is.GreaterThan(0f), "the legacy sun is visible at noon");
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Sun = new PBSkybox.Types.Sun { Visible = false } });
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Visible = false });
 
             // Act
             sunController.SetSceneLook(true, profile);
@@ -807,7 +728,7 @@ namespace DCL.SkyBox.Tests
             sunController!.SetSceneLook(true, null);
             float legacySunOpacity = sunGenesisCopy!.GetFloat(SUN_OPACITY);
             float legacyFlareIntensity = lensFlare.intensity;
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = Gradient((0f, Color.red)) } });
+            SceneEnvironmentProfile profile = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
 
             // Act
             sunController.SetSceneLook(true, profile);
@@ -827,7 +748,7 @@ namespace DCL.SkyBox.Tests
             var lensFlare = sunLight.GetComponent<LensFlareComponentSRP>();
             Color shippedLightColor = sunLight.color;
             float shippedFlareIntensity = lensFlare.intensity;
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Sun = new PBSkybox.Types.Sun { Color = Gradient((0f, Color.red)), Visible = false } });
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Color = Gradient((0f, Color.red)), Visible = false });
             sunController!.SetSceneLook(true, profile);
 
             // Act
@@ -840,17 +761,165 @@ namespace DCL.SkyBox.Tests
             Assert.That(sunGenesisCopy!.GetFloat(SECOND_SUN_SIZE_FACTOR), Is.EqualTo(shippedPreset.SecondSunSizeFactor));
         }
 
+        [Test]
+        public void MultiplySunIntensityAndRestoreItWhenCleared()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+            sunController!.SetSceneLook(true, null);
+            float timeOfDayIntensity = sunLight.intensity;
+            Assert.That(timeOfDayIntensity, Is.GreaterThan(0f), "the legacy light is lit at noon");
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Intensity = 0.5f });
+
+            // Act
+            sunController.SetSceneLook(true, profile);
+            sunController.SetSceneLook(true, profile);
+            sunController.UpdateSkybox(TIME_OF_DAY + 0.1f);
+            sunController.UpdateSkybox(TIME_OF_DAY);
+
+            // Assert
+            Assert.That(sunLight.intensity, Is.EqualTo(timeOfDayIntensity * 0.5f).Within(1e-4f));
+
+            // Act
+            sunController.SetSceneLook(true, null);
+
+            // Assert
+            Assert.That(sunLight.intensity, Is.EqualTo(timeOfDayIntensity).Within(1e-4f));
+        }
+
+        [Test]
+        public void NotCompoundSunIntensityWhenTheLightIntensityIsItsOwnFallback()
+        {
+            // Arrange: no clip and no intensity curve, so every evaluation falls back to the intensity already on the light
+            Light sunLight = CreateSunController(lensFlareEnabled: false, withoutLightClip: true, sceneLookWithoutIntensityCurve: true);
+            sunController!.SetSceneLook(true, null);
+            float fallbackIntensity = sunLight.intensity;
+            Assert.That(fallbackIntensity, Is.GreaterThan(0f));
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Intensity = 0.5f });
+
+            // Act
+            sunController.SetSceneLook(true, profile);
+            sunController.SetSceneLook(true, profile);
+            sunController.UpdateSkybox(TIME_OF_DAY + 0.1f);
+            sunController.UpdateSkybox(TIME_OF_DAY);
+
+            // Assert
+            Assert.That(sunLight.intensity, Is.EqualTo(fallbackIntensity * 0.5f).Within(1e-5f));
+        }
+
+        [Test]
+        public void ZeroTheLightWithAZeroSunIntensity()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+
+            // Act
+            sunController!.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 0f }));
+
+            // Assert
+            Assert.That(sunLight.intensity, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void KeepTheSunAtAFixedDirectionAtEveryTimeOfDay()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+            Vector3 travelDirection = new Vector3(1f, -1f, 0.5f).normalized;
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Direction = new Decentraland.Common.Vector3 { X = 1f, Y = -1f, Z = 0.5f } });
+
+            // Act
+            sunController!.SetSceneLook(true, profile);
+
+            // Assert
+            AssertDirection(sunLight.transform.forward, travelDirection);
+            AssertDirection(Shader.GetGlobalVector(SUN_DIRECTION), -travelDirection);
+
+            // Act
+            sunController.UpdateSkybox(0.9f);
+
+            // Assert
+            AssertDirection(sunLight.transform.forward, travelDirection);
+            AssertDirection(Shader.GetGlobalVector(SUN_DIRECTION), -travelDirection);
+        }
+
+        [TestCase(0f, -1f, 0f)]
+        [TestCase(0f, 1f, 0f)]
+        public void PointTheLightAlongAPoleDirection(float x, float y, float z)
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Direction = new Decentraland.Common.Vector3 { X = x, Y = y, Z = z } });
+
+            // Act
+            sunController!.SetSceneLook(true, profile);
+
+            // Assert
+            AssertDirection(sunLight.transform.forward, new Vector3(x, y, z));
+        }
+
+        [Test]
+        public void FollowTheTimeOfDayAgainWhenTheSunOverridesAreCleared()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+            Color shippedLightColor = sunLight.color;
+            float shippedIntensity = sunLight.intensity;
+            Quaternion shippedRotation = sunLight.transform.rotation;
+            sunController!.SetSceneLook(true, null);
+            Vector3 timeOfDayForward = sunLight.transform.forward;
+            Vector3 travelDirection = Vector3.right;
+            Assume.That(Vector3.Angle(timeOfDayForward, travelDirection), Is.GreaterThan(1f));
+            sunController.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
+            AssertDirection(sunLight.transform.forward, travelDirection);
+
+            // Act
+            sunController.SetSceneLook(true, null);
+
+            // Assert
+            AssertDirection(sunLight.transform.forward, timeOfDayForward);
+
+            // Act
+            sunController.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
+            sunController.SetSceneLook(false, null);
+
+            // Assert
+            Assert.That(sunController.Preset, Is.SameAs(shippedPreset));
+            Assert.That(sunLight.intensity, Is.EqualTo(shippedIntensity).Within(1e-4f));
+            Assert.That(Quaternion.Angle(sunLight.transform.rotation, shippedRotation), Is.LessThan(0.01f));
+            ColorGradientConverterShould.AssertColor(sunLight.color, shippedLightColor);
+        }
+
+        private static void AssertDirection(Vector3 actual, Vector3 expected) =>
+            Assert.That(Vector3.Angle(actual, expected), Is.LessThan(0.01f), $"expected {expected}, got {actual}");
+
         /// <summary>
         ///     Builds a second controller around a real directional light so the sun, moon and lens flare paths run;
-        ///     the shared controller of the fixture has no light.
+        ///     the shared controller of the fixture has no light. Optionally drops the light clip and the scene look's
+        ///     intensity curve, so the light's own intensity is the fallback of every evaluation.
         /// </summary>
-        private Light CreateSunController(bool lensFlareEnabled)
+        private Light CreateSunController(bool lensFlareEnabled, bool withoutLightClip = false, bool sceneLookWithoutIntensityCurve = false)
         {
             sunLightObject = new GameObject("SunLight");
             Light sunLight = sunLightObject.AddComponent<Light>();
             sunLight.type = LightType.Directional;
 
             sunController = Object.Instantiate(AssetDatabase.LoadAssetAtPath<SkyboxRenderController>(PREFAB_PATH));
+            var serializedController = new SerializedObject(sunController);
+
+            if (withoutLightClip)
+                serializedController.FindProperty("lightAnimation").objectReferenceValue = null;
+
+            if (sceneLookWithoutIntensityCurve)
+            {
+                customSceneLook = Object.Instantiate(legacyPreset);
+                var serializedLook = new SerializedObject(customSceneLook);
+                serializedLook.FindProperty("lightIntensity").animationCurveValue = new AnimationCurve();
+                serializedLook.ApplyModifiedPropertiesWithoutUndo();
+                serializedController.FindProperty("sceneLookPreset").objectReferenceValue = customSceneLook;
+            }
+
+            serializedController.ApplyModifiedPropertiesWithoutUndo();
             sunController.Initialize(genesisMaterial, panoramicMaterial, sunLight, null!, TIME_OF_DAY, lensFlareEnabled);
             sunGenesisCopy = RenderSettings.skybox;
             sunController.SetSkyboxOverride(skyboxTexture);
@@ -869,9 +938,9 @@ namespace DCL.SkyBox.Tests
         private static ColorGradient Gradient(params (float time, Color color)[] keys) =>
             ColorGradientConverterShould.Gradient(keys);
 
-        private static SceneEnvironmentProfile Profile(PBSkybox pbSkybox)
+        private static SceneEnvironmentProfile Profile(PBSkybox? skybox = null, PBSun? sun = null, PBEnvironmentFog? fog = null)
         {
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(skybox, sun, fog);
             Assert.That(profile, Is.Not.Null);
             return profile!;
         }

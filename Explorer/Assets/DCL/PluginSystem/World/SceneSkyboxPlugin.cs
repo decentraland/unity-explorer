@@ -10,7 +10,7 @@ using System.Collections.Generic;
 namespace DCL.PluginSystem.World
 {
     /// <summary>
-    ///     Scene-world side of the PBSkybox component; the global side lives in <see cref="DCL.SkyBox.SkyboxPlugin" />.
+    ///     Scene-world side of the PBSkybox, PBSun and PBEnvironmentFog components; the global side lives in <see cref="DCL.SkyBox.SkyboxPlugin" />.
     /// </summary>
     public class SceneSkyboxPlugin : IDCLWorldPluginWithoutSettings
     {
@@ -31,6 +31,8 @@ namespace DCL.PluginSystem.World
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBSkybox>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBSun>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBEnvironmentFog>.InjectToWorld(ref builder);
 
             SceneSkyboxHandlerSystem handler = SceneSkyboxHandlerSystem.InjectToWorld(ref builder,
                 globalWorld,

@@ -4,16 +4,20 @@ using UnityEngine;
 namespace DCL.SkyBox
 {
     /// <summary>
-    ///     Immutable snapshot of the environment overrides of a PBSkybox: gradients keyed by normalized time of day
-    ///     for the sun, the sky bands, the horizon rim, the fog and the cloud tint, constant floats for the fog density,
-    ///     the cloud layer and the star field, and the sun visibility. A null member keeps the value of the scene look preset.
+    ///     Immutable snapshot of the environment overrides of a scene, built from its PBSkybox, PBSun and PBEnvironmentFog:
+    ///     gradients keyed by normalized time of day for the sun, the sky bands, the horizon rim, the fog and the cloud tint,
+    ///     constant floats for the fog density, the cloud layer and the star field, and the sun visibility, intensity
+    ///     multiplier and fixed direction. A null member keeps the value of the scene look preset.
     /// </summary>
     public sealed class SceneEnvironmentProfile
     {
         /// <summary>
         ///     Nothing overridden: applying it writes the scene look preset values back.
         /// </summary>
-        public static readonly SceneEnvironmentProfile EMPTY = new (null, null, null, null, null, null, null, null, null, null, null, null);
+        public static readonly SceneEnvironmentProfile EMPTY = new (null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+
+        // Shorter directions carry no usable orientation and fall back to the time-of-day path.
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 1e-6f;
 
         // SDK gradient time is the time of day itself, so the scene copy never remaps it through a phase curve.
         private static readonly AnimationCurve IDENTITY_PHASE = AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -46,8 +50,19 @@ namespace DCL.SkyBox
         /// </summary>
         public readonly bool? SunVisible;
 
+        /// <summary>
+        ///     Multiplier on the time-of-day light intensity, never negative. Null keeps the time-of-day intensity.
+        /// </summary>
+        public readonly float? SunIntensity;
+
+        /// <summary>
+        ///     Normalized direction the sunlight travels in scene space, fixed at every time of day. Null follows the time-of-day path.
+        /// </summary>
+        public readonly Vector3? SunDirection;
+
         private SceneEnvironmentProfile(Gradient? sunColor, Gradient? zenith, Gradient? horizon, Gradient? nadir, Gradient? rim,
-            Gradient? fogColor, float? fogDensity, Gradient? cloudsColor, float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness, bool? sunVisible)
+            Gradient? fogColor, float? fogDensity, Gradient? cloudsColor, float? cloudsOpacity, float? cloudsSpeed, float? starsBrightness,
+            bool? sunVisible, float? sunIntensity, Vector3? sunDirection)
         {
             SunColor = sunColor;
             Zenith = zenith;
@@ -61,42 +76,45 @@ namespace DCL.SkyBox
             CloudsSpeed = cloudsSpeed;
             StarsBrightness = starsBrightness;
             SunVisible = sunVisible;
+            SunIntensity = sunIntensity;
+            SunDirection = sunDirection;
         }
 
         /// <summary>
-        ///     Null when the component sets no environment override at all, so an unset group and an empty gradient
-        ///     both resolve to the default environment.
+        ///     Null when none of the components sets an environment override, so a missing component, an unset group and
+        ///     an empty gradient all resolve to the default environment.
         /// </summary>
-        public static SceneEnvironmentProfile? FromProto(PBSkybox pbSkybox)
+        public static SceneEnvironmentProfile? FromProto(PBSkybox? pbSkybox, PBSun? pbSun, PBEnvironmentFog? pbFog)
         {
-            PBSkybox.Types.Sun? sun = pbSkybox.Sun;
-            Gradient? sunColor = ColorGradientConverter.ToGradient(sun?.Color);
-            bool? sunVisible = sun is { HasVisible: true } ? sun.Visible : null;
+            Gradient? sunColor = ColorGradientConverter.ToGradient(pbSun?.Color);
+            bool? sunVisible = pbSun is { HasVisible: true } ? pbSun.Visible : null;
+            float? sunIntensity = pbSun is { HasIntensity: true } ? Mathf.Max(0f, pbSun.Intensity) : null;
+            Vector3? sunDirection = ToDirection(pbSun?.Direction);
 
-            PBSkybox.Types.SkyColors? skyColors = pbSkybox.SkyColors;
+            PBSkybox.Types.SkyColors? skyColors = pbSkybox?.SkyColors;
             Gradient? zenith = ColorGradientConverter.ToGradient(skyColors?.Zenith);
             Gradient? horizon = ColorGradientConverter.ToGradient(skyColors?.Horizon);
             Gradient? nadir = ColorGradientConverter.ToGradient(skyColors?.Nadir);
             Gradient? rim = ColorGradientConverter.ToGradient(skyColors?.Rim);
 
-            PBSkybox.Types.Fog? fog = pbSkybox.Fog;
-            Gradient? fogColor = ColorGradientConverter.ToGradient(fog?.Color);
-            float? fogDensity = fog is { HasDensity: true } ? Mathf.Max(0f, fog.Density) : null;
+            Gradient? fogColor = ColorGradientConverter.ToGradient(pbFog?.Color);
+            float? fogDensity = pbFog is { HasDensity: true } ? Mathf.Max(0f, pbFog.Density) : null;
 
-            PBSkybox.Types.Clouds? clouds = pbSkybox.Clouds;
+            PBSkybox.Types.Clouds? clouds = pbSkybox?.Clouds;
             Gradient? cloudsColor = ColorGradientConverter.ToGradient(clouds?.Color);
             float? cloudsOpacity = clouds is { HasOpacity: true } ? Mathf.Clamp01(clouds.Opacity) : null;
             float? cloudsSpeed = clouds is { HasSpeed: true } ? Mathf.Max(0f, clouds.Speed) : null;
 
-            PBSkybox.Types.Stars? stars = pbSkybox.Stars;
+            PBSkybox.Types.Stars? stars = pbSkybox?.Stars;
             float? starsBrightness = stars is { HasBrightness: true } ? Mathf.Max(0f, stars.Brightness) : null;
 
             bool anySet = sunColor != null || zenith != null || horizon != null || nadir != null || rim != null || fogColor != null
                           || fogDensity != null || cloudsColor != null || cloudsOpacity != null || cloudsSpeed != null || starsBrightness != null
-                          || sunVisible != null;
+                          || sunVisible != null || sunIntensity != null || sunDirection != null;
 
             return anySet
-                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, rim, fogColor, fogDensity, cloudsColor, cloudsOpacity, cloudsSpeed, starsBrightness, sunVisible)
+                ? new SceneEnvironmentProfile(sunColor, zenith, horizon, nadir, rim, fogColor, fogDensity, cloudsColor, cloudsOpacity, cloudsSpeed,
+                    starsBrightness, sunVisible, sunIntensity, sunDirection)
                 : null;
         }
 
@@ -105,7 +123,7 @@ namespace DCL.SkyBox
         ///     of <paramref name="defaults" /> where the profile has none. The sky bands also drive the ambient trilight
         ///     (zenith → sky, horizon → equator, nadir → ground), the rim follows an overridden horizon, the sun color tints
         ///     both the light and the disc, a hidden sun zeroes the disc, its halo, the moon and the lens flare, and the constant
-        ///     fog density is written to all four phase anchors. The cloud cubemap is not touched: the clouds texture override owns it.
+        ///     fog density is written to all four phase anchors. The sun intensity and direction are not preset values and are not written.
         /// </summary>
         public void ApplyTo(SkyboxLookPreset target, SkyboxLookPreset defaults)
         {
@@ -137,6 +155,15 @@ namespace DCL.SkyBox
             target.SunRadianceIntensity = sunVisible ? defaults.SunRadianceIntensity : ZERO;
             target.LensFlareIntensity = sunVisible ? defaults.LensFlareIntensity : ZERO;
             target.SecondSunSizeFactor = sunVisible ? defaults.SecondSunSizeFactor : 0f;
+        }
+
+        private static Vector3? ToDirection(Decentraland.Common.Vector3? direction)
+        {
+            if (direction == null) return null;
+
+            var unityDirection = new Vector3(direction.X, direction.Y, direction.Z);
+
+            return unityDirection.sqrMagnitude < MIN_DIRECTION_SQR_MAGNITUDE ? null : unityDirection.normalized;
         }
     }
 }

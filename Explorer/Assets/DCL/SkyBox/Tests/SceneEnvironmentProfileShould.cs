@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Texture = Decentraland.Common.Texture;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.SkyBox.Tests
 {
@@ -16,7 +17,14 @@ namespace DCL.SkyBox.Tests
             var pbSkybox = new PBSkybox { SkyboxTexture = new TextureUnion { Texture = new Texture { Src = "images/sky.png" } } };
 
             // Act & Assert
-            Assert.That(SceneEnvironmentProfile.FromProto(pbSkybox), Is.Null);
+            Assert.That(SceneEnvironmentProfile.FromProto(pbSkybox, null, null), Is.Null);
+        }
+
+        [Test]
+        public void ReturnNullWhenNoComponentIsPresent()
+        {
+            // Act & Assert
+            Assert.That(SceneEnvironmentProfile.FromProto(null, null, null), Is.Null);
         }
 
         [Test]
@@ -25,15 +33,16 @@ namespace DCL.SkyBox.Tests
             // Arrange
             var pbSkybox = new PBSkybox
             {
-                Sun = new PBSkybox.Types.Sun { Color = new ColorGradient() },
                 SkyColors = new PBSkybox.Types.SkyColors(),
-                Fog = new PBSkybox.Types.Fog(),
                 Clouds = new PBSkybox.Types.Clouds(),
                 Stars = new PBSkybox.Types.Stars(),
             };
 
+            var pbSun = new PBSun { Color = new ColorGradient(), Direction = new Decentraland.Common.Vector3() };
+            var pbFog = new PBEnvironmentFog { Color = new ColorGradient() };
+
             // Act & Assert
-            Assert.That(SceneEnvironmentProfile.FromProto(pbSkybox), Is.Null);
+            Assert.That(SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog), Is.Null);
         }
 
         [Test]
@@ -43,7 +52,7 @@ namespace DCL.SkyBox.Tests
             var pbSkybox = new PBSkybox { Clouds = new PBSkybox.Types.Clouds { Speed = 0.2f } };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, new PBSun(), new PBEnvironmentFog());
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -54,16 +63,18 @@ namespace DCL.SkyBox.Tests
             Assert.That(profile.FogColor, Is.Null);
             Assert.That(profile.FogDensity, Is.Null);
             Assert.That(profile.SunVisible, Is.Null);
+            Assert.That(profile.SunIntensity, Is.Null);
+            Assert.That(profile.SunDirection, Is.Null);
         }
 
         [Test]
         public void BuildProfileFromFogDensityAlone()
         {
             // Arrange
-            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } };
+            var pbFog = new PBEnvironmentFog { Density = 0.02f };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, null, pbFog);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -75,10 +86,10 @@ namespace DCL.SkyBox.Tests
         public void KeepUnsetFogDensityNull()
         {
             // Arrange
-            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Color = ColorGradientConverterShould.Gradient((0f, Color.gray)) } };
+            var pbFog = new PBEnvironmentFog { Color = ColorGradientConverterShould.Gradient((0f, Color.gray)) };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, null, pbFog);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -90,10 +101,10 @@ namespace DCL.SkyBox.Tests
         public void ClampNegativeFogDensityToZero()
         {
             // Arrange
-            var pbSkybox = new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = -0.5f } };
+            var pbFog = new PBEnvironmentFog { Density = -0.5f };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, null, pbFog);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -104,15 +115,106 @@ namespace DCL.SkyBox.Tests
         public void BuildProfileFromSunVisibilityAlone()
         {
             // Arrange
-            var pbSkybox = new PBSkybox { Sun = new PBSkybox.Types.Sun { Visible = false } };
+            var pbSun = new PBSun { Visible = false };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
             Assert.That(profile!.SunVisible, Is.False);
             Assert.That(profile.SunColor, Is.Null);
+        }
+
+        [Test]
+        public void BuildProfileFromSunIntensityAlone()
+        {
+            // Arrange
+            var pbSun = new PBSun { Intensity = 2.5f };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.SunIntensity, Is.EqualTo(2.5f));
+            Assert.That(profile.SunDirection, Is.Null);
+            Assert.That(profile.SunVisible, Is.Null);
+        }
+
+        [Test]
+        public void ClampNegativeSunIntensityToZero()
+        {
+            // Arrange
+            var pbSun = new PBSun { Intensity = -3f };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.SunIntensity, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void NormalizeSunDirection()
+        {
+            // Arrange
+            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 0f, Y = -4f, Z = 3f } };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.SunDirection, Is.Not.Null);
+            Vector3 direction = profile.SunDirection!.Value;
+            Assert.That(direction.x, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(direction.y, Is.EqualTo(-0.8f).Within(1e-5f));
+            Assert.That(direction.z, Is.EqualTo(0.6f).Within(1e-5f));
+        }
+
+        [Test]
+        public void IgnoreZeroSunDirection()
+        {
+            // Arrange
+            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 0f, Y = 0f, Z = 0f }, Intensity = 1f };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.SunDirection, Is.Null);
+        }
+
+        [Test]
+        public void ReturnNullWhenOnlyANearZeroSunDirectionIsSet()
+        {
+            // Arrange
+            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 1e-5f, Y = 0f, Z = 0f } };
+
+            // Act & Assert
+            Assert.That(SceneEnvironmentProfile.FromProto(null, pbSun, null), Is.Null);
+        }
+
+        [Test]
+        public void CombineValuesFromAllThreeComponents()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox { Stars = new PBSkybox.Types.Stars { Brightness = 2f } };
+            var pbSun = new PBSun { Color = ColorGradientConverterShould.Gradient((0f, Color.red)), Intensity = 0.5f };
+            var pbFog = new PBEnvironmentFog { Density = 0.01f };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.StarsBrightness, Is.EqualTo(2f));
+            ColorGradientConverterShould.AssertColor(profile.SunColor!.Evaluate(0.5f), Color.red);
+            Assert.That(profile.SunIntensity, Is.EqualTo(0.5f));
+            Assert.That(profile.FogDensity, Is.EqualTo(0.01f));
         }
 
         [Test]
@@ -122,7 +224,7 @@ namespace DCL.SkyBox.Tests
             var pbSkybox = new PBSkybox { Clouds = new PBSkybox.Types.Clouds { Opacity = 3f } };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, null, null);
 
             // Assert
             Assert.That(profile!.CloudsOpacity, Is.EqualTo(1f));
@@ -139,7 +241,7 @@ namespace DCL.SkyBox.Tests
             };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, null, null);
 
             // Assert
             Assert.That(profile!.CloudsSpeed, Is.EqualTo(0f));
@@ -153,7 +255,7 @@ namespace DCL.SkyBox.Tests
             var pbSkybox = new PBSkybox { Clouds = new PBSkybox.Types.Clouds { Color = ColorGradientConverterShould.Gradient((0f, Color.green)) } };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, null, null);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -170,7 +272,7 @@ namespace DCL.SkyBox.Tests
             var pbSkybox = new PBSkybox { SkyColors = new PBSkybox.Types.SkyColors { Rim = ColorGradientConverterShould.Gradient((0f, Color.magenta)) } };
 
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, null, null);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -185,17 +287,18 @@ namespace DCL.SkyBox.Tests
             // Arrange
             var pbSkybox = new PBSkybox
             {
-                Sun = new PBSkybox.Types.Sun { Color = ColorGradientConverterShould.Gradient((0f, Color.yellow)) },
                 SkyColors = new PBSkybox.Types.SkyColors
                 {
                     Zenith = ColorGradientConverterShould.Gradient((0f, Color.blue)),
                     Nadir = ColorGradientConverterShould.Gradient((0f, Color.black)),
                 },
-                Fog = new PBSkybox.Types.Fog { Color = ColorGradientConverterShould.Gradient((0f, Color.gray)) },
             };
 
+            var pbSun = new PBSun { Color = ColorGradientConverterShould.Gradient((0f, Color.yellow)) };
+            var pbFog = new PBEnvironmentFog { Color = ColorGradientConverterShould.Gradient((0f, Color.gray)) };
+
             // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog);
 
             // Assert
             Assert.That(profile, Is.Not.Null);
@@ -244,7 +347,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             using var presets = new Presets();
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Fog = new PBSkybox.Types.Fog { Density = 0.02f } });
+            SceneEnvironmentProfile profile = Profile(fog: new PBEnvironmentFog { Density = 0.02f });
 
             // Act
             profile.ApplyTo(presets.Target, presets.Defaults);
@@ -321,7 +424,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             using var presets = new Presets();
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Sun = new PBSkybox.Types.Sun { Color = ColorGradientConverterShould.Gradient((0f, Color.red)) } });
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Color = ColorGradientConverterShould.Gradient((0f, Color.red)) });
 
             // Act
             profile.ApplyTo(presets.Target, presets.Defaults);
@@ -336,7 +439,7 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             using var presets = new Presets();
-            SceneEnvironmentProfile profile = Profile(new PBSkybox { Sun = new PBSkybox.Types.Sun { Visible = false } });
+            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Visible = false });
 
             // Act
             profile.ApplyTo(presets.Target, presets.Defaults);
@@ -356,28 +459,9 @@ namespace DCL.SkyBox.Tests
             Assert.That(presets.Target.SecondSunSizeFactor, Is.EqualTo(presets.Defaults.SecondSunSizeFactor));
         }
 
-        [Test]
-        public void LeaveCloudsCubemapAloneOnApply()
+        private static SceneEnvironmentProfile Profile(PBSkybox? skybox = null, PBSun? sun = null, PBEnvironmentFog? fog = null)
         {
-            // Arrange
-            using var presets = new Presets();
-            var cubemap = new RenderTexture(2, 2, 0);
-            presets.Target.CloudsCubemap = cubemap;
-
-            try
-            {
-                // Act
-                SceneEnvironmentProfile.EMPTY.ApplyTo(presets.Target, presets.Defaults);
-
-                // Assert
-                Assert.That(presets.Target.CloudsCubemap, Is.SameAs(cubemap));
-            }
-            finally { Object.DestroyImmediate(cubemap); }
-        }
-
-        private static SceneEnvironmentProfile Profile(PBSkybox pbSkybox)
-        {
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(skybox, sun, fog);
             Assert.That(profile, Is.Not.Null);
             return profile!;
         }

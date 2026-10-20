@@ -69,5 +69,7 @@ namespace DCL.ECS7
         public const int AVATAR_NAMETAG = 1221;
         public const int EXPLORER_ITEM_PURCHASE_RESULT = 1222;
         public const int SKYBOX = 1223;
+        public const int SUN = 1224;
+        public const int ENVIRONMENT_FOG = 1225;
     }
 }

@@ -19,14 +19,16 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using Entity = Arch.Core.Entity;
+using EnvironmentSources = DCL.SDKComponents.Skybox.SceneSkyboxComponent.EnvironmentSources;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using TextureSlot = DCL.SDKComponents.Skybox.SceneSkyboxComponent.TextureSlot;
 
 namespace DCL.SDKComponents.Skybox.Systems
 {
     /// <summary>
-    ///     Loads the textures of the PBSkybox on the scene root entity, builds its environment profile and, while the scene
-    ///     is current, publishes them to the global world as the scene environment overrides.
+    ///     Loads the sky texture of the PBSkybox on the scene root entity, builds the environment profile of its PBSkybox,
+    ///     PBSun and PBEnvironmentFog and, while the scene is current, publishes them to the global world as the scene
+    ///     environment overrides. Any of the three components makes the scene the owner of the overrides.
     /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -35,6 +37,9 @@ namespace DCL.SDKComponents.Skybox.Systems
         private const int GET_TEXTURE_MAX_ATTEMPT_COUNT = 6;
 
         private static readonly QueryDescription GLOBAL_SKYBOX_QUERY = new QueryDescription().WithAll<SceneSkyboxOverrides>();
+
+        // Video sources are disabled until their cost is measured on mobile; the video slot code stays for that iteration.
+        private static readonly bool VIDEO_TEXTURES_ENABLED = false;
 
         private readonly World globalWorld;
         private readonly Entity rootEntity;
@@ -79,9 +84,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             // File textures stay loaded for an instant re-apply; video consumers are released and re-added by the next sync
             ref SceneSkyboxComponent component = ref World.Get<SceneSkyboxComponent>(rootEntity);
-            ReleaseVideo(ref component.ReflectionMap);
             ReleaseVideo(ref component.SkyboxTexture);
-            ReleaseVideo(ref component.CloudsTexture);
         }
 
         public void FinalizeComponents(in Query query)
@@ -104,33 +107,51 @@ namespace DCL.SDKComponents.Skybox.Systems
 
         private void Sync(bool skipDirtyCheck)
         {
-            ref PBSkybox pbSkybox = ref World.TryGetRef<PBSkybox>(rootEntity, out bool hasPbSkybox);
+            PBSkybox? pbSkybox = GetRootComponent<PBSkybox>();
+            PBSun? pbSun = GetRootComponent<PBSun>();
+            PBEnvironmentFog? pbFog = GetRootComponent<PBEnvironmentFog>();
             ref SceneSkyboxComponent component = ref World.Get<SceneSkyboxComponent>(rootEntity);
 
-            if (!hasPbSkybox)
+            EnvironmentSources sources = ToSources(pbSkybox, pbSun, pbFog);
+
+            if (sources == EnvironmentSources.None)
             {
                 ReleaseAll(ref component);
                 ClearOverridesIfOwner();
                 return;
             }
 
+            bool sourcesChanged = sources != component.Sources;
+            component.Sources = sources;
+
+            bool skyboxDirty = skipDirtyCheck || sourcesChanged || pbSkybox is { IsDirty: true };
             var changed = false;
 
-            if (skipDirtyCheck || pbSkybox.IsDirty)
-            {
-                changed |= UpdateSlot(pbSkybox.ReflectionMap, ref component.ReflectionMap);
-                changed |= UpdateSlot(pbSkybox.SkyboxTexture, ref component.SkyboxTexture);
-                changed |= UpdateSlot(pbSkybox.Clouds?.Texture, ref component.CloudsTexture);
-                changed |= UpdateEnvironment(pbSkybox, ref component);
-            }
+            if (skyboxDirty)
+                changed |= UpdateSlot(pbSkybox?.SkyboxTexture, ref component.SkyboxTexture);
 
-            changed |= ResolveSlot(ref component.ReflectionMap);
+            if (skyboxDirty || pbSun is { IsDirty: true } || pbFog is { IsDirty: true })
+                changed |= UpdateEnvironment(pbSkybox, pbSun, pbFog, ref component);
+
             changed |= ResolveSlot(ref component.SkyboxTexture);
-            changed |= ResolveSlot(ref component.CloudsTexture);
 
             if (changed || skipDirtyCheck)
                 PushOverrides(in component);
         }
+
+        private static EnvironmentSources ToSources(PBSkybox? pbSkybox, PBSun? pbSun, PBEnvironmentFog? pbFog)
+        {
+            EnvironmentSources sources = EnvironmentSources.None;
+
+            if (pbSkybox != null) sources |= EnvironmentSources.Skybox;
+            if (pbSun != null) sources |= EnvironmentSources.Sun;
+            if (pbFog != null) sources |= EnvironmentSources.Fog;
+
+            return sources;
+        }
+
+        private T? GetRootComponent<T>() where T : class =>
+            World.TryGet(rootEntity, out T? component) ? component : null;
 
         /// <summary>
         ///     Starts loading the requested texture when it differs from the one the slot already tracks.
@@ -141,9 +162,10 @@ namespace DCL.SDKComponents.Skybox.Systems
             if (texture == null)
                 return Release(ref slot);
 
-            if (texture.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
+            if (texture.TexCase == TextureUnion.TexOneofCase.AvatarTexture
+                || (texture.TexCase == TextureUnion.TexOneofCase.VideoTexture && !VIDEO_TEXTURES_ENABLED))
             {
-                ReportHub.LogWarning(GetReportData(), $"{nameof(PBSkybox)} supports file and video textures only, ignoring {texture.TexCase}");
+                ReportHub.LogWarning(GetReportData(), $"{nameof(PBSkybox)} supports file textures only for now, ignoring {texture.TexCase}");
                 return Release(ref slot);
             }
 
@@ -264,21 +286,20 @@ namespace DCL.SDKComponents.Skybox.Systems
 
         private void ReleaseAll(ref SceneSkyboxComponent component)
         {
-            component.ReflectionMap.CleanUp(World, mediaFactory);
             component.SkyboxTexture.CleanUp(World, mediaFactory);
-            component.CloudsTexture.CleanUp(World, mediaFactory);
             component.Environment = null;
+            component.Sources = EnvironmentSources.None;
         }
 
         /// <summary>
-        ///     Rebuilds the environment profile from the component data, also on the re-push that skips the dirty check:
-        ///     the dirty flag is reset every frame while the scene is not current, so a profile cached before leaving
+        ///     Rebuilds the environment profile from the components, also on the re-push that skips the dirty check:
+        ///     the dirty flags are reset every frame while the scene is not current, so a profile cached before leaving
         ///     could miss changes made in the meantime.
         /// </summary>
         /// <returns>True when the profile changed.</returns>
-        private static bool UpdateEnvironment(PBSkybox pbSkybox, ref SceneSkyboxComponent component)
+        private static bool UpdateEnvironment(PBSkybox? pbSkybox, PBSun? pbSun, PBEnvironmentFog? pbFog, ref SceneSkyboxComponent component)
         {
-            SceneEnvironmentProfile? environment = SceneEnvironmentProfile.FromProto(pbSkybox);
+            SceneEnvironmentProfile? environment = SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog);
 
             if (environment == null && component.Environment == null)
                 return false;
@@ -290,9 +311,7 @@ namespace DCL.SDKComponents.Skybox.Systems
         private void PushOverrides(in SceneSkyboxComponent component)
         {
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
-            overrides.ReflectionMap = component.ReflectionMap.TextureData?.Asset.Texture;
             overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.Asset.Texture;
-            overrides.CloudsTexture = component.CloudsTexture.TextureData?.Asset.Texture;
             overrides.Environment = component.Environment;
             overrides.Owner = sceneInfo;
         }
@@ -303,9 +322,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             if (overrides.Owner is not { } owner || !owner.Equals(sceneInfo)) return;
 
-            overrides.ReflectionMap = null;
             overrides.SkyboxTexture = null;
-            overrides.CloudsTexture = null;
             overrides.Environment = null;
             overrides.Owner = null;
         }

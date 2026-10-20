@@ -217,7 +217,7 @@ namespace DCL.SkyBox
         [SerializeField] private float rimOpacity = 0.94f;
         [SerializeField] private float starsBrightness = 4.62f;
         [SerializeField] private Texture2D? starsTexture;
-        [SerializeField] private Texture? cloudsCubemap;
+        [SerializeField] private Cubemap? cloudsCubemap;
         [SerializeField] private float cloudOpacity = 1f;
         [SerializeField] private float cloudsRotationSpeed = 0.01f;
         [SerializeField] private Vector2 moonMaskPosition = new (0.01f, -0.01f);
@@ -330,7 +330,7 @@ namespace DCL.SkyBox
         public float RimOpacity => rimOpacity;
         public float StarsBrightness { get => starsBrightness; internal set => starsBrightness = value; }
         public Texture2D? StarsTexture => starsTexture;
-        public Texture? CloudsCubemap { get => cloudsCubemap; internal set => cloudsCubemap = value; }
+        public Cubemap? CloudsCubemap => cloudsCubemap;
         public float CloudOpacity { get => cloudOpacity; internal set => cloudOpacity = value; }
         public float CloudsRotationSpeed { get => cloudsRotationSpeed; internal set => cloudsRotationSpeed = value; }
         public Vector2 MoonMaskPosition => moonMaskPosition;
