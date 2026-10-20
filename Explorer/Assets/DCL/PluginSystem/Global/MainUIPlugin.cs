@@ -1,7 +1,5 @@
 ﻿using Arch.SystemGroups;
 using DCL.UI.MainUI;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.SingleScene;
 using MVC;
 
 namespace DCL.PluginSystem.Global
@@ -13,9 +11,7 @@ namespace DCL.PluginSystem.Global
         public MainUIPlugin(
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            bool isFriendsEnabled,
-            SingleSceneMode singleSceneMode,
-            IScenesCache scenesCache)
+            bool isFriendsEnabled)
         {
             this.mvcManager = mvcManager;
 
@@ -26,9 +22,7 @@ namespace DCL.PluginSystem.Global
                     return mainUIView;
                 },
                 mvcManager,
-                isFriendsEnabled,
-                singleSceneMode,
-                scenesCache
+                isFriendsEnabled
             );
 
             mvcManager.RegisterController(mainUIController);

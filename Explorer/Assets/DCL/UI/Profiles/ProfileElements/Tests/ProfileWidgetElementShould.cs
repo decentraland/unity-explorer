@@ -47,6 +47,23 @@ namespace DCL.UI.ProfileElements.Tests
         }
 
         [Test]
+        public void LightUpWhileItsMenuIsOpen()
+        {
+            //Act
+            widget.IsMenuOpen = true;
+
+            //Assert
+            Assert.IsTrue(widget.ClassListContains("profile-widget--open"));
+            Assert.IsTrue(widget.IsMenuOpen);
+
+            //Act
+            widget.IsMenuOpen = false;
+
+            //Assert
+            Assert.IsFalse(widget.ClassListContains("profile-widget--open"));
+        }
+
+        [Test]
         public void BindTheThumbnailAndStartItsLoading()
         {
             //Act

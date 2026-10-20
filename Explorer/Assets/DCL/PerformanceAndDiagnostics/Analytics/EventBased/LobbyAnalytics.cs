@@ -2,6 +2,7 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Lobby;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             lobby.EventOpened += OnEventOpened;
             lobby.EventJumpedIn += OnEventJumpedIn;
             lobby.FriendJoined += OnFriendJoined;
+            lobby.ExploreSectionOpened += OnExploreSectionOpened;
         }
 
         public void Dispose()
@@ -44,6 +46,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             lobby.EventOpened -= OnEventOpened;
             lobby.EventJumpedIn -= OnEventJumpedIn;
             lobby.FriendJoined -= OnFriendJoined;
+            lobby.ExploreSectionOpened -= OnExploreSectionOpened;
         }
 
         private void OnOpened(bool isStartup)
@@ -82,6 +85,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "source", SOURCE },
                 { "is_startup", isStartupVisit },
             });
+
+        // The map has no section-opened event of its own.
+        private void OnExploreSectionOpened(ExploreSections section)
+        {
+            switch (section)
+            {
+                case ExploreSections.Places:
+                    analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, VisitPayload());
+                    break;
+                case ExploreSections.Events:
+                    analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, VisitPayload());
+                    break;
+            }
+        }
 
         private JObject PlacePayload(PlacesData.PlaceInfo place, LobbyCardOrigin origin) =>
             new ()
