@@ -4,8 +4,6 @@ using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
 using DCL.UI.Sidebar;
 using DG.Tweening;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.SingleScene;
 using MVC;
 using System;
 using System.Threading;
@@ -24,10 +22,6 @@ namespace DCL.UI.MainUI
 
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
-        private readonly SingleSceneMode singleSceneMode;
-        private readonly IScenesCache scenesCache;
-
-        private SingleSceneModeHudController? singleSceneModeHud;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -42,14 +36,10 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            bool isFriendsEnabled,
-            SingleSceneMode singleSceneMode,
-            IScenesCache scenesCache) : base(viewFactory)
+            bool isFriendsEnabled) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
-            this.singleSceneMode = singleSceneMode;
-            this.scenesCache = scenesCache;
         }
 
         protected override void OnViewInstantiated()
@@ -68,15 +58,7 @@ namespace DCL.UI.MainUI
             }
 
             showingSidebar = true;
-
-            singleSceneModeHud = new SingleSceneModeHudController(singleSceneMode, scenesCache, mvcManager,
-                viewInstance.PerformanceModeOnToast, viewInstance.EndOfSceneToast, viewInstance.EndOfSceneOpenPlacesButton);
-
-            singleSceneModeHud.Activate();
         }
-
-        public override void Dispose() =>
-            singleSceneModeHud?.Dispose();
 
         private void OnSidebarAutohideStatusChanged(bool status)
         {
