@@ -158,9 +158,8 @@
     right: 16px;
     bottom: 42px;
     height: 30px;
-    font-size: 22px;
+    font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: lower-left;
     color: white;
     white-space: nowrap;

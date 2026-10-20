@@ -116,11 +116,10 @@
 }
 
 .lobby-place-card__title {
-    height: 20px;
+    height: 24px;
     margin-bottom: 2px;
-    font-size: 14px;
+    font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: middle-left;
     color: white;
     white-space: nowrap;
