@@ -2,9 +2,7 @@
     --community-card-hover-duration: 0.3s;
 }
 
-/* Same footprint as the place card (256x146, 16px corners): the thumbnail fills the card and a gradient darkens its bottom
-   under the texts; hovering zooms the thumbnail and brings the View button in under the name, like the place card's
-   jump-in button */
+/* The footprint of the place card, so both rails line up. */
 .lobby-community-card {
     width: 256px;
     height: 146px;
@@ -32,14 +30,13 @@
     scale: 1.05;
 }
 
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
+/* The loaded picture fades in over the card fill instead of popping up. */
 .lobby-community-card--loading .lobby-community-card__thumbnail {
     opacity: 0;
     transition: opacity 0s;
 }
 
-/* The place card's sprite and slices: a 52px fade into a flat strip under the texts, stretching with the hovered footer so
-   the View button lands on the flat part */
+/* Sliced so the 52px fade keeps its shape while the flat strip stretches up to darken the hovered card. */
 .lobby-community-card__gradient {
     position: absolute;
     left: 0;
@@ -53,61 +50,31 @@
 }
 
 .lobby-community-card:hover .lobby-community-card__gradient {
-    height: 132px;
+    height: 146px;
 }
 
-.lobby-community-card__private {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    height: 26px;
-    flex-direction: row;
-    align-items: center;
-    padding: 0 8px 0 6px;
-    border-radius: 8px;
-    background-color: var(--dcl-color-shadow);
-    display: none;
-}
-
-.lobby-community-card--private .lobby-community-card__private {
-    display: flex;
-}
-
-.lobby-community-card__private-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-    background-image: url('/Assets/DCL/Communities/Textures/PrivateIcn.png');
-}
-
-.lobby-community-card__private-text {
-    font-size: 12px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    color: var(--dcl-color-snow);
-}
-
+/* The hovered height adds the 36px View button and an 8px gap, lifting the texts above it. */
 .lobby-community-card__footer {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 55px;
-    padding: 8px 10px 0;
+    height: 60px;
+    padding: 0 16px 16px;
     transition: height var(--community-card-hover-duration) ease-out;
 }
 
 .lobby-community-card:hover .lobby-community-card__footer {
-    height: 87px;
+    height: 104px;
 }
 
 .lobby-community-card__title {
-    height: 20px;
-    margin-bottom: 2px;
-    font-size: 14px;
+    height: 24px;
+    margin-bottom: 4px;
+    font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: middle-left;
-    color: white;
+    color: var(--lobby-title-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -117,25 +84,44 @@
     height: 16px;
     flex-direction: row;
     align-items: center;
-    transition: opacity var(--community-card-hover-duration) ease-out;
 }
 
-.lobby-community-card:hover .lobby-community-card__members-row {
-    opacity: 0;
-}
-
-.lobby-community-card__members-icon {
+/* A 10px box fits the 20x20 globe at 10x10 and the 16x20 lock at 8x10, as designed. */
+.lobby-community-card__visibility-icon {
     flex-shrink: 0;
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     margin-right: 4px;
-    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+    background-image: url('/Assets/DCL/Communities/Textures/PublicIcn.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
     -unity-background-image-tint-color: var(--lobby-subtitle-color);
+}
+
+.lobby-community-card--private .lobby-community-card__visibility-icon {
+    background-image: url('/Assets/DCL/Communities/Textures/PrivateIcn.png');
+}
+
+.lobby-community-card__visibility {
+    flex-shrink: 0;
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
+}
+
+.lobby-community-card__separator {
+    flex-shrink: 0;
+    width: 1px;
+    height: 10px;
+    margin: 0 6px;
+    background-color: var(--lobby-white-60);
 }
 
 .lobby-community-card__members {
     flex-shrink: 1;
-    font-size: 11px;
+    font-size: 12px;
     -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
     color: var(--lobby-subtitle-color);
@@ -144,27 +130,22 @@
     text-overflow: ellipsis;
 }
 
-/* Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the
-   visible button for the shadow of its sprite (see LobbyDocument.uss) */
+/* Only reachable while hovered, so its invisible state never takes a click meant for the card. */
 .lobby-community-card__view {
     position: absolute;
-    left: 7px;
-    right: 7px;
-    bottom: 2px;
-    height: 46px;
-    padding: 0 0 6px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 8px;
     align-items: center;
     justify-content: center;
-    background-color: transparent;
-    background-image: var(--lobby-button-shadow-image);
-    -unity-slice-left: 26;
-    -unity-slice-top: 24;
-    -unity-slice-right: 25;
-    -unity-slice-bottom: 36;
-    -unity-slice-scale: 0.5px;
-    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    background-color: var(--lobby-white-5);
     opacity: 0;
-    transition: opacity var(--community-card-hover-duration) ease-out, -unity-background-image-tint-color 0.1s;
+    transition: opacity var(--community-card-hover-duration) ease-out, background-color 0.1s;
 }
 
 .lobby-community-card:hover .lobby-community-card__view {
@@ -172,17 +153,16 @@
 }
 
 .lobby-community-card__view:hover {
-    -unity-background-image-tint-color: var(--lobby-jump-in-hover-color);
+    background-color: var(--lobby-white-10);
 }
 
 .lobby-community-card__view:active {
-    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
+    background-color: var(--lobby-white-2);
 }
 
 .lobby-community-card__view-text {
     font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: middle-center;
     color: var(--dcl-color-snow);
 }
