@@ -17,6 +17,11 @@ namespace DCL.Lobby
         /// <summary>Straight runs a quarter circle is drawn with.</summary>
         private const int CORNER_SEGMENTS = 8;
 
+        /// <summary>A fade on either side of the solid core: a mesh gets no anti-aliasing of its own.</summary>
+        private const int VERTICES_PER_POINT = 4;
+
+        private const int INDICES_PER_POINT = (VERTICES_PER_POINT - 1) * 6;
+
         private static readonly Color DEFAULT_TOP_COLOR = new (1f, 45f / 255f, 85f / 255f);
         private static readonly Color DEFAULT_BOTTOM_COLOR = new (198f / 255f, 64f / 255f, 205f / 255f);
 
@@ -81,8 +86,8 @@ namespace DCL.Lobby
             generateVisualContent += OnGenerateVisualContent;
         }
 
-        // The ring is a strip of quads between the outer and the inner path, both run clockwise from the top-left
-        // corner, each vertex tinted by its height
+        // The ring is three strips of quads between the outer and the inner path, both run clockwise from the top-left
+        // corner, each vertex tinted by its height; the fades straddle the edges so the ring keeps its width.
         private void OnGenerateVisualContent(MeshGenerationContext context)
         {
             Rect rect = contentRect;
@@ -93,10 +98,11 @@ namespace DCL.Lobby
 
             float outerRadius = Mathf.Min(radius, halfExtent);
             float ringWidth = Mathf.Min(thickness, halfExtent);
+            float halfFeather = Mathf.Min(0.5f / scaledPixelsPerPoint, ringWidth * 0.5f);
             int pointsPerCorner = outerRadius > 0f ? CORNER_SEGMENTS + 1 : 1;
             int pointCount = 4 * pointsPerCorner;
 
-            MeshWriteData mesh = context.Allocate(pointCount * 2, pointCount * 6);
+            MeshWriteData mesh = context.Allocate(pointCount * VERTICES_PER_POINT, pointCount * INDICES_PER_POINT);
 
             for (var corner = 0; corner < 4; corner++)
             {
@@ -107,37 +113,58 @@ namespace DCL.Lobby
                 float centerY = bottom ? rect.yMax - outerRadius : rect.yMin + outerRadius;
                 float startAngle = (corner + 2) * 90f;
 
+                // A square corner fades along its diagonal so the band keeps its width on both edges.
+                var cornerDiagonal = new Vector2(right ? 1f : -1f, bottom ? 1f : -1f);
+
                 for (var segment = 0; segment < pointsPerCorner; segment++)
                 {
                     float angle = (startAngle + (pointsPerCorner > 1 ? 90f * segment / (pointsPerCorner - 1) : 45f)) * Mathf.Deg2Rad;
                     var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
                     Vector2 outer = new Vector2(centerX, centerY) + (direction * outerRadius);
+                    Vector2 outerNormal = pointsPerCorner > 1 ? direction : cornerDiagonal;
 
                     // A corner tighter than the ring is thick has a square inner corner
-                    Vector2 inner = outerRadius >= ringWidth
+                    bool roundedInner = outerRadius >= ringWidth;
+
+                    Vector2 inner = roundedInner
                         ? new Vector2(centerX, centerY) + (direction * (outerRadius - ringWidth))
                         : new Vector2(right ? rect.xMax - ringWidth : rect.xMin + ringWidth, bottom ? rect.yMax - ringWidth : rect.yMin + ringWidth);
 
-                    mesh.SetNextVertex(new Vertex { position = new Vector3(outer.x, outer.y, Vertex.nearZ), tint = ColorAt(outer.y, rect) });
-                    mesh.SetNextVertex(new Vertex { position = new Vector3(inner.x, inner.y, Vertex.nearZ), tint = ColorAt(inner.y, rect) });
+                    Vector2 innerNormal = roundedInner ? direction : cornerDiagonal;
+
+                    AddVertex(mesh, outer + (outerNormal * halfFeather), rect, 0);
+                    AddVertex(mesh, outer - (outerNormal * halfFeather), rect, byte.MaxValue);
+                    AddVertex(mesh, inner + (innerNormal * halfFeather), rect, byte.MaxValue);
+                    AddVertex(mesh, inner - (innerNormal * halfFeather), rect, 0);
                 }
             }
 
             for (var i = 0; i < pointCount; i++)
             {
                 int next = (i + 1) % pointCount;
-                var outerThis = (ushort)(i * 2);
-                var innerThis = (ushort)((i * 2) + 1);
-                var outerNext = (ushort)(next * 2);
-                var innerNext = (ushort)((next * 2) + 1);
 
-                mesh.SetNextIndex(outerThis);
-                mesh.SetNextIndex(outerNext);
-                mesh.SetNextIndex(innerThis);
-                mesh.SetNextIndex(innerThis);
-                mesh.SetNextIndex(outerNext);
-                mesh.SetNextIndex(innerNext);
+                for (var strip = 0; strip < VERTICES_PER_POINT - 1; strip++)
+                {
+                    var nearThis = (ushort)((i * VERTICES_PER_POINT) + strip);
+                    var farThis = (ushort)(nearThis + 1);
+                    var nearNext = (ushort)((next * VERTICES_PER_POINT) + strip);
+                    var farNext = (ushort)(nearNext + 1);
+
+                    mesh.SetNextIndex(nearThis);
+                    mesh.SetNextIndex(nearNext);
+                    mesh.SetNextIndex(farThis);
+                    mesh.SetNextIndex(farThis);
+                    mesh.SetNextIndex(nearNext);
+                    mesh.SetNextIndex(farNext);
+                }
             }
+        }
+
+        private void AddVertex(MeshWriteData mesh, Vector2 position, Rect rect, byte alpha)
+        {
+            Color32 tint = ColorAt(position.y, rect);
+            tint.a = alpha;
+            mesh.SetNextVertex(new Vertex { position = new Vector3(position.x, position.y, Vertex.nearZ), tint = tint });
         }
 
         private Color32 ColorAt(float y, Rect rect) =>
