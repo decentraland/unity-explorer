@@ -30,13 +30,6 @@
     overflow: hidden;
 }
 
-.lobby-profile-menu__header {
-    margin-bottom: 24px;
-    font-size: 16px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    color: var(--dcl-color-snow);
-}
-
 .lobby-profile-menu__identity {
     flex-direction: row;
     align-items: center;
