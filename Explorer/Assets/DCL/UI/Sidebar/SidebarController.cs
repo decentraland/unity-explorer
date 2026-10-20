@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Audio;
 using DCL.BugReporting.UI;
 using DCL.Chat;
 using DCL.Chat.ChatStates;
@@ -16,6 +17,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
@@ -27,8 +29,10 @@ using DCL.Web3.Identities;
 using ECS;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Events;
 using Utility;
 
@@ -37,6 +41,11 @@ namespace DCL.UI.Sidebar
     public class SidebarController : ControllerBase<SidebarView>
     {
         private const string SOURCE_BUTTON = "Button";
+        private const string MASTER_VOLUME_PARAM = "Master_Volume";
+        private const string WORLD_VOLUME_PARAM = "World_Volume";
+        private const string MUSIC_VOLUME_PARAM = "Music_Volume";
+        private const string UI_VOLUME_PARAM = "UI_Volume";
+        private const string AVATAR_VOLUME_PARAM = "Avatar_Volume";
         private const string SHOP_ITEMS_PATH = "items";
         private const string SHOP_CATEGORY_PARAM = "category";
         private const string EMOTE_CATEGORY = "emote";
@@ -57,6 +66,9 @@ namespace DCL.UI.Sidebar
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
         private readonly InWorldCameraToggle cameraToggle;
+        private readonly AudioMixer generalAudioMixer;
+        private readonly VolumeBus volumeBus;
+        private readonly List<AudioSliderBinder> audioSliderBinders = new ();
         private readonly bool isCameraReelFeatureEnabled;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
@@ -85,11 +97,15 @@ namespace DCL.UI.Sidebar
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
             InWorldCameraToggle cameraToggle,
+            AudioMixer generalAudioMixer,
+            VolumeBus volumeBus,
             IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
             this.supportRequestService = supportRequestService;
             this.cameraToggle = cameraToggle;
+            this.generalAudioMixer = generalAudioMixer;
+            this.volumeBus = volumeBus;
             this.mvcManager = mvcManager;
             this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
@@ -145,6 +161,7 @@ namespace DCL.UI.Sidebar
                 UnsubscribeFromOption(viewInstance.galleryGalleryOption, OnGalleryOptionClicked);
                 UnsubscribeFromOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
                 viewInstance.galleryCloseButton.onClick.RemoveListener(CloseOpenMenu);
+                viewInstance.audioCloseButton.onClick.RemoveListener(CloseOpenMenu);
 
                 viewInstance.shopEmotesBanner.onClick.RemoveListener(OnExploreEmotesClicked);
                 viewInstance.shopWearablesBanner.onClick.RemoveListener(OnExploreWearablesClicked);
@@ -160,6 +177,9 @@ namespace DCL.UI.Sidebar
                 if (isBugReportFeatureEnabled)
                     UnsubscribeFromOption(viewInstance.systemReportBugOption, OnReportBugOptionClicked);
             }
+
+            foreach (AudioSliderBinder binder in audioSliderBinders)
+                binder.Dispose();
 
             profileWidgetCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
@@ -180,6 +200,7 @@ namespace DCL.UI.Sidebar
             // Both gallery options come from the same feature, so the whole entry goes away rather than opening an empty menu.
             viewInstance.GalleryButton.gameObject.SetActive(isCameraReelFeatureEnabled);
 
+            BindAudioSliders();
             CloseAllMenus();
             SubscribeToEvents();
 
@@ -230,6 +251,7 @@ namespace DCL.UI.Sidebar
             SubscribeToOption(viewInstance.galleryGalleryOption, OnGalleryOptionClicked);
             SubscribeToOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
             viewInstance.galleryCloseButton.onClick.AddListener(CloseOpenMenu);
+            viewInstance.audioCloseButton.onClick.AddListener(CloseOpenMenu);
 
             viewInstance.shopEmotesBanner.onClick.AddListener(OnExploreEmotesClicked);
             viewInstance.shopWearablesBanner.onClick.AddListener(OnExploreWearablesClicked);
@@ -371,6 +393,28 @@ namespace DCL.UI.Sidebar
             webBrowser.OpenUrlMainThreadOnly(url);
         }
 
+        private void BindAudioSliders()
+        {
+            audioSliderBinders.Add(new AudioSliderBinder(viewInstance!.audioMasterSlider, generalAudioMixer, volumeBus.SetMasterVolume,
+                new AudioSliderBinder.Channel(MASTER_VOLUME_PARAM, DCLPrefKeys.SETTINGS_MASTER_VOLUME)));
+
+            audioSliderBinders.Add(new AudioSliderBinder(viewInstance.audioInWorldSlider, generalAudioMixer, volumeBus.SetWorldVolume,
+                new AudioSliderBinder.Channel(WORLD_VOLUME_PARAM, DCLPrefKeys.SETTINGS_WORLD_VOLUME),
+                new AudioSliderBinder.Channel(MUSIC_VOLUME_PARAM, DCLPrefKeys.SETTINGS_MUSIC_VOLUME)));
+
+            audioSliderBinders.Add(new AudioSliderBinder(viewInstance.audioUiSlider, generalAudioMixer, null,
+                new AudioSliderBinder.Channel(UI_VOLUME_PARAM, DCLPrefKeys.SETTINGS_UI_VOLUME)));
+
+            audioSliderBinders.Add(new AudioSliderBinder(viewInstance.audioAvatarSlider, generalAudioMixer, null,
+                new AudioSliderBinder.Channel(AVATAR_VOLUME_PARAM, DCLPrefKeys.SETTINGS_AVATAR_VOLUME)));
+        }
+
+        private void RefreshAudioSliders()
+        {
+            foreach (AudioSliderBinder binder in audioSliderBinders)
+                binder.Refresh();
+        }
+
         private void OnGalleryOptionClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
 
         private void OnTakeShotOptionClicked()
@@ -452,7 +496,11 @@ namespace DCL.UI.Sidebar
         private void OnDiscoverButtonClicked() => ToggleMenu(viewInstance!.DiscoverButton, viewInstance.discoverMenu);
         private void OnShopButtonClicked() => ToggleMenu(viewInstance!.ShopButton, viewInstance.shopMenu);
         private void OnSettingsButtonClicked() => ToggleMenu(viewInstance!.SettingsButton, viewInstance.systemMenu);
-        private void OnAudioSettingsButtonClicked() => ToggleMenu(viewInstance!.AudioSettingsButton, viewInstance.audioMenu);
+        private void OnAudioSettingsButtonClicked()
+        {
+            RefreshAudioSliders();
+            ToggleMenu(viewInstance!.AudioSettingsButton, viewInstance.audioMenu);
+        }
         private void OnGalleryButtonClicked() => ToggleMenu(viewInstance!.GalleryButton, viewInstance.galleryMenu);
         private void OnProfileButtonClicked() => ToggleMenu(null, viewInstance!.profileMenu);
 

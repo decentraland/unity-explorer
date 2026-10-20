@@ -601,7 +601,9 @@ namespace Global.Dynamic
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
                     marketplaceCreditsApiClient,
-                    inWorldCameraToggle),
+                    inWorldCameraToggle,
+                    generalAudioMixer,
+                    bootstrapContainer.VolumeBus),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,

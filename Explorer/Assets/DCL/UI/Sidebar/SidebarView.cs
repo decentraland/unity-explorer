@@ -10,6 +10,7 @@ using DCL.VoiceChat.UI;
 using MVC;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace DCL.UI.Sidebar
 {
@@ -55,6 +56,11 @@ namespace DCL.UI.Sidebar
         [field: Header("Audio Settings")]
         [field: SerializeField] public SimpleHoverableButton AudioSettingsButton { get; private set; } = null!;
         [field: SerializeField] internal GameObject audioMenu { get; private set; } = null!;
+        [field: SerializeField] internal Slider audioMasterSlider { get; private set; } = null!;
+        [field: SerializeField] internal Slider audioInWorldSlider { get; private set; } = null!;
+        [field: SerializeField] internal Slider audioUiSlider { get; private set; } = null!;
+        [field: SerializeField] internal Slider audioAvatarSlider { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView audioCloseButton { get; private set; } = null!;
 
         [field: Header("Gallery")]
         [field: SerializeField] public SimpleHoverableButton GalleryButton { get; private set; } = null!;

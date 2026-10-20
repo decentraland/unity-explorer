@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
@@ -35,6 +36,7 @@ using Runtime.Wearables;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.AddressableAssets;
 using UnityEngine.InputSystem;
 using Utility;
@@ -68,6 +70,8 @@ namespace DCL.PluginSystem.Global
         private readonly SupportRequestService supportRequestService;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly InWorldCameraToggle cameraToggle;
+        private readonly AudioMixer generalAudioMixer;
+        private readonly VolumeBus volumeBus;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -108,7 +112,9 @@ namespace DCL.PluginSystem.Global
             SmartWearableCache smartWearableCache,
             SupportRequestService supportRequestService,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            InWorldCameraToggle cameraToggle)
+            InWorldCameraToggle cameraToggle,
+            AudioMixer generalAudioMixer,
+            VolumeBus volumeBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -135,6 +141,8 @@ namespace DCL.PluginSystem.Global
             this.supportRequestService = supportRequestService;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.cameraToggle = cameraToggle;
+            this.generalAudioMixer = generalAudioMixer;
+            this.volumeBus = volumeBus;
         }
 
         public void Dispose()
@@ -196,6 +204,8 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 supportRequestService,
                 cameraToggle,
+                generalAudioMixer,
+                volumeBus,
                 web3IdentityCache
                 );
 
