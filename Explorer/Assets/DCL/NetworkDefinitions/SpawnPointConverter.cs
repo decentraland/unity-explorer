@@ -28,13 +28,21 @@ namespace DCL.Ipfs
         {
             var token = JToken.Load(reader);
 
-            // Scene metadata is creator-authored: an explicit null is treated the same as an absent coordinate.
-            return token.Type switch
-                   {
-                       JTokenType.Null => default,
-                       JTokenType.Array => new SceneMetadata.SpawnPoint.Coordinate { MultiValue = token.ToObject<float[]>() },
-                       _ => new SceneMetadata.SpawnPoint.Coordinate { SingleValue = token.ToObject<float>() },
-                   };
+            // Scene metadata is creator-authored: an explicit null, a null inside the range or a value that is not a number
+            // is treated the same as an absent coordinate instead of failing the whole deserialization.
+            try
+            {
+                return token.Type switch
+                       {
+                           JTokenType.Null => default,
+                           JTokenType.Array => new SceneMetadata.SpawnPoint.Coordinate { MultiValue = token.ToObject<float[]>() },
+                           _ => new SceneMetadata.SpawnPoint.Coordinate { SingleValue = token.ToObject<float>() },
+                       };
+            }
+            catch (Exception e) when (e is JsonException or FormatException or ArgumentException)
+            {
+                return default;
+            }
         }
     }
 }
