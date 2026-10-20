@@ -108,8 +108,12 @@ namespace DCL.AvatarRendering.Emotes.Load
         /// <summary>
         ///     An emote whose DTO request failed counts as resolved but has no DTO, so it is not part of the result.
         /// </summary>
-        internal static void RemoveEmotesWithFailedDTO(List<IEmote> emotes) =>
-            emotes.RemoveAll(static emote => !emote.Model.Succeeded);
+        internal static void RemoveEmotesWithFailedDTO(List<IEmote> emotes)
+        {
+            for (var i = emotes.Count - 1; i >= 0; i--)
+                if (!emotes[i].Model.Succeeded)
+                    emotes.RemoveAt(i);
+        }
 
         private void ResolveIntentionWithSuccessfulEmotes(Entity entity,
             GetEmotesByPointersIntention intention,
@@ -121,8 +125,16 @@ namespace DCL.AvatarRendering.Emotes.Load
                     emote.UpdateLoadingStatus(false);
 
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
+            List<IEmote> resolvedEmotes = resolvedEmotesTmp.List;
+
             // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
-            resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
+            for (var i = resolvedEmotes.Count - 1; i >= 0; i--)
+            {
+                IEmote emote = resolvedEmotes[i];
+
+                if (emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()))
+                    resolvedEmotes.RemoveAt(i);
+            }
 
             World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
