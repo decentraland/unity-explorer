@@ -8,7 +8,6 @@ namespace DCL.Chat.MessageBus
         DebugPanel,
         RestrictedActionApi,
         Minimap,
-        JumpIn,
         TeleportPrompt,
     }
 
@@ -22,7 +21,6 @@ namespace DCL.Chat.MessageBus
                        ChatMessageOrigin.DebugPanel => "debug panel",
                        ChatMessageOrigin.RestrictedActionApi => "RestrictedActionAPI",
                        ChatMessageOrigin.Minimap => "minimap",
-                       ChatMessageOrigin.JumpIn => "jump in",
                        ChatMessageOrigin.TeleportPrompt => "teleport prompt",
                        _ => throw new ArgumentOutOfRangeException(nameof(origin), origin, null),
                    };

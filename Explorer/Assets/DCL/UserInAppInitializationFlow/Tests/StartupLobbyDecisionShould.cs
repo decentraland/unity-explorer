@@ -17,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             IAppArgs appArgs = new ApplicationParametersParser(false, flag, value);
 
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
 
             // Assert
             Assert.That(show, Is.False);
@@ -30,7 +30,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             IAppArgs appArgs = new ApplicationParametersParser(false, "decentraland://?realm=pravus.dcl.eth");
 
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
 
             // Assert
             Assert.That(show, Is.False);
@@ -43,7 +43,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             IAppArgs appArgs = new ApplicationParametersParser(false, "--position", "10,20");
 
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.Logout);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.Logout);
 
             // Assert
             Assert.That(show, Is.True);
@@ -56,7 +56,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             IAppArgs appArgs = new ApplicationParametersParser(false, "decentraland://?force-open-backpack=true");
 
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, true, appArgs, new StartParcel(Vector2Int.zero), LoadSource.StartUp);
 
             // Assert
             Assert.That(show, Is.True);
@@ -71,7 +71,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             startParcel.RequestJumpIn();
 
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, new ApplicationParametersParser(false), startParcel, loadSource);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, true, new ApplicationParametersParser(false), startParcel, loadSource);
 
             // Assert
             Assert.That(show, Is.False);
@@ -107,7 +107,17 @@ namespace DCL.UserInAppInitializationFlow.Tests
         public void NeverShowTheLobbyWhenTheFeatureIsOff()
         {
             // Act
-            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(false, new ApplicationParametersParser(false), new StartParcel(Vector2Int.zero), LoadSource.StartUp);
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(false, true, new ApplicationParametersParser(false), new StartParcel(Vector2Int.zero), LoadSource.StartUp);
+
+            // Assert
+            Assert.That(show, Is.False);
+        }
+
+        [Test]
+        public void SkipTheLobbyWhenTheAuthenticationScreenIsDisabled()
+        {
+            // Act
+            bool show = RealUserInAppInitializationFlow.ShouldShowStartupLobby(true, false, new ApplicationParametersParser(false), new StartParcel(Vector2Int.zero), LoadSource.StartUp);
 
             // Assert
             Assert.That(show, Is.False);
