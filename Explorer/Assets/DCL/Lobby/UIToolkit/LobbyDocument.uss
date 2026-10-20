@@ -26,6 +26,7 @@
     --lobby-card-border-color: var(--lobby-white-10);
     --lobby-title-color: white;
     --lobby-subtitle-color: rgb(207, 205, 212);
+    --lobby-grip-color: rgb(113, 107, 124);
     --lobby-jump-in-color: rgb(255, 45, 85);
     --lobby-jump-in-hover-color: rgb(255, 77, 111);
     --lobby-jump-in-pressed-color: rgb(200, 35, 67);

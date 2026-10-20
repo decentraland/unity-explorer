@@ -141,6 +141,7 @@
     height: 24px;
     margin-right: 10px;
     background-image: url('/Assets/DCL/Lobby/Textures/DragIcon.png');
+    -unity-background-image-tint-color: var(--lobby-grip-color);
 }
 
 .lobby-widget-card__icon {
