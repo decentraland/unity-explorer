@@ -23,7 +23,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
     /// <summary>
     ///     Covers the path from Nearby voice activity to <c>PBAvatarBase.talking</c>:
     ///     <see cref="NearbyTalkingSDKPropagationSystem" /> feeds the scene's <see cref="SDKTalking" />, <see cref="WriteSDKAvatarBaseSystem" /> writes it.
-    ///     Remote activity enters through <see cref="IsActivelySpeakingTag" /> on the frame the scene assignment changes,
+    ///     Remote activity enters through <see cref="IsActivelySpeakingTag" /> every frame,
     ///     the local player's through <see cref="NearbyVoiceChatStateModel.IsLocalSpeaking" />.
     /// </summary>
     public class NearbyTalkingSDKPropagationSystemShould : UnitySystemTestBase<NearbyTalkingSDKPropagationSystem>
@@ -196,7 +196,23 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         }
 
         [Test]
-        public void NotTouchSceneWhileTalkingIsUnchanged()
+        public void WriteTalkingWhenSpeakerStartsInScene()
+        {
+            // Arrange
+            Entity remote = world.Create();
+            AddPlayerToScene(remote, REMOTE_WALLET, SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            Tick();
+
+            // Act
+            world.Add<IsActivelySpeakingTag>(remote);
+            Tick();
+
+            // Assert
+            Assert.That(written?.Talking, Is.True);
+        }
+
+        [Test]
+        public void WriteSilentWhenSpeakerStopsInScene()
         {
             // Arrange
             Entity remote = world.Create(new IsActivelySpeakingTag());
@@ -204,17 +220,35 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Tick();
             written = null;
 
-            Entity sceneEntity = world.Get<PlayerCRDTEntity>(remote).SceneWorldEntity;
-            ref SDKTalking sdkTalking = ref sceneWorld.Get<SDKTalking>(sceneEntity);
-            sdkTalking.Set(false);
-            sdkTalking.IsDirty = false;
-
             // Act
+            world.Remove<IsActivelySpeakingTag>(remote);
             Tick();
 
-            // Assert: the hand-set scene value survives, so nothing is reconciled per frame
-            Assert.That(sceneWorld.Get<SDKTalking>(sceneEntity).Value, Is.False);
-            Assert.That(written, Is.Null);
+            // Assert
+            Assert.That(written?.HasTalking, Is.True);
+            Assert.That(written?.Talking, Is.False);
+        }
+
+        [Test]
+        public void WriteTalkingOnceSceneEntityGetsProfileAfterAssignment()
+        {
+            // Arrange: assigned to a scene entity that has no profile yet
+            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM));
+            var playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            playerCRDTEntity.AssignToScene(scene, sceneEntity);
+            world.Create(new IsActivelySpeakingTag(), playerCRDTEntity);
+            Tick();
+
+            // Act
+            var sdkProfile = new SDKProfile();
+            sdkProfile.OverrideWith(Profile.NewRandomProfile(REMOTE_WALLET));
+            sdkProfile.IsDirty = false;
+            sceneWorld.Add(sceneEntity, sdkProfile, new SDKTalking());
+            Tick();
+
+            // Assert
+            Assert.That(written?.HasTalking, Is.True);
+            Assert.That(written?.Talking, Is.True);
         }
 
         [Test]

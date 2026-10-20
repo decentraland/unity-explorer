@@ -14,8 +14,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Mirrors Nearby voice activity into <c>PBAvatarBase.talking</c>.
-    ///     A remote player's current <see cref="IsActivelySpeakingTag" /> state is written to the <see cref="SDKTalking" />
-    ///     of the scene the player stands in on the frame the scene assignment changes.
+    ///     A remote player's <see cref="IsActivelySpeakingTag" /> state is written every frame to the <see cref="SDKTalking" />
+    ///     of the scene the player stands in; <see cref="SDKTalking.Set" /> raises it only when the value changes.
     ///     The local player's value is written to <see cref="TalkingComponent" /> on the global player entity.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -44,15 +44,19 @@ namespace DCL.VoiceChat.Nearby.Systems
             World.Get<TalkingComponent>(playerEntity).IsTalking = stateModel.IsLocalSpeaking;
 
             // remote players
-            SeedOnSceneAssignmentQuery(World);
+            PropagateRemoteTalkingQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void SeedOnSceneAssignment(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateRemoteTalking(Entity entity, in PlayerCRDTEntity playerCRDTEntity)
         {
-            if (playerCRDTEntity.IsDirty)
-                SDKTalkingPropagation.Propagate(in playerCRDTEntity, talking: World.Has<IsActivelySpeakingTag>(entity));
+            if (!playerCRDTEntity.AssignedToScene) return;
+
+            ref SDKTalking sdkTalking = ref playerCRDTEntity.SceneFacade!.EcsExecutor.World.TryGetRef<SDKTalking>(playerCRDTEntity.SceneWorldEntity, out bool exists);
+
+            if (exists)
+                sdkTalking.Set(World.Has<IsActivelySpeakingTag>(entity));
         }
     }
 }

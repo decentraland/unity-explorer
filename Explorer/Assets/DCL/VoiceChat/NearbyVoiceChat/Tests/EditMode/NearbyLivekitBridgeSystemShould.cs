@@ -1,7 +1,5 @@
 using Arch.Core;
-using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
@@ -10,13 +8,11 @@ using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
-using SceneFacadeUtils = DCL.Multiplayer.SDK.Tests.SceneFacadeUtils;
 
 namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
@@ -33,8 +29,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private INearbyAudioStreamRegistry registry = null!;
-        private World sceneWorld = null!;
-        private ISceneFacade scene = null!;
 
         private readonly List<GameObject> gameObjects = new (16);
 
@@ -50,9 +44,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             registry.GetAudioSidsArray(Arg.Any<string>()).Returns((string[]?)null);
             registry.IsActiveSpeaker(Arg.Any<string>()).Returns(false);
 
-            sceneWorld = World.Create();
-            scene = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
-
             system = new NearbyLivekitBridgeSystem(world, registry);
         }
 
@@ -62,7 +53,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
-            sceneWorld.Dispose();
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
@@ -348,80 +338,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                 "component is pass-through; consumers (Binding/Cleanup/Nametag) own the listening gate");
         }
 
-        // ── Scene talking ───────────────────────────────────────────
-
-        [Test]
-        public void WriteTalkingToSceneWhenSpeakingTagRises()
-        {
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            Entity sceneEntity = AssignToScene(e);
-            StubStreaming(WALLET, "sid-1");
-            registry.IsActiveSpeaker(WALLET).Returns(true);
-
-            system.Update(0);
-
-            Assert.That(sceneWorld.Get<SDKTalking>(sceneEntity).Value, Is.True);
-        }
-
-        [Test]
-        public void WriteSilentToSceneWhenSpeakingTagDrops()
-        {
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            Entity sceneEntity = AssignToScene(e);
-            StubStreaming(WALLET, "sid-1");
-            registry.IsActiveSpeaker(WALLET).Returns(true);
-            system.Update(0);
-
-            registry.IsActiveSpeaker(WALLET).Returns(false);
-            system.Update(0);
-
-            Assert.That(sceneWorld.Get<SDKTalking>(sceneEntity).Value, Is.False);
-        }
-
-        [Test]
-        public void WriteSilentToSceneWhenStreamDisappears()
-        {
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            Entity sceneEntity = AssignToScene(e);
-            StubStreaming(WALLET, "sid-1");
-            registry.IsActiveSpeaker(WALLET).Returns(true);
-            system.Update(0);
-
-            registry.GetAudioSidsArray(WALLET).Returns((string[]?)null);
-            system.Update(0);
-
-            Assert.That(sceneWorld.Get<SDKTalking>(sceneEntity).Value, Is.False);
-        }
-
-        [Test]
-        public void LeaveSceneUntouchedWhileSpeakingIsUnchanged()
-        {
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            Entity sceneEntity = AssignToScene(e);
-            StubStreaming(WALLET, "sid-1");
-            registry.IsActiveSpeaker(WALLET).Returns(true);
-            system.Update(0);
-            sceneWorld.Get<SDKTalking>(sceneEntity).IsDirty = false;
-
-            system.Update(0);
-
-            Assert.That(sceneWorld.Get<SDKTalking>(sceneEntity).IsDirty, Is.False);
-        }
-
         // ── Helpers ─────────────────────────────────────────────────
-
-        private Entity AssignToScene(Entity avatar)
-        {
-            Entity sceneEntity = sceneWorld.Create(new SDKTalking());
-            var playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-            playerCRDTEntity.AssignToScene(scene, sceneEntity);
-            world.Add(avatar, playerCRDTEntity);
-            return sceneEntity;
-        }
 
         private string[] StubStreaming(string walletId, params string[] sids)
         {
