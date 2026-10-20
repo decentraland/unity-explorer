@@ -16,6 +16,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.MarketplaceCredits;
+using DCL.Clipboard;
 using DCL.Credits;
 using DCL.InWorldCamera;
 using DCL.UI.MainUI;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private readonly InWorldCameraToggle cameraToggle;
         private readonly AudioMixer generalAudioMixer;
         private readonly VolumeBus volumeBus;
+        private readonly ISystemClipboard systemClipboard;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -84,6 +86,7 @@ namespace DCL.PluginSystem.Global
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
         private ICreditsPanelController? shopCreditsPanelController;
+        private SidebarProfileMenuPresenter? sidebarProfileMenuPresenter;
 
         private CancellationTokenSource? controlsShortcutCts;
 
@@ -114,7 +117,8 @@ namespace DCL.PluginSystem.Global
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             InWorldCameraToggle cameraToggle,
             AudioMixer generalAudioMixer,
-            VolumeBus volumeBus)
+            VolumeBus volumeBus,
+            ISystemClipboard systemClipboard)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -143,6 +147,7 @@ namespace DCL.PluginSystem.Global
             this.cameraToggle = cameraToggle;
             this.generalAudioMixer = generalAudioMixer;
             this.volumeBus = volumeBus;
+            this.systemClipboard = systemClipboard;
         }
 
         public void Dispose()
@@ -161,6 +166,7 @@ namespace DCL.PluginSystem.Global
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
             shopCreditsPanelController?.Dispose();
+            sidebarProfileMenuPresenter?.Dispose();
             helpMenuController?.Dispose();
         }
 
@@ -189,6 +195,11 @@ namespace DCL.PluginSystem.Global
             shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(
                 mainUiView.SidebarView.ShopCreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
 
+            sidebarProfileMenuPresenter = new SidebarProfileMenuPresenter(
+                mainUiView.SidebarView, web3IdentityCache, profileRepository, profileChangesBus,
+                systemClipboard, decentralandUrls, passportBridge, mvcManager, web3Authenticator,
+                userInAppInitializationFlow, profileCache, globalWorld, playerEntity);
+
             sidebarController = new SidebarController(() =>
                 {
                     SidebarView view = mainUiView.SidebarView;
@@ -203,6 +214,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 chatEventBus,
                 supportRequestService,
+                sidebarProfileMenuPresenter,
                 cameraToggle,
                 generalAudioMixer,
                 volumeBus,

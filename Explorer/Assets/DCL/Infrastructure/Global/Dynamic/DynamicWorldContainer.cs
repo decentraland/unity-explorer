@@ -603,7 +603,8 @@ namespace Global.Dynamic
                     marketplaceCreditsApiClient,
                     inWorldCameraToggle,
                     generalAudioMixer,
-                    bootstrapContainer.VolumeBus),
+                    bootstrapContainer.VolumeBus,
+                    uiShellContainer.Clipboard),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,

@@ -65,6 +65,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
+        private readonly SidebarProfileMenuPresenter profileMenuPresenter;
         private readonly InWorldCameraToggle cameraToggle;
         private readonly AudioMixer generalAudioMixer;
         private readonly VolumeBus volumeBus;
@@ -96,6 +97,7 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
+            SidebarProfileMenuPresenter profileMenuPresenter,
             InWorldCameraToggle cameraToggle,
             AudioMixer generalAudioMixer,
             VolumeBus volumeBus,
@@ -103,6 +105,7 @@ namespace DCL.UI.Sidebar
             : base(viewFactory)
         {
             this.supportRequestService = supportRequestService;
+            this.profileMenuPresenter = profileMenuPresenter;
             this.cameraToggle = cameraToggle;
             this.generalAudioMixer = generalAudioMixer;
             this.volumeBus = volumeBus;
@@ -162,6 +165,13 @@ namespace DCL.UI.Sidebar
                 UnsubscribeFromOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
                 viewInstance.galleryCloseButton.onClick.RemoveListener(CloseOpenMenu);
                 viewInstance.audioCloseButton.onClick.RemoveListener(CloseOpenMenu);
+
+                UnsubscribeFromOption(viewInstance.profileBadgesOption, profileMenuPresenter.OpenBadges);
+                UnsubscribeFromOption(viewInstance.profileProfileOption, profileMenuPresenter.OpenProfile);
+                UnsubscribeFromOption(viewInstance.profileBackpackOption, profileMenuPresenter.OpenBackpack);
+                UnsubscribeFromOption(viewInstance.profileSignOutOption, profileMenuPresenter.SignOut);
+                UnsubscribeFromOption(viewInstance.profileExitOption, profileMenuPresenter.Exit);
+                viewInstance.profileCloseButton.onClick.RemoveListener(CloseOpenMenu);
 
                 viewInstance.shopEmotesBanner.onClick.RemoveListener(OnExploreEmotesClicked);
                 viewInstance.shopWearablesBanner.onClick.RemoveListener(OnExploreWearablesClicked);
@@ -252,6 +262,13 @@ namespace DCL.UI.Sidebar
             SubscribeToOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
             viewInstance.galleryCloseButton.onClick.AddListener(CloseOpenMenu);
             viewInstance.audioCloseButton.onClick.AddListener(CloseOpenMenu);
+
+            SubscribeToOption(viewInstance.profileBadgesOption, profileMenuPresenter.OpenBadges);
+            SubscribeToOption(viewInstance.profileProfileOption, profileMenuPresenter.OpenProfile);
+            SubscribeToOption(viewInstance.profileBackpackOption, profileMenuPresenter.OpenBackpack);
+            SubscribeToOption(viewInstance.profileSignOutOption, profileMenuPresenter.SignOut);
+            SubscribeToOption(viewInstance.profileExitOption, profileMenuPresenter.Exit);
+            viewInstance.profileCloseButton.onClick.AddListener(CloseOpenMenu);
 
             viewInstance.shopEmotesBanner.onClick.AddListener(OnExploreEmotesClicked);
             viewInstance.shopWearablesBanner.onClick.AddListener(OnExploreWearablesClicked);
@@ -502,7 +519,11 @@ namespace DCL.UI.Sidebar
             ToggleMenu(viewInstance!.AudioSettingsButton, viewInstance.audioMenu);
         }
         private void OnGalleryButtonClicked() => ToggleMenu(viewInstance!.GalleryButton, viewInstance.galleryMenu);
-        private void OnProfileButtonClicked() => ToggleMenu(null, viewInstance!.profileMenu);
+        private void OnProfileButtonClicked()
+        {
+            profileMenuPresenter.Refresh();
+            ToggleMenu(null, viewInstance!.profileMenu);
+        }
 
 #endregion
 

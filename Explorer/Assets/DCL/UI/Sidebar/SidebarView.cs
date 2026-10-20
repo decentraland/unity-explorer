@@ -8,6 +8,7 @@ using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.UI;
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -84,6 +85,21 @@ namespace DCL.UI.Sidebar
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; } = null!;
         [field: SerializeField] internal GameObject profileMenu { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text ProfileNameLabel { get; private set; } = null!;
+        [field: SerializeField] public GameObject ProfileVerifiedMark { get; private set; } = null!;
+        [field: SerializeField] public GameObject ProfileFoundationMark { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text ProfileWalletAddressLabel { get; private set; } = null!;
+        [field: SerializeField] public Button ProfileCopyWalletButton { get; private set; } = null!;
+        [field: SerializeField] public Button ProfileInviteFriendsButton { get; private set; } = null!;
+        [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView ProfileCopyWalletToast { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView ProfileInviteToast { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView profileBadgesOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView profileProfileOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView profileBackpackOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView profileSignOutOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView profileExitOption { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView profileCloseButton { get; private set; } = null!;
 
         [field: Header("Chat")]
         [field: SerializeField]
