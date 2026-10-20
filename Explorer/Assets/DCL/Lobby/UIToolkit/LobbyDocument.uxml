@@ -107,6 +107,7 @@
                         <ui:Label name="Caption" text="No Friends Online" class="lobby-empty-banner__caption" picking-mode="Ignore" />
                     </ui:VisualElement>
                     <ui:VisualElement name="NoFriends" class="lobby-empty-banner lobby-empty-banner--friends" picking-mode="Ignore" style="display: none;">
+                        <ui:VisualElement name="Glow" class="lobby-empty-banner__friends-glow" picking-mode="Ignore" />
                         <ui:VisualElement name="Image" class="lobby-empty-banner__friends-image" picking-mode="Ignore" />
                         <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
                             <ui:Label name="Title" text="Time to make some friends!" class="lobby-empty-banner__title lobby-empty-banner__title--small" picking-mode="Ignore" />

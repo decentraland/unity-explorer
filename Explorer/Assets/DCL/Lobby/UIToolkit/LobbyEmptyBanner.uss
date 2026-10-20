@@ -55,12 +55,26 @@
     color: var(--lobby-subtitle-color);
 }
 
-/* The design's blurred discs behind the figure are baked into a picture: the panel cannot blur */
 .lobby-empty-banner--friends {
     padding: 12px 30px 12px 10px;
     overflow: hidden;
-    background-image: url('/Assets/DCL/Lobby/Textures/FriendsEmptyGlow.png');
-    background-size: 100% 100%;
+}
+
+/* The design's blurred discs, baked since the panel cannot blur: a 2x picture narrower than the frame, sliced down its
+   clear middle so each glow keeps its size in its corner; a sliced picture ignores its element's corner radius, hence a
+   child the frame clips; the tint thins the alpha as LobbyDocument.uss thins the design's, the glow blending in linear
+   light too */
+.lobby-empty-banner__friends-glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/Assets/DCL/Lobby/Textures/FriendsBannerBackground.png');
+    -unity-slice-left: 280;
+    -unity-slice-right: 280;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.5);
 }
 
 .lobby-empty-banner__friends-image {
@@ -68,7 +82,7 @@
     height: 117px;
     flex-shrink: 0;
     margin-right: 20px;
-    background-image: url('/Assets/DCL/Lobby/Textures/FriendsEmptyImage.png');
+    background-image: url('/Assets/DCL/Lobby/Textures/FriendsBannerImg.png');
     background-size: 100% 100%;
 }
 
@@ -82,7 +96,7 @@
     height: 90px;
     flex-shrink: 0;
     margin-right: 25px;
-    background-image: url('/Assets/DCL/Lobby/Textures/GalleryEmptyImage.png');
+    background-image: url('/Assets/DCL/Lobby/Textures/GalleryBannerImage.png');
     background-size: 100% 100%;
 }
 
@@ -98,7 +112,7 @@
     height: 143px;
     flex-shrink: 0;
     margin-right: 30px;
-    background-image: url('/Assets/DCL/Lobby/Textures/CommunitiesEmptyImage.png');
+    background-image: url('/Assets/DCL/Lobby/Textures/CommunitiesBannerImg.png');
     background-size: 100% 100%;
 }
 
