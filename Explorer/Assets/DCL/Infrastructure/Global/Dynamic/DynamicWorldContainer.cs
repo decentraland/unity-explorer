@@ -21,6 +21,7 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
@@ -450,6 +451,8 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
+            var inWorldCameraToggle = new InWorldCameraToggle(globalWorld);
+
             var badgesApiClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -597,7 +600,8 @@ namespace Global.Dynamic
                     chatContainer.ChatEventBus,
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
-                    marketplaceCreditsApiClient),
+                    marketplaceCreditsApiClient,
+                    inWorldCameraToggle),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,
@@ -995,6 +999,7 @@ namespace Global.Dynamic
                     wearableContainer.WearablesProvider,
                     uiShellContainer.Cursor,
                     globalWorld,
+                    inWorldCameraToggle,
                     debugBuilder,
                     dynamicSettings.NametagsData,
                     profileContainer.ProfileRepositoryWrapper,

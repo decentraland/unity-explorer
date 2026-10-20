@@ -16,6 +16,7 @@ using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.MarketplaceCredits;
 using DCL.Credits;
+using DCL.InWorldCamera;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly SupportRequestService supportRequestService;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly InWorldCameraToggle cameraToggle;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -105,7 +107,8 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
             SupportRequestService supportRequestService,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            InWorldCameraToggle cameraToggle)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -131,6 +134,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.supportRequestService = supportRequestService;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.cameraToggle = cameraToggle;
         }
 
         public void Dispose()
@@ -191,6 +195,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 chatEventBus,
                 supportRequestService,
+                cameraToggle,
                 web3IdentityCache
                 );
 

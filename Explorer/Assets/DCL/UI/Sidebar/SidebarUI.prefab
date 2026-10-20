@@ -91,6 +91,9 @@ MonoBehaviour:
   <audioMenu>k__BackingField: {fileID: 6973889494588925755}
   <GalleryButton>k__BackingField: {fileID: 1456494438077899857}
   <galleryMenu>k__BackingField: {fileID: 4933004527931025400}
+  <galleryGalleryOption>k__BackingField: {fileID: 1101081167368760155}
+  <galleryTakeShotOption>k__BackingField: {fileID: 3265640622359388143}
+  <galleryCloseButton>k__BackingField: {fileID: 7676592878832698226}
   <FriendsButton>k__BackingField: {fileID: 8319876786927441977}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
@@ -359,6 +362,24 @@ MonoBehaviour:
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7318904455213067781, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &1101081167368760155 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3412031279676240375, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &3265640622359388143 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 959207329313424707, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+--- !u!114 &7676592878832698226 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5374649982758509022, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
 --- !u!1001 &1089184277027898555

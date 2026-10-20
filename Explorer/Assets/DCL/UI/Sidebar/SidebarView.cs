@@ -59,6 +59,9 @@ namespace DCL.UI.Sidebar
         [field: Header("Gallery")]
         [field: SerializeField] public SimpleHoverableButton GalleryButton { get; private set; } = null!;
         [field: SerializeField] internal GameObject galleryMenu { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView galleryGalleryOption { get; private set; } = null!;
+        [field: SerializeField] internal MenuElementView galleryTakeShotOption { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView galleryCloseButton { get; private set; } = null!;
 
         [field: Header("Friends")]
         [field: SerializeField] public SimpleHoverableButton FriendsButton { get; private set; } = null!;

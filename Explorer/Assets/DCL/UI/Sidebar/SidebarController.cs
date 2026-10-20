@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
+using DCL.InWorldCamera;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -35,6 +36,7 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
+        private const string SOURCE_BUTTON = "Button";
         private const string SHOP_ITEMS_PATH = "items";
         private const string SHOP_CATEGORY_PARAM = "category";
         private const string EMOTE_CATEGORY = "emote";
@@ -54,6 +56,8 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
+        private readonly InWorldCameraToggle cameraToggle;
+        private readonly bool isCameraReelFeatureEnabled;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
@@ -80,10 +84,12 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
+            InWorldCameraToggle cameraToggle,
             IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
             this.supportRequestService = supportRequestService;
+            this.cameraToggle = cameraToggle;
             this.mvcManager = mvcManager;
             this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
@@ -96,6 +102,7 @@ namespace DCL.UI.Sidebar
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -135,6 +142,10 @@ namespace DCL.UI.Sidebar
                 UnsubscribeFromOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
                 viewInstance.discoverCloseButton.onClick.RemoveListener(CloseOpenMenu);
 
+                UnsubscribeFromOption(viewInstance.galleryGalleryOption, OnGalleryOptionClicked);
+                UnsubscribeFromOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
+                viewInstance.galleryCloseButton.onClick.RemoveListener(CloseOpenMenu);
+
                 viewInstance.shopEmotesBanner.onClick.RemoveListener(OnExploreEmotesClicked);
                 viewInstance.shopWearablesBanner.onClick.RemoveListener(OnExploreWearablesClicked);
                 viewInstance.shopCloseButton.onClick.RemoveListener(CloseOpenMenu);
@@ -165,6 +176,9 @@ namespace DCL.UI.Sidebar
             viewInstance.discoverPlacesOption.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.discoverEventsOption.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.systemReportBugOption.gameObject.SetActive(isBugReportFeatureEnabled);
+
+            // Both gallery options come from the same feature, so the whole entry goes away rather than opening an empty menu.
+            viewInstance.GalleryButton.gameObject.SetActive(isCameraReelFeatureEnabled);
 
             CloseAllMenus();
             SubscribeToEvents();
@@ -212,6 +226,10 @@ namespace DCL.UI.Sidebar
             SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
             SubscribeToOption(viewInstance.discoverCommunitiesOption, OnCommunitiesOptionClicked);
             viewInstance.discoverCloseButton.onClick.AddListener(CloseOpenMenu);
+
+            SubscribeToOption(viewInstance.galleryGalleryOption, OnGalleryOptionClicked);
+            SubscribeToOption(viewInstance.galleryTakeShotOption, OnTakeShotOptionClicked);
+            viewInstance.galleryCloseButton.onClick.AddListener(CloseOpenMenu);
 
             viewInstance.shopEmotesBanner.onClick.AddListener(OnExploreEmotesClicked);
             viewInstance.shopWearablesBanner.onClick.AddListener(OnExploreWearablesClicked);
@@ -351,6 +369,14 @@ namespace DCL.UI.Sidebar
                                        .Build();
 
             webBrowser.OpenUrlMainThreadOnly(url);
+        }
+
+        private void OnGalleryOptionClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
+
+        private void OnTakeShotOptionClicked()
+        {
+            CloseOpenMenu();
+            cameraToggle.Toggle(SOURCE_BUTTON);
         }
 
         private void OnSettingsOptionClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
