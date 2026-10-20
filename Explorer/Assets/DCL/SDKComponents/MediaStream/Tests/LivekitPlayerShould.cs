@@ -107,7 +107,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
                          resolves.Add(ci.Arg<CancellationToken>());
                          return new UniTaskCompletionSource<ResolvedMediaUrl>().Task;
                      });
-            MediaOpenThrottle.MarkOpened(float.PositiveInfinity);
             now = 0f;
             roomRunning = true;
 
@@ -131,8 +130,6 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             foreach (Object obj in created)
                 Object.DestroyImmediate(obj);
-
-            MediaOpenThrottle.MarkOpened(float.NegativeInfinity);
         }
 
         [Test]
@@ -1205,7 +1202,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => true, null, slideCache, material, new PresentationUrlVideo(mediaPlayerPool, resolver));
+            var p = new LivekitPlayer(room, () => true, null, slideCache, material, new PresentationUrlPlayer(mediaPlayerPool, resolver));
             players.Add(p);
             return p;
         }
@@ -1214,7 +1211,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var material = new Material(Shader.Find("DCL/PresentationCompositor"));
             created.Add(material);
-            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, new PresentationUrlVideo(mediaPlayerPool, resolver));
+            var p = new LivekitPlayer(room, () => roomRunning, null, NewSlideCache(), material, new PresentationUrlPlayer(mediaPlayerPool, resolver));
             players.Add(p);
             return p;
         }

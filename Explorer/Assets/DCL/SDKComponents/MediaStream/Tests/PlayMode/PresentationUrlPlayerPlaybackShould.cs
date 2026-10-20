@@ -16,7 +16,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
-    public class PresentationUrlVideoPlaybackShould : UUAVTestBase
+    public class PresentationUrlPlayerPlaybackShould : UUAVTestBase
     {
         private const string URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
         private const string MEDIA_PLAYER_PREFAB_PATH = "Assets/DCL/Audio/Prefabs/MediaPlayer.prefab";
@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private MediaPlayerCustomPool pool = null!;
         private IUrlResolverService resolver = null!;
-        private PresentationUrlVideo video = null!;
+        private PresentationUrlPlayer urlPlayer = null!;
         private float now;
 
         private MediaPlayer? mediaPlayer =>
@@ -36,31 +36,30 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             pool = new MediaPlayerCustomPool(AssetDatabase.LoadAssetAtPath<MediaPlayer>(MEDIA_PLAYER_PREFAB_PATH));
             resolver = Substitute.For<IUrlResolverService>();
-            video = new PresentationUrlVideo(pool, resolver);
-            MediaOpenThrottle.MarkOpened(float.NegativeInfinity);
+            urlPlayer = new PresentationUrlPlayer(pool, resolver);
             now = 0f;
         }
 
         [TearDown]
         public void TearDown()
         {
-            video.Dispose();
-            Object.Destroy(GameObject.Find(POOL_CONTAINER_NAME));
-            MediaOpenThrottle.MarkOpened(float.NegativeInfinity);
+            urlPlayer.Dispose();
+            Object.DestroyImmediate(GameObject.Find(POOL_CONTAINER_NAME));
         }
 
         [UnityTest]
         public IEnumerator PlayResolvedUrl_OnceItOpens()
         {
             // Arrange
-            ResolveTo(Fixtures.ToneColorBands);
+            ResolveTo(Fixtures.ToneColorBands, 1000f);
 
             // Act
-            yield return UpdateUntil(() => mediaPlayer is { } player && player.Control.IsPlaying() && video.Texture != null, null, true, "playing");
+            yield return UpdateUntil(() => mediaPlayer is { } player && player.Control.IsPlaying() && urlPlayer.Texture != null, null, true, "playing");
 
             // Assert
-            Assert.IsNotNull(video.Texture);
-            Assert.IsTrue(video.RequiresCompositorFlip);
+            Assert.IsNotNull(urlPlayer.Texture);
+            Assert.IsTrue(urlPlayer.RequiresCompositorFlip);
+            AssertResolved(1);
         }
 
         [UnityTest]
@@ -76,6 +75,23 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Assert
             Assert.IsTrue(mediaPlayer!.Control.IsPlaying());
+            AssertResolved(1);
+        }
+
+        [UnityTest]
+        public IEnumerator ReuseParkedPlayer_WhenReplayedAfterRelease()
+        {
+            // Arrange
+            ResolveTo(Fixtures.ToneColorBands);
+            yield return UpdateUntil(() => mediaPlayer is { } player && player.Control.IsPlaying(), null, true, "playing");
+            MediaPlayer played = mediaPlayer!;
+
+            // Act
+            urlPlayer.Release();
+            yield return UpdateUntil(() => mediaPlayer is { } player && player.Control.IsPlaying(), null, true, "replaying");
+
+            // Assert
+            Assert.AreSame(played, mediaPlayer);
         }
 
         [UnityTest]
@@ -139,35 +155,36 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Act
             now = 2000f;
-            video.Update(URL, null, true, now);
-            video.Update(URL, null, true, now);
+            urlPlayer.Update(URL, null, true, now);
+            urlPlayer.Update(URL, null, true, now);
 
             // Assert
             AssertResolved(2);
         }
 
         [UnityTest]
-        public IEnumerator DestroyPlayer_WhenPausedBeforeMediaOpens()
+        public IEnumerator ParkPlayer_WhenPausedBeforeMediaOpens()
         {
             // Arrange
             ResolveTo(Fixtures.ToneColorBands);
             Tick(null, true);
             Tick(null, true);
-            Assert.IsNotNull(mediaPlayer);
+            MediaPlayer opened = mediaPlayer!;
 
             // Act
-            video.Pause();
+            urlPlayer.Pause();
             yield return null;
-            bool destroyed = mediaPlayer == null;
-            yield return UpdateUntil(() => mediaPlayer != null, null, true, "reopened");
+            bool parked = mediaPlayer == null;
+            yield return UpdateUntil(() => mediaPlayer is { } player && player.Control.IsPlaying(), null, true, "reopened and playing");
 
             // Assert
-            Assert.IsTrue(destroyed);
+            Assert.IsTrue(parked);
+            Assert.AreSame(opened, mediaPlayer);
         }
 
-        private void ResolveTo(string fixture) =>
+        private void ResolveTo(string fixture, float expiresAt = 0f) =>
             resolver.ResolveAsync(URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>())
-                    .Returns(UniTask.FromResult(new ResolvedMediaUrl(UrlFor(fixture), true)));
+                    .Returns(UniTask.FromResult(new ResolvedMediaUrl(UrlFor(fixture), true, expiresAtRealtimeSinceStartup: expiresAt)));
 
         private void AssertResolved(int times) =>
             resolver.Received(times).ResolveAsync(URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>());
@@ -209,7 +226,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private void Tick(double? targetSeconds, bool playing)
         {
             now += UnityEngine.Time.unscaledDeltaTime;
-            video.Update(URL, targetSeconds, playing, now);
+            urlPlayer.Update(URL, targetSeconds, playing, now);
 
             if (mediaPlayer is { } player && !player.GetComponent<AudioTapBehaviour>())
                 player.gameObject.AddComponent<AudioTapBehaviour>();

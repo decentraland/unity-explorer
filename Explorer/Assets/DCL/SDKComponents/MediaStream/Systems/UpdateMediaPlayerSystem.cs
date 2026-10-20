@@ -32,6 +32,9 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Material flipMaterial;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
+        private static float lastOpenMediaTime;
+        private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
+
         // Generic-URL retry policy: 5 attempts with exponential backoff (2s, 4s, 8s, 16s, 32s).
         // Covers cold-network scenarios on Windows where the initial reachability probe fails
         // before DNS/SSL is warm. After MAX_RETRY_ATTEMPTS the component stays in VsError so
@@ -416,15 +419,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
         {
-            if (component.OpenMediaPromise is not { IsResolved: true, IsConsumed: false }) return false;
+            if (!component.OpenMediaPromise.IsResolved) return false;
+            if (component.OpenMediaPromise.IsConsumed) return false;
 
             // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
             // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
-            // the gap still pays for delaying the Nth stream by N × the MediaOpenThrottle interval.
+            // the gap still pays for delaying the Nth stream by N × MIN_OPEN_MEDIA_INTERVAL_SECONDS.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
-            float timeSinceLastOpen = MediaOpenThrottle.SecondsSinceLastOpen(currentTime);
+            float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 
-            if (!MediaOpenThrottle.CanOpen(currentTime))
+            if (timeSinceLastOpen < MIN_OPEN_MEDIA_INTERVAL_SECONDS)
                 return false;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
@@ -437,7 +441,7 @@ namespace DCL.SDKComponents.MediaStream
                 // Use the resolved media address (which may be a direct URL after YouTube resolution)
                 MediaAddress resolvedAddress = component.OpenMediaPromise.ResolvedAddress;
 
-                MediaOpenThrottle.MarkOpened(currentTime);
+                lastOpenMediaTime = currentTime;
 
                 // Resolved URLs can run very long (googlevideo manifests exceed a KB);
                 // logging them whole floods the console and Sentry breadcrumbs.

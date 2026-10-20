@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly SlideTextureCache slideCache;
         private readonly PresentationCompositor compositor;
-        private readonly PresentationUrlVideo urlVideo;
+        private readonly PresentationUrlPlayer urlPlayer;
         private PlayerState playerState;
         private PresentationBotMetadata? presentation;
         private string? clientVideoUrl;
@@ -113,14 +113,14 @@ namespace DCL.SDKComponents.MediaStream
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
         internal LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
-            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlVideo urlVideo)
+            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlPlayer urlPlayer)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
             this.placeholderSource = placeholderSource;
             this.slideCache = slideCache;
             compositor = new PresentationCompositor(compositorMaterial);
-            this.urlVideo = urlVideo;
+            this.urlPlayer = urlPlayer;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -480,7 +480,7 @@ namespace DCL.SDKComponents.MediaStream
             bool wasComposing = isComposing;
 
             if (value?.slide?.url != presentation?.slide?.url)
-                urlVideo.Release();
+                urlPlayer.Release();
 
             presentation = value;
             clientVideoUrl = value != null && PresentationLayout.TryClientVideoUrl(value, out string candidate) ? candidate : null;
@@ -497,7 +497,7 @@ namespace DCL.SDKComponents.MediaStream
 
             shownSlide = null;
             shownSlideUrl = null;
-            urlVideo.Release();
+            urlPlayer.Release();
             compositor.Release();
             slideCache.EndComposing();
         }
@@ -528,9 +528,9 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateClientVideo()
         {
             if (presentation is { } metadata && clientVideoUrl != null)
-                urlVideo.Update(clientVideoUrl, PresentationLayout.TargetPositionSeconds(metadata, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), PresentationLayout.IsVideoPlaying(metadata), UnityEngine.Time.realtimeSinceStartup);
+                urlPlayer.Update(clientVideoUrl, PresentationLayout.TargetPositionSeconds(metadata, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), PresentationLayout.IsVideoPlaying(metadata), UnityEngine.Time.realtimeSinceStartup);
             else
-                urlVideo.Release();
+                urlPlayer.Release();
         }
 
         private static bool IsUnresolved(CurrentVideoStreamInfo? stream) =>
@@ -641,13 +641,13 @@ namespace DCL.SDKComponents.MediaStream
             bool showRect = PresentationLayout.TryVideoRect(metadata, out Vector4 videoRect);
             bool clientEntry = PresentationLayout.IsClientEntry(metadata);
             Texture? video = !showRect ? null
-                : clientEntry ? urlVideo.Texture
+                : clientEntry ? urlPlayer.Texture
                 : DecodeLastFrame(presentationVideo);
 
             Vector4 cameraRect = PresentationLayout.CameraRect(metadata.overlay, slide.width, slide.height);
             Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive() ? DecodeLastFrame(presenterCamera) : null;
 
-            bool flipVideo = clientEntry && urlVideo.RequiresCompositorFlip;
+            bool flipVideo = clientEntry && urlPlayer.RequiresCompositorFlip;
 
             return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, video, camera, cameraRect, flipVideo);
         }
@@ -695,7 +695,7 @@ namespace DCL.SDKComponents.MediaStream
             room.Participants.UpdatesFromParticipant -= OnRoomParticipantUpdate;
 
             CloseCurrentStream();
-            urlVideo.Dispose();
+            urlPlayer.Dispose();
             compositor.Dispose();
         }
 
@@ -770,7 +770,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Pause()
         {
             playerState = PlayerState.Paused;
-            urlVideo.Pause();
+            urlPlayer.Pause();
 
             // There is no "pause" for a streaming source.
             foreach (var (source, _) in audioSources.Values)
@@ -780,7 +780,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Stop()
         {
             playerState = PlayerState.Stopped;
-            urlVideo.Release();
+            urlPlayer.Release();
 
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();
@@ -789,7 +789,7 @@ namespace DCL.SDKComponents.MediaStream
         public void SetVolume(float target)
         {
             Volume = target;
-            urlVideo.SetVolume(target);
+            urlPlayer.SetVolume(target);
 
             foreach (var (source, _) in audioSources.Values)
                 source.SetVolume(target);
@@ -805,7 +805,7 @@ namespace DCL.SDKComponents.MediaStream
         public void PlaceAudioAt(Vector3 position)
         {
             audioPosition = position;
-            urlVideo.PlaceAudioAt(position);
+            urlPlayer.PlaceAudioAt(position);
 
             foreach (var (source, _) in audioSources.Values)
                 source.transform.position = position;

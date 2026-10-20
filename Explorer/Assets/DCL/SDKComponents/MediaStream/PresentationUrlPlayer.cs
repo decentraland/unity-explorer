@@ -9,12 +9,14 @@ using UUAV.Compat;
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a media player created by
-    ///     <see cref="MediaPlayerCustomPool.CreateMediaPlayer" />, opening it through <see cref="MediaOpenThrottle" />. Main-thread only.
+    ///     Resolves a client video url with <see cref="IUrlResolverService" /> and plays it on a media player taken from
+    ///     <see cref="MediaPlayerCustomPool" /> under <see cref="POOL_KEY" />, parking it there again on release. Main-thread only.
     /// </summary>
-    internal sealed class PresentationUrlVideo : IDisposable
+    internal sealed class PresentationUrlPlayer : IDisposable
     {
         private const int MAX_LOGGED_URL_LENGTH = 120;
+        private const string POOL_KEY = "presentation-client-video";
+        private const string YOUTUBE_WATCH_PREFIX = "https://www.youtube.com/watch?v=";
 
         private readonly MediaPlayerCustomPool pool;
         private readonly IUrlResolverService resolver;
@@ -43,7 +45,7 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public bool RequiresCompositorFlip => LivePlayer() is { } current && current.TextureScale.y >= 0f;
 
-        public PresentationUrlVideo(MediaPlayerCustomPool pool, IUrlResolverService resolver)
+        public PresentationUrlPlayer(MediaPlayerCustomPool pool, IUrlResolverService resolver)
         {
             this.pool = pool;
             this.resolver = resolver;
@@ -77,10 +79,10 @@ namespace DCL.SDKComponents.MediaStream
 
             if (player == null)
             {
-                if (expiresAt > 0f && now >= expiresAt)
+                if (IsExpired(expiresAt, now))
                     ReleasePlayer();
-                else if (directUrl != null && MediaOpenThrottle.CanOpen(now))
-                    Open(directUrl, playing, now);
+                else if (directUrl != null)
+                    Open(directUrl, playing);
 
                 return;
             }
@@ -93,7 +95,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (current.GetLastError() != ErrorCode.None)
             {
-                if (expiresAt <= 0f || now < expiresAt)
+                if (!IsExpired(expiresAt, now))
                     Fail(url);
 
                 ReleasePlayer();
@@ -141,7 +143,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Pauses the video, or destroys its media player when the media isn't open yet.
+        ///     Pauses the video, or parks its media player when the media isn't open yet.
         /// </summary>
         public void Pause()
         {
@@ -151,17 +153,23 @@ namespace DCL.SDKComponents.MediaStream
             if (IsMediaOpened(current))
                 current.Pause();
             else
-                DestroyPlayer();
+                ParkPlayer();
         }
 
         /// <summary>
-        ///     Cancels any pending resolve, destroys the media player and forgets a url that failed.
+        ///     Cancels any pending resolve, parks the media player and forgets a url that failed.
         /// </summary>
         public void Release()
         {
             ReleasePlayer();
             failedUrl = null;
         }
+
+        /// <summary>
+        ///     Whether a resolved url with <paramref name="expiresAt" /> has expired at <paramref name="now" />; one with no expiry never does.
+        /// </summary>
+        internal static bool IsExpired(float expiresAt, float now) =>
+            expiresAt > 0f && now >= expiresAt;
 
         private MultiMediaPlayer? LivePlayer() =>
             player is { IsValid: true } current ? current : null;
@@ -174,18 +182,19 @@ namespace DCL.SDKComponents.MediaStream
             currentUrl = null;
             finished = false;
             lastSeekAt = float.NegativeInfinity;
-            DestroyPlayer();
+            ParkPlayer();
             directUrl = null;
             expiresAt = 0f;
+            isLive = false;
         }
 
-        private void DestroyPlayer()
+        private void ParkPlayer()
         {
             MultiMediaPlayer? released = player;
             player = null;
 
             if (released is { } local && local.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
-                pool.DestroyMediaPlayer(urlMediaPlayer.MediaPlayer);
+                pool.ReleaseMediaPlayer(POOL_KEY, urlMediaPlayer.MediaPlayer);
         }
 
         private async UniTaskVoid ResolveAsync(string url, int gen, CancellationToken ct)
@@ -217,11 +226,10 @@ namespace DCL.SDKComponents.MediaStream
             isLive = resolved.IsLiveStream;
         }
 
-        private void Open(string url, bool playing, float now)
+        private void Open(string url, bool playing)
         {
-            var opened = MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(pool.CreateMediaPlayer(), pool));
+            var opened = MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(pool.GetOrCreateReusableMediaPlayer(POOL_KEY), pool));
             player = opened;
-            MediaOpenThrottle.MarkOpened(now);
 
             if (!opened.OpenMedia(MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(url)), false, playing))
             {
@@ -238,7 +246,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             failedUrl = url;
             string shown = url ?? string.Empty;
-            int query = shown.IsYouTubeUrl() ? -1 : shown.IndexOf('?');
+            int query = shown.StartsWith(YOUTUBE_WATCH_PREFIX, StringComparison.Ordinal) ? -1 : shown.IndexOf('?');
 
             if (query >= 0)
                 shown = shown[..query];

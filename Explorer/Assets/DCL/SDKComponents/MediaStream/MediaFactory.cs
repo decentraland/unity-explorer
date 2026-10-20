@@ -182,7 +182,7 @@ namespace DCL.SDKComponents.MediaStream
                 (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, presentationUrlResolver),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
-                    new PresentationUrlVideo(ctx.mediaPlayerPool, ctx.presentationUrlResolver)))
+                    new PresentationUrlPlayer(ctx.mediaPlayerPool, ctx.presentationUrlResolver)))
             );
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
