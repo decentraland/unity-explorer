@@ -40,7 +40,7 @@ namespace Global.Dynamic
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
-        private const string PINNED_VERSION = "0.17.13";
+        private const string PINNED_VERSION = "0.21.0";
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
@@ -452,13 +452,17 @@ namespace Global.Dynamic
             }
         }
 
-        /// <summary>The extensions abgen's corpus build converts: models and the standalone images they reference.</summary>
+        /// <summary>
+        ///     The extensions abgen's corpus build converts: models, the standalone images they reference,
+        ///     and the scene's TrueType fonts (only <c>.ttf</c>; other font files keep the built-in font).
+        /// </summary>
         private static bool IsConvertible(string file) =>
             file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
             || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
-            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Null when no build for the entity is in flight (the route 404s before the build registers and after it finishes).</summary>
         private async UniTask<BuildProgress?> TryGetBuildProgressAsync(string entityId, CancellationToken ct)
@@ -532,11 +536,11 @@ namespace Global.Dynamic
         private static (string target, string sha256)? Platform() =>
             Application.platform switch
             {
-                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "f721f6bef2a0aabc80d210dd482d382fae0c431fe4d380cc4075b42cb3a9f7a5"),
+                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "b02f2711f4fcababf4afd6d2b4edc4a691a6685310897989428103d89ab0abec"),
                 RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-                    ? ("aarch64-apple-darwin", "ad235ccaf04d60e69615918af8597f77c7f7767e308afe1af9acd564f59f79de")
-                    : ("x86_64-apple-darwin", "2f23e97020c1025de892d8bab08df2c5f7b8d4f93dcd4bb2fb5322dd5af80a97"),
-                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "294128fe6b7dad6272a6af971ceae6f98f35087d1aac3e1865a57495aef13a39"),
+                    ? ("aarch64-apple-darwin", "ed1342fac6ea7db15467ad6946fcf4844f4b58b0ee539fc8c4a3973aee61c7fe")
+                    : ("x86_64-apple-darwin", "a02ac38a9c4c93a2627bbb34431e47f0fff561bd1bd4f6912ea7a7e13a4219f8"),
+                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "5c3f01ac22cbd44c665b188de2ad101463fc159d576a3ce7a04806dcda9093f1"),
                 _ => null,
             };
 

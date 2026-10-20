@@ -22,14 +22,14 @@ namespace DCL.PluginSystem.Global
         ///     Keeps the view hidden unless the credits feature is on and the user is allowed, in which case it returns a live controller.
         /// </summary>
         public static async UniTask<ICreditsPanelController> EnableIfUserAllowedAsync(
-            CreditsPanelView view,
+            ICreditsPanelView view,
             MarketplaceCreditsAPIClient creditsAPIClient,
             ProfileChangesBus profileChangesBus,
             IWeb3IdentityCache identityCache,
             IMVCManager mvcManager,
             CancellationToken ct)
         {
-            view.gameObject.SetActive(false);
+            view.IsShown = false;
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
                 return new NullCreditsPanelController();
@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.Global
                 topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
                 openTopUpPanel: OpenTopUpPanel);
 
-            view.gameObject.SetActive(true);
+            view.IsShown = true;
 
             return controller;
 

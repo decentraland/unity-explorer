@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -98,6 +99,32 @@ namespace DCL.SDKComponents.MediaStream.Tests
             ResolvedMediaUrl result = await service.ResolveAsync(url, default, CancellationToken.None).AsTask();
 
             Assert.That(result.DirectUrl, Is.EqualTo(url));
+            Assert.That(result.IsReachable, Is.False);
+        }
+
+        // --- Direct URL reachability ---
+
+        [Test]
+        public async Task ResolveAsync_WhenDirectHttpUrl_AndHeadProbeFails_ReturnsUnreachableWithoutThrowing()
+        {
+            // Arrange
+            // A non-loopback http host: with the project's "insecure http not allowed" setting the GET fallback's
+            // SendWebRequest throws InvalidOperationException synchronously, which must be answered as unreachable
+            const string URL = "http://media.invalid/stream.mp4";
+
+            webRequestController
+               .SendAsync<GenericHeadRequest, GenericHeadArguments, WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(
+                    Arg.Any<RequestEnvelope<GenericHeadRequest, GenericHeadArguments>>(),
+                    Arg.Any<WebRequestUtils.NoOp<GenericHeadRequest>>(),
+                    Arg.Any<long>(),
+                    Arg.Any<IProgress<float>?>())
+               .Returns(UniTask.FromException<WebRequestUtils.NoResult>(new Exception("HEAD probe failed")));
+
+            // Act
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, default, CancellationToken.None).AsTask();
+
+            // Assert
+            Assert.That(result.DirectUrl, Is.EqualTo(URL));
             Assert.That(result.IsReachable, Is.False);
         }
 

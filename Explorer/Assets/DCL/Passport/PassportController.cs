@@ -62,13 +62,11 @@ namespace DCL.Passport
 {
     public class PassportController : ControllerBase<PassportView, PassportParams>
     {
-        private enum OpenBadgeSectionOrigin
-        {
-            BUTTON,
-            NOTIFICATION
-        }
-
         private const int MUTUAL_PAGE_SIZE = 3;
+
+        // Sent as analytics values, so they keep their uppercase form.
+        private const string BADGES_SECTION_ORIGIN_BUTTON = "BUTTON";
+        private const string BADGES_SECTION_ORIGIN_NOTIFICATION = "NOTIFICATION";
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (25, 0);
@@ -86,7 +84,7 @@ namespace DCL.Passport
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly UnityAppWebBrowser webBrowser;
@@ -127,11 +125,11 @@ namespace DCL.Passport
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
+        private readonly UpscalingController upscalingController;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
-        private Profile? ownProfile;
         private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
@@ -181,7 +179,7 @@ namespace DCL.Passport
             CharacterPreviewEventBus characterPreviewEventBus,
             ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
@@ -204,6 +202,7 @@ namespace DCL.Passport
             bool isCommunitiesFeatureEnabled,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
+            UpscalingController upscalingController,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
@@ -238,6 +237,7 @@ namespace DCL.Passport
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.badge3DPreviewCamera = Object.Instantiate(badge3DPreviewCameraPrefab);
+            this.upscalingController = upscalingController;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -259,7 +259,7 @@ namespace DCL.Passport
             isVoiceCallFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat);
             isGiftFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GiftingEnabled);
 
-            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
@@ -288,7 +288,6 @@ namespace DCL.Passport
 
             colorPickerController = new NameColorPickerController(
                 mvcManager,
-                selfProfile,
                 profileChangesBus,
                 viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
                 colorPresets);
@@ -558,6 +557,9 @@ namespace DCL.Passport
 
             PassportOpened?.Invoke(currentUserId, isOwnProfile);
             badge3DPreviewCamera.gameObject.SetActive(true);
+
+            // The badge camera clears to transparent, so the upscaler must stay off while it renders.
+            upscalingController.RequireFullRenderScale(badge3DPreviewCamera);
         }
 
         protected override void OnViewClose()
@@ -586,6 +588,7 @@ namespace DCL.Passport
             currentSection = PassportSection.None;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
+            upscalingController.ReleaseFullRenderScale(badge3DPreviewCamera);
 
             if(isOwnProfile)
                 TrySaveAsync(CancellationToken.None).Forget();
@@ -596,23 +599,17 @@ namespace DCL.Passport
                 if (colorPickerController == null)
                     return;
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-                if (profile != null)
-                {
-                    // Create a copy to avoid mutating the cached profile in-place,
-                    // which would cause UpdateProfileAsync to see no changes (IdenticalProfileUpdateException)
-                    Profile newProfile = new ProfileBuilder().From(profile).Build();
-                    newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
-                    try
-                    {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
+                    return;
 
-                        if (updatedProfile != null)
-                            profileChangesBus.PushUpdate(updatedProfile);
-                    }
-                    catch (IdenticalProfileUpdateException) { }
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-                }
+                // Copy so the read profile is not mutated in place
+                Profile newProfile = new ProfileBuilder().From(profile).Build();
+                newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
+
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct);
+
+                if (deploy.IsOk(out Profile? updatedProfile))
+                    profileChangesBus.PushUpdate(updatedProfile);
             }
         }
 
@@ -626,6 +623,7 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
+            upscalingController.ReleaseFullRenderScale(badge3DPreviewCamera);
             passportErrorsController?.Hide(true);
             openPassportFromNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
@@ -672,7 +670,7 @@ namespace DCL.Passport
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct,
                     batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
-                if (profile == null)
+                if (ct.IsCancellationRequested || profile == null)
                     return;
 
                 UpdateBackgroundColor(profile.UserNameColor);
@@ -815,8 +813,8 @@ namespace DCL.Passport
 
             SetCharacterPreviewVisible(false, false);
 
-            bool isOwnPassport = ownProfile?.UserId == currentUserId;
-            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, nameof(OpenBadgeSectionOrigin.BUTTON));
+            bool isOwnPassport = OwnUserId() == currentUserId;
+            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, BADGES_SECTION_ORIGIN_BUTTON);
         }
 
         private void SetCharacterPreviewVisible(bool visible, bool triggerOnShowBusEvent = true)
@@ -848,7 +846,7 @@ namespace DCL.Passport
                 badgeIdToOpen = badgeNotification.Metadata.Id;
 
             openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
-            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromNotificationCts.Token).Forget();
+            OpenPassportFromBadgeNotification(badgeIdToOpen, openPassportFromNotificationCts.Token);
         }
 
         private void OnReferralUserAcceptedNotificationClicked(object[] parameters)
@@ -867,30 +865,23 @@ namespace DCL.Passport
             }
         }
 
-        private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
+        private void OpenPassportFromBadgeNotification(string badgeIdToOpen, CancellationToken ct)
         {
-            try
-            {
-                ownProfile ??= await selfProfile.ProfileAsync(ct);
+            string? ownUserId = OwnUserId();
 
-                if (ownProfile != null)
-                {
-                    BadgesSectionOpened?.Invoke(ownProfile.UserId!, true, nameof(OpenBadgeSectionOrigin.NOTIFICATION));
-                    mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId!, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while opening the Badges section into the Passport. Please try again!";
-                passportErrorsController!.Show(ERROR_MESSAGE);
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-            }
+            if (ownUserId == null)
+                return;
+
+            BadgesSectionOpened?.Invoke(ownUserId, true, BADGES_SECTION_ORIGIN_NOTIFICATION);
+            mvcManager.ShowAsync(IssueCommand(new PassportParams(ownUserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
         }
+
+        private string? OwnUserId() =>
+            selfProfile.CurrentProfileSnapshot.IsIdentified(out Identified own) ? own.Address.Value : null;
 
         private void OnBadgeSelected(string badgeId)
         {
-            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            bool isOwnPassport = OwnUserId() == currentUserId;
             BadgeSelected?.Invoke(badgeId, isOwnPassport);
         }
 
@@ -912,12 +903,11 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    Profile? myOwnProfile = await selfProfile.ProfileAsync(ct);
-
                     // Dont show any interaction for our own user
-                    if (myOwnProfile == null || myOwnProfile.UserId == inputData.UserId) return;
+                    if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? myOwnProfile) || myOwnProfile.UserId == inputData.UserId) return;
 
-                    viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled);
+                    bool userInWorld = ChatOpener.Instance.IsUserInWorld;
+                    viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled && userInWorld);
 
                     FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
 
@@ -944,7 +934,7 @@ namespace DCL.Passport
                     viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
 
                     //For now this button will not appear if the user is blocked
-                    viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.Blocked && friendshipStatus != FriendshipStatus.BlockedBy);
+                    viewInstance.ChatButton.gameObject.SetActive(userInWorld && friendshipStatus != FriendshipStatus.Blocked && friendshipStatus != FriendshipStatus.BlockedBy);
 
                     await SetupContextMenuAsync(friendshipStatus, ct);
                 }

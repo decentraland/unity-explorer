@@ -91,6 +91,14 @@ namespace DCL.Character.CharacterCamera.Systems
             if (!input.SwitchState)
                 return;
 
+            // Free mode is not part of the switch cycle; the switch key leaves it to third person
+            if (cameraComponent.Mode == CameraMode.Free)
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
+                cameraComponent.Mode = CameraMode.ThirdPerson;
+                return;
+            }
+
             if (!HandleModeSwitch(hotkeySwitchStateDirection, ref cameraComponent, true))
                 hotkeySwitchStateDirection *= -1;
         }

@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
@@ -20,13 +19,12 @@ using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SystemMenu;
 using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
-using DCL.UserInAppInitializationFlow;
 using DCL.VoiceChat;
 using DCL.VoiceChat.UI;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -45,21 +43,18 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly MainUIView mainUIView;
+        private readonly MainUIView mainUiView;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly ICompositeWeb3Provider web3Authenticator;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly IProfileCache profileCache;
+        private readonly UserLogout userLogout;
         private readonly Arch.Core.World globalWorld;
-        private readonly Entity playerEntity;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
@@ -86,21 +81,18 @@ namespace DCL.PluginSystem.Global
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            MainUIView mainUIView,
+            MainUIView mainUiView,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
             UnityAppWebBrowser webBrowser,
-            ICompositeWeb3Provider web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfileCache profileCache,
+            UserLogout userLogout,
             Arch.Core.World globalWorld,
-            Entity playerEntity,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ProfileChangesBus profileChangesBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
@@ -113,17 +105,14 @@ namespace DCL.PluginSystem.Global
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.mainUIView = mainUIView;
+            this.mainUiView = mainUiView;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
             this.webBrowser = webBrowser;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
-            this.profileCache = profileCache;
+            this.userLogout = userLogout;
             this.globalWorld = globalWorld;
-            this.playerEntity = playerEntity;
             this.chatHistory = chatHistory;
             profileRepositoryWrapper = profileDataProvider;
             this.profileChangesBus = profileChangesBus;
@@ -170,18 +159,18 @@ namespace DCL.PluginSystem.Global
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
-            notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
-            profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
-            profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
-            skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
-            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
-            sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
-            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget);
-            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
+            notificationsPanelController = new NotificationsPanelController(() => mainUiView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
+            profileButtonPresenter = new SidebarProfileButtonPresenter( mainUiView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
+            profileMenuController = new ProfileMenuController(() => mainUiView.SidebarView.ProfileMenuView, web3IdentityCache, webBrowser, userLogout, passportBridge, profileRepositoryWrapper);
+            skyboxMenuController = new SkyboxMenuController(() => mainUiView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
+            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUiView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+            sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUiView.SidebarView.NearbyVoiceWidget);
+            helpMenuController = new HelpMenuController(() => mainUiView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             sidebarController = new SidebarController(() =>
                 {
-                    SidebarView view = mainUIView.SidebarView;
+                    SidebarView view = mainUiView.SidebarView;
                     view.gameObject.SetActive(true);
                     return view;
                 },

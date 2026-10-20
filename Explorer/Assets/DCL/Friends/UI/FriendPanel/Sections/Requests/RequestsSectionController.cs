@@ -30,7 +30,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IPassportBridge passportBridge;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource? reportConfirmationDialogCts;
@@ -47,7 +47,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             bool includeUserBlocking,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile)
+            SelfProfile selfProfile)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
             this.passportBridge = passportBridge;

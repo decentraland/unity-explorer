@@ -164,7 +164,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnContinueButtonClicked()
         {
-            controller.RaiseAvatarSelected(selectedBodyType.ToString(), selectedPresetSlot);
+            controller.RaiseAvatarSelected(selectedBodyType, selectedPresetSlot);
 
             view.Hide();
             fsm.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((newUserProfile, userEmail, isRestoredSession, loginCt));

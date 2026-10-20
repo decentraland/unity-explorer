@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using DCL.Audio;
-using DCL.AvProSwitch;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
@@ -19,6 +18,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {

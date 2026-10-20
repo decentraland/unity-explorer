@@ -2,25 +2,27 @@
 
 The sky is rendered by one Shader Graph material (`GenesisSkybox.mat`) driven by `SkyboxRenderController`, and everything that defines how it *looks* over a day lives in **look presets**: `SkyboxLookPreset` ScriptableObjects under `Assets/DCL/SkyBox/Presets/`. The *time* of day is a separate concern, owned by the skybox state machine, and is unchanged by the look.
 
-## The two looks
+## The looks
 
 | Preset | Role | Where it is referenced |
 |---|---|---|
 | `StylizedV1.asset` | **The look that ships.** Stylized sky with a baked colour lookup, layered cloud strips, computed sun and moon arcs and procedural stars. Sun haze is available but ships off. | `Prefab/SkyboxRenderController.prefab` → `preset` |
-| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded, and the base of every SDK-controlled sky. **Do not delete it.** | `Prefab/SkyboxRenderController.prefab` → `sceneLookPreset`; `SkyboxSettings.asset` → `DebugLookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
+| `Legacy.asset` | The previous sky, a 1:1 migration of the values that used to be hard-coded, and the base of every SDK-controlled sky. **Do not delete it.** | `Prefab/SkyboxRenderController.prefab` → `sceneLookPreset`; `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Legacy` in the `Essentials` group |
+| `Halloween2026.asset` | Seasonal night look for Halloween 2026 on top of StylizedV1: more purple clouds, a bigger purple moon and more moonlight (plus brighter stars with more shooting stars). Sky gradients, and so the baked LUT, match StylizedV1, as do the sunrise, day and sunset colours. Turned on remotely (see *Feature flag* below). | `SkyboxSettings.asset` → `LookPresets`, Addressable `SkyboxLookPreset_Halloween2026` in the `Essentials` group |
 
 Legacy stays for two reasons:
 
 - It is the reference look, and it can be selected at runtime for comparison (see *Debug panel* below).
 - **SDK control.** A scene that controls the environment through `PBSkybox`, `PBSun` or `PBEnvironmentFog` runs on the **Legacy** look: its colour bands and curves map directly onto what the SDK exposes. The controller prefab references it as `sceneLookPreset`, so it is always resident (see *SDK control* below).
 
-Both presets are plain data. Changing the shipped look is changing one reference on the controller prefab.
+Presets are plain data. Changing the default look is changing one reference on the controller prefab; switching to another listed look in production needs no build, only the feature flag.
 
 ## Data flow
 
 ```
-SkyboxPlugin ──loads──> SkyboxSettingsAsset (settings, time, debug look list)
-             ──instantiates──> SkyboxRenderController prefab (+ its preset)
+SkyboxPlugin ──loads──> SkyboxSettingsAsset (settings, time, look preset list)
+             ──instantiates──> SkyboxRenderController prefab (+ its default preset)
+             ──applies──> the look named by alfa-skybox-look-preset, when set
              ──injects──> SkyboxTimeUpdateSystem
 
 SkyboxTimeUpdateSystem (every frame)
@@ -73,7 +75,7 @@ A scene overrides the environment through three LWW components, valid on its roo
 | `PBSun` | 1224 | `color`, `visible`, `intensity` (multiplier on the time-of-day intensity, negative → 0), `direction` (direction the light travels in scene space; unset or zero = time-of-day path) |
 | `PBEnvironmentFog` | 1225 | `color`, `density` (exponential, negative → 0) |
 
-While the player is inside a scene with **any** of them, the controller runs the **scene look**: a runtime copy of `sceneLookPreset` (Legacy) with the scene's values written over it. Leaving the scene, or removing the last of the three components, applies the base look again (the shipped preset, or whatever the debug dropdown picked last).
+While the player is inside a scene with **any** of them, the controller runs the **scene look**: a runtime copy of `sceneLookPreset` (Legacy) with the scene's values written over it. Leaving the scene, or removing the last of the three components, applies the base look again (the default or feature-flagged look, or whatever the debug dropdown picked last).
 
 ```
 SceneSkyboxHandlerSystem (scene world)   PBSkybox + PBSun + PBEnvironmentFog → sky texture + SceneEnvironmentProfile → SceneSkyboxOverrides (global skybox entity)
@@ -91,9 +93,17 @@ SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) →
 - **Video sources are disabled** (`SceneSkyboxHandlerSystem.VIDEO_TEXTURES_ENABLED`) until their cost is measured on mobile: a `VideoTexture` logs a warning and is ignored. The supporting code stays for the next iteration: the handler's video slot, `IMediaFactory.TryAddScreenSpaceConsumer`/`RemoveScreenSpaceConsumer`/`HasVideoTexture` (a screen-space consumer is never culled by `UpdateMediaPlayerPrioritizationSystem`), and the sliced reflection regeneration `SkyboxToCubemapRendererFeature` keeps up while the override is a `RenderTexture`.
 - `SceneSkyboxOverrides.Owner` is the scene identity that owns the overrides: a `SceneShortInfo`, not a base parcel, since portable experiences share `0,0`. Any of the three components on the current scene makes it the owner as soon as something is published, whatever fields it sets, so a scene with only a `skybox_texture` also runs on the Legacy base.
 
+## Feature flag
+
+`explorer-alfa-skybox-look-preset` picks the production look without a build. String payload (any variant name) holding the name of a `SkyboxSettings.asset → LookPresets` entry, for example `Halloween2026` (case and surrounding whitespace are ignored).
+
+- `SkyboxPlugin` reads it once at start-up, loads the entry's Addressable and applies it before the controller initialises, so the controller sets up fog, statics and lens flare from that look and the first rendered frame already has it. A change on the server reaches players on their next launch.
+- Flag off, no payload or an empty payload keep the prefab's default look. A name missing from the list logs a warning and a failed load logs the exception; both keep the default look, and the skybox always starts.
+- Only listed presets can be selected, and only ones shipped in the build: a new look needs a release before the flag can point at it.
+
 ## Debug panel
 
-**Debug panel → Skybox → Look preset** switches looks at runtime. The dropdown lists the shipped preset plus the entries of `SkyboxSettings.asset → DebugLookPresets`, which are Addressable references loaded the first time they are picked. Today the only entry is Legacy. Switching re-applies the statics and the current time, so the change is immediate.
+**Debug panel → Skybox → Look preset** switches looks at runtime. The dropdown lists the default preset plus the entries of `SkyboxSettings.asset → LookPresets`, which are Addressable references loaded the first time they are needed. It opens on the active look, so it shows the flagged one when the flag is set, and reuses its loaded asset. Switching re-applies the statics and the current time, so the change is immediate.
 
 ## Authoring
 
@@ -104,13 +114,13 @@ SkyboxRenderController.SetSceneLook       profile.ApplyTo(sceneCopy, Legacy) →
 ## Textures
 
 - **Cloud strips** (`Textures/Clouds/SkyboxClouds{Cumulus,Low,Overhead}_V2.png`): 4096×512, RGBA as data, linear, repeat U / clamp V, BC7 with mips. R shading, G backlit look, B growth order, A mask; RGB premultiplied by A. Artist-authored.
-- **Sky LUT** (`Presets/StylizedV1_SkyLut.asset`): 256×5 RGBAHalf, baked from the four sky gradients.
+- **Sky LUT** (`Presets/<Preset>_SkyLut.asset`, one per preset, e.g. `StylizedV1_SkyLut.asset`): 256×5 RGBAHalf, baked from that preset's four sky gradients.
 - **Horizon noise** (`Textures/Noise4.png`): tiling noise for the horizon silhouettes and the star dim patches.
 
 ## Known caveats
 
 - The stylized path takes authored colours **as-is** (no sRGB→linear conversion), consistently across the lookup, clouds and haze; `StylizedV1` was tuned against that behaviour. Changing it means re-tuning.
-- Legacy is referenced by the controller prefab (SDK-controlled scenes start from it) and listed in the `Essentials` Addressables group for the debug dropdown, so it is always resident.
+- The listed presets sit in the `Essentials` Addressables group so the flag and QA can reach them in builds. Each is only loaded when flagged or picked in the debug dropdown, but each adds to the shipped bundle. Drop an entry once its look is no longer needed (a seasonal look after its season). Legacy stays: the controller prefab references it as `sceneLookPreset`, since SDK-controlled scenes start from it, so it is always resident.
 - `DCL/PanoramicSkybox` (visible sky) and `DCL/EquirectToCube` (reflection cubemap) share one lat-long mapping, `uv = (atan2(d.x, d.z) / 2π + 0.5, asin(d.y) / π + 0.5)`. Change both together, or the reflections stop matching the sky.
 - `DCL/EquirectToCube` is created through `Shader.Find` by `SkyboxToCubemapRendererFeature`, so it must stay in *Always Included Shaders* (`ProjectSettings/GraphicsSettings.asset`), otherwise player builds strip it. It builds a fullscreen triangle from `SV_VertexID`, so faces must be drawn with `CoreUtils.DrawFullScreen`; `Graphics.Blit` would feed it quad vertices.
 - Fog on/off is also written by the quality settings. A preset with fog enabled turns fog on once when the controller initialises, then drives fog colour and density every frame.
