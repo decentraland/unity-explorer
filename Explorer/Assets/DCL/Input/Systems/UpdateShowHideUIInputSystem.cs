@@ -28,9 +28,9 @@ namespace DCL.Input.Systems
         }
 
         private const int TOAST_DURATION_MS = 3000;
-        // Same width as ALL_HIDDEN_TOAST: the toast prefab draws the key cap at a fixed offset under the "U" of a centred label
-        private const string EXPLORER_HIDDEN_TOAST = "Press   U   to hide the scene UI.";
-        private const string ALL_HIDDEN_TOAST = "Press   U   to show the UI again.";
+        // The <link> tag marks the key the toast prefab frames with a key cap
+        private const string EXPLORER_HIDDEN_TOAST = "Press   <link=key>U</link>   to hide the scene UI.";
+        private const string ALL_HIDDEN_TOAST = "Press   <link=key>U</link>   to show the UI again.";
 
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
