@@ -18,7 +18,7 @@ namespace Editor
         [PublicAPI]
         public static Dictionary<string, object> Parameters { get; private set; }
 
-        private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
+        private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
         private static readonly string[] DEBUG_SYMBOL_FOLDER_PATTERNS =
         {
