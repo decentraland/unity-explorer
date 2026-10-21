@@ -100,6 +100,7 @@
                     <ui:Label name="Title" text="Friends" class="lobby__section-title" picking-mode="Ignore" />
                     <ui:Label name="OnlineCount" text="0 Online" class="lobby__section-count" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="4" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <!-- Two banners for the two ways of having nobody online: friends who are all offline, or no friends at all -->
                 <ui:VisualElement name="Empty" class="lobby-empty-banner-slot" picking-mode="Ignore" style="display: none;">
                     <ui:VisualElement name="NoFriendsOnline" class="lobby-empty-banner lobby-empty-banner--friends-online" picking-mode="Ignore">
@@ -159,11 +160,12 @@
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__places-rail lobby__places-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <!-- The communities the user belongs to, in the two widths of the places sections; a banner while there are none -->
+            <!-- The communities the user belongs to, in the two widths of the places sections; a skeleton until they arrive, a banner while there are none -->
             <ui:VisualElement name="Communities" class="lobby__widget lobby__communities" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="3" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
                     <ui:VisualElement name="Image" class="lobby-empty-banner__communities-image" picking-mode="Ignore" />
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
@@ -181,6 +183,7 @@
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="2" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
                     <ui:VisualElement name="Image" class="lobby-empty-banner__communities-image" picking-mode="Ignore" />
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
@@ -194,11 +197,12 @@
                 </ui:VisualElement>
                 <DCL.Lobby.LobbyRailElement name="Rail" class="lobby__communities-rail lobby__communities-rail--4x2" cards-per-page="2" arrows-move-one-card="true" />
             </ui:VisualElement>
-            <!-- The user's latest camera reel photos, in the two widths of the places sections; a banner while there are none -->
+            <!-- The user's latest camera reel photos, in the two widths of the places sections; a skeleton until they arrive, a banner while there are none -->
             <ui:VisualElement name="Gallery" class="lobby__widget lobby__gallery" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="3" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">
                     <ui:VisualElement name="Image" class="lobby-empty-banner__gallery-image" picking-mode="Ignore" />
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
@@ -212,6 +216,7 @@
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="2" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">
                     <ui:VisualElement name="Image" class="lobby-empty-banner__gallery-image" picking-mode="Ignore" />
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">

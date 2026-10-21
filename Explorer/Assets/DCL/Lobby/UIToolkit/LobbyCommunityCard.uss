@@ -23,17 +23,11 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--community-card-hover-duration) ease-out;
+    transition: scale var(--community-card-hover-duration) ease-out;
 }
 
 .lobby-community-card:hover .lobby-community-card__thumbnail {
     scale: 1.05;
-}
-
-/* The loaded picture fades in over the card fill instead of popping up. */
-.lobby-community-card--loading .lobby-community-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
 }
 
 /* Sliced so the 52px fade keeps its shape while the flat strip stretches up to darken the hovered card. */

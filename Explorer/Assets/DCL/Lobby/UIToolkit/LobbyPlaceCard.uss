@@ -23,17 +23,11 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--place-card-hover-duration) ease-out;
+    transition: scale var(--place-card-hover-duration) ease-out;
 }
 
 .lobby-place-card:hover .lobby-place-card__thumbnail {
     scale: 1.05;
-}
-
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
-.lobby-place-card--loading .lobby-place-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
 }
 
 /* The sprite is authored at this size for the Linear color space (a plain alpha ramp blends in linear light and reads

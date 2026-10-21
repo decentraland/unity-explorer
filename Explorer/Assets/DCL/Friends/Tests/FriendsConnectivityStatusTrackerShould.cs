@@ -143,6 +143,60 @@ namespace DCL.Friends.Tests
         }
 
         [Test]
+        public async Task RaiseSettledOnceTheLastHeldBackUpdateRanItsCourse()
+        {
+            //Arrange
+            var settled = 0;
+            tracker.OnPendingChangesSettled += () => settled++;
+            eventBus.BroadcastFriendConnected(new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "Online"));
+            eventBus.BroadcastFriendDisconnected(new Profile.CompactInfo(UserId.New(OFFLINE_FRIEND_ID).Unwrap(), "Offline"));
+            bool pendingBefore = tracker.HasPendingChanges;
+
+            //Act
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            //Assert
+            Assert.IsTrue(pendingBefore);
+            Assert.IsFalse(tracker.HasPendingChanges);
+            Assert.AreEqual(1, settled, "The two updates settle together");
+        }
+
+        [Test]
+        public async Task RaiseSettledOnceForAnUpdateReplacedByANewerOne()
+        {
+            //Arrange
+            var friendProfile = new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "TestFriend");
+            var settled = 0;
+            tracker.OnPendingChangesSettled += () => settled++;
+            eventBus.BroadcastFriendConnected(friendProfile);
+            eventBus.BroadcastFriendAsAway(friendProfile);
+
+            //Act
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            //Assert
+            Assert.AreEqual(1, settled);
+            Assert.AreEqual(OnlineStatus.Away, tracker.GetFriendStatus(FRIEND_ID));
+        }
+
+        [Test]
+        public async Task NotRaiseSettledForAnUpdateForgottenByReset()
+        {
+            //Arrange
+            var settled = 0;
+            tracker.OnPendingChangesSettled += () => settled++;
+            eventBus.BroadcastFriendConnected(new Profile.CompactInfo(UserId.New(FRIEND_ID).Unwrap(), "TestFriend"));
+
+            //Act
+            tracker.Reset();
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            //Assert
+            Assert.AreEqual(0, settled);
+            Assert.IsFalse(tracker.HasPendingChanges);
+        }
+
+        [Test]
         public async Task RaiseResetAndEmptyOnlineCopy()
         {
             //Arrange

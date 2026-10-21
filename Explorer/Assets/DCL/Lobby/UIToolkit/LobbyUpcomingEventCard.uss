@@ -40,11 +40,6 @@
     scale: 1.05;
 }
 
-.lobby-upcoming-event-card--loading .lobby-upcoming-event-card__thumbnail {
-    background-image: none;
-    background-color: rgb(207, 205, 212);
-}
-
 .lobby-upcoming-event-card__info {
     position: absolute;
     left: 20px;

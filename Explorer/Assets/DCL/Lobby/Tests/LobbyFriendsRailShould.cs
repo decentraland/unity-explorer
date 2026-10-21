@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -30,11 +31,32 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
             Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.IsFalse(Loading().IsAnimating);
+            Assert.IsFalse(friends.IsLoading);
         }
 
         [Test]
-        public void ShowTheBannerAsSoonAsItTakesTheSectionOver()
+        public void ShowTheSkeletonUntilTheFirstCount()
         {
+            //Act
+            friends.Show(section);
+
+            //Assert
+            Assert.IsTrue(friends.IsLoading);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Loading().style.display.value);
+            Assert.IsTrue(Loading().IsAnimating);
+            Assert.AreEqual(DisplayStyle.None, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+        }
+
+        [Test]
+        public void ShowTheBannerAsSoonAsItTakesASectionWithoutASkeletonOver()
+        {
+            //Arrange
+            section.Remove(Loading());
+
             //Act
             friends.Show(section);
 
@@ -56,6 +78,8 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, Rail().style.display.value);
             Assert.AreEqual(DisplayStyle.None, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.IsFalse(Loading().IsAnimating);
             Assert.AreEqual(2, Rail().childCount);
         }
 
@@ -120,12 +144,16 @@ namespace DCL.Lobby.Tests
         private VisualElement Empty() =>
             section.Q("Empty");
 
+        private SkeletonLoadingElement Loading() =>
+            section.Q<SkeletonLoadingElement>("Loading");
+
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)Rail()[index];
 
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
+            friendsSection.Add(new SkeletonLoadingElement { name = "Loading", BoneCount = 4 });
             friendsSection.Add(new VisualElement { name = "Empty" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;

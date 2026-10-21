@@ -69,6 +69,9 @@ namespace DCL.Lobby
         // Null until the service has told; kept across shows, like the cards, so a reopen does not flash the other banner
         private int? totalFriends;
 
+        // Until the total answers, nobody online may just mean nothing has arrived yet
+        private bool totalProbePending;
+
         public LobbyDocumentFriendsPresenter(LobbyFriendsRail rail,
             FriendsConnectivityStatusTracker tracker,
             IFriendsService friendsService,
@@ -119,7 +122,9 @@ namespace DCL.Lobby
             tracker.OnFriendBecameOffline += OnFriendStatusChanged;
             tracker.OnFriendRemoved += OnFriendRemoved;
             tracker.OnReset += OnTrackerReset;
+            tracker.OnPendingChangesSettled += Settle;
 
+            totalProbePending = true;
             Rebuild(rewind: true);
             FetchTotalFriendsAsync(ct).Forget();
         }
@@ -131,6 +136,7 @@ namespace DCL.Lobby
             tracker.OnFriendBecameOffline -= OnFriendStatusChanged;
             tracker.OnFriendRemoved -= OnFriendRemoved;
             tracker.OnReset -= OnTrackerReset;
+            tracker.OnPendingChangesSettled -= Settle;
             jumpCts.SafeCancelAndDispose();
             rail.Hide();
         }
@@ -153,7 +159,12 @@ namespace DCL.Lobby
             tracker.CopyOnlineFriendsTo(onlineFriends);
             FriendsSorter.SortFriendList(onlineFriends);
 
-            rail.SetCount(onlineFriends.Count, rewind);
+            // With updates still out, nobody online is no answer yet: the skeleton stays up
+            bool stillArriving = onlineFriends.Count == 0 && rail.IsLoading && (totalProbePending || tracker.HasPendingChanges);
+
+            if (!stillArriving)
+                rail.SetCount(onlineFriends.Count, rewind);
+
             ShowOnlineCount(onlineFriends.Count);
             ShowEmptyVariant();
 
@@ -213,14 +224,25 @@ namespace DCL.Lobby
         {
             Result<PaginatedFriendsResult> result = await friendsService.GetFriendsAsync(0, TOTAL_PROBE_PAGE_SIZE, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-            if (!result.Success) return;
+            if (result.Success)
+            {
+                using PaginatedFriendsResult page = result.Value;
 
-            using PaginatedFriendsResult page = result.Value;
+                if (ct.IsCancellationRequested) return;
 
-            if (ct.IsCancellationRequested) return;
+                totalFriends = page.TotalAmount;
+            }
+            else if (ct.IsCancellationRequested) return;
 
-            totalFriends = page.TotalAmount;
+            totalProbePending = false;
             ShowEmptyVariant();
+            Settle();
+        }
+
+        private void Settle()
+        {
+            if (rail.IsLoading)
+                Rebuild(rewind: true);
         }
 
         private static void ShowLocation(LobbyFriendCardElement card, string label, bool canJoin)

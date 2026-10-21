@@ -58,7 +58,7 @@
     background-position: center;
     background-repeat: no-repeat;
     -unity-background-image-tint-color: rgb(230, 230, 230);
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--landing-card-hover-duration) ease-out, -unity-background-image-tint-color var(--landing-card-hover-duration) ease-out;
+    transition: scale var(--landing-card-hover-duration) ease-out, -unity-background-image-tint-color var(--landing-card-hover-duration) ease-out;
 }
 
 /* Hovering zooms the picture in a little and brightens it; a static card keeps still */
@@ -70,12 +70,6 @@
 .lobby-landing-card--static:hover .lobby-landing-card__thumbnail {
     scale: 1;
     -unity-background-image-tint-color: rgb(230, 230, 230);
-}
-
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
-.lobby-landing-card--loading .lobby-landing-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
 }
 
 /* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the name and the button */

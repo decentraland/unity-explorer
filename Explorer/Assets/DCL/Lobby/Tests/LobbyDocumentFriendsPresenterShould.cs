@@ -7,6 +7,7 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.UIToolkit.Elements;
 using DCL.Web3.Identities;
 using ECS.TestSuite;
 using NSubstitute;
@@ -17,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -103,10 +105,69 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, section.Q("Empty").style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
             Assert.AreEqual(DisplayStyle.None, section.Q("NoFriends").style.display.value);
             Assert.AreEqual(DisplayStyle.None, section.Q<Label>("OnlineCount").style.display.value, "A banner says it already");
+        }
+
+        [Test]
+        public async Task ShowTheBannerWhenTheTotalCannotBeFetched()
+        {
+            // Arrange
+            friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                          .Returns(_ => UniTask.FromException<PaginatedFriendsResult>(new InvalidOperationException("friends endpoint down")));
+
+            LogAssert.Expect(LogType.Exception, "InvalidOperationException: friends endpoint down");
+
+            // Act
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("Empty").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
+        }
+
+        [Test]
+        public async Task KeepTheSkeletonWhileTheTrackerStillHoldsUpdatesBack()
+        {
+            // Arrange
+            eventBus.BroadcastFriendConnected(Friend(AMY_ID, "Amy"));
+
+            // Act
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+            DisplayStyle skeletonWhilePending = Loading().style.display.value;
+            DisplayStyle emptyWhilePending = section.Q("Empty").style.display.value;
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.Flex, skeletonWhilePending);
+            Assert.AreEqual(DisplayStyle.None, emptyWhilePending);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q<LobbyRailElement>().style.display.value);
+            Assert.AreEqual("Amy", Card(0).UserName);
+        }
+
+        [Test]
+        public async Task ShowTheBannerOnceAHeldBackUpdateSettlesWithNobodyOnline()
+        {
+            // Arrange
+            eventBus.BroadcastFriendDisconnected(Friend(AMY_ID, "Amy"));
+
+            // Act
+            presenter.Show(section, cts.Token);
+            await UniTask.DelayFrame(2);
+            DisplayStyle skeletonWhilePending = Loading().style.display.value;
+            await UniTask.Delay(DEBOUNCE_WAIT_MS);
+
+            // Assert
+            Assert.AreEqual(DisplayStyle.Flex, skeletonWhilePending);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
         }
 
         [Test]
@@ -126,23 +187,25 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public async Task KeepTheNoFriendsOnlineBannerUntilTheTotalArrives()
+        public async Task KeepTheSkeletonUntilTheTotalArrives()
         {
             // Arrange
             var pending = new UniTaskCompletionSource<PaginatedFriendsResult>();
             friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(_ => pending.Task);
             presenter.Show(section, cts.Token);
             await UniTask.DelayFrame(2);
-            DisplayStyle onlineBannerBefore = section.Q("NoFriendsOnline").style.display.value;
-            DisplayStyle emptyBannerBefore = section.Q("NoFriends").style.display.value;
+            DisplayStyle skeletonBefore = Loading().style.display.value;
+            DisplayStyle emptyBefore = section.Q("Empty").style.display.value;
 
             // Act
             pending.TrySetResult(new PaginatedFriendsResult(Array.Empty<Profile.CompactInfo>(), 0));
             await UniTask.DelayFrame(2);
 
             // Assert
-            Assert.AreEqual(DisplayStyle.Flex, onlineBannerBefore);
-            Assert.AreEqual(DisplayStyle.None, emptyBannerBefore);
+            Assert.AreEqual(DisplayStyle.Flex, skeletonBefore);
+            Assert.AreEqual(DisplayStyle.None, emptyBefore);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, section.Q("Empty").style.display.value);
             Assert.AreEqual(DisplayStyle.None, section.Q("NoFriendsOnline").style.display.value);
             Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriends").style.display.value);
         }
@@ -165,6 +228,7 @@ namespace DCL.Lobby.Tests
             // Assert
             Assert.AreEqual(DisplayStyle.Flex, section.Q("NoFriendsOnline").style.display.value);
             Assert.AreEqual(DisplayStyle.None, section.Q("NoFriends").style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Loading().style.display.value, "A hidden section is left as it was");
         }
 
         [Test]
@@ -326,6 +390,9 @@ namespace DCL.Lobby.Tests
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)section.Q<LobbyRailElement>()[index];
 
+        private SkeletonLoadingElement Loading() =>
+            section.Q<SkeletonLoadingElement>("Loading");
+
         private void SetTotalFriends(int total) =>
             friendsService.GetFriendsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                           .Returns(_ => UniTask.FromResult(new PaginatedFriendsResult(Array.Empty<Profile.CompactInfo>(), total)));
@@ -355,6 +422,7 @@ namespace DCL.Lobby.Tests
         {
             var friendsSection = new VisualElement { name = "Friends" };
             friendsSection.Add(new Label { name = "OnlineCount" });
+            friendsSection.Add(new SkeletonLoadingElement { name = "Loading", BoneCount = 4 });
             var empty = new VisualElement { name = "Empty" };
             empty.Add(new VisualElement { name = "NoFriendsOnline" });
             empty.Add(new VisualElement { name = "NoFriends" });

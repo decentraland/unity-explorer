@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -8,13 +9,15 @@ namespace DCL.Lobby
     /// <summary>
     ///     The card strip of a lobby section, filled with clones of a card template. The section is handed over on
     ///     every <see cref="Show" /> and the cards outlive it. Without cards a rail hides its section, or, when it shows
-    ///     an empty state, swaps the strip for the section's element named Empty.
+    ///     an empty state, swaps the strip for the section's element named Loading until its first count and for the one
+    ///     named Empty from then on.
     /// </summary>
     public abstract class LobbyCardRail<TCard> where TCard: VisualElement
     {
         private const string CARDS_NAME = "Cards";
         private const string VIEW_ALL_NAME = "ViewAll";
         private const string EMPTY_NAME = "Empty";
+        private const string LOADING_NAME = "Loading";
 
         /// <summary>The View all of the section was clicked; a section without one never reports it.</summary>
         public Action? ViewAllClicked;
@@ -25,8 +28,10 @@ namespace DCL.Lobby
 
         private VisualElement? strip;
         private VisualElement? empty;
+        private SkeletonLoadingElement? loading;
         private LobbyRailElement? rail;
         private Button? viewAll;
+        private bool loaded;
 
         /// <summary>
         ///     Every card cloned so far, shown or hidden; cards are only ever appended, so indices stay stable.
@@ -35,6 +40,9 @@ namespace DCL.Lobby
 
         // How many of Cards are shown, counting from the first
         public int Count { get; private set; }
+
+        /// <summary>True until the first <see cref="SetCount" />: nothing has told yet whether there are cards.</summary>
+        public bool IsLoading => !loaded;
 
         protected VisualElement? section { get; private set; }
 
@@ -55,6 +63,7 @@ namespace DCL.Lobby
             rail = newSection.Q<LobbyRailElement>();
             strip = rail ?? newSection.Q(CARDS_NAME);
             empty = showsEmptyState ? newSection.Q(EMPTY_NAME) : null;
+            loading = showsEmptyState ? newSection.Q<SkeletonLoadingElement>(LOADING_NAME) : null;
             viewAll = newSection.Q<Button>(VIEW_ALL_NAME);
 
             if (viewAll != null)
@@ -77,6 +86,7 @@ namespace DCL.Lobby
         public void SetCount(int count, bool rewind = true)
         {
             Count = count;
+            loaded = true;
 
             for (var i = 0; i < count; i++)
             {
@@ -97,6 +107,7 @@ namespace DCL.Lobby
         public void Hide()
         {
             DetachViewAll();
+            StopLoading();
             section = null;
             strip = null;
             empty = null;
@@ -121,9 +132,25 @@ namespace DCL.Lobby
                 return;
             }
 
+            bool showsSkeleton = !hasCards && !loaded && loading != null;
+
             section!.SetDisplayed(true);
             strip!.SetDisplayed(hasCards);
-            empty?.SetDisplayed(!hasCards);
+            empty?.SetDisplayed(!hasCards && !showsSkeleton);
+
+            if (loading == null) return;
+
+            loading.SetDisplayed(showsSkeleton);
+            loading.IsAnimating = showsSkeleton;
+        }
+
+        // A handed-back section outlives the rail, so its skeleton must stop ticking
+        private void StopLoading()
+        {
+            if (loading == null) return;
+
+            loading.IsAnimating = false;
+            loading = null;
         }
 
         // The hierarchy outlives the rail's hold of it, so a handed-back section must stop reporting

@@ -46,15 +46,9 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--gallery-card-hover-duration) ease-out;
+    transition: scale var(--gallery-card-hover-duration) ease-out;
 }
 
 .lobby-gallery-card:hover .lobby-gallery-card__thumbnail {
     scale: 1.05;
-}
-
-/* While the photo is on its way the dark fill of the card shows; the photo then fades in over it rather than popping up */
-.lobby-gallery-card--loading .lobby-gallery-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
 }

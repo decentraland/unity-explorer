@@ -40,6 +40,12 @@
     background-image: none;
 }
 
+/* The sweep runs over the profile colour, which stands in for the picture, inside the circle of the 3px border */
+.lobby-friend-card__picture .skeleton-loading__bone {
+    border-radius: 17px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
 .lobby-friend-card__online {
     position: absolute;
     top: 10px;

@@ -63,7 +63,8 @@ namespace DCL.Lobby
         private int cardsPerPage = DEFAULT_CARDS_PER_PAGE;
         private int shownCount;
         private float offset;
-        private float lastWheelTime;
+        // The first wheel is never held back, however little the clock reads (in Edit Mode it may still read under the cooldown)
+        private float lastWheelTime = float.NegativeInfinity;
 
         // The card at the left edge of the viewport since the last snap
         private int currentCard;

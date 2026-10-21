@@ -48,17 +48,11 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out, scale var(--live-event-card-hover-duration) ease-out;
+    transition: scale var(--live-event-card-hover-duration) ease-out;
 }
 
 .lobby-live-event-card:hover .lobby-live-event-card__thumbnail {
     scale: 1.05;
-}
-
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
-.lobby-live-event-card--loading .lobby-live-event-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
 }
 
 /* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the texts, sliced so the fade
