@@ -20,7 +20,6 @@ using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
@@ -74,7 +73,6 @@ namespace DCL.PluginSystem.Global
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
-        private ProfileMenuController? profileMenuController;
         private ControlsPanelController? controlsPanelController;
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
@@ -151,7 +149,6 @@ namespace DCL.PluginSystem.Global
             sidebarController?.Dispose();
             notificationsPanelController?.Dispose();
             profileButtonPresenter?.Dispose();
-            profileMenuController?.Dispose();
             controlsPanelController?.Dispose();
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
@@ -175,7 +172,6 @@ namespace DCL.PluginSystem.Global
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUiView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUiView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
-            profileMenuController = new ProfileMenuController(() => mainUiView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             var smartWearablesTooltipController = new SmartWearablesSideBarTooltipController(() => mainUiView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             smartWearablesSideBarTooltipController = smartWearablesTooltipController;
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
@@ -213,7 +209,6 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
-            mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);

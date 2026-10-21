@@ -128,7 +128,6 @@ MonoBehaviour:
   <NearbyVoiceChatButton>k__BackingField: {fileID: 3283011950901128146}
   <NearbyVoiceWidget>k__BackingField: {fileID: 3326973332496372382}
   <NearbyVoiceTip>k__BackingField: {fileID: 3278540452595179668}
-  <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
   <SmartWearablesButton>k__BackingField: {fileID: 8215331601358191189}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
@@ -1531,17 +1530,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84e76370cf0e414cb5224e89a90807da, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &9096970311108952280 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8152466508641780835, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9f43d9654c4bda24aa1490081d457856, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &9117111064993892592 stripped
