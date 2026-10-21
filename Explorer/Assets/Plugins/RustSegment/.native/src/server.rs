@@ -4,6 +4,7 @@ use futures::future::FutureExt;
 use std::{
     ffi::CString,
     panic::AssertUnwindSafe,
+    path::Path,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc, Weak,
@@ -13,7 +14,10 @@ use tokio::sync::Mutex;
 
 use segment::{
     message::{BatchMessage, User},
-    queue::{event_queue::EnqueError, event_send_daemon::AnalyticsEventSendDaemon},
+    queue::{
+        event_queue::{CombinedAnalyticsEventQueue, EnqueError},
+        event_send_daemon::AnalyticsEventSendDaemon,
+    },
     Client, HttpClient,
 };
 
@@ -21,16 +25,14 @@ use std::future::Future;
 use std::marker::Send;
 
 use crate::{
-    operations,
-    resilient_queue::{DegradeReason, HealthObserver, QueueHealth, ResilientAnalyticsEventQueue},
-    FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, FfiHealthCallbackFn, OperationHandleId,
+    operations, queue_file, FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, OperationHandleId,
     QueueHealthCode, Response,
 };
 use segment::queue::queued_batcher::QueuedBatcher;
 
 pub struct AppContext {
     pub batcher: QueuedBatcher,
-    pub queue: Arc<Mutex<ResilientAnalyticsEventQueue>>,
+    pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
@@ -61,6 +63,7 @@ impl Default for Server {
 }
 
 impl Server {
+    /// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when the server already runs.
     pub fn initialize(
         &self,
         queue_file_path: String,
@@ -68,11 +71,11 @@ impl Server {
         writer_key: String,
         api_host: String,
         callbacks: FfiCallbacks,
-    ) -> bool {
+    ) -> QueueHealthCode {
         let mut state = self.state.lock();
 
         match *state {
-            ServerState::Ready(_, _, _) => false,
+            ServerState::Ready(_, _, _) => QueueHealthCode::NotInitialized,
             ServerState::Disposed => {
                 let new_runtime = tokio::runtime::Builder::new_multi_thread()
                     .worker_threads(1)
@@ -82,7 +85,7 @@ impl Server {
 
                 let event_bridge = EventBridge::new(callbacks);
 
-                let server = SegmentServer::new(
+                let (server, health) = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
@@ -92,7 +95,7 @@ impl Server {
                 );
 
                 *state = ServerState::Ready(Arc::new(server), new_runtime, event_bridge);
-                true
+                health
             }
         }
     }
@@ -150,11 +153,9 @@ impl Server {
 pub struct EventBridge {
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
-    health_fn: Option<FfiHealthCallbackFn>,
 
     callback_queue: Arc<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
     error_queue: Arc<crossbeam_queue::SegQueue<String>>,
-    health_queue: Arc<crossbeam_queue::SegQueue<QueueHealthCode>>,
 }
 
 impl EventBridge {
@@ -162,10 +163,8 @@ impl EventBridge {
         Self {
             callback_fn: callbacks.callback_fn,
             error_fn: callbacks.error_fn,
-            health_fn: callbacks.health_fn,
             callback_queue: Arc::new(crossbeam_queue::SegQueue::new()),
             error_queue: Arc::new(crossbeam_queue::SegQueue::new()),
-            health_queue: Arc::new(crossbeam_queue::SegQueue::new()),
         }
     }
 
@@ -180,17 +179,6 @@ impl EventBridge {
                     }
                 };
             };
-
-            return true;
-        }
-
-        // dequeue health changes before the operation results they explain
-        if let Some(code) = self.health_queue.pop() {
-            if let Some(cb) = self.health_fn {
-                unsafe {
-                    cb(code);
-                }
-            }
 
             return true;
         }
@@ -210,8 +198,7 @@ impl EventBridge {
     pub fn input(&self) -> EventInput {
         let cq = Arc::downgrade(&self.callback_queue);
         let eq = Arc::downgrade(&self.error_queue);
-        let hq = Arc::downgrade(&self.health_queue);
-        EventInput::new(cq, eq, hq)
+        EventInput::new(cq, eq)
     }
 }
 
@@ -219,25 +206,16 @@ impl EventBridge {
 pub struct EventInput {
     callback_queue: Weak<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
     error_queue: Weak<crossbeam_queue::SegQueue<String>>,
-    health_queue: Weak<crossbeam_queue::SegQueue<QueueHealthCode>>,
 }
 
 impl EventInput {
     pub fn new(
         callback_queue: Weak<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
         error_queue: Weak<crossbeam_queue::SegQueue<String>>,
-        health_queue: Weak<crossbeam_queue::SegQueue<QueueHealthCode>>,
     ) -> Self {
         Self {
             callback_queue,
             error_queue,
-            health_queue,
-        }
-    }
-
-    pub fn try_enqueue_health(&self, code: QueueHealthCode) {
-        if let Some(q) = self.health_queue.upgrade() {
-            q.push(code);
         }
     }
 
@@ -259,6 +237,7 @@ impl SegmentServer {
         self.next_id.fetch_add(1, Ordering::Relaxed)
     }
 
+    /// Returns the server with how its queue keeps the events of the session.
     fn new(
         queue_file_path: String,
         queue_count_limit: u32,
@@ -266,30 +245,27 @@ impl SegmentServer {
         api_host: String,
         event_input: EventInput,
         async_runtime: &tokio::runtime::Runtime,
-    ) -> Self {
+    ) -> (Self, QueueHealthCode) {
         let error_event_input = event_input.clone();
         let error_fn = Box::new(move |message: &str| {
             let message = String::from(message);
             error_event_input.try_enqueue_error(message);
         });
 
-        let health_observer = || -> HealthObserver {
-            let health_event_input = event_input.clone();
-            Box::new(move |health| health_event_input.try_enqueue_health(health_code(health)))
-        };
-
         // An open failure that says nothing about the file or its environment is a fault, reported as such.
-        let event_queue = match ResilientAnalyticsEventQueue::new(
-            queue_file_path,
+        let (event_queue, health) = match queue_file::open(
+            Path::new(&queue_file_path),
             queue_count_limit,
-            health_observer(),
         ) {
-            Ok(queue) => queue,
+            Ok(opened) => opened,
             Err(err) => {
-                let error_message =
-                    format!("Cannot create persistent queue, fallback to in memory queue: {err}");
-                error_fn(&error_message);
-                ResilientAnalyticsEventQueue::in_memory(queue_count_limit, health_observer())
+                error_fn(&format!(
+                    "Cannot open the queue file, the events of the session stay in memory: {err}"
+                ));
+                (
+                    queue_file::in_memory(queue_count_limit),
+                    QueueHealthCode::DegradedOther,
+                )
             }
         };
         let event_queue = Arc::new(Mutex::new(event_queue));
@@ -321,11 +297,13 @@ impl SegmentServer {
             error_fn,
         };
 
-        Self {
+        let server = Self {
             next_id: AtomicU64::new(1), //0 is invalid,
             daemon: send_daemon,
             context: Arc::new(Mutex::new(context)),
-        }
+        };
+
+        (server, health)
     }
 
     pub async fn instant_track_and_flush(
@@ -454,21 +432,6 @@ impl SegmentServer {
     }
 }
 
-fn health_code(health: QueueHealth) -> QueueHealthCode {
-    match health {
-        QueueHealth::OwnedByAnotherInstance => QueueHealthCode::OwnedByAnotherInstance,
-        QueueHealth::Recreated => QueueHealthCode::Recreated,
-        QueueHealth::DegradedToMemory(reason) => match reason {
-            DegradeReason::DiskFull => QueueHealthCode::DegradedDiskFull,
-            DegradeReason::ReadOnly => QueueHealthCode::DegradedReadOnly,
-            DegradeReason::IoError => QueueHealthCode::DegradedIoError,
-            DegradeReason::PermissionDenied => QueueHealthCode::DegradedPermissionDenied,
-            DegradeReason::CannotOpen => QueueHealthCode::DegradedCannotOpen,
-            DegradeReason::Corrupt => QueueHealthCode::DegradedCorrupt,
-        },
-    }
-}
-
 fn response_code_for_enque_error(error: &EnqueError) -> Response {
     match error {
         EnqueError::Sqlite(e)
@@ -545,31 +508,5 @@ mod tests {
             response_code_for_enque_error(&EnqueError::LimitReached),
             Response::Error
         ));
-    }
-
-    #[test]
-    fn every_health_maps_to_a_distinct_code() {
-        let codes = [
-            health_code(QueueHealth::OwnedByAnotherInstance),
-            health_code(QueueHealth::Recreated),
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::DiskFull)),
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::ReadOnly)),
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::IoError)),
-            health_code(QueueHealth::DegradedToMemory(
-                DegradeReason::PermissionDenied,
-            )),
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::CannotOpen)),
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::Corrupt)),
-        ];
-
-        let mut values: Vec<u8> = codes.iter().map(|code| *code as u8).collect();
-        values.sort_unstable();
-        values.dedup();
-
-        assert_eq!(values.len(), codes.len());
-        assert_eq!(
-            health_code(QueueHealth::DegradedToMemory(DegradeReason::DiskFull)),
-            QueueHealthCode::DegradedDiskFull
-        );
     }
 }

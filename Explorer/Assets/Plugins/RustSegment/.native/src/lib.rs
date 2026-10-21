@@ -3,7 +3,7 @@ use std::os::raw::c_char;
 
 pub mod cabi;
 pub mod operations;
-pub mod resilient_queue;
+pub mod queue_file;
 pub mod server;
 
 pub type OperationHandleId = u64;
@@ -26,10 +26,13 @@ pub type FfiCallbackFn = unsafe extern "C" fn(OperationHandleId, Response);
 /// # SAFTEY: The "C" callback must be threadsafe and not block
 pub type FfiErrorCallbackFn = unsafe extern "C" fn(msg: *const c_char);
 
-/// A change in how the queue keeps or sends events. The values are part of the C ABI.
+/// How the queue keeps the events of the session, decided once when the server is initialized and returned by
+/// `segment_server_initialize`. The values are part of the C ABI.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QueueHealthCode {
+    /// This process owns the queue file; the events are kept on disk.
+    Persistent = 0,
     /// Another process owns the queue file; the events of this process stay in memory.
     OwnedByAnotherInstance = 1,
     /// The queue file was corrupt and has been replaced by an empty one.
@@ -44,19 +47,21 @@ pub enum QueueHealthCode {
     DegradedPermissionDenied = 6,
     /// The queue file is given up for the session: it cannot be opened.
     DegradedCannotOpen = 7,
-    /// The queue file is given up for the session: it was corrupt again or could not be recreated.
+    /// The queue file is given up for the session: it could not be recreated after it was found corrupt.
     DegradedCorrupt = 8,
+    /// The queue file is given up for the session: it failed in a way that says nothing about the file or its
+    /// environment, reported on the error channel.
+    DegradedOther = 9,
+    /// The server is not running: it was already initialized, or the initialization panicked and the panic was
+    /// reported on the error channel.
+    NotInitialized = 255,
 }
-
-/// # SAFTEY: The "C" callback must be threadsafe and not block
-pub type FfiHealthCallbackFn = unsafe extern "C" fn(QueueHealthCode);
 
 /// The foreign functions the server reports through.
 #[derive(Clone, Copy)]
 pub struct FfiCallbacks {
     pub callback_fn: FfiCallbackFn,
     pub error_fn: Option<FfiErrorCallbackFn>,
-    pub health_fn: Option<FfiHealthCallbackFn>,
 }
 
 lazy_static! {
@@ -88,7 +93,6 @@ mod tests {
             FfiCallbacks {
                 callback_fn: test_callback,
                 error_fn: None,
-                health_fn: None,
             },
         );
         SEGMENT_SERVER.try_execute(|segment, id| {

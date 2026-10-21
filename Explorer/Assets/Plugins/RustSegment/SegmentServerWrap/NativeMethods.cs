@@ -19,9 +19,15 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
-        /// <summary>A change in how the native queue keeps or sends events. The values are part of the C ABI.</summary>
+        /// <summary>
+        ///     How the native queue keeps the events of the session, decided once by <see cref="SegmentServerInitialize" />.
+        ///     The values are part of the C ABI.
+        /// </summary>
         internal enum QueueHealth : byte
         {
+            /// <summary>This process owns the queue file; the events are kept on disk.</summary>
+            Persistent = 0,
+
             /// <summary>Another process owns the queue file; the events of this process stay in memory.</summary>
             OwnedByAnotherInstance = 1,
 
@@ -43,25 +49,33 @@ namespace Plugins.RustSegment.SegmentServerWrap
             /// <summary>The queue file is given up for the session: it cannot be opened.</summary>
             DegradedCannotOpen = 7,
 
-            /// <summary>The queue file is given up for the session: it was corrupt again or could not be recreated.</summary>
+            /// <summary>The queue file is given up for the session: it could not be recreated after it was found corrupt.</summary>
             DegradedCorrupt = 8,
+
+            /// <summary>
+            ///     The queue file is given up for the session: it failed in a way that says nothing about the file or its
+            ///     environment, reported on the error channel.
+            /// </summary>
+            DegradedOther = 9,
+
+            /// <summary>
+            ///     The server is not running: it was already initialized, or the initialization panicked and the panic was
+            ///     reported on the error channel.
+            /// </summary>
+            NotInitialized = 255,
         }
 
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiErrorCallback(IntPtr msg);
 
-        [UnmanagedFunctionPointer(CALLING_CONVENTION)]
-        internal delegate void SegmentFfiHealthCallback(QueueHealth health);
-
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
-        internal static extern bool SegmentServerInitialize(
+        internal static extern QueueHealth SegmentServerInitialize(
             IntPtr queueFilePath,
             uint queueCountLimit,
             IntPtr segmentWriteKey,
             IntPtr segmentApiHost,
             SegmentFfiCallback callback,
-            SegmentFfiErrorCallback errorCallback,
-            SegmentFfiHealthCallback healthCallback
+            SegmentFfiErrorCallback errorCallback
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]

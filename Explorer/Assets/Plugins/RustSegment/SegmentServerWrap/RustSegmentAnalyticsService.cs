@@ -79,15 +79,16 @@ namespace Plugins.RustSegment.SegmentServerWrap
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
             using var mApiHost = new MarshaledString(apiHost);
-            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback, HealthCallback);
+            NativeMethods.QueueHealth health = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback);
 
-            if (result == false)
+            if (health == NativeMethods.QueueHealth.NotInitialized)
                 throw new Exception("Rust Segment initialization failed");
 
             this.cancellationTokenSource = new CancellationTokenSource();
             PumpJobAsync(this.cancellationTokenSource).Forget();
 
             ReportHub.Log(ReportCategory.ANALYTICS, $"Rust Segment initialized, api host: {apiHost}");
+            LogQueueHealth(health);
             instanceGuard.Value = this;
         }
 
@@ -228,7 +229,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        /// <summary>Receives genuine faults only: environment conditions arrive through <see cref="HealthCallback" />.</summary>
+        /// <summary>Receives genuine faults only: the queue file conditions are returned by the initialization.</summary>
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiErrorCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
@@ -243,56 +244,44 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiHealthCallback))]
-        private static void HealthCallback(NativeMethods.QueueHealth health)
+        private void LogQueueHealth(NativeMethods.QueueHealth health)
         {
-            try
+            switch (health)
             {
-                switch (health)
-                {
-                    case NativeMethods.QueueHealth.OwnedByAnotherInstance:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is owned by another running instance: the events of this session are kept in memory only");
-                        break;
-                    case NativeMethods.QueueHealth.Recreated:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file was corrupt and has been recreated empty");
-                        break;
-                    case NativeMethods.QueueHealth.DegradedDiskFull:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk is full");
-                        PublishDiskFullDetected();
-                        break;
-                    case NativeMethods.QueueHealth.DegradedReadOnly:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be written");
-                        break;
-                    case NativeMethods.QueueHealth.DegradedIoError:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk failed");
-                        break;
-                    case NativeMethods.QueueHealth.DegradedPermissionDenied:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the OS refused access");
-                        break;
-                    case NativeMethods.QueueHealth.DegradedCannotOpen:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be opened");
-                        break;
-                    case NativeMethods.QueueHealth.DegradedCorrupt:
-                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it was corrupt again or could not be recreated");
-                        break;
-                    default:
-                        ReportHub.LogError(ReportCategory.ANALYTICS, $"Segment reported an unknown queue health code: {(byte)health}");
-                        break;
-                }
+                case NativeMethods.QueueHealth.Persistent:
+                    break;
+                case NativeMethods.QueueHealth.OwnedByAnotherInstance:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is owned by another running instance: the events of this session are kept in memory only");
+                    break;
+                case NativeMethods.QueueHealth.Recreated:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file was corrupt and has been recreated empty");
+                    break;
+                case NativeMethods.QueueHealth.DegradedDiskFull:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk is full");
+                    eventBus?.Publish(new AnalyticsDiskFullDetected());
+                    break;
+                case NativeMethods.QueueHealth.DegradedReadOnly:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be written");
+                    break;
+                case NativeMethods.QueueHealth.DegradedIoError:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk failed");
+                    break;
+                case NativeMethods.QueueHealth.DegradedPermissionDenied:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the OS refused access");
+                    break;
+                case NativeMethods.QueueHealth.DegradedCannotOpen:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be opened");
+                    break;
+                case NativeMethods.QueueHealth.DegradedCorrupt:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it could not be recreated after it was found corrupt");
+                    break;
+                case NativeMethods.QueueHealth.DegradedOther:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it failed in a way that says nothing about the file, the error is reported separately");
+                    break;
+                default:
+                    ReportHub.LogError(ReportCategory.ANALYTICS, $"Segment returned an unknown queue health code: {(byte)health}");
+                    break;
             }
-            catch
-            {
-                // Ignore to avoid possibility of double exception
-            }
-        }
-
-        private static void PublishDiskFullDetected()
-        {
-            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-
-            if (instanceGuard.Value == null) return;
-
-            instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]

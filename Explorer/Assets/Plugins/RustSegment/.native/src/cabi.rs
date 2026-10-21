@@ -3,10 +3,12 @@ use std::ffi::c_char;
 use crate::{
     operations::{as_str, user_from},
     server::SegmentServer,
-    FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, FfiHealthCallbackFn, OperationHandleId,
+    FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, OperationHandleId, QueueHealthCode,
     INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
 };
 
+/// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when the server is not running.
+///
 /// # Safety
 ///
 /// The foreign language must only provide valid pointers
@@ -18,8 +20,7 @@ pub unsafe extern "C" fn segment_server_initialize(
     segment_api_host: *const c_char,
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
-    health_fn: Option<FfiHealthCallbackFn>,
-) -> bool {
+) -> QueueHealthCode {
     std::panic::set_hook(Box::new(|info| {
         eprintln!("PANIC: {info}");
         eprintln!("{:?}", std::backtrace::Backtrace::force_capture());
@@ -39,7 +40,6 @@ pub unsafe extern "C" fn segment_server_initialize(
             FfiCallbacks {
                 callback_fn,
                 error_fn,
-                health_fn,
             },
         )
     })
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn segment_server_initialize(
             unsafe { cb(msg.as_ptr()) };
         }
 
-        false
+        QueueHealthCode::NotInitialized
     })
 }
 
