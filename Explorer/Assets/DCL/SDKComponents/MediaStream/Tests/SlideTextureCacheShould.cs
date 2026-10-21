@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string ALLOWED_URL = ORG_ORIGIN + SLIDE_PATH;
         private const string BOT_A = "presentation-bot:a:1";
         private const string BOT_B = "presentation-bot:b:1";
+        private const int PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH = 33;
 
         private IWebRequestController webRequestController = null!;
         private IDecentralandUrlsSource decentralandUrlsSource = null!;
@@ -274,6 +275,26 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void StopFetching_AfterMaxFailedAttempts()
+        {
+            // Arrange
+            SendTextureRequest(webRequestController).Returns(_ => UniTask.FromException<Texture2D?>(new InvalidOperationException()));
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+            LogAssert.Expect(LogType.Warning, new Regex("Slide rejected after"));
+
+            // Act
+            for (var i = 0; i <= SlideTextureCache.MAX_FETCH_ATTEMPTS; i++)
+            {
+                now += SlideTextureCache.MAX_RETRY_COOLDOWN_SECONDS + 1f;
+                cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            }
+
+            // Assert
+            SendTextureRequest(webRequestController.Received(SlideTextureCache.MAX_FETCH_ATTEMPTS));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
         public void KeepRecentlyUsedSlide_WhenCacheEvicts()
         {
             // Arrange
@@ -367,6 +388,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Act & Assert
             Assert.IsNull(Decode(oversized));
+        }
+
+        [Test]
+        public void ReturnNull_WhenPngBodyFailsToDecode()
+        {
+            // Arrange
+            byte[] png = Png(4, 2);
+            Array.Fill(png, (byte)0xFF, PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH, png.Length - PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH);
+
+            // Act & Assert
+            Assert.IsNull(Decode(png));
         }
 
         [Test]

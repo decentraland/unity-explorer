@@ -18,7 +18,6 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly int VIDEO_RECT = Shader.PropertyToID("_VideoRect");
         private static readonly int CAMERA_RECT = Shader.PropertyToID("_CameraRect");
         private static readonly int VIDEO_ENABLED = Shader.PropertyToID("_VideoEnabled");
-        private static readonly int VIDEO_TEX_ENABLED = Shader.PropertyToID("_VideoTexEnabled");
         private static readonly int CAMERA_ENABLED = Shader.PropertyToID("_CameraEnabled");
         private static readonly int CAMERA_EDGE = Shader.PropertyToID("_CameraEdge");
         private static readonly int SLIDE_SIZE = Shader.PropertyToID("_SlideSize");
@@ -81,7 +80,6 @@ namespace DCL.SDKComponents.MediaStream
 
             material.SetVector(VIDEO_RECT, videoRect);
             material.SetFloat(VIDEO_ENABLED, showVideoRect ? 1f : 0f);
-            material.SetFloat(VIDEO_TEX_ENABLED, showVideoRect && video != null ? 1f : 0f);
             material.SetTexture(VIDEO_TEX, video != null ? video : Texture2D.blackTexture);
             material.SetFloat(VIDEO_TEX_LINEAR_DATA, video != null && !video.isDataSRGB ? 1f : 0f);
 

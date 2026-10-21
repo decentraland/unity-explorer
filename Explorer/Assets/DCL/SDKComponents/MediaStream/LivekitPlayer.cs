@@ -63,8 +63,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        // Set from LiveKit FFI callbacks (off main thread); consumed by EnsureVideoIsPlaying / EnsureAudioIsPlaying
-        // on the main thread. Forces immediate re-discovery so we don't wait for the polling cycle in cases
+        // Set from LiveKit FFI callbacks (off main thread) and from the main thread to rescan on the next update;
+        // consumed by EnsureVideoIsPlaying / EnsureAudioIsPlaying on the main thread. Forces immediate re-discovery so we don't wait for the polling cycle in cases
         // where the streamer was already publishing before we joined (TrackPublication visible, but
         // trackPublication.Track stays null until subscription completes — see LiveKit Streams.ActiveStream).
         private volatile bool pendingVideoRediscovery;
