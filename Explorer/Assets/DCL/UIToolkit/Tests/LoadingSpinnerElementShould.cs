@@ -30,14 +30,14 @@ namespace DCL.UIToolkit.Tests
         public void FillFromTheHeadThenEmptyFromTheTailWithinACycle()
         {
             //Act
-            spinner.Advance(0.5f);
+            spinner.Advance(1f);
 
             //Assert
             Assert.AreEqual(1f, spinner.Head, TOLERANCE);
             Assert.AreEqual(0f, spinner.Tail, TOLERANCE);
 
             //Act
-            spinner.Advance(0.4f);
+            spinner.Advance(0.8f);
 
             //Assert
             Assert.AreEqual(1f, spinner.Head, TOLERANCE);
@@ -48,7 +48,7 @@ namespace DCL.UIToolkit.Tests
         public void EaseTheHeadThroughTheFirstThird()
         {
             //Act
-            spinner.Advance(1f / 6f);
+            spinner.Advance(1f / 3f);
 
             //Assert
             Assert.AreEqual(0.5f, spinner.Head, TOLERANCE);
@@ -59,19 +59,19 @@ namespace DCL.UIToolkit.Tests
         public void ChangeColourEachCycleAndWrapAfterThree()
         {
             //Act
-            spinner.Advance(1.5f);
+            spinner.Advance(3f);
 
             //Assert
             Assert.AreEqual(new Color(1f, 0.176f, 0.333f), spinner.ArcColor);
 
             //Act
-            spinner.Advance(1f);
+            spinner.Advance(2f);
 
             //Assert
             Assert.AreEqual(new Color(0.412f, 0.122f, 0.663f), spinner.ArcColor);
 
             //Act
-            spinner.Advance(1f);
+            spinner.Advance(2f);
 
             //Assert
             Assert.AreEqual(new Color(1f, 0.737f, 0.357f), spinner.ArcColor);
@@ -81,7 +81,7 @@ namespace DCL.UIToolkit.Tests
         public void StartOverWhenSetSpinning()
         {
             //Arrange
-            spinner.Advance(2.5f);
+            spinner.Advance(5f);
 
             //Act
             spinner.IsSpinning = true;

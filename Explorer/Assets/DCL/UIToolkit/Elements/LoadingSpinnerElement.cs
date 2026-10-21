@@ -4,22 +4,22 @@ using UnityEngine.UIElements;
 namespace DCL.UIToolkit.Elements
 {
     /// <summary>
-    ///     The uGUI LoadingSpinner prefab in UI Toolkit: a track ring and an arc that fills, then empties, once a second
+    ///     The uGUI LoadingSpinner prefab in UI Toolkit: a track ring and an arc that fills, then empties, every two seconds
     ///     in the prefab's three colours in turn.
     /// </summary>
     [UxmlElement]
     public partial class LoadingSpinnerElement : VisualElement
     {
         private const long TICK_MS = 16;
-        private const float CYCLE_SECONDS = 1f;
+        private const float CYCLE_SECONDS = 2f; // The prefab's animator state plays the one-second clip at half speed.
         private const float THICKNESS = 0.2f;
-        private const float START_ANGLE = 90f;
+        private const float START_ANGLE = 270f; // Painter2D angles run clockwise from 3 o'clock, so the prefab's 12 o'clock start is 270.
         private const float FULL_TURN = 360f;
 
         private static readonly Color TRACK_COLOR = Color.white;
         private static readonly Color[] CYCLE_COLORS = { new (1f, 0.737f, 0.357f), new (1f, 0.176f, 0.333f), new (0.412f, 0.122f, 0.663f) };
 
-        // One cycle of the prefab's LoadingAnimation keys, with their flat tangents
+        // One cycle of the prefab's LoadingAnimation keys, with their flat tangents.
         private static readonly AnimationCurve HEAD = new (new Keyframe(0f, 0f), new Keyframe(1f / 3f, 1f), new Keyframe(0.5f, 1f), new Keyframe(5f / 6f, 1f), new Keyframe(0.9833f, 1f), new Keyframe(1f, 0f));
         private static readonly AnimationCurve TAIL = new (new Keyframe(0f, 0f), new Keyframe(1f / 3f, 0f), new Keyframe(0.5f, 0f), new Keyframe(5f / 6f, 1f), new Keyframe(0.9833f, 1f), new Keyframe(1f, 0f));
 
@@ -61,9 +61,9 @@ namespace DCL.UIToolkit.Elements
         {
             elapsed += seconds;
             int cycle = Mathf.FloorToInt(elapsed / CYCLE_SECONDS);
-            float cycleTime = elapsed - (cycle * CYCLE_SECONDS);
-            Head = HEAD.Evaluate(cycleTime);
-            Tail = TAIL.Evaluate(cycleTime);
+            float cycleProgress = (elapsed - (cycle * CYCLE_SECONDS)) / CYCLE_SECONDS;
+            Head = HEAD.Evaluate(cycleProgress);
+            Tail = TAIL.Evaluate(cycleProgress);
             ArcColor = CYCLE_COLORS[cycle % CYCLE_COLORS.Length];
             MarkDirtyRepaint();
         }
@@ -71,7 +71,7 @@ namespace DCL.UIToolkit.Elements
         private void OnTick(TimerState state) =>
             Advance(state.deltaTime / 1000f);
 
-        // Both strokes are inset by half their width so the round caps stay inside the box
+        // Both strokes are inset by half their width so the round caps stay inside the box.
         private void OnGenerateVisualContent(MeshGenerationContext context)
         {
             Rect rect = contentRect;
