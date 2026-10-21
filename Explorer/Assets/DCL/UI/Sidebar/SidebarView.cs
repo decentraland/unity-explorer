@@ -104,7 +104,7 @@ namespace DCL.UI.Sidebar
         [field: Header("Chat")]
         [field: SerializeField]
         [field: FormerlySerializedAs("<unreadMessagesButton>k__BackingField")]
-        public HoverableAndSelectableButtonWithAnimator UnreadMessagesButton { get; private set; } = null!;
+        public SimpleHoverableButton UnreadMessagesButton { get; private set; } = null!;
 
         [field: Header("Nearby Voice Chat")]
         [field: SerializeField] public NearbyVoiceChatButtonView NearbyVoiceChatButton { get; private set; } = null!;
