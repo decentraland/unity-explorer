@@ -1,3 +1,4 @@
+using DCL.MapRenderer.MapLayers;
 using UnityEngine;
 
 namespace DCL.MapRenderer
@@ -44,7 +45,7 @@ namespace DCL.MapRenderer
 
         public void SetZoom(float baseZoom, float newZoom)
         {
-            RecalculateLineSize(newZoom / baseZoom * MIN_DOT_SIZE_NAVMAP);
+            RecalculateLineSize(MarkerHelper.ScaleForZoom(MIN_DOT_SIZE_NAVMAP, baseZoom, newZoom));
             UpdateLine();
         }
 

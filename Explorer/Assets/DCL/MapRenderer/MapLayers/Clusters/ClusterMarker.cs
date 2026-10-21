@@ -58,11 +58,12 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
         public void OnBecameVisible()
         {
-            poolableBehavior.OnBecameVisible().title.text = title;
-            poolableBehavior.OnBecameVisible().SetCategorySprite(iconSprite);
+            ClusterMarkerObject instance = poolableBehavior.OnBecameVisible();
+            instance.title.text = title;
+            instance.SetCategorySprite(iconSprite);
 
             if(currentBaseScale != 0)
-                poolableBehavior.OnBecameVisible().SetScale(currentBaseScale, currentNewScale);
+                instance.SetScale(currentBaseScale, currentNewScale);
         }
 
         public void OnBecameInvisible()

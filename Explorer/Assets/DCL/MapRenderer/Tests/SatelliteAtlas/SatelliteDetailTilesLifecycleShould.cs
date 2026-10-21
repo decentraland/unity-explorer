@@ -212,6 +212,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             // Arrange
             var loading = new UniTaskCompletionSource<Texture2D?>();
             var texture = new Texture2D(4, 4);
+            loadedTextures[LEVEL_4_TILE_URL] = texture;
             responses[LEVEL_4_TILE_URL] = () => loading.Task;
 
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);

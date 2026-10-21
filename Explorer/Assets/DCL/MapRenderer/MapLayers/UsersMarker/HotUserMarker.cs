@@ -35,7 +35,10 @@ namespace DCL.MapRenderer.MapLayers.Users
         public IHotUserMarker SetScale(float newScale)
         {
             scale = newScale;
-            poolableBehavior.instance?.SetScale(newScale);
+
+            if (poolableBehavior.instance != null)
+                poolableBehavior.instance.SetScale(newScale);
+
             return this;
         }
 

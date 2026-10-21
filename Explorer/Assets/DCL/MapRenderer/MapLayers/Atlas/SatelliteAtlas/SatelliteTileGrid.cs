@@ -9,8 +9,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     internal readonly struct SatelliteTileGrid
     {
         internal const int BASE_LEVEL = 3;
-        internal const int MAX_LEVEL = 8;
-        internal const int MAX_TILES_PER_CAMERA = 64;
+        private const int MAX_LEVEL = 8;
+        private const int MAX_TILES_PER_CAMERA = 64;
         private const int TILE_PIXELS = 1024;
         private const float SHARPNESS_BIAS = 0.4f;
 
