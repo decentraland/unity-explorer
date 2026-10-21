@@ -4,7 +4,6 @@ using DCL.UI.Buttons;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
-using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.UI;
 using MVC;
@@ -128,7 +127,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
         [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
         [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
-        [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
 
         public void BlockSidebar()
         {

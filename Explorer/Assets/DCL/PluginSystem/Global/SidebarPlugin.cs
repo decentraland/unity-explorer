@@ -12,8 +12,6 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.MarketplaceCredits;
 using DCL.Clipboard;
@@ -24,7 +22,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
-using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.VoiceChat.UI;
@@ -82,7 +79,6 @@ namespace DCL.PluginSystem.Global
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
-        private HelpMenuController? helpMenuController;
         private ICreditsPanelController? shopCreditsPanelController;
         private SidebarProfileMenuPresenter? sidebarProfileMenuPresenter;
 
@@ -162,7 +158,6 @@ namespace DCL.PluginSystem.Global
             nearbyVoicePanelController?.Dispose();
             shopCreditsPanelController?.Dispose();
             sidebarProfileMenuPresenter?.Dispose();
-            helpMenuController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -184,7 +179,6 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUiView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUiView.SidebarView.NearbyVoiceWidget);
-            helpMenuController = new HelpMenuController(() => mainUiView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(
                 mainUiView.SidebarView.ShopCreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
@@ -221,7 +215,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
-            mvcManager.RegisterController(helpMenuController);
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
