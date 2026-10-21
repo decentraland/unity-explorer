@@ -80,6 +80,8 @@ namespace Editor
                 // Skips the Cloud Diagnostics symbol generation and upload; Sentry symbolicates the other builds
                 Debug.Log("[CLOUD_DIAGNOSTICS]: Not a release build — disabling crash reporting");
                 CrashReportingSettings.enabled = false;
+                // usymtool still uploads with crash reporting off as long as the editor process holds this token
+                Environment.SetEnvironmentVariable("USYM_UPLOAD_AUTH_TOKEN", null);
             }
 
             DesktopStandaloneSettings.CopyPDBFiles = KeepsDebugSymbols();
