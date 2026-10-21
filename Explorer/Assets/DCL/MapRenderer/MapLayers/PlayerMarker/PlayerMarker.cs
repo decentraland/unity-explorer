@@ -49,8 +49,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
 
         public void SetZoom(float baseZoom, float zoom)
         {
-            // Keeps its on-screen size at any zoom closer than the base one
-            float newScale = zoom / baseZoom * baseScale;
+            float newScale = MarkerHelper.ScaleForZoom(baseScale, baseZoom, zoom);
             markerObject.transform.localScale = new Vector3(newScale, newScale, 1f);
         }
 

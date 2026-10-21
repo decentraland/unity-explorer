@@ -89,7 +89,7 @@ namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
         {
             instantiationParent.gameObject.SetActive(true);
 
-            // Refreshes skipped while the layer was hidden would otherwise wait for the next camera change.
+            // Refresh does nothing while the layer is hidden, so the tiles update now instead of at the next camera change.
             detailTiles?.Refresh();
             return UniTask.CompletedTask;
         }

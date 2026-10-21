@@ -254,13 +254,14 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             SatelliteDetailTiles? detailTiles = null;
 
-            // Without the KTX2 native decoder the tiles can't be read: the map shows the bundled chunks only.
+            // Without the KTX2 native decoder, the map shows only the bundled chunks.
             if (KtxNativeSupport.IsSupported)
             {
                 SpriteRenderer template = await GetAtlasChunkPrefabAsync(configuration.SatelliteAtlasRoot, cancellationToken);
 
-                detailTiles = new SatelliteDetailTiles(decentralandUrlsSource.Url(DecentralandUrl.SatelliteMapTiles), webRequestController, bytesDiskCache, cullingController, template,
-                    MapRendererDrawOrder.SATELLITE_DETAIL_BASE_LEVEL);
+                detailTiles = new SatelliteDetailTiles(decentralandUrlsSource.Url(DecentralandUrl.SatelliteMapTiles), webRequestController,
+                    new SatelliteTileLoader(webRequestController, bytesDiskCache), cullingController,
+                    new SatelliteTileViews(template, MapRendererDrawOrder.SATELLITE_DETAIL_BASE_LEVEL));
             }
 
             var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController,

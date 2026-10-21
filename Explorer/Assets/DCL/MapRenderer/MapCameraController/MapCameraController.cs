@@ -15,7 +15,7 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
         private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
-        // Half-height a zoomable camera reaches at its closest zoom: about where the finest satellite level (8) is shown.
+        // The orthographic half-height, in parcels, of a zoomable camera at its closest zoom. At this zoom, the map shows about satellite level 8.
         private const int CLOSEST_ZOOM_PARCELS = 1;
 
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
@@ -193,7 +193,7 @@ namespace DCL.MapRenderer.MapCameraController
         private bool IsZoomable() =>
             zoomValues.x < zoomValues.y;
 
-        // Markers and clusters keep scaling against the configured closest zoom (zoomValues.x).
+        // Markers and clusters still scale against the configured closest zoom, zoomValues.x.
         private float ClosestZoom() =>
             IsZoomable() ? CLOSEST_ZOOM_PARCELS * coordsUtils.ParcelSize : zoomValues.x;
 
@@ -246,7 +246,7 @@ namespace DCL.MapRenderer.MapCameraController
         {
             mapCameraObject.mapCamera.enabled = true;
 
-            // What the camera shows was skipped while it was suspended; it resumes in place, so nothing else marks it changed.
+            // The camera resumes in place, so no camera move marks it dirty. Without this, the updates that it skipped while suspended never run.
             if (renter != null)
                 cullingController.SetCameraDirty(this);
         }

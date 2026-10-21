@@ -134,7 +134,6 @@ namespace Global
         public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
         public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
 
-        /// <summary>Caches files their consumer decodes itself; shares the directory, lock and size budget of the other disk caches.</summary>
         public IDiskCache<byte[]> BytesDiskCache { get; private set; } = null!;
 
         public void Dispose()

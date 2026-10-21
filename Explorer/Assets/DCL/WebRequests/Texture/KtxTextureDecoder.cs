@@ -11,10 +11,6 @@ namespace DCL.WebRequests
     /// </summary>
     public static class KtxTextureDecoder
     {
-        /// <param name="data">The KTX2 file.</param>
-        /// <param name="linear">False for colour images; true for data textures such as normals or metallic-roughness.</param>
-        /// <param name="readable">Whether the texture keeps a CPU copy of its pixels.</param>
-        /// <param name="debugName">The name the texture reports in profilers, usually its URL.</param>
         public static async UniTask<Texture2D> DecodeAsync(byte[] data, bool linear, TextureWrapMode wrapMode, FilterMode filterMode, bool readable, string debugName)
         {
             using var bufferWrapped = new ManagedNativeArray(data);

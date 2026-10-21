@@ -1,20 +1,25 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     /// <summary>
-    ///     Which satellite tiles a source publishes and where they are. <c>{baseUrl}/manifest.json</c> lists a version per
-    ///     section, a section being one bundled level-3 chunk together with every finer tile under it. A section's tiles live
-    ///     at <c>sections/{sx},{sy}/{version}/{level}/{i},{j}.ktx2</c>, so re-publishing a section under a new version moves
-    ///     its tiles to new paths, which a client holding the previous version in its disk cache misses. A section the manifest
-    ///     omits has no tiles. A source that publishes no manifest keeps its tiles at the unversioned <c>{level}/{i},{j}.ktx2</c>.
+    ///     Lists a version for each section that a source publishes. A section is one bundled level-3 chunk with every finer tile under it.
+    ///     A new version of a section moves its tiles to new paths, so a disk cache that holds the old version misses.
     /// </summary>
     internal class SatelliteManifest
     {
-        /// <summary>The source has no manifest: its tiles are at the unversioned paths.</summary>
+        private const string FILE = "manifest.json";
+        private const float RETRY_AFTER_SECONDS = 30f;
+
+        /// <summary>For a source without a manifest. Its tiles are at the unversioned paths.</summary>
         public static readonly SatelliteManifest UNVERSIONED = new (null);
 
         private readonly Dictionary<Vector2Int, string>? sectionVersions;
@@ -24,7 +29,39 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             this.sectionVersions = sectionVersions;
         }
 
-        /// <summary>Keeps the sections whose key parses as <c>"{sx},{sy}"</c> and whose version is not empty.</summary>
+        /// <summary>
+        ///     Fails only on cancellation. A 404 gives <see cref="UNVERSIONED" />. Any other failure is retried, and only the first failure is reported.
+        /// </summary>
+        public static async UniTask<SatelliteManifest> LoadAsync(IWebRequestController webRequestController, string baseUrl, CancellationToken ct)
+        {
+            var url = $"{baseUrl}/{FILE}";
+            var failureReported = false;
+
+            while (true)
+            {
+                try
+                {
+                    Dto dto = await webRequestController
+                                   .GetAsync(new CommonArguments(URLAddress.FromString(url), RetryPolicy.NONE), ct, ReportCategory.UI, suppressErrors: true)
+                                   .CreateFromJson<Dto>(WRJsonParser.Newtonsoft);
+
+                    return From(dto);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (UnityWebRequestException e) when (e.ResponseCode == WebRequestUtils.NOT_FOUND) { return UNVERSIONED; }
+                catch (Exception e)
+                {
+                    if (!failureReported)
+                    {
+                        failureReported = true;
+                        ReportHub.LogException(e, ReportCategory.UI);
+                    }
+                }
+
+                await UniTask.Delay(TimeSpan.FromSeconds(RETRY_AFTER_SECONDS), ignoreTimeScale: true, cancellationToken: ct);
+            }
+        }
+
         public static SatelliteManifest From(Dto dto)
         {
             var versions = new Dictionary<Vector2Int, string>();
@@ -38,8 +75,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         }
 
         /// <summary>
-        ///     Path of the tile <paramref name="id" /> (x, y, level) under the source's base URL.
-        ///     False when the manifest lists no version for the tile's section: the tile is not published.
+        ///     The path of the tile relative to the base URL. The <paramref name="id" /> is (x, y, level). False when the tile is not published.
         /// </summary>
         public bool TryGetTilePath(Vector3Int id, out string path)
         {
@@ -64,7 +100,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         /// <summary>The bundled level-3 chunk that the tile <paramref name="id" /> (x, y, level) subdivides.</summary>
         public static Vector2Int SectionOf(Vector3Int id)
         {
-            int shift = id.z - SatelliteDetailTiles.BASE_LEVEL;
+            int shift = id.z - SatelliteTileGrid.BASE_LEVEL;
             return new Vector2Int(id.x >> shift, id.y >> shift);
         }
 

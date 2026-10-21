@@ -154,7 +154,7 @@ namespace DCL.MapRenderer.Culling
             bool anyCameraChanged = dirtyCamerasFlag != 0;
             dirtyCamerasFlag = 0;
 
-            // A throwing subscriber must not end the culling routine that calls this every frame.
+            // A subscriber that throws must not stop the culling routine.
             if (anyCameraChanged)
             {
                 try { CamerasChanged?.Invoke(); }

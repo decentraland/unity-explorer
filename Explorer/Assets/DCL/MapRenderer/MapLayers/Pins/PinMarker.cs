@@ -150,7 +150,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_MIN_SCALE);
             float zoomRatio = zoom / baseZoom;
 
-            // Keeps its on-screen size at any zoom closer than the base one
+            // Closer than the base zoom, the pin keeps its size on screen.
             currentTargetScale = zoomRatio < 1
                 ? zoomRatio * currentBaseScale
                 : Math.Max(zoomRatio * currentBaseScale * PIN_SIZE_MULTIPLIER, currentBaseScale);

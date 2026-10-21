@@ -67,11 +67,9 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
-            if (ZoomBlocked)
-                return;
-
-            // Markers keep their size on the map, down to the zoom closer than the base one where they keep their on-screen size
-            SetMarkersScale(coordsUtils.ParcelSize * Mathf.Min(zoom / baseZoom, 1f));
+            // Markers keep their size on the map. Closer than the base zoom, the markers keep their size on screen.
+            if (!ZoomBlocked)
+                SetMarkersScale(coordsUtils.ParcelSize * Mathf.Min(zoom / baseZoom, 1f));
         }
 
         public void ResetToBaseScale() =>
@@ -85,12 +83,8 @@ namespace DCL.MapRenderer.MapLayers.Users
                 marker.SetScale(scale);
         }
 
-        private IHotUserMarker GetMarker()
-        {
-            IHotUserMarker marker = wrapsPool.Get();
-            marker.SetScale(markerScale);
-            return marker;
-        }
+        private IHotUserMarker GetMarker() =>
+            wrapsPool.Get().SetScale(markerScale);
 
         protected override void DisposeImpl()
         {

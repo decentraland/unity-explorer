@@ -11,6 +11,6 @@ namespace DCL.MapRenderer.MapLayers.Users
     {
         void UpdateMarkerPosition(string playerId, Vector3 position);
 
-        void SetScale(float scale);
+        IHotUserMarker SetScale(float scale);
     }
 }

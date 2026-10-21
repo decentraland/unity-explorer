@@ -32,16 +32,12 @@ namespace DCL.MapRenderer.MapLayers.Users
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, coordsUtils.CoordsToPositionUnclamped(gridPosition)));
         }
 
-        public void SetScale(float scale)
+        public IHotUserMarker SetScale(float scale)
         {
             this.scale = scale;
-
-            if (poolableBehavior.instance != null)
-                ApplyScale(poolableBehavior.instance);
+            poolableBehavior.instance?.SetScale(scale);
+            return this;
         }
-
-        private void ApplyScale(HotUserMarkerObject markerObject) =>
-            markerObject.transform.localScale = new Vector3(scale, scale, 1f);
 
         public void Dispose()
         {
@@ -50,7 +46,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         public void OnMapObjectBecameVisible(IHotUserMarker obj)
         {
-            ApplyScale(poolableBehavior.OnBecameVisible());
+            poolableBehavior.OnBecameVisible().SetScale(scale);
         }
 
         public void OnMapObjectCulled(IHotUserMarker obj)

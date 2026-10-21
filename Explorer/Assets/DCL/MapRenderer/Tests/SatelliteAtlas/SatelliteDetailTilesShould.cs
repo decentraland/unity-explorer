@@ -7,10 +7,6 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 {
     public class SatelliteDetailTilesShould
     {
-        private const float BASE_LEVEL_PIXELS_PER_UNIT = 1024f / 800f;
-        private const float BUNDLED_CHUNK_SIZE = 800f;
-        private const float LEVEL_4_TILE_SIZE = BUNDLED_CHUNK_SIZE / 2f;
-        private const float LEVEL_8_TILE_SIZE = BUNDLED_CHUNK_SIZE / 32f;
         private const int CURRENT_REFRESH = 10;
 
         private readonly Dictionary<Vector3Int, SatelliteDetailTiles.Tile> tiles = new ();
@@ -34,103 +30,6 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             tiles.Clear();
             Object.DestroyImmediate(viewObject);
             Object.DestroyImmediate(loadedTexture);
-        }
-
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT / 8f, 3)] // never coarser than the base level
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT, 3)]
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.05f, 3)]
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 1.1f, 4)] // switches before a tile is magnified much
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 16f, 7)]
-        [TestCase(BASE_LEVEL_PIXELS_PER_UNIT * 32f, 8)]
-        [TestCase(100f, 8)]
-        public void PickTheLevelNearestToTheScreenSharpness(float screenPixelsPerUnit, int expectedLevel)
-        {
-            // Act
-            int level = SatelliteDetailTiles.LevelFor(screenPixelsPerUnit, BASE_LEVEL_PIXELS_PER_UNIT);
-
-            // Assert
-            Assert.AreEqual(expectedLevel, level);
-        }
-
-        [Test]
-        public void CoverOnlyTheTilesTheRectOverlaps()
-        {
-            // Arrange: inside level-4 tile (2, 3), which spans x 800..1200 and y -1200..-1600 below a top-left corner at the origin
-            var rect = new Rect((2 * LEVEL_4_TILE_SIZE) + 10, -(4 * LEVEL_4_TILE_SIZE) + 10, LEVEL_4_TILE_SIZE - 20, LEVEL_4_TILE_SIZE - 20);
-
-            // Act
-            RectInt range = SatelliteDetailTiles.TileRange(rect, 4, Vector2.zero, BUNDLED_CHUNK_SIZE);
-
-            // Assert
-            Assert.AreEqual(new RectInt(2, 3, 1, 1), range);
-        }
-
-        [Test]
-        public void ClampTheRangeToTheGrid()
-        {
-            // Arrange
-            var rect = new Rect(-10000, -10000, 20000, 20000);
-
-            // Act
-            RectInt range = SatelliteDetailTiles.TileRange(rect, 4, Vector2.zero, BUNDLED_CHUNK_SIZE);
-
-            // Assert
-            Assert.AreEqual(new RectInt(0, 0, 16, 16), range);
-        }
-
-        [Test]
-        public void KeepTheLevelWhenTheRectFitsTheTileBudget()
-        {
-            // Arrange: 4x4 level-8 tiles
-            var rect = new Rect(1, -(4 * LEVEL_8_TILE_SIZE) + 1, (4 * LEVEL_8_TILE_SIZE) - 2, (4 * LEVEL_8_TILE_SIZE) - 2);
-
-            // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
-
-            // Assert
-            Assert.AreEqual(8, level);
-            Assert.AreEqual(new RectInt(0, 0, 4, 4), range);
-        }
-
-        [Test]
-        public void StepDownALevelWhenTheRectNeedsMoreTilesThanTheBudget()
-        {
-            // Arrange: 12x12 level-8 tiles is over the budget; level 7 needs 6x6
-            var rect = new Rect(1, -(12 * LEVEL_8_TILE_SIZE) + 1, (12 * LEVEL_8_TILE_SIZE) - 2, (12 * LEVEL_8_TILE_SIZE) - 2);
-
-            // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 8, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
-
-            // Assert
-            Assert.AreEqual(7, level);
-            Assert.AreEqual(new RectInt(0, 0, 6, 6), range);
-        }
-
-        [Test]
-        public void StepDownToTheBaseLevelForTheWholeGrid()
-        {
-            // Arrange: the whole grid, within the budget only at the base level
-            var rect = new Rect(-10000, -10000, 20000, 20000);
-
-            // Act
-            int level = SatelliteDetailTiles.LevelWithinTileBudget(rect, 6, Vector2.zero, BUNDLED_CHUNK_SIZE, out RectInt range);
-
-            // Assert
-            Assert.AreEqual(SatelliteDetailTiles.BASE_LEVEL, level);
-            Assert.AreEqual(new RectInt(0, 0, 8, 8), range);
-        }
-
-        [Test]
-        public void PlaceTheTileCentreOnTheGrid()
-        {
-            // Arrange: level-4 tile (1, 2) spans x 400..800 and y -800..-1200 below a top-left corner at the origin
-            var id = new Vector3Int(1, 2, 4);
-
-            // Act
-            Vector2 center = SatelliteDetailTiles.TileCenter(id, Vector2.zero, BUNDLED_CHUNK_SIZE);
-
-            // Assert
-            Assert.AreEqual(new Vector2(600f, -1000f), center);
         }
 
         [Test]
@@ -203,7 +102,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public void NeverDropTheBaseLevelLoads()
         {
             // Arrange
-            AddTile(0, lastUsed: 1, level: SatelliteDetailTiles.BASE_LEVEL); // loading, out of view
+            AddTile(0, lastUsed: 1, level: SatelliteTileGrid.BASE_LEVEL); // loading, out of view
             AddTile(1, lastUsed: 1); // loading, out of view
 
             // Act
@@ -218,8 +117,8 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public void NeitherEvictNorCountTheBaseLevelTiles()
         {
             // Arrange
-            AddTile(0, lastUsed: 1, loaded: true, level: SatelliteDetailTiles.BASE_LEVEL);
-            AddTile(1, lastUsed: 2, loaded: true, level: SatelliteDetailTiles.BASE_LEVEL);
+            AddTile(0, lastUsed: 1, loaded: true, level: SatelliteTileGrid.BASE_LEVEL);
+            AddTile(1, lastUsed: 2, loaded: true, level: SatelliteTileGrid.BASE_LEVEL);
             AddTile(2, lastUsed: 3, loaded: true);
 
             // Act
@@ -229,10 +128,10 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             Assert.IsEmpty(evictions);
         }
 
-        private static Vector3Int TileId(int i, int level = SatelliteDetailTiles.BASE_LEVEL + 1) =>
+        private static Vector3Int TileId(int i, int level = SatelliteTileGrid.BASE_LEVEL + 1) =>
             new (i, 0, level);
 
-        private void AddTile(int i, int lastUsed, bool loaded = false, int level = SatelliteDetailTiles.BASE_LEVEL + 1)
+        private void AddTile(int i, int lastUsed, bool loaded = false, int level = SatelliteTileGrid.BASE_LEVEL + 1)
         {
             tiles.Add(TileId(i, level), new SatelliteDetailTiles.Tile(view) { LastUsed = lastUsed, Texture = loaded ? loadedTexture : null });
         }

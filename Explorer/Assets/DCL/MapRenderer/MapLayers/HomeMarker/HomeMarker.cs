@@ -50,8 +50,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		public void SetZoom(float baseScale, float baseZoom, float zoom)
 		{
 			currentBaseScale = baseScale;
-			// Keeps its on-screen size at any zoom closer than the base one
-			currentNewScale = zoom / baseZoom * baseScale;
+			currentNewScale = MarkerHelper.ScaleForZoom(baseScale, baseZoom, zoom);
 			markerObject.SetScale(currentNewScale);
 		}
 

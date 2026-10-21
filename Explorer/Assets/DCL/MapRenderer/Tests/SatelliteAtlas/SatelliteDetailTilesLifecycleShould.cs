@@ -2,21 +2,16 @@ using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
-using DCL.Optimization.Hashing;
-using DCL.Utility.Types;
 using DCL.WebRequests;
-using ECS.StreamableLoading.Cache.Disk;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Networking;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
@@ -24,14 +19,12 @@ using Object = UnityEngine.Object;
 namespace DCL.MapRenderer.Tests.SatelliteAtlas
 {
     /// <summary>
-    ///     Drives a <see cref="SatelliteDetailTiles" /> through its load lifecycle with a substituted web request controller, disk cache
-    ///     and culling controller. The manifest publishes section (0, 0) only, so the camera over it shows the level-3 tile (0, 0) and
-    ///     the level-4 tile (0, 0), and a camera over any other section shows nothing.
+    ///     The disk cache holds no tile, so a cache-only load returns nothing. The manifest publishes only section (0, 0).
+    ///     A camera over that section shows the level-3 tile (0, 0) and the level-4 tile (0, 0). A camera over any other section shows nothing.
     /// </summary>
     public class SatelliteDetailTilesLifecycleShould
     {
         private const string BASE_URL = "http://tiles.test";
-        private const string CACHE_EXTENSION = "ktx2";
         private const float BUNDLED_CHUNK_SIZE = 800f;
         private const int RENDER_TEXTURE_SIZE = 1024;
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
@@ -39,9 +32,8 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         /// <summary>Longer than the settle wait, so a refresh that requests nothing has had its chance.</summary>
         private static readonly TimeSpan GRACE = TimeSpan.FromMilliseconds(500);
 
-        private static readonly string LEVEL_3_TILE_URL = TileUrl(0, 0, SatelliteDetailTiles.BASE_LEVEL);
-        private static readonly string LEVEL_4_TILE_URL = TileUrl(0, 0, SatelliteDetailTiles.BASE_LEVEL + 1);
-        private static readonly string FIXTURE_PATH = Path.Combine(Application.dataPath, "DCL/MapRenderer/Tests/SatelliteAtlas/SatelliteTileFixture.bytes");
+        private static readonly string LEVEL_3_TILE_URL = TileUrl(0, 0, SatelliteTileGrid.BASE_LEVEL);
+        private static readonly string LEVEL_4_TILE_URL = TileUrl(0, 0, SatelliteTileGrid.BASE_LEVEL + 1);
 
         // The render texture over this rect gives level 4; the rect lies inside level-4 tile (0, 0), x 0..400 and y -400..0.
         private static readonly Rect IN_VIEW = new (10, -390, 380, 380);
@@ -50,29 +42,26 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         private static readonly Rect OUT_OF_VIEW = new (1610, -390, 380, 380);
 
         private readonly List<string> downloads = new ();
-        private readonly Dictionary<string, Func<UniTask<byte[]>>> responses = new ();
-        private readonly Dictionary<string, Texture2D> decodedTextures = new ();
+        private readonly Dictionary<string, Func<UniTask<Texture2D?>>> responses = new ();
+        private readonly Dictionary<string, Texture2D> loadedTextures = new ();
+        private readonly List<string> cacheOnlyLoads = new ();
         private readonly List<CameraState> cameraStates = new ();
 
-        private byte[] ktx2Tile = null!;
         private IWebRequestController webRequestController = null!;
-        private IDiskCache<byte[]> diskCache = null!;
+        private ISatelliteTileLoader loader = null!;
         private IMapCullingController cullingController = null!;
         private GameObject root = null!;
         private GameObject cameraObject = null!;
         private RenderTexture renderTexture = null!;
         private SatelliteDetailTiles tiles = null!;
         private float clockOffset;
-        private int removedCachedFiles;
 
         [SetUp]
         public void SetUp()
         {
             // A failed tile is reported through ReportHub as an exception log.
             LogAssert.ignoreFailingMessages = true;
-            ktx2Tile = File.ReadAllBytes(FIXTURE_PATH);
             clockOffset = 0f;
-            removedCachedFiles = 0;
 
             webRequestController = Substitute.For<IWebRequestController>();
 
@@ -82,29 +71,22 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
                     Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>>())
                .Returns(UniTask.FromResult(new SatelliteManifest.Dto { sections = new Dictionary<string, string?> { ["0,0"] = "v1" } }));
 
-            webRequestController
-               .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.GetDataCopyOp<GenericGetRequest>, byte[]>(
-                    Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
-                    Arg.Any<GenericDownloadHandlerUtils.GetDataCopyOp<GenericGetRequest>>())
-               .Returns(call =>
-                {
-                    string url = call.Arg<RequestEnvelope<GenericGetRequest, GenericGetArguments>>().CommonArguments.URL;
-                    downloads.Add(url);
-                    return responses.TryGetValue(url, out Func<UniTask<byte[]>>? response) ? response() : UniTask.FromResult(ktx2Tile);
-                });
+            loader = Substitute.For<ISatelliteTileLoader>();
 
-            diskCache = Substitute.For<IDiskCache<byte[]>>();
-            SetDiskCacheContent(Option<byte[]>.None);
+            loader.LoadAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+                  .Returns(call =>
+                   {
+                       var url = call.ArgAt<string>(0);
 
-            diskCache.PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, Arg.Any<byte[]>(), Arg.Any<CancellationToken>())
-                     .Returns(UniTask.FromResult(EnumResult<TaskError>.SuccessResult()));
+                       if (call.ArgAt<bool>(1))
+                       {
+                           cacheOnlyLoads.Add(url);
+                           return UniTask.FromResult<Texture2D?>(null);
+                       }
 
-            diskCache.RemoveAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, Arg.Any<CancellationToken>())
-                     .Returns(_ =>
-                      {
-                          removedCachedFiles++;
-                          return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
-                      });
+                       downloads.Add(url);
+                       return responses.TryGetValue(url, out Func<UniTask<Texture2D?>>? response) ? response() : UniTask.FromResult<Texture2D?>(NewTexture(url));
+                   });
 
             cullingController = Substitute.For<IMapCullingController>();
             cullingController.CameraStates.Returns(cameraStates);
@@ -126,7 +108,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             typeof(AtlasChunk).GetProperty(nameof(AtlasChunk.MainSpriteRenderer))!.SetValue(chunk, template);
             typeof(AtlasChunk).GetProperty(nameof(AtlasChunk.LoadingSpriteRenderer))!.SetValue(chunk, loadingObject.AddComponent<SpriteRenderer>());
 
-            tiles = new SatelliteDetailTiles(BASE_URL, webRequestController, diskCache, cullingController, template, drawOrderOfBaseLevel: 0);
+            tiles = new SatelliteDetailTiles(BASE_URL, webRequestController, loader, cullingController, new SatelliteTileViews(template, drawOrderOfBaseLevel: 0));
             tiles.clockOverride = () => UnityEngine.Time.realtimeSinceStartup + clockOffset;
         }
 
@@ -138,43 +120,42 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             Object.DestroyImmediate(cameraObject);
             Object.DestroyImmediate(renderTexture);
 
-            foreach (Texture2D texture in decodedTextures.Values)
+            foreach (Texture2D texture in loadedTextures.Values)
                 Object.DestroyImmediate(texture);
 
             downloads.Clear();
             responses.Clear();
-            decodedTextures.Clear();
+            loadedTextures.Clear();
+            cacheOnlyLoads.Clear();
             cameraStates.Clear();
             LogAssert.ignoreFailingMessages = false;
         }
 
         [Test]
-        public async Task ShowATileReadFromTheDiskCacheWithoutDownloadingIt()
+        public async Task ShowTheBaseAndTheSharperLevelTilesInView()
         {
-            // Arrange
-            RequireNativeDecoder(requireSampling: true);
-            SetDiskCacheContent(Option<byte[]>.Some(ktx2Tile));
-
             // Act
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => IsShown(LEVEL_4_TILE_URL), "the level-4 tile to show from the disk cache");
+            await UntilAsync(() => IsShown(LEVEL_3_TILE_URL) && IsShown(LEVEL_4_TILE_URL), "the level-3 and level-4 tiles to show");
 
             // Assert
-            Assert.IsEmpty(downloads);
+            Assert.AreEqual(1, DownloadCount(LEVEL_3_TILE_URL));
+            Assert.AreEqual(1, DownloadCount(LEVEL_4_TILE_URL));
         }
 
         [Test]
-        public async Task DownloadAndStoreATileMissingFromTheDiskCache()
+        public async Task ReadTheBaseLevelFromTheDiskCacheOnlyBeforeACameraShowsIt()
         {
             // Arrange
-            tiles.decodeOverride = (_, url) => UniTask.FromResult(NewDecodedTexture(url));
+            MoveCamera(OUT_OF_VIEW);
 
             // Act
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => DownloadCount(LEVEL_3_TILE_URL) == 1 && DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-3 and level-4 tiles in view to download");
+            await UntilAsync(() => cacheOnlyLoads.Contains(LEVEL_3_TILE_URL), "the level-3 tile to be read from the disk cache");
+            await Task.Delay(GRACE);
 
             // Assert
-            await diskCache.Received(2).PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, ktx2Tile, Arg.Any<CancellationToken>());
+            Assert.IsEmpty(downloads);
         }
 
         [Test]
@@ -182,7 +163,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         {
             // Arrange
             UnityWebRequestException notFound = await NotFoundExceptionAsync();
-            responses[LEVEL_4_TILE_URL] = () => UniTask.FromException<byte[]>(notFound);
+            responses[LEVEL_4_TILE_URL] = () => UniTask.FromException<Texture2D?>(notFound);
 
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
             await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to be requested");
@@ -203,7 +184,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         {
             // Arrange
             LogAssert.ignoreFailingMessages = true;
-            responses[LEVEL_4_TILE_URL] = () => UniTask.FromException<byte[]>(new Exception("offline"));
+            responses[LEVEL_4_TILE_URL] = () => UniTask.FromException<Texture2D?>(new Exception("offline"));
 
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
             await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to be requested");
@@ -226,50 +207,23 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         }
 
         [Test]
-        public async Task RemoveACachedFileThatFailsToDecode()
+        public async Task DestroyTheTextureOfATileDroppedWhileLoading()
         {
             // Arrange
-            LogAssert.ignoreFailingMessages = true;
-            RequireNativeDecoder(requireSampling: false);
-            SetDiskCacheContent(Option<byte[]>.Some(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
-
-            // Act
-            tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => removedCachedFiles > 0, "the corrupt file to be removed from the disk cache");
-            await Task.Delay(GRACE);
-
-            // Assert: a failed decode waits like any failure, it doesn't download right away
-            Assert.IsEmpty(downloads);
-            Assert.IsFalse(IsShown(LEVEL_4_TILE_URL));
-        }
-
-        [Test]
-        public async Task DestroyTheTextureOfATileDroppedWhileDecoding()
-        {
-            // Arrange
-            var decoding = new UniTaskCompletionSource<Texture2D>();
-            var decodingStarted = false;
+            var loading = new UniTaskCompletionSource<Texture2D?>();
             var texture = new Texture2D(4, 4);
-
-            tiles.decodeOverride = (_, url) =>
-            {
-                if (url != LEVEL_4_TILE_URL)
-                    return UniTask.FromResult(NewDecodedTexture(url));
-
-                decodingStarted = true;
-                return decoding.Task;
-            };
+            responses[LEVEL_4_TILE_URL] = () => loading.Task;
 
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => decodingStarted, "the level-4 tile to start decoding");
+            await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to start loading");
 
-            // Act: the tile leaves the view while decoding, then its texture arrives
+            // Act: the tile leaves the view while loading, then its texture arrives
             MoveCamera(OUT_OF_VIEW);
-            decoding.TrySetResult(texture);
+            loading.TrySetResult(texture);
             await UntilAsync(() => tiles.ActiveLoads == 0, "the dropped load to finish");
 
             // Assert
-            Assert.IsTrue(texture == null, "The texture decoded for a dropped tile is destroyed");
+            Assert.IsTrue(texture == null, "The texture loaded for a dropped tile is destroyed");
             Assert.IsFalse(IsShown(LEVEL_4_TILE_URL));
         }
 
@@ -277,47 +231,26 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         public async Task ReleaseEveryTileOutOfViewWhenACameraIsReleased()
         {
             // Arrange
-            tiles.decodeOverride = (_, url) => UniTask.FromResult(NewDecodedTexture(url));
-
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
             await UntilAsync(() => IsShown(LEVEL_4_TILE_URL), "the level-4 tile to show");
 
             MoveCamera(OUT_OF_VIEW);
             await Task.Delay(GRACE);
-            Assert.IsFalse(decodedTextures[LEVEL_4_TILE_URL] == null, "A loaded tile out of view stays loaded while the camera is rented");
+            Assert.IsFalse(loadedTextures[LEVEL_4_TILE_URL] == null, "A loaded tile out of view stays loaded while the camera is rented");
 
             // Act
             cameraStates.Clear();
             cullingController.CamerasChanged += Raise.Event<Action>();
 
             // Assert
-            Assert.IsTrue(decodedTextures[LEVEL_4_TILE_URL] == null, "The texture of a tile out of view is destroyed once a camera is released");
+            Assert.IsTrue(loadedTextures[LEVEL_4_TILE_URL] == null, "The texture of a tile out of view is destroyed once a camera is released");
             Assert.IsFalse(IsShown(LEVEL_4_TILE_URL));
-        }
-
-        [Test]
-        public async Task NotStoreADownloadThatFailsToDecode()
-        {
-            // Arrange
-            LogAssert.ignoreFailingMessages = true;
-            tiles.decodeOverride = (_, _) => UniTask.FromException<Texture2D>(new Exception("not a KTX2 file"));
-
-            // Act
-            tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
-            await UntilAsync(() => DownloadCount(LEVEL_4_TILE_URL) == 1, "the level-4 tile to download");
-            await Task.Delay(GRACE);
-
-            // Assert
-            await diskCache.DidNotReceive().PutAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
-            Assert.AreEqual(0, removedCachedFiles, "A downloaded file was never stored, so there is nothing to remove");
         }
 
         [Test]
         public async Task ReleaseTheFinerTilesButKeepTheBaseLevelWhenTheLayerIsHidden()
         {
             // Arrange
-            tiles.decodeOverride = (_, url) => UniTask.FromResult(NewDecodedTexture(url));
-
             tiles.Initialize(Vector2.zero, BUNDLED_CHUNK_SIZE);
             await UntilAsync(() => IsShown(LEVEL_3_TILE_URL) && IsShown(LEVEL_4_TILE_URL), "the level-3 and level-4 tiles to show");
 
@@ -325,7 +258,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             tiles.ReleaseFinerTiles();
 
             // Assert
-            Assert.IsTrue(decodedTextures[LEVEL_4_TILE_URL] == null, "The texture of a finer tile is destroyed once the layer is hidden");
+            Assert.IsTrue(loadedTextures[LEVEL_4_TILE_URL] == null, "The texture of a finer tile is destroyed once the layer is hidden");
             Assert.IsTrue(IsShown(LEVEL_3_TILE_URL));
         }
 
@@ -360,16 +293,6 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
 
         private static string TileUrl(int i, int j, int level) =>
             $"{BASE_URL}/sections/0%2C0/v1/{level}/{i}%2C{j}.ktx2";
-
-        /// <summary>Skips the test where the KTX2 native decoder, or the GPU format it decodes the fixture to, is missing.</summary>
-        private static void RequireNativeDecoder(bool requireSampling)
-        {
-            if (!KtxNativeSupport.IsSupported)
-                Assert.Ignore("The ktx_unity native plugin can't be loaded on this machine");
-
-            if (requireSampling && !SystemInfo.IsFormatSupported(GraphicsFormat.R8G8B8A8_SRGB, GraphicsFormatUsage.Sample))
-                Assert.Ignore("The graphics device can't sample the fixture's format");
-        }
 
         /// <summary>A genuine 404 from a loopback server, as the web request layer raises for a missing tile.</summary>
         private static async Task<UnityWebRequestException> NotFoundExceptionAsync()
@@ -410,16 +333,10 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             }
         }
 
-        private void SetDiskCacheContent(Option<byte[]> content)
-        {
-            diskCache.ContentAsync(Arg.Any<HashKey>(), CACHE_EXTENSION, Arg.Any<CancellationToken>())
-                     .Returns(UniTask.FromResult(EnumResult<Option<byte[]>, TaskError>.SuccessResult(content)));
-        }
-
-        private Texture2D NewDecodedTexture(string url)
+        private Texture2D NewTexture(string url)
         {
             var texture = new Texture2D(4, 4) { name = url };
-            decodedTextures[url] = texture;
+            loadedTextures[url] = texture;
             return texture;
         }
 
@@ -440,7 +357,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
             return count;
         }
 
-        /// <summary>Whether an active view draws a texture decoded from <paramref name="url" />: the decoder names the texture after it.</summary>
+        /// <summary>Whether an active view draws the texture loaded for <paramref name="url" />: the loader names the texture after it.</summary>
         private bool IsShown(string url)
         {
             foreach (AtlasChunk view in root.GetComponentsInChildren<AtlasChunk>())

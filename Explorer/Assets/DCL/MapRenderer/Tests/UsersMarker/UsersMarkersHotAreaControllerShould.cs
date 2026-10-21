@@ -30,6 +30,7 @@ namespace DCL.MapRenderer.Tests.UsersMarker
         {
             parent = new GameObject("hot users markers");
             marker = Substitute.For<IHotUserMarker>();
+            marker.SetScale(Arg.Any<float>()).Returns(marker);
 
             IObjectPool<IHotUserMarker> wrapsPool = Substitute.For<IObjectPool<IHotUserMarker>>();
             wrapsPool.Get().Returns(marker);

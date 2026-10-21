@@ -3,9 +3,6 @@ using System.Threading;
 
 namespace ECS.StreamableLoading.Cache.Disk
 {
-    /// <summary>
-    ///     Stores a byte array as is, for files the consumer decodes itself.
-    /// </summary>
     public class BytesDiskSerializer : IDiskSerializer<byte[], SerializeMemoryIterator<BytesDiskSerializer.State>>
     {
         public readonly struct State
