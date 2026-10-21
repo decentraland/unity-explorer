@@ -75,16 +75,19 @@ namespace DCL.Profiles.Self
                 return Ignored(model, reason);
 
             // A trusted profile outlives a failed read.
-            ProfileKnowledge knowledge = current.Knowledge.Match(
+            (ProfileKnowledge knowledge, ProfileFailure failure) = current.Knowledge.Match(
                 msg.Failure,
-                onUnknown: static failure => ProfileKnowledge.FromFailed(failure),
-                onKnown: static (_, known) => ProfileKnowledge.FromKnown(known),
-                onMissing: static failure => ProfileKnowledge.FromFailed(failure),
-                onFailed: static (failure, previous) => ProfileKnowledge.FromFailed(failure.Following(previous))
+                onUnknown: static failure => Failed(failure),
+                onKnown: static (failure, known) => (ProfileKnowledge.FromKnown(known), failure),
+                onMissing: static failure => Failed(failure),
+                onFailed: static (failure, previous) => Failed(failure.Following(previous))
             );
 
-            return SettleReads(model, current.With(knowledge, ProfileActivity.Idle()), SelfProfileCmd.None());
+            return SettleReads(model, current.With(knowledge, ProfileActivity.Idle()), SelfProfileCmd.FromReportFetchFailure(failure));
         }
+
+        private static (ProfileKnowledge, ProfileFailure) Failed(in ProfileFailure failure) =>
+            (ProfileKnowledge.FromFailed(failure), failure);
 
         private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, in ReadRequest request) =>
             model.Session.Match(

@@ -3,6 +3,7 @@ using DCL.Utility.Types;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
+using Utility.Times;
 
 namespace DCL.Profiles.Tests
 {
@@ -11,7 +12,9 @@ namespace DCL.Profiles.Tests
         private static readonly UserId ALICE = UserId.New("0xAlice").Unwrap();
         private static readonly UserId BOB = UserId.New("0xBob").Unwrap();
 
-        private static readonly ProfileFailure FETCH_FAILURE = new (new TimeoutException("catalyst timed out"));
+        private static readonly UnixTimeMs FAILED_AT = new (10_000);
+
+        private static readonly ProfileFailure FETCH_FAILURE = new (new TimeoutException("catalyst timed out"), FAILED_AT);
         private static readonly Exception DEPLOY_ERROR = new InvalidOperationException("deploy rejected");
         private static readonly RequestId READ = new (7);
         private static readonly RequestId DEPLOY = new (8);
@@ -136,7 +139,7 @@ namespace DCL.Profiles.Tests
             Assert.That(identified.Knowledge.IsFailed(out ProfileFailure failure), Is.True);
             Assert.That(failure, Is.EqualTo(FETCH_FAILURE));
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
-            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReportFetchFailure(cmd, FETCH_FAILURE);
         }
 
         [Test]
@@ -153,7 +156,7 @@ namespace DCL.Profiles.Tests
             Identified identified = AssertIdentified(next);
             AssertKnown(identified.Knowledge, trusted);
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
-            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReportFetchFailure(cmd, FETCH_FAILURE);
         }
 
         [Test]
@@ -521,7 +524,7 @@ namespace DCL.Profiles.Tests
             (SelfProfileModel reverted, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, sent, DEPLOY_ERROR)));
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(reverted, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(reverted, ReadRequested(READ));
 
             // Assert
             Assert.That(AssertIdentified(next).Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
@@ -704,7 +707,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Known(known);
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ));
 
             // Assert
             Assert.That(next.Session, Is.EqualTo(model.Session));
@@ -720,7 +723,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ));
 
             // Assert
             Assert.That(next.Session, Is.EqualTo(model.Session));
@@ -736,7 +739,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Deploying(created, ProfileKnowledge.Missing());
 
             // Act
-            (SelfProfileModel queued, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel queued, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ));
             (SelfProfileModel next, _) = SelfProfileModel.Update(queued, SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(ALICE, created, created)));
 
             // Assert
@@ -753,7 +756,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = SelfProfileModel.NoIdentity();
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ));
 
             // Assert
             Assert.That(next.Session.GetKind(), Is.EqualTo(SelfProfileSession.Kind.NoIdentity));
@@ -768,7 +771,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Fetching();
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -786,7 +789,7 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Fetching();
 
             // Act
-            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, ReadRequested(READ));
 
             // Assert
             Assert.That(next.LastRequest, Is.EqualTo(READ));
@@ -800,13 +803,13 @@ namespace DCL.Profiles.Tests
             SelfProfileModel model = Fetching();
 
             for (var i = 1; i <= RequestIds.CAPACITY; i++)
-                (model, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(new RequestId(i)));
+                (model, _) = SelfProfileModel.Update(model, ReadRequested(new RequestId(i)));
 
             var oldest = new RequestId(1);
             var newest = new RequestId(RequestIds.CAPACITY + 1);
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(newest));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(newest));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -844,13 +847,13 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void RefetchForAReadAfterAFailedFetch()
+        public void RefetchForAReadOnceTheBackOffWindowHasPassed()
         {
             // Arrange
             SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Idle());
 
             // Act
-            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ, FAILED_AT + ProfileFailure.MIN_BACK_OFF_MS));
 
             // Assert
             Identified identified = AssertIdentified(next);
@@ -858,6 +861,110 @@ namespace DCL.Profiles.Tests
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
             Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
             AssertFetch(cmd, ALICE);
+        }
+
+        [Test]
+        public void AnswerAReadWithFetchFailedInsideTheBackOffWindow()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Idle());
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ, FAILED_AT + (ProfileFailure.MIN_BACK_OFF_MS - 1)));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(0));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReadError(next, READ, ProfileReadError.FetchFailed);
+        }
+
+        [Test]
+        public void QueueAReadOnTheFetchInFlightInsideTheBackOffWindow()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Fetching());
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ, FAILED_AT + 1));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Assert.That(next.ReadResults.Contains(READ), Is.False);
+        }
+
+        [Test]
+        public void WidenTheBackOffWindowWhileFetchesKeepFailing()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Fetching());
+            UnixTimeMs secondFailedAt = FAILED_AT + ProfileFailure.MIN_BACK_OFF_MS;
+            var second = new ProfileFailure(new TimeoutException("catalyst timed out again"), secondFailedAt);
+
+            // Act
+            (SelfProfileModel failedTwice, SelfProfileCmd reportCmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, second)));
+            (SelfProfileModel insideWindow, SelfProfileCmd insideCmd) = SelfProfileModel.Update(failedTwice, ReadRequested(READ, secondFailedAt + ((2 * ProfileFailure.MIN_BACK_OFF_MS) - 1)));
+            (_, SelfProfileCmd afterCmd) = SelfProfileModel.Update(failedTwice, ReadRequested(READ, secondFailedAt + (2 * ProfileFailure.MIN_BACK_OFF_MS)));
+
+            // Assert
+            AssertReportFetchFailure(reportCmd, second.Following(FETCH_FAILURE));
+            Assert.That(AssertIdentified(failedTwice).Knowledge.IsFailed(out ProfileFailure failure), Is.True);
+            Assert.That(failure.Exception, Is.SameAs(second.Exception));
+            Assert.That(failure.Streak, Is.EqualTo(2));
+            Assert.That(failure.BackOffMs, Is.EqualTo(2 * ProfileFailure.MIN_BACK_OFF_MS));
+            Assert.That(insideCmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReadError(insideWindow, READ, ProfileReadError.FetchFailed);
+            AssertFetch(afterCmd, ALICE);
+        }
+
+        [TestCase(1, 2_000)]
+        [TestCase(2, 4_000)]
+        [TestCase(5, 32_000)]
+        [TestCase(6, 60_000)]
+        [TestCase(40, 60_000)]
+        public void CapTheBackOffWindow(int streak, long expectedBackOffMs)
+        {
+            // Arrange
+            var failure = new ProfileFailure(FETCH_FAILURE.Exception, FAILED_AT, streak);
+
+            // Assert
+            Assert.That(failure.CalculateBackOffMs(), Is.EqualTo(expectedBackOffMs));
+            Assert.That(failure.IsBackingOffAt(FAILED_AT + (expectedBackOffMs - 1)), Is.True);
+            Assert.That(failure.IsBackingOffAt(FAILED_AT + expectedBackOffMs), Is.False);
+        }
+
+        [Test]
+        public void StartANewStreakWhenAFetchFailsAfterAMissingProfile()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Fetching());
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).Knowledge.IsFailed(out ProfileFailure failure), Is.True);
+            Assert.That(failure.Streak, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ForgetTheBackOffWhenIdentitySwitches()
+        {
+            // Arrange
+            var streak = new ProfileFailure(FETCH_FAILURE.Exception, FAILED_AT, 4);
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(streak), ProfileActivity.Idle());
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromIdentityChanged(BOB));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Address, Is.EqualTo(BOB));
+            Assert.That(identified.Knowledge.GetKind(), Is.EqualTo(ProfileKnowledge.Kind.Unknown));
         }
 
         [Test]
@@ -888,7 +995,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(AssertIdentified(next).PendingReads.Count, Is.EqualTo(0));
-            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            AssertReportFetchFailure(cmd, FETCH_FAILURE);
             AssertReadError(next, READ, ProfileReadError.FetchFailed);
         }
 
@@ -944,7 +1051,7 @@ namespace DCL.Profiles.Tests
         public void DropAReadResultWhenTheRequestIsClosed()
         {
             // Arrange
-            (SelfProfileModel answered, _) = SelfProfileModel.Update(Known(NewProfile(3)), SelfProfileMsg.FromProfileReadRequested(READ));
+            (SelfProfileModel answered, _) = SelfProfileModel.Update(Known(NewProfile(3)), ReadRequested(READ));
 
             // Act
             (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(answered, SelfProfileMsg.FromRequestClosed(READ));
@@ -1068,6 +1175,12 @@ namespace DCL.Profiles.Tests
             return SelfProfileModel.FromIdentified(identified.WithPendingReads(identified.PendingReads.Add(READ)));
         }
 
+        private static SelfProfileMsg ReadRequested(RequestId id) =>
+            ReadRequested(id, FAILED_AT + ProfileFailure.MAX_BACK_OFF_MS);
+
+        private static SelfProfileMsg ReadRequested(RequestId id, UnixTimeMs at) =>
+            SelfProfileMsg.FromProfileReadRequested(new ReadRequest(id, at));
+
         private static SelfProfileModel Model(ProfileKnowledge knowledge, ProfileActivity activity) =>
             SelfProfileModel.FromIdentified(new Identified(ALICE, knowledge, activity));
 
@@ -1136,6 +1249,12 @@ namespace DCL.Profiles.Tests
         {
             Assert.That(cmd.IsFetch(out UserId? actual), Is.True, $"expected Fetch, got {cmd}");
             Assert.That(actual, Is.EqualTo(address));
+        }
+
+        private static void AssertReportFetchFailure(in SelfProfileCmd cmd, in ProfileFailure expected)
+        {
+            Assert.That(cmd.IsReportFetchFailure(out ProfileFailure actual), Is.True, $"expected ReportFetchFailure, got {cmd}");
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
         private static void AssertPublish(in SelfProfileCmd cmd, Profile expected)
