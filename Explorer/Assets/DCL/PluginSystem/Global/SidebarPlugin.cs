@@ -63,7 +63,6 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly SelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
         private readonly ChatEventBus chatEventBus;
@@ -79,7 +78,6 @@ namespace DCL.PluginSystem.Global
         private NotificationsPanelController? notificationsPanelController;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
         private ProfileMenuController? profileMenuController;
-        private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
@@ -108,7 +106,6 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             SelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
@@ -137,7 +134,6 @@ namespace DCL.PluginSystem.Global
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
@@ -160,7 +156,6 @@ namespace DCL.PluginSystem.Global
             notificationsPanelController?.Dispose();
             profileButtonPresenter?.Dispose();
             profileMenuController?.Dispose();
-            skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
@@ -186,7 +181,6 @@ namespace DCL.PluginSystem.Global
             notificationsPanelController = new NotificationsPanelController(() => mainUiView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUiView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUiView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
-            skyboxMenuController = new SkyboxMenuController(() => mainUiView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUiView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUiView.SidebarView.NearbyVoiceWidget);
@@ -224,7 +218,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(profileMenuController);
-            mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
@@ -241,7 +234,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
-            [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
         }
 

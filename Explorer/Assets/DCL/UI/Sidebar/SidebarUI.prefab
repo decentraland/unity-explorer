@@ -130,7 +130,6 @@ MonoBehaviour:
   <MarketplaceCreditsButtonAnimator>k__BackingField: {fileID: 8553432859607388883}
   <MarketplaceCreditsButtonAlertMark>k__BackingField: {fileID: 8415137157935535153}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
-  <SkyboxMenuView>k__BackingField: {fileID: 8821864330962428420}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
   <HelpMenu>k__BackingField: {fileID: 8797854463136211626}

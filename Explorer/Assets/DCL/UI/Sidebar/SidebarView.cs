@@ -126,7 +126,6 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Pending Port")]
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
-        [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; } = null!;
         [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
         [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
         [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
