@@ -21,10 +21,6 @@ namespace DCL.Navmap
     {
         public readonly bool IsFromSearchResults;
         public readonly Vector2Int? OriginalParcel;
-
-        /// <summary>
-        ///     When true, jumping in lands on <see cref="OriginalParcel" /> itself instead of the place's base parcel.
-        /// </summary>
         public readonly bool LandOnOriginalParcel;
 
         public AdditionalParams(bool isFromSearchResults, Vector2Int? originalParcel = null, bool landOnOriginalParcel = false)

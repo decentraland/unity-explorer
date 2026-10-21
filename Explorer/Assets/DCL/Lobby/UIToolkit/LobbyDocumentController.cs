@@ -585,7 +585,7 @@ namespace DCL.Lobby
                 PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
                 RequestClose();
             }
-            // The saved home is a parcel the user stood on, so the jump lands on it rather than on its scene's spawn point
+            // A home is the exact parcel the user stood on, not a place
             else if (startParcel.Source == StartParcelSource.Home && landingDestination is { WorldName: null } home)
             {
                 PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);

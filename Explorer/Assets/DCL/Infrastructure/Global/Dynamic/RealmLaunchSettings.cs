@@ -49,8 +49,6 @@ namespace Global.Dynamic
         private bool isLocalSceneDevelopmentRealm;
         internal string? spawnPointName;
         internal StartParcelSource startParcelSource;
-
-        // A saved home is a parcel the user stood on, so the startup teleport lands on it rather than on its scene's spawn point
         internal bool landOnStartParcel;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
@@ -237,6 +235,8 @@ namespace Global.Dynamic
                 {
                     targetScene = homeParcel;
                     startParcelSource = StartParcelSource.Home;
+
+                    // A home is the exact parcel the user stood on, not a place
                     landOnStartParcel = true;
                     return;
                 }

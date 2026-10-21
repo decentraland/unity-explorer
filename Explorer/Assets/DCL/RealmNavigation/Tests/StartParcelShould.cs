@@ -220,7 +220,7 @@ namespace DCL.RealmNavigation.Tests
         [Test]
         public void DropTheLandOnParcelRequestWhenARealmIsAssigned()
         {
-            // Arrange: a realm pick lands on the realm's own spawn
+            // Arrange
             var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
 
             // Act

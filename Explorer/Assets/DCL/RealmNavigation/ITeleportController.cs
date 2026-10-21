@@ -67,9 +67,6 @@ namespace DCL.RealmNavigation
 
         public string? SpawnPointName { get; private set; }
 
-        /// <summary>
-        ///     When true, the startup teleport lands on the parcel itself instead of the spawn point of the scene that contains it.
-        /// </summary>
         public bool LandOnParcel { get; private set; }
 
         public StartParcelSource Source { get; }

@@ -184,7 +184,7 @@ namespace DCL.Chat.Commands
 
 
         /// <summary>
-        /// Teleports the player to a parcel. With <paramref name="landOnParcel" /> the player lands on the parcel itself instead of the spawn point of the scene that contains it.
+        /// Teleports the player to a parcel.
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null, bool landOnParcel = false)
         {

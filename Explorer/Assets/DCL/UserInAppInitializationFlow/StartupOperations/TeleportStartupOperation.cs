@@ -42,7 +42,7 @@ namespace DCL.UserInAppInitializationFlow
             string? spawnPointName = startParcel.SpawnPointName;
             Vector2Int destination = await ResolveDestinationAsync(ct);
 
-            // Only the start parcel itself carries the land-on-parcel request; a manifest or local-scene destination lands on its spawn point
+            // A manifest or local-scene destination is not the parcel the request was made for
             bool landOnParcel = startParcel.LandOnParcel && destination == startParcel.Peek();
 
             // Consumed on every path: a consumed start parcel is the mark that the startup teleport happened
