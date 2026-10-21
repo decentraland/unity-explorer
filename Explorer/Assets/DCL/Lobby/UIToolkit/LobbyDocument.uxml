@@ -169,9 +169,9 @@
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
                         <ui:Label name="Title" text="✨ Discover and Join Communities ✨" class="lobby-empty-banner__title lobby-empty-banner__title--nowrap" picking-mode="Ignore" />
                         <ui:VisualElement name="Tags" class="lobby-empty-banner__tags" picking-mode="Ignore">
-                            <ui:Label text="💬 Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
-                            <ui:Label text="🎯 Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
-                            <ui:Label text="🔔 Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="💬  Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🎯  Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🔔  Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -186,9 +186,9 @@
                     <ui:VisualElement name="Text" class="lobby-empty-banner__text" picking-mode="Ignore">
                         <ui:Label name="Title" text="✨ Discover and Join Communities ✨" class="lobby-empty-banner__title lobby-empty-banner__title--nowrap" picking-mode="Ignore" />
                         <ui:VisualElement name="Tags" class="lobby-empty-banner__tags" picking-mode="Ignore">
-                            <ui:Label text="💬 Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
-                            <ui:Label text="🎯 Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
-                            <ui:Label text="🔔 Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="💬  Chat in a shared channel" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🎯  Connect over shared interests" class="lobby-empty-banner__tag" picking-mode="Ignore" />
+                            <ui:Label text="🔔  Get notified about community events" class="lobby-empty-banner__tag" picking-mode="Ignore" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
