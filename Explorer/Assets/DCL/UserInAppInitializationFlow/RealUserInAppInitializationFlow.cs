@@ -177,7 +177,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 // Nothing has been teleported or loaded yet: the lobby holds the flow until the user jumps in
-                if (ShouldShowStartupLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), appArgs, startParcel, parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
+                if (ShouldShowStartupLobby(FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby), parameters.ShowAuthentication, appArgs, startParcel, parameters.LoadSource) && !await WaitForLobbyJumpInAsync(ct))
                     return;
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
@@ -272,8 +272,9 @@ namespace DCL.UserInAppInitializationFlow
             while (!result.Success && parameters.ShowAuthentication);
         }
 
-        internal static bool ShouldShowStartupLobby(bool lobbyEnabled, IAppArgs appArgs, StartParcel startParcel, IUserInAppInitializationFlow.LoadSource loadSource) =>
+        internal static bool ShouldShowStartupLobby(bool lobbyEnabled, bool showAuthentication, IAppArgs appArgs, StartParcel startParcel, IUserInAppInitializationFlow.LoadSource loadSource) =>
             lobbyEnabled
+            && showAuthentication
             && loadSource != IUserInAppInitializationFlow.LoadSource.Recover
             && !LandsAtLaunchDestination(appArgs, loadSource)
             && !startParcel.JumpInRequested
