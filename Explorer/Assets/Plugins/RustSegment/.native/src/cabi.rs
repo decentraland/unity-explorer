@@ -3,8 +3,8 @@ use std::ffi::c_char;
 use crate::{
     operations::{as_str, user_from},
     server::SegmentServer,
-    FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, INVALID_OPERATION_HANDLE_ID,
-    SEGMENT_SERVER,
+    FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, FfiHealthCallbackFn, OperationHandleId,
+    INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
 };
 
 /// # Safety
@@ -18,6 +18,7 @@ pub unsafe extern "C" fn segment_server_initialize(
     segment_api_host: *const c_char,
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
+    health_fn: Option<FfiHealthCallbackFn>,
 ) -> bool {
     std::panic::set_hook(Box::new(|info| {
         eprintln!("PANIC: {info}");
@@ -35,8 +36,11 @@ pub unsafe extern "C" fn segment_server_initialize(
             queue_count_limit,
             write_key,
             api_host,
-            callback_fn,
-            error_fn,
+            FfiCallbacks {
+                callback_fn,
+                error_fn,
+                health_fn,
+            },
         )
     })
     .unwrap_or_else(|err| {

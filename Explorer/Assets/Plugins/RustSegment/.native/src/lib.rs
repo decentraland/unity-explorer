@@ -3,6 +3,7 @@ use std::os::raw::c_char;
 
 pub mod cabi;
 pub mod operations;
+pub mod resilient_queue;
 pub mod server;
 
 pub type OperationHandleId = u64;
@@ -25,6 +26,39 @@ pub type FfiCallbackFn = unsafe extern "C" fn(OperationHandleId, Response);
 /// # SAFTEY: The "C" callback must be threadsafe and not block
 pub type FfiErrorCallbackFn = unsafe extern "C" fn(msg: *const c_char);
 
+/// A change in how the queue keeps or sends events. The values are part of the C ABI.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QueueHealthCode {
+    /// Another process owns the queue file; the events of this process stay in memory.
+    OwnedByAnotherInstance = 1,
+    /// The queue file was corrupt and has been replaced by an empty one.
+    Recreated = 2,
+    /// The queue file is given up for the session: the disk is full.
+    DegradedDiskFull = 3,
+    /// The queue file is given up for the session: it cannot be written.
+    DegradedReadOnly = 4,
+    /// The queue file is given up for the session: the disk failed.
+    DegradedIoError = 5,
+    /// The queue file is given up for the session: the OS refused access.
+    DegradedPermissionDenied = 6,
+    /// The queue file is given up for the session: it cannot be opened.
+    DegradedCannotOpen = 7,
+    /// The queue file is given up for the session: it was corrupt again or could not be recreated.
+    DegradedCorrupt = 8,
+}
+
+/// # SAFTEY: The "C" callback must be threadsafe and not block
+pub type FfiHealthCallbackFn = unsafe extern "C" fn(QueueHealthCode);
+
+/// The foreign functions the server reports through.
+#[derive(Clone, Copy)]
+pub struct FfiCallbacks {
+    pub callback_fn: FfiCallbackFn,
+    pub error_fn: Option<FfiErrorCallbackFn>,
+    pub health_fn: Option<FfiHealthCallbackFn>,
+}
+
 lazy_static! {
     pub static ref SEGMENT_SERVER: server::Server = server::Server::default();
 }
@@ -46,7 +80,17 @@ mod tests {
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();
         let api_host = std::env::var("SEGMENT_API_HOST").unwrap();
 
-        SEGMENT_SERVER.initialize(persistent_path, 100, write_key, api_host, test_callback, None);
+        SEGMENT_SERVER.initialize(
+            persistent_path,
+            100,
+            write_key,
+            api_host,
+            FfiCallbacks {
+                callback_fn: test_callback,
+                error_fn: None,
+                health_fn: None,
+            },
+        );
         SEGMENT_SERVER.try_execute(|segment, id| {
             SegmentServer::enqueue_track(
                 segment.clone(),

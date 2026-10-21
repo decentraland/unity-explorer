@@ -87,7 +87,8 @@ bool segment_server_initialize(
     const char* segment_write_key,
     const char* segment_api_host,
     FfiCallbackFn callback_fn,
-    FfiErrorCallbackFn error_fn
+    FfiErrorCallbackFn error_fn,
+    FfiHealthCallbackFn health_fn
 );
 ```
 
@@ -97,6 +98,7 @@ Notes:
 * All pointer arguments must remain valid for the duration of the call.
 * `segment_api_host` is the Tracking API origin with no path: the client appends `/v1/batch`, `/v1/track` and the other endpoint paths itself.
 * Callbacks must be thread-safe and non-blocking.
+* `queue_file_path` has one owner: the file is opened in exclusive locking mode, so a second process of the same user keeps its events in memory for its session and is told so through `health_fn`.
 
 ---
 
@@ -114,6 +116,27 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
+### Error channel
+
+`FfiErrorCallbackFn` receives genuine faults only: an operation that failed for a reason that is not an environment condition, a queued row the API can never take, a row that could not be read. Environment conditions arrive as health codes.
+
+### Health codes
+
+Each change in how the queue keeps its events is reported once through `FfiHealthCallbackFn`:
+
+| Code | Name | Meaning |
+|---|---|---|
+| 1 | `OwnedByAnotherInstance` | Another process owns the queue file; the events of this process stay in memory. |
+| 2 | `Recreated` | The queue file was corrupt and has been replaced by an empty one. |
+| 3 | `DegradedDiskFull` | The queue file is given up for the session: the disk is full. |
+| 4 | `DegradedReadOnly` | The queue file is given up for the session: it cannot be written. |
+| 5 | `DegradedIoError` | The queue file is given up for the session: the disk failed. |
+| 6 | `DegradedPermissionDenied` | The queue file is given up for the session: the OS refused access. |
+| 7 | `DegradedCannotOpen` | The queue file is given up for the session: it cannot be opened. |
+| 8 | `DegradedCorrupt` | The queue file is given up for the session: it was corrupt again or could not be recreated. |
+
+A send that fails on the network is retried with a delay that doubles up to 60 s and is not reported.
+
 ---
 
 ## Shutdown / Disposal Contract
@@ -130,7 +153,7 @@ During application shutdown or disposal:
 
 ## Testing
 
-`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
+`cargo test` runs the unit tests (disk-full response mapping, health code mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
 ```sh
 SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... SEGMENT_API_HOST=... cargo test -- --ignored
 ````

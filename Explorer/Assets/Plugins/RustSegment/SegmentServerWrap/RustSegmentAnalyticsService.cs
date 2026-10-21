@@ -33,8 +33,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
-        // nullable service
-        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private static readonly Mutex<RustSegmentAnalyticsService?> CURRENT = new (null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
 
         private readonly string anonId;
@@ -50,15 +49,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
-        // temportal sentry budget fix. TODO remove once the core issue solved
-        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
-
         private readonly IEventBus? eventBus;
 
         public RustSegmentAnalyticsService(string writerKey, string apiHost, string? anonId, IEventBus? eventBus = null)
         {
             this.eventBus = eventBus;
-            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -83,7 +79,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
             using var mApiHost = new MarshaledString(apiHost);
-            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback);
+            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback, HealthCallback);
 
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
@@ -99,7 +95,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             while (cts.IsCancellationRequested == false)
             {
-                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
+                int result = NativeMethods.SegmentServerPumpNextEvent();
                 if (result > 0) continue; // instantly jump to new iteration;
                 await UniTask.Delay(PUMP_DELAY);
             }
@@ -110,7 +106,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (publicLock)
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 cancellationTokenSource.Cancel();
                 cancellationTokenSource.Dispose();
@@ -232,27 +228,56 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
+        /// <summary>Receives genuine faults only: environment conditions arrive through <see cref="HealthCallback" />.</summary>
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiErrorCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
             try
             {
-                const string ONCE_PATTERN = "(will retry)";
-
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
-                bool isCaught = marshaled.Contains(ONCE_PATTERN);
-
-                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
-                {
-                    // Don't log if already was
-                    return;
-                }
-
                 ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+            }
+            catch
+            {
+                // Ignore to avoid possibility of double exception
+            }
+        }
 
-                if (isCaught)
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiHealthCallback))]
+        private static void HealthCallback(NativeMethods.QueueHealth health)
+        {
+            try
+            {
+                switch (health)
                 {
-                    ONCE_PATTERN_ALREADY_CAUGHT = true;
+                    case NativeMethods.QueueHealth.OwnedByAnotherInstance:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is owned by another running instance: the events of this session are kept in memory only");
+                        break;
+                    case NativeMethods.QueueHealth.Recreated:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file was corrupt and has been recreated empty");
+                        break;
+                    case NativeMethods.QueueHealth.DegradedDiskFull:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk is full");
+                        PublishDiskFullDetected();
+                        break;
+                    case NativeMethods.QueueHealth.DegradedReadOnly:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be written");
+                        break;
+                    case NativeMethods.QueueHealth.DegradedIoError:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the disk failed");
+                        break;
+                    case NativeMethods.QueueHealth.DegradedPermissionDenied:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: the OS refused access");
+                        break;
+                    case NativeMethods.QueueHealth.DegradedCannotOpen:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it cannot be opened");
+                        break;
+                    case NativeMethods.QueueHealth.DegradedCorrupt:
+                        ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment queue file is given up for this session: it was corrupt again or could not be recreated");
+                        break;
+                    default:
+                        ReportHub.LogError(ReportCategory.ANALYTICS, $"Segment reported an unknown queue health code: {(byte)health}");
+                        break;
                 }
             }
             catch
@@ -261,12 +286,21 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
+        private static void PublishDiskFullDetected()
+        {
+            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+
+            if (instanceGuard.Value == null) return;
+
+            instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
+        }
+
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
             try
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 if (instanceGuard.Value == null) return;
 

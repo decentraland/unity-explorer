@@ -19,8 +19,39 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiCallback(ulong operationId, Response responseCode);
 
+        /// <summary>A change in how the native queue keeps or sends events. The values are part of the C ABI.</summary>
+        internal enum QueueHealth : byte
+        {
+            /// <summary>Another process owns the queue file; the events of this process stay in memory.</summary>
+            OwnedByAnotherInstance = 1,
+
+            /// <summary>The queue file was corrupt and has been replaced by an empty one.</summary>
+            Recreated = 2,
+
+            /// <summary>The queue file is given up for the session: the disk is full.</summary>
+            DegradedDiskFull = 3,
+
+            /// <summary>The queue file is given up for the session: it cannot be written.</summary>
+            DegradedReadOnly = 4,
+
+            /// <summary>The queue file is given up for the session: the disk failed.</summary>
+            DegradedIoError = 5,
+
+            /// <summary>The queue file is given up for the session: the OS refused access.</summary>
+            DegradedPermissionDenied = 6,
+
+            /// <summary>The queue file is given up for the session: it cannot be opened.</summary>
+            DegradedCannotOpen = 7,
+
+            /// <summary>The queue file is given up for the session: it was corrupt again or could not be recreated.</summary>
+            DegradedCorrupt = 8,
+        }
+
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
         internal delegate void SegmentFfiErrorCallback(IntPtr msg);
+
+        [UnmanagedFunctionPointer(CALLING_CONVENTION)]
+        internal delegate void SegmentFfiHealthCallback(QueueHealth health);
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_initialize")]
         internal static extern bool SegmentServerInitialize(
@@ -29,7 +60,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
             IntPtr segmentWriteKey,
             IntPtr segmentApiHost,
             SegmentFfiCallback callback,
-            SegmentFfiErrorCallback errorCallback
+            SegmentFfiErrorCallback errorCallback,
+            SegmentFfiHealthCallback healthCallback
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]
@@ -62,7 +94,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         internal static extern ulong SegmentServerFlush();
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_pump_next_event")]
-        internal static extern Int32 SegmentServerPumpNextEvent(); // 1 - pumped, 0 - nothing
+        internal static extern int SegmentServerPumpNextEvent(); // 1 - pumped, 0 - nothing
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_dispose")]
         internal static extern bool SegmentServerDispose();
