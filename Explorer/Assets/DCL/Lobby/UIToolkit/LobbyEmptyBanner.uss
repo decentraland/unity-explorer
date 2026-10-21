@@ -199,6 +199,11 @@
     font-size: 16px;
 }
 
+/* The one-line communities title has 285px beside the illustration, which its 16px run overshoots and the ellipsis cuts */
+.lobby__widget--narrow .lobby-empty-banner__title--nowrap {
+    font-size: 14px;
+}
+
 .lobby__widget--narrow .lobby-empty-banner__body {
     font-size: 13px;
 }
