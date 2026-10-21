@@ -147,7 +147,8 @@ namespace Global.AppArgs
             AppArgsFlags.MCP_PORT,
 
             // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-            // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
+            // embedded abgen sidecar instead of raw GLTFs (the default; the link can also opt out with
+            // local-ab=false). A pure boolean — the sidecar reads the scene through
             // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
             // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
             // point asset conversion at the realm the link already targets.

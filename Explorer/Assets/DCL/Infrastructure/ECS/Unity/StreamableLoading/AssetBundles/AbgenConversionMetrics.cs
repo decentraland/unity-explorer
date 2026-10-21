@@ -46,6 +46,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private int version;
 
         private bool panelOpenRequested;
+        private string? rawGltfFallbackReason;
 
         private WarmUpStage warmUpStage;
         private string? warmUpSceneId;
@@ -153,6 +154,35 @@ namespace ECS.StreamableLoading.AssetBundles
                 lock (gate) { return warmUpTotal; }
             }
         }
+
+        /// <summary>
+        ///     Why the scene loads raw GLTFs instead of local asset bundles, or null while bundles are the
+        ///     source. Set by whichever step gave up — the binary install, the server launch, the scene's
+        ///     manifest fetch, or the server dying mid-session — and kept for the session: the first reason wins.
+        /// </summary>
+        public string? RawGltfFallbackReason
+        {
+            get
+            {
+                lock (gate) { return rawGltfFallbackReason; }
+            }
+        }
+
+        /// <summary>Records the degrade to raw GLTFs, adds it as a row, and asks for the panel so the verdict is seen.</summary>
+        public void OnRawGltfFallback(string reason)
+        {
+            lock (gate)
+            {
+                rawGltfFallbackReason ??= reason;
+                panelOpenRequested = true;
+                version++;
+            }
+
+            OnMilestone($"loading raw GLTFs — {reason}");
+        }
+
+        public void OnSceneManifestUnavailable() =>
+            OnRawGltfFallback("the scene's manifest could not be fetched from the local asset-bundle server");
 
         /// <summary>The server's authoritative converted/planned counters for the running whole-scene build.</summary>
         public void OnWarmUpProgress(int done, int total)

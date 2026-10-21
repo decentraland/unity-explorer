@@ -111,7 +111,9 @@ namespace DCL.PluginSystem.World
                 });
 
             CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+            // A bundle the local JIT converter could not serve is loaded as the raw file instead of failing the container.
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget,
+                rawGltfFallback: localSceneDevelopment && useLocalAssetBundles);
 
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);

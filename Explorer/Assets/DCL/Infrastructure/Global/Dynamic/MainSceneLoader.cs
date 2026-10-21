@@ -342,10 +342,11 @@ namespace Global.Dynamic
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
 
-            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
-            // local scene and read-throughs everything else from production). Brought up to health serially,
-            // before the URL sources are built, so the override is seeded only when the server is actually
-            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
+            // Local asset bundles (the local-scene-development default): the embedded abgen JIT server becomes
+            // the optimized-assets source (it serves the local scene and read-throughs everything else from
+            // production). Brought up to health serially, before the URL sources are built, so the override is
+            // seeded only when the server is actually serving; the whole-scene warm-up continues in the
+            // background and realm loading holds on it below.
             string? localAbBaseUrl = null;
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
@@ -361,6 +362,12 @@ namespace Global.Dynamic
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
+                else
+
+                    // No server to answer bundle requests: everything built from here on (manifest lane, GLTF
+                    // container loading) is wired as a session launched without local asset bundles, so the
+                    // scene loads raw GLTFs straight away instead of requesting bundles only the sidecar could serve.
+                    launchSettings.useLocalAssetBundles = false;
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
