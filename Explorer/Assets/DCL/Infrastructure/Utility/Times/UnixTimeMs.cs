@@ -20,6 +20,9 @@ namespace Utility.Times
         public static UnixTimeMs operator +(UnixTimeMs time, long milliseconds) =>
             new (time.Value + milliseconds);
 
+        public static UnixTimeMs operator -(UnixTimeMs time, long milliseconds) =>
+            new (time.Value - milliseconds);
+
         public static bool operator ==(UnixTimeMs left, UnixTimeMs right) =>
             left.Value == right.Value;
 
@@ -36,6 +39,6 @@ namespace Utility.Times
             Value.GetHashCode();
 
         public override string ToString() =>
-            $"{Value} ms";
+            DateTimeOffset.FromUnixTimeMilliseconds(Value).ToString("O");
     }
 }

@@ -121,11 +121,11 @@ namespace DCL.Profiles.Self
                 if (!realmData.Configured)
                     await UniTask.WaitUntil(realmData, static realm => realm.Configured, cancellationToken: ct);
 
-                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
+                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound, which is where it is reported.
                 // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
                 Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
                     getFromCacheIfPossible: false,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
 
                 if (profile == null)
                 {

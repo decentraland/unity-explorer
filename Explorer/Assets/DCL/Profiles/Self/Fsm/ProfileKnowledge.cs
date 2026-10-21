@@ -35,8 +35,9 @@ namespace DCL.Profiles.Self
             return Math.Min(backOff, MAX_BACK_OFF_MS);
         }
 
+        /// <summary>The magnitude is compared, so a wall clock set back past the window ends it instead of stalling it.</summary>
         public bool IsBackingOffAt(UnixTimeMs now) =>
-            now - FailedAt < CalculateBackOffMs();
+            Math.Abs(now - FailedAt) < CalculateBackOffMs();
 
         public ProfileFailure Following(in ProfileFailure previous) =>
             new (Exception, FailedAt, previous.Streak + 1);

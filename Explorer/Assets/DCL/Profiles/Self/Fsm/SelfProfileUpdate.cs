@@ -71,8 +71,9 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnFetchFailed(in SelfProfileModel model, in FetchFailed msg)
         {
+            // A stale failure changes nothing, but its exception is still reported.
             if (StaleFetchReason(model, msg.Address, out Identified current) is { } reason)
-                return Ignored(model, reason);
+                return (model, Then(SelfProfileCmd.FromIgnore(reason), SelfProfileCmd.FromReportFetchFailure(msg.Failure)));
 
             // A trusted profile outlives a failed read.
             (ProfileKnowledge knowledge, ProfileFailure failure) = current.Knowledge.Match(

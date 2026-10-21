@@ -168,7 +168,17 @@ namespace DCL.Profiles.Tests
             // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(BOB, NewProfile(1))));
             AssertUnchanged(model, SelfProfileMsg.FromFetchNotFound(BOB));
-            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(BOB, FETCH_FAILURE)));
+            AssertStaleFailureReported(model, BOB);
+        }
+
+        [Test]
+        public void ReportAFetchFailureOfTheIdentityBefore()
+        {
+            // Arrange
+            (SelfProfileModel switched, _) = SelfProfileModel.Update(Fetching(), SelfProfileMsg.FromIdentityChanged(BOB));
+
+            // Act & Assert
+            AssertStaleFailureReported(switched, ALICE);
         }
 
         [Test]
@@ -180,7 +190,7 @@ namespace DCL.Profiles.Tests
             // Act & Assert
             AssertUnchanged(model, SelfProfileMsg.FromFetchSucceeded(new FetchSucceeded(ALICE, NewProfile(1))));
             AssertUnchanged(model, SelfProfileMsg.FromFetchNotFound(ALICE));
-            AssertUnchanged(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
+            AssertStaleFailureReported(model, ALICE);
         }
 
         [Test]
@@ -898,6 +908,47 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void QueueAReadOnTheDeployInFlightInsideTheBackOffWindow()
+        {
+            // Arrange
+            SelfProfileModel model = Deploying(NewProfile(1), ProfileKnowledge.FromFailed(FETCH_FAILURE));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ, FAILED_AT + 1));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            AssertDeploying(identified.Activity);
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
+            Assert.That(cmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
+            Assert.That(next.ReadResults.Contains(READ), Is.False);
+        }
+
+        [Test]
+        public void KeepTheBackOffWhenADeployStartedFromAFailedFetchFails()
+        {
+            // Arrange
+            var streak = new ProfileFailure(FETCH_FAILURE.Exception, FAILED_AT, 3);
+            Profile sent = NewProfile(1);
+            SelfProfileModel model = Deploying(sent, ProfileKnowledge.FromFailed(streak));
+
+            // Act
+            (SelfProfileModel next, _) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployFailed(new DeployFailed(ALICE, sent, DEPLOY_ERROR)));
+
+            // Assert
+            Assert.That(AssertIdentified(next).Knowledge.IsFailed(out ProfileFailure failure), Is.True);
+            Assert.That(failure, Is.EqualTo(streak));
+        }
+
+        [Test]
+        public void EndTheBackOffWhenTheClockIsSetBackPastTheWindow()
+        {
+            // Assert
+            Assert.That(FETCH_FAILURE.IsBackingOffAt(FAILED_AT - 1), Is.True);
+            Assert.That(FETCH_FAILURE.IsBackingOffAt(FAILED_AT - ProfileFailure.MIN_BACK_OFF_MS), Is.False);
+        }
+
+        [Test]
         public void WidenTheBackOffWindowWhileFetchesKeepFailing()
         {
             // Arrange
@@ -1210,6 +1261,18 @@ namespace DCL.Profiles.Tests
             Assert.That(next, Is.EqualTo(model), $"{msg} should not change the model");
             Assert.That(cmd.IsIgnore(out string? reason), Is.True, $"{msg} should be ignored, got {cmd}");
             Assert.That(reason, Is.Not.Empty);
+        }
+
+        /// <summary>A fetch failure that no longer applies leaves the model alone and is still reported.</summary>
+        private static void AssertStaleFailureReported(in SelfProfileModel model, UserId address)
+        {
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(address, FETCH_FAILURE)));
+
+            Assert.That(next, Is.EqualTo(model), "a stale failure should not change the model");
+            SelfProfileCmd[] batch = AssertBatch(cmd, 2);
+            Assert.That(batch[0].IsIgnore(out string? reason), Is.True, $"expected Ignore, got {batch[0]}");
+            Assert.That(reason, Is.Not.Empty);
+            AssertReportFetchFailure(batch[1], FETCH_FAILURE);
         }
 
         private static Identified AssertIdentified(in SelfProfileModel model)

@@ -115,7 +115,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             profileRepository.Received(1).GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
-                IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
         }
 
         [Test]
@@ -689,7 +689,7 @@ namespace DCL.Profiles.Tests
             {
                 equippedWearables.Clear();
                 profileRepository.GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
-                    IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+                    IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
             });
 
             Assert.That(SingleSent().IsFetchSucceeded(out _), Is.True);

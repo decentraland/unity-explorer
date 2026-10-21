@@ -40,8 +40,8 @@ namespace DCL.Profiles.Self
     ///     Intents the self-profile update emits for the executor. <c>None</c> = nothing to do; <c>Ignore</c> = the message did not
     ///     apply, the payload says why; <c>ResetLocalState</c> = drop equipped wearables, emotes and owned-NFT registries;
     ///     <c>Fetch</c> = read the profile of the address; <c>Publish</c> = make the profile the local truth;
-    ///     <c>Deploy</c> = send the profile to the catalyst and re-read it; <c>ReportFetchFailure</c> = log the failure, as an exception
-    ///     for the first of a streak and as a warning for its repeats; <c>Batch</c> = perform the commands in order.
+    ///     <c>Deploy</c> = send the profile to the catalyst and re-read it; <c>ReportFetchFailure</c> = report a failed fetch;
+    ///     <c>Batch</c> = perform the commands in order.
     /// </summary>
     [REnum(EnumUnderlyingType.Byte)]
     [REnumFieldEmpty("None")]
