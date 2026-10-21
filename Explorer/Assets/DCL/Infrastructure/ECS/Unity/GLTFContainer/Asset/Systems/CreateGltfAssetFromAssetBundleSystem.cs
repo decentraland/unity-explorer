@@ -27,7 +27,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private readonly IPerformanceBudget memoryBudget;
         private readonly bool rawGltfFallback;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, bool rawGltfFallback = false) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, bool rawGltfFallback) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;

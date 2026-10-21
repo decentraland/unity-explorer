@@ -201,7 +201,7 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
   - {fileID: 1757973802043764545}
-  - {fileID: 4908790961291395409}
+  - {fileID: 0}
   - {fileID: -4982935907446270823}
   - {fileID: 5175788798212861771}
   - {fileID: -4991993260910906933}
@@ -413,6 +413,7 @@ MonoBehaviour:
     dimensions: 256
     executeInEditMode: 0
     assignAsReflectionProbe: 1
+    regenerationInterval: 8
 --- !u!114 &8407763759742182732
 MonoBehaviour:
   m_ObjectHideFlags: 0

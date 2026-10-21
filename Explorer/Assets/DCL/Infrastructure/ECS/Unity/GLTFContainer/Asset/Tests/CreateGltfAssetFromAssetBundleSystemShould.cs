@@ -25,7 +25,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false);
         }
 
         [TearDown]

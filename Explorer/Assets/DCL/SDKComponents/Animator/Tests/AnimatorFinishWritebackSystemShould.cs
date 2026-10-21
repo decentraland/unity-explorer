@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.Animator.Tests
                 NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false);
 
             sdkAnimatorUpdaterSystem = new SDKAnimatorUpdaterSystem(world);
             legacyAnimationPlayerSystem = new LegacyAnimationPlayerSystem(world);
