@@ -189,8 +189,10 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         /// <summary>
         ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
-        ///     content base is derived from the realm the client already has.
+        ///     embedded abgen sidecar, reading the preview server's content. On by default; <c>--local-ab false</c>
+        ///     opts out, and a bare <c>--local-ab</c> (or <c>true</c>) opts in over <see cref="LSD_USE_REMOTE_AB" />.
+        ///     Carries no URL or port — the content base is derived from the realm the client already has.
+        ///     A sidecar that fails to install or start degrades the scene to raw GLTFs on its own.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 

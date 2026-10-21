@@ -203,6 +203,84 @@ namespace Global.Tests.EditMode
         }
 
         [Test]
+        public void EnableLocalAssetBundlesByDefaultInLocalSceneDevelopment()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local asset bundles must be on without any flag");
+        }
+
+        [Test]
+        public void DisableLocalAssetBundlesFromLocalAbFalse()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=false",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
+            Assert.IsFalse(realmLaunchSettings.useLocalAssetBundles, "local-ab=false must opt out of local asset bundles");
+        }
+
+        [Test]
+        public void PreferRemoteAssetBundlesOverTheLocalDefault()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            // Command-line form: the remote-AB flag is not deep-link allowlisted.
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--realm", "http://127.0.0.1:8000", "--local-scene", "true", "--lsd-use-remote-ab",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.IsFalse(realmLaunchSettings.useLocalAssetBundles, "an explicit remote-AB request must replace the implicit local default");
+            Assert.IsTrue(realmLaunchSettings.CreateHybridSceneParams().EnableHybridScene, "remote asset bundles must stay enabled");
+        }
+
+        [Test]
+        public void PreferExplicitLocalAssetBundlesOverRemoteOnes()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            // Command-line form: the remote-AB flag is not deep-link allowlisted.
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--realm", "http://127.0.0.1:8000", "--local-scene", "true", "--local-ab", "--lsd-use-remote-ab",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "an explicit local-ab must win over a remote-AB request");
+            Assert.IsFalse(realmLaunchSettings.CreateHybridSceneParams().EnableHybridScene, "remote asset bundles must be dropped when local ones were asked for");
+        }
+
+        [Test]
         [TestCase("127.0.0.1:8000")]
         [TestCase("localhost:8000")]
         public void IgnoreMacOSRealmInvalidation(string realm)

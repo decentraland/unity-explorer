@@ -164,7 +164,7 @@ namespace Global.Dynamic
                 return true;
             }
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen did not answer on {BaseUrl} within {HEALTH_TIMEOUT_MS / 1000}s of launch");
             Dispose();
             return false;
         }
@@ -231,7 +231,7 @@ namespace Global.Dynamic
 
         /// <summary>
         ///     Records that <paramref name="what" /> holds <see cref="BaseUrl" /> and that <paramref name="action" />
-        ///     is what would free it, and opens the AB panel so the reason is seen rather than left in a log.
+        ///     is what would free it, as rows the raw-GLTF verdict then follows on the AB panel.
         ///     Always <see cref="ResidentServer.Blocked" /> — the resident is left running and untouched.
         /// </summary>
         private ResidentServer Unusable(string what, string action)
@@ -239,9 +239,8 @@ namespace Global.Dynamic
             ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
                 $"{BaseUrl} is held by {what}; this scene loads as raw GLTFs — {action}");
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl} — the scene loads as raw GLTFs");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl}");
             AbgenConversionMetrics.INSTANCE.OnMilestone($"to use asset bundles: {action}");
-            AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
             return ResidentServer.Blocked;
         }
 
@@ -565,7 +564,10 @@ namespace Global.Dynamic
         public static async UniTask<bool> EnsurePinnedBinaryAsync(CancellationToken ct)
         {
             if (Platform() == null)
+            {
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{PINNED_VERSION} has no release for {Application.platform}");
                 return false;
+            }
 
             try
             {
@@ -891,9 +893,12 @@ namespace Global.Dynamic
                         continue;
 
                     // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                    // Once supervision gives up, every bundle request fails fast on the dead port and the
+                    // GLTF container falls back to the raw file, so the panel is told the session degraded.
                     if (++restarts > MAX_RESTARTS)
                     {
-                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; the scene loads raw GLTFs from here on");
+                        AbgenConversionMetrics.INSTANCE.OnRawGltfFallback($"the abgen server kept exiting ({MAX_RESTARTS} restarts)");
                         return;
                     }
 
@@ -901,7 +906,8 @@ namespace Global.Dynamic
 
                     if (!Launch())
                     {
-                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; the scene loads raw GLTFs from here on");
+                        AbgenConversionMetrics.INSTANCE.OnRawGltfFallback("the abgen server exited and could not be relaunched");
                         return;
                     }
 

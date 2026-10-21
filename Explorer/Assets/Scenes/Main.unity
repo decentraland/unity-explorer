@@ -393,7 +393,7 @@ MonoBehaviour:
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
     useRemoteAssetsBundles: 0
-    useLocalAssetBundles: 0
+    useLocalAssetBundles: 1
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
