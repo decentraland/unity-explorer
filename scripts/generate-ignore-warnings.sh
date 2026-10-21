@@ -47,3 +47,38 @@ for file_name in "${rsp_files[@]}"; do
         echo "Updated $file_name with ${#warnings_to_ignore[@]} warning suppressions."
     fi
 done
+
+# Cloud Build runs this script before Unity starts. Release builds drop the ALTTESTER define
+# here so Unity compiles the scripts once, instead of compiling them again after
+# CloudBuild.PreExport removes the define.
+if [[ "$IS_RELEASE_BUILD" == "true" ]]; then
+    project_settings="./Explorer/ProjectSettings/ProjectSettings.asset"
+
+    if ! awk '
+        /^  scriptingDefineSymbols:/ { in_defines = 1; print; next }
+        in_defines && !/^    / { in_defines = 0 }
+        in_defines && /^    Standalone: / {
+            sub(/^    Standalone: /, "")
+            n = split($0, defines, ";")
+            out = ""
+            for (i = 1; i <= n; i++)
+                if (defines[i] != "ALTTESTER")
+                    out = out (out == "" ? "" : ";") defines[i]
+            print "    Standalone: " out
+            next
+        }
+        { print }
+    ' "$project_settings" > "$tmp"; then
+        echo "Failed to strip the ALTTESTER define"
+        exit 1
+    fi
+
+    if cmp -s "$tmp" "$project_settings"; then
+        echo "ALTTESTER define already absent."
+    elif cp "$tmp" "$project_settings"; then
+        echo "Removed the ALTTESTER define for the release build."
+    else
+        echo "Failed to write $project_settings"
+        exit 1
+    fi
+fi

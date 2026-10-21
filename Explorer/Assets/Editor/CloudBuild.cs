@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEditor;
+using UnityEditor.CrashReporting;
 using UnityEngine;
 
 namespace Editor
@@ -18,6 +19,12 @@ namespace Editor
         public static Dictionary<string, object> Parameters { get; private set; }
 
         private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
+
+        private static readonly string[] DEBUG_SYMBOL_FOLDER_PATTERNS =
+        {
+            "*_BackUpThisFolder_ButDontShipItWithYourGame",
+            "*_BurstDebugInformation_DoNotShip",
+        };
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
@@ -63,21 +70,60 @@ namespace Editor
                 Debug.Log($"[INSTALL_SOURCE]: write key not found");
             }
 
-            if (Parameters.TryGetValue("IS_RELEASE_BUILD", out object isReleaseBuild)
-                && isReleaseBuild as string == "true")
+            if (IsReleaseBuild())
             {
                 Debug.Log("[ALTTESTER]: Release build — removing AltTester scripting define");
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
+            else
+            {
+                // Skips the Cloud Diagnostics symbol generation and upload; Sentry symbolicates the other builds
+                Debug.Log("[CLOUD_DIAGNOSTICS]: Not a release build — disabling crash reporting");
+                CrashReportingSettings.enabled = false;
+            }
 
-            DesktopStandaloneSettings.CopyPDBFiles = true;
+            DesktopStandaloneSettings.CopyPDBFiles = KeepsDebugSymbols();
         }
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
-        public static void PostExport()
+        public static void PostExport(string exportPath)
         {
-            Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
+            Debug.Log($"~~ {nameof(CloudBuild)} PostExport ({exportPath}) ~~");
+
+            if (!KeepsDebugSymbols())
+                DeleteDebugSymbolFolders(exportPath);
+        }
+
+        // Read from the environment rather than Parameters: a domain reload between PreExport and PostExport resets static state
+        private static bool IsReleaseBuild() =>
+            Environment.GetEnvironmentVariable("IS_RELEASE_BUILD") == "true";
+
+        // Release builds keep them for post-hoc symbolication, Sentry-enabled builds upload them to Sentry
+        private static bool KeepsDebugSymbols() =>
+            IsReleaseBuild() || Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
+
+        private static void DeleteDebugSymbolFolders(string exportPath)
+        {
+            // Standalone builds put the debug folders next to the player: the .exe or .app path points one level too deep
+            string playerPath = exportPath.TrimEnd('/', '\\');
+
+            string buildFolder = Directory.Exists(playerPath) && !playerPath.EndsWith(".app", StringComparison.OrdinalIgnoreCase)
+                ? playerPath
+                : Path.GetDirectoryName(playerPath);
+
+            if (string.IsNullOrEmpty(buildFolder) || !Directory.Exists(buildFolder))
+            {
+                Debug.LogWarning($"[DEBUG_SYMBOLS]: build folder not found for export path '{exportPath}'");
+                return;
+            }
+
+            foreach (string pattern in DEBUG_SYMBOL_FOLDER_PATTERNS)
+            foreach (string folder in Directory.GetDirectories(buildFolder, pattern, SearchOption.TopDirectoryOnly))
+            {
+                Directory.Delete(folder, true);
+                Debug.Log($"[DEBUG_SYMBOLS]: deleted {folder}");
+            }
         }
 
         private static void WriteReleaseStoreToBuildData(string installSource)
