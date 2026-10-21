@@ -8,7 +8,6 @@ Shader "DCL/PresentationCompositor"
         _VideoRect ("Video rect (x, y, w, h; top-left origin, normalized)", Vector) = (0, 0, 0, 0)
         _CameraRect ("Camera rect (left, top, w, h; top-left origin, normalized)", Vector) = (0, 0, 0, 0)
         _VideoEnabled ("Video rect enabled (filled black)", Float) = 0
-        _VideoTexEnabled ("Video frame available", Float) = 0
         _CameraEnabled ("Camera enabled", Float) = 0
         _CameraEdge ("Circle edge softness in circle-local units", Float) = 0.01
         _SlideSize ("Slide size in px (x, y)", Vector) = (1, 1, 0, 0)
@@ -36,7 +35,6 @@ Shader "DCL/PresentationCompositor"
             float4 _VideoRect;
             float4 _CameraRect;
             float _VideoEnabled;
-            float _VideoTexEnabled;
             float _CameraEnabled;
             float _CameraEdge;
             float4 _SlideSize;
@@ -81,23 +79,19 @@ Shader "DCL/PresentationCompositor"
                 if (_VideoEnabled > 0.5 && Inside(p, _VideoRect.xy, _VideoRect.zw))
                 {
                     color = fixed4(0, 0, 0, 1);
+                    float4 content = ContainRect(_VideoRect);
 
-                    if (_VideoTexEnabled > 0.5)
+                    if (Inside(p, content.xy, content.zw))
                     {
-                        float4 content = ContainRect(_VideoRect);
+                        float2 uv = (p - content.xy) / content.zw;
 
-                        if (Inside(p, content.xy, content.zw))
-                        {
-                            float2 uv = (p - content.xy) / content.zw;
+                        if (_VideoFlip > 0.5)
+                            uv.y = 1.0 - uv.y;
 
-                            if (_VideoFlip > 0.5)
-                                uv.y = 1.0 - uv.y;
+                        color = tex2Dlod(_VideoTex, float4(uv, 0, 0));
 
-                            color = tex2Dlod(_VideoTex, float4(uv, 0, 0));
-
-                            if (_VideoTexLinearData > 0.5)
-                                color.rgb = GammaToLinearSpace(color.rgb);
-                        }
+                        if (_VideoTexLinearData > 0.5)
+                            color.rgb = GammaToLinearSpace(color.rgb);
                     }
                 }
 
