@@ -16,6 +16,7 @@ using DCL.UI.Controls;
 using DCL.MarketplaceCredits;
 using DCL.Clipboard;
 using DCL.Credits;
+using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
@@ -65,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly SupportRequestService supportRequestService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly InWorldCameraToggle cameraToggle;
         private readonly AudioMixer generalAudioMixer;
@@ -107,6 +109,7 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
             SupportRequestService supportRequestService,
+            HttpEventsApiService eventsApiService,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             InWorldCameraToggle cameraToggle,
             AudioMixer generalAudioMixer,
@@ -135,6 +138,7 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.chatEventBus = chatEventBus;
             this.supportRequestService = supportRequestService;
+            this.eventsApiService = eventsApiService;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.cameraToggle = cameraToggle;
             this.generalAudioMixer = generalAudioMixer;
@@ -202,6 +206,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 chatEventBus,
                 supportRequestService,
+                eventsApiService,
                 sidebarProfileMenuPresenter,
                 cameraToggle,
                 generalAudioMixer,

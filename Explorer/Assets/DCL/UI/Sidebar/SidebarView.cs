@@ -33,6 +33,8 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal MenuElementView discoverEventsOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView discoverCommunitiesOption { get; private set; } = null!;
         [field: SerializeField] internal ButtonView discoverCloseButton { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
+        [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; } = null!;
 
         [field: Header("Shop")]
         [field: SerializeField] public SimpleHoverableButton ShopButton { get; private set; } = null!;
@@ -141,6 +143,12 @@ namespace DCL.UI.Sidebar
         public void UnblockSidebar()
         {
             BlockStatusChanged?.Invoke(false);
+        }
+
+        public void SetLiveEventsCounter(int count)
+        {
+            liveEventsCounterText.text = count.ToString();
+            liveEventsCounterContainer.SetActive(count > 0);
         }
     }
 }

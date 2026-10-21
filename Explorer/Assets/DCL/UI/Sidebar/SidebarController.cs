@@ -8,6 +8,7 @@ using DCL.Chat.ChatStates;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
+using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.InWorldCamera;
@@ -24,6 +25,8 @@ using DCL.UI.Buttons;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Identities;
 using ECS;
@@ -65,6 +68,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly SidebarProfileMenuPresenter profileMenuPresenter;
         private readonly InWorldCameraToggle cameraToggle;
         private readonly AudioMixer generalAudioMixer;
@@ -77,6 +81,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource openPanelCts = new ();
+        private CancellationTokenSource checkForLiveEventsCts = new ();
         private bool isMarketplaceCreditsFeatureEnabled;
 
         private SimpleHoverableButton? openMenuButton;
@@ -97,6 +102,7 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
+            HttpEventsApiService eventsApiService,
             SidebarProfileMenuPresenter profileMenuPresenter,
             InWorldCameraToggle cameraToggle,
             AudioMixer generalAudioMixer,
@@ -105,6 +111,7 @@ namespace DCL.UI.Sidebar
             : base(viewFactory)
         {
             this.supportRequestService = supportRequestService;
+            this.eventsApiService = eventsApiService;
             this.profileMenuPresenter = profileMenuPresenter;
             this.cameraToggle = cameraToggle;
             this.generalAudioMixer = generalAudioMixer;
@@ -196,6 +203,7 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -221,12 +229,34 @@ namespace DCL.UI.Sidebar
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             OnChatViewFoldingChanged(true);
+
+            viewInstance.SetLiveEventsCounter(0);
         }
 
         protected override void OnViewShow()
         {
             //We load the data into the profile widget
             profileButtonPresenter.LoadProfile();
+
+            if (!isDiscoverFeatureEnabled) return;
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                         .SuppressToResultAsync(ReportCategory.EVENTS);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
+                await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
+            }
         }
 
         protected override void OnViewClose()

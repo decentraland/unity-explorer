@@ -599,6 +599,7 @@ namespace Global.Dynamic
                     chatContainer.ChatEventBus,
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
+                    placesAndEventsContainer.EventsApiService,
                     marketplaceCreditsApiClient,
                     inWorldCameraToggle,
                     generalAudioMixer,
