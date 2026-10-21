@@ -64,7 +64,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         internal int ActiveLoads => activeLoads;
 
-        private float Now => clockOverride?.Invoke() ?? UnityEngine.Time.realtimeSinceStartup;
 
         public SatelliteDetailTiles(string baseUrl, IWebRequestController webRequestController, ISatelliteTileLoader loader, IMapCullingController cullingController,
             SatelliteTileViews views)
@@ -108,7 +107,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
 
             refreshStamp++;
-            lastCameraChangeTime = Now;
+            lastCameraChangeTime = Now();
 
             int previousCameraCount = cameraCount;
             cameraCount = cullingController.CameraStates.Count;
@@ -192,7 +191,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 while (true)
                 {
-                    float remaining = SETTLE_SECONDS - (Now - lastCameraChangeTime);
+                    float remaining = SETTLE_SECONDS - (Now() - lastCameraChangeTime);
 
                     if (remaining <= 0f)
                         break;
@@ -293,7 +292,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                     tile.DistanceSqToCamera = (grid.TileCenter(id) - cameraCenter).sqrMagnitude;
                 }
 
-                if (requestWith != null && tile.FailedAt is { } failedAt && Now - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
+                if (requestWith != null && tile.FailedAt is { } failedAt && Now() - failedAt >= RETRY_FAILED_TILE_AFTER_SECONDS)
                 {
                     tile.FailedAt = null;
                     failedUrls.Remove(tile.Url);
@@ -318,7 +317,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             tiles.Add(id, tile);
 
             // A failed tile that returns to view before its retry wait ends waits for the rest of that wait.
-            if (failedUrls.TryGetValue(url, out float failedBefore) && Now - failedBefore < RETRY_FAILED_TILE_AFTER_SECONDS)
+            if (failedUrls.TryGetValue(url, out float failedBefore) && Now() - failedBefore < RETRY_FAILED_TILE_AFTER_SECONDS)
             {
                 tile.FailedAt = failedBefore;
                 return;
@@ -430,7 +429,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 ReportHub.LogException(failure, ReportCategory.UI);
             }
 
-            tile.FailedAt = lastFailureTime = Now;
+            tile.FailedAt = lastFailureTime = Now();
             failedUrls[tile.Url] = lastFailureTime;
 
             if (!retryPending)
@@ -446,7 +445,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             while (true)
             {
-                float remaining = RETRY_FAILED_TILE_AFTER_SECONDS - (Now - lastFailureTime);
+                float remaining = RETRY_FAILED_TILE_AFTER_SECONDS - (Now() - lastFailureTime);
 
                 if (remaining <= 0f)
                     break;
@@ -466,6 +465,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             UnityObjectUtils.SafeDestroy(tile.Texture);
             views.Return(tile.View);
         }
+
+        private float Now() =>
+            clockOverride?.Invoke() ?? UnityEngine.Time.realtimeSinceStartup;
 
         internal class Tile
         {

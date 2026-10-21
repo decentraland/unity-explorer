@@ -93,7 +93,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             realmNavigator.NavigationExecuted -= OnTeleport;
         }
 
-        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+        public UniTask InitializeAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
         private void OnTeleport(Vector2Int destinationCoordinates)
@@ -185,14 +185,14 @@ namespace DCL.MapRenderer.MapLayers.Users
         private bool IsLocalUser(string userId) =>
             userId.Equals(web3IdentityCache.Identity?.Address.ToString(), StringComparison.InvariantCultureIgnoreCase);
 
-        public async UniTask EnableAsync(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken ct)
         {
             isEnabled = true;
 
-            await ProcessRemoteUsersAsync(cancellationToken);
+            await ProcessRemoteUsersAsync(ct);
         }
 
-        public UniTask Disable(CancellationToken cancellationToken)
+        public UniTask Disable(CancellationToken ct)
         {
             isEnabled = false;
 

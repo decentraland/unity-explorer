@@ -69,7 +69,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>, SatelliteManifest.Dto>(
                     Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
                     Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>>())
-               .Returns(UniTask.FromResult(new SatelliteManifest.Dto { sections = new Dictionary<string, string?> { ["0,0"] = "v1" } }));
+               .Returns(UniTask.FromResult<SatelliteManifest.Dto?>(new SatelliteManifest.Dto { sections = new Dictionary<string, string?> { ["0,0"] = "v1" } }));
 
             loader = Substitute.For<ISatelliteTileLoader>();
 
@@ -276,7 +276,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>, SatelliteManifest.Dto>(
                     Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
                     Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<SatelliteManifest.Dto, GenericGetRequest>>())
-               .Returns(UniTask.FromResult(new SatelliteManifest.Dto { sections = sections }));
+               .Returns(UniTask.FromResult<SatelliteManifest.Dto?>(new SatelliteManifest.Dto { sections = sections }));
 
             Exception? unobserved = null;
             void Capture(Exception e) => unobserved ??= e;

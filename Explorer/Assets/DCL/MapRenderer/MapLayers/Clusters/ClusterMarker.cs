@@ -59,10 +59,10 @@ namespace DCL.MapRenderer.MapLayers.Cluster
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible().title.text = title;
-            poolableBehavior.instance.SetCategorySprite(iconSprite);
+            poolableBehavior.OnBecameVisible().SetCategorySprite(iconSprite);
 
             if(currentBaseScale != 0)
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                poolableBehavior.OnBecameVisible().SetScale(currentBaseScale, currentNewScale);
         }
 
         public void OnBecameInvisible()

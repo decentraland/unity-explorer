@@ -62,7 +62,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             if (currentBaseScale != 0)
             {
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                poolableBehavior.OnBecameVisible().SetScale(currentBaseScale, currentNewScale);
                 ToggleSelection(isSelectedPin);
             }
         }

@@ -36,9 +36,18 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
         private Texture2D? texture;
         private int removedCachedFiles;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            // The first IsSupported read probes the native plugin with an empty buffer, and the plugin logs an error for it.
+            LogAssert.ignoreFailingMessages = true;
+            _ = KtxNativeSupport.IsSupported;
+        }
+
         [SetUp]
         public void SetUp()
         {
+            LogAssert.ignoreFailingMessages = false;
             ktx2Tile = File.ReadAllBytes(FIXTURE_PATH);
             served = ktx2Tile;
             texture = null;
@@ -53,7 +62,7 @@ namespace DCL.MapRenderer.Tests.SatelliteAtlas
                .Returns(call =>
                 {
                     downloads.Add(call.Arg<RequestEnvelope<GenericGetRequest, GenericGetArguments>>().CommonArguments.URL);
-                    return UniTask.FromResult(served);
+                    return UniTask.FromResult<byte[]?>(served);
                 });
 
             diskCache = Substitute.For<IDiskCache<byte[]>>();

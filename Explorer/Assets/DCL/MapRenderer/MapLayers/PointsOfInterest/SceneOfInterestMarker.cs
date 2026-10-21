@@ -63,7 +63,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             AnimateDeSelectionAsync(default).Forget();
 
             if(currentBaseScale != 0)
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                poolableBehavior.OnBecameVisible().SetScale(currentBaseScale, currentNewScale);
         }
 
         public void OnBecameInvisible()

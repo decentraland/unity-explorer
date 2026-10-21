@@ -32,10 +32,10 @@ namespace DCL.MapRenderer.MapLayers.Users
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, coordsUtils.CoordsToPositionUnclamped(gridPosition)));
         }
 
-        public IHotUserMarker SetScale(float scale)
+        public IHotUserMarker SetScale(float newScale)
         {
-            this.scale = scale;
-            poolableBehavior.instance?.SetScale(scale);
+            scale = newScale;
+            poolableBehavior.instance?.SetScale(newScale);
             return this;
         }
 
