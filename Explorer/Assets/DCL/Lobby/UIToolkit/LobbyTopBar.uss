@@ -31,16 +31,16 @@
     border-width: 2px;
     border-radius: 21px;
     border-color: var(--lobby-white-5);
-    background-color: var(--dcl-color-black-70);
+    background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
 .lobby__edit-layout-button:hover {
-    background-color: rgb(31, 31, 31);
+    background-color: rgba(90, 90, 90, 0.55);
 }
 
 .lobby__edit-layout-button:active {
-    background-color: var(--dcl-color-black-70);
+    background-color: rgba(0, 0, 0, 0.55);
 }
 
 .lobby__edit-layout-icon {
@@ -179,16 +179,16 @@
     border-width: 2px;
     border-radius: 21px;
     border-color: var(--lobby-white-5);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
 .lobby__top-bar-back-button:hover {
-    background-color: rgba(31, 31, 31, 0.8);
+    background-color: rgba(90, 90, 90, 0.55);
 }
 
 .lobby__top-bar-back-button:active {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.55);
 }
 
 .lobby__back-key {
@@ -214,7 +214,7 @@
     border-width: 2px;
     border-radius: 21px;
     border-color: var(--lobby-white-5);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
@@ -223,11 +223,11 @@
 }
 
 .lobby__back-button:hover {
-    background-color: rgba(31, 31, 31, 0.8);
+    background-color: rgba(90, 90, 90, 0.55);
 }
 
 .lobby__back-button:active {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.55);
 }
 
 .lobby__back-icon {
