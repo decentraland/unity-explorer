@@ -253,12 +253,6 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
             });
 
-            container.ScenesCache.CurrentScene.OnUpdate += scene =>
-            {
-                if (scene != null)
-                    UnityDiagnosticsCenter.Instance.SetCurrentScene(scene.Info);
-            };
-
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
                 diagnosticsContainer.Sentry?.AddRealmInfoToScope(scope,

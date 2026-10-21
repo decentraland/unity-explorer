@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEditor;
-using UnityEditor.CrashReporting;
 using UnityEngine;
 
 namespace Editor
@@ -75,14 +74,9 @@ namespace Editor
                 Debug.Log("[ALTTESTER]: Release build — removing AltTester scripting define");
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
-            else
-            {
-                // Skips the Cloud Diagnostics symbol generation and upload; Sentry symbolicates the other builds
-                Debug.Log("[CLOUD_DIAGNOSTICS]: Not a release build — disabling crash reporting");
-                CrashReportingSettings.enabled = false;
-                // usymtool still uploads with crash reporting off as long as the editor process holds this token
-                Environment.SetEnvironmentVariable("USYM_UPLOAD_AUTH_TOKEN", null);
-            }
+
+            // usymtool uploads to Cloud Diagnostics whenever the editor process holds this token, even with crash reporting off
+            Environment.SetEnvironmentVariable("USYM_UPLOAD_AUTH_TOKEN", null);
 
             DesktopStandaloneSettings.CopyPDBFiles = KeepsDebugSymbols();
         }
