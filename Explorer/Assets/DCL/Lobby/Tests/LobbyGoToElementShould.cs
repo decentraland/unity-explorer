@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace DCL.Lobby.Tests
         private const string FOCUSED_CLASS = "lobby-goto--focused";
         private const string WITH_TEXT_CLASS = "lobby-goto--with-text";
         private const string INVALID_CLASS = "lobby-goto--invalid";
+        private const string CHECKING_CLASS = "lobby-goto--checking";
 
         private readonly List<string> submitted = new ();
 
@@ -54,7 +56,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void SubmitTheTrimmedTextOnReturnAndEmptyTheField()
+        public void SubmitTheTrimmedTextOnReturnAndKeepTheField()
         {
             //Arrange
             element.Text = "  3,-5 ";
@@ -65,7 +67,8 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(1, submitted.Count);
             Assert.AreEqual("3,-5", submitted[0]);
-            Assert.AreEqual(string.Empty, element.Text);
+            Assert.AreEqual("  3,-5 ", element.Text);
+            Assert.IsTrue(element.ClassListContains(WITH_TEXT_CLASS));
         }
 
         [Test]
@@ -141,7 +144,7 @@ namespace DCL.Lobby.Tests
         [TestCase("random")]
         [TestCase("crowd")]
         [TestCase("crowd.dcl.eth")]
-        public void SubmitTheTrimmedDestinationAndEmptyTheField(string text)
+        public void SubmitTheTrimmedDestination(string text)
         {
             //Arrange
             element.Text = text;
@@ -152,9 +155,8 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(1, submitted.Count);
             Assert.AreEqual(text.Trim(), submitted[0]);
-            Assert.AreEqual(string.Empty, element.Text);
+            Assert.AreEqual(text, element.Text);
             Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
-            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
         }
 
         [TestCase("1000,-500")]
@@ -209,7 +211,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void SubmitTheTrimmedTextOnTheGoButtonAndEmptyTheField()
+        public void SubmitTheTrimmedTextOnTheGoButton()
         {
             //Arrange
             element.Text = " mana.dcl.eth ";
@@ -220,16 +222,19 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(1, submitted.Count);
             Assert.AreEqual("mana.dcl.eth", submitted[0]);
-            Assert.AreEqual(string.Empty, element.Text);
-            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
         }
 
-        // Closing the lobby from the callback detaches the pill before its queued change event runs
+        // Closing the lobby from the callback detaches the pill before a queued change event would run
         [Test]
-        public void HideTheGoButtonBeforeTheSubscriberDetachesIt()
+        public void HideTheGoButtonWhenEmptiedBeforeTheSubscriberDetachesIt()
         {
             //Arrange
-            element.Submitted = _ => element.RemoveFromHierarchy();
+            element.Submitted = _ =>
+            {
+                element.Text = string.Empty;
+                element.RemoveFromHierarchy();
+            };
+
             element.Text = "eax";
 
             //Act
@@ -238,6 +243,77 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(string.Empty, element.Text);
             Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
+        }
+
+        [Test]
+        public void ShowTheSpinnerAndTakeNoEditOrSubmitWhileChecking()
+        {
+            //Arrange
+            element.Text = "eax";
+
+            //Act
+            element.IsChecking = true;
+
+            //Assert
+            Assert.IsTrue(element.IsChecking);
+            Assert.IsTrue(element.ClassListContains(CHECKING_CLASS));
+            Assert.IsTrue(input.isReadOnly);
+            Assert.IsTrue(element.Q<LoadingSpinnerElement>("Spinner").IsSpinning);
+
+            //Act
+            Press(KeyCode.Return);
+            Click();
+
+            //Assert
+            Assert.AreEqual(0, submitted.Count);
+
+            //Act
+            element.IsChecking = false;
+
+            //Assert
+            Assert.IsFalse(element.ClassListContains(CHECKING_CLASS));
+            Assert.IsFalse(input.isReadOnly);
+            Assert.IsFalse(element.Q<LoadingSpinnerElement>("Spinner").IsSpinning);
+            Assert.AreEqual("eax", element.Text);
+        }
+
+        [Test]
+        public void EndTheCheckMarkedInvalidWithTheTextKept()
+        {
+            //Arrange
+            element.Text = "eax";
+            element.IsChecking = true;
+
+            //Act
+            element.ShowInvalid();
+
+            //Assert
+            Assert.IsFalse(element.IsChecking);
+            Assert.IsFalse(input.isReadOnly);
+            Assert.IsTrue(element.ClassListContains(INVALID_CLASS));
+            Assert.AreEqual("eax", element.Text);
+
+            //Act
+            input.value = "eax2";
+
+            //Assert
+            Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
+        }
+
+        [Test]
+        public void EndTheCheckOnReset()
+        {
+            //Arrange
+            element.Text = "eax";
+            element.IsChecking = true;
+
+            //Act
+            element.Reset();
+
+            //Assert
+            Assert.IsFalse(element.IsChecking);
+            Assert.IsFalse(input.isReadOnly);
+            Assert.AreEqual(string.Empty, element.Text);
         }
 
         [Test]

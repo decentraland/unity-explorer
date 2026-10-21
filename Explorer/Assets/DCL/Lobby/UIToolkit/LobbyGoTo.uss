@@ -113,6 +113,23 @@
     display: none;
 }
 
+/* While the destination is checked the spinner (LoadingSpinnerElement) takes the go button's place */
+.lobby-goto__spinner {
+    display: none;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin: 0 0 0 8px;
+}
+
+.lobby-goto--checking .lobby-goto__spinner {
+    display: flex;
+}
+
+.lobby-goto--checking .lobby-goto__go {
+    display: none;
+}
+
 /* The error line hangs under the pill, out of the flow, so the widget's row keeps its height */
 .lobby-goto__error {
     display: none;

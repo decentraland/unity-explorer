@@ -1,5 +1,6 @@
 using DCL.Chat.Commands;
 using DCL.UI.InputFieldFormatting;
+using DCL.UIToolkit.Elements;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -17,11 +18,13 @@ namespace DCL.Lobby
         private const string USS_FOCUSED = USS_BLOCK + "--focused";
         private const string USS_WITH_TEXT = USS_BLOCK + "--with-text";
         private const string USS_INVALID = USS_BLOCK + "--invalid";
+        private const string USS_CHECKING = USS_BLOCK + "--checking";
         private const string USS_ICON = USS_BLOCK + "__icon";
         private const string USS_COMMAND = USS_BLOCK + "__command";
         private const string USS_INPUT = USS_BLOCK + "__input";
         private const string USS_GO = USS_BLOCK + "__go";
         private const string USS_GO_ICON = USS_BLOCK + "__go-icon";
+        private const string USS_SPINNER = USS_BLOCK + "__spinner";
         private const string USS_ERROR = USS_BLOCK + "__error";
         private const string USS_ERROR_ICON = USS_BLOCK + "__error-icon";
         private const string USS_ERROR_LABEL = USS_BLOCK + "__error-label";
@@ -34,6 +37,7 @@ namespace DCL.Lobby
         public Action<string>? Submitted;
 
         private readonly TextField input;
+        private readonly LoadingSpinnerElement spinner;
 
         /// <summary>What the field holds, untrimmed.</summary>
         public string Text
@@ -44,6 +48,19 @@ namespace DCL.Lobby
             {
                 input.value = value;
                 OnTextChanged();
+            }
+        }
+
+        /// <summary>While on, the spinner stands in for the go button and the field takes no edits and no submit.</summary>
+        public bool IsChecking
+        {
+            get => ClassListContains(USS_CHECKING);
+
+            set
+            {
+                EnableInClassList(USS_CHECKING, value);
+                input.isReadOnly = value;
+                spinner.IsSpinning = value;
             }
         }
 
@@ -73,6 +90,10 @@ namespace DCL.Lobby
             go.Add(goIcon);
             Add(go);
 
+            spinner = new LoadingSpinnerElement { name = "Spinner", pickingMode = PickingMode.Ignore };
+            spinner.AddToClassList(USS_SPINNER);
+            Add(spinner);
+
             var error = new VisualElement { name = "Error", pickingMode = PickingMode.Ignore };
             error.AddToClassList(USS_ERROR);
             var errorIcon = new VisualElement { name = "ErrorIcon", pickingMode = PickingMode.Ignore };
@@ -95,7 +116,15 @@ namespace DCL.Lobby
         public void Reset()
         {
             input.Blur();
+            IsChecking = false;
             Text = string.Empty;
+        }
+
+        /// <summary>Ends the check with the pill marked invalid and the text kept.</summary>
+        public void ShowInvalid()
+        {
+            IsChecking = false;
+            AddToClassList(USS_INVALID);
         }
 
         // The field takes its own presses; the rest of the pill hands them over
@@ -118,7 +147,7 @@ namespace DCL.Lobby
         {
             string destination = input.value.Trim();
 
-            if (destination.Length == 0)
+            if (IsChecking || destination.Length == 0)
                 return;
 
             if (!IsDestination(destination))
@@ -127,8 +156,6 @@ namespace DCL.Lobby
                 return;
             }
 
-            // Through the setter: the change event queues behind this key or click, which a subscriber may outlive
-            Text = string.Empty;
             Submitted?.Invoke(destination);
         }
 

@@ -66,6 +66,7 @@ namespace DCL.Lobby
 
         /// <summary>What a world named without its domain gets, as in the /goto chat command.</summary>
         private const string WORLD_SUFFIX = ".dcl.eth";
+        private const string WORLD_ABOUT_PATH = "/about";
         private const string CROWD_LOOKUP_ERROR_MESSAGE = "The most crowded place could not be found. Please try again.";
         private const int MAX_UPCOMING_EVENTS = 10;
 
@@ -164,6 +165,7 @@ namespace DCL.Lobby
         private CancellationTokenSource? galleryCts;
         private CancellationTokenSource? deletePhotoCts;
         private CancellationTokenSource? jumpInCts;
+        private CancellationTokenSource? goToCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource? notificationsCts;
         private UniTaskCompletionSource? closeIntent;
@@ -307,6 +309,7 @@ namespace DCL.Lobby
             galleryCts.SafeCancelAndDispose();
             deletePhotoCts.SafeCancelAndDispose();
             jumpInCts.SafeCancelAndDispose();
+            goToCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             notificationsCts.SafeCancelAndDispose();
             avatarPreview?.Dispose();
@@ -482,6 +485,8 @@ namespace DCL.Lobby
             avatarCts = null;
             placesCts.SafeCancelAndDispose();
             placesCts = null;
+            goToCts.SafeCancelAndDispose();
+            goToCts = null;
             eventsCts.SafeCancelAndDispose();
             eventsCts = null;
             friends?.Hide();
@@ -581,6 +586,8 @@ namespace DCL.Lobby
                 layoutEditor.Hide();
             else
             {
+                goToCts.SafeCancelAndDispose();
+                goToCts = null;
                 viewInstance!.GoToField.Reset();
                 layoutEditor.Show(viewInstance.Root);
             }
@@ -1170,6 +1177,42 @@ namespace DCL.Lobby
         // world with an optional parcel, or the random and crowd keywords
         private void OnGoToSubmitted(string destination)
         {
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(destination);
+
+            if (target.World is { } worldName)
+            {
+                goToCts = goToCts.SafeRestart();
+                GoToWorldAsync(destination, target, WorldUrl(WorldName(worldName)), goToCts.Token).Forget();
+            }
+            else
+                GoTo(destination, target);
+        }
+
+        // Probed as the realm change does, so a world that does not exist is reported on the pill, not after a fallback to Genesis
+        private async UniTaskVoid GoToWorldAsync(string destination, GotoTarget target, URLDomain worldUrl, CancellationToken ct)
+        {
+            LobbyGoToElement goTo = viewInstance!.GoToField;
+            goTo.IsChecking = true;
+
+            bool reachable = await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, worldUrl.Append(new URLPath(WORLD_ABOUT_PATH)), ct, suppressErrors: true);
+
+            goTo.IsChecking = false;
+
+            if (ct.IsCancellationRequested) return;
+
+            if (!reachable)
+            {
+                goTo.ShowInvalid();
+                return;
+            }
+
+            GoTo(destination, target);
+        }
+
+        private void GoTo(string destination, GotoTarget target)
+        {
+            viewInstance!.GoToField.Text = string.Empty;
+
             // In-world the destination is sent to the chat as the command itself, which resolves it like a typed /goto
             // and reports the outcome in the nearby channel
             if (startParcel.IsConsumed())
@@ -1178,9 +1221,6 @@ namespace DCL.Lobby
                 RequestClose();
                 return;
             }
-
-            // Before the world loads the destination is parsed here and handed to the startup teleport
-            GotoTarget target = ChatParamUtils.ParseGotoTarget(destination);
 
             if (target.IsCrowd)
                 StartAtCrowdAsync(placesCts!.Token).Forget();
