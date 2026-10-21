@@ -1,6 +1,7 @@
 using REnum;
 using System;
 using System.Runtime.CompilerServices;
+using Utility.Times;
 
 namespace DCL.Profiles.Self
 {
@@ -111,6 +112,31 @@ namespace DCL.Profiles.Self
             $"{Address.Value} sent v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
     }
 
+    public readonly struct ReadRequest : IEquatable<ReadRequest>
+    {
+        public readonly RequestId Id;
+
+        public readonly UnixTimeMs At;
+
+        public ReadRequest(RequestId id, UnixTimeMs at)
+        {
+            Id = id;
+            At = at;
+        }
+
+        public bool Equals(ReadRequest other) =>
+            Id.Equals(other.Id) && At == other.At;
+
+        public override bool Equals(object? obj) =>
+            obj is ReadRequest other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Id, At);
+
+        public override string ToString() =>
+            $"{Id} at {At}";
+    }
+
     public readonly struct DeployRequest : IEquatable<DeployRequest>
     {
         public readonly RequestId Id;
@@ -148,7 +174,7 @@ namespace DCL.Profiles.Self
     [REnumField(typeof(DeployRequest), "DeployProfileOnEditRequested")]
     [REnumField(typeof(DeploySucceeded))]
     [REnumField(typeof(DeployFailed))]
-    [REnumField(typeof(RequestId), "ProfileReadRequested")]
+    [REnumField(typeof(ReadRequest), "ProfileReadRequested")]
     [REnumField(typeof(RequestId), "RequestClosed")]
     public readonly partial struct SelfProfileMsg
     {
