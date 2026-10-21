@@ -19,7 +19,6 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using ECS.SceneLifeCycle.Realm;
 using DCL.Utility;
 
 namespace PortableExperiences.Controller

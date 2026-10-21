@@ -100,6 +100,8 @@ MonoBehaviour:
   friendCardTemplate: {fileID: 9197481963319205126, guid: 531036d3f969ddb7fd360197f735a14f, type: 3}
   liveEventCardTemplate: {fileID: 9197481963319205126, guid: d10a66744e3e4801828dbdfa2e1096b7, type: 3}
   upcomingEventCardTemplate: {fileID: 9197481963319205126, guid: adc04d6ef74845c9904bb90118d056d5, type: 3}
+  communityCardTemplate: {fileID: 9197481963319205126, guid: da296fb22c30410cab69be66188ffbd8, type: 3}
+  galleryCardTemplate: {fileID: 9197481963319205126, guid: 53d770492d32408e908aa58e25164f77, type: 3}
   eventContextMenuSettings: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
   characterPreviewView: {fileID: 7412093855120448752}
 --- !u!1 &7412093855120448740

@@ -2,38 +2,51 @@
     --place-card-hover-duration: 0.3s;
 }
 
-/* 280x165 with 24px corners: the thumbnail over a 55px footer that holds the texts */
+/* 256x146 with 16px corners: the thumbnail fills the card and a gradient darkens its bottom under the texts */
 .lobby-place-card {
-    width: 280px;
-    height: 165px;
-    border-radius: 24px;
+    width: 256px;
+    height: 146px;
+    border-width: 1px;
+    border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
 
-/* Gives up as much height as the hovered footer grows; its 16px corners make the dark strip under it curve into it */
 .lobby-place-card__thumbnail {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    height: 110px;
-    border-radius: 16px;
+    bottom: 0;
     background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: height var(--place-card-hover-duration) ease-out, opacity var(--lobby-thumbnail-fade-duration) ease-out;
+    transition: scale var(--place-card-hover-duration) ease-out;
 }
 
 .lobby-place-card:hover .lobby-place-card__thumbnail {
-    height: 86px;
+    scale: 1.05;
 }
 
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
-.lobby-place-card--loading .lobby-place-card__thumbnail {
-    opacity: 0;
-    transition: height var(--place-card-hover-duration) ease-out, opacity 0s;
+/* The sprite is authored at this size for the Linear color space (a plain alpha ramp blends in linear light and reads
+   too faint): a 52px fade into a flat 78% black strip under the texts. Sliced so the fade keeps its shape while the
+   strip stretches with the hovered footer, putting the jump-in button on the flat part */
+.lobby-place-card__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+    transition: height var(--place-card-hover-duration) ease-out;
+}
+
+.lobby-place-card:hover .lobby-place-card__gradient {
+    height: 132px;
 }
 
 /* The counter's margin spaces the friends row that follows it */
@@ -41,18 +54,18 @@
     position: absolute;
     top: 12px;
     left: 12px;
-    height: 28px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
 }
 
 .lobby-place-card__online {
-    height: 28px;
-    margin-right: 8px;
+    height: 26px;
+    margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }
@@ -93,15 +106,14 @@
 }
 
 .lobby-place-card:hover .lobby-place-card__footer {
-    height: 79px;
+    height: 87px;
 }
 
 .lobby-place-card__title {
-    height: 20px;
+    height: 24px;
     margin-bottom: 2px;
-    font-size: 14px;
+    font-size: 18px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
     -unity-text-align: middle-left;
     color: white;
     white-space: nowrap;
@@ -131,7 +143,7 @@
     left: 7px;
     right: 7px;
     bottom: 2px;
-    height: 38px;
+    height: 46px;
     padding: 0 0 6px;
     flex-direction: row;
     align-items: center;
@@ -157,8 +169,8 @@
 }
 
 .lobby-place-card__jump-in-text {
-    margin-right: 4px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 14px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
@@ -166,7 +178,7 @@
 }
 
 .lobby-place-card__jump-in-icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-image: url('/Assets/Textures/Common/JumpInOutline.png');
 }

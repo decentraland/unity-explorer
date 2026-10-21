@@ -47,10 +47,10 @@ namespace DCL.Chat.Commands
             GotoTarget target = ChatParamUtils.ParseGotoTarget(parameters[0]);
 
             if (target.IsRandom)
-                return await chatTeleporter.TeleportToParcelAsync(GetRandomParcel(), false, ct);
+                return await chatTeleporter.TeleportToParcelAsync(RandomParcel(), false, ct);
 
             if (target.IsCrowd)
-                return await chatTeleporter.TeleportToParcelAsync(await FindCrowdAsync(ct), false, ct);
+                return await chatTeleporter.TeleportToParcelAsync(await FindCrowdAsync(webRequestController, urlsSource, ct), false, ct);
 
             if (target.World != null)
                 return target.Parcel.HasValue
@@ -63,12 +63,14 @@ namespace DCL.Chat.Commands
             return $"🔴 Invalid parameters, usage:\n{Description}";
         }
 
-        private static Vector2Int GetRandomParcel() =>
+        /// <summary>A parcel of Genesis City picked at random, where <c>/goto random</c> goes.</summary>
+        public static Vector2Int RandomParcel() =>
             new (
                 Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x),
                 Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y));
 
-        private async UniTask<Vector2Int> FindCrowdAsync(CancellationToken ct)
+        /// <summary>The base parcel of the most populated scene, where <c>/goto crowd</c> goes.</summary>
+        public static async UniTask<Vector2Int> FindCrowdAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, CancellationToken ct)
         {
             HotScene[] hotScenes = await webRequestController
                                         .GetAsync(urlsSource.Url(DecentralandUrl.ArchipelagoHotScenes), ct, ReportCategory.BADGES)
