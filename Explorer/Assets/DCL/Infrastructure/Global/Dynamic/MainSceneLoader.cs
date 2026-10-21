@@ -342,14 +342,16 @@ namespace Global.Dynamic
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
 
-            // Local asset bundles (the local-scene-development default): the embedded abgen JIT server becomes
-            // the optimized-assets source (it serves the local scene and read-throughs everything else from
-            // production). Brought up to health serially, before the URL sources are built, so the override is
-            // seeded only when the server is actually serving; the whole-scene warm-up continues in the
-            // background and realm loading holds on it below.
+            // Local scene development serves the scene as local asset bundles: the embedded abgen JIT server
+            // becomes the optimized-assets source (it serves the local scene and read-throughs everything else
+            // from production). Brought up to health serially, before the URL sources are built, so the override
+            // is seeded only when the server is actually serving; the whole-scene warm-up continues in the
+            // background and realm loading holds on it below. When the server does not come up nothing is
+            // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
+            // the scene loads either way.
             string? localAbBaseUrl = null;
 
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
                 // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
@@ -362,12 +364,6 @@ namespace Global.Dynamic
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
-                else
-
-                    // No server to answer bundle requests: everything built from here on (manifest lane, GLTF
-                    // container loading) is wired as a session launched without local asset bundles, so the
-                    // scene loads raw GLTFs straight away instead of requesting bundles only the sidecar could serve.
-                    launchSettings.useLocalAssetBundles = false;
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -401,6 +397,7 @@ namespace Global.Dynamic
                 identityCache,
                 pluginSettingsContainer,
                 launchSettings,
+                useLocalAssetBundles: localAbBaseUrl != null,
                 applicationParametersParser,
                 splashScreen.Value,
                 diskCache,

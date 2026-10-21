@@ -1,7 +1,7 @@
 # Local asset bundles via the abgen sidecar
 
-**Pinned:** abgen v0.21.0 · **Default:** on in local scene development (`--local-ab false` opts
-out; the Editor's "Use Local Asset Bundles" checkbox is the switch there) · **Guarantee:** every
+**Pinned:** abgen v0.21.0 · **Always on** in local scene development — there is no flag and no
+Editor switch (Creator Hub's legacy `local-ab=true` is accepted and ignored) · **Guarantee:** every
 failure — install, launch, manifest, a single file, the server dying later — degrades to raw GLTFs
 and is reported on the AB tab, never a broken scene.
 
@@ -10,7 +10,7 @@ and is reported on the AB tab, never a broken scene.
 `AbgenSidecar` (Global/Dynamic) runs the abgen JIT server as a supervised localhost child on
 abgen's **default bind** (`127.0.0.1:5147`) — the endpoint is deliberately not exported, because
 abgen's `HTTP_SERVER_HOST`/`HTTP_SERVER_PORT` are generic names that would leak into every child
-process spawned afterwards; a second `--local-ab` instance loses the port and its scene degrades
+process spawned afterwards; a second local-scene instance loses the port and its scene degrades
 to raw GLTFs. Everything else is env-configured (preview content server as `ABGEN_CATALYST_URL`,
 `ABGEN_UPSTREAM_AB_CDN` read-through, `ABGEN_JIT_CONTENT_DIGEST=1` so edits reconvert under the
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`,
@@ -25,10 +25,9 @@ binary when absent (`EnsurePinnedBinaryAsync` — the AB panel is auto-opened so
 visible), creates the sidecar (`TryCreate`), launches it and polls it to health (`StartAsync`).
 Only when it returns `true` — the server is provably serving — is its base URL passed into the URL
 sources as the optimized-assets override; on `false` the override is never set and
-`useLocalAssetBundles` is switched off on the launch settings before anything else is built, so
-the session is byte-for-byte the one launched with `--local-ab false` (manual LSD manifest, raw
-GLTFs) — every failure path inside `StartAsync` records its reason on `AbgenConversionMetrics`
-(`OnRawGltfFallback`) on the way out. The whole-scene warm-up
+`BootstrapContainer.UseLocalAssetBundles` is false for everything built afterwards, so the session
+is wired for raw GLTFs (manual LSD manifest, GLTF lane) — every failure path inside `StartAsync`
+records its reason on `AbgenConversionMetrics` (`OnRawGltfFallback`) on the way out. The whole-scene warm-up
 then runs in the background (`WarmUpTask`), overlapping the rest of boot. The child is killed on
 dispose (`MainSceneLoader.Shutdown()`, registered as a quit-cleanup candidate). In every other
 mode no sidecar object is ever constructed.
@@ -87,8 +86,8 @@ first manifest request, and a failure is cached for the session (`IrrecoverableF
 (which is what starts scene loading), so the first manifest request lands on converted bundles
 rather than a server mid-conversion; the warm-up's outcome carries no signal (a healthy server
 JIT-converts per request regardless), and the task is pre-completed when the server never came
-up. First run therefore enters the world with bundles already served; outside LSD, or with
-`--local-ab false`, no sidecar exists and boot is unaffected. Both waits — the serial health launch and this hold —
+up. First run therefore enters the world with bundles already served; outside LSD no sidecar
+exists and boot is unaffected. Both waits — the serial health launch and this hold —
 are absorbed under the splash screen, before the authentication screen.
 
 ## Degrading to raw GLTFs
@@ -97,8 +96,8 @@ The scene must load whatever happens to the sidecar, so every failure has a raw-
 
 - **Server never comes up** (no release for the platform, download or checksum failure, launch
   that never answers, port held by a foreign or mismatched server): `AbgenSidecarBootstrap`
-  records the reason and `MainSceneLoader` switches `useLocalAssetBundles` off before the
-  containers are built — the session is wired exactly like `--local-ab false`.
+  records the reason and `MainSceneLoader` passes `useLocalAssetBundles: false` into
+  `BootstrapContainer` — everything built afterwards is wired for raw GLTFs.
 - **Scene manifest cannot be fetched** from a healthy server: `LoadSceneDefinition(List)System`
   leaves the manifest `FAILED`, `PrepareGltfAssetLoadingSystem` routes every container of the scene
   to the raw-GLTF lane (whole-scene degrade, no per-asset round trips), and the reason is recorded.

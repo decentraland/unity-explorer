@@ -184,63 +184,6 @@ namespace Global.Tests.EditMode
         }
 
         [Test]
-        public void EnableLocalAssetBundlesFromLocalAbDeepLink()
-        {
-            //Arrange
-            var realmLaunchSettings = new RealmLaunchSettings();
-
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=true",
-            });
-
-            //Act
-            realmLaunchSettings.ApplyConfig(applicationParametersParser);
-
-            //Assert
-            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
-            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
-        }
-
-        [Test]
-        public void EnableLocalAssetBundlesByDefaultInLocalSceneDevelopment()
-        {
-            //Arrange
-            var realmLaunchSettings = new RealmLaunchSettings();
-
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true",
-            });
-
-            //Act
-            realmLaunchSettings.ApplyConfig(applicationParametersParser);
-
-            //Assert
-            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
-            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local asset bundles must be on without any flag");
-        }
-
-        [Test]
-        public void DisableLocalAssetBundlesFromLocalAbFalse()
-        {
-            //Arrange
-            var realmLaunchSettings = new RealmLaunchSettings();
-
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=false",
-            });
-
-            //Act
-            realmLaunchSettings.ApplyConfig(applicationParametersParser);
-
-            //Assert
-            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
-            Assert.IsFalse(realmLaunchSettings.useLocalAssetBundles, "local-ab=false must opt out of local asset bundles");
-        }
-
-        [Test]
         [TestCase("127.0.0.1:8000")]
         [TestCase("localhost:8000")]
         public void IgnoreMacOSRealmInvalidation(string realm)
