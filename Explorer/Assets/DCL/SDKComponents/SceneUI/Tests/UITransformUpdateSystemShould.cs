@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public async Task SetUp()
         {
             await Initialize();
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)));
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)), isPortableExperience: false);
         }
 
         [Test]

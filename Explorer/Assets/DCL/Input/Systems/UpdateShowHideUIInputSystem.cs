@@ -28,7 +28,8 @@ namespace DCL.Input.Systems
         }
 
         private const int TOAST_DURATION_MS = 3000;
-        private const string EXPLORER_HIDDEN_TOAST = "Press   U   again to hide the scene UI.";
+        // Same width as ALL_HIDDEN_TOAST: the toast prefab draws the key cap at a fixed offset under the "U" of a centred label
+        private const string EXPLORER_HIDDEN_TOAST = "Press   U   to hide the scene UI.";
         private const string ALL_HIDDEN_TOAST = "Press   U   to show the UI again.";
 
         private readonly DCLInput dclInput;
@@ -103,6 +104,9 @@ namespace DCL.Input.Systems
                     : visibility == UIVisibility.AllVisible;
 
                 tracker.Document.rootVisualElement.SetVisible(visible);
+
+                if (tracker.IsSceneUI)
+                    tracker.Document.rootVisualElement.EnableInClassList(VisualElementsExtensions.CURRENT_SCENE_UI_ONLY_CLASS, visibility == UIVisibility.ExplorerHidden);
             }
         }
 

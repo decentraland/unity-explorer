@@ -12,6 +12,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -24,12 +25,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Entity sceneRoot;
+        private readonly bool isPortableExperience;
 
-        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
             this.sceneRoot = sceneRoot;
+            this.isPortableExperience = isPortableExperience;
         }
 
         protected override void Update(float _)
@@ -37,7 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             UpdateUITransformQuery(World);
 
             // For newly created and modified entities
-            CheckUITransformOutOfSceneQuery(World, sceneStateProvider.IsCurrent);
+            CheckUITransformOutOfSceneQuery(World, ShouldBeOnCanvas(sceneStateProvider.IsCurrent));
         }
 
         [Query]
@@ -77,14 +80,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(SceneRootComponent))]
-        private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
+        private void CheckUITransformOutOfScene([Data] bool shouldBeOnCanvas, ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
             if (uiTransformComponent.RelationData.parent != sceneRoot)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas
-            switch (isCurrent)
+            switch (shouldBeOnCanvas)
             {
                 case false when !uiTransformComponent.IsHidden:
                     canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
@@ -101,7 +104,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             if(sceneStateProvider.State.Value() == SceneState.Disposed) return;
 
-            CheckUITransformOutOfSceneQuery(World, value);
+            CheckUITransformOutOfSceneQuery(World, ShouldBeOnCanvas(value));
         }
+
+        // Portable experiences are always current, so the current-scene-only flag on the canvas root is what takes their UI off
+        private bool ShouldBeOnCanvas(bool isCurrent) =>
+            isCurrent && !(isPortableExperience && canvas.rootVisualElement.ClassListContains(VisualElementsExtensions.CURRENT_SCENE_UI_ONLY_CLASS));
     }
 }
