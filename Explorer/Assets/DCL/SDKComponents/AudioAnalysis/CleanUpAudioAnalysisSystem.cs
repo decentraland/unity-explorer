@@ -11,7 +11,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.AudioClips;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
 {
