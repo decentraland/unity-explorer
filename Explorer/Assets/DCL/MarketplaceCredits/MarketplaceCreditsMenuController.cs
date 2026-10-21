@@ -10,7 +10,6 @@ using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
-using DCL.UI.Buttons;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
@@ -21,7 +20,6 @@ using System;
 using System.Globalization;
 using System.Threading;
 using DCL.UI;
-using UnityEngine;
 using Utility;
 
 namespace DCL.MarketplaceCredits
@@ -41,18 +39,12 @@ namespace DCL.MarketplaceCredits
 
         public event Action OnAnyPlaceClick;
 
-        private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
-        private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID = Animator.StringToHash("isPaused");
-
-        private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
-        private readonly Animator sidebarCreditsButtonAnimator;
-        private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
@@ -68,47 +60,40 @@ namespace DCL.MarketplaceCredits
         private UniTaskCompletionSource closeTaskCompletionSource;
         private CancellationTokenSource showCreditsUnlockedCts;
         private CancellationTokenSource showErrorNotificationCts;
-        private CancellationTokenSource sidebarButtonStateCts;
+        private CancellationTokenSource creditsProgramStateCts;
 
         private bool haveJustClaimedCredits;
 
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
-            HoverableAndSelectableButtonWithAnimator sidebarButton,
             UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            Animator sidebarCreditsButtonAnimator,
-            GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
             ImageControllerProvider imageControllerProvider) : base(viewFactory)
         {
-            this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
-            this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
-            this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
             this.imageControllerProvider = imageControllerProvider;
 
-            marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
-            CheckForSidebarButtonState();
+            CheckForCreditsProgramState();
         }
 
         protected override void OnViewInstantiated()
@@ -159,15 +144,12 @@ namespace DCL.MarketplaceCredits
         {
             closeTaskCompletionSource = new UniTaskCompletionSource();
             OpenSection(MarketplaceCreditsSection.Welcome);
-            SetSidebarButtonAnimationAsPaused(true);
             MarketplaceCreditsOpened.Invoke(inputData.IsOpenedFromNotification);
         }
 
         protected override void OnViewClose()
         {
-            sidebarButton.Deselect();
             CloseAllSections();
-            SetSidebarButtonAnimationAsPaused(false);
             haveJustClaimedCredits = false;
             currentSection = null;
         }
@@ -240,10 +222,9 @@ namespace DCL.MarketplaceCredits
         {
             showCreditsUnlockedCts.SafeCancelAndDispose();
             showErrorNotificationCts.SafeCancelAndDispose();
-            sidebarButtonStateCts.SafeCancelAndDispose();
+            creditsProgramStateCts.SafeCancelAndDispose();
 
-            marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
-            web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
+            web3IdentityCache.OnIdentityChanged -= CheckForCreditsProgramState;
 
             if (viewInstance != null)
             {
@@ -294,9 +275,6 @@ namespace DCL.MarketplaceCredits
             if (!isFeatureActivated)
                 return;
 
-            SetSidebarButtonAnimationAsAlert(true);
-            SetSidebarButtonAsClaimIndicator(true);
-
             // If the user is in the Goals of the Week section, we need to refresh the information
             if (currentSection == MarketplaceCreditsSection.GoalsOfTheWeek && !isCreditsUnlockedPanelOpen)
                 OpenSection(MarketplaceCreditsSection.Welcome);
@@ -316,17 +294,16 @@ namespace DCL.MarketplaceCredits
             mvcManager.ShowAndForget(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: true)));
         }
 
-        private void CheckForSidebarButtonState()
+        private void CheckForCreditsProgramState()
         {
-            sidebarButtonStateCts = sidebarButtonStateCts.SafeRestart();
-            CheckForSidebarButtonStateAsync(sidebarButtonStateCts.Token).Forget();
+            creditsProgramStateCts = creditsProgramStateCts.SafeRestart();
+            CheckForCreditsProgramStateAsync(creditsProgramStateCts.Token).Forget();
         }
 
-        private async UniTaskVoid CheckForSidebarButtonStateAsync(CancellationToken ct)
+        private async UniTaskVoid CheckForCreditsProgramStateAsync(CancellationToken ct)
         {
             try
             {
-                await UniTask.WaitUntil(() => sidebarButton.gameObject.activeInHierarchy, cancellationToken: ct);
                 await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
 
                 if (web3IdentityCache.IsGuest())
@@ -342,8 +319,6 @@ namespace DCL.MarketplaceCredits
                 var creditsProgramProgressResponse =
                     await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
 
-                SetSidebarButtonState(creditsProgramProgressResponse);
-
                 if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City,
@@ -352,8 +327,8 @@ namespace DCL.MarketplaceCredits
                     await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 
-                web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
-                web3IdentityCache.OnIdentityChanged += CheckForSidebarButtonState;
+                web3IdentityCache.OnIdentityChanged -= CheckForCreditsProgramState;
+                web3IdentityCache.OnIdentityChanged += CheckForCreditsProgramState;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -379,37 +354,6 @@ namespace DCL.MarketplaceCredits
             }
 
             return false;
-        }
-
-        public void SetSidebarButtonAnimationAsAlert(bool isOn) =>
-            sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID, isOn);
-
-        public void SetSidebarButtonAsClaimIndicator(bool isOn) =>
-            sidebarCreditsButtonIndicator.SetActive(isOn);
-
-        private void SetSidebarButtonAnimationAsPaused(bool isOn) =>
-            sidebarCreditsButtonAnimator.SetBool(SIDEBAR_BUTTON_ANIMATOR_IS_PAUSED_ID, isOn);
-
-        private void SetSidebarButtonState(CreditsProgramProgressResponse creditsProgramProgressResponse)
-        {
-            if (creditsProgramProgressResponse.IsProgramEnded())
-            {
-                SetSidebarButtonAnimationAsAlert(false);
-                SetSidebarButtonAsClaimIndicator(false);
-                return;
-            }
-
-            bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-            SetSidebarButtonAnimationAsAlert(
-                !creditsProgramProgressResponse.HasUserStartedProgram()
-                || !creditsProgramProgressResponse.IsUserEmailVerified()
-                || (thereIsSomethingToClaim
-                && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
-            SetSidebarButtonAsClaimIndicator(
-                creditsProgramProgressResponse.HasUserStartedProgram()
-                && creditsProgramProgressResponse.IsUserEmailVerified()
-                && thereIsSomethingToClaim
-                && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }
 }

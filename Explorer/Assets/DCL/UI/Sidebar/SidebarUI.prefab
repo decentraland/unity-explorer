@@ -128,9 +128,6 @@ MonoBehaviour:
   <NearbyVoiceChatButton>k__BackingField: {fileID: 3283011950901128146}
   <NearbyVoiceWidget>k__BackingField: {fileID: 3326973332496372382}
   <NearbyVoiceTip>k__BackingField: {fileID: 3278540452595179668}
-  <MarketplaceCreditsButton>k__BackingField: {fileID: 2307622500487672837}
-  <MarketplaceCreditsButtonAnimator>k__BackingField: {fileID: 8553432859607388883}
-  <MarketplaceCreditsButtonAlertMark>k__BackingField: {fileID: 8415137157935535153}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
@@ -1201,17 +1198,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84e76370cf0e414cb5224e89a90807da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2307622500487672837 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3394549892427051198, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2459600118286465694 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3260551235916889637, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
@@ -1503,16 +1489,6 @@ MonoBehaviour:
 --- !u!1 &8365220141105737363 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8866096941222373928, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &8415137157935535153 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8923071207788531850, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &8553432859607388883 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 8768062667089581672, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &8603036728969572028 stripped

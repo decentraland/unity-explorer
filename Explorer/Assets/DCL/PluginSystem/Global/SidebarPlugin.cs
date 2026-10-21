@@ -29,7 +29,6 @@ using DCL.VoiceChat.UI;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using MVC;
 using Runtime.Wearables;
 using System;
@@ -60,7 +59,6 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly SelfProfile selfProfile;
-        private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
         private readonly ChatEventBus chatEventBus;
@@ -103,7 +101,6 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ProfileChangesBus profileChangesBus,
             SelfProfile selfProfile,
-            IRealmData realmData,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
@@ -132,7 +129,6 @@ namespace DCL.PluginSystem.Global
             profileRepositoryWrapper = profileDataProvider;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
-            this.realmData = realmData;
             this.decentralandUrls = decentralandUrls;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
@@ -202,7 +198,6 @@ namespace DCL.PluginSystem.Global
                 profileButtonPresenter,
                 webBrowser,
                 selfProfile,
-                realmData,
                 decentralandUrls,
                 chatEventBus,
                 supportRequestService,

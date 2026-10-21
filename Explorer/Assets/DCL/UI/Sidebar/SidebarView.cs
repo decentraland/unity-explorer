@@ -112,19 +112,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public NearbyVoiceWidgetView NearbyVoiceWidget { get; private set; } = null!;
         [field: SerializeField] public NearbyVoiceTipView NearbyVoiceTip { get; private set; } = null!;
 
-        [field: Header("Marketplace Credits")]
-        [field: SerializeField]
-        [field: FormerlySerializedAs("<marketplaceCreditsButton>k__BackingField")]
-        public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        [field: FormerlySerializedAs("<marketplaceCreditsButtonAnimator>k__BackingField")]
-        public Animator MarketplaceCreditsButtonAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        [field: FormerlySerializedAs("<marketplaceCreditsButtonAlertMark>k__BackingField")]
-        public GameObject MarketplaceCreditsButtonAlertMark { get; private set; } = null!;
-
         [field: Header("Pending Port")]
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
         [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;

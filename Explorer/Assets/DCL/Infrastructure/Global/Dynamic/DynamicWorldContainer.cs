@@ -593,7 +593,6 @@ namespace Global.Dynamic
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
                     profileContainer.SelfProfile,
-                    staticContainer.RealmData,
                     bootstrapContainer.DecentralandUrlsSource,
                     uiShellContainer.PassportBridge,
                     chatContainer.ChatEventBus,

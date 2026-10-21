@@ -13,7 +13,6 @@ using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.InWorldCamera;
 using DCL.Friends.UI.FriendPanel;
-using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
@@ -29,7 +28,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Identities;
-using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -59,7 +57,6 @@ namespace DCL.UI.Sidebar
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly SelfProfile selfProfile;
-        private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly IDisposable chatEventBusSubscription;
@@ -77,12 +74,10 @@ namespace DCL.UI.Sidebar
         private readonly bool isCameraReelFeatureEnabled;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource openPanelCts = new ();
         private CancellationTokenSource checkForLiveEventsCts = new ();
-        private bool isMarketplaceCreditsFeatureEnabled;
 
         private SimpleHoverableButton? openMenuButton;
         private GameObject? openMenu;
@@ -98,7 +93,6 @@ namespace DCL.UI.Sidebar
             SidebarProfileButtonPresenter profileButtonPresenter,
             UnityAppWebBrowser webBrowser,
             SelfProfile selfProfile,
-            IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
@@ -121,10 +115,8 @@ namespace DCL.UI.Sidebar
             this.profileButtonPresenter = profileButtonPresenter;
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
-            this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
-            isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
@@ -159,9 +151,6 @@ namespace DCL.UI.Sidebar
 
                 if (isNearbyVoiceChatEnabled)
                     viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
-
-                if (isMarketplaceCreditsFeatureEnabled)
-                    viewInstance.MarketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
 
                 UnsubscribeFromOption(viewInstance.discoverPlacesOption, OnPlacesOptionClicked);
                 UnsubscribeFromOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
@@ -200,7 +189,6 @@ namespace DCL.UI.Sidebar
 
             profileWidgetCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
-            checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
@@ -221,9 +209,6 @@ namespace DCL.UI.Sidebar
             BindAudioSliders();
             CloseAllMenus();
             SubscribeToEvents();
-
-            checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
-            CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
 
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
@@ -566,18 +551,6 @@ namespace DCL.UI.Sidebar
 
         private void OnNotificationsButtonClicked() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
 
-        private void OnMarketplaceCreditsButtonClicked()
-        {
-            if (identityCache.IsGuest())
-            {
-                OpenPanelAsync(viewInstance!.MarketplaceCreditsButton, UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits))).Forget();
-                return;
-            }
-
-            OpenPanelAsync(viewInstance!.MarketplaceCreditsButton,
-                MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
-        }
-
         private void OnNearbyVoiceButtonClicked()
         {
             if (identityCache.IsGuest())
@@ -689,21 +662,6 @@ namespace DCL.UI.Sidebar
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
             }
-        }
-
-        private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
-        {
-            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
-
-            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
-                return;
-
-            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);
-            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
-
-            if (isMarketplaceCreditsFeatureEnabled)
-                viewInstance?.MarketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
         }
     }
 }
