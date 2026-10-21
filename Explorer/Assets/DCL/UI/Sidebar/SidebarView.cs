@@ -107,6 +107,10 @@ namespace DCL.UI.Sidebar
         [field: FormerlySerializedAs("<unreadMessagesButton>k__BackingField")]
         public SimpleHoverableButton UnreadMessagesButton { get; private set; } = null!;
 
+        [field: Header("Smart Wearables")]
+        [field: SerializeField] public SimpleHoverableButton SmartWearablesButton { get; private set; } = null!;
+        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
+
         [field: Header("Nearby Voice Chat")]
         [field: SerializeField] public NearbyVoiceChatButtonView NearbyVoiceChatButton { get; private set; } = null!;
         [field: SerializeField] public NearbyVoiceWidgetView NearbyVoiceWidget { get; private set; } = null!;
@@ -114,7 +118,6 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Pending Port")]
         [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; } = null!;
-        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
         [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
 
         public void BlockSidebar()

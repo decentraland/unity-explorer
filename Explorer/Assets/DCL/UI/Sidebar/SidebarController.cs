@@ -22,6 +22,8 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
+using DCL.UI.Skybox;
+using DCL.Utilities;
 using DCL.UI.ProfileElements;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
@@ -65,6 +67,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
+        private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly HttpEventsApiService eventsApiService;
         private readonly SidebarProfileMenuPresenter profileMenuPresenter;
         private readonly InWorldCameraToggle cameraToggle;
@@ -78,6 +81,8 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource openPanelCts = new ();
         private CancellationTokenSource checkForLiveEventsCts = new ();
+        private CancellationTokenSource smartWearablesTooltipCts = new ();
+        private ReactivePropertyExtensions.DisposableSubscription<bool>? smartWearablesSubscription;
 
         private SimpleHoverableButton? openMenuButton;
         private GameObject? openMenu;
@@ -96,6 +101,7 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
+            SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             HttpEventsApiService eventsApiService,
             SidebarProfileMenuPresenter profileMenuPresenter,
             InWorldCameraToggle cameraToggle,
@@ -105,6 +111,7 @@ namespace DCL.UI.Sidebar
             : base(viewFactory)
         {
             this.supportRequestService = supportRequestService;
+            this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.eventsApiService = eventsApiService;
             this.profileMenuPresenter = profileMenuPresenter;
             this.cameraToggle = cameraToggle;
@@ -145,6 +152,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.NotificationsButton.onClick.RemoveListener(OnNotificationsButtonClicked);
                 viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfileButtonClicked);
                 viewInstance.EmotesButton.onClick.RemoveListener(OnEmotesButtonClicked);
+                viewInstance.SmartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
+                viewInstance.SmartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
 
                 if (isFriendsFeatureEnabled)
                     viewInstance.FriendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
@@ -192,6 +201,8 @@ namespace DCL.UI.Sidebar
             referralNotificationCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
+            smartWearablesTooltipCts.SafeCancelAndDispose();
+            smartWearablesSubscription?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -216,6 +227,9 @@ namespace DCL.UI.Sidebar
             OnChatViewFoldingChanged(true);
 
             viewInstance.SetLiveEventsCounter(0);
+
+            smartWearablesSubscription = smartWearablesTooltipController.HasRunningSmartWearables.UseCurrentValueAndSubscribeToUpdate(
+                this, static (hasAny, controller) => controller.OnRunningSmartWearablesChanged(hasAny), CancellationToken.None);
         }
 
         protected override void OnViewShow()
@@ -227,6 +241,30 @@ namespace DCL.UI.Sidebar
 
             checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
             FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+        }
+
+        private void OnRunningSmartWearablesChanged(bool hasAny)
+        {
+            viewInstance!.SmartWearablesButton.gameObject.SetActive(hasAny);
+
+            if (!hasAny)
+                smartWearablesTooltipController.Close();
+        }
+
+        private void OnSmartWearablesButtonHover()
+        {
+            smartWearablesTooltipCts = smartWearablesTooltipCts.SafeRestart();
+            ShowSmartWearablesTooltipAsync(smartWearablesTooltipCts.Token).Forget();
+        }
+
+        private void OnSmartWearablesButtonUnhover() =>
+            smartWearablesTooltipController.Close();
+
+        private async UniTaskVoid ShowSmartWearablesTooltipAsync(CancellationToken ct)
+        {
+            try { await mvcManager.ShowAsync(SmartWearablesSideBarTooltipController.IssueCommand(), ct); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
@@ -267,6 +305,8 @@ namespace DCL.UI.Sidebar
             viewInstance.NotificationsButton.onClick.AddListener(OnNotificationsButtonClicked);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfileButtonClicked);
             viewInstance.EmotesButton.onClick.AddListener(OnEmotesButtonClicked);
+            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
+            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
 
             SubscribeToOption(viewInstance.discoverPlacesOption, OnPlacesOptionClicked);
             SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
