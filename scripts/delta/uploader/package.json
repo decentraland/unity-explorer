@@ -1,0 +1,8 @@
+{
+  "name": "delta-cdn-uploader",
+  "private": true,
+  "description": "Locked install of @dcl/cdn-uploader for the delta tool (docs/delta-updates.md)",
+  "dependencies": {
+    "@dcl/cdn-uploader": "1.5.0"
+  }
+}
