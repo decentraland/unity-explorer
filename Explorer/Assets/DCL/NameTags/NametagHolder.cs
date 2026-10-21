@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Nametags
 {
@@ -27,7 +28,11 @@ namespace DCL.Nametags
         }
 
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
-        private void OnEnable() =>
-            nametag = GetComponent<UIDocument>().rootVisualElement.Q<NametagElement>();
+        private void OnEnable()
+        {
+            UIDocument document = GetComponent<UIDocument>();
+            PanelSpriteLookupTables.Build(document.panelSettings);
+            nametag = document.rootVisualElement.Q<NametagElement>();
+        }
     }
 }

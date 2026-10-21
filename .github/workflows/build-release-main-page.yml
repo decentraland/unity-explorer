@@ -58,7 +58,7 @@ jobs:
           generate_release_notes: true
           draft: true # Swap to auto-release!
           tag_name: ${{ needs.get-info.outputs.tag_version }}
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
           files: |
             ./Decentraland_windows64.zip
             ./Decentraland_macos.zip

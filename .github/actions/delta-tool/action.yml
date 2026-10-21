@@ -1,0 +1,23 @@
+name: Build the delta tool
+description: >-
+  Build scripts/delta (Rust, toolchain pinned by its rust-toolchain.toml) in release mode,
+  reusing the cargo registry and target folder of earlier runs, and export DELTA as the
+  path of the binary.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          scripts/delta/target
+        key: delta-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/delta/Cargo.lock', 'scripts/delta/rust-toolchain.toml') }}
+
+    - name: Build
+      shell: bash
+      working-directory: scripts/delta
+      run: |
+        cargo build --release --locked
+        echo "DELTA=$PWD/target/release/delta" >> "$GITHUB_ENV"
