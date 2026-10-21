@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.Lobby.Tests
@@ -11,12 +12,24 @@ namespace DCL.Lobby.Tests
 
         private VisualElement section = null!;
         private LobbyPlacesRail places = null!;
+        private GameObject? documentGameObject;
+        private PanelSettings? panelSettings;
 
         [SetUp]
         public void SetUp()
         {
             section = CreateSection();
             places = new LobbyPlacesRail(AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(CARD_TEMPLATE_PATH));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (documentGameObject != null)
+                Object.DestroyImmediate(documentGameObject);
+
+            if (panelSettings != null)
+                Object.DestroyImmediate(panelSettings);
         }
 
         [Test]
@@ -84,6 +97,41 @@ namespace DCL.Lobby.Tests
             //Assert
             Assert.AreEqual(1, clicked);
             Assert.AreEqual(0, jumpedIn);
+        }
+
+        [Test]
+        public void ReportTheViewAllClickOfItsSection()
+        {
+            //Arrange
+            var clicked = 0;
+            places.ViewAllClicked = () => clicked++;
+            Button viewAll = AddViewAll(section);
+            AttachToPanel(section);
+
+            //Act
+            places.Show(section);
+            Submit(viewAll);
+
+            //Assert
+            Assert.AreEqual(1, clicked);
+        }
+
+        [Test]
+        public void StopReportingTheViewAllOfASectionItHandedBack()
+        {
+            //Arrange
+            var clicked = 0;
+            places.ViewAllClicked = () => clicked++;
+            Button viewAll = AddViewAll(section);
+            AttachToPanel(section);
+            places.Show(section);
+
+            //Act
+            places.Hide();
+            Submit(viewAll);
+
+            //Assert
+            Assert.AreEqual(0, clicked);
         }
 
         [Test]
@@ -167,6 +215,31 @@ namespace DCL.Lobby.Tests
             placesSection.Add(new Label { name = "Title", text = "RECENT PLACES" });
             placesSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 3 });
             return placesSection;
+        }
+
+        private static Button AddViewAll(VisualElement placesSection)
+        {
+            var viewAll = new Button { name = "ViewAll" };
+            placesSection.Add(viewAll);
+            return viewAll;
+        }
+
+        // A button hears a submit only through a panel
+        private void AttachToPanel(VisualElement element)
+        {
+            documentGameObject = new GameObject(nameof(LobbyPlacesRailShould));
+            var document = documentGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            document.panelSettings = panelSettings;
+            document.rootVisualElement.Add(element);
+        }
+
+        // A submit is reported as a click like a keyboard press; unlike a pointer click it needs no laid-out panel
+        private static void Submit(Button button)
+        {
+            using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();
+            evt.target = button;
+            button.SendEvent(evt);
         }
     }
 }
