@@ -223,11 +223,11 @@
 }
 
 .lobby-profile-menu__settings-icon {
-    background-image: url('/Assets/Textures/ExplorePanel/SettingsOff.png');
+    background-image: url('/Assets/Textures/Common/SettingsIcn.png');
 }
 
 .lobby-profile-menu__bug-icon {
-    background-image: var(--sprite-common__icon-debug);
+    background-image: url('/Assets/Textures/Common/BugIcon.png');
 }
 
 .lobby-profile-menu__sign-out-icon {
