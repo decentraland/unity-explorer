@@ -35,7 +35,7 @@
     align-items: center;
 }
 
-/* The profile color, its lighter border and the picture are set inline by the element */
+/* Defaults only: the element sets the profile color, its border and the picture inline */
 .lobby-profile-menu__picture {
     flex-shrink: 0;
     width: 72px;
@@ -67,7 +67,7 @@
     overflow: hidden;
 }
 
-/* The name takes the profile color, set inline by the element */
+/* Default only: the element sets the profile color inline */
 .lobby-profile-menu__name {
     flex-shrink: 1;
     font-size: 22px;
@@ -167,7 +167,6 @@
     color: var(--dcl-color-snow);
 }
 
-/* Negative side margins reach past the panel padding */
 .lobby-profile-menu__separator {
     height: 1px;
     margin: 12px -20px;
@@ -178,7 +177,7 @@
     margin-top: 24px;
 }
 
-/* Negative side margins put the icon on the panel padding, in line with the header and the picture */
+/* The hover rect reaches past the icon, which stays in line with the picture */
 .lobby-profile-menu__item {
     height: 46px;
     margin: 0 -12px;
@@ -238,7 +237,6 @@
     background-image: url('/Assets/Textures/Common/LeaveIcon.png');
 }
 
-/* Negative margins reach the panel edges; the panel clips the corners */
 .lobby-profile-menu__footer {
     height: 38px;
     flex-direction: row;
