@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Utility;
 
 namespace DCL.UI.InputFieldFormatting
 {
@@ -38,7 +37,7 @@ namespace DCL.UI.InputFieldFormatting
         private static readonly string SCENE_PATTERN = $@"(?<{SCENE_GROUP_NAME}>(?<=^|\s)(?<{X_COORD_GROUP_NAME}>-?\d{{1,3}}),(?<{Y_COORD_GROUP_NAME}>-?\d{{1,3}})(?=\s|!|\?|\.|,|$))";
 
         private static readonly string WORLD_PATTERN =
-            $@"(?<{WORLD_GROUP_NAME}>{LEAD}[A-Za-z0-9]+\.dcl\.eth{TRAIL})";
+            $"(?<{WORLD_GROUP_NAME}>{LEAD}{DestinationRules.WORLD_PATTERN}{TRAIL})";
 
         private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{1,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
         private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
@@ -250,7 +249,7 @@ namespace DCL.UI.InputFieldFormatting
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool AreCoordsValid(int x, int y) =>
-            GenesisCityData.IsInsideBounds(x, y);
+            DestinationRules.IsParcel(x, y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsOwnUsername(ReadOnlySpan<char> username)

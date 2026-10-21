@@ -9,7 +9,8 @@ namespace DCL.Lobby.Tests
     public class LobbyGoToElementShould
     {
         private const string FOCUSED_CLASS = "lobby-goto--focused";
-        private const string WITH_DESTINATION_CLASS = "lobby-goto--with-destination";
+        private const string WITH_TEXT_CLASS = "lobby-goto--with-text";
+        private const string INVALID_CLASS = "lobby-goto--invalid";
 
         private readonly List<string> submitted = new ();
 
@@ -42,12 +43,14 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void ShowTheCommandAndThePlaceholder()
+        public void ShowTheCommandThePlaceholderAndTheErrorLine()
         {
             Assert.AreEqual("/goto", element.Q<Label>("Command").text);
             Assert.AreEqual("e.g. 3,-5 or mana.dcl.eth", input.textEdition.placeholder);
             Assert.IsFalse(input.textEdition.hidePlaceholderOnFocus);
             Assert.AreEqual(PickingMode.Ignore, element.Q("Icon").pickingMode);
+            Assert.AreEqual("Coordinates or World name doesn't exist", element.Q<Label>("ErrorLabel").text);
+            Assert.AreEqual(PickingMode.Ignore, element.Q("Error").pickingMode);
         }
 
         [Test]
@@ -79,20 +82,21 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual("mana.dcl.eth", submitted[0]);
         }
 
+        [TestCase("")]
         [TestCase("   ")]
-        [TestCase("mana")]
-        [TestCase("3")]
-        public void SubmitNothingWhileTheFieldHoldsNoDestination(string text)
+        public void SubmitNothingAndStayValidWhileTheFieldIsBlank(string text)
         {
             //Arrange
             element.Text = text;
 
             //Act
             Press(KeyCode.Return);
+            Click();
 
             //Assert
             Assert.AreEqual(0, submitted.Count);
             Assert.AreEqual(text, element.Text);
+            Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
         }
 
         [Test]
@@ -110,22 +114,98 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual("3,-5", element.Text);
         }
 
-        [TestCase("3,-5", true)]
-        [TestCase(" 3,-5/spawn ", true)]
-        [TestCase("mana.dcl.eth", true)]
-        [TestCase("your.world.eth/3,-5/spawn", true)]
-        [TestCase("mana", false)]
-        [TestCase("mana/3,-5", false)]
-        [TestCase("3", false)]
-        [TestCase("random", false)]
+        [TestCase("", false)]
         [TestCase("   ", false)]
-        public void ShowTheGoButtonWhileTheFieldHoldsADestination(string text, bool expected)
+        [TestCase("3,-5", true)]
+        [TestCase("m", true)]
+        [TestCase(" x ", true)]
+        public void ShowTheGoButtonOnceSomethingIsTyped(string text, bool expected)
         {
             //Act
             element.Text = text;
 
             //Assert
-            Assert.AreEqual(expected, element.ClassListContains(WITH_DESTINATION_CLASS));
+            Assert.AreEqual(expected, element.ClassListContains(WITH_TEXT_CLASS));
+        }
+
+        [TestCase("3,-5")]
+        [TestCase(" 3,-5/spawn ")]
+        [TestCase("3, -5")]
+        [TestCase("mana.dcl.eth")]
+        [TestCase("mana.dcl.eth/3,-5/spawn")]
+        [TestCase("eax")]
+        [TestCase("eax/3,-5")]
+        [TestCase("eax/spawn")]
+        [TestCase("eax/3,-5/spawn")]
+        [TestCase("3")]
+        [TestCase("random")]
+        [TestCase("crowd")]
+        [TestCase("crowd.dcl.eth")]
+        public void SubmitTheTrimmedDestinationAndEmptyTheField(string text)
+        {
+            //Arrange
+            element.Text = text;
+
+            //Act
+            Press(KeyCode.Return);
+
+            //Assert
+            Assert.AreEqual(1, submitted.Count);
+            Assert.AreEqual(text.Trim(), submitted[0]);
+            Assert.AreEqual(string.Empty, element.Text);
+            Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
+            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
+        }
+
+        [TestCase("1000,-500")]
+        [TestCase("3,-5,7")]
+        [TestCase("eax/1000,-500")]
+        [TestCase("your.world.eth")]
+        [TestCase("my-world.dcl.eth")]
+        [TestCase("foo bar")]
+        [TestCase("mana.dcl.eth/")]
+        public void MarkItselfInvalidAndKeepTheTextOnSubmittingANonDestination(string text)
+        {
+            //Arrange
+            element.Text = text;
+
+            //Act
+            Press(KeyCode.Return);
+
+            //Assert
+            Assert.AreEqual(0, submitted.Count);
+            Assert.AreEqual(text, element.Text);
+            Assert.IsTrue(element.ClassListContains(INVALID_CLASS));
+            Assert.IsTrue(element.ClassListContains(WITH_TEXT_CLASS));
+        }
+
+        [Test]
+        public void MarkItselfInvalidOnTheGoButtonToo()
+        {
+            //Arrange
+            element.Text = "1000,-500";
+
+            //Act
+            Click();
+
+            //Assert
+            Assert.AreEqual(0, submitted.Count);
+            Assert.AreEqual("1000,-500", element.Text);
+            Assert.IsTrue(element.ClassListContains(INVALID_CLASS));
+        }
+
+        [Test]
+        public void DropTheInvalidMarkOnceTheTextChanges()
+        {
+            //Arrange
+            element.Text = "1000,-500";
+            Press(KeyCode.Return);
+
+            //Act
+            input.value = "100,-50";
+
+            //Assert
+            Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
         }
 
         [Test]
@@ -141,7 +221,23 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(1, submitted.Count);
             Assert.AreEqual("mana.dcl.eth", submitted[0]);
             Assert.AreEqual(string.Empty, element.Text);
-            Assert.IsFalse(element.ClassListContains(WITH_DESTINATION_CLASS));
+            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
+        }
+
+        // Closing the lobby from the callback detaches the pill before its queued change event runs
+        [Test]
+        public void HideTheGoButtonBeforeTheSubscriberDetachesIt()
+        {
+            //Arrange
+            element.Submitted = _ => element.RemoveFromHierarchy();
+            element.Text = "eax";
+
+            //Act
+            Press(KeyCode.Return);
+
+            //Assert
+            Assert.AreEqual(string.Empty, element.Text);
+            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
         }
 
         [Test]
@@ -161,18 +257,20 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void EmptyTheFieldAndDropTheFocusOnReset()
+        public void EmptyTheFieldAndDropTheFocusAndTheInvalidMarkOnReset()
         {
             //Arrange
-            element.Text = "3,-5";
+            element.Text = "1000,-500";
             input.Focus();
+            Press(KeyCode.Return);
 
             //Act
             element.Reset();
 
             //Assert
             Assert.AreEqual(string.Empty, element.Text);
-            Assert.IsFalse(element.ClassListContains(WITH_DESTINATION_CLASS));
+            Assert.IsFalse(element.ClassListContains(WITH_TEXT_CLASS));
+            Assert.IsFalse(element.ClassListContains(INVALID_CLASS));
             Assert.IsFalse(element.ClassListContains(FOCUSED_CLASS));
             Assert.AreEqual(0, submitted.Count);
         }
