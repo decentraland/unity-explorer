@@ -477,6 +477,8 @@ namespace DCL.Lobby
             notificationsCts.SafeCancelAndDispose();
             notificationsCts = null;
 
+            viewInstance?.GoToField.Reset();
+
             // The next show starts outside edit mode, like the first one
             layoutEditor.Hide();
 
