@@ -3,7 +3,6 @@ using DCL.FeatureFlags;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace DCL.Chat.MessageBus
 {
