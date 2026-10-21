@@ -7,7 +7,6 @@ using DCL.Translation.Service;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -22,7 +21,8 @@ namespace DCL.SDKComponents.MediaStream
     ///     <see cref="Uri.AbsoluteUri" />): https on the default port, the host of <see cref="DecentralandUrl.CastPresenterService" />,
     ///     no userinfo, query, fragment or backslash, and a path made of an optional prefix of <c>[A-Za-z0-9_-]</c>
     ///     segments followed by <c>/presentations/{uuid}/slides/{16 lowercase hex}.png</c>; in the Editor, loopback http
-    ///     urls on any port with the same path too. Fetches once per url while in flight, and backs off after a failure.
+    ///     urls on any port with the same path too. Fetches once per url while in flight, backs off after a failure, and
+    ///     rejects a url after <see cref="MAX_FETCH_ATTEMPTS" /> failed fetches.
     ///     Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" /> per throttle key, tracking at most
     ///     <see cref="MAX_TRACKED_BOTS" /> keys, tracks at most <see cref="MAX_TRACKED_URLS" /> rejected and
     ///     <see cref="MAX_TRACKED_URLS" /> failed urls, forgetting the least recently tracked first, logs at most
@@ -37,6 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         internal const float BASE_RETRY_COOLDOWN_SECONDS = 10f;
         internal const float MAX_RETRY_COOLDOWN_SECONDS = 60f;
         internal const float MIN_FETCH_INTERVAL_SECONDS = 0.25f;
+        internal const int MAX_FETCH_ATTEMPTS = 5;
         internal const int MAX_TRACKED_URLS = 32;
         internal const int MAX_TRACKED_BOTS = 32;
         internal const int MAX_REJECTION_REPORTS = 8;
@@ -183,9 +184,9 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         /// <returns>
         ///     <c>null</c>, without decoding, when <paramref name="data" /> isn't a PNG of at most <see cref="MAX_SLIDE_BYTES" />
-        ///     bytes whose header declares at most <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> px on either side.
+        ///     bytes whose header declares at most <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> px on either side, and
+        ///     <c>null</c> when the PNG fails to decode.
         /// </returns>
-        /// <exception cref="InvalidDataException">The PNG fails to decode.</exception>
         internal static Texture2D? DecodeSlide(byte[]? data)
         {
             if (data == null || data.Length > MAX_SLIDE_BYTES || !TryReadPngSize(data, out int width, out int height)
@@ -198,7 +199,7 @@ namespace DCL.SDKComponents.MediaStream
                 return texture;
 
             UnityObjectUtils.SafeDestroy(texture);
-            throw new InvalidDataException("Failed to decode slide");
+            return null;
         }
 
         private static bool TryReadPngSize(byte[] data, out int width, out int height)
@@ -250,7 +251,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (texture == null)
                 {
-                    Reject(url, $"Slide rejected, not a PNG of at most {MAX_SLIDE_BYTES} bytes and {PresentationLayout.MAX_SLIDE_SIZE} px per side");
+                    Reject(url, $"Slide rejected, not a decodable PNG of at most {MAX_SLIDE_BYTES} bytes and {PresentationLayout.MAX_SLIDE_SIZE} px per side");
                     return;
                 }
 
@@ -260,8 +261,16 @@ namespace DCL.SDKComponents.MediaStream
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                if (RecordFailure(url) == 1 && TryConsumeReport(ref failureReportsLeft))
+                int attempts = RecordFailure(url);
+
+                if (attempts == 1 && TryConsumeReport(ref failureReportsLeft))
                     ReportHub.LogException(e, ReportCategory.MEDIA_STREAM);
+
+                if (attempts >= MAX_FETCH_ATTEMPTS)
+                {
+                    failed.TryRemove(url, out _);
+                    Reject(url, $"Slide rejected after {MAX_FETCH_ATTEMPTS} failed fetches");
+                }
             }
             finally { inFlight.Remove(url); }
         }
