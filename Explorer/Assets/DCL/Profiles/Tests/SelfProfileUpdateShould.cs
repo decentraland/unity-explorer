@@ -915,7 +915,7 @@ namespace DCL.Profiles.Tests
             Assert.That(AssertIdentified(failedTwice).Knowledge.IsFailed(out ProfileFailure failure), Is.True);
             Assert.That(failure.Exception, Is.SameAs(second.Exception));
             Assert.That(failure.Streak, Is.EqualTo(2));
-            Assert.That(failure.BackOffMs, Is.EqualTo(2 * ProfileFailure.MIN_BACK_OFF_MS));
+            Assert.That(failure.CalculateBackOffMs(), Is.EqualTo(2 * ProfileFailure.MIN_BACK_OFF_MS));
             Assert.That(insideCmd.GetKind(), Is.EqualTo(SelfProfileCmd.Kind.None));
             AssertReadError(insideWindow, READ, ProfileReadError.FetchFailed);
             AssertFetch(afterCmd, ALICE);
