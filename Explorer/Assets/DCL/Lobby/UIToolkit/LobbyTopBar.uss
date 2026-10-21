@@ -32,7 +32,7 @@
     justify-content: center;
     border-width: 2px;
     border-radius: 21px;
-    border-color: var(--dcl-color-white-10);
+    border-color: var(--lobby-white-5);
     background-color: var(--dcl-color-black-70);
     transition: background-color 0.1s;
 }
@@ -71,6 +71,10 @@
     display: none;
 }
 
+.lobby__top-bar .profile-widget {
+    border-color: var(--lobby-white-5);
+}
+
 /* Pill opening an explore section over the lobby: the shape and the fill of the profile widget beside it */
 .lobby__top-bar-pill {
     height: 42px;
@@ -80,7 +84,7 @@
     align-items: center;
     border-width: 2px;
     border-radius: 21px;
-    border-color: rgba(40, 40, 40, 0.55);
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
@@ -125,7 +129,7 @@
     justify-content: center;
     border-width: 2px;
     border-radius: 21px;
-    border-color: rgba(40, 40, 40, 0.55);
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
@@ -181,7 +185,7 @@
     align-items: center;
     border-width: 2px;
     border-radius: 21px;
-    border-color: var(--dcl-color-white-10);
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
 }
@@ -218,7 +222,7 @@
     align-items: center;
     border-width: 2px;
     border-radius: 21px;
-    border-color: var(--dcl-color-white-10);
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.6);
     transition: background-color 0.1s;
 }

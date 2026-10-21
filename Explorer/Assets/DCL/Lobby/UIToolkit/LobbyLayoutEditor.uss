@@ -220,7 +220,7 @@
 }
 
 .lobby-widget-card__size-toggle:hover {
-    background-color: var(--lobby-white-5);
+    background-color: var(--lobby-white-1);
 }
 
 .lobby-widget-card__size-toggle--selected {
@@ -456,7 +456,7 @@
 }
 
 .lobby__widget-modal-button:active {
-    background-color: var(--lobby-white-5);
+    background-color: var(--lobby-white-1);
 }
 
 .lobby__widget-modal-button--fixed {

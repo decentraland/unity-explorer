@@ -13,7 +13,7 @@
        black far lighter, than the same alpha does in the design tool; these are the alphas that look like the design's
        10%, 20%, 40%, 60%, 70% and 80% whites and its 40% and 60% blacks, used wherever the design names one */
     --lobby-white-2: rgba(255, 255, 255, 0.004);
-    --lobby-white-5: rgba(255, 255, 255, 0.01);
+    --lobby-white-1: rgba(255, 255, 255, 0.01);
     --lobby-white-10: rgba(255, 255, 255, 0.025);
     --lobby-white-20: rgba(255, 255, 255, 0.055);
     --lobby-white-40: rgba(255, 255, 255, 0.14);
@@ -22,6 +22,8 @@
     --lobby-white-80: rgba(255, 255, 255, 0.61);
     --lobby-black-40: rgba(0, 0, 0, 0.67);
     --lobby-black-60: rgba(0, 0, 0, 0.85);
+    /* Not compensated like the alphas above: the outline of the top bar buttons was tuned in-engine */
+    --lobby-white-5: rgba(255, 255, 255, 0.05);
     /* The 1px line just inside the edge of every entry, the design's 10% white */
     --lobby-card-border-color: var(--lobby-white-10);
     --lobby-title-color: white;
