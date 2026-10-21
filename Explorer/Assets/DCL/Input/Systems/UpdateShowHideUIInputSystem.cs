@@ -20,7 +20,16 @@ namespace DCL.Input.Systems
     [UpdateBefore(typeof(InputGroup))]
     public partial class UpdateShowHideUIInputSystem : BaseUnityLoopSystem
     {
+        private enum UIVisibility
+        {
+            AllVisible,
+            ExplorerHidden,
+            AllHidden,
+        }
+
         private const int TOAST_DURATION_MS = 3000;
+        private const string EXPLORER_HIDDEN_TOAST = "Press   U   again to hide the scene UI.";
+        private const string ALL_HIDDEN_TOAST = "Press   U   to show the UI again.";
 
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
@@ -29,7 +38,7 @@ namespace DCL.Input.Systems
         private CancellationTokenSource? toastCt;
         private readonly WarningNotificationView warningNotificationView;
 
-        private bool currentUIVisibilityState = true;
+        private UIVisibility visibility = UIVisibility.AllVisible;
 
         private readonly IReadOnlyList<InputAction> actionsThatEnableUI;
 
@@ -61,23 +70,23 @@ namespace DCL.Input.Systems
         {
             // TODO: Should this really be in a system? It's not really updating anything, just checking for input triggers
 
-            bool? fromInputs = CheckInputs();
+            UIVisibility? fromInputs = CheckInputs();
 
             if (fromInputs.HasValue)
             {
-                currentUIVisibilityState = fromInputs.Value;
+                visibility = fromInputs.Value;
 
                 // Common UIs
-                mvcManager.SetAllViewsCanvasActive(currentUIVisibilityState);
+                mvcManager.SetAllViewsCanvasActive(visibility == UIVisibility.AllVisible);
 
                 ShowOrHideToast();
             }
             else if (World.TryGet(camera, out ToggleUIRequest request))
             {
-                currentUIVisibilityState = request.Enable;
+                visibility = request.Enable ? UIVisibility.AllVisible : UIVisibility.AllHidden;
 
                 // Common UIs
-                mvcManager.SetAllViewsCanvasActive(request.Except, currentUIVisibilityState);
+                mvcManager.SetAllViewsCanvasActive(request.Except, visibility == UIVisibility.AllVisible);
 
                 World.Remove<ToggleUIRequest>(camera);
 
@@ -86,21 +95,32 @@ namespace DCL.Input.Systems
 
             foreach (UIDocumentTracker tracker in UIDocumentTracker.ActiveDocuments)
             {
-                if(!tracker.CanBeHidden)
+                if (!tracker.CanBeHidden)
                     continue;
-                tracker.Document.rootVisualElement.SetVisible(currentUIVisibilityState);
+
+                bool visible = tracker.IsSceneUI
+                    ? visibility != UIVisibility.AllHidden
+                    : visibility == UIVisibility.AllVisible;
+
+                tracker.Document.rootVisualElement.SetVisible(visible);
             }
         }
 
-        private bool? CheckInputs()
+        private UIVisibility? CheckInputs()
         {
+            // U cycles: all visible -> explorer hidden (scene UI kept) -> all hidden -> all visible
             if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
-                return !currentUIVisibilityState;
+                return visibility switch
+                {
+                    UIVisibility.AllVisible => UIVisibility.ExplorerHidden,
+                    UIVisibility.ExplorerHidden => UIVisibility.AllHidden,
+                    _ => UIVisibility.AllVisible,
+                };
 
             foreach (InputAction inputAction in actionsThatEnableUI)
             {
                 if (inputAction.WasPressedThisFrame())
-                    return true;
+                    return UIVisibility.AllVisible;
             }
 
             return null;
@@ -108,19 +128,20 @@ namespace DCL.Input.Systems
 
         private void ShowOrHideToast()
         {
-            if (!currentUIVisibilityState)
-            {
-                toastCt = toastCt.SafeRestart();
-
-                warningNotificationView.AnimatedShowAsync(TOAST_DURATION_MS, toastCt.Token)
-                                       .SuppressCancellationThrow()
-                                       .Forget();
-            }
-            else
+            if (visibility == UIVisibility.AllVisible)
             {
                 toastCt.SafeCancelAndDispose();
                 warningNotificationView.Hide();
+                return;
             }
+
+            string text = visibility == UIVisibility.ExplorerHidden ? EXPLORER_HIDDEN_TOAST : ALL_HIDDEN_TOAST;
+
+            toastCt = toastCt.SafeRestart();
+
+            warningNotificationView.AnimatedShowAsync(text, TOAST_DURATION_MS, toastCt.Token)
+                                   .SuppressCancellationThrow()
+                                   .Forget();
         }
     }
 }

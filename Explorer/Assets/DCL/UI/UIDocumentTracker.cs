@@ -14,6 +14,9 @@ namespace DCL.UI
         [field: SerializeField]
         public bool CanBeHidden { get; private set; } = true;
 
+        [field: SerializeField]
+        public bool IsSceneUI { get; private set; }
+
         public UIDocument Document { get; private set; }
 
         private void Awake()
