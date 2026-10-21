@@ -136,9 +136,6 @@ To opt out and load raw GLTFs from the start:
 --local-ab false
 ```
 
-`--local-ab` (or `--local-ab true`) opts in explicitly and wins over `--lsd-use-remote-ab`; a
-remote-AB request on its own replaces the default.
-
 In the Unity Editor the "Use Local Asset Bundles" checkbox in the Main Scene Loader (shown when
 Initial Realm is Localhost, ticked by default) is the switch — the client launches its embedded
 sidecar on abgen's default loopback port (5147) and wires the URL override itself.

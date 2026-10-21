@@ -103,7 +103,6 @@ namespace Global.Tests.PlayMode
                 identityCache,
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
-                useRemoteAssetBundles: false,
                 useLocalAssetBundles: false,
                 world,
                 playerEntity,

@@ -1,12 +1,10 @@
 using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
-using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -35,9 +33,6 @@ namespace Global.Dynamic
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
-        [SerializeField] internal bool useRemoteAssetsBundles;
         [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
                                   + "embedded abgen sidecar (reading the preview server's content). Untick to load raw GLTFs instead; "
                                   + "a sidecar that fails to install or start degrades to raw GLTFs on its own")] internal bool useLocalAssetBundles = true;
@@ -77,23 +72,6 @@ namespace Global.Dynamic
                    };
         }
 
-        public HybridSceneParams CreateHybridSceneParams()
-        {
-            if (initialRealm == InitialRealm.Localhost || isLocalSceneDevelopmentRealm)
-            {
-                return new HybridSceneParams
-                {
-                    EnableHybridScene = useRemoteAssetsBundles && !useLocalAssetBundles,
-                    HybridSceneContentServer = remoteHybridSceneContentServer,
-                    World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
-                        ? remoteHibridWorld
-                        : "",
-                };
-            }
-
-            return new HybridSceneParams();
-        }
-
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
@@ -116,32 +94,14 @@ namespace Global.Dynamic
 
             if (isLocalSceneDevelopment)
             {
-                // Local asset bundles are the default: `--local-ab false` opts out, and a remote-AB request
-                // replaces the default. `--local-ab` (or `true`) is an explicit opt-in that also wins over a
-                // remote-AB request. The serialized checkbox is an Editor convenience only — player builds
-                // never read it, so its state in the scene asset cannot change what ships.
+                // Local asset bundles are the default: `--local-ab false` opts out, a bare `--local-ab` (or
+                // `true`) opts in explicitly. The serialized checkbox is an Editor convenience only — player
+                // builds never read it, so its state in the scene asset cannot change what ships.
                 bool localAbOptOut = appParameters.HasFlagWithValueFalse(AppArgsFlags.LOCAL_AB);
                 bool localAbExplicit = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) && !localAbOptOut;
-                bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
-                bool localAbDefault = !localAbOptOut && !useRemoteAB && (!Application.isEditor || useLocalAssetBundles);
 
-                if (localAbExplicit && useRemoteAB)
-                {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
-                    useRemoteAB = false;
-                }
-
-                useLocalAssetBundles = localAbExplicit || localAbDefault;
-                SetLocalSceneDevelopmentRealm(realmParamValue, useRemoteAB);
-
-                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
-                    ParseLsdRemoteABServer(serverValue!);
-
-                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_WORLD, out string? worldValue))
-                {
-                    remoteHibridWorld = worldValue!;
-                    remoteHybridSceneContentServer = HybridSceneContentServer.World;
-                }
+                useLocalAssetBundles = localAbExplicit || (!localAbOptOut && (!Application.isEditor || useLocalAssetBundles));
+                SetLocalSceneDevelopmentRealm(realmParamValue);
             }
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
@@ -161,18 +121,11 @@ namespace Global.Dynamic
             initialRealm = InitialRealm.World;
         }
 
-        private void SetLocalSceneDevelopmentRealm(string targetRealm, bool useRemoteAB)
+        private void SetLocalSceneDevelopmentRealm(string targetRealm)
         {
             customRealm = targetRealm;
             initialRealm = InitialRealm.Custom;
-            useRemoteAssetsBundles = useRemoteAB;
             isLocalSceneDevelopmentRealm = true;
-        }
-
-        private void ParseLsdRemoteABServer(string serverValue)
-        {
-            if (Enum.TryParse<HybridSceneContentServer>(serverValue, true, out var server))
-                remoteHybridSceneContentServer = server;
         }
 
         private void ParsePositionAppParameter(string targetPositionParam)

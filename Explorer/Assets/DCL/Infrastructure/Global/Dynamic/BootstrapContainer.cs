@@ -61,7 +61,6 @@ namespace Global.Dynamic
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs AppArgs { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
-        public bool UseRemoteAssetBundles { get; private set; }
         public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
 
@@ -123,7 +122,6 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
-                UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 UseLocalAssetBundles = realmLaunchSettings.useLocalAssetBundles,
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,

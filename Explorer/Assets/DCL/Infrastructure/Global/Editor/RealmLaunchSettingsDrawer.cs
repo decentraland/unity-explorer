@@ -3,7 +3,6 @@ using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SceneRunner.Scene;
 using UnityEditor;
 using UnityEngine;
 using Utility;
@@ -131,34 +130,10 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.Localhost)
             {
-                SerializedProperty remoteWorldContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHibridWorld));
-                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
-                SerializedProperty useHibridAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles));
                 SerializedProperty useLocalAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useLocalAssetBundles));
 
                 EditorGUI.PropertyField(position, useLocalAssets);
                 position.y += singleLineHeight;
-
-                EditorGUI.PropertyField(position, useHibridAssets);
-                position.y += singleLineHeight;
-
-                if (useHibridAssets.boolValue)
-                {
-                    EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
-                    position.y += singleLineHeight;
-
-                    EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
-                    position.y += singleLineHeight;
-
-                    if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
-                    {
-                        EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
-                        position.y += singleLineHeight;
-
-                        EditorGUI.PropertyField(position, remoteWorldContentServerProperty);
-                        position.y += singleLineHeight;
-                    }
-                }
             }
 
             return position;
@@ -260,18 +235,7 @@ namespace Global.Editor
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    var fieldToAdd = 2;
-
-                    if (property.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles)).boolValue)
-                    {
-                        fieldToAdd += 2;
-                        SerializedProperty remoteSceneContentServerProperty = property.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
-
-                        if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
-                            fieldToAdd += 2;
-                    }
-
-                    fieldsCount += fieldToAdd;
+                    fieldsCount += 1; // useLocalAssetBundles
                     break;
                 case InitialRealm.World:
                 case InitialRealm.Custom:

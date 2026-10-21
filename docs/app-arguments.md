@@ -181,36 +181,13 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
-### `lsd-use-remote-ab`
-**Type:** Bool (presence flag)
-**Description:** Enables the use of remote asset bundles during local scene development (LSD). By default, local scene development relies on locally converted assets; with this flag the explorer can instead fetch already-deployed asset bundles from a remote content server. Only takes effect when local scene development is active (`--local-scene true` together with a valid `--realm` URL). Pair it with either `--lsd-remote-ab-world` or `--lsd-remote-ab-server` to choose where the remote asset bundles are sourced from.
+### `local-ab`
+**Type:** Bool (`true`/`false`; presence alone means `true`)
+**Description:** Local scene development only. Serves the scene as asset bundles JIT-converted by the explorer's embedded [abgen sidecar](abgen-sidecar.md), reading the preview server's content. **On by default** — pass `--local-ab false` to load the scene's raw GLTFs instead. Any sidecar failure (binary download, launch, scene manifest, a single bundle, the server dying later) degrades to raw GLTFs on its own and is reported on the scene dev console's AB tab, so the flag is only needed to opt out. See [How to connect to a local scene § Local asset bundles](how-to-connect-to-a-local-scene.md#local-asset-bundles).
 
 **Usage:**
 ```bash
---lsd-use-remote-ab
-```
-
----
-
-### `lsd-remote-ab-world`
-**Type:** String (world name)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), sources them from a specific deployed **world**. The value is the world name to pull the asset bundles from. Setting this flag implicitly selects the `World` content server, so it takes precedence over `--lsd-remote-ab-server`. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-world my-world.dcl.eth
-```
-
----
-
-### `lsd-remote-ab-server`
-**Type:** String (`Genesis`, `Goerli`, case-insensitive)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), selects which deployed environment the asset bundles are sourced from — `Genesis` (Genesis City) or `Goerli` (Goerli Plaza). `World` is also accepted, but to target a world you should use `--lsd-remote-ab-world` instead, since it sets the world name as well. Invalid values are ignored. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-server Genesis
---lsd-remote-ab-server Goerli
+--local-ab false
 ```
 
 ---

@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory, ct);
             // First process the scene metadata.
-            // Fixes possible race conditions with the setup of the scene definition, especially on Hybrid mode (LSD+remote ABs)
+            // Fixes possible race conditions with the setup of the scene definition
             await OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             await UniTask.SwitchToMainThread(ct);
 
@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Loads scene metadata from a separate endpoint to ensure it contains "baseUrl" and overrides the existing metadata
         ///     with new one
         /// </summary>
-        protected virtual async UniTask<bool> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
+        private async UniTask<bool> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
         {
             const string NAME = "scene.json";
 
