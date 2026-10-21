@@ -85,10 +85,18 @@ public class JSBridge : MonoBehaviour
         PreviewConfiguration.Instance.SetMarketplaceServerUrl(value);
 
     [UsedImplicitly]
-    public void SetShadow(string value) => PreviewConfiguration.Instance.SetShadow(value);
+    public void SetShadow(string value)
+    {
+        PreviewConfiguration.Instance.SetShadow(value);
+        previewController.ApplyFloor();
+    }
 
     [UsedImplicitly]
-    public void SetGlow(string value) => PreviewConfiguration.Instance.SetGlow(value);
+    public void SetGlow(string value)
+    {
+        PreviewConfiguration.Instance.SetGlow(value);
+        previewController.ApplyFloor();
+    }
 
     [UsedImplicitly]
     public void SetSkinColor(string value) => PreviewConfiguration.Instance.SetSkinColor(value);
@@ -191,30 +199,28 @@ public class JSBridge : MonoBehaviour
 
     /// <summary>
     /// The camera options of the Babylon preview, applied without a reload. The zoom and wheel ones
-    /// restart the zoom at the new range's start, as a Babylon reload would.
+    /// restart the zoom at the new range's start, as a Babylon reload would, but only when the range
+    /// changed: the page resends every option with any update, and the same value again must leave
+    /// the user's zoom alone.
     /// </summary>
     [UsedImplicitly]
-    public void SetZoomLevel(string value)
-    {
-        PreviewConfiguration.Instance.SetZoomLevel(value);
-        previewController.ApplyCameraSettings();
-        previewController.RestartZoom();
-    }
+    public void SetZoomLevel(string value) => SetZoomOption(PreviewConfiguration.Instance.SetZoomLevel, value);
 
     [UsedImplicitly]
-    public void SetWheelZoom(string value)
-    {
-        PreviewConfiguration.Instance.SetWheelZoom(value);
-        previewController.ApplyCameraSettings();
-        previewController.RestartZoom();
-    }
+    public void SetWheelZoom(string value) => SetZoomOption(PreviewConfiguration.Instance.SetWheelZoom, value);
 
     [UsedImplicitly]
-    public void SetWheelStart(string value)
+    public void SetWheelStart(string value) => SetZoomOption(PreviewConfiguration.Instance.SetWheelStart, value);
+
+    private void SetZoomOption(Action<string> set, string value)
     {
-        PreviewConfiguration.Instance.SetWheelStart(value);
+        var config = PreviewConfiguration.Instance;
+        var before = (config.ZoomLevel, config.WheelZoom, config.WheelStart);
+
+        set(value);
         previewController.ApplyCameraSettings();
-        previewController.RestartZoom();
+
+        if ((config.ZoomLevel, config.WheelZoom, config.WheelStart) != before) previewController.RestartZoom();
     }
 
     [UsedImplicitly]

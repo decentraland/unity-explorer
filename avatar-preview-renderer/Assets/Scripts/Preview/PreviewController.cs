@@ -40,6 +40,9 @@ namespace Preview
         // survives across sessions: only ever a fallback, never an override of what was requested.
         private const string PREF_AVATAR_SHOWN = "PreviewAvatarShown";
 
+        // The animation reference's cylinder, by its name in the scene.
+        private const string BOUNDARIES_CYLINDER_NAME = "Cylinder";
+
         // #cc9b76, the skin the JS wrapper used to send whenever a builder caller left it out.
         private static readonly Color DEFAULT_SKIN_COLOR = new(204f / 255f, 155f / 255f, 118f / 255f);
 
@@ -51,6 +54,9 @@ namespace Preview
         private bool _emoteHeldForStaticCamera;
 
         private ScreenshotCapture _screenshotCapture;
+
+        // The scene boundaries' cylinder in the animation reference, which the avatar views frame.
+        private Renderer _boundariesCylinder;
 
         private bool _loading;
         private bool _shouldReload;
@@ -75,6 +81,11 @@ namespace Preview
         private void Awake()
         {
             _screenshotCapture = new ScreenshotCapture(mainCamera, avatarLoader, wearableLoader);
+
+            foreach (var reference in animationReference.GetComponentsInChildren<Renderer>(true))
+            {
+                if (reference.name == BOUNDARIES_CYLINDER_NAME) _boundariesCylinder = reference;
+            }
         }
 
         private void OnDestroy()
@@ -137,8 +148,7 @@ namespace Preview
 
             // One 20-unit plane spans both subjects, which sit 5 apart, so the avatar's shadow drifts
             // into the item view once zoomed out. Nothing there casts, so the plane goes with the view.
-            shadowCatcher.SetActive(!showWearable && PreviewConfiguration.Instance.Shadow);
-            wearableGlowCatcher.SetActive(showWearable && PreviewConfiguration.Instance.Glow);
+            ApplyFloor();
         }
 
         private void OnShowWearableClicked()
@@ -212,7 +222,12 @@ namespace Preview
             previewUIPresenter.ShowThumbnailBoundaries(config.ShowThumbnailBoundaries);
 
             // The animation reference is Babylon's scene boundaries: the same cylinder on a grid floor.
-            animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
+            var boundariesShown = config.ShowAnimationReference || config.ShowSceneBoundaries;
+            animationReference.SetActive(boundariesShown);
+            previewCameraController.SetBoundaries(boundariesShown && _boundariesCylinder != null
+                ? _boundariesCylinder.bounds
+                : null);
+            ApplyFloor();
 
             ConfigureRotator(avatarRotator, config, interactive);
             ConfigureRotator(wearableRotator, config, interactive);
@@ -234,6 +249,21 @@ namespace Preview
             }
 
             _emoteHeldForStaticCamera = !interactive;
+        }
+
+        /// <summary>
+        /// Shows the shadow and the glow under the subject as the configuration asks. Neither shows on
+        /// the boundaries' grid floor, which they would fight for depth with; the Babylon preview draws
+        /// neither there.
+        /// </summary>
+        public void ApplyFloor()
+        {
+            var config = PreviewConfiguration.Instance;
+            var gridFloor = config.ShowAnimationReference || config.ShowSceneBoundaries;
+
+            shadowCatcher.SetActive(config.Shadow && !_showingWearable && !gridFloor);
+            glowCatcher.SetActive(config.Glow && !gridFloor);
+            wearableGlowCatcher.SetActive(config.Glow && _showingWearable);
         }
 
         /// <summary>
@@ -367,9 +397,7 @@ namespace Preview
 
                 animationReference.SetActive(config.ShowAnimationReference || config.ShowSceneBoundaries);
                 platform.SetActive(config.Mode is PreviewMode.Authentication);
-                shadowCatcher.SetActive(config.Shadow);
-                glowCatcher.SetActive(config.Glow);
-                wearableGlowCatcher.SetActive(false);
+                ApplyFloor();
                 ApplyBackground();
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
@@ -514,6 +542,9 @@ namespace Preview
                 else if (config.Mode is PreviewMode.Builder)
                 {
                     avatarRotator.DragSpeed = 2f;
+
+                    // Fitted like the marketplace avatar view, so a tall item is never cut off.
+                    previewCameraController.FitBuilderView(avatarLoader.transform);
                 }
 
                 _autoRotateByMode = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;

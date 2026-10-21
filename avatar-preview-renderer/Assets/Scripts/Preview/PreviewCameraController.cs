@@ -57,6 +57,9 @@ namespace Preview
         private bool _zoomLocked;
         private bool _autoCenter = true;
 
+        // The shown scene boundaries' cylinder, which the avatar views frame along with the avatar.
+        private Bounds? _boundaries;
+
         // Wheel delta multiplier from the page's wheel precision; 1 at Babylon's default.
         private float _wheelSensitivity = 1f;
 
@@ -82,7 +85,9 @@ namespace Preview
             // The three cameras the zoom drives.
             _avatarFraming = new CameraFraming(marketplaceAvatarCamera, _initialFOV, _initialOrthoSize);
             _wearableFraming = new CameraFraming(marketplaceWearableCamera, _initialFOV, _initialOrthoSize);
-            _builderFraming = new CameraFraming(builderCamera, _initialFOV, _initialOrthoSize);
+            // The Builder camera is never fitted, so it keeps the lens the scene gives it.
+            _builderFraming = new CameraFraming(builderCamera, builderCamera.Lens.FieldOfView,
+                builderCamera.Lens.OrthographicSize);
             _active = _avatarFraming;
 
             _lastAspect = Aspect;
@@ -190,6 +195,11 @@ namespace Preview
         public void FitAvatarView(Transform subject) => Fit(_avatarFraming, subject);
 
         /// <summary>
+        /// Frames the Builder's view on the avatar and everything it wears, so a tall item stays in view.
+        /// </summary>
+        public void FitBuilderView(Transform subject) => Fit(_builderFraming, subject);
+
+        /// <summary>
         /// Frames the item-alone view on the single item it shows.
         /// </summary>
         public void FitWearableView(Transform subject) => Fit(_wearableFraming, subject);
@@ -200,13 +210,16 @@ namespace Preview
 
             // A different subject starts from the fit's framing, not the other view's zoom and pan.
             // The same view again, as on a reload, keeps them.
-            if (next != _active)
+            var switched = next != _active;
+
+            if (switched)
             {
                 _active = next;
                 ResetZoomAndPan(_active);
             }
 
             Refit(_active);
+            if (switched) SnapLens(_active);
             _active.Camera.Prioritize();
         }
 
@@ -290,12 +303,59 @@ namespace Preview
             framing.HasSubject = GameObjectUtils.TryMeasureYawInvariant(subject, out var center,
                 out var radius, out var height);
 
-            framing.SubjectCenter = center;
+            framing.MeasuredCenter = center;
+            framing.MeasuredRadius = radius;
+            framing.MeasuredHeight = height;
             framing.SubjectPivot = subject.position;
-            framing.SubjectRadius = radius;
-            framing.SubjectHeight = height;
+
+            FrameMeasured(framing);
+
+            // A fresh fit is where the view starts, not somewhere to glide to: a capture taken as the
+            // load ends would otherwise show the lens still far out at its scene default.
+            SnapLens(framing);
+        }
+
+        // The subject the fit frames: the measured one, grown in the avatar views to take in the shown
+        // scene boundaries, so the cylinder they have to fit in is in view as well.
+        private void FrameMeasured(CameraFraming framing)
+        {
+            framing.SubjectCenter = framing.MeasuredCenter;
+            framing.SubjectRadius = framing.MeasuredRadius;
+            framing.SubjectHeight = framing.MeasuredHeight;
+
+            if (framing != _wearableFraming && _boundaries.HasValue)
+            {
+                var boundaries = _boundaries.Value;
+                var bottom = Mathf.Min(framing.MeasuredCenter.y - framing.MeasuredHeight * 0.5f, boundaries.min.y);
+                var top = Mathf.Max(framing.MeasuredCenter.y + framing.MeasuredHeight * 0.5f, boundaries.max.y);
+                var offAxis = Vector2.Distance(new Vector2(framing.MeasuredCenter.x, framing.MeasuredCenter.z),
+                    new Vector2(boundaries.center.x, boundaries.center.z));
+
+                framing.SubjectCenter.y = (bottom + top) * 0.5f;
+                framing.SubjectHeight = top - bottom;
+                framing.SubjectRadius = Mathf.Max(framing.MeasuredRadius, boundaries.extents.x + offAxis);
+            }
 
             Refit(framing);
+        }
+
+        /// <summary>
+        /// The scene boundaries the avatar views have to show, or null when they are hidden. A change
+        /// reframes the fitted avatar views at once.
+        /// </summary>
+        public void SetBoundaries(Bounds? boundaries)
+        {
+            if (Nullable.Equals(_boundaries, boundaries)) return;
+
+            _boundaries = boundaries;
+
+            foreach (var framing in new[] { _avatarFraming, _builderFraming })
+            {
+                if (!framing.HasSubject) continue;
+
+                FrameMeasured(framing);
+                SnapLens(framing);
+            }
         }
 
         private void Refit(CameraFraming framing)
@@ -345,8 +405,8 @@ namespace Preview
         private void ResetFraming(CameraFraming framing)
         {
             framing.HasSubject = false;
-            framing.FittedFOV = _initialFOV;
-            framing.FittedOrthoSize = _initialOrthoSize;
+            framing.FittedFOV = framing.InitialFOV;
+            framing.FittedOrthoSize = framing.InitialOrthoSize;
             framing.FitOffset = Vector2.zero;
 
             framing.Camera.Lens.FieldOfView = TargetFieldOfView(framing);
@@ -389,6 +449,13 @@ namespace Preview
             // Fitted views only - resetting the others would throw away a hand-set zoom.
             if (_avatarFraming.HasSubject) Refit(_avatarFraming);
             if (_wearableFraming.HasSubject) Refit(_wearableFraming);
+            if (_builderFraming.HasSubject) Refit(_builderFraming);
+        }
+
+        private void SnapLens(CameraFraming framing)
+        {
+            framing.Camera.Lens.FieldOfView = TargetFieldOfView(framing);
+            framing.Camera.Lens.OrthographicSize = TargetOrthoSize(framing);
         }
 
         private void LerpLens(CameraFraming framing)
@@ -434,6 +501,8 @@ namespace Preview
         {
             public readonly CinemachineCamera Camera;
             public readonly Vector3 InitialLocalPosition;
+            public readonly float InitialFOV;
+            public readonly float InitialOrthoSize;
 
             public float FittedFOV;
             public float FittedOrthoSize;
@@ -452,10 +521,17 @@ namespace Preview
             public float SubjectRadius;
             public float SubjectHeight;
 
+            // The subject as measured, before the boundaries widen it.
+            public Vector3 MeasuredCenter;
+            public float MeasuredRadius;
+            public float MeasuredHeight;
+
             public CameraFraming(CinemachineCamera camera, float initialFOV, float initialOrthoSize)
             {
                 Camera = camera;
                 InitialLocalPosition = camera.transform.localPosition;
+                InitialFOV = initialFOV;
+                InitialOrthoSize = initialOrthoSize;
                 FittedFOV = initialFOV;
                 FittedOrthoSize = initialOrthoSize;
             }
