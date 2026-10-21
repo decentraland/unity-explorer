@@ -146,12 +146,9 @@ namespace Global.AppArgs
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
 
-            // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-            // embedded abgen sidecar instead of raw GLTFs (the default; the link can also opt out with
-            // local-ab=false). A pure boolean — the sidecar reads the scene through
-            // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
-            // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
-            // point asset conversion at the realm the link already targets.
+            // Legacy, ignored by the client (local asset bundles are what local scene development always does),
+            // but still forwarded by Creator Hub into preview deep links. Kept permitted so it is not listed as a
+            // denied parameter in the startup warning; it unlocks nothing.
             AppArgsFlags.LOCAL_AB,
 
             // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like

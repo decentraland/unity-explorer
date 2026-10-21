@@ -185,11 +185,11 @@ namespace Global.AppArgs
         public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
 
         /// <summary>
-        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-        ///     embedded abgen sidecar, reading the preview server's content. On by default; <c>--local-ab false</c>
-        ///     opts out into raw GLTFs. Carries no URL or port — the content base is derived from the realm the
-        ///     client already has.
-        ///     A sidecar that fails to install or start degrades the scene to raw GLTFs on its own.
+        ///     Legacy, ignored: local scene development always serves the scene as asset bundles JIT-converted by
+        ///     the explorer's embedded abgen sidecar, degrading to raw GLTFs on its own when the sidecar cannot
+        ///     install or start. The key stays accepted (see <c>DeepLinkAllowlist</c>) because Creator Hub still
+        ///     forwards <c>local-ab=true</c> into preview deep links, and a non-allowlisted key is shown to the
+        ///     user as a denied parameter.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 

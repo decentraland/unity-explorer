@@ -130,14 +130,12 @@ starts with `RAW GLTFs — <reason>`, and per-file fallbacks show as `FAILED <fi
 GLTF`); the sidebar's AB button stays lit until the tab has been looked at. The `HIGHLIGHT SOURCES`
 button in the tab tints bundle-sourced objects green and raw-GLTF ones red.
 
-To opt out and load raw GLTFs from the start:
+There is no switch: local scene development always does this, so no `--local-ab` argument or
+Editor checkbox exists any more (Creator Hub's `local-ab=true` is still accepted and ignored). To
+inspect the raw-GLTF path, make the sidecar fail — the simplest way is to hold its port before
+launching (`python3 -m http.server 5147 --bind 127.0.0.1`).
 
-```
---local-ab false
-```
-
-In the Unity Editor the "Use Local Asset Bundles" checkbox in the Main Scene Loader (shown when
-Initial Realm is Localhost, ticked by default) is the switch — the client launches its embedded
+In the Unity Editor (Initial Realm = Localhost) the same applies: the client launches its embedded
 sidecar on abgen's default loopback port (5147) and wires the URL override itself.
 
 For abgen development itself, drop a binary at `StreamingAssets/abgen` (`abgen.exe` on Windows):

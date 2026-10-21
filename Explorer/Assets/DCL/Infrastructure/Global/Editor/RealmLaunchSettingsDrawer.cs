@@ -126,19 +126,6 @@ namespace Global.Editor
             return position;
         }
 
-        private static Rect DrawLocalhost(Rect position, SerializedProperty parent, InitialRealm initialRealm)
-        {
-            if (initialRealm == InitialRealm.Localhost)
-            {
-                SerializedProperty useLocalAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useLocalAssetBundles));
-
-                EditorGUI.PropertyField(position, useLocalAssets);
-                position.y += singleLineHeight;
-            }
-
-            return position;
-        }
-
         private static Rect DrawPredefinedScenes(Rect position, SerializedProperty parent)
         {
             SerializedProperty predefinedList = parent.FindPropertyRelative(nameof(RealmLaunchSettings.predefinedScenes));
@@ -217,7 +204,6 @@ namespace Global.Editor
             position = DrawTargetScene(position, property, initialRealmValue);
             position = DrawTargetWorld(position, property, initialRealmValue);
             position = DrawCustomRealm(position, property, initialRealmValue);
-            position = DrawLocalhost(position, property, initialRealmValue);
             position = DrawIsolateSceneCommunication(position, property, initialRealmValue);
             position = DrawPredefinedScenes(position, property);
             position = DrawOverridenScenes(position);
@@ -234,9 +220,6 @@ namespace Global.Editor
 
             switch (initialRealmValue)
             {
-                case InitialRealm.Localhost:
-                    fieldsCount += 1; // useLocalAssetBundles
-                    break;
                 case InitialRealm.World:
                 case InitialRealm.Custom:
                     fieldsCount += 1;

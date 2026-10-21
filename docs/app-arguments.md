@@ -181,17 +181,6 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
-### `local-ab`
-**Type:** Bool (`true`/`false`; presence alone means `true`)
-**Description:** Local scene development only. Serves the scene as asset bundles JIT-converted by the explorer's embedded [abgen sidecar](abgen-sidecar.md), reading the preview server's content. **On by default** — pass `--local-ab false` to load the scene's raw GLTFs instead. Any sidecar failure (binary download, launch, scene manifest, a single bundle, the server dying later) degrades to raw GLTFs on its own and is reported on the scene dev console's AB tab, so the flag is only needed to opt out. See [How to connect to a local scene § Local asset bundles](how-to-connect-to-a-local-scene.md#local-asset-bundles).
-
-**Usage:**
-```bash
---local-ab false
-```
-
----
-
 ### `position`
 **Type:** String (coordinates)
 **Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.

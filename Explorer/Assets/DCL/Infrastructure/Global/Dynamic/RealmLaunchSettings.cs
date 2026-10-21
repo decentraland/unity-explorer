@@ -33,9 +33,6 @@ namespace Global.Dynamic
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
-                                  + "embedded abgen sidecar (reading the preview server's content). Untick to load raw GLTFs instead; "
-                                  + "a sidecar that fails to install or start degrades to raw GLTFs on its own")] internal bool useLocalAssetBundles = true;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -93,16 +90,7 @@ namespace Global.Dynamic
                                            && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
-            {
-                // Local asset bundles are the default: `--local-ab false` opts out, a bare `--local-ab` (or
-                // `true`) opts in explicitly. The serialized checkbox is an Editor convenience only — player
-                // builds never read it, so its state in the scene asset cannot change what ships.
-                bool localAbOptOut = appParameters.HasFlagWithValueFalse(AppArgsFlags.LOCAL_AB);
-                bool localAbExplicit = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) && !localAbOptOut;
-
-                useLocalAssetBundles = localAbExplicit || (!localAbOptOut && (!Application.isEditor || useLocalAssetBundles));
                 SetLocalSceneDevelopmentRealm(realmParamValue);
-            }
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
             else

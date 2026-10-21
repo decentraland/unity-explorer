@@ -390,7 +390,6 @@ MonoBehaviour:
       - {x: 100, y: 100}
     targetWorld: flutterecho.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
-    useLocalAssetBundles: 1
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
