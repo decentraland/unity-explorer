@@ -7,7 +7,6 @@ using DCL.Passport;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
@@ -151,9 +150,7 @@ namespace DCL.Lobby
             card.IsVerified = profile.HasClaimedName;
             card.OnlineStatus = tracker.GetFriendStatus(userId);
 
-            // Rebinding the same friend keeps the picture unless its fetch was cancelled by a hide before finishing
-            if (!string.Equals(binding.UserId, userId, StringComparison.OrdinalIgnoreCase) || binding.IsPictureLoading)
-                binding.LoadPicture(profile, showCt);
+            binding.Picture.Load(profile, showCt);
 
             if (locations.TryGetValue(userId, out FriendLocation location))
                 ShowLocation(card, location.Label, location.CanJoin);
@@ -244,14 +241,14 @@ namespace DCL.Lobby
         private void ApplyLocation(string userId, string label, bool canJoin)
         {
             for (var i = 0; i < rail.Count; i++)
-                if (string.Equals(bindings[i].UserId, userId, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(bindings[i].Picture.UserId, userId, StringComparison.OrdinalIgnoreCase))
                     ShowLocation(rail.Cards[i], label, canJoin);
         }
 
         private void Join(int index)
         {
             jumpCts = jumpCts.SafeRestart();
-            JoinAsync(bindings[index].UserId, jumpCts.Token).Forget();
+            JoinAsync(bindings[index].Picture.UserId, jumpCts.Token).Forget();
         }
 
         // The shown location may be stale, so the live position is fetched again before jumping
@@ -275,7 +272,7 @@ namespace DCL.Lobby
         }
 
         private void OpenPassport(int index) =>
-            passport.ShowAsync(bindings[index].UserId).SuppressToResultAsync(ReportCategory.UI).Forget();
+            passport.ShowAsync(bindings[index].Picture.UserId).SuppressToResultAsync(ReportCategory.UI).Forget();
 
         private static OnlineUserData? Find(IReadOnlyCollection<OnlineUserData> users, string userId)
         {
@@ -301,34 +298,17 @@ namespace DCL.Lobby
         private class CardBinding : IDisposable
         {
             private readonly LobbyFriendCardElement card;
-            private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
 
-            private CancellationTokenSource? thumbnailCts;
-
-            public string UserId { get; private set; } = string.Empty;
-
-            // Also true when the fetch was cancelled midway
-            public bool IsPictureLoading => thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading or ProfileThumbnailViewModel.State.NotBound;
+            public LobbyProfilePictureBinding Picture { get; }
 
             public CardBinding(LobbyFriendCardElement card)
             {
                 this.card = card;
-                thumbnail.Subscribe(OnThumbnailUpdated);
+                Picture = new LobbyProfilePictureBinding(OnThumbnailUpdated);
             }
 
-            public void Dispose()
-            {
-                thumbnailCts.SafeCancelAndDispose();
-                thumbnail.Unsubscribe(OnThumbnailUpdated);
-            }
-
-            public void LoadPicture(in Profile.CompactInfo profile, CancellationToken ct)
-            {
-                UserId = profile.UserId.Value;
-                thumbnailCts = thumbnailCts.SafeRestartLinked(ct);
-                thumbnail.SetLoading(profile.UserNameColor);
-                GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, thumbnailCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
-            }
+            public void Dispose() =>
+                Picture.Dispose();
 
             // The profile color fills the circle without a picture; a fetch keeps any previous picture up
             private void OnThumbnailUpdated(ProfileThumbnailViewModel model)

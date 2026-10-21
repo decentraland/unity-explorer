@@ -13,8 +13,7 @@
 
 ## Severity → GitHub Label Reference
 
-> This table is used by the automated issue-labeler bot and is the authoritative mapping between severity and GitHub priority labels.
-> If the bot assigns the wrong label, check the [feature categories doc](issue-triage-categories.md) and move the affected feature to the correct Primary/Secondary section.
+> This table is the authoritative mapping between severity and GitHub priority labels.
 
 | Severity | GitHub label | Criteria |
 | --- | --- | --- |

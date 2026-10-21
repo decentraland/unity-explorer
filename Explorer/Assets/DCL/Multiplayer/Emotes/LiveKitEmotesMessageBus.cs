@@ -23,7 +23,6 @@ namespace DCL.Multiplayer.Emotes
     {
         private const float LATENCY = 0f;
 
-        private readonly IMessagePipesHub messagePipesHub;
         private readonly MultiplayerDebugSettings settings;
         private readonly IUserBlockingCache userBlockingCache;
 
@@ -41,15 +40,14 @@ namespace DCL.Multiplayer.Emotes
             IUserBlockingCache userBlockingCache,
             LiveKitMessagesBroadcaster broadcaster)
         {
-            this.messagePipesHub = messagePipesHub;
             this.settings = settings;
             this.userBlockingCache = userBlockingCache;
             this.broadcaster = broadcaster;
 
             messageScheduler = new EmotesScheduler();
 
-            this.messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
         }
 
         public void Dispose() =>
@@ -157,7 +155,7 @@ namespace DCL.Multiplayer.Emotes
                 return;
 
             using (sync.GetScope())
-                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, mask));
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, mask, source: this));
         }
 
         private void InboxStop(string walletId, float timestamp)
@@ -166,7 +164,7 @@ namespace DCL.Multiplayer.Emotes
                 return;
 
             using (sync.GetScope())
-                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
+                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp, source: this));
         }
 
         public void SaveForRetry(RemoteEmoteIntention intention) =>

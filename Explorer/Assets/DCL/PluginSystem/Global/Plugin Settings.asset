@@ -607,11 +607,17 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EventInfoPrefab>k__BackingField:
           m_AssetGUID: 112ec96d4c89d41d68b03e4ba73992e9
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 0
         <QualityPresets>k__BackingField: {fileID: 11400000, guid: d8c17d5ed6e4b5e41b9155c640906ef2, type: 2}
+        <ExploreSectionModalPrefab>k__BackingField:
+          m_AssetGUID: 2f632a9f636549a2b1d4b833b1a6b5df
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
     - rid: 1709771649487732831
       type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:

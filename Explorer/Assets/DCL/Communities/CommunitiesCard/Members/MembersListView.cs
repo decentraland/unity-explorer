@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
@@ -93,6 +94,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private ICommunityMemberData lastClickedProfileCtx = null!;
         private GenericContextMenu? contextMenu;
         private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
+        private GenericContextMenuElement? openChatContextMenuElement;
+        private GenericContextMenuElement? callUserContextMenuElement;
         private GenericContextMenuElement? removeModeratorContextMenuElement;
         private GenericContextMenuElement? addModeratorContextMenuElement;
         private GenericContextMenuElement? blockUserContextMenuElement;
@@ -107,7 +110,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
-        private ISelfProfile? selfProfile;
+        private SelfProfile? selfProfile;
 
         private void Awake()
         {
@@ -121,8 +124,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                 .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)));
+                .AddControl(openChatContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!))))
+                .AddControl(callUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!))));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =
@@ -163,6 +166,11 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.Friend ? status : UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
             elementView.CanUnHover = false;
+
+            // The call controls live in the chat area too
+            bool userInWorld = ChatOpener.Instance.IsUserInWorld;
+            openChatContextMenuElement!.Enabled = userInWorld;
+            callUserContextMenuElement!.Enabled = userInWorld;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
             addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
@@ -216,7 +224,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowTransferOwnershipConfirmationDialogAsync(CancellationToken ct)
             {
-                var ownProfile = selfProfile != null ? await selfProfile.ProfileAsync(ct) : null;
+                Profile.CompactInfo fromUserInfo = default(Profile.CompactInfo);
+
+                if (selfProfile != null && (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
+                    fromUserInfo = ownProfile.Compact;
 
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
                              string.Format(TRANSFER_OWNERSHIP_TEXT_FORMAT, profile.Name),
@@ -226,7 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                              false, false,
                              subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
                              userInfo: profile.Profile,
-                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
+                             fromUserInfo: fromUserInfo), ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
@@ -321,7 +332,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.communitiesDataProvider = dataProvider;
         }
 
-        public void SetSelfProfile(ISelfProfile selfProfileData) =>
+        public void SetSelfProfile(SelfProfile selfProfileData) =>
             selfProfile = selfProfileData;
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)

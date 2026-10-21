@@ -55,6 +55,7 @@ using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -312,7 +313,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager, dynamicWorldParams.StartParcel);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -532,6 +533,8 @@ namespace Global.Dynamic
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
 
+            var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -583,11 +586,8 @@ namespace Global.Dynamic
                     profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
-                    profileCache,
+                    userLogout,
                     globalWorld,
-                    playerEntity,
                     chatContainer.ChatHistory,
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
@@ -650,15 +650,13 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     characterPreviewFactory,
                     profilesRepository,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
+                    userLogout,
                     profileContainer.SelfProfile,
                     profileContainer.EquippedWearables,
                     profileContainer.EquippedEmotes,
                     webBrowser,
                     emotesCache,
                     staticContainer.RealmData,
-                    profileCache,
                     characterPreviewEventBus,
                     placesAndEventsContainer.MapPathEventBus,
                     wearableContainer.BackpackEventBus,
@@ -669,7 +667,7 @@ namespace Global.Dynamic
                     wearableContainer.EmoteProvider,
                     globalWorld,
                     playerEntity,
-                    chatContainer.ChatMessagesBus,
+                    chatContainer.ChatTeleporter,
                     staticContainer.MemoryCap,
                     bootstrapContainer.VolumeBus,
                     placesAndEventsContainer.EventsApiService,
@@ -854,11 +852,11 @@ namespace Global.Dynamic
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
-                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, uiShellContainer.Cursor, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
                     placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
-                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
+                    identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
+                    userLogout, marketplaceCreditsApiClient, notificationsRequestController,
                     FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
@@ -885,6 +883,7 @@ namespace Global.Dynamic
                         uiShellContainer.MainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
+                        identityCache,
                         voiceChatContainer.NearbyMuteService,
                         voiceChatContainer.NearbyStateModel)
                 );

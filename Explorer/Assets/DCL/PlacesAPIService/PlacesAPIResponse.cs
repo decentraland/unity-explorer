@@ -157,14 +157,18 @@ namespace DCL.PlacesAPIService
                 if (connected_addresses is { Length: 0 })
                     connected_addresses = null;
 
-                if (positions == null) return;
-
-                Positions = new Vector2Int[positions.Length];
-
-                for (var i = 0; i < positions.Length; i++)
+                // A missing array means the place has no parcels
+                if (positions == null)
+                    Positions = Array.Empty<Vector2Int>();
+                else
                 {
-                    string[] split = positions[i].Split(',');
-                    Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
+                    Positions = new Vector2Int[positions.Length];
+
+                    for (var i = 0; i < positions.Length; i++)
+                    {
+                        string[] split = positions[i].Split(',');
+                        Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
+                    }
                 }
 
                 if (string.IsNullOrEmpty(base_position))

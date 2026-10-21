@@ -14,6 +14,7 @@ namespace DCL.UI.ProfileElements
     {
         private const string USS_BLOCK = "profile-widget";
         private const string USS_LOADING = USS_BLOCK + "--loading";
+        private const string USS_OPEN = USS_BLOCK + "--open";
         private const string USS_PICTURE = USS_BLOCK + "__picture";
         private const string USS_TEXTS = USS_BLOCK + "__texts";
         private const string USS_NAME = USS_BLOCK + "__name";
@@ -57,6 +58,15 @@ namespace DCL.UI.ProfileElements
         /// </summary>
         public bool IsLoading => ClassListContains(USS_LOADING);
 
+        /// <summary>
+        ///     Keeps the pill lit, as on hover, while the menu it opens is up.
+        /// </summary>
+        public bool IsMenuOpen
+        {
+            get => ClassListContains(USS_OPEN);
+            set => EnableInClassList(USS_OPEN, value);
+        }
+
         public ProfileWidgetElement()
         {
             AddToClassList(USS_BLOCK);
@@ -99,8 +109,8 @@ namespace DCL.UI.ProfileElements
 
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
-            picture.style.backgroundColor = model.ProfileColor;
-            picture.style.backgroundImage = model.Sprite == null ? StyleKeyword.Null : new StyleBackground(model.Sprite);
+            picture.SetProfileColor(model.ProfileColor);
+            picture.style.backgroundImage = VisualElementsExtensions.CoverBackground(model.Sprite);
             EnableInClassList(USS_LOADING, model.ThumbnailState == ProfileThumbnailViewModel.State.Loading && model.Sprite == null);
         }
 

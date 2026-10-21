@@ -50,6 +50,7 @@ namespace DCL.RealmNavigation
         private readonly ILandscape landscape;
         private readonly IWorldAccessGate worldAccessGate;
         private readonly IScenesCache scenesCache;
+        private readonly StartParcel startParcel;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -64,8 +65,10 @@ namespace DCL.RealmNavigation
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
             SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
             IWorldAccessGate worldAccessGate,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            StartParcel startParcel)
         {
+            this.startParcel = startParcel;
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
             this.cameraEntity = cameraEntity;
@@ -104,6 +107,12 @@ namespace DCL.RealmNavigation
 
             if (realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
+
+            // Navigating under the startup flow would bring the lobby back after the load
+            Vector2Int? pickedParcel = parcelToTeleport == default ? null : parcelToTeleport;
+
+            if (!startParcel.IsRealmApplied && startParcel.TryTakeAsStartupDestination(realm, pickedParcel, spawnPointName))
+                return EnumResult<ChangeRealmError>.SuccessResult();
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
@@ -343,6 +352,12 @@ namespace DCL.RealmNavigation
 
             if (!isLocal && realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
+
+            // Navigating under the startup flow would bring the lobby back after the load
+            URLDomain? pickedRealm = isLocal ? null : URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+
+            if (!startParcel.IsRealmApplied && startParcel.TryTakeAsStartupDestination(pickedRealm, parcel, spawnPointName))
+                return EnumResult<TaskError>.SuccessResult();
 
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
 

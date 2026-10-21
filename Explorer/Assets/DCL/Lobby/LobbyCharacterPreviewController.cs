@@ -35,7 +35,6 @@ namespace DCL.Lobby
 
             RenderTargetChanged += FitStage;
 
-            rotateEnabled = false;
             panEnabled = false;
             zoomEnabled = false;
         }

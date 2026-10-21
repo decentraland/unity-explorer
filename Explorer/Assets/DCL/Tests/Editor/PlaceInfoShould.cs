@@ -60,5 +60,16 @@ namespace DCL.Tests.Editor
 
             Assert.AreEqual(2, placeInfo.connected_addresses?.Length ?? placeInfo.user_count);
         }
+
+        [Test]
+        public void ParseMissingPositionsAsNoParcelsAndStillParseBasePosition()
+        {
+            const string JSON = "{\"ok\":true,\"total\":1,\"data\":[{\"id\":\"world-id\",\"world_name\":\"example.dcl.eth\",\"base_position\":\"3,4\"}]}";
+
+            PlacesData.PlaceInfo placeInfo = JsonUtility.FromJson<PlacesData.PlacesAPIResponse>(JSON).data[0];
+
+            Assert.IsEmpty(placeInfo.Positions);
+            Assert.AreEqual(new Vector2Int(3, 4), placeInfo.base_position_processed);
+        }
     }
 }

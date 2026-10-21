@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.Credits;
 using DCL.FeatureFlags;
 using DCL.Diagnostics;
 using DCL.Events;
@@ -37,6 +36,7 @@ namespace DCL.ExplorePanel
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
+        private readonly IHostableSection[] hostableSections;
         private readonly ShopController shopController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
@@ -89,13 +89,13 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             HttpEventsApiService eventsApiService,
             IMVCManager mvcManager,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
-            ICreditsPanelController creditsPanelController)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
+            hostableSections = new IHostableSection[] { backpackController, navmapController, placesController, eventsController, settingsController };
             CameraReelController = cameraReelController;
             this.profileButtonPresenter = profileButtonPresenter;
             dclInput = DCLInput.Instance;
@@ -224,12 +224,15 @@ namespace DCL.ExplorePanel
                 );
             }
 
-            viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
+            viewInstance?.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenuAsync);
         }
 
-        // The backpack view is shared with the lobby modal, which does not put it back: whoever shows it claims it
-        protected override void OnBeforeViewShow() =>
-            backpackController.AttachToHome();
+        // A section view may still sit under a modal host, so each is reclaimed before the show.
+        protected override void OnBeforeViewShow()
+        {
+            foreach (IHostableSection section in hostableSections)
+                section.AttachToHome();
+        }
 
         protected override void OnViewShow()
         {
@@ -372,7 +375,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Places)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Places);
             }
             else
@@ -385,7 +388,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Events)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Events);
             }
             else

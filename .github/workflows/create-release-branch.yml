@@ -12,6 +12,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: dev
+
+      # The workflow can be dispatched from a ref newer than the dev release cut.
+      - name: Check out the workflow's shared API helper
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-helpers
+          sparse-checkout: .github/scripts/gh-api-retry.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
           
       - name: Get release date and branch name
         run: |
@@ -79,25 +89,7 @@ jobs:
               bash .github/actions/ci-status-comment/upsert-ci-status.sh
           }
 
-          # The helper the InWorld gate step below also defines, written twice
-          # for the reason stated there: a step cannot export a shell function
-          # to the next one. What it buys here is the distinction between "the
-          # API says there is no run" and "the API did not answer" — the latter
-          # left to set -e would kill this step and take the gate with it, and
-          # reported as the former it would send the release manager off to
-          # rebuild a commit that is already built.
-          gh_api_retry() {
-            local out attempt
-            for attempt in 1 2 3; do
-              if [ "$attempt" -lt 3 ]; then
-                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-                sleep 5
-              else
-                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-              fi
-            done
-            return 1
-          }
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
 
           BUILD_STYLE="?logo=unity&logoColor=white&style=for-the-badge"
           BUILD_RUNS="${ACTIONS_URL}/workflows/build-unitycloud.yml"
@@ -112,12 +104,12 @@ jobs:
           # moment the PR opens, already "completed", with no jobs — newer than
           # dev's real run and saying nothing about the commit.
           #
-          # BUILD_STATE is read by the gate step below:
-          #   reused    a green run's links were written; the gate is dispatched
+          # BUILD_STATE is read by the automation dispatch step below:
+          #   reused    a green run's links were written; the suites are dispatched
           #   building  dev is still building; its completion reports into this
-          #             PR (resolve-comment-pr.sh) and dispatches the gate
+          #             PR (resolve-comment-pr.sh) and dispatches the suites
           #   forced    dev's build failed; the PR was labeled force-build and
-          #             the release branch's own build dispatches the gate
+          #             the release branch's own build dispatches the suites
           #   notfound  no run exists; the operator has to label force-build
           #   unknown   the API did not answer
           BUILD_LISTED=1
@@ -238,6 +230,10 @@ jobs:
               platform_row "Mac" "Decentraland_macos" "Decentraland_macos.zip"
             } > build.md
             upsert build build.md
+            {
+              echo "REUSED_RUN_ID=$RUN_ID"
+              echo "REUSED_S3_BASE=$S3_BASE"
+            } >> "$GITHUB_ENV"
           fi
           echo "BUILD_STATE=$BUILD_STATE" >> "$GITHUB_ENV"
 
@@ -247,7 +243,7 @@ jobs:
           # approved, and only a push to the branch or a force-build label
           # changes that.
           #
-          # Four outcomes, kept apart for the same reason the InWorld gate
+          # Four outcomes, kept apart for the same reason the automation dispatch
           # below keeps LISTED apart from UNEXAMINED: "the suite did not run",
           # "the suite is still running" and "the API would not say" are three
           # different instructions to whoever reads the section, and only the
@@ -366,7 +362,8 @@ jobs:
           # pr-comment-artifact-url dispatches it with the PR number. A dev
           # build that finished before the cut never had one, so the
           # placeholder's promise ("results land in this section") is one
-          # nothing at the cut can keep; say what will.
+          # nothing at the cut can keep; say what will. In the reused state the
+          # next step dispatches against that dev build and overwrites this.
           {
             echo "![Performance](https://img.shields.io/badge/Performance-Not%20dispatched-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)"
             echo ""
@@ -374,72 +371,121 @@ jobs:
           } > performance.md
           upsert performance performance.md
 
+      # A dev build that went green before the cut never reports into this PR,
+      # and nothing else builds the release branch, so without this step the
+      # release ships with no benchmark. Its artifacts are the release's, so
+      # dispatch against them with the payload pr-comment-artifact-url.yml sends.
+      #
+      # Never fails the job, for the same reason as the automation step below:
+      # a re-run force-pushes the release branch from a newer dev tip.
+      - name: Dispatch the benchmark against the reused dev build
+        if: env.BUILD_STATE == 'reused'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERF_TOKEN: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+        run: |
+          set -uo pipefail
+
+          PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number --jq '.number')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          STEP_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          PERF_QUEUE="https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml"
+          BADGE_STYLE="?logo=speedtest&logoColor=white&style=for-the-badge"
+
+          upsert() {
+            SECTION=performance SECTION_BODY_FILE=performance.md REPO="$GITHUB_REPOSITORY" PR_NUMBER="$PR_NUMBER" \
+              bash .github/actions/ci-status-comment/upsert-ci-status.sh
+          }
+
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
+
+          # A green run can still have built nothing (no Explorer/** change) or
+          # one platform (windows-only/macos-only label); the benchmark downloads
+          # both zips, so it needs both legs.
+          LEGS_GREEN=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${REUSED_RUN_ID}/jobs?per_page=50" \
+            --jq '[.jobs[] | select(.conclusion == "success") | .name] | any(startswith("Build (macos")) and any(startswith("Build (windows64"))') || LEGS_GREEN=unknown
+          if [ "$LEGS_GREEN" != "true" ]; then
+            echo "::warning::dev's build of ${SHORT_SHA} does not have both Build (macos) and Build (windows64) green (${LEGS_GREEN}), so no benchmark was dispatched. Label the release PR \`force-build\` to build the release branch; its build dispatches one."
+            exit 0
+          fi
+
+          if RELEASE_TAG=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq '.tagName') && [ -n "$RELEASE_TAG" ] && \
+             jq -n \
+               --arg run_name "release: ${RELEASE_DATE}" \
+               --arg pr_number "$PR_NUMBER" \
+               --arg change "$REUSED_S3_BASE" \
+               --arg base "${PUBLIC_URL_PREFIX}/@dcl/${GITHUB_REPOSITORY#*/}/releases/${RELEASE_TAG}" \
+               '{event_type: "unity-explorer", client_payload: {
+                  run_name: $run_name,
+                  pr_number: $pr_number,
+                  win_change_build_url: "\($change)/Decentraland_windows64.zip",
+                  win_base_build_url: "\($base)/Decentraland_windows64.zip",
+                  mac_change_build_url: "\($change)/Decentraland_macos.zip",
+                  mac_base_build_url: "\($base)/Decentraland_macos.zip"}}' > dispatch.json && \
+             GH_TOKEN="$PERF_TOKEN" gh api repos/decentraland/performance-testing/dispatches --input dispatch.json; then
+            {
+              echo "[![Performance](https://img.shields.io/badge/Performance-Dispatched!-yellow${BADGE_STYLE})](${PERF_QUEUE})"
+              echo ""
+              echo "🏁 Bare-metal benchmark dispatched for dev's build of \`${SHORT_SHA}\`, the commit this release was cut from ([run queue](${PERF_QUEUE})) — results across the runner fleet land in this section when it finishes."
+              echo ""
+              echo "<sub>Latest build wins this section — a push to the release branch dispatches a new benchmark that replaces this one.</sub>"
+            } > performance.md
+            upsert || echo "::warning::Benchmark dispatched, but the performance section could not be updated."
+            echo "::notice::Benchmark dispatched against dev's build of ${SHORT_SHA} (baseline ${RELEASE_TAG})."
+          else
+            echo "::error::Could not dispatch the benchmark against dev's build of ${SHORT_SHA}. If the log says \"Repository not found, OR token has insufficient permissions\", PERFORMANCE_TESTING_PAT has expired and needs rotating. Label the release PR \`force-build\` to get a benchmark from the release branch's own build. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            {
+              echo "[![Performance](https://img.shields.io/badge/Performance-Dispatch%20failed-ff0000${BADGE_STYLE})](${STEP_URL})"
+              echo ""
+              echo "❌ Could not dispatch the bare-metal benchmark against dev's build of \`${SHORT_SHA}\` — see the [step log](${STEP_URL}). Label this PR \`force-build\` to benchmark the release branch's own build."
+            } > performance.md
+            upsert || true
+          fi
+
       # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
       # run without manual approval — the same suppression the CI-status step above
       # exists to work around.
-      # So the InWorld gate has to be started explicitly, by a token that can.
+      # So the automation suites have to be started explicitly, by a token that can.
       #
-      # Dispatching against the release branch is what puts the gate on the PR:
-      # a workflow_dispatch run attaches its checks to the dispatched ref's tip,
-      # and that tip is the PR head. Without this the required check on main
-      # never reports and the release cannot merge.
-      - name: Start the InWorld gate on the release branch
+      # Dispatching runs the suites against the release branch and reports into
+      # the PR's status comment. A dispatched run cannot satisfy a required check,
+      # so requiring `InWorld suite result` also needs a PR-triggered run.
+      - name: Start the automation suites on the release branch
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
 
-          # On the dispatch path the gate resolves this commit's build with
+          # On the dispatch path the workflow resolves this commit's build with
           # wait-minutes 0, so it fails within seconds unless both zips are
           # already up. Ask it the same question — did both build legs conclude
           # success — rather than whether a run went green: build-unitycloud.yml
           # also concludes green having built nothing, when the commit touches
           # no Explorer/** file and the matrix never expands, and green having
           # built one platform, when a windows-only/macos-only label narrows it.
-          # Either would dispatch a gate that immediately reds a brand-new
+          # Either would dispatch a suite run that immediately reds a brand-new
           # release PR with nothing wrong in it.
           #
           # Runs come back newest first, and only the newest few are worth
           # asking about — the same candidate cap resolve-explorer-build uses.
           HEAD_SHA=$(git rev-parse HEAD)
 
-          # Set by the seed step. In these two states the build that will carry
-          # the gate has not finished yet, and pr-comment-artifact-url.yml
+          # Set by the seed step. In these two states the build needed by the
+          # suites has not finished yet, and pr-comment-artifact-url.yml
           # (release-gate) dispatches it when that build succeeds; listing runs
           # here would only end in an error telling the operator to do what the
           # workflow has already arranged.
           case "${BUILD_STATE:-}" in
             building)
-              echo "::notice::dev is still building ${HEAD_SHA:0:7}. When that build succeeds its links are written into the release PR and the InWorld gate is dispatched against ${BRANCH_NAME}; if it does not, the PR is labeled force-build and the release branch's own build does the same."
+              echo "::notice::dev is still building ${HEAD_SHA:0:7}. When that build succeeds its links are written into the release PR and the automation suites are dispatched against ${BRANCH_NAME}; if it does not, the PR is labeled force-build and the release branch's own build does the same."
               exit 0 ;;
             forced)
-              echo "::notice::dev's build of ${HEAD_SHA:0:7} failed; the PR was labeled force-build and the InWorld gate is dispatched against ${BRANCH_NAME} when the release branch's build succeeds."
+              echo "::notice::dev's build of ${HEAD_SHA:0:7} failed; the PR was labeled force-build and the automation suites are dispatched against ${BRANCH_NAME} when the release branch's build succeeds."
               exit 0 ;;
           esac
 
-          # The helper resolve-explorer-build defines, duplicated because a
-          # composite action cannot export a shell function to its caller. Same
-          # justification, more sharply: this step decides on one answer and
-          # then the workflow ends, so a single 5xx must not settle a release
-          # cut. Three attempts five seconds apart cover a transport failure —
-          # a 5xx, a connection reset — and only that; a spent rate limit
-          # refills on an hour boundary, which is why the flags below record
-          # whether the API answered rather than trusting the retry to make it.
-          # stderr is kept on the last attempt so a permanent failure (this
-          # workflow file renamed, say) says what it was instead of vanishing
-          # into "the API did not answer".
-          gh_api_retry() {
-            local out attempt
-            for attempt in 1 2 3; do
-              if [ "$attempt" -lt 3 ]; then
-                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-                sleep 5
-              else
-                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
-              fi
-            done
-            return 1
-          }
+          source "$GITHUB_WORKSPACE/.ci-helpers/.github/scripts/gh-api-retry.sh"
 
           # Absorbed rather than left to set -e, here and on the jobs call
           # below: an API blip must not red a cut whose branch, PR, labels and
@@ -475,10 +521,8 @@ jobs:
           done
 
           # Three ways to end up not dispatching, and only the last is a build
-          # problem — so they get three messages. All three are `::error::`:
-          # each one ends with the gate unreported and the release unmergeable,
-          # which is not a line in a green log, and the dispatch failure below
-          # already annotates for exactly that outcome.
+          # problem — so they get three messages. Each leaves the automatic suite
+          # results unavailable and requires an operator to start validation.
           #
           # None of them says "re-run this workflow". Re-running re-enters the
           # `Create or update branch` step above, which force-pushes
@@ -487,15 +531,15 @@ jobs:
           # `In-World Tests` by hand is the remedy in every case, and it is the
           # same instruction the dispatch failure below gives.
           if [ "$LISTED" = "0" ]; then
-            echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer, so no build was ever looked at and the InWorld gate was not started. This says nothing about whether a build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer, so no build was ever looked at and the automation suites were not started. This says nothing about whether a build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
           if [ "$LEGS_GREEN" != "true" ] && [ "$UNEXAMINED" = "1" ]; then
-            echo "::error::The GitHub Actions API did not answer for at least one build run of ${HEAD_SHA:0:7}, so whether its legs are green is unknown and the InWorld gate was not started. This is not evidence that no build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::The GitHub Actions API did not answer for at least one build run of ${HEAD_SHA:0:7}, so whether its legs are green is unknown and the automation suites were not started. This is not evidence that no build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
           if [ "$LEGS_GREEN" != "true" ]; then
-            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the InWorld gate was not started — it would fail on its first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the automation suites were not started — they would fail on their first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
 
@@ -506,10 +550,9 @@ jobs:
           # would invite a re-run, and re-running this workflow force-pushes the
           # release branch, quietly re-cutting the release from a newer dev tip.
           # The branch, PR, labels and CI status comment have all landed by
-          # now; the annotation is what makes the missing gate visible, and the
-          # required check staying unreported is what keeps the release blocked.
+          # now; the annotation is what makes the missing suite run visible.
           if ! gh workflow run in-world-tests.yml --ref "$BRANCH_NAME"; then
-            echo "::error::Could not dispatch the InWorld gate against ${BRANCH_NAME}. The likeliest cause is that ORG_ACCESS_TOKEN lacks \`actions: write\` on this repository, which \`gh workflow run\` requires. The release branch and its PR are fine — start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}, or its required check will sit unreported and the release will not be mergeable."
+            echo "::error::Could not dispatch the automation suites against ${BRANCH_NAME}. The likeliest cause is that ORG_ACCESS_TOKEN lacks \`actions: write\` on this repository, which \`gh workflow run\` requires. The release branch and its PR are fine — start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Manual runs execute and report the suites; satisfying a required \`InWorld suite result\` check needs a PR-triggered run."
             exit 0
           fi
-          echo "::notice::InWorld gate dispatched against ${BRANCH_NAME}."
+          echo "::notice::Automation suites dispatched against ${BRANCH_NAME}."

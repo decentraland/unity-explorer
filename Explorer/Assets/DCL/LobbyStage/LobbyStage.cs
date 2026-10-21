@@ -29,6 +29,7 @@ namespace DCL.Lobby
         [SerializeField] private Renderer vignette = null!;
         [SerializeField] private Transform propsRoot = null!;
         [SerializeField] private Light keyLight = null!;
+        [SerializeField] private ParticleSystem dust = null!;
         [SerializeField] private LobbyStagePreset? preset;
 
         private MaterialPropertyBlock? backdropProperties;
@@ -147,8 +148,16 @@ namespace DCL.Lobby
         }
 
 #if UNITY_EDITOR
+        // Objects cannot be activated or deactivated inside a validation callback, so the refresh runs on the next editor tick
         private void OnValidate()
         {
+            UnityEditor.EditorApplication.delayCall += ApplyPresetValuesIfAlive;
+        }
+
+        private void ApplyPresetValuesIfAlive()
+        {
+            if (this == null || !isActiveAndEnabled) return;
+
             ApplyPresetValues();
         }
 
@@ -231,10 +240,34 @@ namespace DCL.Lobby
             floorProperties.SetColor(SPOT_COLOR, preset.SpotColor);
             floor.SetPropertyBlock(floorProperties);
 
-            mistProperties ??= new MaterialPropertyBlock();
-            mist.GetPropertyBlock(mistProperties);
-            mistProperties.SetColor(COLOR, preset.MistColor);
-            mist.SetPropertyBlock(mistProperties);
+            mist.enabled = preset.MistEnabled;
+
+            if (mist.enabled)
+            {
+                mistProperties ??= new MaterialPropertyBlock();
+                mist.GetPropertyBlock(mistProperties);
+                mistProperties.SetColor(COLOR, preset.MistColor);
+                mist.SetPropertyBlock(mistProperties);
+            }
+
+            // Deactivating the object stops the simulation as well as the rendering
+            GameObject dustObject = dust.gameObject;
+
+            if (dustObject.activeSelf != preset.DustEnabled)
+                dustObject.SetActive(preset.DustEnabled);
+
+            if (preset.DustEnabled)
+            {
+                ParticleSystem.MainModule dustMain = dust.main;
+
+                // Stopping resets the system, so the next Play prewarms a full set of motes in the new colour
+                if (dustMain.startColor.color != preset.DustColor)
+                {
+                    dustMain.startColor = preset.DustColor;
+                    dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    dust.Play(true);
+                }
+            }
 
             // A fully transparent vignette still costs a full screen of blending, so it is switched off outright
             vignette.enabled = preset.VignetteIntensity > 0f;
