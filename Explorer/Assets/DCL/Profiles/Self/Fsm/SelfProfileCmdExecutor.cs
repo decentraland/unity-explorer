@@ -14,13 +14,14 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Fsm;
+using Utility.Times;
 
 namespace DCL.Profiles.Self
 {
     /// <summary>
     ///     Performs the self-profile FSM commands and reports outcomes as messages. A fetch cancels the activity in flight; a deploy
     ///     never cancels a deploy in flight; <c>ResetLocalState</c> and <c>Dispose</c> cancel any. A cancelled IO reports nothing;
-    ///     any other failure is logged and sent as a failure message.
+    ///     any other failure is sent as a failure message.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
@@ -81,6 +82,7 @@ namespace DCL.Profiles.Self
                 onFetch: static (ctx, address) => ctx.executor.StartFetch(address, ctx.inbox),
                 onPublish: static (ctx, profile) => ctx.executor.Publish(profile),
                 onDeploy: static (ctx, deploy) => ctx.executor.StartDeploy(deploy, ctx.inbox),
+                onReportFetchFailure: static (_, failure) => ReportFetchFailure(failure),
                 onBatch: static (ctx, batch) => ctx.executor.ExecuteBatch(batch, ctx.inbox)
             );
 
@@ -146,9 +148,16 @@ namespace DCL.Profiles.Self
                 if (ct.IsCancellationRequested)
                     return;
 
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e))));
+                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e, UnixTimeMs.Now()))));
             }
+        }
+
+        private static void ReportFetchFailure(in ProfileFailure failure)
+        {
+            if (failure.Streak == 1)
+                ReportHub.LogException(failure.Exception, ReportCategory.PROFILE);
+            else
+                ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
         /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
