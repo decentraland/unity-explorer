@@ -17,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using Utility.Times;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.Tests
@@ -401,7 +402,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
             public int Calls { get; private set; }
 
             public override SelfProfileModel CurrentProfileSnapshot =>
-                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.FromFailed(new ProfileFailure(new Exception("fetch failed"))), ProfileActivity.Idle()));
+                SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.FromFailed(new ProfileFailure(new Exception("fetch failed"), new UnixTimeMs(0))), ProfileActivity.Idle()));
 
             public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
             {
