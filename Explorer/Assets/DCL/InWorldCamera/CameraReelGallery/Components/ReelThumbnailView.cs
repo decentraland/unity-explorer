@@ -55,13 +55,12 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             flatIndex = index;
 
-            // RefreshAllShownItem rebinds the visible slots after every page; restarting would re-request an image mid-load.
+            // The same reel keeps its in-flight load; only the index may have shifted.
             if (ReferenceEquals(Reel, reel))
                 return;
 
             Unbind();
             Reel = reel;
-            flatIndex = index;
             gameObject.SetActive(true);
 
             Sprite? cached = thumbnailCache.GetCachedSprite(reel.thumbnailUrl);
@@ -91,7 +90,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             hovered = false;
 
             // A recycled row never receives PointerExit, so the shared options button would stay parked here.
-            if (optionButton != null && optionButtonContainer.childCount > 0 && optionButtonContainer.GetChild(0).gameObject.activeSelf)
+            if (optionButton != null && optionButton.IsShownUnder(optionButtonContainer))
                 optionButton.HideControl();
 
             Reel = null;

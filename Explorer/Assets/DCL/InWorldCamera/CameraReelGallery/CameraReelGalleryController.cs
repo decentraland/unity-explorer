@@ -47,6 +47,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
         private readonly List<ReelGalleryRow> rows = new ();
+        private readonly string paddingPrefabName;
+        private readonly string monthHeaderPrefabName;
+        private readonly string thumbnailRowPrefabName;
         private readonly Action<int> onThumbnailClicked;
         private readonly Action<CameraReelResponseCompact> deleteReelIntention;
         private readonly Action<CameraReelResponseCompact> hideReelIntention;
@@ -99,6 +102,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             view.loopList.InitListView(0, OnGetItemByIndex, new LoopListViewInitParam
                 { mItemDefaultWithPaddingSize = reelGalleryConfigParams.ThumbnailHeight + ReelGalleryRow.ROW_SPACING });
+
+            paddingPrefabName = PrefabName(view.loopList, PADDING_PREFAB_INDEX);
+            monthHeaderPrefabName = PrefabName(view.loopList, MONTH_HEADER_PREFAB_INDEX);
+            thumbnailRowPrefabName = PrefabName(view.loopList, THUMBNAIL_ROW_PREFAB_INDEX);
 
             this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 
@@ -292,15 +299,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             switch (row.Kind)
             {
                 case ReelGalleryRowKind.Padding:
-                    item = list.NewListViewItem(PrefabName(list, PADDING_PREFAB_INDEX));
+                    item = list.NewListViewItem(paddingPrefabName);
                     item.CachedRectTransform.sizeDelta = new Vector2(item.CachedRectTransform.sizeDelta.x, row.Size);
                     break;
                 case ReelGalleryRowKind.MonthHeader:
-                    item = list.NewListViewItem(PrefabName(list, MONTH_HEADER_PREFAB_INDEX));
+                    item = list.NewListViewItem(monthHeaderPrefabName);
                     item.GetComponent<ReelGalleryMonthHeaderView>().SetMonth(row.Month);
                     break;
                 default:
-                    item = list.NewListViewItem(PrefabName(list, THUMBNAIL_ROW_PREFAB_INDEX));
+                    item = list.NewListViewItem(thumbnailRowPrefabName);
                     ReelGalleryRowView rowView = item.GetComponent<ReelGalleryRowView>();
 
                     if (!rowView.IsInitialized)
@@ -480,7 +487,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             PagedCameraReelManager? manager = pagedCameraReelManager;
 
-            // Idempotent: the deletion signal reaches every open gallery, loaded or not.
             if (manager == null || !manager.RemoveReelId(reelId))
                 return;
 
@@ -513,8 +519,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             ClearRows();
             pagedCameraReelManager = null;
-
-            // Thumbnails must not outlive the gallery.
             reelThumbnailCache.Clear();
 
             loadNextPageCts.SafeCancelAndDispose();

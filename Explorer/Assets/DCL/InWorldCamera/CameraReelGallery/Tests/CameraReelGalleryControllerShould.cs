@@ -209,21 +209,39 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
         }
 
         [Test]
-        public async Task ChainPagesWhileTheBoundRowsReachTheThreshold()
+        public async Task ChainPagesAsTheShownRowsReachTheThreshold()
         {
-            // Arrange: a viewport taller than a page binds every loaded row at once.
+            // Arrange: a viewport taller than a page shows every row it has, and each page completes only on demand.
             rootTransform.sizeDelta = new Vector2(1920f, TALL_VIEWPORT_HEIGHT);
+            view.loopList.ResetListView();
             int pageSize = view.PaginationLimit;
             AddReels(MARCH, (pageSize * 2) + (pageSize / 2));
+            var pendingPages = new Dictionary<int, UniTaskCompletionSource<CameraReelResponsesCompact>>();
+
+            storage.GetCompactScreenshotGalleryAsync(WALLET, pageSize, Arg.Any<int>(), Arg.Any<CancellationToken>())
+                   .Returns(call =>
+                    {
+                        var page = new UniTaskCompletionSource<CameraReelResponsesCompact>();
+                        pendingPages[call.ArgAt<int>(2)] = page;
+                        return page.Task;
+                    });
 
             // Act
-            await controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
+            UniTask show = controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
+            pendingPages[0].TrySetResult(Page(pageSize, 0));
+            bool secondPageRequested = pendingPages.ContainsKey(pageSize);
+            pendingPages[pageSize].TrySetResult(Page(pageSize, pageSize));
+            bool thirdPageRequestedBeforeFill = pendingPages.ContainsKey(pageSize * 2);
+            FillList();
+            bool thirdPageRequestedAfterFill = pendingPages.ContainsKey(pageSize * 2);
+            pendingPages[pageSize * 2].TrySetResult(Page(pageSize, pageSize * 2));
+            await show;
 
             // Assert
-            await storage.Received(1).GetCompactScreenshotGalleryAsync(WALLET, pageSize, 0, Arg.Any<CancellationToken>());
-            await storage.Received(1).GetCompactScreenshotGalleryAsync(WALLET, pageSize, pageSize, Arg.Any<CancellationToken>());
-            await storage.Received(1).GetCompactScreenshotGalleryAsync(WALLET, pageSize, pageSize * 2, Arg.Any<CancellationToken>());
-            await storage.DidNotReceive().GetCompactScreenshotGalleryAsync(WALLET, pageSize, pageSize * 3, Arg.Any<CancellationToken>());
+            Assert.IsTrue(secondPageRequested);
+            Assert.IsFalse(thirdPageRequestedBeforeFill);
+            Assert.IsTrue(thirdPageRequestedAfterFill);
+            Assert.IsFalse(pendingPages.ContainsKey(pageSize * 3));
         }
 
         [Test]
@@ -273,6 +291,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
                     active++;
 
             return active;
+        }
+
+        // Shows the rows that fit the viewport, which the list otherwise does in Update.
+        private void FillList()
+        {
+            LoopListViewInitParam defaults = LoopListViewInitParam.CopyDefaultInitParam();
+            view.loopList.UpdateListView(defaults.mDistanceForRecycle0, defaults.mDistanceForRecycle1, defaults.mDistanceForNew0, defaults.mDistanceForNew1);
         }
 
         private ReelThumbnailView FirstRowSlot(int slot) =>
