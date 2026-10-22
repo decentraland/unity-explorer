@@ -1,0 +1,163 @@
+/* The pill of the go-to widget (LobbyGoToElement); 19px on the left lands the command at the design's 46px past the pin's margin */
+.lobby-goto {
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    padding: 0 11px 0 19px;
+    border-width: 2px;
+    border-radius: 23px;
+    border-color: var(--lobby-white-40);
+    background-color: var(--lobby-black-40);
+    transition: border-color 0.1s, background-color 0.1s;
+}
+
+/* Black at zero alpha stands in for the design's 10% white: a fill easing from black to white passes through a grey
+   that flashes brighter than either end */
+.lobby-goto:hover {
+    border-color: var(--lobby-white-60);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.lobby-goto--focused,
+.lobby-goto--focused:hover {
+    border-color: var(--lobby-white-60);
+    background-color: var(--lobby-black-40);
+}
+
+.lobby-goto--invalid,
+.lobby-goto--invalid:hover,
+.lobby-goto--invalid.lobby-goto--focused,
+.lobby-goto--invalid.lobby-goto--focused:hover {
+    border-color: var(--lobby-jump-in-color);
+}
+
+/* The pin sprite is taller than wide (36x43), so the box keeps its shape */
+.lobby-goto__icon {
+    flex-shrink: 0;
+    width: 13px;
+    height: 15px;
+    margin-right: 14px;
+    background-image: url('/Assets/Textures/Common/LocationIcn.png');
+    -unity-background-image-tint-color: var(--lobby-title-color);
+}
+
+.lobby-goto__command {
+    flex-shrink: 0;
+    margin-right: 10px;
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--lobby-title-color);
+}
+
+/* The field is stripped of the default chrome: the pill is its frame */
+.lobby-goto__input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0;
+    --unity-cursor-color: var(--lobby-title-color);
+    --unity-selection-color: rgba(255, 255, 255, 0.25);
+}
+
+.lobby-goto__input > .unity-text-field__input {
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--lobby-title-color);
+}
+
+.lobby-goto__input > .unity-base-text-field__input--placeholder {
+    font-size: 13px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    color: var(--lobby-white-70);
+}
+
+/* The go button is stripped of the Button chrome into the design's jump-in disc; the sprite carries the arrow, so the
+   icon inside has nothing to draw */
+.lobby-goto__go {
+    display: none;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin: 0 0 0 8px;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url('/Assets/DCL/Lobby/Textures/JumpInRounded.png');
+    -unity-background-image-tint-color: white;
+    transition: -unity-background-image-tint-color 0.1s, opacity 0.1s;
+}
+
+.lobby-goto--with-text .lobby-goto__go {
+    display: flex;
+}
+
+.lobby-goto__go:hover {
+    -unity-background-image-tint-color: rgb(255, 230, 235);
+}
+
+.lobby-goto__go:active {
+    -unity-background-image-tint-color: rgb(200, 200, 200);
+}
+
+.lobby-goto--invalid .lobby-goto__go {
+    opacity: 0.2;
+}
+
+.lobby-goto__go-icon {
+    display: none;
+}
+
+/* While the destination is checked the spinner (LoadingSpinnerElement) takes the go button's place */
+.lobby-goto__spinner {
+    display: none;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin: 0 0 0 8px;
+}
+
+.lobby-goto--checking .lobby-goto__spinner {
+    display: flex;
+}
+
+.lobby-goto--checking .lobby-goto__go {
+    display: none;
+}
+
+/* The error line hangs under the pill, out of the flow, so the widget's row keeps its height */
+.lobby-goto__error {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-goto--invalid .lobby-goto__error {
+    display: flex;
+}
+
+.lobby-goto__error-icon {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/WarningIcn.png');
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+}
+
+.lobby-goto__error-label {
+    font-size: 13px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    color: var(--lobby-jump-in-color);
+}
