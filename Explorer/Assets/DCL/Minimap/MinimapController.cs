@@ -117,7 +117,7 @@ namespace DCL.Minimap
             HomePlaceEventBus homePlaceEventBus,
             MinimapContextMenuSettings minimapContextMenuSettings,
             IDonationsService donationsService)
-                : base(() => minimapView)
+            : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -267,6 +267,7 @@ namespace DCL.Minimap
         private void SetInitialHomeToggleValue()
         {
             bool isHome;
+
             if (realmData.ScenesAreFixed)
                 isHome = string.Equals(homePlaceEventBus.CurrentHomeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
             else
@@ -288,6 +289,7 @@ namespace DCL.Minimap
         private void ShowContextMenu()
         {
             SetInitialHomeToggleValue();
+
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
@@ -340,6 +342,7 @@ namespace DCL.Minimap
                         viewInstance!.favoriteButton.SetButtonState(false, false);
                         return;
                     }
+
                     await placesAPIService.SetPlaceFavoriteAsync(info.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
@@ -453,8 +456,9 @@ namespace DCL.Minimap
         private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = playerPosition.ToParcel();
+
             bool realmNameChanged = realmData.Configured
-                && !string.Equals(previousRealmName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
+                                    && !string.Equals(previousRealmName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
 
             if (previousParcelPosition == playerParcelPosition && !realmNameChanged)
                 return;
@@ -482,6 +486,7 @@ namespace DCL.Minimap
             if (realmData.ScenesAreFixed)
             {
                 PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(parcelPosition, realmData.RealmName, ct);
+
                 if (worldInfo != null)
                 {
                     viewInstance!.placeNameText.text = worldInfo.title;
@@ -528,14 +533,8 @@ namespace DCL.Minimap
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
             catch (OperationCanceledException) { }
-            catch (NotAPlaceException notAPlaceException)
-            {
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
-            }
-            catch (Exception exception)
-            {
-                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-            }
+            catch (NotAPlaceException notAPlaceException) { ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}"); }
+            catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST); }
 
             return null;
         }
@@ -544,19 +543,10 @@ namespace DCL.Minimap
         {
             await realmData.WaitConfiguredAsync();
 
-            try
-            {
-                return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
-            }
+            try { return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct); }
             catch (OperationCanceledException) { }
-            catch (NotAPlaceException notAPlaceException)
-            {
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}");
-            }
-            catch (Exception exception)
-            {
-                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-            }
+            catch (NotAPlaceException notAPlaceException) { ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}"); }
+            catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST); }
 
             return null;
         }
@@ -570,8 +560,12 @@ namespace DCL.Minimap
             ConfigureContextualButton(isGenesisModeActivated);
         }
 
-        private void ToggleObjects(bool isGenesisModeActivated) =>
+        private void ToggleObjects(bool isGenesisModeActivated)
+        {
             viewInstance!.SetWorldsSectionVisible(!isGenesisModeActivated);
+            SetMapExpanded(isGenesisModeActivated);
+            viewInstance.SetMapResizingAllowed(isGenesisModeActivated);
+        }
 
         private void ConfigureContextualButton(bool isGenesisModeActivated)
         {

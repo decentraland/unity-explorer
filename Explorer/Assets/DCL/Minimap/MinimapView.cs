@@ -109,6 +109,12 @@ namespace DCL.Minimap
             SetHeight(infoSection, isVisible ? INFO_SECTION_EXPANDED_HEIGHT : INFO_SECTION_HEIGHT);
         }
 
+        internal void SetMapResizingAllowed(bool isAllowed)
+        {
+            expandMinimapButton.interactable = isAllowed;
+            collapseMinimapButton.interactable = isAllowed;
+        }
+
         internal void SetSkyboxWidgetVisible(bool isVisible)
         {
             skyboxWidget.SetActive(isVisible);
