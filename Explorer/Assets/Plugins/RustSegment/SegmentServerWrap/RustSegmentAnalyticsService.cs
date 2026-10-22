@@ -252,6 +252,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 case NativeMethods.QueueHealth.OwnedByAnotherInstance:
                     ReportHub.Log(ReportCategory.ANALYTICS, "Segment queue file is owned by another running instance: the events of this session are kept in memory only");
                     return;
+                case NativeMethods.QueueHealth.DegradedOther:
+                    return;
                 default:
                     ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment queue file health: {health}");
                     return;

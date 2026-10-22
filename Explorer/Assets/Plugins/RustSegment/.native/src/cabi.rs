@@ -7,7 +7,7 @@ use crate::{
     INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
 };
 
-/// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when the server is not running.
+/// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when this call did not start the server.
 ///
 /// # Safety
 ///

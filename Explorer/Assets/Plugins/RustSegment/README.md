@@ -98,7 +98,7 @@ Notes:
 * All pointer arguments must remain valid for the duration of the call.
 * `segment_api_host` is the Tracking API origin with no path: the client appends `/v1/batch`, `/v1/track` and the other endpoint paths itself.
 * Callbacks must be thread-safe and non-blocking.
-* `queue_file_path` has one owner: the file is opened in exclusive locking mode, so a second process of the same user keeps its events in memory for its session. The returned [health code](#health-codes) says how the queue keeps the events of the session; `255` (`NotInitialized`) means the server is not running.
+* `queue_file_path` has one owner: the file is opened in exclusive locking mode, so a second process of the same user keeps its events in memory for its session. The returned [health code](#health-codes) says how the queue keeps the events of the session; `255` (`NotInitialized`) means this call did not start the server.
 
 ---
 
@@ -136,7 +136,7 @@ How the queue keeps the events of the session is decided once, when the file is 
 | 7 | `DegradedCannotOpen` | The queue file is given up for the session: it cannot be opened. |
 | 8 | `DegradedCorrupt` | The queue file is given up for the session: it could not be recreated after it was found corrupt. |
 | 9 | `DegradedOther` | The queue file is given up for the session: it failed in a way that says nothing about the file or its environment, reported on the error channel. |
-| 255 | `NotInitialized` | The server is not running: it was already initialized. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
+| 255 | `NotInitialized` | This call did not start the server: it already runs. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
 
 A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s.
 
