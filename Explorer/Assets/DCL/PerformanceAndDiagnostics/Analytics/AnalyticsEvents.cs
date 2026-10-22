@@ -31,6 +31,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             // 'source' tells which surface showed it: the explore panel or the lobby's modal.
             public const string BACKPACK_OPENED = "backpack_opened";
 
+            // Carries the same 'source' as the open it closes and how long the panel stayed on screen, in seconds.
+            public const string BACKPACK_CLOSED = "backpack_closed";
+
             // A profile published from the backpack with a different avatar; 'source' is the surface the backpack was shown in.
             public const string AVATAR_CHANGED = "avatar_changed";
         }
