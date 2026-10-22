@@ -16,10 +16,6 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class FilteredCommunitiesView : MonoBehaviour
     {
-        // Sized for the full-width explore panel; the modal host, 400px of which the left column takes, fits two cards fewer per row.
-        private const int GRID_COLUMNS = 5;
-        private const int COMPACT_GRID_COLUMNS = 3;
-
         public event Action? BackButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
@@ -36,7 +32,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
-        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
+        [SerializeField] private RectTransform[] loadingCards = null!;
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
@@ -87,10 +83,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCompactLayout(bool compact)
         {
-            resultLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS);
-
-            foreach (GameObject card in loadingCardsBeyondCompactColumns)
-                card.SetActive(!compact);
+            resultLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, CommunityCardsLayout.Columns(compact));
+            resultLoopGrid.SetItemSize(new Vector2(CommunityCardsLayout.CardWidth(compact), resultLoopGrid.ItemSize.y));
+            CommunityCardsLayout.LayoutLoadingCards(loadingCards, compact);
         }
 
         public void ClearResultsItems()
@@ -176,6 +171,12 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityData communityData = browserStateService!.GetCommunityDataById(currentFilteredIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+
+            // The grid places the items at its item size but leaves them the prefab's width.
+            RectTransform itemRect = gridItem.CachedRectTransform;
+
+            if (!Mathf.Approximately(itemRect.sizeDelta.x, loopGridView.ItemSize.x))
+                itemRect.sizeDelta = new Vector2(loopGridView.ItemSize.x, itemRect.sizeDelta.y);
 
             bool isMember = communityData.role != CommunityMemberRole.none;
 

@@ -20,10 +20,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string REQUESTS_RESULTS_TITLE = "Requests Sent";
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
-        // Sized for the full-width explore panel; the modal host, 400px of which the left column takes, fits two cards fewer per row.
-        private const int GRID_COLUMNS = 5;
-        private const int COMPACT_GRID_COLUMNS = 3;
-
         public event Action? BackButtonClicked;
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
@@ -49,7 +45,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private CommunityResultCardView communityCardPrefab = null!;
         [SerializeField] private CommunityRequestsReceivedGroupView requestsReceivedGroupPrefab = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
-        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
+        [SerializeField] private RectTransform[] loadingCards = null!;
 
         [Header("Invites")]
         [SerializeField] private Transform invitesGridContainer = null!;
@@ -220,15 +216,13 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetCompactLayout(bool compact)
         {
             isCompact = compact;
-            int columns = compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS;
-            invitesGridContainer.GetComponent<GridLayoutGroup>().constraintCount = columns;
-            requestsGridContainer.GetComponent<GridLayoutGroup>().constraintCount = columns;
+            CommunityCardsLayout.Apply(invitesGridContainer.GetComponent<GridLayoutGroup>(), compact);
+            CommunityCardsLayout.Apply(requestsGridContainer.GetComponent<GridLayoutGroup>(), compact);
 
             foreach (CommunityRequestsReceivedGroupView group in currentRequestsReceivedGroups)
                 group.SetCompactLayout(compact);
 
-            foreach (GameObject card in loadingCardsBeyondCompactColumns)
-                card.SetActive(!compact);
+            CommunityCardsLayout.LayoutLoadingCards(loadingCards, compact);
         }
 
         public void SetInvitesAndRequestsAsEmpty(bool isEmpty)
