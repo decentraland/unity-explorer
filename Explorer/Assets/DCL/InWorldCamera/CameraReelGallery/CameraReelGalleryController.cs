@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.InWorldCamera.CameraReelGallery
@@ -412,7 +411,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.deleteReelModal.DOFade(1f, view.deleteModalAnimationDuration);
         }
 
-        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
+        private void HideDeleteModal()
         {
             CanvasGroup? deleteReelModal = view.deleteReelModal;
 
