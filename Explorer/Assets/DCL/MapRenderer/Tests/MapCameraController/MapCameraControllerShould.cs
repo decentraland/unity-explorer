@@ -108,13 +108,14 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             culling.Received(1).OnCameraRemoved(mapCamera);
         }
 
+        // A zoomable camera's closest zoom is 1 parcel, not the configured 100
         [TestCase(-5, 100, 200, 200)]
         [TestCase(0, 100, 200, 200)]
-        [TestCase(0.75f, 100, 200, 125)]
-        [TestCase(0.5f, 100, 200, 150)]
-        [TestCase(0.25f, 100, 200, 175)]
-        [TestCase(1f, 100, 200, 100)]
-        [TestCase(2f, 100, 200, 100)]
+        [TestCase(0.75f, 100, 200, 50.75f)]
+        [TestCase(0.5f, 100, 200, 100.5f)]
+        [TestCase(0.25f, 100, 200, 150.25f)]
+        [TestCase(1f, 100, 200, 1)]
+        [TestCase(2f, 100, 200, 1)]
         public void SetZoom(float zoom, int minZoom, int maxZoom, float expected)
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(100, 200), MapLayer.SatelliteAtlas);
@@ -156,10 +157,40 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         {
             new object[] { new Vector2(10, 10), new Vector2(10, 10), new Vector2Int(10, 20), 0f},
             new object[] { new Vector2(-500, -300), new Vector2(-500, -300), new Vector2Int(10, 20), 0.5f},
-            new object[] { new Vector2(-1000, 1200), new Vector2(-930, 930), new Vector2Int(10, 20), 1f},
+            new object[] { new Vector2(-1000, 1200), new Vector2(-993, 993), new Vector2Int(10, 20), 1f},
             new object[] { new Vector2(-1000, 1200), new Vector2(-860, 860), new Vector2Int(10, 20), 0f},
-            new object[] { new Vector2(4000, -8000), new Vector2(720, -720), new Vector2Int(30, 50), 0.5f},
+            new object[] { new Vector2(4000, -8000), new Vector2(821.5f, -821.5f), new Vector2Int(30, 50), 0.5f},
         };
+
+        [Test]
+        public void MarkTheCameraChangedWhenItResumesRendering()
+        {
+            // Arrange: a minimap camera suspended while a popup covers it, standing still meanwhile
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.SuspendRendering();
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert: the satellite tiles it skipped while suspended are requested again
+            culling.Received(1).SetCameraDirty(mapCamera);
+        }
+
+        [Test]
+        public void NotMarkAReleasedCameraChangedWhenItResumesRendering()
+        {
+            // Arrange
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, new Vector2Int(20, 20), new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+            mapCamera.Release(owner);
+            culling.ClearReceivedCalls();
+
+            // Act
+            mapCamera.ResumeRendering();
+
+            // Assert
+            culling.DidNotReceive().SetCameraDirty(mapCamera);
+        }
 
         [TestCase(true)]
         [TestCase(false)]

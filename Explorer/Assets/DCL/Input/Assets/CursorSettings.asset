@@ -26,3 +26,24 @@ MonoBehaviour:
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   <InteractionCursorHotspot>k__BackingField: {x: 4.5, y: 1.5}
+  <GrabCursor>k__BackingField:
+    m_AssetGUID: 5bca9526827354aa290bdc2818c6c78c
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <GrabCursorHotspot>k__BackingField: {x: 16, y: 16}
+  <DraggingCursor>k__BackingField:
+    m_AssetGUID: 04037fc25e7fc4efd8316b7c14e449d2
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <DraggingCursorHotspot>k__BackingField: {x: 16, y: 16}
+  <NotAllowedCursor>k__BackingField:
+    m_AssetGUID: 66600c85c4d5d40a483a25899d4b10bb
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <NotAllowedCursorHotspot>k__BackingField: {x: 16, y: 16}
