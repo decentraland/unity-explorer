@@ -615,7 +615,8 @@ namespace DCL.PluginSystem.Global
                         { ExploreSections.Settings, settingsController },
                         { ExploreSections.CameraReel, cameraReelController },
                         { ExploreSections.Communities, communitiesBrowserController },
-                    });
+                    },
+                    placesController);
 
                 mvcManager.RegisterController(exploreSectionModalController);
             }
