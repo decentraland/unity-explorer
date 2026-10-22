@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables
                 // Element could be in the storage but still loading their data. Wait until they finish loading.
                 await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
 
-                if (IsResolved<TElementDTO>(element))
+                if (IsResolved(element))
                 {
                     await UniTask.SwitchToMainThread();
                     onElementFetched(element);
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables
                 await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 foreach (var result in results)
-                    if (IsResolved<TElementDTO>(result) && result.GetUrn() == pointer)
+                    if (IsResolved(result) && result.GetUrn() == pointer)
                     {
                         await UniTask.SwitchToMainThread();
                         onElementFetched(result);

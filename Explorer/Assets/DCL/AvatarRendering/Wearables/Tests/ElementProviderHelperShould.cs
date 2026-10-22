@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -24,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             IWearable wearable = new Wearable(new StreamableLoadingResult<WearableDTO>(model));
 
-            Assert.IsTrue(ElementProviderHelper.IsResolved<WearableDTO>(wearable));
+            Assert.IsTrue(ElementProviderHelper.IsResolved(wearable));
         }
 
         [Test]
@@ -32,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             IWearable wearable = IWearable.NewEmpty();
 
-            Assert.IsFalse(ElementProviderHelper.IsResolved<WearableDTO>(wearable));
+            Assert.IsFalse(ElementProviderHelper.IsResolved(wearable));
         }
 
         [Test]
@@ -40,10 +39,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             IWearable wearable = IWearable.NewEmpty();
 
-            ((IAvatarAttachment<WearableDTO>)wearable).ResolvedFailedDTO(
-                new StreamableLoadingResult<WearableDTO>(ReportData.UNSPECIFIED, new ArgumentNullException("Wearable DTO is null")));
+            wearable.ResolvedFailedDTO(
+                new StreamableLoadingResult<WearableDTO>(ReportData.UNSPECIFIED, new Exception("Wearable DTO is null")));
 
-            Assert.IsFalse(ElementProviderHelper.IsResolved<WearableDTO>(wearable));
+            Assert.IsFalse(ElementProviderHelper.IsResolved(wearable));
         }
     }
 }

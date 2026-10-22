@@ -12,7 +12,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
-using DCL.Backpack.EmotesSection;
 using UnityEngine.Pool;
 using Utility;
 

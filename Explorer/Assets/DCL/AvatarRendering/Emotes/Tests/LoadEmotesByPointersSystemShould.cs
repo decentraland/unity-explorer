@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             var failed = new Emote
             {
-                Model = new StreamableLoadingResult<EmoteDTO>(new ReportData(ReportCategory.EMOTE), new ArgumentNullException("dto")),
+                Model = new StreamableLoadingResult<EmoteDTO>(new ReportData(ReportCategory.EMOTE), new Exception("Emote DTO is null")),
             };
 
             var emotes = new List<IEmote> { failed, resolved };

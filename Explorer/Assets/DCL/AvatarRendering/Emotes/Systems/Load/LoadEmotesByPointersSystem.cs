@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static _ => "Pointer request cancelled"))
                 return;
 
-            using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest)!;
+            using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest);
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
             ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp.List);

@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using DCL.Utility.Types;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
