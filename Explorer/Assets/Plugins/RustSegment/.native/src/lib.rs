@@ -52,8 +52,8 @@ pub enum QueueHealthCode {
     /// The queue file is given up for the session: it failed in a way that says nothing about the file or its
     /// environment, reported on the error channel.
     DegradedOther = 9,
-    /// The server is not running: it was already initialized, or the initialization panicked and the panic was
-    /// reported on the error channel.
+    /// The server is not running: it was already initialized. In debug builds also returned when the initialization
+    /// panicked (reported on the error channel); release builds abort on panic.
     NotInitialized = 255,
 }
 

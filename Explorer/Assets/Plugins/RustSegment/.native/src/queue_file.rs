@@ -81,7 +81,7 @@ pub fn in_memory(event_count_limit: u32) -> CombinedAnalyticsEventQueue {
 }
 
 /// Replaces a corrupt file by an empty one. The failed connection is already closed: an open one would keep the file from
-/// being deleted on Windows.
+/// being deleted on Windows. A process that recreated the same file first owns it.
 fn recreate(path: &Path, event_count_limit: u32) -> (CombinedAnalyticsEventQueue, QueueHealthCode) {
     for suffix in ["", "-journal", "-wal", "-shm"] {
         let mut name = path.as_os_str().to_owned();
@@ -95,9 +95,12 @@ fn recreate(path: &Path, event_count_limit: u32) -> (CombinedAnalyticsEventQueue
             CombinedAnalyticsEventQueue::Persistent(persistent),
             QueueHealthCode::Recreated,
         ),
-        Err(_) => (
+        Err(error) => (
             in_memory(event_count_limit),
-            QueueHealthCode::DegradedCorrupt,
+            match SqliteCondition::of(&error) {
+                SqliteCondition::OwnedByAnotherInstance => QueueHealthCode::OwnedByAnotherInstance,
+                _ => QueueHealthCode::DegradedCorrupt,
+            },
         ),
     }
 }
@@ -238,6 +241,26 @@ mod tests {
         assert!(is_persistent(&queue));
         assert_eq!(code, QueueHealthCode::Recreated);
         assert_eq!(event_name(&queue.peek().unwrap().unwrap()), "a");
+    }
+
+    /// Two processes that find the same corrupt file both recreate it. On Windows the open file of the first cannot be
+    /// removed, so the second is told who owns it; on Unix the second unlinks the file of the first and owns a new one,
+    /// and the first keeps writing to an unlinked file for its session.
+    #[test]
+    fn a_corrupt_file_recreated_twice_has_one_owner() {
+        let dir = TempDir::new("corrupt-race");
+        let (_winner, winner_code) = recreate(&dir.file(), 10);
+
+        let (queue, code) = recreate(&dir.file(), 10);
+
+        assert_eq!(winner_code, QueueHealthCode::Recreated);
+        if cfg!(windows) {
+            assert!(!is_persistent(&queue));
+            assert_eq!(code, QueueHealthCode::OwnedByAnotherInstance);
+        } else {
+            assert!(is_persistent(&queue));
+            assert_eq!(code, QueueHealthCode::Recreated);
+        }
     }
 
     #[test]

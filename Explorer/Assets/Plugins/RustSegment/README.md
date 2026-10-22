@@ -136,9 +136,9 @@ How the queue keeps the events of the session is decided once, when the file is 
 | 7 | `DegradedCannotOpen` | The queue file is given up for the session: it cannot be opened. |
 | 8 | `DegradedCorrupt` | The queue file is given up for the session: it could not be recreated after it was found corrupt. |
 | 9 | `DegradedOther` | The queue file is given up for the session: it failed in a way that says nothing about the file or its environment, reported on the error channel. |
-| 255 | `NotInitialized` | The server is not running: it was already initialized, or the initialization panicked and the panic was reported on the error channel. |
+| 255 | `NotInitialized` | The server is not running: it was already initialized. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
 
-A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read is retried by the send loop with a delay that doubles up to 60 s.
+A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s.
 
 A send that fails on the network is retried with a delay that doubles up to 60 s and is not reported.
 

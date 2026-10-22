@@ -252,22 +252,19 @@ impl SegmentServer {
             error_event_input.try_enqueue_error(message);
         });
 
-        // An open failure that says nothing about the file or its environment is a fault, reported as such.
-        let (event_queue, health) = match queue_file::open(
-            Path::new(&queue_file_path),
-            queue_count_limit,
-        ) {
-            Ok(opened) => opened,
-            Err(err) => {
-                error_fn(&format!(
+        let (event_queue, health) =
+            match queue_file::open(Path::new(&queue_file_path), queue_count_limit) {
+                Ok(opened) => opened,
+                Err(err) => {
+                    error_fn(&format!(
                     "Cannot open the queue file, the events of the session stay in memory: {err}"
                 ));
-                (
-                    queue_file::in_memory(queue_count_limit),
-                    QueueHealthCode::DegradedOther,
-                )
-            }
-        };
+                    (
+                        queue_file::in_memory(queue_count_limit),
+                        QueueHealthCode::DegradedOther,
+                    )
+                }
+            };
         let event_queue = Arc::new(Mutex::new(event_queue));
 
         let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);

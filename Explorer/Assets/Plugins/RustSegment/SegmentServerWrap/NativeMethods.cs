@@ -59,8 +59,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
             DegradedOther = 9,
 
             /// <summary>
-            ///     The server is not running: it was already initialized, or the initialization panicked and the panic was
-            ///     reported on the error channel.
+            ///     The server is not running: it was already initialized. In debug builds also returned when the initialization
+            ///     panicked (reported on the error channel); release builds abort on panic.
             /// </summary>
             NotInitialized = 255,
         }
