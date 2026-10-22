@@ -2,6 +2,7 @@ using System;
 
 namespace Utility.Times
 {
+    /// <summary>A wall-clock instant in Unix milliseconds (UTC). Not monotonic: a system clock change can move it backwards.</summary>
     public readonly struct UnixTimeMs : IEquatable<UnixTimeMs>
     {
         public readonly long Value;

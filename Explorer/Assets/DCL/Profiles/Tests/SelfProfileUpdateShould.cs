@@ -976,9 +976,13 @@ namespace DCL.Profiles.Tests
         [Test]
         public void EndTheBackOffWhenTheClockIsSetBackPastTheWindow()
         {
+            // Act
+            bool oneMsBeforeFailure = FETCH_FAILURE.IsBackingOffAt(FAILED_AT - 1);
+            bool windowBeforeFailure = FETCH_FAILURE.IsBackingOffAt(FAILED_AT - ProfileFailure.MIN_BACK_OFF_MS);
+
             // Assert
-            Assert.That(FETCH_FAILURE.IsBackingOffAt(FAILED_AT - 1), Is.True);
-            Assert.That(FETCH_FAILURE.IsBackingOffAt(FAILED_AT - ProfileFailure.MIN_BACK_OFF_MS), Is.False);
+            Assert.That(oneMsBeforeFailure, Is.True);
+            Assert.That(windowBeforeFailure, Is.False);
         }
 
         [Test]
@@ -1015,10 +1019,15 @@ namespace DCL.Profiles.Tests
             // Arrange
             var failure = new ProfileFailure(FETCH_FAILURE.Exception, FAILED_AT, streak);
 
+            // Act
+            long backOffMs = failure.CalculateBackOffMs();
+            bool insideWindow = failure.IsBackingOffAt(FAILED_AT + (expectedBackOffMs - 1));
+            bool afterWindow = failure.IsBackingOffAt(FAILED_AT + expectedBackOffMs);
+
             // Assert
-            Assert.That(failure.CalculateBackOffMs(), Is.EqualTo(expectedBackOffMs));
-            Assert.That(failure.IsBackingOffAt(FAILED_AT + (expectedBackOffMs - 1)), Is.True);
-            Assert.That(failure.IsBackingOffAt(FAILED_AT + expectedBackOffMs), Is.False);
+            Assert.That(backOffMs, Is.EqualTo(expectedBackOffMs));
+            Assert.That(insideWindow, Is.True);
+            Assert.That(afterWindow, Is.False);
         }
 
         [Test]

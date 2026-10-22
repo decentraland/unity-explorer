@@ -37,7 +37,8 @@ namespace DCL.Profiles
             ForceFetchFromCatalyst = 4,
 
             /// <summary>
-            ///     A failed single request is thrown without being reported.
+            ///     A failed catalyst GET of a single request is thrown without being reported. The centralized POST path still
+            ///     reports its failures and resolves them as <c>null</c>, so this flag does not apply there.
             /// </summary>
             CallerReportsFailures = 8,
         }
