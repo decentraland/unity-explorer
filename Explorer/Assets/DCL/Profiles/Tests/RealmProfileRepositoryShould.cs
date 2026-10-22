@@ -180,6 +180,7 @@ namespace DCL.Profiles.Tests
 
             // Act
             Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet);
+            await FinalizeUnobservedExceptionsAsync();
 
             // Assert
             Assert.That(thrown, Is.SameAs(error));
@@ -195,6 +196,7 @@ namespace DCL.Profiles.Tests
 
             // Act
             Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+            await FinalizeUnobservedExceptionsAsync();
 
             // Assert
             Assert.That(thrown, Is.SameAs(error));
@@ -205,6 +207,14 @@ namespace DCL.Profiles.Tests
             webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
                                  (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
                                 .Returns(UniTask.FromException<Profile>(error));
+
+        /// <summary>Runs the finalizers now and the player loop tick on which UniTask reports an exception nobody took from a source.</summary>
+        private static async UniTask FinalizeUnobservedExceptionsAsync()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            await UniTask.Yield();
+        }
 
         private async UniTask<Exception?> SingleGetFailureAsync(IProfileRepository.FetchBehaviour fetchBehaviour)
         {

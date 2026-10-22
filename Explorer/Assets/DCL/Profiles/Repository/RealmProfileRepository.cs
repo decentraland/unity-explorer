@@ -172,8 +172,15 @@ namespace DCL.Profiles
 
         private void ResolveException(string userId, Exception ex)
         {
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
-                continuation.TrySetException(ex);
+            if (!TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
+                return;
+
+            continuation.TrySetException(ex);
+
+            // The exception is taken from the source once: the issuer of a single request rethrows its own copy without awaiting
+            // this source, and UniTask reports an exception nobody took when the source is finalized.
+            try { continuation.Task.GetAwaiter().GetResult(); }
+            catch (Exception) { }
         }
 
         private bool TryRemoveOngoingRequest(string userId, [NotNullWhen(true)] out UniTaskCompletionSource<ProfileTier?>? ongoingRequest)
