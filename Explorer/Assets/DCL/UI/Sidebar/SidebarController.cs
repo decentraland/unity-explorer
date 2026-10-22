@@ -219,6 +219,7 @@ namespace DCL.UI.Sidebar
 
             BindAudioSliders();
             CloseAllMenus();
+            SetMapOpen(true);
             SubscribeToEvents();
 
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
@@ -536,9 +537,6 @@ namespace DCL.UI.Sidebar
             viewInstance.galleryMenu.SetActive(false);
             viewInstance.profileMenu.SetActive(false);
 
-            // The minimap keeps whatever visibility the prefab was authored with; the Map button only mirrors it.
-            viewInstance.MapButton.SetSelected(viewInstance.minimapMenu.activeSelf);
-
             viewInstance.DiscoverButton.SetSelected(false);
             viewInstance.ShopButton.SetSelected(false);
             viewInstance.SettingsButton.SetSelected(false);
@@ -559,10 +557,13 @@ namespace DCL.UI.Sidebar
         /// </summary>
         private void OnMapButtonClicked()
         {
-            bool show = !viewInstance!.MapButton.IsSelected;
+            SetMapOpen(!viewInstance!.MapButton.IsSelected);
+        }
 
-            viewInstance.MapButton.SetSelected(show);
-            viewInstance.minimapMenu.SetActive(show);
+        private void SetMapOpen(bool open)
+        {
+            viewInstance!.MapButton.SetSelected(open);
+            viewInstance.minimapMenu.SetActive(open);
         }
 
         private void OnDiscoverButtonClicked() => ToggleMenu(viewInstance!.DiscoverButton, viewInstance.discoverMenu);
