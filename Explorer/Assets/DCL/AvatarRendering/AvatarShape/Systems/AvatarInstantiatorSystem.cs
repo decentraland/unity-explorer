@@ -19,6 +19,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -51,6 +52,10 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
         private readonly bool pointAtFeatureEnabled;
         private readonly bool headSyncFeatureEnabled;
+
+        // Per-frame aggregation: avatars whose re-instantiation failed after their previous skinning was released.
+        // Removing the released components is a structural change, so it waits until the query has finished.
+        private readonly List<Entity> avatarsToStrip = new ();
 
         public AvatarInstantiatorSystem(World world,
             IPerformanceBudget instantiationFrameTimeBudget,
@@ -100,6 +105,8 @@ namespace DCL.AvatarRendering.AvatarShape
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
+
+            StripReleasedAvatars();
         }
 
         [Query]
@@ -153,8 +160,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
             var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
 
-            (AvatarCustomSkinningComponent skinningComponent, BoneArray finalBoneArray) =
-                InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+            if (!TryInstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray,
+                    out AvatarCustomSkinningComponent skinningComponent, out BoneArray finalBoneArray))
+                return false;
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(finalBoneArray);
 
@@ -218,7 +226,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(CharacterTransform))]
         [None(typeof(DeleteEntityIntention))]
-        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
+        private void InstantiateExistingAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
             ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
@@ -234,10 +242,53 @@ namespace DCL.AvatarRendering.AvatarShape
             // Re-derive base bone array and extend with spring bones from new wearables
             var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
 
-            BoneArray finalBoneArray;
-            (skinningComponent, finalBoneArray) = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+            if (!TryInstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray,
+                    out AvatarCustomSkinningComponent newSkinningComponent, out BoneArray finalBoneArray))
+            {
+                // The entity still carries the skinning component whose buffers were just released. Left in place, the
+                // skinning dispatch would write the bones into a released ComputeBuffer every frame.
+                avatarsToStrip.Add(entity);
+                return;
+            }
 
+            skinningComponent = newSkinningComponent;
             avatarTransformMatrixComponent.bones = finalBoneArray;
+        }
+
+        /// <summary>
+        ///     Instantiation can fail at several points (a wearable with no vertices, a full vertex buffer, a broken mesh).
+        ///     A failure leaves the shape consistent instead of half-built: the wearables appended so far go back to the
+        ///     cache and the shape stops being dirty, so the same broken resolution is not retried every frame.
+        ///     The next profile change brings a new promise and a new attempt.
+        /// </summary>
+        private bool TryInstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, in WearablesLoadResult wearablesResult,
+            AvatarBase avatarBase, BoneArray baseBoneArray,
+            out AvatarCustomSkinningComponent skinningComponent, out BoneArray finalBoneArray)
+        {
+            try
+            {
+                (skinningComponent, finalBoneArray) = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+                return true;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, GetReportData());
+
+                wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+                avatarShapeComponent.IsDirty = false;
+
+                skinningComponent = default(AvatarCustomSkinningComponent);
+                finalBoneArray = default(BoneArray);
+                return false;
+            }
+        }
+
+        private void StripReleasedAvatars()
+        {
+            for (var i = 0; i < avatarsToStrip.Count; i++)
+                World.Remove<AvatarTransformMatrixComponent, AvatarCustomSkinningComponent>(avatarsToStrip[i]);
+
+            avatarsToStrip.Clear();
         }
 
         private (AvatarCustomSkinningComponent skinning, BoneArray finalBones) InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
