@@ -73,7 +73,7 @@ namespace DCL.Profiles.Self
         {
             // A stale failure changes nothing, but its exception is still reported.
             if (StaleFetchReason(model, msg.Address, out Identified current) is { } reason)
-                return (model, Then(SelfProfileCmd.FromIgnore(reason), SelfProfileCmd.FromReportFetchFailure(msg.Failure)));
+                return (model, Then(SelfProfileCmd.FromIgnore(reason), SelfProfileCmd.FromReportFetchFailure(StaleFailure(model, msg))));
 
             // A trusted profile outlives a failed read.
             (ProfileKnowledge knowledge, ProfileFailure failure) = current.Knowledge.Match(
@@ -90,6 +90,12 @@ namespace DCL.Profiles.Self
         private static (ProfileKnowledge, ProfileFailure) Failed(in ProfileFailure failure) =>
             (ProfileKnowledge.FromFailed(failure), failure);
 
+        /// <summary>A stale failure of an identity that is still failing continues its streak instead of starting one.</summary>
+        private static ProfileFailure StaleFailure(in SelfProfileModel model, in FetchFailed msg) =>
+            model.Session.IsIdentified(out Identified current) && current.Address.Equals(msg.Address) && current.Knowledge.IsFailed(out ProfileFailure previous)
+                ? msg.Failure.Following(previous)
+                : msg.Failure;
+
         private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, in ReadRequest request) =>
             model.Session.Match(
                 (model: model.WithLastRequest(request.Id), request),
@@ -99,7 +105,8 @@ namespace DCL.Profiles.Self
 
         /// <summary>
         ///     A read is answered at once from settled knowledge, which a missing profile is not while its first deploy is in flight
-        ///     and a failed fetch is only inside its back-off window; otherwise it waits on the activity in flight, or starts the one refetch.
+        ///     and a failed fetch is only inside its back-off window, unless the read ignores it; otherwise it waits on the activity
+        ///     in flight, or starts the one refetch.
         /// </summary>
         private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, in ReadRequest request)
         {
@@ -111,7 +118,7 @@ namespace DCL.Profiles.Self
             if (current.Knowledge.IsMissing() && !current.Activity.IsDeploying(out _))
                 return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.NotFound)), SelfProfileCmd.None());
 
-            if (current.Knowledge.IsFailed(out ProfileFailure failure) && failure.IsBackingOffAt(request.At) && current.Activity.IsIdle())
+            if (!request.IgnoreBackOff && current.Knowledge.IsFailed(out ProfileFailure failure) && failure.IsBackingOffAt(request.At) && current.Activity.IsIdle())
                 return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.FetchFailed)), SelfProfileCmd.None());
 
             Identified queued = current.WithPendingReads(current.PendingReads.Add(id));

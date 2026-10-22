@@ -7,8 +7,10 @@ namespace DCL.Profiles.Self
 {
     public readonly struct ProfileFailure : IEquatable<ProfileFailure>
     {
+        /// <summary>Back-off after the first failure of a streak; doubles per consecutive failure.</summary>
         public const long MIN_BACK_OFF_MS = 2000;
 
+        /// <summary>Upper bound of the back-off window, however long the streak.</summary>
         public const long MAX_BACK_OFF_MS = 60000;
 
         public readonly Exception Exception;

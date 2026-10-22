@@ -193,6 +193,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                     await SettleAsync();
 
                     Assert.That(selfProfile.Calls, Is.EqualTo(1));
+                    Assert.That(selfProfile.IgnoredBackOff, Is.True, "a user-initiated read must not wait out the back-off");
                     identityCache.DidNotReceive().Clear();
                 }
                 finally
@@ -333,7 +334,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
             public override SelfProfileModel CurrentProfileSnapshot => SelfProfileModel.NoIdentity();
 
-            public override async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct, bool ignoreBackOff = false)
             {
                 CapturedTokens.Add(ct);
 
@@ -362,7 +363,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 this.profile = profile;
             }
 
-            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct, bool ignoreBackOff = false)
             {
                 Calls++;
                 return UniTask.FromResult(ProfileReadResult.FromOk(profile));
@@ -384,7 +385,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
             public override SelfProfileModel CurrentProfileSnapshot =>
                 SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.Missing(), ProfileActivity.Idle()));
 
-            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct, bool ignoreBackOff = false)
             {
                 Calls++;
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.NotFound));
@@ -401,12 +402,15 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
             public int Calls { get; private set; }
 
+            public bool IgnoredBackOff { get; private set; }
+
             public override SelfProfileModel CurrentProfileSnapshot =>
                 SelfProfileModel.FromIdentified(new Identified(address, ProfileKnowledge.FromFailed(new ProfileFailure(new Exception("fetch failed"), new UnixTimeMs(0))), ProfileActivity.Idle()));
 
-            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+            public override UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct, bool ignoreBackOff = false)
             {
                 Calls++;
+                IgnoredBackOff = ignoreBackOff;
                 return UniTask.FromResult(ProfileReadResult.FromError(ProfileReadError.FetchFailed));
             }
 

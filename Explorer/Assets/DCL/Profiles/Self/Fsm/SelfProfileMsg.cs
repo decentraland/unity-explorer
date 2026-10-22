@@ -118,23 +118,27 @@ namespace DCL.Profiles.Self
 
         public readonly UnixTimeMs At;
 
-        public ReadRequest(RequestId id, UnixTimeMs at)
+        /// <summary>The read refetches a failed profile even inside its back-off window.</summary>
+        public readonly bool IgnoreBackOff;
+
+        public ReadRequest(RequestId id, UnixTimeMs at, bool ignoreBackOff = false)
         {
             Id = id;
             At = at;
+            IgnoreBackOff = ignoreBackOff;
         }
 
         public bool Equals(ReadRequest other) =>
-            Id.Equals(other.Id) && At == other.At;
+            Id.Equals(other.Id) && At == other.At && IgnoreBackOff == other.IgnoreBackOff;
 
         public override bool Equals(object? obj) =>
             obj is ReadRequest other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Id, At);
+            HashCode.Combine(Id, At, IgnoreBackOff);
 
         public override string ToString() =>
-            $"{Id} at {At}";
+            IgnoreBackOff ? $"{Id} at {At} ignoring back-off" : $"{Id} at {At}";
     }
 
     public readonly struct DeployRequest : IEquatable<DeployRequest>

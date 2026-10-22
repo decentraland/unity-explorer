@@ -16,9 +16,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.Profiles.Tests
 {
@@ -166,6 +168,52 @@ namespace DCL.Profiles.Tests
             // Still should be completed
             foreach (Action action in onProfilesResolved)
                 action.Received(1);
+        }
+
+        [Test]
+        public async Task ReportAFailedSingleGetByDefault()
+        {
+            // Arrange
+            var error = new Exception("catalyst timed out");
+            FailSingleGetWith(error);
+            LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet);
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task LeaveAFailedSingleGetUnreportedWhenTheCallerReportsFailures()
+        {
+            // Arrange
+            var error = new Exception("catalyst timed out");
+            FailSingleGetWith(error);
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        private void FailSingleGetWith(Exception error) =>
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
+                                .Returns(UniTask.FromException<Profile>(error));
+
+        private async UniTask<Exception?> SingleGetFailureAsync(IProfileRepository.FetchBehaviour fetchBehaviour)
+        {
+            try
+            {
+                await repository.GetAsync(dtos[0].UserId, 0, LAMBDAS, CancellationToken.None, false, fetchBehaviour, ProfileTier.Kind.Full);
+                return null;
+            }
+            catch (Exception e) { return e; }
         }
 
         private ProfilesBatchRequest[] AssertBatch(int batches, int requests)

@@ -172,6 +172,23 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void ContinueTheStreakWhenAStaleFailureBelongsToTheFailingIdentity()
+        {
+            // Arrange
+            var streak = new ProfileFailure(FETCH_FAILURE.Exception, FAILED_AT, 3);
+            SelfProfileModel model = Deploying(NewProfile(1), ProfileKnowledge.FromFailed(streak));
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromFetchFailed(new FetchFailed(ALICE, FETCH_FAILURE)));
+
+            // Assert
+            Assert.That(next, Is.EqualTo(model));
+            SelfProfileCmd[] batch = AssertBatch(cmd, 2);
+            Assert.That(batch[0].IsIgnore(out _), Is.True);
+            AssertReportFetchFailure(batch[1], FETCH_FAILURE.Following(streak));
+        }
+
+        [Test]
         public void ReportAFetchFailureOfTheIdentityBefore()
         {
             // Arrange
@@ -891,6 +908,22 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void RefetchForAReadThatIgnoresTheBackOffWindow()
+        {
+            // Arrange
+            SelfProfileModel model = Model(ProfileKnowledge.FromFailed(FETCH_FAILURE), ProfileActivity.Idle());
+
+            // Act
+            (SelfProfileModel next, SelfProfileCmd cmd) = SelfProfileModel.Update(model, ReadRequested(READ, FAILED_AT + 1, ignoreBackOff: true));
+
+            // Assert
+            Identified identified = AssertIdentified(next);
+            Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Fetching));
+            Assert.That(identified.PendingReads.Count, Is.EqualTo(1));
+            AssertFetch(cmd, ALICE);
+        }
+
+        [Test]
         public void QueueAReadOnTheFetchInFlightInsideTheBackOffWindow()
         {
             // Arrange
@@ -1229,8 +1262,8 @@ namespace DCL.Profiles.Tests
         private static SelfProfileMsg ReadRequested(RequestId id) =>
             ReadRequested(id, FAILED_AT + ProfileFailure.MAX_BACK_OFF_MS);
 
-        private static SelfProfileMsg ReadRequested(RequestId id, UnixTimeMs at) =>
-            SelfProfileMsg.FromProfileReadRequested(new ReadRequest(id, at));
+        private static SelfProfileMsg ReadRequested(RequestId id, UnixTimeMs at, bool ignoreBackOff = false) =>
+            SelfProfileMsg.FromProfileReadRequested(new ReadRequest(id, at, ignoreBackOff));
 
         private static SelfProfileModel Model(ProfileKnowledge knowledge, ProfileActivity activity) =>
             SelfProfileModel.FromIdentified(new Identified(ALICE, knowledge, activity));
