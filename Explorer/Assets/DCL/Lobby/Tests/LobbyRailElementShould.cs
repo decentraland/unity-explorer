@@ -38,7 +38,7 @@ namespace DCL.Lobby.Tests
 
             // Assert
             Assert.AreEqual(2, rail.childCount);
-            Assert.AreEqual(2, rail.hierarchy.childCount, "Only the track and the dots hang from the rail itself");
+            Assert.AreEqual(2, rail.hierarchy.childCount, "Only the viewport and the pager hang from the rail itself");
         }
 
         [Test]
@@ -50,10 +50,11 @@ namespace DCL.Lobby.Tests
             // Assert
             Assert.AreEqual(3, rail.PageCount);
             Assert.AreEqual(3, VisibleDots());
+            Assert.AreEqual(DisplayStyle.Flex, rail.Q("Pill").style.display.value);
         }
 
         [Test]
-        public void HideTheDotsWhileEverythingFitsInOnePage()
+        public void HideTheDotsAndTheArrowsWhileEverythingFitsInOnePage()
         {
             // Act
             ShowCards(3);
@@ -61,32 +62,79 @@ namespace DCL.Lobby.Tests
             // Assert
             Assert.AreEqual(1, rail.PageCount);
             Assert.AreEqual(0, VisibleDots());
+            Assert.AreEqual(DisplayStyle.None, rail.Q("Pill").style.display.value);
         }
 
         [Test]
-        public void HideThePreviousArrowOnTheFirstPage()
-        {
-            // Act
-            ShowCards(7);
-
-            // Assert
-            Assert.AreEqual(DisplayStyle.None, Arrow("Previous").style.display.value);
-            Assert.AreEqual(DisplayStyle.Flex, Arrow("Next").style.display.value);
-        }
-
-        [Test]
-        public void HideTheNextArrowOnTheLastPage()
+        public void PageOnWhenTheNextArrowIsClicked()
         {
             // Arrange
+            AttachToPanel();
             ShowCards(7);
 
             // Act
+            Click("Next");
+
+            // Assert
+            Assert.AreEqual(1, rail.CurrentPage);
+        }
+
+        [Test]
+        public void WrapRoundToTheFirstPageFromTheLast()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
             rail.SnapTo(2);
+
+            // Act
+            Click("Next");
+
+            // Assert
+            Assert.AreEqual(0, rail.CurrentPage);
+        }
+
+        [Test]
+        public void WrapRoundToTheLastPageFromTheFirst()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+
+            // Act
+            Click("Previous");
 
             // Assert
             Assert.AreEqual(2, rail.CurrentPage);
-            Assert.AreEqual(DisplayStyle.Flex, Arrow("Previous").style.display.value);
-            Assert.AreEqual(DisplayStyle.None, Arrow("Next").style.display.value);
+        }
+
+        [Test]
+        public void StopAtTheStartWhenTheWheelScrollsUpPastIt()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+
+            // Act
+            Wheel(new Vector2(0f, -1f));
+
+            // Assert
+            Assert.AreEqual(0, rail.CurrentPage);
+        }
+
+        [Test]
+        public void StopAtTheEndWhenTheWheelScrollsDownPastIt()
+        {
+            // Arrange
+            AttachToPanel();
+            ShowCards(7);
+            rail.SnapTo(2);
+
+            // Act
+            Wheel(new Vector2(0f, 1f));
+
+            // Assert
+            Assert.AreEqual(2, rail.CurrentPage);
         }
 
         [Test]
@@ -341,8 +389,14 @@ namespace DCL.Lobby.Tests
             rail.SetCardCount(count);
         }
 
-        private VisualElement Arrow(string name) =>
-            rail.Q<Button>(name);
+        // A submit is what a Button turns into a click without a laid-out pointer target
+        private void Click(string arrowName)
+        {
+            Button arrow = rail.Q<Button>(arrowName);
+            using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();
+            evt.target = arrow;
+            arrow.SendEvent(evt);
+        }
 
         private int VisibleDots()
         {

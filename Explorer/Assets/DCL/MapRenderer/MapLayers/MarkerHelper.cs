@@ -15,6 +15,32 @@ namespace DCL.MapRenderer.MapLayers
         private const float DEFAULT_SCALE_FACTOR = 1.3f;
         private const float DEFAULT_DURATION = .5f;
         private const float DEFAULT_DELAY = 0f;
+        private const float TITLE_Y_POSITION_OFFSET = -0.2f;
+
+        /// <summary>The scale that keeps a marker the same size on screen at every zoom.</summary>
+        public static float ScaleForZoom(float baseScale, float baseZoom, float zoom) =>
+            zoom / baseZoom * baseScale;
+
+        /// <summary>
+        ///     Scales the marker. Above <paramref name="baseScale" />, the title scales inversely, so that the title keeps its size.
+        ///     Below <paramref name="baseScale" />, the title shrinks with the marker.
+        /// </summary>
+        public static void ScaleWithTitle(Transform marker, Transform title, Vector3 titleBasePosition, float titleBaseScale, float baseScale, float newScale)
+        {
+            marker.localScale = new Vector3(newScale, newScale, 1f);
+
+            float positionFactor = Mathf.Max(newScale / baseScale, 1f);
+            float yOffset = (1 - positionFactor) * TITLE_Y_POSITION_OFFSET;
+
+            float yValue = yOffset < 0.9f
+                ? titleBasePosition.y + yOffset
+                : titleBasePosition.y / positionFactor;
+
+            title.localPosition = new Vector3(titleBasePosition.x, yValue, titleBasePosition.z);
+
+            float textScale = titleBaseScale / positionFactor;
+            title.localScale = new Vector3(textScale, textScale, 1f);
+        }
 
         public static async UniTaskVoid PulseScaleAsync(Transform transform, float scaleFactor = DEFAULT_SCALE_FACTOR, float duration = DEFAULT_DURATION, float delay = DEFAULT_DELAY, CancellationToken ct = default)
         {

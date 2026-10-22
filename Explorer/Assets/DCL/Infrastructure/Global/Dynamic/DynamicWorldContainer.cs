@@ -853,10 +853,11 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
                 globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, uiShellContainer.Cursor, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
-                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, chatContainer.ChatMessagesBus, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
                     userLogout, marketplaceCreditsApiClient, notificationsRequestController,
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

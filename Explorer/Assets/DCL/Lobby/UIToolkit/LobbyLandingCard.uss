@@ -1,16 +1,52 @@
-/* 524x300 with 24px corners, the thumbnail filling it */
+:root {
+    --landing-card-hover-duration: 0.3s;
+}
+
+/* 442x248 with 16px corners: the thumbnail fills the body under a gradient strip holding the place name and the
+   full-width jump-in button; hovering brightens the picture and outlines the card with the gradient */
 .lobby-landing-card {
-    width: 524px;
-    height: 300px;
-    border-radius: 24px;
+    width: 442px;
+    height: 248px;
+}
+
+/* The gradient ring (LobbyGradientOutlineElement, 2px thick, its radius the card's plus the 6px) hangs 6px past the
+   body on every side, leaving a 4px gap between it and the card, and shows only while hovered */
+.lobby-landing-card__outline {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    opacity: 0;
+    transition: opacity var(--lobby-outline-duration) ease-out;
+}
+
+.lobby-landing-card:hover .lobby-landing-card__outline {
+    opacity: 1;
+}
+
+.lobby-landing-card--static:hover .lobby-landing-card__outline {
+    opacity: 0;
+}
+
+.lobby-landing-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-width: 1px;
+    border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
     background-color: var(--lobby-card-color);
     overflow: hidden;
 }
 
-.lobby-landing-card--static {
+.lobby-landing-card--static .lobby-landing-card__body {
     background-color: rgba(16, 16, 20, 0.45);
 }
 
+/* The picture rests a shade darker than it is, so hovering has somewhere to brighten it to */
 .lobby-landing-card__thumbnail {
     position: absolute;
     left: 0;
@@ -21,43 +57,50 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
+    -unity-background-image-tint-color: rgb(230, 230, 230);
+    transition: scale var(--landing-card-hover-duration) ease-out, -unity-background-image-tint-color var(--landing-card-hover-duration) ease-out;
 }
 
-/* While the picture is on its way the dark fill of the card shows; the picture then fades in over it rather than popping up */
-.lobby-landing-card--loading .lobby-landing-card__thumbnail {
-    opacity: 0;
-    transition: opacity 0s;
+/* Hovering zooms the picture in a little and brightens it; a static card keeps still */
+.lobby-landing-card:hover .lobby-landing-card__thumbnail {
+    scale: 1.05;
+    -unity-background-image-tint-color: white;
 }
 
+.lobby-landing-card--static:hover .lobby-landing-card__thumbnail {
+    scale: 1;
+    -unity-background-image-tint-color: rgb(230, 230, 230);
+}
+
+/* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the name and the button */
 .lobby-landing-card__gradient {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 100px;
-    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
-    background-size: 100% 100%;
-    -unity-background-image-tint-color: var(--dcl-color-black-80);
+    height: 140px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
 }
 
 /* The counter's margin spaces the friends row that follows it */
 .lobby-landing-card__badges {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    height: 28px;
+    top: 20px;
+    left: 20px;
+    height: 26px;
     flex-direction: row;
     align-items: center;
 }
 
 .lobby-landing-card__online {
-    height: 28px;
-    margin-right: 8px;
+    height: 26px;
+    margin-right: 6px;
     flex-direction: row;
     align-items: center;
     padding: 0 6px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--dcl-color-shadow);
     display: none;
 }
@@ -87,44 +130,45 @@
     color: var(--dcl-color-snow);
 }
 
+/* The home icon and the place name, 16px over the button; the 1px border of the body is inside its box, so 21px in */
 .lobby-landing-card__footer {
     position: absolute;
-    left: 16px;
-    right: 190px;
-    bottom: 16px;
+    left: 21px;
+    right: 21px;
+    bottom: 84px;
+    height: 24px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-landing-card__home-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    background-image: url('/Assets/DCL/Lobby/Textures/HomeIcon.png');
 }
 
 .lobby-landing-card__title {
-    height: 30px;
-    margin-bottom: 4px;
-    font-size: 22px;
+    flex-shrink: 1;
+    height: 24px;
+    font-size: 20px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-    -unity-font-style: bold;
-    -unity-text-align: lower-left;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.lobby-landing-card__creator {
-    height: 22px;
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-regular);
     -unity-text-align: middle-left;
-    color: var(--lobby-subtitle-color);
+    color: var(--dcl-color-snow);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* The box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss); the label is padded off that strip */
+/* Spans the card 22px in; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss)
+   and the label is padded off that strip */
 .lobby-landing-card__jump-in {
     position: absolute;
-    right: 15px;
-    bottom: 10px;
-    width: 155px;
-    height: 46px;
+    left: 21px;
+    right: 21px;
+    bottom: 16px;
+    height: 52px;
     padding: 0 0 6px;
     flex-direction: row;
     align-items: center;
