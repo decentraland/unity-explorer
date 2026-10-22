@@ -66,9 +66,9 @@
         "profile": "release",
         "crate_version": "0.1.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_digest": "f864e47664174ade450b77959c0d66d03a2a7ad817f000e546b85659fbc8bd2a",
         "source_files": 5,
-        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309",
+        "repo_commit": "e7929a2c574ff3dece81107a42d6d1b69dbd4ba9",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -80,7 +80,7 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
-          "sha256": "07846e1fbb60751e72a4445fd9e4c37aa3a2ca2032adcda303b3d5cced31b84c",
+          "sha256": "bd013d7926156a878373c9458421951271435f1a3ae92d1e1f8ef85a56ff4855",
           "bytes": 6254032,
           "produced_by": "cargo"
         }
@@ -93,9 +93,9 @@
         "profile": "release",
         "crate_version": "0.1.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_digest": "f864e47664174ade450b77959c0d66d03a2a7ad817f000e546b85659fbc8bd2a",
         "source_files": 5,
-        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309",
+        "repo_commit": "e7929a2c574ff3dece81107a42d6d1b69dbd4ba9",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -105,8 +105,8 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
-          "sha256": "c2c3bed93fe2c89c6e46f7188e2990516ca1cb6b1e0805ffbf81afdd386c8964",
-          "bytes": 4564480,
+          "sha256": "1990fe51aa49bf35937c70b34bba267ca8819c4454797065f8a53314a343d968",
+          "bytes": 4564992,
           "produced_by": "cargo"
         }
       ]
@@ -117,7 +117,7 @@
         "target": "x86_64-unknown-linux-gnu",
         "profile": "release",
         "crate_version": "0.1.0",
-        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_digest": "f864e47664174ade450b77959c0d66d03a2a7ad817f000e546b85659fbc8bd2a",
         "source_files": 5,
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
@@ -125,13 +125,13 @@
           "gcc": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
         },
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309"
+        "repo_commit": "e7929a2c574ff3dece81107a42d6d1b69dbd4ba9"
       },
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so",
-          "sha256": "5f82306f7b49227959f94105b1a78e66d1715ab270cf12f47a5f4dea32d2f185",
-          "bytes": 5694432,
+          "sha256": "fc2fe9936603d7b0318cee4368518564fff25ecfd7876d40c7cc3c3094f99a56",
+          "bytes": 5693472,
           "produced_by": "cargo"
         }
       ]
