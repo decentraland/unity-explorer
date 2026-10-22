@@ -422,17 +422,17 @@ namespace DCL.SDKComponents.MediaStream
             presentationSource = (bot, raw);
             PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(raw);
 
-            if (bot != null && metadata?.slide is { } slide)
+            if (bot != null && metadata?.slide is { url: { } slideUrl } slide)
             {
                 if (video.IsComposingVideo(out ComposingVideo? composing))
                 {
-                    if (slide.url != composing.slide.url)
+                    if (slideUrl != composing.slideUrl)
                         urlPlayer.Release();
 
-                    composing.Show(bot, metadata, slide);
+                    composing.Show(bot, metadata, slide, slideUrl);
                 }
                 else
-                    StartComposing(requested, bot, metadata, slide);
+                    StartComposing(requested, bot, metadata, slide, slideUrl);
             }
             else if (video.IsComposingVideo(out ComposingVideo? composing))
                 StopComposing(composing);
@@ -461,8 +461,8 @@ namespace DCL.SDKComponents.MediaStream
         private void Follow(LivekitAddress requested, LivekitAddress target, StreamKey key) =>
             SetVideo(LivekitVideoMode.FromLegacyVideo(new LegacyVideo(requested, target, VideoStreamInfo.New(key, room.VideoStreams.ActiveStream(key)))));
 
-        private void StartComposing(LivekitAddress requested, string bot, PresentationBotMetadata metadata, PresentationSlide slide) =>
-            SetVideo(LivekitVideoMode.FromComposingVideo(new ComposingVideo(requested, slideCache.BeginComposing(), bot, metadata, slide)));
+        private void StartComposing(LivekitAddress requested, string bot, PresentationBotMetadata metadata, PresentationSlide slide, string slideUrl) =>
+            SetVideo(LivekitVideoMode.FromComposingVideo(new ComposingVideo(requested, slideCache.BeginComposing(), bot, metadata, slide, slideUrl)));
 
         private void StopComposing(ComposingVideo composing) =>
             Defer(composing.requested, composing.requested);
@@ -603,20 +603,16 @@ namespace DCL.SDKComponents.MediaStream
             return CameraOffPlaceholder(legacy.Stream) ?? legacy.Stream.VideoStream.Resource.Value.DecodeLastFrame();
         }
 
-        private Texture? ComposePresentation(ComposingVideo composing)
+        private Texture ComposePresentation(ComposingVideo composing)
         {
             PresentationBotMetadata metadata = composing.presentation;
             PresentationSlide slide = composing.slide;
-
-            if (slide.url == null)
-                return null;
-
-            DCL.Utility.Types.EnumResult<Texture2D, SlideState> cachedSlide = slideCache.GetOrRequest(slide.url, composing.bot);
+            DCL.Utility.Types.EnumResult<Texture2D, SlideState> cachedSlide = slideCache.GetOrRequest(composing.slideUrl, composing.bot);
 
             if (cachedSlide.Success)
             {
                 composing.shownSlide = cachedSlide.Value;
-                composing.shownSlideUrl = slide.url;
+                composing.shownSlideUrl = composing.slideUrl;
             }
             else if (composing.shownSlideUrl != null)
                 slideCache.KeepAlive(composing.shownSlideUrl);
