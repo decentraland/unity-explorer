@@ -121,7 +121,7 @@ namespace Global
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
-        public ReactiveProperty<bool> CurrentSceneUIOnly { get; } = new (false);
+        public ReactiveProperty<bool> CurrentSceneUiOnly { get; } = new (false);
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
@@ -304,7 +304,7 @@ namespace Global
                 new AudioAnalysisPlugin(sharedDependencies),
                 assetBundlePlugin,
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.CurrentSceneUIOnly),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.CurrentSceneUiOnly),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),

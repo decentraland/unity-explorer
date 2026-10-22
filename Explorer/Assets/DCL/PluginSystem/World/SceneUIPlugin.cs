@@ -40,16 +40,16 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
-        private readonly IReadonlyReactiveProperty<bool> currentSceneUIOnly;
+        private readonly IReadonlyReactiveProperty<bool> currentSceneUiOnly;
 
         private UIDocument uiDocument = null!;
         private StyleFontDefinition[] styleFontDefinitions;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, IReadonlyReactiveProperty<bool> currentSceneUIOnly)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, IReadonlyReactiveProperty<bool> currentSceneUiOnly)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
-            this.currentSceneUIOnly = currentSceneUIOnly;
+            this.currentSceneUiOnly = currentSceneUiOnly;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUiTransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUiElement, maxSize: 100);
@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.World
 
             uiDocument.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             uiDocument.rootVisualElement.pickingMode = PickingMode.Ignore;
-            uiDocument.GetComponent<UIDocumentTracker>().MarkAsSceneUI();
+            uiDocument.GetComponent<UIDocumentTracker>().MarkAsSceneUi();
 
             // Order according to Protocol's TEXT PB message:
             // https://github.com/decentraland/protocol/blob/d6cccca48449239e4b17a4f32bc6d65c44446b43/proto/decentraland/sdk/components/common/texts.proto#L17
@@ -94,7 +94,7 @@ namespace DCL.PluginSystem.World
             UITransformInstantiationSystem.InjectToWorld(ref builder, uiDocument, componentPoolsRegistry);
             UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
-            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot, sharedDependencies.SceneData.IsPortableExperience(), currentSceneUIOnly));
+            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot, sharedDependencies.SceneData.IsPortableExperience(), currentSceneUiOnly));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
             finalizeWorldSystems.Add(UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));

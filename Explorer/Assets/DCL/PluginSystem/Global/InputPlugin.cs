@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IReactiveProperty<bool> currentSceneUIOnly;
+        private readonly IReactiveProperty<bool> currentSceneUiOnly;
         private CrosshairCanvas crosshairCanvas = null!;
         private WarningNotificationView showUIToast = null!;
 
@@ -55,14 +55,14 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             EmoteWheelShortcutHandler emoteWheelShortcutHandler,
             IMVCManager mvcManager,
-            IReactiveProperty<bool> currentSceneUIOnly)
+            IReactiveProperty<bool> currentSceneUiOnly)
         {
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
             this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
             this.mvcManager = mvcManager;
-            this.currentSceneUIOnly = currentSceneUIOnly;
+            this.currentSceneUiOnly = currentSceneUiOnly;
 
             DCLInput.Instance.Enable();
         }
@@ -92,7 +92,7 @@ namespace DCL.PluginSystem.Global
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, emoteWheelShortcutHandler);
             UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast, currentSceneUIOnly);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast, currentSceneUiOnly);
         }
 
         public void Dispose()

@@ -26,15 +26,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Entity sceneRoot;
         private readonly bool isPortableExperience;
-        private readonly IReadonlyReactiveProperty<bool> currentSceneUIOnly;
+        private readonly IReadonlyReactiveProperty<bool> currentSceneUiOnly;
 
-        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience, IReadonlyReactiveProperty<bool> currentSceneUIOnly) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience, IReadonlyReactiveProperty<bool> currentSceneUiOnly) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
             this.sceneRoot = sceneRoot;
             this.isPortableExperience = isPortableExperience;
-            this.currentSceneUIOnly = currentSceneUIOnly;
+            this.currentSceneUiOnly = currentSceneUiOnly;
         }
 
         protected override void Update(float _)
@@ -114,6 +114,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         // Portable experiences are always current, so the current-scene-only flag is what takes their UI off
         private bool ShouldBeOnCanvas(bool isCurrent) =>
-            isCurrent && !(isPortableExperience && currentSceneUIOnly.Value);
+            isCurrent && !(isPortableExperience && currentSceneUiOnly.Value);
     }
 }

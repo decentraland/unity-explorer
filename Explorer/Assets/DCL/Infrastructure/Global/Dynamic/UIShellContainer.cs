@@ -90,8 +90,8 @@ namespace Global.Dynamic
         public MainUIPlugin CreateMainUIPlugin(bool includeFriends) =>
             new (MvcManager, MainUIView, includeFriends);
 
-        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler, IReactiveProperty<bool> currentSceneUIOnly) =>
-            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager, currentSceneUIOnly);
+        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler, IReactiveProperty<bool> currentSceneUiOnly) =>
+            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager, currentSceneUiOnly);
 
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);

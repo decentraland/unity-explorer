@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UITransformUpdateSystemShould : UITransformSystemTestBase<UITransformUpdateSystem>
     {
         private Entity sceneRoot;
-        private ReactiveProperty<bool> currentSceneUIOnly = null!;
+        private ReactiveProperty<bool> currentSceneUiOnly = null!;
 
         [SetUp]
         public async Task SetUp()
@@ -25,8 +25,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             sceneRootTransform.InitializeAsRoot(canvas.rootVisualElement);
             sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), sceneRootTransform);
 
-            currentSceneUIOnly = new ReactiveProperty<bool>(false);
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: false, currentSceneUIOnly);
+            currentSceneUiOnly = new ReactiveProperty<bool>(false);
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: false, currentSceneUiOnly);
         }
 
         [Test]
@@ -116,15 +116,15 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void TakePortableExperienceRootOffWhileCurrentSceneUIOnly()
+        public void TakePortableExperienceRootOffWhileCurrentSceneUiOnly()
         {
             // Arrange
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: true, currentSceneUIOnly);
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: true, currentSceneUiOnly);
             CreateUITransform();
             sceneStateProvider.IsCurrent = true;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.RelationData.parent = sceneRoot;
-            currentSceneUIOnly.Value = true;
+            currentSceneUiOnly.Value = true;
 
             // Act
             system.Update(0);
@@ -133,7 +133,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsFalse(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
 
             // Act
-            currentSceneUIOnly.Value = false;
+            currentSceneUiOnly.Value = false;
             system.Update(0);
 
             // Assert
@@ -141,14 +141,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void KeepRegularSceneRootWhileCurrentSceneUIOnly()
+        public void KeepRegularSceneRootWhileCurrentSceneUiOnly()
         {
             // Arrange
             CreateUITransform();
             sceneStateProvider.IsCurrent = true;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.RelationData.parent = sceneRoot;
-            currentSceneUIOnly.Value = true;
+            currentSceneUiOnly.Value = true;
 
             // Act
             system.Update(0);

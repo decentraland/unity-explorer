@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,12 +13,12 @@ namespace DCL.UI
         [field: SerializeField]
         public bool CanBeHidden { get; private set; } = true;
 
-        public bool IsSceneUI { get; private set; }
+        public bool IsSceneUi { get; private set; }
 
         public UIDocument Document { get; private set; }
 
-        public void MarkAsSceneUI() =>
-            IsSceneUI = true;
+        public void MarkAsSceneUi() =>
+            IsSceneUi = true;
 
         private void Awake()
         {
