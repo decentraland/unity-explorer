@@ -1,4 +1,54 @@
-/* Right-aligned and centred in the 100px header band */
+/* Every pill is 42px tall, centred in the 46px band that only the profile widget fills */
+.lobby__header {
+    position: absolute;
+    top: 27px;
+    left: var(--lobby-margin);
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby__logo {
+    width: 175px;
+    height: 24px;
+    background-image: url('/Assets/Textures/ExplorePanel/DecentralandLogo.png');
+}
+
+.lobby__header-title {
+    margin-left: 2px;
+    font-size: 26px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-silver);
+}
+
+.lobby__edit-layout-button {
+    width: 42px;
+    height: 42px;
+    margin-left: 16px;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--lobby-white-5);
+    background-color: rgba(0, 0, 0, 0.55);
+    transition: background-color 0.1s;
+}
+
+.lobby__edit-layout-button:hover {
+    background-color: rgba(90, 90, 90, 0.55);
+}
+
+.lobby__edit-layout-button:active {
+    background-color: rgba(0, 0, 0, 0.55);
+}
+
+.lobby__edit-layout-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/EditIcn.png');
+}
+
 .lobby__top-bar {
     position: absolute;
     top: 27px;
@@ -8,27 +58,31 @@
     align-items: center;
 }
 
-/* The credits and profile widgets are moved into the slots at runtime; a slot is only as big as what it holds */
+/* Widgets are moved into the slot at runtime, so it has no size of its own */
 .lobby__top-bar-slot {
     flex-direction: row;
     margin-left: 10px;
 }
 
-/* The profile widget of the lobby shows the name alone, like the uGUI one whose wallet tag is disabled */
+/* The wallet tag is hidden, as on the uGUI profile widget */
 .lobby__top-bar .profile-widget__address {
     display: none;
 }
 
-/* Pill opening an explore section over the lobby: the shape and the fill of the profile widget beside it */
+.lobby__top-bar .profile-widget {
+    border-color: var(--lobby-white-5);
+}
+
+/* Same shape and fill as the profile widget beside it */
 .lobby__top-bar-pill {
-    height: 46px;
+    height: 42px;
     margin-left: 10px;
     padding: 0 18px 0 14px;
     flex-direction: row;
     align-items: center;
     border-width: 2px;
-    border-radius: 23px;
-    border-color: rgba(40, 40, 40, 0.55);
+    border-radius: 21px;
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
@@ -66,14 +120,14 @@
 }
 
 .lobby__top-bar-button {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     margin-left: 10px;
     align-items: center;
     justify-content: center;
     border-width: 2px;
-    border-radius: 23px;
-    border-color: rgba(40, 40, 40, 0.55);
+    border-radius: 21px;
+    border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
@@ -86,11 +140,10 @@
     background-color: rgba(0, 0, 0, 0.55);
 }
 
-/* The bell texture has less padding than the pill icons, so a smaller box keeps the visible glyph the same height */
 .lobby__notifications-icon {
-    width: 28px;
-    height: 28px;
-    background-image: url('/Assets/Textures/Common/NotificationIcn.png');
+    width: 32px;
+    height: 32px;
+    background-image: url('/Assets/Textures/ExplorePanel/NotificationsOff.png');
 }
 
 .lobby__top-bar-button--open,
@@ -98,11 +151,8 @@
     background-color: rgba(90, 90, 90, 0.55);
 }
 
-/* The lit frame of the sidebar's bell animation is padded like the pill icons, so it takes their box */
 .lobby__top-bar-button--open .lobby__notifications-icon {
-    width: 32px;
-    height: 32px;
-    background-image: url('/Assets/Textures/ExplorePanel/NotificationsHover/NotificationIcon_00062.png');
+    background-image: url('/Assets/Textures/ExplorePanel/NotificationsOn.png');
 }
 
 .lobby__notifications-badge {
@@ -120,13 +170,80 @@
     color: var(--dcl-color-snow);
 }
 
-.lobby__close-icon {
-    width: 12px;
-    height: 12px;
-    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+.lobby__top-bar-back-button {
+    height: 42px;
+    margin-left: 10px;
+    padding: 0 16px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--lobby-white-5);
+    background-color: rgba(0, 0, 0, 0.55);
+    transition: background-color 0.1s;
 }
 
-/* The panel hangs 8px under the bar, right-aligned with the profile widget */
+.lobby__top-bar-back-button:hover {
+    background-color: rgba(90, 90, 90, 0.55);
+}
+
+.lobby__top-bar-back-button:active {
+    background-color: rgba(0, 0, 0, 0.55);
+}
+
+.lobby__back-key {
+    margin-left: 6px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-silver);
+}
+
+/* The edit modal brings its own Cancel and Save, so the edit button yields to Back */
+.lobby--editing .lobby__edit-layout-button {
+    display: none;
+}
+
+.lobby__back-button {
+    display: none;
+    height: 42px;
+    margin-left: 16px;
+    padding: 0 16px 0 14px;
+    flex-direction: row;
+    align-items: center;
+    border-width: 2px;
+    border-radius: 21px;
+    border-color: var(--lobby-white-5);
+    background-color: rgba(0, 0, 0, 0.55);
+    transition: background-color 0.1s;
+}
+
+.lobby--editing .lobby__back-button {
+    display: flex;
+}
+
+.lobby__back-button:hover {
+    background-color: rgba(90, 90, 90, 0.55);
+}
+
+.lobby__back-button:active {
+    background-color: rgba(0, 0, 0, 0.55);
+}
+
+.lobby__back-icon {
+    width: 9px;
+    height: 14px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/Common/ArrowLeft.png');
+}
+
+.lobby__back-text {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
 .lobby__profile-menu {
     position: absolute;
     left: 0;
@@ -135,12 +252,13 @@
     bottom: 0;
 }
 
+/* 8px under the bar, right-aligned with the profile widget */
 .lobby__profile-menu .lobby-profile-menu__panel {
     top: 81px;
     right: var(--lobby-margin);
 }
 
-/* In-world the Close button sits right of the widget: 46px plus its 10px margin */
-.lobby__profile-menu--with-close .lobby-profile-menu__panel {
-    right: 106px;
+/* Clears the in-world Back pill right of the widget: its width plus its 10px margin */
+.lobby__profile-menu--with-back .lobby-profile-menu__panel {
+    right: 193px;
 }

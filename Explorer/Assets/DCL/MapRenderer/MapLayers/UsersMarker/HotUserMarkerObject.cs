@@ -13,5 +13,8 @@ namespace DCL.MapRenderer.MapLayers.UsersMarker
             for (var i = 0; i < spriteRenderers.Length; i++)
                 spriteRenderers[i].sortingOrder = sortingOrder;
         }
+
+        public void SetScale(float scale) =>
+            transform.localScale = new Vector3(scale, scale, 1f);
     }
 }

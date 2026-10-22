@@ -13,14 +13,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {
-        private const float SATURATION_VALUE = 1f;
-
         private readonly MapRendererTextureContainer textureContainer;
         private readonly AtlasChunk atlasChunk;
 
         private CancellationTokenSource? internalCts;
         private CancellationTokenSource? linkedCts;
-        private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
         private AsyncOperationHandle<Texture2D> bundledTextureHandle;
 
@@ -34,7 +31,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
-            prefab.material.SetFloat(SATURATION, SATURATION_VALUE);
+            prefab.material.SetFloat(AtlasChunkConstants.SATURATION, AtlasChunkConstants.SATELLITE_SATURATION);
             atlasChunk = prefab.GetComponent<AtlasChunk>();
             atlasChunk.transform.localPosition = chunkLocalPosition;
             atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;

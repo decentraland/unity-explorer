@@ -58,7 +58,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void ModifyCameraSamplingBasedOnTeleportIntent(in PlayerTeleportIntent teleportIntent)
         {
             cameraSamplingData.Position = teleportIntent.Position;
-            cameraSamplingData.Parcel = teleportIntent.DestinationParcel;
+            cameraSamplingData.Parcel = teleportIntent.Parcel;
             cameraSamplingData.IsDirty = true;
         }
     }

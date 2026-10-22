@@ -35,7 +35,6 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
-using ECS.SceneLifeCycle.SingleScene;
 using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
@@ -101,8 +100,6 @@ namespace Global
 
         public SceneLoadingLimit SceneLoadingLimit { get; private set; } = null!;
 
-        public SingleSceneMode SingleSceneMode { get; } = new ();
-
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
@@ -133,6 +130,8 @@ namespace Global
         public AssetPreLoadCache AssetPreLoadCache { get; private set; } = null!;
         public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
         public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
+
+        public IDiskCache<byte[]> BytesDiskCache { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -249,6 +248,7 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
+            container.BytesDiskCache = new DiskCache<byte[], SerializeMemoryIterator<BytesDiskSerializer.State>>(diskCache, new BytesDiskSerializer());
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using Font = UnityEngine.Font;
 
 namespace DCL.PluginSystem.World
@@ -63,6 +64,7 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             uiDocument = (await assetsProvisioner.ProvideInstanceAsync(settings.ScenesUIDocument, ct: ct)).Value;
+            PanelSpriteLookupTables.Build(uiDocument.panelSettings);
 
             uiDocument.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             uiDocument.rootVisualElement.pickingMode = PickingMode.Ignore;

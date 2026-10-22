@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04037fc25e7fc4efd8316b7c14e449d2
+    m_Address: Assets/DCL/Input/Assets/Dragging.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
@@ -370,6 +375,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bca9526827354aa290bdc2818c6c78c
+    m_Address: Assets/DCL/Input/Assets/Grab.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5deacee45f1ebfe4394a97755a51fcca
     m_Address: Assets/Textures/ExplorePanel/BackpackHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -412,6 +422,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65718726e8675f3438790051aed58b6a
     m_Address: Inter-SemiBold SDF (Gr)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66600c85c4d5d40a483a25899d4b10bb
+    m_Address: Assets/DCL/Input/Assets/NotAllowed.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

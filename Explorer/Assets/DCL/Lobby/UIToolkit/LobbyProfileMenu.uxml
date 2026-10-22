@@ -3,7 +3,6 @@
     <DCL.Lobby.LobbyProfileMenuElement name="ProfileMenu" user-name="User Name" address="0x000...00000">
         <ui:VisualElement name="Backdrop" class="lobby-profile-menu__backdrop" />
         <ui:VisualElement name="Panel" class="lobby-profile-menu__panel">
-            <ui:Label name="Header" text="ME" class="lobby-profile-menu__header" picking-mode="Ignore" />
             <ui:VisualElement name="Identity" class="lobby-profile-menu__identity" picking-mode="Ignore">
                 <ui:VisualElement name="Picture" class="lobby-profile-menu__picture" picking-mode="Ignore" />
                 <ui:VisualElement name="Texts" class="lobby-profile-menu__texts" picking-mode="Ignore">
