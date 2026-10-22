@@ -1,5 +1,4 @@
-﻿using DCL.Communities.CommunitiesCard;
-using DCL.Communities.CommunitiesCard.Members;
+﻿using DCL.Communities.CommunitiesCard.Members;
 using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;

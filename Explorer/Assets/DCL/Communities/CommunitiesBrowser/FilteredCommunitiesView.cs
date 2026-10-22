@@ -31,7 +31,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
         [SerializeField] private TMP_Text resultsCountText = null!;
-        [SerializeField] private GameObject resultsSection = null!;
         [SerializeField] private LoopGridView resultLoopGrid = null!;
         [SerializeField] private GameObject resultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;

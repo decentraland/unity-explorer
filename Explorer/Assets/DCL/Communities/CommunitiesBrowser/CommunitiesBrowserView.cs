@@ -3,12 +3,10 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.ExplorePanel;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using MVC;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {

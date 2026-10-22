@@ -31,7 +31,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             reelThumbnailPool = new ObjectPool<ReelThumbnailController>(
                 () =>
                 {
-                    ReelThumbnailView view = GameObject.Instantiate(reelThumbnailPrefab);
+                    ReelThumbnailView view = Object.Instantiate(reelThumbnailPrefab);
                     return new ReelThumbnailController(view, cameraReelScreenshotsStorageService);
                 },
                 thumbnail =>
@@ -40,7 +40,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     thumbnail.PoolRelease(unusedThumbnailPoolObjectParent.transform),
                 thumbnail =>
                 {
-                    GameObject.Destroy(thumbnail.view.gameObject);
+                    Object.Destroy(thumbnail.view.gameObject);
                     thumbnail.Dispose();
                 },
                 true,
@@ -50,7 +50,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             reelGridPool = new ObjectPool<MonthGridController>(
                 () =>
                 {
-                    MonthGridView view = GameObject.Instantiate(monthViewPrefab);
+                    MonthGridView view = Object.Instantiate(monthViewPrefab);
                     return new MonthGridController(view, this);
                 },
                 grid =>
@@ -65,7 +65,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     grid.view.transform.SetParent(unusedGridPoolObjectParent.transform, false);
                     grid.view.gameObject.SetActive(false);
                 },
-                grid => GameObject.Destroy(grid.view.gameObject),
+                grid => Object.Destroy(grid.view.gameObject),
                 true,
                 gridDefaultCapacity,
                 gridMaxSize);

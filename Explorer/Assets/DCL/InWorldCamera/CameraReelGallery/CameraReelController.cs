@@ -23,7 +23,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int COMPACT_THUMBNAIL_WIDTH = 292;
         private const int COMPACT_THUMBNAIL_HEIGHT = 219;
 
-        public event Action Activated;
+        public event Action? Activated;
         public readonly CameraReelGalleryController CameraReelGalleryController;
 
         private readonly CameraReelView view;
