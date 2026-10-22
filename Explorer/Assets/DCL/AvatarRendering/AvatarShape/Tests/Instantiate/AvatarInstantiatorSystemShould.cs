@@ -15,6 +15,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -44,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomSkinColor;
         private Color randomHairColor;
         private Color randomEyesColor;
-        private Mesh avatarMesh;
+        private Mesh avatarMesh = null!;
 
         private async Task SetupAsync()
         {
@@ -107,16 +108,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 new AvatarTransformMatrixJobWrapper(), new[] { facialFeatureTextures });
         }
 
-        private IEmote GetMockEmote(string materialName, string category)
-        {
-            (IEmote mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
-
-            mockWearable.AssetResults.Returns(
-                new StreamableLoadingResult<AttachmentRegularAsset>?[] { new StreamableLoadingResult<AttachmentRegularAsset>(wearableAsset) });
-
-            return mockWearable;
-        }
-
         private IWearable GetMockWearable(string materialName, string category, bool withMesh = true)
         {
             (IWearable mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category, withMesh);
@@ -165,7 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             var rendererInfo = new AttachmentRegularAsset.RendererInfo(fakeABMaterial);
 
-            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, IStreamableRefCountData.Null.INSTANCE);
             wearableAsset.AddReference();
 
             return (mockWearable, wearableAsset);
