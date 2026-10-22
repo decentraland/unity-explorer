@@ -44,8 +44,6 @@ namespace Global.Dynamic
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
-        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart = Array.Empty<string>();
-
         private bool isLocalSceneDevelopmentRealm;
         internal string? spawnPointName;
         internal StartParcelSource startParcelSource;

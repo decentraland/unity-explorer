@@ -12,9 +12,9 @@ namespace DCL.Navmap
         void Undo();
     }
 
-    public interface INavmapCommand<TParam> : INavmapCommand
+    public interface INavmapCommand<TParam> : INavmapCommand where TParam : struct
     {
-        UniTask ExecuteAsync(AdditionalParams? param, CancellationToken ct);
+        UniTask ExecuteAsync(TParam? param, CancellationToken ct);
     }
 
     public struct AdditionalParams

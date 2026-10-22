@@ -31,9 +31,9 @@ namespace DCL.Navmap
         public event Action? OnClearPlacesFromMap;
         public event Action<Vector2, float>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
-        public event Action<Vector2Int, Vector2> OnLongHover;
-        public event Action OnClearFilter;
-        public event Action<Vector2Int, bool, bool> OnSelectPlaceFromResultsPanel;
+        public event Action<Vector2Int, Vector2>? OnLongHover;
+        public event Action? OnClearFilter;
+        public event Action<Vector2Int, bool, bool>? OnSelectPlaceFromResultsPanel;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
