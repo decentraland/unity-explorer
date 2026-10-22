@@ -8,9 +8,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class PagedCameraReelManager
     {
-        public bool AllImagesLoaded { get; private set; }
-        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
-
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly PagedCameraReelManagerParameters parameters;
         private readonly int pageSize;
@@ -18,6 +15,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private int currentOffset;
         private int currentLoadedImages;
+
+        public bool AllImagesLoaded { get; private set; }
+        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
@@ -38,7 +38,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             currentOffset += pageSize;
             currentLoadedImages += response.images.Count;
 
-            // A short page ends the gallery even when the storage count is stale, so paging cannot spin on empty responses
+            // A short page ends the gallery even when the storage count is stale, so paging cannot spin on empty responses.
             AllImagesLoaded = currentLoadedImages >= totalImages || response.images.Count < pageSize;
             AllOrderedResponses.AddRange(response.images);
         }
@@ -57,9 +57,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             return await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
         }
 
-        /// <summary>
-        ///     Returns false when the reel was not loaded, which happens when another open gallery already removed it.
-        /// </summary>
         public bool RemoveReelId(string reelId)
         {
             for (var i = 0; i < AllOrderedResponses.Count; i++)

@@ -30,13 +30,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             Action<CameraReelResponseCompact> reelDeleteIntention,
             Action<CameraReelResponseCompact> reelListRefreshIntention);
 
-        public event ThumbnailClick? ThumbnailClicked;
-        public event Action<CameraReelStorageStatus>? StorageUpdated;
-        public event Action? ScreenshotDeleted;
-        public event Action? ScreenshotShared;
-        public event Action? ScreenshotDownloaded;
-        public event Action<int>? MaxThumbnailsUpdated;
-
         // Order of the item prefabs in the LoopListView2 of CameraReelGallery.prefab.
         private const int PADDING_PREFAB_INDEX = 0;
         private const int MONTH_HEADER_PREFAB_INDEX = 1;
@@ -68,6 +61,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private CancellationTokenSource downloadScreenshotCts = new ();
         private CameraReelResponseCompact? reelToDelete;
         private PagedCameraReelManager? pagedCameraReelManager;
+
+        public event ThumbnailClick? ThumbnailClicked;
+        public event Action<CameraReelStorageStatus>? StorageUpdated;
+        public event Action? ScreenshotDeleted;
+        public event Action? ScreenshotShared;
+        public event Action? ScreenshotDownloaded;
+        public event Action<int>? MaxThumbnailsUpdated;
 
         public CameraReelGalleryController(CameraReelGalleryView view,
             ICameraReelStorageService cameraReelStorageService,
@@ -240,7 +240,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
             finally { isLoading = false; }
 
-            // The rows bound above were gated by isLoading; a short page may leave the list within the threshold
+            // The rows bound above were gated by isLoading; a short page may leave the list within the threshold.
             TryLoadMore(manager, highestBoundIndex);
         }
 
@@ -266,7 +266,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             ReelGalleryRow.Build(rows, manager.AllOrderedResponses, in reelGalleryConfigParams, view.paddingTop, view.paddingBottom, view.monthSpacing);
 
-            // Binding runs synchronously inside these calls; a page request started from a bind would re-enter the list
+            // Binding runs synchronously inside these calls; a page request started from a bind would re-enter the list.
             isBindingRows = true;
             view.loopList.SetListItemCount(rows.Count, resetPosition);
             view.loopList.RefreshAllShownItem();
@@ -481,7 +481,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             PagedCameraReelManager? manager = pagedCameraReelManager;
 
-            // The reel may already be gone when more than one gallery is open at the same time
+            // Idempotent: the deletion signal reaches every open gallery, loaded or not.
             if (manager == null || !manager.RemoveReelId(reelId))
                 return;
 
@@ -515,7 +515,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ClearRows();
             pagedCameraReelManager = null;
 
-            // Every thumbnail the gallery showed is released with it, so nothing stays in memory for the session
+            // Thumbnails must not outlive the gallery.
             reelThumbnailCache.Clear();
 
             loadNextPageCts.SafeCancelAndDispose();

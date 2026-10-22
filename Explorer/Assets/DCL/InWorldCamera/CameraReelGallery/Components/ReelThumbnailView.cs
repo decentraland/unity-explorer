@@ -40,9 +40,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public CameraReelResponseCompact? Reel { get; private set; }
 
-        /// <summary>
-        ///     Runs once per pooled slot; the click and hover wiring is not repeated on every bind.
-        /// </summary>
         public void Initialize(CameraReelOptionButtonController? optionButtonController, Action<int> onClicked, Vector2 cellSize)
         {
             optionButton = optionButtonController;
@@ -58,7 +55,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             flatIndex = index;
 
-            // RefreshAllShownItem rebinds the visible slots after every page; restarting would re-request an image mid-load
+            // RefreshAllShownItem rebinds the visible slots after every page; restarting would re-request an image mid-load.
             if (ReferenceEquals(Reel, reel))
                 return;
 
@@ -93,7 +90,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             imageLoaded = false;
             hovered = false;
 
-            // A recycled row never receives PointerExit, so the shared options button would stay parked here
+            // A recycled row never receives PointerExit, so the shared options button would stay parked here.
             if (optionButton != null && optionButtonContainer.childCount > 0 && optionButtonContainer.GetChild(0).gameObject.activeSelf)
                 optionButton.HideControl();
 
@@ -125,7 +122,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             if (optionButton.IsContextMenuOpen()) return;
 
-            // Hiding the options button raises Hide, which returns this slot to normal
             optionButton.HideControl();
         }
 
@@ -151,7 +147,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL)); }
 
-            // The cache resolves null instead of throwing when the token is cancelled
+            // The cache resolves null instead of throwing when the token is cancelled.
             if (ct.IsCancellationRequested) return;
 
             loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
@@ -164,11 +160,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void Show(Texture texture)
         {
-            // The cache keeps textures readable; the gallery never reads pixels back, so the CPU copy is dropped
+            // The cache keeps textures readable; the gallery never reads pixels back, so the CPU copy is dropped.
             if (texture is Texture2D { isReadable: true } readableTexture)
                 readableTexture.Apply(false, true);
 
-            // Centre-crop the thumbnail to the cell aspect ratio
             Vector2 cell = ((RectTransform)transform).sizeDelta;
             float originalToSmallerRatio = texture.height * 1f / cell.y;
             float realWidth = originalToSmallerRatio * cell.x;

@@ -211,7 +211,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
         [Test]
         public async Task ChainPagesWhileTheBoundRowsReachTheThreshold()
         {
-            // Arrange: a viewport taller than a page binds every loaded row at once
+            // Arrange: a viewport taller than a page binds every loaded row at once.
             rootTransform.sizeDelta = new Vector2(1920f, TALL_VIEWPORT_HEIGHT);
             int pageSize = view.PaginationLimit;
             AddReels(MARCH, (pageSize * 2) + (pageSize / 2));

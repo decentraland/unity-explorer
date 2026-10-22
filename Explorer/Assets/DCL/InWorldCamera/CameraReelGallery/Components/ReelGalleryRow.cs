@@ -17,7 +17,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     /// </summary>
     internal readonly struct ReelGalleryRow
     {
-        // Spacings of the GridLayoutGroup and month layout the list replaced.
+        // Spacings of the GridLayoutGroup and month layout the list replaced, kept for visual parity.
         public const float ROW_SPACING = 4f;
         public const float HEADER_SPACING = 20f;
 
@@ -48,8 +48,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             new (ReelGalleryRowKind.Thumbnails, default(DateTime), startIndex, count, 0f, spacingAfter);
 
         /// <summary>
-        ///     Rebuilds the rows from the flat, API-ordered reel list. Consecutive reels of the same month form one
-        ///     section, so <see cref="StartIndex" /> plus the slot index is the index into that list.
+        ///     Consecutive reels of the same month form one section, so <see cref="StartIndex" /> plus the slot index
+        ///     is the index into the reel list.
         /// </summary>
         public static void Build(List<ReelGalleryRow> rows, IReadOnlyList<CameraReelResponseCompact> reels, in ReelGalleryConfigParams config,
             float topPadding, float bottomPadding, float monthSpacing)

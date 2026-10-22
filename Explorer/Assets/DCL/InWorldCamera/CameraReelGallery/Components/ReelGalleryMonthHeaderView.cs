@@ -16,7 +16,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             monthText.SetText(month.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
 
-            // LoopListView2 measures the item right after binding, so the height must be final here
+            // LoopListView2 measures the item right after binding, so the height must be final here.
             var rectTransform = (RectTransform)transform;
             rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, monthText.preferredHeight);
         }

@@ -18,8 +18,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         internal IReadOnlyList<ReelThumbnailView> slots => thumbnails;
 
         /// <summary>
-        ///     Runs once per pooled row: the column count and cell size come from the host's config,
-        ///     so the slots cannot be authored in the prefab.
+        ///     The column count and cell size come from the host's config, so the slots cannot be authored in the prefab.
         /// </summary>
         public void Initialize(ReelThumbnailView thumbnailPrefab, in ReelGalleryConfigParams config, CameraReelOptionButtonController? optionButton, Action<int> clicked)
         {
@@ -33,7 +32,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 var rect = (RectTransform)slot.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
 
-                // The prefab pivot stays centered so the hover scale grows around the thumbnail
+                // The prefab pivot stays centered so the hover scale grows around the thumbnail.
                 rect.anchoredPosition = new Vector2((i * (cell.x + ReelGalleryRow.ROW_SPACING)) + (cell.x / 2f), -cell.y / 2f);
                 slot.Initialize(optionButton, clicked, cell);
                 slot.gameObject.SetActive(false);
