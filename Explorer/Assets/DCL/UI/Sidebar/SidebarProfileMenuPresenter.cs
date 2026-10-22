@@ -1,4 +1,3 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
@@ -9,13 +8,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.UserInAppInitializationFlow;
+using DCL.UI.SystemMenu;
 using DCL.Utilities;
 using DCL.Utility;
-using DCL.Web3;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.UI.SystemMenu;
 using MVC;
 using System;
 using System.Threading;
@@ -32,6 +28,7 @@ namespace DCL.UI.Sidebar
         private const string GUEST_NAME = "Guest";
         private const string HASH_COLOR = "#727272";
         private const int TOAST_DURATION_MS = 3000;
+        private const int TOAST_FADE_MS = 300;
         private const int ADDRESS_PREFIX_LENGTH = 6;
         private const int ADDRESS_SUFFIX_LENGTH = 4;
         private const string INVITE_PATH = "invite";
@@ -191,9 +188,19 @@ namespace DCL.UI.Sidebar
 
         private static async UniTaskVoid ShowToastAsync(WarningNotificationView toast, CancellationToken ct)
         {
-            try { await toast.AnimatedShowAsync(TOAST_DURATION_MS, ct, toggleGameObject: true); }
+            try
+            {
+                toast.CanvasGroup.alpha = 0;
+                toast.gameObject.SetActive(true);
+
+                await toast.AnimatedShowAsync(TOAST_DURATION_MS, ct);
+
+                // AnimatedShowAsync returns as soon as the fade-out starts, so the object stays up until it finishes.
+                await UniTask.Delay(TOAST_FADE_MS, cancellationToken: ct);
+            }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            finally { toast.gameObject.SetActive(false); }
         }
 
         private void ShowOwnPassport(string? badgeIdSelected)
