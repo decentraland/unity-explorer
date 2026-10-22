@@ -7,12 +7,12 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -26,13 +26,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Entity sceneRoot;
         private readonly bool isPortableExperience;
+        private readonly IReadonlyReactiveProperty<bool> currentSceneUIOnly;
 
-        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience, IReadonlyReactiveProperty<bool> currentSceneUIOnly) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
             this.sceneRoot = sceneRoot;
             this.isPortableExperience = isPortableExperience;
+            this.currentSceneUIOnly = currentSceneUIOnly;
         }
 
         protected override void Update(float _)
@@ -96,6 +98,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 case true when uiTransformComponent.IsHidden:
                     canvas.rootVisualElement.Add(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = false;
+
+                    // Add appends at the end, so the root has to be re-sorted to restore the rightOf/zIndex order
+                    World.Get<UITransformComponent>(sceneRoot).RelationData.layoutIsDirty = true;
                     break;
             }
         }
@@ -107,8 +112,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             CheckUITransformOutOfSceneQuery(World, ShouldBeOnCanvas(value));
         }
 
-        // Portable experiences are always current, so the current-scene-only flag on the canvas root is what takes their UI off
+        // Portable experiences are always current, so the current-scene-only flag is what takes their UI off
         private bool ShouldBeOnCanvas(bool isCurrent) =>
-            isCurrent && !(isPortableExperience && canvas.rootVisualElement.ClassListContains(VisualElementsExtensions.CURRENT_SCENE_UI_ONLY_CLASS));
+            isCurrent && !(isPortableExperience && currentSceneUIOnly.Value);
     }
 }

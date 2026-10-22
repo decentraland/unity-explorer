@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
 using DCL.UI;
+using DCL.Utilities;
 using ECS.Abstract;
 using MVC;
 using System.Collections.Generic;
@@ -28,12 +29,12 @@ namespace DCL.Input.Systems
         }
 
         private const int TOAST_DURATION_MS = 3000;
-        // The <link> tag marks the key the toast prefab frames with a key cap
         private const string EXPLORER_HIDDEN_TOAST = "Press   <link=key>U</link>   to hide the scene UI.";
         private const string ALL_HIDDEN_TOAST = "Press   <link=key>U</link>   to show the UI again.";
 
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
+        private readonly IReactiveProperty<bool> currentSceneUIOnly;
 
         private SingleInstanceEntity camera;
         private CancellationTokenSource? toastCt;
@@ -43,7 +44,7 @@ namespace DCL.Input.Systems
 
         private readonly IReadOnlyList<InputAction> actionsThatEnableUI;
 
-        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
+        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView, IReactiveProperty<bool> currentSceneUIOnly) : base(world)
         {
             dclInput = DCLInput.Instance;
             actionsThatEnableUI = new List<InputAction>
@@ -60,6 +61,7 @@ namespace DCL.Input.Systems
 
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
+            this.currentSceneUIOnly = currentSceneUIOnly;
         }
 
         public override void Initialize()
@@ -94,6 +96,8 @@ namespace DCL.Input.Systems
                 ShowOrHideToast();
             }
 
+            currentSceneUIOnly.UpdateValue(visibility == UIVisibility.ExplorerHidden);
+
             foreach (UIDocumentTracker tracker in UIDocumentTracker.ActiveDocuments)
             {
                 if (!tracker.CanBeHidden)
@@ -104,15 +108,11 @@ namespace DCL.Input.Systems
                     : visibility == UIVisibility.AllVisible;
 
                 tracker.Document.rootVisualElement.SetVisible(visible);
-
-                if (tracker.IsSceneUI)
-                    tracker.Document.rootVisualElement.EnableInClassList(VisualElementsExtensions.CURRENT_SCENE_UI_ONLY_CLASS, visibility == UIVisibility.ExplorerHidden);
             }
         }
 
         private UIVisibility? CheckInputs()
         {
-            // U cycles: all visible -> explorer hidden (scene UI kept) -> all hidden -> all visible
             if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
                 return visibility switch
                 {

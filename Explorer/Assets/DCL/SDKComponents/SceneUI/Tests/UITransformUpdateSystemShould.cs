@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.Utilities;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
@@ -13,12 +14,19 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UITransformUpdateSystemShould : UITransformSystemTestBase<UITransformUpdateSystem>
     {
         private Entity sceneRoot;
+        private ReactiveProperty<bool> currentSceneUIOnly = null!;
 
         [SetUp]
         public async Task SetUp()
         {
             await Initialize();
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)), isPortableExperience: false);
+
+            var sceneRootTransform = new UITransformComponent();
+            sceneRootTransform.InitializeAsRoot(canvas.rootVisualElement);
+            sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), sceneRootTransform);
+
+            currentSceneUIOnly = new ReactiveProperty<bool>(false);
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: false, currentSceneUIOnly);
         }
 
         [Test]
@@ -86,6 +94,67 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             Assert.AreEqual(isCurrentScene, canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
+        }
+
+        [Test]
+        public void MarkSceneRootDirtyWhenRootIsAddedBack()
+        {
+            // Arrange
+            CreateUITransform();
+            sceneStateProvider.IsCurrent = true;
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            uiTransformComponent.IsHidden = true;
+            uiTransformComponent.RelationData.parent = sceneRoot;
+            UITransformComponent sceneRootTransform = world.Get<UITransformComponent>(sceneRoot);
+            sceneRootTransform.RelationData.layoutIsDirty = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(sceneRootTransform.RelationData.layoutIsDirty);
+        }
+
+        [Test]
+        public void TakePortableExperienceRootOffWhileCurrentSceneUIOnly()
+        {
+            // Arrange
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot, isPortableExperience: true, currentSceneUIOnly);
+            CreateUITransform();
+            sceneStateProvider.IsCurrent = true;
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            uiTransformComponent.RelationData.parent = sceneRoot;
+            currentSceneUIOnly.Value = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
+
+            // Act
+            currentSceneUIOnly.Value = false;
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
+        }
+
+        [Test]
+        public void KeepRegularSceneRootWhileCurrentSceneUIOnly()
+        {
+            // Arrange
+            CreateUITransform();
+            sceneStateProvider.IsCurrent = true;
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            uiTransformComponent.RelationData.parent = sceneRoot;
+            currentSceneUIOnly.Value = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
         }
     }
 }

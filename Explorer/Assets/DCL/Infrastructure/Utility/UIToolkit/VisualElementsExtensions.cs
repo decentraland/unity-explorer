@@ -11,11 +11,6 @@ namespace Utility.UIToolkit
         /// </summary>
         public const string INTERACTABLE_CLASS = "dcl-interactable";
 
-        /// <summary>
-        ///     USS class on the scene UI document root while only the current scene's UI may stay on the canvas: portable experiences and smart wearables take theirs off.
-        /// </summary>
-        public const string CURRENT_SCENE_UI_ONLY_CLASS = "dcl-current-scene-ui-only";
-
         public static void SetDisplayed(this VisualElement ve, bool displayed) =>
             ve.style.display = displayed ? DisplayStyle.Flex : DisplayStyle.None;
 

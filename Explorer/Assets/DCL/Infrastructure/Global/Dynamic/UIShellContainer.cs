@@ -14,6 +14,7 @@ using DCL.Profiles.Self;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -89,8 +90,8 @@ namespace Global.Dynamic
         public MainUIPlugin CreateMainUIPlugin(bool includeFriends) =>
             new (MvcManager, MainUIView, includeFriends);
 
-        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler) =>
-            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager);
+        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler, IReactiveProperty<bool> currentSceneUIOnly) =>
+            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager, currentSceneUIOnly);
 
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);

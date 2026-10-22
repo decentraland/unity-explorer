@@ -18,6 +18,7 @@ using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.UI;
+using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -39,14 +40,16 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
+        private readonly IReadonlyReactiveProperty<bool> currentSceneUIOnly;
 
         private UIDocument uiDocument = null!;
         private StyleFontDefinition[] styleFontDefinitions;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, IReadonlyReactiveProperty<bool> currentSceneUIOnly)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
+            this.currentSceneUIOnly = currentSceneUIOnly;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUiTransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUiElement, maxSize: 100);
@@ -91,7 +94,7 @@ namespace DCL.PluginSystem.World
             UITransformInstantiationSystem.InjectToWorld(ref builder, uiDocument, componentPoolsRegistry);
             UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
-            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot, sharedDependencies.SceneData.IsPortableExperience()));
+            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot, sharedDependencies.SceneData.IsPortableExperience(), currentSceneUIOnly));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
             finalizeWorldSystems.Add(UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
