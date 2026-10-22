@@ -134,5 +134,8 @@ namespace DCL.Prefs
         public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
 
         public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
+
+        // The placements of the lobby widgets on the corner grids, as one JSON string (see LobbyLayoutStorage)
+        public const string LOBBY_LAYOUT = "Lobby_Layout";
     }
 }

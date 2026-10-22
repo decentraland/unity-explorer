@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
@@ -9,55 +8,62 @@ using Toggle = UnityEngine.UIElements.Toggle;
 
 namespace DCL.Input.Utils
 {
+    /// <summary>
+    ///     Whether the UI under the pointer would take a click: only the topmost hit and its parents are asked, as a click
+    ///     reaches nothing behind them.
+    /// </summary>
     public class InteractionCache
     {
-        private readonly Dictionary<GameObject, Selectable?> interactionCache = new ();
+        /// <summary>A Selectable never moves to another game object, so each one's own is cached, null included.</summary>
+        private readonly Dictionary<GameObject, Selectable?> selectables = new ();
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
 
         public bool IsInteractable(GameObject gameObject, Vector2 pointerPosition)
         {
             if (uiToolkitPanel.TryGetValue(gameObject, out PanelEventHandler? panelEventHandler))
+                return IsInteractable(panelEventHandler, pointerPosition);
+
+            if (!selectables.ContainsKey(gameObject) && gameObject.TryGetComponent(out PanelEventHandler eventHandler))
             {
-                // we need to convert screen coord to panel coord, since uiElement panel anchor is top-left coordinate we flip the y axis
-                Vector2 localCoord = pointerPosition;
-                localCoord.y = Screen.height - pointerPosition.y;
-                localCoord = RuntimePanelUtils.ScreenToPanel(panelEventHandler.panel, localCoord);
-
-                List<VisualElement>? visualElements = ListPool<VisualElement>.Get();
-                panelEventHandler.panel.PickAll(localCoord, visualElements);
-                var canBeInteracted = false;
-
-                for (var i = 0; i < visualElements.Count; i++)
-                {
-                    VisualElement visualElement = visualElements[i];
-
-                    canBeInteracted = visualElement.enabledInHierarchy && (visualElement is Button or Toggle || visualElement.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS));
-
-                    if (canBeInteracted)
-                        break;
-                }
-
-                ListPool<VisualElement>.Release(visualElements);
-                return canBeInteracted;
+                uiToolkitPanel.Add(gameObject, eventHandler);
+                return IsInteractable(eventHandler, pointerPosition);
             }
 
-            if (interactionCache.TryGetValue(gameObject, out Selectable? cachedSelectable))
-                return cachedSelectable?.IsInteractable() ?? false;
-
-            // In theory Selectable should cover UnityEngine.UI.Toggle but it does not, weird
-            if (gameObject.TryGetComponent<Selectable>(out var selectable))
+            for (Transform? at = gameObject.transform; at != null; at = at.parent)
             {
-                interactionCache.Add(gameObject, selectable);
+                Selectable? selectable = SelectableOf(at.gameObject);
+
+                if (selectable == null || !selectable.isActiveAndEnabled)
+                    continue;
+
                 return selectable.IsInteractable();
             }
 
-            PanelEventHandler? eventHandler = gameObject.GetComponent<PanelEventHandler>();
-
-            if (eventHandler)
-                uiToolkitPanel.Add(gameObject, eventHandler);
-
-            interactionCache.Add(gameObject, null);
             return false;
+        }
+
+        private static bool IsInteractable(PanelEventHandler panelEventHandler, Vector2 pointerPosition)
+        {
+            // The panel space is anchored top-left, so the y axis is flipped.
+            Vector2 localCoord = pointerPosition;
+            localCoord.y = Screen.height - pointerPosition.y;
+            localCoord = RuntimePanelUtils.ScreenToPanel(panelEventHandler.panel, localCoord);
+
+            for (VisualElement? at = panelEventHandler.panel.Pick(localCoord); at != null; at = at.parent)
+                if (at.enabledInHierarchy && (at is Button or Toggle || at.ClassListContains(VisualElementsExtensions.INTERACTABLE_CLASS)))
+                    return true;
+
+            return false;
+        }
+
+        private Selectable? SelectableOf(GameObject gameObject)
+        {
+            if (selectables.TryGetValue(gameObject, out Selectable? selectable))
+                return selectable;
+
+            gameObject.TryGetComponent(out selectable);
+            selectables.Add(gameObject, selectable);
+            return selectable;
         }
     }
 }

@@ -98,8 +98,11 @@ namespace DCL.Lobby
             jumpInButton.clicked += OnJumpInClicked;
 
             titleLabel.text = title;
-            creatorLabel.text = creator;
             onlineCountLabel.text = onlineCount.ToString();
+
+            // The hero card (LobbyLandingCard.uxml) names no creator
+            if (creatorLabel != null)
+                creatorLabel.text = creator;
         }
 
         private void OnJumpInClicked() =>

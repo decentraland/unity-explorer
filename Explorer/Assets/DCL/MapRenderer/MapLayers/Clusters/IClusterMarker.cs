@@ -22,9 +22,9 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
         void ResetScale(float scale);
 
-        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
+        new UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
 
-        UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
+        new UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
 
         GameObject? GetGameObject();
     }
