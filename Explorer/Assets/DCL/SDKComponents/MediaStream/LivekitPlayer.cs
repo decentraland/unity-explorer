@@ -149,7 +149,7 @@ namespace DCL.SDKComponents.MediaStream
                 rescan |= RefreshPresentation(requested);
             }
 
-            if (video.IsComposingVideo(out ComposingVideo composing))
+            if (video.IsComposingVideo(out ComposingVideo? composing))
             {
                 EnsurePresentationStreams(composing, rescan);
                 UpdateClientVideo(composing);
@@ -283,7 +283,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private void TryFollowVideoStreamToActiveSpeaker(LegacyVideo legacy)
         {
-            if (legacy.Target.IsUserStream(out _)) return; // if stream dedicated user then don't auto-follow
+            LivekitAddress target = legacy.Target;
+
+            if (target.IsUserStream(out _)) return; // if stream dedicated user then don't auto-follow
 
             if (legacy.Stream.IsFromPresentationBot()) return; // already streams high-priority presentation bot
 
@@ -422,9 +424,9 @@ namespace DCL.SDKComponents.MediaStream
 
             if (bot != null && metadata?.slide is { } slide)
             {
-                if (video.IsComposingVideo(out ComposingVideo composing))
+                if (video.IsComposingVideo(out ComposingVideo? composing))
                 {
-                    if (slide.url != composing.Slide.url)
+                    if (slide.url != composing.slide.url)
                         urlPlayer.Release();
 
                     composing.Show(bot, metadata, slide);
@@ -432,7 +434,7 @@ namespace DCL.SDKComponents.MediaStream
                 else
                     StartComposing(requested, bot, metadata, slide);
             }
-            else if (video.IsComposingVideo(out ComposingVideo composing))
+            else if (video.IsComposingVideo(out ComposingVideo? composing))
                 StopComposing(composing);
 
             if (metadata == null && !string.IsNullOrEmpty(raw) && !loggedBadMetadata)
@@ -446,7 +448,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void DropPresentation()
         {
-            if (video.IsComposingVideo(out ComposingVideo composing))
+            if (video.IsComposingVideo(out ComposingVideo? composing))
                 StopComposing(composing);
 
             presentationSource = default;
@@ -463,13 +465,13 @@ namespace DCL.SDKComponents.MediaStream
             SetVideo(LivekitVideoMode.FromComposingVideo(new ComposingVideo(requested, slideCache.BeginComposing(), bot, metadata, slide)));
 
         private void StopComposing(ComposingVideo composing) =>
-            Defer(composing.Requested, composing.Requested);
+            Defer(composing.requested, composing.requested);
 
         private void SetVideo(LivekitVideoMode next)
         {
-            if (video.IsComposingVideo(out ComposingVideo composing))
+            if (video.IsComposingVideo(out ComposingVideo? composing))
             {
-                composing.SlideLease.Dispose();
+                composing.slideLease.Dispose();
                 urlPlayer.Release();
                 compositor.Release();
             }
@@ -484,31 +486,31 @@ namespace DCL.SDKComponents.MediaStream
                 room.VideoStreams.Release(legacy.Stream.Key);
                 Defer(legacy.Requested, legacy.Target);
             }
-            else if (video.IsComposingVideo(out ComposingVideo composing))
+            else if (video.IsComposingVideo(out ComposingVideo? composing))
             {
-                ReleaseVideoStream(ref composing.PresentationVideo);
-                ReleaseVideoStream(ref composing.PresenterCamera);
+                ReleaseVideoStream(ref composing.presentationVideo);
+                ReleaseVideoStream(ref composing.presenterCamera);
             }
         }
 
         private void EnsurePresentationStreams(ComposingVideo composing, bool rescan)
         {
-            if (rescan || IsUnresolved(composing.PresentationVideo))
-                composing.PresentationVideo = RebindVideoStream(composing.PresentationVideo, FindVideoTrack(composing.Bot, static track => IsPresentationVideo(track)));
+            if (rescan || IsUnresolved(composing.presentationVideo))
+                composing.presentationVideo = RebindVideoStream(composing.presentationVideo, FindVideoTrack(composing.bot, static track => IsPresentationVideo(track)));
 
-            if (rescan || IsUnresolved(composing.PresenterCamera))
+            if (rescan || IsUnresolved(composing.presenterCamera))
             {
-                string? presenter = composing.Presentation.presenterIdentity;
-                composing.PresenterCamera = RebindVideoStream(composing.PresenterCamera, presenter == null ? null : FindVideoTrack(presenter, static track => track.Source == TrackSource.SourceCamera));
+                string? presenter = composing.presentation.presenterIdentity;
+                composing.presenterCamera = RebindVideoStream(composing.presenterCamera, presenter == null ? null : FindVideoTrack(presenter, static track => track.Source == TrackSource.SourceCamera));
             }
         }
 
         private void UpdateClientVideo(ComposingVideo composing)
         {
-            PresentationBotMetadata metadata = composing.Presentation;
+            PresentationBotMetadata metadata = composing.presentation;
 
-            if (composing.ClientVideoUrl != null)
-                urlPlayer.Update(composing.ClientVideoUrl, metadata.TargetPositionSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), metadata.IsVideoPlaying(), UnityEngine.Time.realtimeSinceStartup);
+            if (composing.clientVideoUrl != null)
+                urlPlayer.Update(composing.clientVideoUrl, metadata.TargetPositionSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), metadata.IsVideoPlaying(), UnityEngine.Time.realtimeSinceStartup);
             else
                 urlPlayer.Release();
         }
@@ -584,15 +586,15 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.Playing)
                 return null;
 
-            if (video.IsComposingVideo(out ComposingVideo composing))
+            if (video.IsComposingVideo(out ComposingVideo? composing))
             {
-                if (composing.ComposedFrame != UnityEngine.Time.frameCount)
+                if (composing.composedFrame != UnityEngine.Time.frameCount)
                 {
-                    composing.ComposedTexture = ComposePresentation(composing);
-                    composing.ComposedFrame = UnityEngine.Time.frameCount;
+                    composing.composedTexture = ComposePresentation(composing);
+                    composing.composedFrame = UnityEngine.Time.frameCount;
                 }
 
-                return composing.ComposedTexture;
+                return composing.composedTexture;
             }
 
             if (!video.IsLegacyVideo(out LegacyVideo legacy) || !legacy.Stream.IsLive)
@@ -603,31 +605,31 @@ namespace DCL.SDKComponents.MediaStream
 
         private Texture? ComposePresentation(ComposingVideo composing)
         {
-            PresentationBotMetadata metadata = composing.Presentation;
-            PresentationSlide slide = composing.Slide;
+            PresentationBotMetadata metadata = composing.presentation;
+            PresentationSlide slide = composing.slide;
 
             if (slide.url == null)
                 return null;
 
-            DCL.Utility.Types.EnumResult<Texture2D, SlideState> cachedSlide = slideCache.GetOrRequest(slide.url, composing.Bot);
+            DCL.Utility.Types.EnumResult<Texture2D, SlideState> cachedSlide = slideCache.GetOrRequest(slide.url, composing.bot);
 
             if (cachedSlide.Success)
             {
-                composing.ShownSlide = cachedSlide.Value;
-                composing.ShownSlideUrl = slide.url;
+                composing.shownSlide = cachedSlide.Value;
+                composing.shownSlideUrl = slide.url;
             }
-            else if (composing.ShownSlideUrl != null)
-                slideCache.KeepAlive(composing.ShownSlideUrl);
+            else if (composing.shownSlideUrl != null)
+                slideCache.KeepAlive(composing.shownSlideUrl);
 
-            Texture slideTexture = composing.ShownSlide != null ? composing.ShownSlide : Texture2D.blackTexture;
+            Texture slideTexture = composing.shownSlide != null ? composing.shownSlide : Texture2D.blackTexture;
             bool showRect = metadata.TryVideoRect(out Vector4 videoRect);
             bool clientEntry = metadata.IsClientEntry();
             Texture? videoFrame = !showRect ? null
                 : clientEntry ? urlPlayer.Texture
-                : DecodeLastFrame(composing.PresentationVideo);
+                : DecodeLastFrame(composing.presentationVideo);
 
             Vector4 cameraRect = metadata.CameraRect(slide.width, slide.height);
-            Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive(composing) ? DecodeLastFrame(composing.PresenterCamera) : null;
+            Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive(composing) ? DecodeLastFrame(composing.presenterCamera) : null;
 
             bool flipVideo = clientEntry && urlPlayer.RequiresCompositorFlip;
 
@@ -638,7 +640,7 @@ namespace DCL.SDKComponents.MediaStream
             stream is { IsLive: true } live ? live.VideoStream.Resource.Value.DecodeLastFrame() : null;
 
         private bool IsPresenterCameraLive(ComposingVideo composing) =>
-            composing.PresenterCamera.HasValue && PublicationOf(composing.PresenterCamera.Value) is { Muted: false };
+            composing.presenterCamera.HasValue && PublicationOf(composing.presenterCamera.Value) is { Muted: false };
 
         private Texture? CameraOffPlaceholder(VideoStreamInfo videoInfo) =>
             placeholderSource != null && IsCameraVideoMuted(videoInfo)

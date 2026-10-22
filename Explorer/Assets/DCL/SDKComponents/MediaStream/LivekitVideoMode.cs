@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
     /// <summary>
     ///     Opened, but holding no track: <see cref="Target" /> is opened once the room is connected and a track matches it.
     /// </summary>
-    public readonly struct DeferredVideo
+    public readonly struct DeferredVideo : IEquatable<DeferredVideo>
     {
         public readonly LivekitAddress Requested;
         public readonly LivekitAddress Target;
@@ -47,13 +47,22 @@ namespace DCL.SDKComponents.MediaStream
             Requested = requested;
             Target = target;
         }
+
+        public bool Equals(DeferredVideo other) =>
+            Requested.Equals(other.Requested) && Target.Equals(other.Target);
+
+        public override bool Equals(object? obj) =>
+            obj is DeferredVideo other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Requested, Target);
     }
 
     /// <summary>
     ///     Showing one LiveKit track chosen for <see cref="Target" />, which is the requested address or, after the
     ///     requested track went away, the current stream.
     /// </summary>
-    public readonly struct LegacyVideo
+    public readonly struct LegacyVideo : IEquatable<LegacyVideo>
     {
         public readonly LivekitAddress Requested;
         public readonly LivekitAddress Target;
@@ -65,52 +74,61 @@ namespace DCL.SDKComponents.MediaStream
             Target = target;
             Stream = stream;
         }
+
+        public bool Equals(LegacyVideo other) =>
+            Requested.Equals(other.Requested) && Target.Equals(other.Target) && Stream.Key.Equals(other.Stream.Key) && Stream.SwitchedAtTime.Equals(other.Stream.SwitchedAtTime);
+
+        public override bool Equals(object? obj) =>
+            obj is LegacyVideo other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Requested, Target, Stream.Key, Stream.SwitchedAtTime);
     }
 
     /// <summary>
-    ///     Composing the presentation of <see cref="Bot" /> from its slide, its presentation video or client-played video,
-    ///     and the presenter camera. Holds a <see cref="SlideTextureCache" /> composing lease until the player leaves this mode.
+    ///     Composing the presentation of the bot from its slide, its presentation video or client-played video, and the
+    ///     presenter camera. Holds a <see cref="SlideTextureCache" /> composing lease until the player leaves this mode.
     /// </summary>
     public sealed class ComposingVideo
     {
-        internal readonly LivekitAddress Requested;
-        internal readonly IDisposable SlideLease;
+        internal readonly LivekitAddress requested;
+        internal readonly IDisposable slideLease;
 
-        internal VideoStreamInfo? PresentationVideo;
-        internal VideoStreamInfo? PresenterCamera;
-        internal Texture2D? ShownSlide;
-        internal string? ShownSlideUrl;
-        internal Texture? ComposedTexture;
-        internal int ComposedFrame = -1;
+        internal VideoStreamInfo? presentationVideo;
+        internal VideoStreamInfo? presenterCamera;
+        internal Texture2D? shownSlide;
+        internal string? shownSlideUrl;
+        internal Texture? composedTexture;
+        internal int composedFrame = -1;
 
-        internal string Bot { get; private set; }
+        internal string bot { get; private set; }
 
-        internal PresentationBotMetadata Presentation { get; private set; }
+        internal PresentationBotMetadata presentation { get; private set; }
 
-        internal PresentationSlide Slide { get; private set; }
+        internal PresentationSlide slide { get; private set; }
 
-        internal string? ClientVideoUrl { get; private set; }
+        internal string? clientVideoUrl { get; private set; }
 
         internal ComposingVideo(LivekitAddress requested, IDisposable slideLease, string bot, PresentationBotMetadata presentation, PresentationSlide slide)
         {
-            Requested = requested;
-            SlideLease = slideLease;
-            Bot = bot;
-            Presentation = presentation;
-            Slide = slide;
-            ClientVideoUrl = ClientVideoUrlOf(presentation);
+            this.requested = requested;
+            this.slideLease = slideLease;
+            this.bot = bot;
+            this.presentation = presentation;
+            this.slide = slide;
+            clientVideoUrl = ClientVideoUrlOf(presentation);
         }
 
         /// <summary>
         ///     Switches to new metadata, keeping the held streams and the shown slide, and composes again on the next read.
         /// </summary>
-        internal void Show(string bot, PresentationBotMetadata presentation, PresentationSlide slide)
+        internal void Show(string nextBot, PresentationBotMetadata nextPresentation, PresentationSlide nextSlide)
         {
-            Bot = bot;
-            Presentation = presentation;
-            Slide = slide;
-            ClientVideoUrl = ClientVideoUrlOf(presentation);
-            ComposedFrame = -1;
+            bot = nextBot;
+            presentation = nextPresentation;
+            slide = nextSlide;
+            clientVideoUrl = ClientVideoUrlOf(nextPresentation);
+            composedFrame = -1;
         }
 
         private static string? ClientVideoUrlOf(PresentationBotMetadata presentation) =>
@@ -135,7 +153,7 @@ namespace DCL.SDKComponents.MediaStream
             onClosed: static () => null,
             onDeferredVideo: static deferred => deferred.Requested,
             onLegacyVideo: static legacy => legacy.Requested,
-            onComposingVideo: static composing => composing.Requested
+            onComposingVideo: static composing => composing.requested
         );
     }
 }
