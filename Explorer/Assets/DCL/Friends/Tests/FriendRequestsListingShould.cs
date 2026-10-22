@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
+using ECS.TestSuite;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
@@ -29,6 +30,7 @@ namespace DCL.Friends.Tests
         [SetUp]
         public void SetUp()
         {
+            EcsTestsUtils.SetUpFeaturesRegistry();
             selfProfile = Substitute.For<SelfProfile>();
             socialServices = Substitute.For<IRPCSocialServices>();
             service = new RPCFriendsService(Substitute.For<IFriendsEventBus>(), new FriendsCache(), selfProfile, socialServices);
