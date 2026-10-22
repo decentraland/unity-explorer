@@ -22,6 +22,9 @@ using System.Collections.Generic;
 
 namespace DCL.ResourcesUnloading
 {
+    /// <summary>
+    ///     Not thread-safe: register caches and unload them from the main thread only.
+    /// </summary>
     public class CacheCleaner : ICacheCleaner
     {
         private const int POOLS_UNLOAD_CHUNK = 10;

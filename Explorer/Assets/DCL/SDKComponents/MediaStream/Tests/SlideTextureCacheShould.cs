@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,11 +22,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const string ALLOWED_URL = ORG_ORIGIN + SLIDE_PATH;
         private const string BOT_A = "presentation-bot:a:1";
         private const string BOT_B = "presentation-bot:b:1";
-        private const int PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH = 33;
 
         private IWebRequestController webRequestController = null!;
         private IDecentralandUrlsSource decentralandUrlsSource = null!;
         private SlideTextureCache cache = null!;
+        private IDisposable lease = null!;
         private List<Texture2D> decoded = null!;
         private float now;
 
@@ -37,7 +38,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             decentralandUrlsSource = Substitute.For<IDecentralandUrlsSource>();
             decentralandUrlsSource.Url(DecentralandUrl.CastPresenterService).Returns(ORG_ORIGIN);
             cache = new SlideTextureCache(webRequestController, decentralandUrlsSource, () => now);
-            cache.BeginComposing();
+            lease = cache.BeginComposing();
             decoded = new List<Texture2D>();
         }
 
@@ -105,20 +106,20 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void ReturnNullAndNeverFetch_WhenUrlIsDisallowed()
+        public void ReportRejectedAndNeverFetch_WhenUrlIsDisallowed()
         {
             // Act
-            Texture2D? first = cache.GetOrRequest("https://example.com/x.png", BOT_A);
-            Texture2D? second = cache.GetOrRequest("https://example.com/x.png", BOT_A);
+            EnumResult<Texture2D, SlideState> first = cache.GetOrRequest("https://example.com/x.png", BOT_A);
+            EnumResult<Texture2D, SlideState> second = cache.GetOrRequest("https://example.com/x.png", BOT_A);
 
             // Assert
-            Assert.IsNull(first);
-            Assert.IsNull(second);
+            Assert.AreEqual(SlideState.Rejected, StateOf(first));
+            Assert.AreEqual(SlideState.Rejected, StateOf(second));
             SendTextureRequest(webRequestController.DidNotReceive());
         }
 
         [Test]
-        public void RequestOnce_WhileInFlight()
+        public void RequestOnceAndReportLoading_WhileInFlight()
         {
             // Arrange
             SendTextureRequest(webRequestController).Returns(new UniTaskCompletionSource<Texture2D?>().Task);
@@ -126,10 +127,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
             // Act
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
-            Texture2D? texture = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            EnumResult<Texture2D, SlideState> result = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             // Assert
-            Assert.IsNull(texture);
+            Assert.AreEqual(SlideState.Loading, StateOf(result));
             SendTextureRequest(webRequestController.Received(1));
         }
 
@@ -151,11 +152,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
             SendTextureRequest(webRequestController).Returns(new UniTaskCompletionSource<Texture2D?>().Task);
 
             // Act
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 9; i++)
                 cache.GetOrRequest(SlideUrl(i), BOT_A);
+
+            EnumResult<Texture2D, SlideState> throttled = cache.GetOrRequest(SlideUrl(9), BOT_A);
 
             // Assert
             SendTextureRequest(webRequestController.Received(1));
+            Assert.AreEqual(SlideState.Throttled, StateOf(throttled));
 
             // Act
             now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
@@ -265,7 +269,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Act & Assert
             now = 9f;
-            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            Assert.AreEqual(SlideState.CoolingDown, StateOf(cache.GetOrRequest(ALLOWED_URL, BOT_A)));
             SendTextureRequest(webRequestController.Received(1));
 
             // Act & Assert
@@ -314,7 +318,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LoadSlide(SlideTextureCache.CAPACITY);
 
             // Assert
-            Assert.AreSame(slides[0], cache.GetOrRequest(SlideUrl(0), BOT_A));
+            Assert.AreSame(slides[0], cache.GetOrRequest(SlideUrl(0), BOT_A).Value);
             Assert.IsTrue(slides[1] == null);
         }
 
@@ -339,66 +343,54 @@ namespace DCL.SDKComponents.MediaStream.Tests
             // Act
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
             now = SlideTextureCache.MAX_RETRY_COOLDOWN_SECONDS + 1f;
-            Texture2D? afterCooldown = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            EnumResult<Texture2D, SlideState> afterCooldown = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             // Assert
-            Assert.IsNull(afterCooldown);
+            Assert.AreEqual(SlideState.Rejected, StateOf(afterCooldown));
             SendTextureRequest(webRequestController.Received(1));
             LogAssert.NoUnexpectedReceived();
         }
 
         [Test]
-        public void DecodeWithoutCpuCopy_WhenPngIsWithinLimits()
+        public void KeepClampedSlide_WhenWithinLimits()
         {
+            // Arrange
+            Texture2D slide = NewSlide(4, 2);
+
             // Act
-            Texture2D? slide = Decode(Png(4, 2));
+            Texture2D? accepted = SlideTextureCache.AcceptSlide(slide, SlideTextureCache.MAX_SLIDE_BYTES);
 
             // Assert
-            Assert.IsNotNull(slide);
-            Assert.AreEqual(4, slide!.width);
-            Assert.AreEqual(2, slide.height);
-            Assert.IsFalse(slide.isReadable);
+            Assert.AreSame(slide, accepted);
+            Assert.AreEqual(TextureWrapMode.Clamp, slide.wrapMode);
         }
 
         [Test]
-        public void RejectBeforeDecoding_WhenPngIsLargerThanMaxSize()
-        {
-            // Act & Assert
-            Assert.IsNull(Decode(Png(PresentationLayout.MAX_SLIDE_SIZE + 1, 1)));
-        }
-
-        [Test]
-        public void RejectBeforeDecoding_WhenBodyIsKtx2()
+        public void DestroySlide_WhenLargerThanMaxSize()
         {
             // Arrange
-            var ktx2 = new byte[64];
-            new byte[] { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(ktx2, 0);
+            Texture2D slide = NewSlide(PresentationBotMetadata.MAX_SLIDE_SIZE + 1, 1);
 
-            // Act & Assert
-            Assert.IsNull(Decode(ktx2));
+            // Act
+            Texture2D? accepted = SlideTextureCache.AcceptSlide(slide, 1);
+
+            // Assert
+            Assert.IsNull(accepted);
+            Assert.IsTrue(slide == null);
         }
 
         [Test]
-        public void RejectBeforeDecoding_WhenBodyExceedsMaxBytes()
+        public void DestroySlide_WhenBodyExceedsMaxBytes()
         {
             // Arrange
-            byte[] png = Png(2, 2);
-            var oversized = new byte[SlideTextureCache.MAX_SLIDE_BYTES + 1];
-            png.CopyTo(oversized, 0);
+            Texture2D slide = NewSlide(2, 2);
 
-            // Act & Assert
-            Assert.IsNull(Decode(oversized));
-        }
+            // Act
+            Texture2D? accepted = SlideTextureCache.AcceptSlide(slide, SlideTextureCache.MAX_SLIDE_BYTES + 1UL);
 
-        [Test]
-        public void ReturnNull_WhenPngBodyFailsToDecode()
-        {
-            // Arrange
-            byte[] png = Png(4, 2);
-            Array.Fill(png, (byte)0xFF, PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH, png.Length - PNG_SIGNATURE_AND_HEADER_CHUNK_LENGTH);
-
-            // Act & Assert
-            Assert.IsNull(Decode(png));
+            // Assert
+            Assert.IsNull(accepted);
+            Assert.IsTrue(slide == null);
         }
 
         [Test]
@@ -465,7 +457,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             // Act
-            cache.EndComposing();
+            lease.Dispose();
             response.TrySetResult(slide);
 
             // Assert
@@ -490,6 +482,46 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // Assert
             Assert.AreEqual(SlideTextureCache.REQUEST_TIMEOUT_SECONDS, envelope.CommonArguments.Timeout);
+        }
+
+        [Test]
+        public void KeepSlides_WhenALeaseIsDisposedTwiceWhileAnotherIsOpen()
+        {
+            // Arrange
+            var slide = new Texture2D(2, 2);
+            SendTextureRequest(webRequestController).Returns(UniTask.FromResult<Texture2D?>(slide));
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            IDisposable second = cache.BeginComposing();
+
+            // Act
+            lease.Dispose();
+            lease.Dispose();
+
+            // Assert
+            Assert.IsTrue(slide != null);
+            second.Dispose();
+            Assert.IsTrue(slide == null);
+        }
+
+        [Test]
+        public void FetchDecodingOffMainThread()
+        {
+            // Arrange
+            RequestEnvelope<GetTextureWebRequest, GetTextureArguments> envelope = default;
+
+            webRequestController.SendAsync<GetTextureWebRequest, GetTextureArguments, SlideTextureCache.SlideTextureOp, Texture2D>(
+                                     Arg.Do<RequestEnvelope<GetTextureWebRequest, GetTextureArguments>>(e => envelope = e),
+                                     Arg.Any<SlideTextureCache.SlideTextureOp>(),
+                                     Arg.Any<long>(),
+                                     Arg.Any<IProgress<float>?>())
+                                .Returns(new UniTaskCompletionSource<Texture2D?>().Task);
+
+            // Act
+            cache.GetOrRequest(ALLOWED_URL, BOT_A);
+
+            // Assert
+            Assert.IsTrue(envelope.args.DecodeOffMainThread);
+            Assert.IsFalse(envelope.args.UseKtx);
         }
 
         [Test]
@@ -528,10 +560,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
             cache.Dispose();
 
             // Act
-            Texture2D? texture = cache.GetOrRequest(ALLOWED_URL, BOT_A);
+            EnumResult<Texture2D, SlideState> result = cache.GetOrRequest(ALLOWED_URL, BOT_A);
 
             // Assert
-            Assert.IsNull(texture);
+            Assert.AreEqual(SlideState.Disposed, StateOf(result));
             SendTextureRequest(webRequestController.DidNotReceive());
             LogAssert.NoUnexpectedReceived();
         }
@@ -542,23 +574,15 @@ namespace DCL.SDKComponents.MediaStream.Tests
             cache.GetOrRequest(SlideUrl(index), BOT_A);
         }
 
-        private Texture2D? Decode(byte[] data)
+        private Texture2D NewSlide(int width, int height)
         {
-            Texture2D? slide = SlideTextureCache.DecodeSlide(data);
-
-            if (slide != null)
-                decoded.Add(slide);
-
+            var slide = new Texture2D(width, height);
+            decoded.Add(slide);
             return slide;
         }
 
-        private static byte[] Png(int width, int height)
-        {
-            var source = new Texture2D(width, height);
-            byte[] png = source.EncodeToPNG();
-            UnityObjectUtils.SafeDestroy(source);
-            return png;
-        }
+        private static SlideState? StateOf(EnumResult<Texture2D, SlideState> result) =>
+            result.Error?.State;
 
         private static string SlideUrl(int index) =>
             $"{ORG_ORIGIN}/presentations/{index:x8}-d9cb-469f-a165-70867728950e/slides/{HASH}.png";
