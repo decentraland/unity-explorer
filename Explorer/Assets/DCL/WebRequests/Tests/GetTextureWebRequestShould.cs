@@ -28,5 +28,31 @@ namespace DCL.WebRequests.Tests
 
             Assert.Greater(request.redirectLimit, 0);
         }
+
+        [Test]
+        public void DecodeNonReadableTextureOffMainThread_WhenRequested()
+        {
+            // Arrange
+            var arguments = new GetTextureArguments(TextureType.Albedo, useKtx: false, decodeOffMainThread: true);
+
+            // Act
+            using UnityWebRequest request = GetTextureWebRequest.Initialize(URL, arguments, Substitute.For<IDecentralandUrlsSource>(), false).UnityWebRequest;
+
+            // Assert
+            Assert.IsInstanceOf<DownloadHandlerTexture>(request.downloadHandler);
+        }
+
+        [Test]
+        public void BufferBody_WhenOffMainThreadDecodeIsNotRequested()
+        {
+            // Arrange
+            var arguments = new GetTextureArguments(TextureType.Albedo, useKtx: false);
+
+            // Act
+            using UnityWebRequest request = GetTextureWebRequest.Initialize(URL, arguments, Substitute.For<IDecentralandUrlsSource>(), false).UnityWebRequest;
+
+            // Assert
+            Assert.IsInstanceOf<DownloadHandlerBuffer>(request.downloadHandler);
+        }
     }
 }

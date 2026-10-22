@@ -55,7 +55,11 @@ namespace DCL.SDKComponents.MediaStream
         ///     every call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the
         ///     slide or rects changed, or the last call drew a video or camera frame.
         /// </summary>
-        /// <returns>The same render texture instance while the size is unchanged.</returns>
+        /// <returns>
+        ///     The compositor's own render texture, not a copy, and the same instance while the size is unchanged. The
+        ///     caller doesn't take ownership: the next call overwrites it, and <see cref="Release" /> or
+        ///     <see cref="Dispose" /> destroys it.
+        /// </returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
         {
             if (composite == null || composite.width != width || composite.height != height)
