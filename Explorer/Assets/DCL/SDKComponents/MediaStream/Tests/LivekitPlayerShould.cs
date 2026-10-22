@@ -786,7 +786,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Arrange
             IWebRequestController controller = Substitute.For<IWebRequestController>();
-            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, () => now);
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, () => now, out _);
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
             LivekitPlayer p = NewPlayer(slideCache);
             p.OpenMedia(LivekitAddress.CurrentStream());
@@ -809,14 +809,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Arrange
             IWebRequestController controller = Substitute.For<IWebRequestController>();
-            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f);
-            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT);
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f, out IDisposable lease);
+            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT).Value;
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
             LivekitPlayer p = NewPlayer(slideCache);
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
             p.LastTexture();
-            slideCache.EndComposing();
+            lease.Dispose();
 
             // Act
             SetMetadata(bot, LEGACY_METADATA);
@@ -831,14 +831,14 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Arrange
             IWebRequestController controller = Substitute.For<IWebRequestController>();
-            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f);
-            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT);
+            SlideTextureCache slideCache = NewSlideCacheHolding(controller, BOT_SLIDE_URL, static () => 0f, out IDisposable lease);
+            Texture2D? slide = slideCache.GetOrRequest(BOT_SLIDE_URL, BOT).Value;
             AddParticipant(BOT, V2("null", "idle", slideUrl: BOT_SLIDE_URL));
             LivekitPlayer first = NewPlayer(slideCache);
             LivekitPlayer second = NewPlayer(slideCache);
             first.OpenMedia(LivekitAddress.CurrentStream());
             second.OpenMedia(LivekitAddress.CurrentStream());
-            slideCache.EndComposing();
+            lease.Dispose();
 
             // Act
             first.CloseCurrentStream();
@@ -857,7 +857,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)), new UniTaskCompletionSource<Texture2D?>().Task);
             var slideCache = new SlideTextureCache(controller, decentralandUrlsSource, () => now);
             slideCaches.Add(slideCache);
-            slideCache.BeginComposing();
+            IDisposable lease = slideCache.BeginComposing();
             slideCache.GetOrRequest(SlideUrl(1), BOT);
             LKParticipant bot = AddParticipant(BOT, V2("null", "idle", slideUrl: SlideUrl(1)));
             LKParticipant otherBot = AddParticipant(OTHER_BOT, V2("null", "idle", slideUrl: SlideUrl(2)));
@@ -865,7 +865,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LivekitPlayer second = NewPlayer(slideCache);
             first.OpenMedia(LivekitAddress.FromUserStream(new UserStream(BOT, "TR_pv")));
             second.OpenMedia(LivekitAddress.FromUserStream(new UserStream(OTHER_BOT, "TR_pv")));
-            slideCache.EndComposing();
+            lease.Dispose();
             first.LastTexture();
             second.LastTexture();
             now += SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS;
@@ -1216,12 +1216,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
             return p;
         }
 
-        private SlideTextureCache NewSlideCacheHolding(IWebRequestController controller, string url, Func<float> getRealtimeSinceStartup)
+        private SlideTextureCache NewSlideCacheHolding(IWebRequestController controller, string url, Func<float> getRealtimeSinceStartup, out IDisposable lease)
         {
             var slideCache = new SlideTextureCache(controller, decentralandUrlsSource, getRealtimeSinceStartup);
             slideCaches.Add(slideCache);
             SlideRequest(controller).ReturnsForAnyArgs(UniTask.FromResult<Texture2D?>(new Texture2D(2, 2)), new UniTaskCompletionSource<Texture2D?>().Task);
-            slideCache.BeginComposing();
+            lease = slideCache.BeginComposing();
             slideCache.GetOrRequest(url, BOT);
             return slideCache;
         }

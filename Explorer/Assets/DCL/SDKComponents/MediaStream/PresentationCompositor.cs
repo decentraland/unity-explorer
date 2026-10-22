@@ -59,7 +59,11 @@ namespace DCL.SDKComponents.MediaStream
         ///     slide or rects changed, or the last call drew a video or camera frame. <paramref name="flipVideo" /> samples
         ///     <paramref name="video" /> with Unity's bottom-left origin; leave it false for frames whose first row is the top one, as LiveKit's are.
         /// </summary>
-        /// <returns>The same render texture instance while the size is unchanged.</returns>
+        /// <returns>
+        ///     The compositor's own render texture, not a copy, and the same instance while the size is unchanged. The
+        ///     caller doesn't take ownership: the next call overwrites it, and <see cref="Release" /> or
+        ///     <see cref="Dispose" /> destroys it.
+        /// </returns>
         public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect, bool flipVideo = false)
         {
             if (composite == null || composite.width != width || composite.height != height)

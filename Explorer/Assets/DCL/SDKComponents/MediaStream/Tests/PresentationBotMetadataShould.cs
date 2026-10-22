@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
-    public class PresentationLayoutShould
+    public class PresentationBotMetadataShould
     {
         private const string LEGACY_METADATA = "{\"role\":\"presentation\",\"presentationId\":\"p\",\"currentSlide\":2,\"overlay\":{\"x\":0,\"y\":1,\"size\":\"small\"}}";
         private const string SLIDE_1080 = "\"slide\":{\"url\":\"https://cast-presenter-service.decentraland.org/presentations/p/slides/ab12.png\",\"width\":1920,\"height\":1080}";
@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ReturnNull_WhenJsonIsMalformed(string? json)
         {
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(json);
 
             // Assert
             Assert.IsNull(metadata);
@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ParseLegacyMetadata_WhenSlideIsAbsent()
         {
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse(LEGACY_METADATA);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(LEGACY_METADATA);
 
             // Assert
             Assert.IsNotNull(metadata);
@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var json = $"{{{SLIDE_1080},\"presenterIdentity\":\"{PRESENTER_ADDRESS}\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}";
 
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(json);
 
             // Assert
             Assert.IsNotNull(metadata);
@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ParseNullPlayingVideoIndex_AsNoValue()
         {
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse($"{{{SLIDE_1080},\"playingVideoIndex\":null}}");
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse($"{{{SLIDE_1080},\"playingVideoIndex\":null}}");
 
             // Assert
             Assert.IsNotNull(metadata);
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ReturnNull_WhenSlideHasNoSizeOrUrl(string json)
         {
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(json);
 
             // Assert
             Assert.IsNull(metadata);
@@ -80,8 +80,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ReturnNull_WhenSlideIsTooLarge()
         {
             // Act
-            PresentationBotMetadata? tooLarge = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2049,\"height\":1080}}");
-            PresentationBotMetadata? atLimit = PresentationLayout.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2048,\"height\":1080}}");
+            PresentationBotMetadata? tooLarge = PresentationBotMetadata.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2049,\"height\":1080}}");
+            PresentationBotMetadata? atLimit = PresentationBotMetadata.Parse("{\"slide\":{\"url\":\"https://a/b.png\",\"width\":2048,\"height\":1080}}");
 
             // Assert
             Assert.IsNull(tooLarge);
@@ -92,10 +92,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ReturnNull_WhenSlideUrlIsTooLong()
         {
             // Arrange
-            string url = "https://a/" + new string('a', PresentationLayout.MAX_SLIDE_URL_LENGTH + 1 - "https://a/".Length);
+            string url = "https://a/" + new string('a', PresentationBotMetadata.MAX_SLIDE_URL_LENGTH + 1 - "https://a/".Length);
 
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse($"{{\"slide\":{{\"url\":\"{url}\",\"width\":1920,\"height\":1080}}}}");
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse($"{{\"slide\":{{\"url\":\"{url}\",\"width\":1920,\"height\":1080}}}}");
 
             // Assert
             Assert.IsNull(metadata);
@@ -142,7 +142,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ParseInitialMetadata()
         {
             // Act
-            PresentationBotMetadata? metadata = PresentationLayout.Parse("{\"role\":\"presentation\",\"presentationId\":\"p\"}");
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse("{\"role\":\"presentation\",\"presentationId\":\"p\"}");
 
             // Assert
             Assert.IsNotNull(metadata);
@@ -162,7 +162,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},\"videoState\":\"{state}\",\"playingVideoIndex\":0,{CENTERED_VIDEO}}}");
 
             // Act
-            bool found = PresentationLayout.TryVideoRect(metadata, out Vector4 rect);
+            bool found = metadata.TryVideoRect(out Vector4 rect);
 
             // Assert
             Assert.IsTrue(found);
@@ -182,7 +182,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail($"{{{SLIDE_1080},{fields}}}");
 
             // Act
-            bool found = PresentationLayout.TryVideoRect(metadata, out _);
+            bool found = metadata.TryVideoRect(out _);
 
             // Assert
             Assert.IsFalse(found);
@@ -194,7 +194,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ComputeCameraRect_ForDefaultOverlay(string? size)
         {
             // Act
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 0, y = 1, size = size }, 1920, 1080);
+            Vector4 rect = new PresentationBotMetadata { overlay = new PresentationOverlay { x = 0, y = 1, size = size } }.CameraRect(1920, 1080);
 
             // Assert
             AssertPixelRect(rect, 1920, 1080, 38, 754, 288);
@@ -204,7 +204,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ComputeCameraRect_ForLargeTopRight()
         {
             // Act
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 1, y = 0, size = "large" }, 1920, 1080);
+            Vector4 rect = new PresentationBotMetadata { overlay = new PresentationOverlay { x = 1, y = 0, size = "large" } }.CameraRect(1920, 1080);
 
             // Assert
             AssertPixelRect(rect, 1920, 1080, 1402, 38, 480);
@@ -214,7 +214,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ComputeCameraRect_ForPortraitSlide()
         {
             // Act
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 0.5, y = 0.5, size = "small" }, 1080, 1920);
+            Vector4 rect = new PresentationBotMetadata { overlay = new PresentationOverlay { x = 0.5, y = 0.5, size = "small" } }.CameraRect(1080, 1920);
 
             // Assert
             AssertPixelRect(rect, 1080, 1920, 458, 878, 162);
@@ -224,7 +224,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ComputeCameraRect_For720pLargeBottomRight()
         {
             // Act
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 1, y = 1, size = "large" }, 1280, 720);
+            Vector4 rect = new PresentationBotMetadata { overlay = new PresentationOverlay { x = 1, y = 1, size = "large" } }.CameraRect(1280, 720);
 
             // Assert
             AssertPixelRect(rect, 1280, 720, 934, 374, 320);
@@ -234,7 +234,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void ReturnZeroCameraRect_WhenDiameterBelowTwo()
         {
             // Act
-            Vector4 rect = PresentationLayout.CameraRect(new PresentationOverlay { x = 0, y = 1, size = "small" }, 1920, 77);
+            Vector4 rect = new PresentationBotMetadata { overlay = new PresentationOverlay { x = 0, y = 1, size = "small" } }.CameraRect(1920, 77);
 
             // Assert
             Assert.AreEqual(Vector4.zero, rect);
@@ -286,7 +286,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo(state, "client", url) + "}");
 
             // Act
-            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+            bool found = metadata.TryClientVideoUrl(out string clientUrl);
 
             // Assert
             Assert.IsTrue(found);
@@ -310,7 +310,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
 
             // Act
-            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+            bool found = metadata.TryClientVideoUrl(out string clientUrl);
 
             // Assert
             Assert.IsFalse(found);
@@ -326,7 +326,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail(WithClientVideo("playing", "client", url) + "}");
 
             // Act
-            bool found = PresentationLayout.TryClientVideoUrl(metadata, out _);
+            bool found = metadata.TryClientVideoUrl(out _);
 
             // Assert
             Assert.AreEqual(expected, found);
@@ -344,7 +344,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             PresentationBotMetadata metadata = ParseOrFail(json);
 
             // Act
-            bool found = PresentationLayout.TryClientVideoUrl(metadata, out string clientUrl);
+            bool found = metadata.TryClientVideoUrl(out string clientUrl);
 
             // Assert
             Assert.IsFalse(found);
@@ -360,7 +360,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = state, videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
             // Act
-            double? target = PresentationLayout.TargetPositionSeconds(metadata, nowEpochMs);
+            double? target = metadata.TargetPositionSeconds(nowEpochMs);
 
             // Assert
             Assert.AreEqual(expectedSeconds, target);
@@ -373,7 +373,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000 };
 
             // Act & Assert
-            Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
+            Assert.IsNull(metadata.TargetPositionSeconds(12_500));
         }
 
         [Test]
@@ -383,7 +383,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = "loading", videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
             // Act & Assert
-            Assert.IsNull(PresentationLayout.TargetPositionSeconds(metadata, 12_500));
+            Assert.IsNull(metadata.TargetPositionSeconds(12_500));
         }
 
         [Test]
@@ -393,7 +393,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = "playing", videoPositionMs = 1_000, videoPositionAt = 10_000 };
 
             // Act
-            double? target = PresentationLayout.TargetPositionSeconds(metadata, 8_000);
+            double? target = metadata.TargetPositionSeconds(8_000);
 
             // Assert
             Assert.IsNull(target);
@@ -409,7 +409,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { videoState = state };
 
             // Act
-            bool playing = PresentationLayout.IsVideoPlaying(metadata);
+            bool playing = metadata.IsVideoPlaying();
 
             // Assert
             Assert.AreEqual(expected, playing);
@@ -431,7 +431,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             };
 
             // Act
-            bool isClient = PresentationLayout.IsClientEntry(metadata);
+            bool isClient = metadata.IsClientEntry();
 
             // Assert
             Assert.AreEqual(expected, isClient);
@@ -444,86 +444,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var metadata = new PresentationBotMetadata { slideVideos = new PresentationSlideVideo?[] { new () { source = "client" } } };
 
             // Act
-            bool isClient = PresentationLayout.IsClientEntry(metadata);
+            bool isClient = metadata.IsClientEntry();
 
             // Assert
             Assert.IsFalse(isClient);
-        }
-
-        [TestCase(30.0, 10.0, false, true)]
-        [TestCase(30.0, 29.0, false, false)]
-        [TestCase(30.0, 40.0, false, false)]
-        [TestCase(30.0, 10.0, true, false)]
-        public void DetectRewind_OnlyWhenTargetIsMoreThanTwoSecondsBehind(double currentSeconds, double targetSeconds, bool isLive, bool expected)
-        {
-            // Act
-            bool rewind = PresentationLayout.IsRewind(currentSeconds, targetSeconds, isLive);
-
-            // Assert
-            Assert.AreEqual(expected, rewind);
-        }
-
-        [TestCase(3f, false, false, true)]
-        [TestCase(2.9f, false, false, false)]
-        [TestCase(3f, true, false, false)]
-        [TestCase(3f, false, true, false)]
-        public void Seek_AtMostEveryThreeSeconds_WhenIdleAndOnDemand(float secondsSinceLastSeek, bool isBusy, bool isLive, bool expected)
-        {
-            // Act
-            bool seek = PresentationLayout.ShouldSeek(10.0, 20.0, isLive, isBusy, 100f, 100f - secondsSinceLastSeek);
-
-            // Assert
-            Assert.AreEqual(expected, seek);
-        }
-
-        [Test]
-        public void SkipSeek_WhenDriftIsWithinThreshold()
-        {
-            // Act
-            bool seek = PresentationLayout.ShouldSeek(10.0, 11.0, false, false, 100f, float.NegativeInfinity);
-
-            // Assert
-            Assert.IsFalse(seek);
-        }
-
-        [Test]
-        public void DetectNoRewind_WithoutTarget()
-        {
-            // Act
-            bool rewind = PresentationLayout.IsRewind(30.0, null, false);
-
-            // Assert
-            Assert.IsFalse(rewind);
-        }
-
-        [TestCase(10.0, 11.9)]
-        [TestCase(11.9, 10.0)]
-        public void SkipSeek_WhenDriftIsWithinTwoSeconds(double currentSeconds, double targetSeconds)
-        {
-            // Act & Assert
-            Assert.IsFalse(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
-        }
-
-        [TestCase(10.0, 12.1)]
-        [TestCase(12.1, 10.0)]
-        public void RequireSeek_WhenDriftExceedsTwoSeconds(double currentSeconds, double targetSeconds)
-        {
-            // Act & Assert
-            Assert.IsTrue(PresentationLayout.NeedsSeek(currentSeconds, targetSeconds, false));
-        }
-
-        [Test]
-        public void ReturnFalse_WhenLive()
-        {
-            // Act & Assert
-            Assert.IsFalse(PresentationLayout.NeedsSeek(0, 100, true));
-        }
-
-        [Test]
-        public void ReturnFalse_WhenTargetIsNull()
-        {
-            // Act & Assert
-            Assert.IsFalse(PresentationLayout.NeedsSeek(0, null, false));
         }
 
         private static string WithClientVideo(string state, string source, string url) =>
@@ -531,7 +455,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private static PresentationBotMetadata ParseOrFail(string json)
         {
-            PresentationBotMetadata? metadata = PresentationLayout.Parse(json);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(json);
             Assert.IsNotNull(metadata, json);
             return metadata!;
         }

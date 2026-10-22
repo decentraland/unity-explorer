@@ -17,6 +17,8 @@ namespace DCL.SDKComponents.MediaStream
         private const int MAX_LOGGED_URL_LENGTH = 120;
         private const string POOL_KEY = "presentation-client-video";
         private const string YOUTUBE_WATCH_PREFIX = "https://www.youtube.com/watch?v=";
+        private const double SEEK_THRESHOLD_SECONDS = 2.0;
+        private const float MIN_SEEK_INTERVAL_SECONDS = 3f;
 
         private readonly MediaPlayerCustomPool pool;
         private readonly IUrlResolverService resolver;
@@ -58,7 +60,7 @@ namespace DCL.SDKComponents.MediaStream
 
         /// <summary>
         ///     Plays <paramref name="url" />, resolving and opening it first when it changed, and seeks it to
-        ///     <paramref name="targetSeconds" /> when <see cref="PresentationLayout.ShouldSeek" /> holds. A resolved url that expires before it
+        ///     <paramref name="targetSeconds" /> when <see cref="ShouldSeek" /> holds. A resolved url that expires before it
         ///     opens, or errors after it expired, is resolved again.
         /// </summary>
         public void Update(string url, double? targetSeconds, bool playing, float now)
@@ -109,7 +111,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (finished)
             {
-                if (!PresentationLayout.IsRewind(current.CurrentTime, targetSeconds, isLive))
+                if (!IsRewind(current.CurrentTime, targetSeconds, isLive))
                     return;
 
                 finished = false;
@@ -123,7 +125,7 @@ namespace DCL.SDKComponents.MediaStream
                     current.Pause();
             }
 
-            if (targetSeconds is { } target && PresentationLayout.ShouldSeek(current.CurrentTime, target, isLive, current.IsSeeking, now, lastSeekAt))
+            if (targetSeconds is { } target && ShouldSeek(current.CurrentTime, target, isLive, current.IsSeeking, now, lastSeekAt))
             {
                 lastSeekAt = now;
                 current.TrySeek(target);
@@ -164,6 +166,27 @@ namespace DCL.SDKComponents.MediaStream
             ReleasePlayer();
             failedUrl = null;
         }
+
+        /// <summary>
+        ///     Whether the player has drifted more than <see cref="SEEK_THRESHOLD_SECONDS" /> from <paramref name="targetSeconds" />. A live
+        ///     stream never needs a seek.
+        /// </summary>
+        internal static bool NeedsSeek(double currentSeconds, double? targetSeconds, bool isLive) =>
+            !isLive && targetSeconds is { } target && Math.Abs(currentSeconds - target) > SEEK_THRESHOLD_SECONDS;
+
+        /// <summary>
+        ///     Whether <paramref name="targetSeconds" /> is more than <see cref="SEEK_THRESHOLD_SECONDS" /> behind <paramref name="currentSeconds" />.
+        ///     A live stream never rewinds.
+        /// </summary>
+        internal static bool IsRewind(double currentSeconds, double? targetSeconds, bool isLive) =>
+            targetSeconds < currentSeconds && NeedsSeek(currentSeconds, targetSeconds, isLive);
+
+        /// <summary>
+        ///     Whether a player that last sought at <paramref name="lastSeekAt" /> seeks now: it isn't busy buffering or seeking, at least
+        ///     <see cref="MIN_SEEK_INTERVAL_SECONDS" /> passed since that seek, and <see cref="NeedsSeek" /> holds.
+        /// </summary>
+        internal static bool ShouldSeek(double currentSeconds, double? targetSeconds, bool isLive, bool isBusy, float now, float lastSeekAt) =>
+            !isBusy && now - lastSeekAt >= MIN_SEEK_INTERVAL_SECONDS && NeedsSeek(currentSeconds, targetSeconds, isLive);
 
         /// <summary>
         ///     Whether a resolved url with <paramref name="expiresAt" /> has expired at <paramref name="now" />; one with no expiry never does.

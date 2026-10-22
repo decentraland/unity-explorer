@@ -147,6 +147,82 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.AreEqual(expected, expired);
         }
 
+        [TestCase(30.0, 10.0, false, true)]
+        [TestCase(30.0, 29.0, false, false)]
+        [TestCase(30.0, 40.0, false, false)]
+        [TestCase(30.0, 10.0, true, false)]
+        public void DetectRewind_OnlyWhenTargetIsMoreThanTwoSecondsBehind(double currentSeconds, double targetSeconds, bool isLive, bool expected)
+        {
+            // Act
+            bool rewind = PresentationUrlPlayer.IsRewind(currentSeconds, targetSeconds, isLive);
+
+            // Assert
+            Assert.AreEqual(expected, rewind);
+        }
+
+        [TestCase(3f, false, false, true)]
+        [TestCase(2.9f, false, false, false)]
+        [TestCase(3f, true, false, false)]
+        [TestCase(3f, false, true, false)]
+        public void Seek_AtMostEveryThreeSeconds_WhenIdleAndOnDemand(float secondsSinceLastSeek, bool isBusy, bool isLive, bool expected)
+        {
+            // Act
+            bool seek = PresentationUrlPlayer.ShouldSeek(10.0, 20.0, isLive, isBusy, 100f, 100f - secondsSinceLastSeek);
+
+            // Assert
+            Assert.AreEqual(expected, seek);
+        }
+
+        [Test]
+        public void SkipSeek_WhenDriftIsWithinThreshold()
+        {
+            // Act
+            bool seek = PresentationUrlPlayer.ShouldSeek(10.0, 11.0, false, false, 100f, float.NegativeInfinity);
+
+            // Assert
+            Assert.IsFalse(seek);
+        }
+
+        [Test]
+        public void DetectNoRewind_WithoutTarget()
+        {
+            // Act
+            bool rewind = PresentationUrlPlayer.IsRewind(30.0, null, false);
+
+            // Assert
+            Assert.IsFalse(rewind);
+        }
+
+        [TestCase(10.0, 11.9)]
+        [TestCase(11.9, 10.0)]
+        public void SkipSeek_WhenDriftIsWithinTwoSeconds(double currentSeconds, double targetSeconds)
+        {
+            // Act & Assert
+            Assert.IsFalse(PresentationUrlPlayer.NeedsSeek(currentSeconds, targetSeconds, false));
+        }
+
+        [TestCase(10.0, 12.1)]
+        [TestCase(12.1, 10.0)]
+        public void RequireSeek_WhenDriftExceedsTwoSeconds(double currentSeconds, double targetSeconds)
+        {
+            // Act & Assert
+            Assert.IsTrue(PresentationUrlPlayer.NeedsSeek(currentSeconds, targetSeconds, false));
+        }
+
+        [Test]
+        public void ReturnFalse_WhenLive()
+        {
+            // Act & Assert
+            Assert.IsFalse(PresentationUrlPlayer.NeedsSeek(0, 100, true));
+        }
+
+        [Test]
+        public void ReturnFalse_WhenTargetIsNull()
+        {
+            // Act & Assert
+            Assert.IsFalse(PresentationUrlPlayer.NeedsSeek(0, null, false));
+        }
+
         private UniTask<ResolvedMediaUrl> Resolve() =>
             resolver.ResolveAsync(URL, Arg.Any<ReportData>(), Arg.Any<CancellationToken>());
 

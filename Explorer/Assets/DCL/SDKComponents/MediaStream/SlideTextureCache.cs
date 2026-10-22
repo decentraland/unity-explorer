@@ -4,17 +4,40 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Translation.Service;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 using Utility.Networking;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <summary>
+    ///     Why <see cref="SlideTextureCache.GetOrRequest" /> has no texture for a url.
+    /// </summary>
+    public enum SlideState
+    {
+        /// <summary>The cache is disposed.</summary>
+        Disposed,
+
+        /// <summary>The slide is downloading; the first request for a fetchable url starts the download.</summary>
+        Loading,
+
+        /// <summary>The throttle key already started a fetch within <see cref="SlideTextureCache.MIN_FETCH_INTERVAL_SECONDS" />.</summary>
+        Throttled,
+
+        /// <summary>The last fetch failed and its retry cooldown hasn't elapsed.</summary>
+        CoolingDown,
+
+        /// <summary>The url is disallowed, its body was out of limits, or it failed <see cref="SlideTextureCache.MAX_FETCH_ATTEMPTS" /> fetches.</summary>
+        Rejected,
+    }
+
     /// <summary>
     ///     App-wide cache of presentation slide textures keyed by url, holding at most <see cref="CAPACITY" /> and
     ///     destroying the least recently used first. Fetches only contract-shaped slide urls in canonical form (equal to their own
@@ -25,11 +48,12 @@ namespace DCL.SDKComponents.MediaStream
     ///     rejects a url after <see cref="MAX_FETCH_ATTEMPTS" /> failed fetches.
     ///     Starts at most one fetch per <see cref="MIN_FETCH_INTERVAL_SECONDS" /> per throttle key, tracking at most
     ///     <see cref="MAX_TRACKED_BOTS" /> keys, tracks at most <see cref="MAX_TRACKED_URLS" /> rejected and
-    ///     <see cref="MAX_TRACKED_URLS" /> failed urls, forgetting the least recently tracked first, logs at most
-    ///     <see cref="MAX_REJECTION_REPORTS" /> rejections and <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime,
-    ///     and rejects before decoding a body that isn't a PNG of at most <see cref="MAX_SLIDE_BYTES" /> bytes and
-    ///     <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> px on either side. Destroys every slide when the last player
-    ///     composing from it stops. Does nothing once disposed. Main-thread only.
+    ///     <see cref="MAX_TRACKED_URLS" /> failed urls, forgetting the least recently tracked first, and logs at most
+    ///     <see cref="MAX_REJECTION_REPORTS" /> rejections and <see cref="MAX_FAILURE_REPORTS" /> failures in its lifetime.
+    ///     Slides decode on a worker thread into non-readable textures; a decoded slide whose body is larger than
+    ///     <see cref="MAX_SLIDE_BYTES" /> bytes or whose size exceeds <see cref="PresentationBotMetadata.MAX_SLIDE_SIZE" />
+    ///     px on either side is destroyed and its url rejected. Destroys every slide when the last composing lease is
+    ///     disposed. Does nothing once disposed. Main-thread only.
     /// </summary>
     public sealed class SlideTextureCache : IThrottledClearable, IDisposable
     {
@@ -45,12 +69,7 @@ namespace DCL.SDKComponents.MediaStream
         internal const int MAX_SLIDE_BYTES = 32 * 1024 * 1024;
         internal const int REQUEST_TIMEOUT_SECONDS = 15;
 
-        private const int PNG_HEADER_LENGTH = 24;
-        private const int PNG_WIDTH_OFFSET = 16;
-        private const int PNG_HEIGHT_OFFSET = 20;
-
         private static readonly Regex SLIDE_PATH = new (@"^(/[A-Za-z0-9_-]+)*/presentations/[0-9a-f-]{36}/slides/[0-9a-f]{16}\.png\z", RegexOptions.Compiled);
-        private static readonly byte[] PNG_SIGNATURE = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52 };
 
         private readonly IWebRequestController webRequestController;
         private readonly string castPresenterHost;
@@ -64,7 +83,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private int rejectionReportsLeft = MAX_REJECTION_REPORTS;
         private int failureReportsLeft = MAX_FAILURE_REPORTS;
-        private int composers;
+        private int openLeases;
         private bool disposed;
 
         internal int trackedUrlCount => rejected.Count + failed.Count;
@@ -95,18 +114,14 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Registers a player that started composing from this cache.
+        ///     Opens a composing lease. While any lease is open, <see cref="ClearThrottled" /> keeps one most recently used
+        ///     slide per lease and completed fetches are cached; disposing the last open lease destroys every cached slide.
         /// </summary>
-        public void BeginComposing() =>
-            composers++;
-
-        /// <summary>
-        ///     Unregisters a player that stopped composing, and destroys every cached slide when it was the last one.
-        /// </summary>
-        public void EndComposing()
+        /// <returns>The lease; disposing it more than once has no further effect.</returns>
+        public IDisposable BeginComposing()
         {
-            if (--composers == 0)
-                Unload();
+            openLeases++;
+            return new ComposingLease(this);
         }
 
         /// <summary>
@@ -123,47 +138,51 @@ namespace DCL.SDKComponents.MediaStream
 
         /// <summary>
         ///     Destroys up to <paramref name="maxUnloadAmount" /> of the least recently used slides, keeping one most
-        ///     recently used slide per composing player.
+        ///     recently used slide per open composing lease.
         /// </summary>
         public void ClearThrottled(int maxUnloadAmount) =>
-            textures.RemoveOldest(Math.Min(maxUnloadAmount, Math.Max(0, textures.Count - composers)));
+            textures.RemoveOldest(Math.Min(maxUnloadAmount, Math.Max(0, textures.Count - openLeases)));
 
         /// <summary>
-        ///     The cached texture for <paramref name="url" />, or <c>null</c> while it loads, cools down after a
-        ///     failure, waits for the fetch interval, or is disallowed. The first call for a fetchable url starts its
-        ///     download.
+        ///     The cached texture for <paramref name="url" />, or the <see cref="SlideState" /> explaining why there is none.
+        ///     The first request for a fetchable url starts its download.
         /// </summary>
         /// <param name="url">The slide url.</param>
         /// <param name="throttleKey">
         ///     Fetch starts are throttled per key; pass the identity of the bot whose metadata named the url.
         /// </param>
-        public Texture2D? GetOrRequest(string url, string throttleKey)
+        public EnumResult<Texture2D, SlideState> GetOrRequest(string url, string throttleKey)
         {
             if (disposed)
-                return null;
+                return Missing(SlideState.Disposed);
 
             if (textures.TryGetValue(url, out Texture2D texture))
-                return texture;
+                return EnumResult<Texture2D, SlideState>.SuccessResult(texture);
 
-            if (inFlight.Contains(url) || rejected.ContainsKey(url))
-                return null;
+            if (rejected.ContainsKey(url))
+                return Missing(SlideState.Rejected);
+
+            if (inFlight.Contains(url))
+                return Missing(SlideState.Loading);
 
             float now = getRealtimeSinceStartup();
 
-            if ((nextFetchAt.TryPeek(throttleKey, out float keyNext) && now < keyNext)
-                || (failed.TryPeek(url, out (int attempts, float retryAt) failure) && now < failure.retryAt))
-                return null;
+            if (failed.TryPeek(url, out (int attempts, float retryAt) failure) && now < failure.retryAt)
+                return Missing(SlideState.CoolingDown);
+
+            if (nextFetchAt.TryPeek(throttleKey, out float keyNext) && now < keyNext)
+                return Missing(SlideState.Throttled);
 
             if (!IsAllowedUrl(url))
             {
                 Reject(url, "Slide url rejected, origin not allowed");
-                return null;
+                return Missing(SlideState.Rejected);
             }
 
             nextFetchAt.Set(throttleKey, now + MIN_FETCH_INTERVAL_SECONDS);
             inFlight.Add(url);
             LoadAsync(url).Forget();
-            return null;
+            return Missing(SlideState.Loading);
         }
 
         internal bool IsAllowedUrl(string url)
@@ -180,46 +199,27 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Decodes a slide body into a clamped, bilinear texture without a CPU copy.
+        ///     Keeps a decoded slide as a clamped texture when its body has at most <see cref="MAX_SLIDE_BYTES" /> bytes and
+        ///     its size is at most <see cref="PresentationBotMetadata.MAX_SLIDE_SIZE" /> px on either side.
         /// </summary>
-        /// <returns>
-        ///     <c>null</c>, without decoding, when <paramref name="data" /> isn't a PNG of at most <see cref="MAX_SLIDE_BYTES" />
-        ///     bytes whose header declares at most <see cref="PresentationLayout.MAX_SLIDE_SIZE" /> px on either side, and
-        ///     <c>null</c> when the PNG fails to decode.
-        /// </returns>
-        internal static Texture2D? DecodeSlide(byte[]? data)
+        /// <returns><paramref name="slide" />, or <c>null</c> after destroying it when it is out of limits.</returns>
+        internal static Texture2D? AcceptSlide(Texture2D? slide, ulong bodyBytes)
         {
-            if (data == null || data.Length > MAX_SLIDE_BYTES || !TryReadPngSize(data, out int width, out int height)
-                || width is < 1 or > PresentationLayout.MAX_SLIDE_SIZE || height is < 1 or > PresentationLayout.MAX_SLIDE_SIZE)
+            if (slide == null)
                 return null;
 
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            if (bodyBytes > MAX_SLIDE_BYTES || slide.width > PresentationBotMetadata.MAX_SLIDE_SIZE || slide.height > PresentationBotMetadata.MAX_SLIDE_SIZE)
+            {
+                UnityObjectUtils.SafeDestroy(slide);
+                return null;
+            }
 
-            if (texture.LoadImage(data, markNonReadable: true))
-                return texture;
-
-            UnityObjectUtils.SafeDestroy(texture);
-            return null;
+            slide.wrapMode = TextureWrapMode.Clamp;
+            return slide;
         }
 
-        private static bool TryReadPngSize(byte[] data, out int width, out int height)
-        {
-            width = height = 0;
-
-            if (data.Length < PNG_HEADER_LENGTH)
-                return false;
-
-            for (var i = 0; i < PNG_SIGNATURE.Length; i++)
-                if (data[i] != PNG_SIGNATURE[i])
-                    return false;
-
-            width = ReadBigEndianInt(data, PNG_WIDTH_OFFSET);
-            height = ReadBigEndianInt(data, PNG_HEIGHT_OFFSET);
-            return true;
-        }
-
-        private static int ReadBigEndianInt(byte[] data, int offset) =>
-            (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+        private static EnumResult<Texture2D, SlideState> Missing(SlideState state) =>
+            EnumResult<Texture2D, SlideState>.ErrorResult(state);
 
         private bool IsCastPresenterOrigin(Uri uri)
         {
@@ -231,19 +231,25 @@ namespace DCL.SDKComponents.MediaStream
             return uri.Scheme == Uri.UriSchemeHttps && uri.IsDefaultPort && string.Equals(uri.Host, castPresenterHost, StringComparison.Ordinal);
         }
 
+        private void EndComposing()
+        {
+            if (--openLeases == 0)
+                Unload();
+        }
+
         private async UniTaskVoid LoadAsync(string url)
         {
             try
             {
                 Texture2D? texture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(url), RetryPolicy.DEFAULT, REQUEST_TIMEOUT_SECONDS),
-                    new GetTextureArguments(TextureType.Albedo, useKtx: false, disableRedirects: true),
+                    new GetTextureArguments(TextureType.Albedo, useKtx: false, disableRedirects: true, decodeOffMainThread: true),
                     new SlideTextureOp(),
                     cts.Token,
                     ReportCategory.MEDIA_STREAM,
                     suppressErrors: true);
 
-                if (cts.IsCancellationRequested || composers == 0)
+                if (cts.IsCancellationRequested || openLeases == 0)
                 {
                     UnityObjectUtils.SafeDestroy(texture);
                     return;
@@ -251,7 +257,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (texture == null)
                 {
-                    Reject(url, $"Slide rejected, not a decodable PNG of at most {MAX_SLIDE_BYTES} bytes and {PresentationLayout.MAX_SLIDE_SIZE} px per side");
+                    Reject(url, $"Slide rejected, not an image of at most {MAX_SLIDE_BYTES} bytes and {PresentationBotMetadata.MAX_SLIDE_SIZE} px per side");
                     return;
                 }
 
@@ -305,7 +311,23 @@ namespace DCL.SDKComponents.MediaStream
         internal readonly struct SlideTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
         {
             public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct) =>
-                UniTask.FromResult(DecodeSlide(webRequest.UnityWebRequest.downloadHandler?.data));
+                UniTask.FromResult(AcceptSlide(DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest), webRequest.UnityWebRequest.downloadedBytes));
+        }
+
+        private sealed class ComposingLease : IDisposable
+        {
+            private SlideTextureCache? cache;
+
+            public ComposingLease(SlideTextureCache cache)
+            {
+                this.cache = cache;
+            }
+
+            public void Dispose()
+            {
+                cache?.EndComposing();
+                cache = null;
+            }
         }
     }
 }
