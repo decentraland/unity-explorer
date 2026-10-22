@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;

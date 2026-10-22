@@ -3,6 +3,7 @@
     <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyConnectedFriends.uss" />
     <DCL.Lobby.LobbyPlaceCardElement name="PlaceCard" title="Place Name" creator="Creator" online-count="0">
         <ui:VisualElement name="Thumbnail" class="lobby-place-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="Gradient" class="lobby-place-card__gradient" picking-mode="Ignore" />
         <ui:VisualElement name="Badges" class="lobby-place-card__badges" picking-mode="Ignore">
             <ui:VisualElement name="OnlineCounter" class="lobby-place-card__online" picking-mode="Ignore">
                 <ui:VisualElement name="OnlineStatus" class="lobby-place-card__online-dot" picking-mode="Ignore" />

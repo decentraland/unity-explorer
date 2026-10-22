@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.RewardPanel;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;

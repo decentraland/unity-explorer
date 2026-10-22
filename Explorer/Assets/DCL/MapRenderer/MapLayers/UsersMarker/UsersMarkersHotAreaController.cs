@@ -25,7 +25,7 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Users
 {
-    internal partial class UsersMarkersHotAreaController : MapLayerControllerBase, IMapLayerController
+    internal partial class UsersMarkersHotAreaController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
     {
         private readonly IObjectPool<HotUserMarkerObject> objectsPool;
         private readonly IObjectPool<IHotUserMarker> wrapsPool;
@@ -40,6 +40,9 @@ namespace DCL.MapRenderer.MapLayers.Users
         private readonly HashSet<string> closebyUsers = new ();
         private CancellationTokenSource cancellationToken;
         private bool isEnabled;
+        private float markerScale;
+
+        public bool ZoomBlocked { get; set; }
 
         public UsersMarkersHotAreaController(
             IObjectPool<HotUserMarkerObject> objectsPool,
@@ -59,7 +62,29 @@ namespace DCL.MapRenderer.MapLayers.Users
             this.web3IdentityCache = web3IdentityCache;
             this.realmNavigator.NavigationExecuted += OnTeleport;
             cancellationToken = new CancellationTokenSource();
+            markerScale = coordsUtils.ParcelSize;
         }
+
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
+        {
+            // Markers keep their size on the map. Closer than the base zoom, the markers keep their size on screen.
+            if (!ZoomBlocked)
+                SetMarkersScale(coordsUtils.ParcelSize * Mathf.Min(zoom / baseZoom, 1f));
+        }
+
+        public void ResetToBaseScale() =>
+            SetMarkersScale(coordsUtils.ParcelSize);
+
+        private void SetMarkersScale(float scale)
+        {
+            markerScale = scale;
+
+            foreach (IHotUserMarker marker in markers.Values)
+                marker.SetScale(scale);
+        }
+
+        private IHotUserMarker GetMarker() =>
+            wrapsPool.Get().SetScale(markerScale);
 
         protected override void DisposeImpl()
         {
@@ -68,7 +93,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             realmNavigator.NavigationExecuted -= OnTeleport;
         }
 
-        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+        public UniTask InitializeAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
         private void OnTeleport(Vector2Int destinationCoordinates)
@@ -105,7 +130,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             else
             {
                 closebyUsers.Add(avatarShape.ID);
-                var wrap = wrapsPool.Get();
+                var wrap = GetMarker();
                 markers.Add(avatarShape.ID, wrap);
                 mapCullingController.StartTracking(wrap, wrap);
             }
@@ -150,7 +175,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
                 if (markers.TryGetValue(remotePlayerData.avatarId, out var marker)) continue;
 
-                var wrap = wrapsPool.Get();
+                var wrap = GetMarker();
                 markers.Add(remotePlayerData.avatarId, wrap);
                 wrap.UpdateMarkerPosition(remotePlayerData.avatarId, remotePlayerData.position);
                 mapCullingController.StartTracking(wrap, wrap);
@@ -160,14 +185,14 @@ namespace DCL.MapRenderer.MapLayers.Users
         private bool IsLocalUser(string userId) =>
             userId.Equals(web3IdentityCache.Identity?.Address.ToString(), StringComparison.InvariantCultureIgnoreCase);
 
-        public async UniTask EnableAsync(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken ct)
         {
             isEnabled = true;
 
-            await ProcessRemoteUsersAsync(cancellationToken);
+            await ProcessRemoteUsersAsync(ct);
         }
 
-        public UniTask Disable(CancellationToken cancellationToken)
+        public UniTask Disable(CancellationToken ct)
         {
             isEnabled = false;
 
