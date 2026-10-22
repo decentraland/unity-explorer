@@ -1,6 +1,7 @@
 ﻿using DCL.Friends.UI.FriendPanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
+using DCL.UI.Sidebar.SubMenus;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Skybox;
@@ -27,7 +28,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Discover")]
         [field: SerializeField] public SimpleHoverableButton DiscoverButton { get; private set; } = null!;
-        [field: SerializeField] internal GameObject discoverMenu { get; private set; } = null!;
+        [field: SerializeField] public DiscoverMenuView DiscoverMenu { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView discoverPlacesOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView discoverEventsOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView discoverCommunitiesOption { get; private set; } = null!;
@@ -37,7 +38,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Shop")]
         [field: SerializeField] public SimpleHoverableButton ShopButton { get; private set; } = null!;
-        [field: SerializeField] internal GameObject shopMenu { get; private set; } = null!;
+        [field: SerializeField] public ShopMenuView ShopMenu { get; private set; } = null!;
         [field: SerializeField] internal ButtonView shopEmotesBanner { get; private set; } = null!;
         [field: SerializeField] internal ButtonView shopWearablesBanner { get; private set; } = null!;
         [field: SerializeField] public CreditsPanelView ShopCreditsPanel { get; private set; } = null!;
@@ -45,7 +46,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("System Settings")]
         [field: SerializeField] public SimpleHoverableButton SettingsButton { get; private set; } = null!;
-        [field: SerializeField] internal GameObject systemMenu { get; private set; } = null!;
+        [field: SerializeField] public SystemMenuView SystemMenu { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView systemSettingsOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView systemControlsOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView systemContactSupportOption { get; private set; } = null!;
@@ -56,7 +57,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Audio Settings")]
         [field: SerializeField] public SimpleHoverableButton AudioSettingsButton { get; private set; } = null!;
-        [field: SerializeField] internal GameObject audioMenu { get; private set; } = null!;
+        [field: SerializeField] public AudioMenuView AudioMenu { get; private set; } = null!;
         [field: SerializeField] internal Slider audioMasterSlider { get; private set; } = null!;
         [field: SerializeField] internal Slider audioInWorldSlider { get; private set; } = null!;
         [field: SerializeField] internal Slider audioUiSlider { get; private set; } = null!;
@@ -65,7 +66,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Gallery")]
         [field: SerializeField] public SimpleHoverableButton GalleryButton { get; private set; } = null!;
-        [field: SerializeField] internal GameObject galleryMenu { get; private set; } = null!;
+        [field: SerializeField] public GalleryMenuView GalleryMenu { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView galleryGalleryOption { get; private set; } = null!;
         [field: SerializeField] internal MenuElementView galleryTakeShotOption { get; private set; } = null!;
         [field: SerializeField] internal ButtonView galleryCloseButton { get; private set; } = null!;
@@ -84,7 +85,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; } = null!;
-        [field: SerializeField] internal GameObject profileMenu { get; private set; } = null!;
+        [field: SerializeField] public SidebarProfileMenuView ProfileMenu { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ProfileNameLabel { get; private set; } = null!;
         [field: SerializeField] public GameObject ProfileVerifiedMark { get; private set; } = null!;
         [field: SerializeField] public GameObject ProfileFoundationMark { get; private set; } = null!;

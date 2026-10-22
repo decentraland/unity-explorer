@@ -22,6 +22,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
+using DCL.UI.Sidebar.SubMenus;
 using DCL.UI.Skybox;
 using DCL.Utilities;
 using DCL.UI.ProfileElements;
@@ -84,8 +85,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource smartWearablesTooltipCts = new ();
         private ReactivePropertyExtensions.DisposableSubscription<bool>? smartWearablesSubscription;
 
-        private SimpleHoverableButton? openMenuButton;
-        private GameObject? openMenu;
+        private Type? openSubMenu;
         private MenuElementView? highlightedOption;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -350,50 +350,50 @@ namespace DCL.UI.Sidebar
         }
 
 #region Nav rail menus
-
         /// <summary>
         ///     Opens the menu nested under the clicked button, closing whichever menu was open before it.
         ///     Clicking the button whose menu is already open closes it.
         /// </summary>
-        private void ToggleMenu(SimpleHoverableButton? button, GameObject menu)
+        /// <summary>
+        ///     Submenus run as MVC popups, so the shared popup closer dismisses them on an outside click.
+        /// </summary>
+        private void ToggleSubMenu<TView>(SimpleHoverableButton? button) where TView: ViewBase, IView
         {
-            bool shouldOpen = openMenu != menu;
-
-            // Closes any MVC panel opened from the rail, so only one entry is ever selected.
-            openPanelCts = openPanelCts.SafeRestart();
+            bool alreadyOpen = openSubMenu == typeof(TView);
 
             CloseOpenMenu();
 
-            if (!shouldOpen) return;
+            if (alreadyOpen) return;
 
-            button?.SetSelected(true);
-            menu.SetActive(true);
+            openSubMenu = typeof(TView);
 
-            openMenuButton = button;
-            openMenu = menu;
+            OpenSubMenuAsync<TView>(button).Forget();
+        }
 
-            viewInstance!.BlockSidebar();
+        private async UniTaskVoid OpenSubMenuAsync<TView>(SimpleHoverableButton? button) where TView: ViewBase, IView
+        {
+            try { await OpenPanelAsync(button, SidebarSubMenuController<TView>.IssueCommand()); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            finally
+            {
+                if (openSubMenu == typeof(TView))
+                    openSubMenu = null;
+            }
         }
 
         private void CloseOpenMenu()
         {
-            if (openMenu == null) return;
+            if (openSubMenu == null) return;
 
-            openMenuButton?.SetSelected(false);
-            openMenu.SetActive(false);
-
-            openMenuButton = null;
-            openMenu = null;
-
+            openSubMenu = null;
             ClearHighlightedOption();
 
-            viewInstance!.UnblockSidebar();
+            openPanelCts = openPanelCts.SafeRestart();
         }
-
 #endregion
 
 #region Menu options
-
         private void SubscribeToOption(MenuElementView option, UnityAction onClick)
         {
             option.PointerEntered += OnOptionPointerEntered;
@@ -446,11 +446,14 @@ namespace DCL.UI.Sidebar
             OpenExplorePanelInSection(ExploreSections.Events);
         }
 
-        private void OnCommunitiesOptionClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
+        private void OnCommunitiesOptionClicked() =>
+            OpenExplorePanelInSection(ExploreSections.Communities);
 
-        private void OnExploreEmotesClicked() => OpenShopCategory(EMOTE_CATEGORY);
+        private void OnExploreEmotesClicked() =>
+            OpenShopCategory(EMOTE_CATEGORY);
 
-        private void OnExploreWearablesClicked() => OpenShopCategory(WEARABLE_CATEGORY);
+        private void OnExploreWearablesClicked() =>
+            OpenShopCategory(WEARABLE_CATEGORY);
 
         private void OpenShopCategory(string category)
         {
@@ -488,7 +491,8 @@ namespace DCL.UI.Sidebar
                 binder.Refresh();
         }
 
-        private void OnGalleryOptionClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
+        private void OnGalleryOptionClicked() =>
+            OpenExplorePanelInSection(ExploreSections.CameraReel);
 
         private void OnTakeShotOptionClicked()
         {
@@ -496,11 +500,14 @@ namespace DCL.UI.Sidebar
             cameraToggle.Toggle(SOURCE_BUTTON);
         }
 
-        private void OnSettingsOptionClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
+        private void OnSettingsOptionClicked() =>
+            OpenExplorePanelInSection(ExploreSections.Settings);
 
-        private void OnControlsOptionClicked() => OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
+        private void OnControlsOptionClicked() =>
+            OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
 
-        private void OnReportBugOptionClicked() => OpenPanelAsync(null, BugReportController.IssueCommand(new BugReportParams())).Forget();
+        private void OnReportBugOptionClicked() =>
+            OpenPanelAsync(null, BugReportController.IssueCommand(new BugReportParams())).Forget();
 
         private void OnContactSupportOptionClicked()
         {
@@ -508,9 +515,11 @@ namespace DCL.UI.Sidebar
             supportRequestService.OpenSupport();
         }
 
-        private void OnDiscordOptionClicked() => OpenWebUrl(DecentralandUrl.Discord);
+        private void OnDiscordOptionClicked() =>
+            OpenWebUrl(DecentralandUrl.Discord);
 
-        private void OnFaqOptionClicked() => OpenWebUrl(DecentralandUrl.Faqs);
+        private void OnFaqOptionClicked() =>
+            OpenWebUrl(DecentralandUrl.Faqs);
 
         private void OpenWebUrl(DecentralandUrl url)
         {
@@ -530,14 +539,7 @@ namespace DCL.UI.Sidebar
 
         private void CloseAllMenus()
         {
-            viewInstance!.discoverMenu.SetActive(false);
-            viewInstance.shopMenu.SetActive(false);
-            viewInstance.systemMenu.SetActive(false);
-            viewInstance.audioMenu.SetActive(false);
-            viewInstance.galleryMenu.SetActive(false);
-            viewInstance.profileMenu.SetActive(false);
-
-            viewInstance.DiscoverButton.SetSelected(false);
+            viewInstance!.DiscoverButton.SetSelected(false);
             viewInstance.ShopButton.SetSelected(false);
             viewInstance.SettingsButton.SetSelected(false);
             viewInstance.AudioSettingsButton.SetSelected(false);
@@ -548,8 +550,7 @@ namespace DCL.UI.Sidebar
 
             ClearHighlightedOption();
 
-            openMenuButton = null;
-            openMenu = null;
+            openSubMenu = null;
         }
 
         /// <summary>
@@ -566,31 +567,40 @@ namespace DCL.UI.Sidebar
             viewInstance.minimapMenu.SetActive(open);
         }
 
-        private void OnDiscoverButtonClicked() => ToggleMenu(viewInstance!.DiscoverButton, viewInstance.discoverMenu);
-        private void OnShopButtonClicked() => ToggleMenu(viewInstance!.ShopButton, viewInstance.shopMenu);
-        private void OnSettingsButtonClicked() => ToggleMenu(viewInstance!.SettingsButton, viewInstance.systemMenu);
+        private void OnDiscoverButtonClicked() =>
+            ToggleSubMenu<DiscoverMenuView>(viewInstance!.DiscoverButton);
+
+        private void OnShopButtonClicked() =>
+            ToggleSubMenu<ShopMenuView>(viewInstance!.ShopButton);
+
+        private void OnSettingsButtonClicked() =>
+            ToggleSubMenu<SystemMenuView>(viewInstance!.SettingsButton);
+
         private void OnAudioSettingsButtonClicked()
         {
             RefreshAudioSliders();
-            ToggleMenu(viewInstance!.AudioSettingsButton, viewInstance.audioMenu);
+            ToggleSubMenu<AudioMenuView>(viewInstance!.AudioSettingsButton);
         }
-        private void OnGalleryButtonClicked() => ToggleMenu(viewInstance!.GalleryButton, viewInstance.galleryMenu);
+
+        private void OnGalleryButtonClicked() =>
+            ToggleSubMenu<GalleryMenuView>(viewInstance!.GalleryButton);
+
         private void OnProfileButtonClicked()
         {
             profileMenuPresenter.Refresh();
-            ToggleMenu(null, viewInstance!.profileMenu);
+            ToggleSubMenu<SidebarProfileMenuView>(null);
         }
-
 #endregion
 
 #region MVC panels
-
-        private void OnEmotesButtonClicked() => OpenPanelAsync(viewInstance!.EmotesButton, EmotesWheelController.IssueCommand()).Forget();
+        private void OnEmotesButtonClicked() =>
+            OpenPanelAsync(viewInstance!.EmotesButton, EmotesWheelController.IssueCommand()).Forget();
 
         private void OnFriendsButtonClicked() =>
             OpenPanelAsync(viewInstance!.FriendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
 
-        private void OnNotificationsButtonClicked() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
+        private void OnNotificationsButtonClicked() =>
+            OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
 
         private void OnNearbyVoiceButtonClicked()
         {
@@ -609,14 +619,14 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(null, NearbyVoicePanelController.IssueCommand()).Forget();
         }
 
-        private async UniTaskVoid OpenPanelAsync<TView, TInputData>(
+        private async UniTask OpenPanelAsync<TView, TInputData>(
             ISelectableButton? button,
             ShowCommand<TView, TInputData> command)
             where TView: IView
         {
             if (!viewInstance) return;
 
-            CloseOpenMenu();
+            ClearHighlightedOption();
 
             openPanelCts = openPanelCts.SafeRestart();
             CancellationToken ct = openPanelCts.Token;
@@ -625,7 +635,7 @@ namespace DCL.UI.Sidebar
             button?.Select();
 
             try { await mvcManager.ShowAsync(command, ct); }
-            catch (OperationCanceledException){} // Expected cancellation when a new panel is opened
+            catch (OperationCanceledException) { } // Expected cancellation when a new panel is opened
             catch (Exception e) { ReportHub.LogException(new Exception("Exception on opening panel from Sidebar: " + e.Message, e), ReportCategory.UI); }
             finally
             {
@@ -666,7 +676,6 @@ namespace DCL.UI.Sidebar
                     break;
             }
         }
-
 #endregion
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>

@@ -67,7 +67,7 @@ MonoBehaviour:
   <MapButton>k__BackingField: {fileID: 5509922065863824249}
   <minimapMenu>k__BackingField: {fileID: 7853431510012902412}
   <DiscoverButton>k__BackingField: {fileID: 3121560537287299383}
-  <discoverMenu>k__BackingField: {fileID: 8365220141105737363}
+  <DiscoverMenu>k__BackingField: {fileID: 2634554035332895739}
   <discoverPlacesOption>k__BackingField: {fileID: 3156140564047988800}
   <discoverEventsOption>k__BackingField: {fileID: 2079476666965182732}
   <discoverCommunitiesOption>k__BackingField: {fileID: 6006232886007053828}
@@ -75,13 +75,13 @@ MonoBehaviour:
   <liveEventsCounterText>k__BackingField: {fileID: 321438779271017039}
   <liveEventsCounterContainer>k__BackingField: {fileID: 415476879896928781}
   <ShopButton>k__BackingField: {fileID: 5179272728502281368}
-  <shopMenu>k__BackingField: {fileID: 3634218081091703835}
+  <ShopMenu>k__BackingField: {fileID: 55561153781118657}
   <shopEmotesBanner>k__BackingField: {fileID: 713774481650121677}
   <shopWearablesBanner>k__BackingField: {fileID: 3687985340279997113}
   <ShopCreditsPanel>k__BackingField: {fileID: 7677642888121936574}
   <shopCloseButton>k__BackingField: {fileID: 1602982816888720525}
   <SettingsButton>k__BackingField: {fileID: 9117111064993892592}
-  <systemMenu>k__BackingField: {fileID: 2459600118286465694}
+  <SystemMenu>k__BackingField: {fileID: 5851773347845622040}
   <systemSettingsOption>k__BackingField: {fileID: 3596874691164709611}
   <systemControlsOption>k__BackingField: {fileID: 2467971669355652168}
   <systemContactSupportOption>k__BackingField: {fileID: 2707011994783439839}
@@ -90,14 +90,14 @@ MonoBehaviour:
   <systemFaqOption>k__BackingField: {fileID: 9217193546717663417}
   <systemCloseButton>k__BackingField: {fileID: 8603036728969572028}
   <AudioSettingsButton>k__BackingField: {fileID: 2374968129854425773}
-  <audioMenu>k__BackingField: {fileID: 6973889494588925755}
+  <AudioMenu>k__BackingField: {fileID: 782876413889190459}
   <audioMasterSlider>k__BackingField: {fileID: 3171285443063026076}
   <audioInWorldSlider>k__BackingField: {fileID: 4995919885513383841}
   <audioUiSlider>k__BackingField: {fileID: 1449849449060054017}
   <audioAvatarSlider>k__BackingField: {fileID: 9207264487955906097}
   <audioCloseButton>k__BackingField: {fileID: 5922976315657465083}
   <GalleryButton>k__BackingField: {fileID: 1456494438077899857}
-  <galleryMenu>k__BackingField: {fileID: 4933004527931025400}
+  <GalleryMenu>k__BackingField: {fileID: 1715368043427717665}
   <galleryGalleryOption>k__BackingField: {fileID: 1101081167368760155}
   <galleryTakeShotOption>k__BackingField: {fileID: 3265640622359388143}
   <galleryCloseButton>k__BackingField: {fileID: 7676592878832698226}
@@ -108,7 +108,7 @@ MonoBehaviour:
   <NotificationsButton>k__BackingField: {fileID: 5377846135955448946}
   <NotificationsMenuView>k__BackingField: {fileID: 599237097637956580}
   <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
-  <profileMenu>k__BackingField: {fileID: 4214354569605071032}
+  <ProfileMenu>k__BackingField: {fileID: 4118114097384684764}
   <ProfileNameLabel>k__BackingField: {fileID: 3767288139858576830}
   <ProfileVerifiedMark>k__BackingField: {fileID: 2581768890338202080}
   <ProfileFoundationMark>k__BackingField: {fileID: 6286060323790787536}
@@ -2418,3 +2418,69 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
+--- !u!114 &2634554035332895739 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3139677149387462464, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c690a2d92d1949748edc7633904c4b2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &55561153781118657 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1141921747438629498, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5f98856662e433990572aac8494e9dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5851773347845622040 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6784711937321045411, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c8fea239df465aaee5ab1f4387c87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &782876413889190459 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3081446004866220183, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5063718a08434ae384aab43775340121, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1715368043427717665 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4021746380156205197, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7ea8aafeb0649c49b7b9f58820ee7af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4118114097384684764 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3907987202102278247, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d7a5f6ad86d4f1c9af147d6bfbdf429, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

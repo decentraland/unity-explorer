@@ -589,7 +589,6 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
                     userLogout,
-                    globalWorld,
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
                     profileContainer.SelfProfile,

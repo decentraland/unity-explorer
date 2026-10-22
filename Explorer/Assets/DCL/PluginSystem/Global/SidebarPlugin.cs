@@ -1,10 +1,15 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Audio;
 using DCL.Chat;
+using DCL.Clipboard;
+using DCL.Credits;
+using DCL.EventsApi;
+using DCL.InWorldCamera;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -12,30 +17,27 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls;
-using DCL.MarketplaceCredits;
-using DCL.Clipboard;
-using DCL.Credits;
-using DCL.EventsApi;
-using DCL.InWorldCamera;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SystemMenu;
 using DCL.UI.Sidebar;
+using DCL.UI.Sidebar.SubMenus;
 using DCL.UI.Skybox;
-using DCL.VoiceChat;
+using DCL.UI.SystemMenu;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using Runtime.Wearables;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 using Utility;
+using SystemMenuView = DCL.UI.Sidebar.SubMenus.SystemMenuView;
 
 namespace DCL.PluginSystem.Global
 {
@@ -50,7 +52,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly UserLogout userLogout;
-        private readonly Arch.Core.World globalWorld;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly SelfProfile selfProfile;
@@ -74,6 +75,7 @@ namespace DCL.PluginSystem.Global
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private ICreditsPanelController? shopCreditsPanelController;
+        private readonly List<IDisposable> subMenuControllers = new ();
         private SidebarProfileMenuPresenter? sidebarProfileMenuPresenter;
 
         private CancellationTokenSource? controlsShortcutCts;
@@ -88,7 +90,6 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             UnityAppWebBrowser webBrowser,
             UserLogout userLogout,
-            Arch.Core.World globalWorld,
             ProfileRepositoryWrapper profileDataProvider,
             ProfileChangesBus profileChangesBus,
             SelfProfile selfProfile,
@@ -113,7 +114,6 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.webBrowser = webBrowser;
             this.userLogout = userLogout;
-            this.globalWorld = globalWorld;
             profileRepositoryWrapper = profileDataProvider;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
@@ -145,6 +145,15 @@ namespace DCL.PluginSystem.Global
             nearbyVoicePanelController?.Dispose();
             shopCreditsPanelController?.Dispose();
             sidebarProfileMenuPresenter?.Dispose();
+
+            foreach (IDisposable subMenu in subMenuControllers)
+                subMenu.Dispose();
+        }
+
+        private void RegisterSubMenu<TView>(SidebarSubMenuController<TView> controller) where TView: ViewBase, IView
+        {
+            subMenuControllers.Add(controller);
+            mvcManager.RegisterController(controller);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -195,6 +204,13 @@ namespace DCL.PluginSystem.Global
                 volumeBus,
                 web3IdentityCache
                 );
+
+            RegisterSubMenu(new SidebarSubMenuController<DiscoverMenuView>(() => mainUiView.SidebarView.DiscoverMenu));
+            RegisterSubMenu(new SidebarSubMenuController<ShopMenuView>(() => mainUiView.SidebarView.ShopMenu));
+            RegisterSubMenu(new SidebarSubMenuController<SystemMenuView>(() => mainUiView.SidebarView.SystemMenu));
+            RegisterSubMenu(new SidebarSubMenuController<AudioMenuView>(() => mainUiView.SidebarView.AudioMenu));
+            RegisterSubMenu(new SidebarSubMenuController<GalleryMenuView>(() => mainUiView.SidebarView.GalleryMenu));
+            RegisterSubMenu(new SidebarSubMenuController<SidebarProfileMenuView>(() => mainUiView.SidebarView.ProfileMenu));
 
             mvcManager.RegisterController(controlsPanelController);
             mvcManager.RegisterController(notificationsPanelController);
