@@ -79,6 +79,9 @@ MonoBehaviour:
   resultsLoadingSpinner: {fileID: 5534048270618266013}
   resultsLoadingMoreSpinner: {fileID: 1972701702536864114}
   defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
+  loadingCardsBeyondCompactColumns:
+  - {fileID: 2893991391367473169}
+  - {fileID: 2492037380732972772}
 --- !u!1001 &1362038011312496042
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -908,3 +911,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &2893991391367473169 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4237724026566571451, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+  m_PrefabInstance: {fileID: 1362038011312496042}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2492037380732972772 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3491293090856645454, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+  m_PrefabInstance: {fileID: 1362038011312496042}
+  m_PrefabAsset: {fileID: 0}

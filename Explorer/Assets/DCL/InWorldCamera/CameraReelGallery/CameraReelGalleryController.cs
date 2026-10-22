@@ -379,6 +379,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
+        /// <summary>
+        ///     Sizes the grids of the next show; <see cref="RestoreGridLayout" /> brings the authored layout back.
+        /// </summary>
+        public void SetGridLayout(int columns, int thumbnailWidth, int thumbnailHeight) =>
+            reelGalleryPoolManager.SetGridLayout(columns, new Vector2(thumbnailWidth, thumbnailHeight));
+
+        public void RestoreGridLayout() =>
+            SetGridLayout(reelGalleryConfigParams.GridLayoutFixedColumnCount, reelGalleryConfigParams.ThumbnailWidth, reelGalleryConfigParams.ThumbnailHeight);
+
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);

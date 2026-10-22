@@ -16,6 +16,10 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class FilteredCommunitiesView : MonoBehaviour
     {
+        // Sized for the full-width explore panel; the modal host, 400px of which the left column takes, fits two cards fewer per row.
+        private const int GRID_COLUMNS = 5;
+        private const int COMPACT_GRID_COLUMNS = 3;
+
         public event Action? BackButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
@@ -33,6 +37,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
+        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
@@ -79,6 +84,14 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            resultLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS);
+
+            foreach (GameObject card in loadingCardsBeyondCompactColumns)
+                card.SetActive(!compact);
         }
 
         public void ClearResultsItems()

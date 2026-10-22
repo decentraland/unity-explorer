@@ -1,5 +1,6 @@
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.ExplorePanel;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -61,7 +62,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public Sprite ReportSprite => contextMenuSettings.ReportSprite;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
-
+        private bool isCompact;
 
         private void Awake()
         {
@@ -126,6 +127,19 @@ namespace DCL.Communities.CommunitiesBrowser
             headerAnimator.Rebind();
             panelAnimator.Update(0);
             headerAnimator.Update(0);
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            rightSectionView.FilteredCommunitiesView.SetCompactLayout(compact);
+            invitesAndRequestsView.SetCompactLayout(compact);
+
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+
+            // Right-anchored in the header, where the modal's close button sits.
+            ((RectTransform)searchBar.transform).anchoredPosition += new Vector2(compact ? -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
         }
 
         public void CleanSearchBar(bool raiseOnChangeEvent = true)

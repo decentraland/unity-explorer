@@ -21,6 +21,11 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunityRequestsReceivedGroupView : MonoBehaviour
     {
         private const int REQUESTS_RECEIVED_MEMBER_CARDS_POOL_DEFAULT_CAPACITY = 5;
+
+        // Sized for the full-width explore panel; the modal host, 400px of which the left column takes, fits two cards fewer per row.
+        private const int GRID_COLUMNS = 5;
+        private const int COMPACT_GRID_COLUMNS = 3;
+
         private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new (0.0f, -26.0f);
 
         public event Action<string>? CommunityButtonClicked;
@@ -91,6 +96,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityId(string id) =>
             CommunityId = id;
+
+        public void SetCompactLayout(bool compact) =>
+            requestReceivedMembersGridContainer.GetComponent<GridLayoutGroup>().constraintCount = compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS;
 
         public void SetTitle(string title) =>
             communityTitle.text = title;

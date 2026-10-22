@@ -10,6 +10,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly IObjectPool<ReelThumbnailController> reelThumbnailPool;
         private readonly IObjectPool<MonthGridController> reelGridPool;
 
+        private int gridColumns;
+        private Vector2 gridCellSize;
+
         public ReelGalleryPoolManager(
             ReelThumbnailView reelThumbnailPrefab,
             MonthGridView monthViewPrefab,
@@ -22,6 +25,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             int gridDefaultCapacity,
             int gridMaxSize)
         {
+            gridColumns = reelGalleryConfigParams.GridLayoutFixedColumnCount;
+            gridCellSize = new Vector2(reelGalleryConfigParams.ThumbnailWidth, reelGalleryConfigParams.ThumbnailHeight);
+
             reelThumbnailPool = new ObjectPool<ReelThumbnailController>(
                 () =>
                 {
@@ -49,8 +55,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 },
                 grid =>
                 {
-                    grid.view.gridLayoutGroup.constraintCount = reelGalleryConfigParams.GridLayoutFixedColumnCount;
-                    grid.view.gridLayoutGroup.cellSize = new Vector2(reelGalleryConfigParams.ThumbnailWidth, reelGalleryConfigParams.ThumbnailHeight);
+                    grid.view.gridLayoutGroup.constraintCount = gridColumns;
+                    grid.view.gridLayoutGroup.cellSize = gridCellSize;
                     grid.view.monthText.gameObject.SetActive(reelGalleryConfigParams.GridShowMonth);
                     grid.view.gameObject.SetActive(true);
                 },
@@ -84,5 +90,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public void ReleaseGridElement(MonthGridController monthGridView) =>
             reelGridPool.Release(monthGridView);
+
+        /// <summary>
+        ///     Lays out the grids taken out from now on; the ones out already keep theirs until they come back.
+        /// </summary>
+        public void SetGridLayout(int columns, Vector2 cellSize)
+        {
+            gridColumns = columns;
+            gridCellSize = cellSize;
+        }
     }
 }

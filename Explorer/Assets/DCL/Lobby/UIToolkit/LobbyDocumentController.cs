@@ -407,15 +407,15 @@ namespace DCL.Lobby
 
             // The four-column rail lists the same communities as the seven-column one; only a user the feature admits gets
             // the sections, which a verdict still pending here brings up from the fetch
-            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
-            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
+            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
 
             if (communitiesProvider != null && CommunitiesFeatureAccess.Instance.IsUserAllowedCached())
                 ShowCommunitiesSections();
 
             // The four-column rail lists the same photos as the seven-column one
-            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
-            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
+            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
 
             if (cameraReel != null && identityCache.Identity != null)
             {
@@ -1336,6 +1336,12 @@ namespace DCL.Lobby
 
         private void ShowEvents() =>
             ShowExploreSection(ExploreSections.Events);
+
+        private void ShowCommunities() =>
+            ShowExploreSection(ExploreSections.Communities);
+
+        private void ShowGallery() =>
+            ShowExploreSection(ExploreSections.CameraReel);
 
         private void ShowExploreSection(ExploreSections section)
         {

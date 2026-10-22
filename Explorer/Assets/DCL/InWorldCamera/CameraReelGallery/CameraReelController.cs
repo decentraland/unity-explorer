@@ -15,13 +15,19 @@ using Utility;
 
 namespace DCL.InWorldCamera.CameraReelGallery
 {
-    public class CameraReelController : ISection, IDisposable
+    public class CameraReelController : IHostableSection, IDisposable
     {
+        // The modal host is narrower than the explore panel's slot: one column fewer, the thumbnails shrunk so the
+        // row still fills the width
+        private const int COMPACT_GRID_COLUMNS = 5;
+        private const int COMPACT_THUMBNAIL_WIDTH = 292;
+        private const int COMPACT_THUMBNAIL_HEIGHT = 219;
+
         public event Action Activated;
         public readonly CameraReelGalleryController CameraReelGalleryController;
 
         private readonly CameraReelView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IMVCManager mvcManager;
@@ -29,6 +35,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly GalleryEventBus galleryEventBus;
 
         private CancellationTokenSource showCancellationTokenSource;
+        private bool isSectionActivated;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
 
         public CameraReelController(
             CameraReelView view,
@@ -48,7 +59,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.cursor = cursor;
             this.galleryEventBus = galleryEventBus;
 
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
 
             this.view.MouseEnter += StorageFullIconEnter;
             this.view.MouseExit += StorageFullIconExit;
@@ -99,6 +110,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public void Activate()
         {
+            isSectionActivated = true;
             showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
             view.gameObject.SetActive(true);
             cursor.Unlock();
@@ -109,6 +121,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public void Deactivate()
         {
+            isSectionActivated = false;
             view.gameObject.SetActive(false);
             showCancellationTokenSource.SafeCancelAndDispose();
         }
@@ -127,8 +140,29 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.headerAnimator.Update(0);
         }
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first; that hands the
+            // grids back to the pool, so the next show lays them out for the new host.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            if (host == homeHost)
+                CameraReelGalleryController.RestoreGridLayout();
+            else
+                CameraReelGalleryController.SetGridLayout(COMPACT_GRID_COLUMNS, COMPACT_THUMBNAIL_WIDTH, COMPACT_THUMBNAIL_HEIGHT);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void Dispose()
         {
