@@ -108,7 +108,7 @@ namespace DCL.Profiles.Self
             }
         }
 
-        /// <param name="localOnly">Publishes the edit locally and reports it as saved without sending it to the catalyst.</param>
+        /// <summary>Deploys the edit; <paramref name="localOnly" /> publishes it locally and reports it as saved without sending it to the catalyst.</summary>
         public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;

@@ -31,12 +31,12 @@ namespace DCL.Profiles.Tests
 
         private static readonly URLDomain LAMBDAS = URLDomain.FromString("https://test-url.com/lambdas");
 
-        private RealmProfileRepository repository;
-        private IWebRequestController webRequestController;
-        private IProfileCache profileCache;
+        private RealmProfileRepository repository = null!;
+        private IWebRequestController webRequestController = null!;
+        private IProfileCache profileCache = null!;
 
         // 19 profiles
-        private List<Profile> dtos;
+        private List<Profile> dtos = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -210,7 +210,7 @@ namespace DCL.Profiles.Tests
         {
             try
             {
-                await repository.GetAsync(dtos[0].UserId, 0, LAMBDAS, CancellationToken.None, false, fetchBehaviour, ProfileTier.Kind.Full);
+                await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false, fetchBehaviour, ProfileTier.Kind.Full);
                 return null;
             }
             catch (Exception e) { return e; }
