@@ -17,7 +17,7 @@
     "cargo_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.toml",
-      "sha256": "52c3fc49ee32feaeea23b9857b621525c71fde1b2e743c8d20b43c96313bc914"
+      "sha256": "fa3846d8968ec89b01a9749d1e59c6bdf7d3f6d57b4033b7564f11699e6118b9"
     },
     "cargo_lock": {
       "comment": [
@@ -27,7 +27,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock",
-      "sha256": "44d3b43e95e9d25214c4bd37d0f14926910d99e95dd4a3df349990c8602b46d6"
+      "sha256": "bf03b50b9ae5c5cc89c4be124c9de7c4985257be592aa6fb5d7638f089f3b666"
     },
     "cargo_config": {
       "comment": [
@@ -66,9 +66,9 @@
         "profile": "release",
         "crate_version": "0.1.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "c9fe26baefac242514d94fbe3bcc1784136b8e3eebbe6be4d1f248a7aa2930d7",
-        "source_files": 4,
-        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7",
+        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_files": 5,
+        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -80,8 +80,8 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
-          "sha256": "c7614a934338e2dbab44035a37fc212cedf95233f771da117e04c086d210680f",
-          "bytes": 6253952,
+          "sha256": "07846e1fbb60751e72a4445fd9e4c37aa3a2ca2032adcda303b3d5cced31b84c",
+          "bytes": 6254032,
           "produced_by": "cargo"
         }
       ]
@@ -93,9 +93,9 @@
         "profile": "release",
         "crate_version": "0.1.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "c9fe26baefac242514d94fbe3bcc1784136b8e3eebbe6be4d1f248a7aa2930d7",
-        "source_files": 4,
-        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7",
+        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_files": 5,
+        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -105,8 +105,8 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
-          "sha256": "10f131ded0fab68088374b0daa4e6303094ea971d263cbfc2e1b2f2ff459d7c8",
-          "bytes": 4562432,
+          "sha256": "c2c3bed93fe2c89c6e46f7188e2990516ca1cb6b1e0805ffbf81afdd386c8964",
+          "bytes": 4564480,
           "produced_by": "cargo"
         }
       ]
@@ -117,21 +117,21 @@
         "target": "x86_64-unknown-linux-gnu",
         "profile": "release",
         "crate_version": "0.1.0",
-        "source_digest": "c9fe26baefac242514d94fbe3bcc1784136b8e3eebbe6be4d1f248a7aa2930d7",
-        "source_files": 4,
+        "source_digest": "12b3f47d2a40ee588c9b881cfae1272d8b79bf50bd264c6fc5a647379d292cbc",
+        "source_files": 5,
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
           "gcc": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
         },
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "repo_commit": "b88c455b4008012ef12e5a3290c2cb5a5da2e6f7"
+        "repo_commit": "b98d0e4b4673976dc53bb7a42fe6df55bcea0309"
       },
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Linux/segment-server.so",
-          "sha256": "d837dd95744750bd5a35b1080679ff11fa0870597304d1ad4f1e6c2a35d46452",
-          "bytes": 5712320,
+          "sha256": "5f82306f7b49227959f94105b1a78e66d1715ab270cf12f47a5f4dea32d2f185",
+          "bytes": 5694432,
           "produced_by": "cargo"
         }
       ]
