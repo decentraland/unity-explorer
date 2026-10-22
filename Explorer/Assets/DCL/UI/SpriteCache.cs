@@ -111,7 +111,11 @@ namespace DCL.UI
         public void Clear()
         {
             foreach (KeyValuePair<string, Sprite> row in cachedSprites)
+            {
+                // Sprites downloaded here own their texture; destroying only the sprite would leak it
+                Object.Destroy(row.Value.texture);
                 Object.Destroy(row.Value);
+            }
 
             cachedSprites.Clear();
             failedSprites.Clear();

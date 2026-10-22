@@ -1,12 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.InWorldCamera.ReelActions;
-using DCL.Optimization.Pools;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Pool;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
@@ -35,13 +31,16 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.pageSize = pageSize;
         }
 
-        public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(
-            ListObjectPool<CameraReelResponseCompact> listPool,
-            CancellationToken ct)
+        public async UniTask FetchNextPageAsync(CancellationToken ct)
         {
             CameraReelResponsesCompact response = await FetchResponseAsync(ct);
 
-            return ProcessResponse(response, listPool);
+            currentOffset += pageSize;
+            currentLoadedImages += response.images.Count;
+
+            // A short page ends the gallery even when the storage count is stale, so paging cannot spin on empty responses
+            AllImagesLoaded = currentLoadedImages >= totalImages || response.images.Count < pageSize;
+            AllOrderedResponses.AddRange(response.images);
         }
 
         private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
@@ -58,36 +57,19 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             return await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
         }
 
-        private Dictionary<DateTime, List<CameraReelResponseCompact>> ProcessResponse(CameraReelResponsesCompact response, ListObjectPool<CameraReelResponseCompact> listPool)
+        /// <summary>
+        ///     Returns false when the reel was not loaded, which happens when another open gallery already removed it.
+        /// </summary>
+        public bool RemoveReelId(string reelId)
         {
-            currentOffset += pageSize;
-
-            currentLoadedImages += response.images.Count;
-            AllImagesLoaded = currentLoadedImages == totalImages;
-            AllOrderedResponses.AddRange(response.images);
-
-            Dictionary<DateTime, List<CameraReelResponseCompact>> elements = DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Get();
-            for (int i = 0; i < response.images.Count; i++)
-            {
-                DateTime imageBucket = ReelUtility.GetImageDateTime(response.images[i]);
-
-                if (!elements.ContainsKey(imageBucket))
-                    elements[imageBucket] = listPool.Get();
-
-                elements[imageBucket].Add(response.images[i]);
-            }
-
-            return elements;
-        }
-
-        public void RemoveReelId(string reelId)
-        {
-            for (int i = 0; i < AllOrderedResponses.Count; i++)
+            for (var i = 0; i < AllOrderedResponses.Count; i++)
                 if (AllOrderedResponses[i].id == reelId)
                 {
                     AllOrderedResponses.RemoveAt(i);
-                    break;
+                    return true;
                 }
+
+            return false;
         }
     }
 

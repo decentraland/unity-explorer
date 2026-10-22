@@ -80,7 +80,7 @@ namespace DCL.Navmap
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
-            ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
+            ISpriteCache? reelThumbnailCache = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
             bool? reelUseSignedRequest = null,
             GalleryEventBus? galleryEventBus = null)
@@ -110,7 +110,7 @@ namespace DCL.Navmap
                 this.cameraReelGalleryController = new CameraReelGalleryController(
                     view.CameraReelGalleryView,
                     cameraReelStorageService!,
-                    cameraReelScreenshotsStorage!,
+                    reelThumbnailCache!,
                     reelGalleryConfigParams!.Value,
                     reelUseSignedRequest!.Value,
                     galleryEventBus!);
