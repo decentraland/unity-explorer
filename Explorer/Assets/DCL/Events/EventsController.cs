@@ -12,7 +12,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
@@ -22,7 +21,7 @@ using UnityEngine;
 
 namespace DCL.Events
 {
-    public class EventsController : ISection, IDisposable
+    public class EventsController : IHostableSection, IDisposable
     {
         public event Action<bool>? CreateEventButtonClicked;
 
@@ -37,8 +36,12 @@ namespace DCL.Events
         public EventsCalendarController EventsCalendarController { get; }
         public EventCardActionsController EventCardActionsController { get; }
 
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+
         private readonly EventsView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -66,7 +69,7 @@ namespace DCL.Events
             CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -119,8 +122,25 @@ namespace DCL.Events
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            view.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void OpenSection(EventsSection section, DateTime? fromDate = null)
         {

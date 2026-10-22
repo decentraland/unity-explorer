@@ -3,7 +3,6 @@ using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.CharacterMotion.Components
 {
@@ -50,12 +49,6 @@ namespace DCL.CharacterMotion.Components
         public readonly AsyncLoadProcessReport? AssetsResolution;
 
         public bool TimedOut => UnityEngine.Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
-
-        /// <summary>
-        ///     Where this teleport lands. <see cref="Parcel" /> is left at zero by the flows that carry the
-        ///     destination in <see cref="Position" /> instead, so neither field answers this on its own.
-        /// </summary>
-        public Vector2Int DestinationParcel => IsPositionSet ? Position.ToParcel() : Parcel;
 
         public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false, bool landOnParcel = false, string? spawnPointName = null)
         {

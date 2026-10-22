@@ -68,6 +68,7 @@ namespace DCL.Profiles.Self.Playground
                         false)
                 ),
                 web3IdentityCache,
+                realmData,
                 equippedWearables,
                 wearableStorage,
                 emoteStorage,

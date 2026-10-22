@@ -36,7 +36,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Backpack
 {
-    public class BackpackController : ISection, IDisposable
+    public class BackpackController : IHostableSection, IDisposable
     {
         private const float COMPACT_HOST_MARGIN = 40f;
 
@@ -63,7 +63,6 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
-        private readonly IRealmData realmData;
         private readonly RectSnapshot contentFull;
         private readonly Vector2[] shiftedFullPositions;
         private readonly RectSnapshot[] trimmedFull;
@@ -365,7 +364,7 @@ namespace DCL.Backpack
             cursor.Unlock();
 
             isActive = true;
-            backpackEventBus.SendBackpackActivateEvent(CurrentHost == homeHost);
+            backpackEventBus.SendBackpackActivateEvent(IsAtHome);
         }
 
         public void Deactivate()
@@ -406,10 +405,9 @@ namespace DCL.Backpack
         public RectTransform? CurrentHost =>
             view.transform.parent as RectTransform;
 
-        /// <summary>
-        ///     Moves the single backpack view under the host about to show it; a compact host is narrower than the screen, so the item info column is dropped.
-        /// </summary>
-        public void AttachTo(RectTransform host, bool compact)
+        public bool IsAtHome => CurrentHost == homeHost;
+
+        public void AttachTo(RectTransform host)
         {
             var viewRect = (RectTransform)view.transform;
 
@@ -417,22 +415,17 @@ namespace DCL.Backpack
             if (isActive && viewRect.parent != host)
                 Deactivate();
 
-            SetCompactLayout(compact);
+            // Every host but the explore slot is narrower than the screen, which leaves no room for the item info column.
+            SetCompactLayout(host != homeHost);
 
-            if (viewRect.parent == host) return;
-
-            viewRect.SetParent(host, false);
-            viewRect.anchorMin = Vector2.zero;
-            viewRect.anchorMax = Vector2.one;
-            viewRect.offsetMin = Vector2.zero;
-            viewRect.offsetMax = Vector2.zero;
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
 
             // Only the explore panel drives the panel animators, so a view coming from anywhere else would keep the state it was left in
             ResetAnimator();
         }
 
         public void AttachToHome() =>
-            AttachTo(homeHost, false);
+            AttachTo(homeHost);
 
         /// <summary>
         ///     Trims the item info column off the content panel and gives the freed width to the avatar, from the authored rects snapshotted at construction so repeated passes do not compound.

@@ -15,6 +15,7 @@ using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.UI.SystemMenu;
 using MVC;
 using System;
 using System.Threading;
@@ -49,11 +50,7 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IPassportBridge passportBridge;
         private readonly IMVCManager mvcManager;
-        private readonly ICompositeWeb3Provider web3Authenticator;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly IProfileCache profileCache;
-        private readonly World world;
-        private readonly Entity playerEntity;
+        private readonly UserLogout userLogout;
         private readonly URLBuilder urlBuilder = new ();
         private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
 
@@ -71,11 +68,7 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             IPassportBridge passportBridge,
             IMVCManager mvcManager,
-            ICompositeWeb3Provider web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfileCache profileCache,
-            World world,
-            Entity playerEntity)
+            UserLogout userLogout)
         {
             this.view = view;
             this.identityCache = identityCache;
@@ -85,11 +78,7 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportBridge = passportBridge;
             this.mvcManager = mvcManager;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
-            this.profileCache = profileCache;
-            this.world = world;
-            this.playerEntity = playerEntity;
+            this.userLogout = userLogout;
 
             view.ProfilePicture.Bind(thumbnail);
 
@@ -217,27 +206,7 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid SignOutAsync(CancellationToken ct)
         {
-            try
-            {
-                if (identityCache.Identity == null)
-                {
-                    ReportHub.LogError(ReportCategory.UI, "Cannot sign out. Identity is null.");
-                    return;
-                }
-
-                Web3Address address = identityCache.Identity.Address;
-                await web3Authenticator.LogoutAsync(ct);
-                profileCache.Remove(address);
-
-                await userInAppInitializationFlow.ExecuteAsync(
-                    new UserInAppInitializationFlowParameters(
-                        showAuthentication: true,
-                        showLoading: true,
-                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
-                        world: world,
-                        playerEntity: playerEntity),
-                    ct);
-            }
+            try { await userLogout.LogoutAsync(ct); }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }

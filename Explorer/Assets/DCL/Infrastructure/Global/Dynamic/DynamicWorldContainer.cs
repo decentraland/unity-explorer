@@ -56,6 +56,7 @@ using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -534,6 +535,8 @@ namespace Global.Dynamic
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
 
+            var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -573,7 +576,7 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     userBlockingCache,
                     includeBannedUsersFromScene),
-                uiShellContainer.CreateMainUIPlugin(includeFriends, staticContainer.SingleSceneMode, staticContainer.ScenesCache),
+                uiShellContainer.CreateMainUIPlugin(includeFriends),
                 profileContainer.CreateProfilePlugin(staticContainer),
                 mapRendererContainer.CreatePlugin(),
                 new SidebarPlugin(
@@ -585,11 +588,8 @@ namespace Global.Dynamic
                     profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
-                    profileCache,
+                    userLogout,
                     globalWorld,
-                    playerEntity,
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
                     profileContainer.SelfProfile,
@@ -653,15 +653,13 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     characterPreviewFactory,
                     profilesRepository,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
+                    userLogout,
                     profileContainer.SelfProfile,
                     profileContainer.EquippedWearables,
                     profileContainer.EquippedEmotes,
                     webBrowser,
                     emotesCache,
                     staticContainer.RealmData,
-                    profileCache,
                     characterPreviewEventBus,
                     placesAndEventsContainer.MapPathEventBus,
                     wearableContainer.BackpackEventBus,
@@ -672,7 +670,7 @@ namespace Global.Dynamic
                     wearableContainer.EmoteProvider,
                     globalWorld,
                     playerEntity,
-                    chatContainer.ChatMessagesBus,
+                    chatContainer.ChatTeleporter,
                     staticContainer.MemoryCap,
                     bootstrapContainer.VolumeBus,
                     placesAndEventsContainer.EventsApiService,
@@ -684,7 +682,6 @@ namespace Global.Dynamic
                     userBlockingCache,
                     profileContainer.ProfileChangesBus,
                     staticContainer.SceneLoadingLimit,
-                    staticContainer.SingleSceneMode,
                     uiShellContainer.MainUIView.WarningNotification,
                     profileContainer.ProfileRepositoryWrapper,
                     upscaleController,
@@ -860,10 +857,11 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
                 globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, uiShellContainer.Cursor, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
-                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
-                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, chatContainer.ChatMessagesBus, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
+                    userLogout, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

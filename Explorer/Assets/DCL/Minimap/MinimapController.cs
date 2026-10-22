@@ -412,6 +412,9 @@ namespace DCL.Minimap
                     new Vector2Int(viewInstance.mapRendererVisibleParcels, viewInstance.mapRendererVisibleParcels)
                 ));
 
+                // The minimap always renders the satellite layer, whatever the navmap's filter left the shared flag at.
+                mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);

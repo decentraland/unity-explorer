@@ -2,7 +2,6 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
-using DCL.Navmap;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -16,6 +15,9 @@ namespace DCL.MapRenderer.MapCameraController
         private const int MAX_TEXTURE_SIZE = 4096;
         private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
+        // The orthographic half-height, in parcels, of a zoomable camera at its closest zoom. At this zoom, the map shows about satellite level 8.
+        private const int CLOSEST_ZOOM_PARCELS = 1;
+
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
         public event Action<float, float, int>? ZoomChanged;
 
@@ -23,7 +25,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public Camera Camera => mapCameraObject.mapCamera;
 
-        public float Zoom => Mathf.InverseLerp(zoomValues.y, zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+        public float Zoom => Mathf.InverseLerp(zoomValues.y, ClosestZoom(), mapCameraObject.mapCamera.orthographicSize);
 
         public Vector2 LocalPosition => mapCameraObject.mapCamera.transform.localPosition;
 
@@ -35,6 +37,7 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly MapCameraObject mapCameraObject;
 
         private RenderTexture? renderTexture;
+        private IMapActivityOwner? renter;
 
         // Zoom Thresholds in Parcels
         private Vector2Int zoomValues;
@@ -58,8 +61,9 @@ namespace DCL.MapRenderer.MapCameraController
             mapCameraObject.mapCamera.orthographic = true;
         }
 
-        void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
+        void IMapCameraControllerInternal.Initialize(IMapActivityOwner owner, Vector2Int textureResolution, Vector2Int zoomValuesInParcels, MapLayer layers)
         {
+            renter = owner;
             textureResolution = ClampTextureResolution(textureResolution);
             renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 16, RenderTextureFormat.Default, 0);
             // Bilinear and Trilinear make texture blurry
@@ -67,7 +71,7 @@ namespace DCL.MapRenderer.MapCameraController
             renderTexture.autoGenerateMips = false;
             renderTexture.useMipMap = false;
 
-            this.zoomValues = zoomValues * coordsUtils.ParcelSize;
+            zoomValues = zoomValuesInParcels * coordsUtils.ParcelSize;
 
             EnabledLayers = layers;
 
@@ -178,13 +182,20 @@ namespace DCL.MapRenderer.MapCameraController
         private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
             zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, ClosestZoom(), zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
             ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
         }
+
+        private bool IsZoomable() =>
+            zoomValues.x < zoomValues.y;
+
+        // Markers and clusters still scale against the configured closest zoom, zoomValues.x.
+        private float ClosestZoom() =>
+            IsZoomable() ? CLOSEST_ZOOM_PARCELS * coordsUtils.ParcelSize : zoomValues.x;
 
         private Vector3 ClampLocalPosition(Vector3 localPos)
         {
@@ -234,6 +245,10 @@ namespace DCL.MapRenderer.MapCameraController
         public void ResumeRendering()
         {
             mapCameraObject.mapCamera.enabled = true;
+
+            // The camera resumes in place, so no camera move marks it dirty. Without this, the updates that it skipped while suspended never run.
+            if (renter != null)
+                cullingController.SetCameraDirty(this);
         }
 
         public void SetActive(bool active)
@@ -253,6 +268,10 @@ namespace DCL.MapRenderer.MapCameraController
 
         public void Release(IMapActivityOwner owner)
         {
+            // A previous renter's stale reference must not free the camera under its current renter.
+            if (owner != renter) return;
+
+            renter = null;
             cullingController.OnCameraRemoved(this);
             if (renderTexture != null)
                 renderTexture.Release();

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,6 +27,7 @@ namespace DCL.Profiles.Self
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
@@ -40,6 +42,7 @@ namespace DCL.Profiles.Self
             IProfileRepository profileRepository,
             IProfileCache profileCache,
             IWeb3IdentityCache identityCache,
+            IRealmData realmData,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
             IEquippedWearables equippedWearables,
@@ -52,6 +55,7 @@ namespace DCL.Profiles.Self
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
             this.identityCache = identityCache;
+            this.realmData = realmData;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
@@ -110,6 +114,11 @@ namespace DCL.Profiles.Self
         {
             try
             {
+                // The profile endpoints are resolved from the realm, so a fetch started before it is configured
+                // waits for it instead of sending a request built from a placeholder url.
+                if (!realmData.Configured)
+                    await UniTask.WaitUntil(realmData, static realm => realm.Configured, cancellationToken: ct);
+
                 // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
                 // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
                 Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
