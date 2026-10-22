@@ -107,26 +107,30 @@ namespace DCL.SDKComponents.MediaStream
 
         internal PresentationSlide slide { get; private set; }
 
+        internal string slideUrl { get; private set; }
+
         internal string? clientVideoUrl { get; private set; }
 
-        internal ComposingVideo(LivekitAddress requested, IDisposable slideLease, string bot, PresentationBotMetadata presentation, PresentationSlide slide)
+        internal ComposingVideo(LivekitAddress requested, IDisposable slideLease, string bot, PresentationBotMetadata presentation, PresentationSlide slide, string slideUrl)
         {
             this.requested = requested;
             this.slideLease = slideLease;
             this.bot = bot;
             this.presentation = presentation;
             this.slide = slide;
+            this.slideUrl = slideUrl;
             clientVideoUrl = ClientVideoUrlOf(presentation);
         }
 
         /// <summary>
         ///     Switches to new metadata, keeping the held streams and the shown slide, and composes again on the next read.
         /// </summary>
-        internal void Show(string nextBot, PresentationBotMetadata nextPresentation, PresentationSlide nextSlide)
+        internal void Show(string nextBot, PresentationBotMetadata nextPresentation, PresentationSlide nextSlide, string nextSlideUrl)
         {
             bot = nextBot;
             presentation = nextPresentation;
             slide = nextSlide;
+            slideUrl = nextSlideUrl;
             clientVideoUrl = ClientVideoUrlOf(nextPresentation);
             composedFrame = -1;
         }
