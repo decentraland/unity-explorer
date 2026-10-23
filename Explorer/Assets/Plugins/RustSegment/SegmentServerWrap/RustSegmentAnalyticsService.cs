@@ -33,8 +33,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
-        // nullable service
-        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private static readonly Mutex<RustSegmentAnalyticsService?> CURRENT = new (null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
 
         private readonly string anonId;
@@ -50,15 +49,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
-        // temportal sentry budget fix. TODO remove once the core issue solved
-        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
-
         private readonly IEventBus? eventBus;
 
         public RustSegmentAnalyticsService(string writerKey, string apiHost, string? anonId, IEventBus? eventBus = null)
         {
             this.eventBus = eventBus;
-            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -83,15 +79,16 @@ namespace Plugins.RustSegment.SegmentServerWrap
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
             using var mApiHost = new MarshaledString(apiHost);
-            bool result = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback);
+            NativeMethods.QueueHealth health = NativeMethods.SegmentServerInitialize(mQueuePath.Ptr, DEFAULT_LIMIT, mWriterKey.Ptr, mApiHost.Ptr, Callback, ErrorCallback);
 
-            if (result == false)
+            if (health == NativeMethods.QueueHealth.NotInitialized)
                 throw new Exception("Rust Segment initialization failed");
 
             this.cancellationTokenSource = new CancellationTokenSource();
             PumpJobAsync(this.cancellationTokenSource).Forget();
 
             ReportHub.Log(ReportCategory.ANALYTICS, $"Rust Segment initialized, api host: {apiHost}");
+            LogQueueHealth(health);
             instanceGuard.Value = this;
         }
 
@@ -99,7 +96,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             while (cts.IsCancellationRequested == false)
             {
-                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
+                int result = NativeMethods.SegmentServerPumpNextEvent();
                 if (result > 0) continue; // instantly jump to new iteration;
                 await UniTask.Delay(PUMP_DELAY);
             }
@@ -110,7 +107,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (publicLock)
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 cancellationTokenSource.Cancel();
                 cancellationTokenSource.Dispose();
@@ -232,32 +229,34 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
+        [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiErrorCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
             try
             {
-                const string ONCE_PATTERN = "(will retry)";
-
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
-                bool isCaught = marshaled.Contains(ONCE_PATTERN);
-
-                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
-                {
-                    // Don't log if already was
-                    return;
-                }
-
                 ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
-
-                if (isCaught)
-                {
-                    ONCE_PATTERN_ALREADY_CAUGHT = true;
-                }
             }
             catch
             {
                 // Ignore to avoid possibility of double exception
+            }
+        }
+
+        private static void LogQueueHealth(NativeMethods.QueueHealth health)
+        {
+            switch (health)
+            {
+                case NativeMethods.QueueHealth.Persistent:
+                    return;
+                case NativeMethods.QueueHealth.OwnedByAnotherInstance:
+                    ReportHub.Log(ReportCategory.ANALYTICS, "Segment queue file is owned by another running instance: the events of this session are kept in memory only");
+                    return;
+                case NativeMethods.QueueHealth.DegradedOther:
+                    return;
+                default:
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment queue file health: {health}");
+                    return;
             }
         }
 
@@ -266,7 +265,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 if (instanceGuard.Value == null) return;
 
