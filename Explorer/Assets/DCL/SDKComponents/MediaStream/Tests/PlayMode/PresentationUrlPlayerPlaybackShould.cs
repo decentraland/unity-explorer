@@ -95,6 +95,23 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [UnityTest]
+        public IEnumerator ShowNoFrame_WhenReopeningParkedPlayer()
+        {
+            // Arrange
+            ResolveTo(Fixtures.ToneColorBands);
+            yield return UpdateUntil(() => urlPlayer.Texture != null, null, true, "presenting");
+            urlPlayer.Release();
+
+            // Act
+            Tick(null, true);
+            Tick(null, true);
+
+            // Assert
+            Assert.IsNotNull(mediaPlayer);
+            Assert.IsNull(urlPlayer.Texture);
+        }
+
+        [UnityTest]
         public IEnumerator SeekToTarget_WhenItDriftsAndHoldTheNextSeek()
         {
             // Arrange
