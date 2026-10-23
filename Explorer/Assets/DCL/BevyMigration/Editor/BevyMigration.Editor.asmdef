@@ -1,0 +1,18 @@
+{
+    "name": "BevyMigration.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7476468734004d07a7eaa70464a85956"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

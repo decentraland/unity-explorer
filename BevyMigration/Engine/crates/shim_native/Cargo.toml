@@ -1,0 +1,12 @@
+[package]
+name = "shim_native"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Object model storage, transforms, rapier, kira, input backing for the shim (plan § 9)."
+
+[dependencies]
+
+[lints]
+workspace = true

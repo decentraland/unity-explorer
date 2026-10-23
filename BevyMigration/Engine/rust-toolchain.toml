@@ -1,0 +1,7 @@
+# Pinned, not inherited: the compiler is an input to the shipped bridge and host
+# binaries (plan § 2). Matches the pin of the other native crates in this repository
+# (Explorer/Assets/Plugins/UUAV/native, Explorer/Assets/Plugins/RustSegment/.native).
+[toolchain]
+channel = "1.97.1"
+# Not part of the bare toolchain; the local gate runs `cargo fmt --check` and `cargo clippy`.
+components = ["clippy", "rustfmt"]

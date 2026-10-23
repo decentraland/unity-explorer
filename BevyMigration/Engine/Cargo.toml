@@ -1,0 +1,38 @@
+# Rust side of the Bevy migration (BevyMigration/docs/README.md § 4).
+# Every crate here is a workspace member; the pinned toolchain lives in
+# rust-toolchain.toml; the local gate is `cargo fmt --check`, `cargo clippy --all-targets --locked -- -D warnings`
+# and `cargo test --locked` (plan § 7, step 0). No CI workflow exists for it.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+# Bevy is pinned once, here, for the whole workspace (plan § 2: "current stable at
+# step 0, pinned per workspace"). No crate depends on it until step 2, so it is not in
+# Cargo.lock yet; crates take it with `bevy = { workspace = true }` and never pin their
+# own version. Bumping it is an isolated upgrade PR (plan § 14).
+[workspace.dependencies]
+bevy = { version = "=0.20.0", default-features = false }
+
+[workspace.lints.rust]
+# Denied, not forbidden: abi and unity_bridge lift it per module when the extern "C"
+# surface lands in step 2, with every entry wrapped in catch_unwind (plan § 7, step 2).
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+must_use_candidate = "allow"
+# Panics never cross the FFI boundary (plan § 12), so none may exist to begin with.
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"

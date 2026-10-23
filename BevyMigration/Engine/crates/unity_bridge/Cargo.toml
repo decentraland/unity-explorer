@@ -1,0 +1,17 @@
+[package]
+name = "unity_bridge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "cdylib Unity loads: snapshot ingest, handle tables, resource upload (plan § 8)."
+
+# The library Unity loads as a native plugin (plan § 8). rlib as well so the
+# test harness and crates/app can link it in-process.
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+[lints]
+workspace = true

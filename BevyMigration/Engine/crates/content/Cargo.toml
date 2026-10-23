@@ -1,0 +1,12 @@
+[package]
+name = "content"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Export-format loaders, IPFS asset source, glTF URI resolver (plan § 11)."
+
+[dependencies]
+
+[lints]
+workspace = true

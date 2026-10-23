@@ -1,0 +1,12 @@
+[package]
+name = "render"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Bevy render plugin: material families, skinning compute, offscreen target (plan § 8)."
+
+[dependencies]
+
+[lints]
+workspace = true

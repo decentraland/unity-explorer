@@ -1,0 +1,12 @@
+[package]
+name = "abi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "extern C surface of the bridge and host; csbindgen input (plan § 7, step 2)."
+
+[dependencies]
+
+[lints]
+workspace = true

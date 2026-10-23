@@ -1,0 +1,12 @@
+[package]
+name = "host"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "CoreCLR hosting through hostfxr, tick, function tables (plan § 12)."
+
+[dependencies]
+
+[lints]
+workspace = true

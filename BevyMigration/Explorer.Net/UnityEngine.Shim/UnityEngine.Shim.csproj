@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UnityEngine-compatible assemblies (BevyMigration/docs/README.md § 9). Empty at step 0:
+       members enter only through the allowlist, each with its conformance recording. -->
+  <PropertyGroup>
+    <RootNamespace>UnityEngine</RootNamespace>
+  </PropertyGroup>
+</Project>

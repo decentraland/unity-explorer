@@ -1,0 +1,12 @@
+[package]
+name = "app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Desktop binary: owns window, input, frame and plugin composition (plan § 12)."
+
+[dependencies]
+
+[lints]
+workspace = true

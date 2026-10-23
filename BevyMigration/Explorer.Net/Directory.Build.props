@@ -1,0 +1,18 @@
+<Project>
+  <!-- The Unity-free .NET side of the migration (BevyMigration/docs/README.md § 4 and § 9).
+       Generated/ (one csproj per asmdef, step 6) and Bindings/ (csbindgen output, step 2)
+       inherit these properties too. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- Unity compiles without implicit usings; the shimmed assemblies must see the same global namespace. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- packages.lock.json per project, verify with a locked-mode restore. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>
