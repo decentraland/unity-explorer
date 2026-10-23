@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.DuplicateIdentityPopup;
 using DCL.Utilities.Extensions;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
 using System;

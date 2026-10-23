@@ -226,7 +226,11 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, Copy(saved))));
+                // The re-read profile gets the same overrides as a fetched one, e.g. a new account deploys an empty emote wheel.
+                Profile reported = Copy(saved);
+                ApplySessionOverrides(reported);
+
+                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)

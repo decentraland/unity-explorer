@@ -121,6 +121,7 @@ namespace Global
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
+        public ReactiveProperty<bool> CurrentSceneUiOnly { get; } = new (false);
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
@@ -130,6 +131,8 @@ namespace Global
         public AssetPreLoadCache AssetPreLoadCache { get; private set; } = null!;
         public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
         public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
+
+        public IDiskCache<byte[]> BytesDiskCache { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -246,6 +249,7 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
+            container.BytesDiskCache = new DiskCache<byte[], SerializeMemoryIterator<BytesDiskSerializer.State>>(diskCache, new BytesDiskSerializer());
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
@@ -303,7 +307,7 @@ namespace Global
                 new AudioAnalysisPlugin(sharedDependencies),
                 assetBundlePlugin,
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.CurrentSceneUiOnly),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),

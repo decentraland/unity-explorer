@@ -513,6 +513,9 @@ namespace DCL.Profiles.Tests
             // Arrange
             Profile sent = NewProfile(BOB, 4);
             Profile saved = NewProfile(ALICE, 4);
+
+            // A non-empty emote wheel, so no session override changes the reported profile.
+            saved.Avatar.emotes[0] = BASE_EMOTE;
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
 
             // Act
@@ -526,6 +529,23 @@ namespace DCL.Profiles.Tests
             Assert.That(msg.Sent, Is.SameAs(sent));
             Assert.That(msg.Saved, Is.Not.SameAs(saved), "the cache owns the re-read instance");
             Assert.That(msg.Saved.IsSameProfile(saved), Is.True);
+        }
+
+        [Test]
+        public void FillAnEmptyEmoteWheelOfTheSavedProfileWithTheBaseEmotes()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            Profile saved = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Saved.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+            Assert.That(saved.Avatar.Emotes[0].IsNullOrEmpty(), Is.True, "the cached instance is left as saved");
         }
 
         [Test]
