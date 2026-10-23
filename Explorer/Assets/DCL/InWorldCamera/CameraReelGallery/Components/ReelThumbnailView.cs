@@ -53,14 +53,16 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public void Bind(CameraReelResponseCompact reel, int index, ISpriteCache thumbnailCache)
         {
-            flatIndex = index;
-
             // The same reel keeps its in-flight load; only the index may have shifted.
             if (ReferenceEquals(Reel, reel))
+            {
+                flatIndex = index;
                 return;
+            }
 
             Unbind();
             Reel = reel;
+            flatIndex = index;
             gameObject.SetActive(true);
 
             Sprite? cached = thumbnailCache.GetCachedSprite(reel.thumbnailUrl);
