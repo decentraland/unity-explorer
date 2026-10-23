@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Utilities;
 using MVC;
 using Runtime.Wearables;
 using System.Threading;
@@ -18,6 +19,8 @@ namespace DCL.UI.Skybox
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        public IReadonlyReactiveProperty<bool> HasRunningSmartWearables => smartWearableCache.HasRunningSmartWearables;
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {

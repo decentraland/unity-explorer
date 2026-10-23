@@ -197,8 +197,6 @@ namespace DCL.MarketplaceCredits.Sections
                 if (claimCreditsResponse.ok)
                 {
                     marketplaceCreditsMenuController.ShowCreditsUnlockedPanelAsync(claimCreditsResponse.credits_granted).Forget();
-                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
-                    marketplaceCreditsMenuController.SetSidebarButtonAsClaimIndicator(false);
                 }
                 else
                 {

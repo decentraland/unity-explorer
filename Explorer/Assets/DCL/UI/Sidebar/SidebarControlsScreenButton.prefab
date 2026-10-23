@@ -477,9 +477,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 8544955153548421658}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
-  _hoveredObject: {fileID: 1450628583014599414}
-  _unhoveredObject: {fileID: 7377945679160685912}
-  _selectedObject: {fileID: 1450628583014599414}
+  hoveredObject: {fileID: 1450628583014599414}
+  unhoveredObject: {fileID: 7377945679160685912}
+  selectedObject: {fileID: 1450628583014599414}
 --- !u!1 &3610229566844102426
 GameObject:
   m_ObjectHideFlags: 0

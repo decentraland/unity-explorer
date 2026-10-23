@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities;
 using DCL.SmartWearables;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Common.Components;
@@ -36,6 +37,8 @@ namespace Runtime.Wearables
         private readonly object gate = new ();
         private readonly Dictionary<string, CacheItem> cache = new ();
         private readonly Dictionary<string, UniTaskCompletionSource<CacheItem>> inFlight = new ();
+        private readonly HashSet<string> runningSmartWearables = new (StringComparer.OrdinalIgnoreCase);
+        private readonly ReactiveProperty<bool> hasRunningSmartWearables = new (false);
 
         public SmartWearableCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -54,7 +57,9 @@ namespace Runtime.Wearables
         /// <summary>
         ///     Contains the IDs of Smart Wearables equipped and that are currently running.
         /// </summary>
-        public HashSet<string> RunningSmartWearables { get; } = new (StringComparer.OrdinalIgnoreCase);
+        public IReadOnlyCollection<string> RunningSmartWearables => runningSmartWearables;
+
+        public IReadonlyReactiveProperty<bool> HasRunningSmartWearables => hasRunningSmartWearables;
 
         /// <summary>
         ///     Contains the IDs of Smart Wearables that were manually killed by the user.
@@ -123,8 +128,25 @@ namespace Runtime.Wearables
             }
 
             AuthorizedSmartWearables.Clear();
-            RunningSmartWearables.Clear();
             KilledPortableExperiences.Clear();
+            runningSmartWearables.Clear();
+            hasRunningSmartWearables.Value = false;
+        }
+
+        public bool IsRunning(string id) =>
+            runningSmartWearables.Contains(id);
+
+        public void AddRunningSmartWearable(string id)
+        {
+            runningSmartWearables.Add(id);
+            hasRunningSmartWearables.Value = runningSmartWearables.Count > 0;
+        }
+
+        public bool RemoveRunningSmartWearable(string id)
+        {
+            bool removed = runningSmartWearables.Remove(id);
+            hasRunningSmartWearables.Value = runningSmartWearables.Count > 0;
+            return removed;
         }
 
         /// <summary>
