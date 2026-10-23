@@ -926,7 +926,7 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                     globalPlugins.Add(new McpServerPlugin(
                         appArgs,
-                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                         chatContainer.ChatMessagesBus,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
@@ -1106,7 +1106,6 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams,
                 commsContainer.CurrentSceneInfo,
                 lodContainer.LodCache,
                 lodContainer.RoadCoordinates,
@@ -1114,7 +1113,6 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
-                bootstrapContainer.UseRemoteAssetBundles,
                 bootstrapContainer.UseLocalAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,

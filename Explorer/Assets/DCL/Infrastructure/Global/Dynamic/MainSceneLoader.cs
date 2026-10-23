@@ -44,6 +44,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.AssetBundles;
 using Global.AppArgs;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Requests;
@@ -367,13 +368,18 @@ namespace Global.Dynamic
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
 
-            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
-            // local scene and read-throughs everything else from production). Brought up to health serially,
-            // before the URL sources are built, so the override is seeded only when the server is actually
-            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
+            // Local scene development serves the scene as local asset bundles: the embedded abgen JIT server
+            // becomes the optimized-assets source (it serves the local scene and read-throughs everything else
+            // from production). Brought up to health serially, before the URL sources are built, so the override
+            // is seeded only when the server is actually serving; the whole-scene warm-up continues in the
+            // background and realm loading holds on it below. When the server does not come up nothing is
+            // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
+            // the scene loads either way. --lsd-raw-gltf skips the sidecar and takes that raw-GLTF wiring directly.
             string? localAbBaseUrl = null;
 
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
                 // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
@@ -419,6 +425,7 @@ namespace Global.Dynamic
                 identityCache,
                 pluginSettingsContainer,
                 launchSettings,
+                useLocalAssetBundles: localAbBaseUrl != null,
                 applicationParametersParser,
                 splashScreen.Value,
                 diskCache,

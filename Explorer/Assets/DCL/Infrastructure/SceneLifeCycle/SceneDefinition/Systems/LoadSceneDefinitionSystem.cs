@@ -49,6 +49,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //from the local asset-bundle server (the embedded abgen sidecar).
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
 
+            if (isLocalSceneDevelopment && useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+                AbgenConversionMetrics.INSTANCE.OnSceneManifestUnavailable();
+
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
             await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);

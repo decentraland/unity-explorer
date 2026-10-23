@@ -390,16 +390,12 @@ MonoBehaviour:
       - {x: 100, y: 100}
     targetWorld: flutterecho.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
-    remoteHibridWorld: MetadyneLabs.dcl.eth
-    remoteHybridSceneContentServer: 1
-    useRemoteAssetsBundles: 0
-    useLocalAssetBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
   debugSettings:
     showSplash: 1
-    showAuthentication: 1
+    showAuthentication: 0
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
@@ -408,6 +404,7 @@ MonoBehaviour:
     enableRemotePortableExperiences: 0
     portableExperiencesEnsToLoad: []
     emotesToAddToUserProfile: []
+    wearablesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
     gatekeeperMode: 0

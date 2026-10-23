@@ -61,7 +61,11 @@ namespace Global.Dynamic
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs AppArgs { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
-        public bool UseRemoteAssetBundles { get; private set; }
+        /// <summary>
+        ///     True when the embedded abgen sidecar came up and serves this local-scene-development session; the
+        ///     scene is then loaded as local asset bundles. False in every other session, including a local one whose
+        ///     sidecar failed to install or start — that session loads raw GLTFs.
+        /// </summary>
         public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
 
@@ -103,6 +107,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
+            bool useLocalAssetBundles,
             IAppArgs applicationParametersParser,
             SplashScreen splashScreen,
             IDiskCache diskCache,
@@ -123,8 +128,7 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
-                UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
-                UseLocalAssetBundles = realmLaunchSettings.useLocalAssetBundles,
+                UseLocalAssetBundles = useLocalAssetBundles,
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),

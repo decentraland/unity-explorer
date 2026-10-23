@@ -56,6 +56,7 @@ namespace DCL.UI.DebugMenu
         private SceneContentCaps metricsCaps;
         private int seenFailedConversions;
         private bool seenWarmUpFailure;
+        private bool seenRawGltfFallback;
         private bool abPanelAutoOpened;
         private float abPanelAutoCloseAt = -1f;
         private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
@@ -205,10 +206,10 @@ namespace DCL.UI.DebugMenu
         /// <summary>
         ///     A panel this controller opened on its own also closes on its own: once the warm-up ends
         ///     Ready with zero failed conversions, it lingers briefly (so the READY row is seen) and
-        ///     closes. A failure — warm-up or any per-file one — keeps it open, and a manual toggle
-        ///     hands the panel back to the user (see <see cref="OnAbConversionButtonClicked" />).
+        ///     closes. A failure — warm-up, any per-file one, or the session's degrade to raw GLTFs — keeps
+        ///     it open, and a manual toggle hands the panel back to the user (see <see cref="OnAbConversionButtonClicked" />).
         /// </summary>
-        private void UpdateAbPanelAutoClose(AbgenConversionMetrics.WarmUpStage warmUpStage, int failedConversions)
+        private void UpdateAbPanelAutoClose(AbgenConversionMetrics.WarmUpStage warmUpStage, int failedConversions, bool rawGltfFallback)
         {
             if (!abPanelAutoOpened) return;
 
@@ -218,7 +219,7 @@ namespace DCL.UI.DebugMenu
                 return;
             }
 
-            if (warmUpStage != AbgenConversionMetrics.WarmUpStage.Ready || failedConversions > 0)
+            if (warmUpStage != AbgenConversionMetrics.WarmUpStage.Ready || failedConversions > 0 || rawGltfFallback)
             {
                 abPanelAutoCloseAt = -1f;
                 return;
@@ -245,17 +246,22 @@ namespace DCL.UI.DebugMenu
             AbgenConversionMetrics.WarmUpStage warmUpStage = metrics.WarmUp;
             int failedConversions = metrics.Failed;
             bool warmUpFailed = warmUpStage == AbgenConversionMetrics.WarmUpStage.Failed;
+            bool rawGltfFallback = metrics.RawGltfFallbackReason != null;
 
             if (abConversionPanelView.Visible)
             {
                 seenFailedConversions = failedConversions;
                 seenWarmUpFailure = warmUpFailed;
+                seenRawGltfFallback = rawGltfFallback;
             }
             else if (warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting)
                 seenWarmUpFailure = false; // a new warm-up can fail anew
 
             bool converting = warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting || metrics.InFlight > 0;
-            bool unseenFailure = failedConversions > seenFailedConversions || (warmUpFailed && !seenWarmUpFailure);
+
+            bool unseenFailure = failedConversions > seenFailedConversions
+                                 || (warmUpFailed && !seenWarmUpFailure)
+                                 || (rawGltfFallback && !seenRawGltfFallback);
 
             bool attention = converting
                 ? (int)(UnityEngine.Time.unscaledTime * 2f) % 2 == 0
@@ -266,7 +272,7 @@ namespace DCL.UI.DebugMenu
             // While collapsed the AB button is hidden, so surface the flash on the collapse handle instead.
             collapseButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, sidebarCollapsed && attention);
 
-            UpdateAbPanelAutoClose(warmUpStage, failedConversions);
+            UpdateAbPanelAutoClose(warmUpStage, failedConversions, rawGltfFallback);
         }
 
         private void UpdateMetricsPanel()

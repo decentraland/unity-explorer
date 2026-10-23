@@ -219,7 +219,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride ?? defaultBaseUrl;
 
         /// <summary>
-        ///     The local-ab abgen sidecar's base url or the flag variant payload override the base url, otherwise
+        ///     The local abgen sidecar's base url or the flag variant payload override the base url, otherwise
         ///     https://abcdn.{BaseDomain}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(UrlData dedicatedHost)

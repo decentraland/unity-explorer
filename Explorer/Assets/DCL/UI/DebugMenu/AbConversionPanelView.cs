@@ -79,6 +79,11 @@ namespace DCL.UI.DebugMenu
             if (atBottom && rows.Count > 0)
                 list.ScrollToItem(rows.Count - 1);
 
+            // The verdict leads: once the session degraded, every counter below describes bundles nobody loads.
+            string fallback = metrics.RawGltfFallbackReason is { } reason
+                ? $"<color=#FF6C6C>RAW GLTFs</color> — {reason} · "
+                : string.Empty;
+
             string warmUp = metrics.WarmUp switch
                             {
                                 AbgenConversionMetrics.WarmUpStage.Converting => $"<color=#FFC95B>SCENE CONVERTING</color> {metrics.WarmUpSceneId} · ",
@@ -95,7 +100,7 @@ namespace DCL.UI.DebugMenu
                 ? $"<color=#63D471>{metrics.WarmUpDone}/{metrics.WarmUpTotal}</color> converted"
                 : $"{metrics.Planned} planned · {metrics.InFlight} converting · <color=#63D471>{metrics.Succeeded} ok</color>";
 
-            summary.text = $"{warmUp}{counts} · <color=#FF6C6C>{metrics.Failed} failed</color> · {metrics.TotalOutputBytes / (1024 * 1024f):F1} MB";
+            summary.text = $"{fallback}{warmUp}{counts} · <color=#FF6C6C>{metrics.Failed} failed</color> · {metrics.TotalOutputBytes / (1024 * 1024f):F1} MB";
         }
 
         /// <summary>

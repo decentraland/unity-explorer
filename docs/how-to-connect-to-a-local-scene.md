@@ -113,33 +113,40 @@ Decentraland.exe --realm http://127.0.0.1:8000 --position 0,0 --local-scene true
 
 ## Local asset bundles
 
-By default a local scene loads raw GLTFs. To preview it with real asset bundles, start the scene
-with the SDK's opt-in flag:
+By default a local scene is previewed with real asset bundles: the explorer launches an embedded
+[abgen](https://github.com/decentraland/abgen) sidecar (on the first run it downloads a pinned,
+checksum-verified binary — no abgen installation or `ABGEN_*` environment setup is needed), fetches
+the scene's asset-bundle manifest from it (the sidecar converts the scene's GLBs just-in-time) and
+downloads bundles from the same server. Wearables/emotes keep working — the sidecar answers with
+the production registry's records and streams their bundles from the production ab-cdn. See
+[`abgen-sidecar.md`](abgen-sidecar.md) for the architecture.
+
+**Every failure degrades to raw GLTFs, never to a broken scene.** If the binary cannot be
+downloaded, the server does not start (or its port is held by something else), the scene's
+manifest cannot be fetched, or the server dies mid-session, the scene loads its raw GLTFs instead
+— whole-scene when the server is unavailable, per file when a single bundle fails to convert or
+load. The scene dev console's AB tab opens itself and says what happened and why (the summary
+starts with `RAW GLTFs — <reason>`, and per-file fallbacks show as `FAILED <file> — … loaded as raw
+GLTF`); the sidebar's AB button stays lit until the tab has been looked at. The `HIGHLIGHT SOURCES`
+button in the tab tints bundle-sourced objects green and raw-GLTF ones red.
+
+This is what local scene development always does: there is no `--local-ab` argument or Editor
+checkbox any more (Creator Hub's `local-ab=true` is still accepted and ignored). The one switch is
+the opt-out, off by default:
 
 ```
-npm run start -- -p 8000 --asset-bundles
+--lsd-raw-gltf
 ```
 
-The SDK spawns an [abgen](https://github.com/decentraland/abgen) sidecar fully configured — on the
-first run it downloads a pinned, checksum-verified binary; no abgen installation or `ABGEN_*`
-environment setup is needed. Then launch the explorer with:
+It skips the sidecar entirely and loads the scene's raw GLTFs, the pre-asset-bundle behaviour. To
+inspect the *fallback* path instead (sidecar wanted but failing), hold its port before launching
+(`python3 -m http.server 5147 --bind 127.0.0.1`).
 
-```
---local-ab true
-```
+In the Unity Editor (Initial Realm = Localhost) the same applies: the client launches its embedded
+sidecar on abgen's default loopback port (5147) and wires the URL override itself.
 
-The scene's asset-bundle manifest is fetched from the sidecar (which converts the scene's GLBs
-just-in-time) instead of using the manual LSD manifest, and bundles download from the same server.
-If the manifest fetch fails (sidecar not running), the scene degrades to today's raw-GLTF loading.
-Wearables/emotes keep working — the sidecar answers with the production registry's records and
-streams their bundles from the production ab-cdn.
-
-In the Unity Editor, ticking "Use Local Asset Bundles" in the Main Scene Loader (shown when
-Initial Realm is Localhost) is all that's needed — the client launches its embedded sidecar on a
-free loopback port (5147, or a random one when taken) and wires the URL override itself.
-
-For abgen development itself, `ABGEN_BIN=/path/to/abgen` makes the SDK spawn that binary instead
-of the pinned release, and any `ABGEN_*` variable exported in the shell overrides the SDK's wiring.
+For abgen development itself, drop a binary at `StreamingAssets/abgen` (`abgen.exe` on Windows):
+it is used whenever no pinned install exists.
 
 ## Modifying the scene
 
