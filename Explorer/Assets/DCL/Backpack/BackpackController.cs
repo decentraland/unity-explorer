@@ -511,18 +511,31 @@ namespace DCL.Backpack
                 // The render texture is measured from the raw image and renewed when the preview resizes, so the image goes first
                 previewImageFull.ApplyTo(previewImageRect);
                 previewFull.ApplyTo(previewRect);
-                return;
+            }
+            else
+            {
+                previewImageRect.anchorMin = Vector2.zero;
+                previewImageRect.anchorMax = Vector2.one;
+                previewImageRect.offsetMin = Vector2.zero;
+                previewImageRect.offsetMax = Vector2.zero;
+
+                previewRect.anchorMin = new Vector2(0f, previewRect.anchorMin.y);
+                previewRect.anchorMax = new Vector2(1f, previewRect.anchorMax.y);
+                previewRect.offsetMin = new Vector2(0f, previewFull.OffsetMin.y);
+                previewRect.offsetMax = new Vector2(-(COMPACT_HOST_MARGIN + contentWidth), previewFull.OffsetMax.y);
             }
 
-            previewImageRect.anchorMin = Vector2.zero;
-            previewImageRect.anchorMax = Vector2.one;
-            previewImageRect.offsetMin = Vector2.zero;
-            previewImageRect.offsetMax = Vector2.zero;
+            CenterRandomizeOutfitBar(previewRect);
+        }
 
-            previewRect.anchorMin = new Vector2(0f, previewRect.anchorMin.y);
-            previewRect.anchorMax = new Vector2(1f, previewRect.anchorMax.y);
-            previewRect.offsetMin = new Vector2(0f, previewFull.OffsetMin.y);
-            previewRect.offsetMax = new Vector2(-(COMPACT_HOST_MARGIN + contentWidth), previewFull.OffsetMax.y);
+        /// <summary>
+        ///     Keeps the randomize bar under the avatar. Both layouts anchor the preview symmetrically around the panel centre,
+        ///     so its centre sits at the mean of its horizontal offsets at any screen width, where the centre-anchored bar follows it.
+        /// </summary>
+        private void CenterRandomizeOutfitBar(RectTransform previewRect)
+        {
+            var barRect = (RectTransform)view.RandomizeOutfitView.transform;
+            barRect.anchoredPosition = new Vector2((previewRect.offsetMin.x + previewRect.offsetMax.x) / 2f, barRect.anchoredPosition.y);
         }
 
         // The explore panel toggles and positions its own section slot, so it stays behind when the view is borrowed

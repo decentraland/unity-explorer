@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Utility;
 using Random = System.Random;
 
@@ -26,6 +27,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
     {
         private const int OWNED_PAGE_SIZE = 200;
         private const int MAX_REPICK_ROUNDS = 3;
+        private const float LOCKED_ALPHA = 0.2f;
 
         private readonly RandomizeOutfitView view;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -289,8 +291,14 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         private void RefreshButtons()
         {
             view.RandomizeButton.interactable = !isBusy;
-            view.UndoButton.interactable = !isBusy && undoStack.Count > 0;
-            view.RedoButton.interactable = !isBusy && redoStack.Count > 0;
+            SetLocked(view.UndoButton, view.UndoCanvasGroup, isBusy || undoStack.Count == 0);
+            SetLocked(view.RedoButton, view.RedoCanvasGroup, isBusy || redoStack.Count == 0);
+        }
+
+        private static void SetLocked(Button button, CanvasGroup canvasGroup, bool locked)
+        {
+            button.interactable = !locked;
+            canvasGroup.alpha = locked ? LOCKED_ALPHA : 1f;
         }
 
         private readonly struct OutfitSnapshot

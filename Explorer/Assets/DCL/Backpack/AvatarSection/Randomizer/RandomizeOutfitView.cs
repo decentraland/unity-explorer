@@ -13,5 +13,11 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         [field: SerializeField]
         public Button RedoButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public CanvasGroup UndoCanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
+        public CanvasGroup RedoCanvasGroup { get; private set; } = null!;
     }
 }
