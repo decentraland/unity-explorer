@@ -96,19 +96,29 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         private void Undo()
         {
-            if (isBusy || undoStack.Count == 0) return;
+            if (isBusy || undoStack.Count == 0)
+            {
+                LogHistory("undo ignored");
+                return;
+            }
 
             redoStack.Push(CaptureCurrent());
             Apply(undoStack.Pop());
+            LogHistory("undo");
             RefreshButtons();
         }
 
         private void Redo()
         {
-            if (isBusy || redoStack.Count == 0) return;
+            if (isBusy || redoStack.Count == 0)
+            {
+                LogHistory("redo ignored");
+                return;
+            }
 
             undoStack.Push(CaptureCurrent());
             Apply(redoStack.Pop());
+            LogHistory("redo");
             RefreshButtons();
         }
 
@@ -117,7 +127,14 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             if (!isApplying) return;
 
             isApplying = false;
+            LogHistory("outfit applied");
             RefreshButtons();
+        }
+
+        private void LogHistory(string action)
+        {
+            ReportHub.Log(ReportCategory.BACKPACK,
+                $"[RandomizeOutfit] {action}: undo={undoStack.Count} redo={redoStack.Count} rolling={isRolling} applying={isApplying} equipped={CaptureCurrent().Wearables.Count}");
         }
 
         private async UniTaskVoid RandomizeAsync(CancellationToken ct)
@@ -144,6 +161,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 undoStack.Push(current);
                 redoStack.Clear();
                 Apply(new OutfitSnapshot(current.BodyShape, outfit, current.EyesColor, current.HairColor, current.SkinColor, Array.Empty<string>()));
+                LogHistory("randomize");
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
