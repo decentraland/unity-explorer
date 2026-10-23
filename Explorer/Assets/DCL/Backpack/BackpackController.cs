@@ -12,6 +12,7 @@ using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.AvatarSection.Randomizer;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -52,6 +53,7 @@ namespace DCL.Backpack
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform homeHost;
         private readonly AvatarController avatarController;
+        private readonly RandomizeOutfitController randomizeOutfitController;
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
         private readonly ICursor cursor;
         private readonly World world;
@@ -113,7 +115,8 @@ namespace DCL.Backpack
             IEventBus eventBus,
             Sprite deleteIcon,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IOwnedNftFilter ownedNftFilter)
+            IOwnedNftFilter ownedNftFilter,
+            IWearablesProvider wearablesProvider)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -211,6 +214,12 @@ namespace DCL.Backpack
                 thumbnailProvider,
                 decentralandUrlsSource);
 
+            randomizeOutfitController = new RandomizeOutfitController(view.RandomizeOutfitView,
+                backpackCommandBus,
+                backpackEventBus,
+                equippedWearables,
+                wearablesProvider);
+
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
                 { BackpackSections.Avatar, avatarController },
@@ -267,6 +276,7 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
             view.CloseButton.onClick.RemoveListener(RequestClose);
             avatarController.Dispose();
+            randomizeOutfitController.Dispose();
             emotesController.Dispose();
             backpackEmoteGridController.Dispose();
             animationCts.SafeCancelAndDispose();
@@ -377,6 +387,7 @@ namespace DCL.Backpack
                 tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
 
             profileLoadingCts.SafeCancelAndDispose();
+            randomizeOutfitController.Reset();
 
             if (isAvatarLoaded)
                 backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());

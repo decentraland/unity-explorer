@@ -1,3 +1,4 @@
+using DCL.Backpack.AvatarSection.Randomizer;
 using DCL.CharacterPreview;
 using DCL.UI;
 using System;
@@ -22,6 +23,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; }
+
+        [field: SerializeField]
+        public RandomizeOutfitView RandomizeOutfitView { get; private set; } = null!;
 
         [field: SerializeField]
         public Animator PanelAnimator { get; private set; }

@@ -291,7 +291,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 deleteIcon,
                 decentralandUrlsSource,
-                ownedNftFilter
+                ownedNftFilter,
+                wearablesProvider
             );
         }
 
