@@ -787,7 +787,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
             bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
-            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
+            MinimumSpecsStatus.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
 
             var specsProperties = new JObject
             {

@@ -3,7 +3,7 @@ using CodeLess.Attributes;
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
-    public partial class UnityDiagnosticsCenter
+    public partial class MinimumSpecsStatus
     {
         /// <summary>Outcome of the startup hardware check; null until it runs.</summary>
         public bool? MeetsMinimumRequirements { get; private set; }
