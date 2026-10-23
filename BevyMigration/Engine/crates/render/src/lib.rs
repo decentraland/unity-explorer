@@ -150,7 +150,8 @@ fn spawn_scene(
         BridgeCamera,
         Camera3d::default(),
         Camera {
-            clear_color: ClearColorConfig::Custom(Color::srgb(0.1, 0.12, 0.16)),
+            // Transparent where nothing is drawn: Unity composites the frame over its own skybox.
+            clear_color: ClearColorConfig::Custom(Color::NONE),
             ..default()
         },
         Projection::Perspective(PerspectiveProjection::default()),

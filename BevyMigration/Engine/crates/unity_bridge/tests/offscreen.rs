@@ -271,15 +271,16 @@ fn renders_a_cube_offscreen_and_reads_it_back() {
         "the cube in the middle must differ from the clear colour in the corner"
     );
 
-    // The placeholder material is orange: more red than blue in the centre, unlike the blue-grey clear colour.
+    // The placeholder material is orange: more red than blue in the centre, unlike the transparent clear colour.
     // BGRA: index 2 is red, index 0 is blue.
     assert!(
         center[2] > center[0],
         "centre pixel {center:?} (BGRA) should be reddish"
     );
-    assert!(
-        corner[0] >= corner[2],
-        "corner pixel {corner:?} (BGRA) should be the blue-grey clear colour"
+    assert_eq!(
+        corner[3],
+        0,
+        "corner pixel {corner:?} (BGRA) should be the transparent clear colour Unity composites over"
     );
 
     // An empty snapshot removes the cube: the centre becomes the clear colour again.
@@ -364,7 +365,7 @@ fn renders_an_uploaded_quad_with_an_uploaded_material() {
     let pixels = read_pixels();
     let center = pixel(&pixels, WIDTH / 2, HEIGHT / 2);
     let corner = pixel(&pixels, 1, 1);
-    // BGRA: green is index 1; the unlit quad must be green in front of the blue-grey clear colour.
+    // BGRA: green is index 1; the unlit quad must be green in front of the transparent clear colour.
     assert!(
         center[1] > 150 && center[1] > center[0] * 2 && center[1] > center[2] * 2,
         "centre pixel {center:?} (BGRA) should be green"
@@ -442,9 +443,10 @@ fn renders_into_an_iosurface_readable_from_the_cpu() {
         center[2] > center[0],
         "centre pixel {center:?} (BGRA) should be the reddish placeholder cube"
     );
-    assert!(
-        corner[0] >= corner[2],
-        "corner pixel {corner:?} (BGRA) should be the blue-grey clear colour"
+    assert_eq!(
+        corner[3],
+        0,
+        "corner pixel {corner:?} (BGRA) should be the transparent clear colour Unity composites over"
     );
 
     assert_eq!(unity_bridge::bm_shutdown(), BmResult::Ok);

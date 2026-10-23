@@ -15,7 +15,7 @@ local command or an Editor session; nothing here runs in CI (README § 1, non-go
 | Output buffers | `Engine/crates/unity_bridge/src/output` | Two buffers. `Offscreen`: plain textures, pixels through `bm_read_output` (tests, the step 3 screenshot harness). `IoSurface` (macOS): one `IOSurface` per buffer wrapped as a Metal texture on Bevy's device (through wgpu-hal) and on Unity's device (through `IUnityGraphicsMetalV1`, captured in `UnityPluginLoad`). |
 | Render plugin | `Engine/crates/render` | Handle table, flat entities with `GlobalTransform` written directly, camera and sun driven by the snapshot, placeholder cube and material, readback plugin. |
 | C# bridge | `Explorer/Assets/DCL/BevyMigration/Bridge` | `BevyBridge` (lifecycle, external textures, log callback), `RendererRegistry`, `TransformGatherJob` (Burst, `IJobParallelForTransform`), `SnapshotWriter`, `BevyBridgeSystem` (global world, `PresentationSystemGroup`), `BevyBridgePlugin` (the composition-root hook), `BevyRenderedObject`. |
-| Composite | `Explorer/Assets/DCL/BevyMigration/Composite` | `BevyCompositeFeature` blits the completed buffer after the skybox, before transparents and UI, on the game camera only. Installed on the URP renderer asset by `Decentraland/Bevy Migration/Install Composite Feature`. |
+| Composite | `Explorer/Assets/DCL/BevyMigration/Composite` | `BevyCompositeFeature` composites the completed buffer over the skybox, before transparents and UI, on the game camera only: premultiplied blend through `Hidden/DCL/BevyComposite`, Bevy clears to alpha zero so Unity's sky shows where Bevy drew nothing. Installed on the URP renderer asset by `Decentraland/Bevy Migration/Install Composite Feature`. |
 | Flag | `--world unity\|bevy`, debug panel "Bevy Migration" | `WorldRendererFlag` is the runtime truth; registered renderers get `forceRenderingOff` while Bevy owns them. |
 | Bindings | `Explorer.Net/Bindings/NativeMethods.g.cs`, `Explorer/Assets/DCL/BevyMigration/Bridge/Generated/NativeMethods.g.cs` | csbindgen output written by `unity_bridge/build.rs`; both copies are generated files. |
 
@@ -106,8 +106,8 @@ The parcel is recognisable through Bevy (geometry, textures, signs, props, point
 threshold is not met: mean absolute difference 58 (limit 4), 93% of pixels differ (limit 2%). The
 differences are structural, not bugs in the transfer:
 
-- Unity's skybox versus Bevy's flat clear colour (step 5 disables the skybox behind `world=bevy`; a
-  matching sky is a later family).
+- Unity's skybox is composited under Bevy's frame rather than lit into it: Bevy's ambient is the probe
+  average, not the sky's spherical harmonics or its reflection cubemap (a later family).
 - Unity's lighting beyond the snapshot: baked and reflection probes, the sun's shadow settings, bloom
   on emissives, and the volume stack's colour grading apply to the Unity frame and only partly to the
   Bevy frame.
@@ -136,7 +136,7 @@ rather than `bevy`; the gate stays open and is re-run with the step 5 screenshot
 | Skinned meshes | `abi` (`mesh_attributes::BONES`, `BmMeshHeader::bindpose_count`, `BmSkinned`, `BmSnapshot::{skinned, bones}`), `ResourceUploader.SkinnedMesh`, `render/src/resources.rs` | A wearable mesh is uploaded once per (mesh, spring-bone offset) with `[u16; 4]` joint indices, `[f32; 4]` weights and the inverse bind poses laid out for the avatar skeleton; the bridge mirrors them like the world matrices. |
 | Skeletons | `RendererRegistry.RegisterSkeleton`, `AvatarContentScanner`, `SnapshotWriter` | One skeleton per avatar: the 62 base bones of `AvatarBase.AvatarSkinnedMeshRenderer.bones`, then every wearable's spring bones (indices offset per wearable, as the compute skinning does). Joint world matrices are gathered by the same Burst job as the renderers and travel in the snapshot. |
 | Skinning | `render/src/lib.rs` (`sync_joints`, `SkinnedMesh`) | Bevy's own vertex-shader skinning: one joint entity per bone with its `GlobalTransform` written from the snapshot, `SkinnedMesh { inverse_bindposes, joints }` on the renderer entity (re-bound when its skeleton changes). The plan's WGSL compute port is not needed for the gate and was not written. |
-| Avatar materials | `AvatarContentScanner` | The wearable's original asset-bundle material (`CachedAttachment.OriginalAsset.RendererInfos`) through the `UrpLit` family; skin and hair colours, the Toon family and outlines are not applied yet. |
+| Avatar materials | `AvatarContentScanner` | The wearable's original asset-bundle material (`CachedAttachment.OriginalAsset.RendererInfos`) through the `UrpLit` family, tinted by the runtime toon material's `_BaseColor` (the profile's skin and hair colour), cached per runtime material; the Toon shading and outlines are not applied. |
 | World text | `BmMaterialFamily::TmpSdf`, `urp_lit_flags::SDF_TEXT`, `urp_lit.wgsl` | TextMeshPro world text is already a `MeshRenderer` under the scene roots; its material maps to the SDF family: unlit, `_FaceColor` times the vertex colour, coverage from the atlas alpha, cutout at 0.5. |
 | Media surfaces | `ResourceUploader.RefreshDynamicTextures`, `render/src/resources.rs` | A material whose base map is a `RenderTexture` (UUAV output) is uploaded through the blit readback and re-uploaded under the same handle on every scan; the bridge replaces the `Image` asset in place so bound materials pick it up. |
 
@@ -188,7 +188,7 @@ the step 3 Unity reference (58 and 93% before it).
 
 | Piece | Where | Notes |
 |---|---|---|
-| Camera takeover | `BevyBridgeSystem.TakeOverCamera` | Behind `world=bevy` the main camera's culling mask is emptied and its clear flags set to a solid colour, so Unity draws no world geometry and no skybox pass; only the composite feature and the UI remain. The previous mask and flags are restored when the flag flips back. |
+| Camera takeover | `BevyBridgeSystem.TakeOverCamera` | Behind `world=bevy` the main camera's culling mask is reduced to one unused layer, so Unity draws no world geometry; the skybox pass stays and the composite blends Bevy's frame over it. Only the composite feature, the skybox and the UI remain. The previous mask is restored when the flag flips back. |
 | Deferred families | `ledger.csv` | Landscape, roads (GPU instancing) and both skyboxes move to `planned`, step 11; particle systems are SDK components and stay with that row. None of them is drawn behind `world=bevy`. |
 | Gather budget | `BevyBridgeSystem.TrackBudget` | Gather job plus snapshot submit measured per frame (smoothed), shown in the debug widget and logged every 600 frames as `Bevy gather+submit ... ms/frame`. |
 | Windows | deferred | See README § 2 "First platform": the D3D11 shared-handle path is out of scope until macOS is validated. |

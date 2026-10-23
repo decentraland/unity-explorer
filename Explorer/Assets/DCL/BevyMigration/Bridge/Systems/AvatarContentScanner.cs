@@ -73,7 +73,8 @@ namespace DCL.BevyMigration.Bridge
 
                     uint meshHandle = uploader.SkinnedMesh(mesh, springOffset, joints.Count);
                     Material? original = i < infos.Count ? infos[i].Material : null;
-                    uint[] materials = { original != null ? uploader.Material(original) : BridgeMaterials.PLACEHOLDER };
+                    Material? runtime = renderer.sharedMaterial;
+                    uint[] materials = { original != null && runtime != null ? uploader.Material(original, runtime) : BridgeMaterials.PLACEHOLDER };
                     registry.Register(renderer, meshHandle, materials, skeleton);
                 }
 

@@ -90,14 +90,28 @@ namespace DCL.BevyMigration.Bridge
         /// <summary>
         ///     The bridge's handle for the material, uploading it and its readable textures on first sight.
         /// </summary>
-        public uint Material(Material material)
+        public uint Material(Material material) =>
+            Material(material, material, Color.white);
+
+        /// <summary>
+        ///     The bridge's handle for <paramref name="source" /> tinted by <paramref name="tint" />'s base colour
+        ///     (an avatar's skin or hair colour lives on the runtime toon material, the textures on the wearable's
+        ///     original one). Cached per <paramref name="tint" />, which is unique per avatar.
+        /// </summary>
+        public uint Material(Material source, Material tint)
         {
-            EntityId id = material.GetEntityId();
+            Color color = tint.HasProperty(BASE_COLOR) ? tint.GetColor(BASE_COLOR) : Color.white;
+            return Material(source, tint, color);
+        }
+
+        private uint Material(Material material, Material key, Color tint)
+        {
+            EntityId id = key.GetEntityId();
 
             if (materialHandles.TryGetValue(id, out uint handle)) return handle;
 
             handle = nextMaterial++;
-            BmMaterial blob = Describe(material);
+            BmMaterial blob = Describe(material, tint);
 
             if (BevyBridge.UploadMaterial(handle, ref blob) != BmResult.Ok)
                 ReportHub.LogWarning(REPORT_DATA, $"material upload refused for {material.name}");
@@ -429,12 +443,12 @@ namespace DCL.BevyMigration.Bridge
             WriteUInt(BridgeTextureFormats.Filter(texture.filterMode));
         }
 
-        private BmMaterial Describe(Material material)
+        private BmMaterial Describe(Material material, Color tint)
         {
             bool unlit = material.shader.name.Contains(FAMILY_UNLIT_TOKEN, StringComparison.Ordinal);
             bool sdfText = material.shader.name.Contains(FAMILY_TMP_SDF_TOKEN, StringComparison.Ordinal);
             Color baseColor = sdfText && material.HasProperty(FACE_COLOR) ? material.GetColor(FACE_COLOR) : material.HasProperty(BASE_COLOR) ? material.GetColor(BASE_COLOR) : material.HasProperty(COLOR) ? material.GetColor(COLOR) : Color.white;
-            Color linear = baseColor.linear;
+            Color linear = baseColor.linear * tint.linear;
             Color emission = material.HasProperty(EMISSION_COLOR) ? material.GetColor(EMISSION_COLOR).linear : Color.black;
             float surface = material.HasProperty(SURFACE) ? material.GetFloat(SURFACE) : 0f;
             bool alphaClip = material.HasProperty(ALPHA_CLIP) && material.GetFloat(ALPHA_CLIP) > 0.5f;

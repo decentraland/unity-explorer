@@ -42,7 +42,6 @@ namespace DCL.BevyMigration.Bridge.Systems
         private Camera? ownedCamera;
         private readonly List<(GameObject, int)> parkedVirtualCameras = new ();
         private int previousCullingMask;
-        private CameraClearFlags previousClearFlags;
         private readonly System.Diagnostics.Stopwatch stopwatch = new ();
 
         private static readonly QueryDescription CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
@@ -125,7 +124,6 @@ namespace DCL.BevyMigration.Bridge.Systems
             ReleaseCamera();
             ownedCamera = camera;
             previousCullingMask = camera.cullingMask;
-            previousClearFlags = camera.clearFlags;
             int layer = FirstUnnamedLayer();
 
             foreach (CinemachineVirtualCameraBase virtualCamera in UnityEngine.Object.FindObjectsByType<CinemachineVirtualCameraBase>(FindObjectsInactive.Include))
@@ -135,8 +133,8 @@ namespace DCL.BevyMigration.Bridge.Systems
                 target.layer = layer;
             }
 
+            // The clear flags stay: Unity keeps drawing the skybox and the composite blends Bevy's frame over it.
             camera.cullingMask = 1 << layer;
-            camera.clearFlags = CameraClearFlags.SolidColor;
         }
 
         private void ReleaseCamera()
@@ -154,7 +152,6 @@ namespace DCL.BevyMigration.Bridge.Systems
             }
 
             ownedCamera.cullingMask = previousCullingMask;
-            ownedCamera.clearFlags = previousClearFlags;
             ownedCamera = null;
         }
 
