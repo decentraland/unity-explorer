@@ -193,6 +193,13 @@ namespace Global.AppArgs
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
+        /// <summary>
+        ///     Local scene development only: presence skips the embedded abgen sidecar entirely and loads the
+        ///     scene's raw GLTFs, the way local scene development worked before local asset bundles. Off by
+        ///     default; ignored outside local scene development.
+        /// </summary>
+        public const string LSD_RAW_GLTF = "lsd-raw-gltf";
+
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
 

@@ -44,6 +44,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.AssetBundles;
 using Global.AppArgs;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Requests;
@@ -348,10 +349,12 @@ namespace Global.Dynamic
             // is seeded only when the server is actually serving; the whole-scene warm-up continues in the
             // background and realm loading holds on it below. When the server does not come up nothing is
             // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
-            // the scene loads either way.
+            // the scene loads either way. --lsd-raw-gltf skips the sidecar and takes that raw-GLTF wiring directly.
             string? localAbBaseUrl = null;
 
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
                 // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
