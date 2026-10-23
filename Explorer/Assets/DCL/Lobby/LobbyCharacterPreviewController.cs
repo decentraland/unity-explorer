@@ -14,7 +14,7 @@ using Random = UnityEngine.Random;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Preview of the player's own avatar shown in the lobby on the 3D stage; it idles and plays a flavour emote every now and then.
+    ///     Preview of the player's own avatar shown in the lobby on the 3D stage; it idles, follows the pointer with its head and plays a flavour emote every now and then.
     /// </summary>
     public class LobbyCharacterPreviewController : CharacterPreviewControllerBase
     {
@@ -50,6 +50,7 @@ namespace DCL.Lobby
             stage.gameObject.SetActive(true);
 
             ApplyAvatar(avatar, position);
+            previewController!.Value.EnableHeadIK();
 
             emotesCts = emotesCts.SafeRestart();
             PlayFlavourEmotesAsync(emotesCts.Token).Forget();
