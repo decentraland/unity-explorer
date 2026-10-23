@@ -13,6 +13,7 @@ This repository hosts three sibling Unity roots:
 | [`Explorer/`](Explorer/) | The desktop client — the main project this README describes. |
 | [`avatar-preview-renderer/`](avatar-preview-renderer/README.md) | Standalone Unity WebGL renderer for avatar/wearable previews (Marketplace, Builder, authentication screen, Profile). Served to users through [wearable-preview](https://github.com/decentraland/wearable-preview), which vendors its released builds. |
 | [`unity-shared-dependencies/`](unity-shared-dependencies/README.md) | UPM package (`com.decentraland.unity-shared-dependencies`): GLTF importer wrappers, the shared Toon/Scene shaders, and wearable utilities. Both projects consume it via a local `file:../../unity-shared-dependencies` reference — edit it in place, no publishing step. |
+| [`BevyMigration/`](BevyMigration/docs/README.md) | Unity Explorer to Bevy migration: Rust workspace, Unity-free .NET solution hosting the C# behind a UnityEngine-compatible shim, and the migration ledger. Internal builds only until the host flip; its Unity-side counterpart lives at `Explorer/Assets/DCL/BevyMigration/`. |
 
 CI is **path-scoped**: each project's workflows trigger on changes to its own root plus `unity-shared-dependencies/**`, so a shared-deps change builds both projects while a renderer-only change never touches Explorer CI.
 

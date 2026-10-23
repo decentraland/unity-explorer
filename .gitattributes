@@ -74,3 +74,18 @@ Explorer/Assets/*.rsp text eol=lf
 *.sh text eol=lf
 
 Explorer/Assets/StreamingAssets/Js/sdk6-adapter.min.js -text
+
+##############################################################################
+# Bevy migration (BevyMigration/docs/README.md § 4 and § 5)
+##############################################################################
+# Scripts and manifests are read by bash and cargo on every host; the ledger is
+# diffed in review.
+BevyMigration/**/*.rs text eol=lf
+BevyMigration/**/*.toml text eol=lf
+BevyMigration/**/*.py text eol=lf
+BevyMigration/**/*.csv text eol=lf
+BevyMigration/**/*.sh text eol=lf
+# Generated files do not count towards the PR diff ceiling.
+BevyMigration/Engine/Cargo.lock linguist-generated=true
+BevyMigration/Explorer.Net/**/packages.lock.json linguist-generated=true
+Explorer/Assets/DCL/BevyMigration/Bridge/Generated/** linguist-generated=true

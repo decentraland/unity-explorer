@@ -25,6 +25,9 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[MVC](mvc.md)** — UI architecture: controllers, views, and the MVC manager
 - **[Third-Party Libraries](third-party-libraries.md)** — ArchECS, ClearScript, and Sentry
 
+## Bevy Migration
+- **[Migration Plan](../BevyMigration/docs/README.md)** — Unity Explorer to Bevy: decisions, repository structure, working rules, ledger and allowlist, steps and gates. Read it before touching `BevyMigration/**` or `Explorer/Assets/DCL/BevyMigration/**`.
+
 ## Development Guides
 - **[Development Guide](development-guide.md)** — ECS system/component design patterns, queries, cleanup, and singletons
 - **[Async Programming](async-programming.md)** — Detached flows, cancellation, and exception-free async
