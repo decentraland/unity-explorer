@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
-using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;

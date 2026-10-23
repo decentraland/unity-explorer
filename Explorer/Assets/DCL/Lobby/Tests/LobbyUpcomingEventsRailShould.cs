@@ -80,7 +80,7 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void TintTheCardsOfTheEventsTheUserIsInterestedIn()
+        public void MarkTheCardsOfTheEventsTheUserIsInterestedIn()
         {
             //Arrange
             events.Show(section);

@@ -1,0 +1,28 @@
+/* A grid sizes itself in code from its cells (LobbyGridElement); the document pins it to its corner. The anchor dots are
+   painted by the element while editing */
+.lobby-grid {
+    position: absolute;
+}
+
+/* The backdrop tints the area of the grid while editing, a little past its cells: a child, as a background on the grid
+   itself would stop at them. Barely there, the design's 2% white, it brightens to its 5% while a drag targets the grid
+   (see LobbyDocument.uss for the alphas) */
+.lobby-grid__backdrop {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    display: none;
+    border-radius: 24px;
+    background-color: var(--lobby-white-2);
+    transition: background-color 0.1s;
+}
+
+.lobby-grid--editing .lobby-grid__backdrop {
+    display: flex;
+}
+
+.lobby-grid--highlighted .lobby-grid__backdrop {
+    background-color: var(--lobby-white-1);
+}

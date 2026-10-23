@@ -174,7 +174,7 @@ namespace SceneRunner
             MultithreadingUtility.AssertMainThread(nameof(StartUpdateLoopAsync), isMainThread: false);
 
             if (SceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
+                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started! Scene '{SceneData.SceneShortInfo}' (id: {SceneData.SceneEntityDefinition.id}) is {SceneStateProvider.State.Value()}");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)

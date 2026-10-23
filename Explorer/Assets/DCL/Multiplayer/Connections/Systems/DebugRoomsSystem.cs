@@ -15,7 +15,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
 using System;
-using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
