@@ -58,13 +58,14 @@ if [[ "$IS_RELEASE_BUILD" == "true" ]]; then
         /^  scriptingDefineSymbols:/ { in_defines = 1; print; next }
         in_defines && !/^    / { in_defines = 0 }
         in_defines && /^    Standalone: / {
+            cr = sub(/\r$/, "") ? "\r" : ""
             sub(/^    Standalone: /, "")
             n = split($0, defines, ";")
             out = ""
             for (i = 1; i <= n; i++)
                 if (defines[i] != "ALTTESTER")
                     out = out (out == "" ? "" : ";") defines[i]
-            print "    Standalone: " out
+            print "    Standalone: " out cr
             next
         }
         { print }
