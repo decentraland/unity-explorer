@@ -1,1 +1,341 @@
-{"status":"pr-open","prUrl":"https://github.com/decentraland/unity-explorer/pull/10492","requester":"U0ADNDHL1T7","originChannel":"C0BB9H2CS5D","since":"2026-10-10T12:02:35Z","collectedAt":"2026-10-17T12:02:21Z","groups":[[10376,10467]],"issues":[{"number":10423,"status":"fixed","commit":"03cdc8b896be4598e1db4aecae2ba25a8affa8d4","note":""},{"number":10442,"status":"fixed","commit":"10a2f9e18b5c77308248fd87d320da074c94de0d","note":""},{"number":10449,"status":"fixed","commit":"fb7088659e7a0207923210d6960be9b173375667","note":""},{"number":10453,"status":"fixed","commit":"c52e2bc17e0b9bdbeec809408ce503202e528da5","note":""},{"number":10459,"status":"fixed","commit":"cf9ed5d6bec1d885a70e0aa0e148f9e0e6cfde50","note":""},{"number":10470,"status":"fixed","commit":"62fd462442480f4c2e936adfaec4e507e70f7b8c","note":""},{"number":10489,"status":"fixed","commit":"15074b120edc9a7a2e29d4f3b7d9c9dcd020dfc4","note":""},{"number":10424,"status":"skipped","commit":null,"note":"#10424 duplicates the \"Profile not found after save\" throw in the old SelfProfile.UpdateProfileAsync (Sentry UNITY-EXPLORER-Q4Z, a pre-FSM build), which is already fixed on dev by #10350 (merged 2026-10-09, now ProfileNotFoundAfterDeployException in SelfProfileCmdExecutor); what remains is the catalyst not yet serving the profile after a deploy, which is server-side propagation and the self-profile retry/back-off design work tracked in #10376/#10467."},{"number":10427,"status":"skipped","commit":null,"note":"Already fixed on dev: the NRE (only ever seen in v0.186.0, 9 events, none since) is ProfileNameEditorController dereferencing `profile!.UserId` after SelfProfile.ProfileAsync returned null on a 404 own-profile fetch; #10350 (self-profile FSM, shipped from v0.187.0) replaced that with a ProfileReadResult check that closes the editor on a failed read, so no further change is needed and the issue can be closed once v0.187+ is confirmed clean in Sentry."},{"number":10422,"status":"skipped","commit":null,"note":"root cause not identifiable: the NRE is thrown inside EngineAPIImplementation.CrdtSendToRenderer with no C# line or deeper frame, every field there is set in the constructor; 5 events from one user, needs a build with line numbers or a repro on the scene at 143,-148"},{"number":10468,"status":"skipped","commit":null,"note":"regression of #8130 still on v0.188 (13 events, 8 users) not covered by #9828's guard, but no second caller of StartUpdateLoopAsync could be found in code; logging the scene id at the throw would identify it"},{"number":10454,"status":"skipped","commit":null,"note":"Not a duplicate of closed #6469 (that was an AddComponentPool NRE fixed by #6482), and a different cause from #10456. The Sentry event shows ComputeBuffer.SetData hitting a disposed bones buffer. Sequence: InstantiateExistingAvatar calls ReleaseAvatar.Execute (which disposes the skinning buffers) before it rebuilds. The rebuild then throws (UNITY-EXPLORER-NQ8 / #7809, here an NRE on get_gameObject inside AttachmentAssetUtility.InstantiateOrGetCached; likely cause: line 60 calls DestroyImmediate on a parent MeshRenderer's GameObject, then reads .gameObject of a nested MeshRenderer that is already destroyed). That leaves the entity with a disposed AvatarCustomSkinningComponent while IsDirty stays true, so it retries every frame. Fixing the cascade means making the avatar rebuild transactional and ending the retry loop, which is a design change and the same one the W36 sweep skipped under #9985. No fix is on dev or in an open PR (#10083 skips #9985)."},{"number":10465,"status":"fixed","commit":"2e9261b1f6b438475cff142be3604e885a4dd563","note":""},{"number":10367,"status":"skipped","commit":null,"note":"design change across the native Rust Segment queue and startup: every instance shares persistentDataPath/analytics_queue_v1.sqlite3 and Segment starts before the single-instance check, and nothing repairs a corrupt DB; needs a native rebuild (recreate on DatabaseCorrupt) and/or a per-instance queue file"},{"number":10456,"status":"skipped","commit":null,"note":"design change across modules: skinning (ComputeSkinningBufferContainer), spring bones (AttachmentAssetUtility.BuildSpringBoneData, SpringBoneRegistrationSystem) and reused instances all assume joint index == base bone index; a skinning-only remap leaves spring bones broken, and it needs the reporter's GLBs plus an avatar-rendering owner"},{"number":10439,"status":"skipped","commit":null,"note":"Skipped #10439: likely root cause is that the local scene runs behind the auth screen and calls getUserData, which requests the user's own profile with DelayUntilResolved (UserIdentityApiWrapper.cs:49, retries 404 for about 2 minutes via CatalystRetryPolicy); the auth self-profile read, a single attempt that does not retry, then waits on that in-flight request (RealmProfileRepository.GetAsync TryGetExistingRequest loop) and hits the 15s timeout instead of reaching the new-account path. A fix needs an owner decision: either stop the scene API retrying 404 for the user's own profile or stop single reads from waiting on a retrying request for the same profile."},{"number":10444,"status":"skipped","commit":null,"note":"backend, not client: the community place picker shows everything /destinations?owner= returns, and the places API matches owned Genesis parcels only through places.owner (mostly null) or lands-permissions (operator grants only); fix belongs in decentraland/places (also match /lambdas/users/:addr/lands)"},{"number":10480,"status":"skipped","commit":null,"note":"looks like a broken install, not code: 5 Sentry events from one user on one machine in 10 minutes, the login music clip streams from disk and FMOD could not open it; monitor in Sentry and close if it does not recur"},{"number":10445,"status":"skipped","commit":null,"note":"not an Explorer defect: the Creator Hub default video URL (Vimeo 552481870.m3u8) now returns HTTP 404; replace it in the Creator Hub asset pack video player/screen and have scenes redeploy (Explorer's MediaStreaming test scene uses it too)"},{"number":9445,"status":"fixed","commit":"437ce105d29ceaf96760a912558c77b242ed13c7","note":""},{"number":8794,"status":"skipped","commit":null,"note":"already fixed on dev by #8821 (350440a47): the attached logs show Dictionary.Add throwing in SceneCommunicationPipe.AddSceneMessageHandler during scene creation, which dev now replaces via the indexer; QA to verify on a current build and close"},{"number":10376,"status":"skipped","commit":null,"note":"root cause confirmed in 2026-w41 (SelfProfileModel.Read refetches whenever knowledge is Failed); a back-off needs a time source threaded into the reducer plus Sentry throttling in two layers: design change, not a minimal fix"},{"number":10467,"status":"skipped","commit":null,"note":"same failure mode as #10376 (own-profile catalyst fetch timeout retried and reported on every read); design change, not a minimal fix"},{"number":10436,"status":"skipped","commit":null,"note":"UI animation polish between onboarding screens; needs design direction and in-editor visual iteration, no defect to fix in code"},{"number":10437,"status":"skipped","commit":null,"note":"Mac-only avatar fade during a UI transition; needs in-editor visual verification on macOS, no repro here"},{"number":10431,"status":"skipped","commit":null,"note":"product call: a single stored home parcel cannot satisfy both the tag position and the toggle on multi-parcel scenes (follow-up to the reverted #10405 fix); needs a decision on what home means"},{"number":10416,"status":"skipped","commit":null,"note":"Genesis Plaza clock tower is scene content (content-team); the clocks are drawn by the scene's own code, not the Explorer"},{"number":10430,"status":"skipped","commit":null,"note":"teleport failed on a request timeout to the asset-bundle-registry gateway; network/backend condition, not a client defect"},{"number":10435,"status":"skipped","commit":null,"note":"NullReferenceException inside System.Net.Http SendAsync; BCL internal, no explorer frames (as #10378 in 2026-w41)"},{"number":10434,"status":"skipped","commit":null,"note":"account-specific Connection Error at 96%; other accounts work on the same machine, needs the affected account and logs to reproduce"},{"number":10441,"status":"skipped","commit":null,"note":"tech debt (collapse the UUAV AVProCompat facade); refactor, out of sweep scope"},{"number":10452,"status":"skipped","commit":null,"note":"Sentry stub for a bug report log attachment, not a defect (duplicate of #9644)"},{"number":10466,"status":"skipped","commit":null,"note":"network: cannot connect to destination host (duplicate of #7767); connectivity condition, not a client defect"},{"number":10469,"status":"skipped","commit":null,"note":"Thirdweb bundler request failing with status 0 (duplicate of #7713); network/third-party service failure"},{"number":10471,"status":"skipped","commit":null,"note":"Places API returns HTTP 500 (TypeError in the places server, World/utils.js); backend defect"},{"number":10473,"status":"skipped","commit":null,"note":"countdown digits turning gray in specific scenes; rendering issue that needs the scenes and an in-world repro, no client root cause identified from the report"},{"number":10475,"status":"skipped","commit":null,"note":"plaza floor blinking white; rendering issue that needs in-world repro and GPU profiling, no root cause identifiable from the report"},{"number":10476,"status":"skipped","commit":null,"note":"performance tech debt (CRDT bridge re-sends unchanged state); optimisation, out of sweep scope"},{"number":10484,"status":"skipped","commit":null,"note":"mesh with NaN/infinite vertices from a content export; content error, not a client defect"},{"number":10485,"status":"skipped","commit":null,"note":"feature request (satellite map north strip and world maps); out of sweep scope"},{"number":6894,"status":"skipped","commit":null,"note":"Genesis Plaza theater Focus Mode hint is scene content (content-team), not Explorer code"},{"number":6788,"status":"skipped","commit":null,"note":"Gaming Quest countdown banner layout belongs to the scene content (content-team), not Explorer code"},{"number":9581,"status":"skipped","commit":null,"note":"Aisha NPC bubble and dialogue text are scene content (content-team), not Explorer code"},{"number":9010,"status":"skipped","commit":null,"note":"Love Bomb emote props missing; needs the emote assets and an in-world repro to tell asset from client, no root cause from the report"},{"number":9498,"status":"skipped","commit":null,"note":"OBS stream switching audio desync in the theater; needs OBS plus admin-tool setup to reproduce, root cause spans streaming and media playback"},{"number":9515,"status":"skipped","commit":null,"note":"vending machine UI belongs to the scene, not Explorer code"},{"number":9440,"status":"skipped","commit":null,"note":"Genesis Plaza memory growth on macOS; needs profiling sessions, no single root cause identifiable in a sweep"},{"number":9337,"status":"skipped","commit":null,"note":"avatars disappearing after World round trip; spans realm switching and avatar loading, too complex for a sweep fix"},{"number":9308,"status":"skipped","commit":null,"note":"chat overlapping the theatre screen is a layout/design decision, not a defect with a code root cause"},{"number":9551,"status":"skipped","commit":null,"note":"feature request (in-world feedback for broken scenes); out of sweep scope"},{"number":9751,"status":"skipped","commit":null,"note":"feature request (offline DMs, duplicate of #4719); out of sweep scope"},{"number":10402,"status":"skipped","commit":null,"note":"UI Toolkit internal NRE in GetTextSettingsFrom; Unity engine internal, no explorer frames (as in 2026-w41)"},{"number":10388,"status":"skipped","commit":null,"note":"UI Toolkit internal MeshGenerationNode invalid state; Unity engine internal, no explorer frames (as in 2026-w41)"},{"number":10377,"status":"skipped","commit":null,"note":"remote party closed the WebSocket without handshake (duplicate of #8797); network condition, not a client defect (as in 2026-w41)"}]}
+{
+  "status": "done",
+  "prUrl": "https://github.com/decentraland/unity-explorer/pull/10492",
+  "requester": "U0ADNDHL1T7",
+  "originChannel": "C0BB9H2CS5D",
+  "since": "2026-10-10T12:02:35Z",
+  "collectedAt": "2026-10-17T12:02:21Z",
+  "groups": [
+    [
+      10376,
+      10467
+    ]
+  ],
+  "issues": [
+    {
+      "number": 10423,
+      "status": "fixed",
+      "commit": "03cdc8b896be4598e1db4aecae2ba25a8affa8d4",
+      "note": ""
+    },
+    {
+      "number": 10442,
+      "status": "fixed",
+      "commit": "10a2f9e18b5c77308248fd87d320da074c94de0d",
+      "note": ""
+    },
+    {
+      "number": 10449,
+      "status": "fixed",
+      "commit": "fb7088659e7a0207923210d6960be9b173375667",
+      "note": ""
+    },
+    {
+      "number": 10453,
+      "status": "fixed",
+      "commit": "c52e2bc17e0b9bdbeec809408ce503202e528da5",
+      "note": ""
+    },
+    {
+      "number": 10459,
+      "status": "fixed",
+      "commit": "cf9ed5d6bec1d885a70e0aa0e148f9e0e6cfde50",
+      "note": ""
+    },
+    {
+      "number": 10470,
+      "status": "fixed",
+      "commit": "62fd462442480f4c2e936adfaec4e507e70f7b8c",
+      "note": ""
+    },
+    {
+      "number": 10489,
+      "status": "fixed",
+      "commit": "15074b120edc9a7a2e29d4f3b7d9c9dcd020dfc4",
+      "note": ""
+    },
+    {
+      "number": 10424,
+      "status": "skipped",
+      "commit": null,
+      "note": "#10424 duplicates the \"Profile not found after save\" throw in the old SelfProfile.UpdateProfileAsync (Sentry UNITY-EXPLORER-Q4Z, a pre-FSM build), which is already fixed on dev by #10350 (merged 2026-10-09, now ProfileNotFoundAfterDeployException in SelfProfileCmdExecutor); what remains is the catalyst not yet serving the profile after a deploy, which is server-side propagation and the self-profile retry/back-off design work tracked in #10376/#10467."
+    },
+    {
+      "number": 10427,
+      "status": "skipped",
+      "commit": null,
+      "note": "Already fixed on dev: the NRE (only ever seen in v0.186.0, 9 events, none since) is ProfileNameEditorController dereferencing `profile!.UserId` after SelfProfile.ProfileAsync returned null on a 404 own-profile fetch; #10350 (self-profile FSM, shipped from v0.187.0) replaced that with a ProfileReadResult check that closes the editor on a failed read, so no further change is needed and the issue can be closed once v0.187+ is confirmed clean in Sentry."
+    },
+    {
+      "number": 10422,
+      "status": "skipped",
+      "commit": null,
+      "note": "root cause not identifiable: the NRE is thrown inside EngineAPIImplementation.CrdtSendToRenderer with no C# line or deeper frame, every field there is set in the constructor; 5 events from one user, needs a build with line numbers or a repro on the scene at 143,-148"
+    },
+    {
+      "number": 10468,
+      "status": "skipped",
+      "commit": null,
+      "note": "regression of #8130 still on v0.188 (13 events, 8 users) not covered by #9828's guard, but no second caller of StartUpdateLoopAsync could be found in code; logging the scene id at the throw would identify it"
+    },
+    {
+      "number": 10454,
+      "status": "skipped",
+      "commit": null,
+      "note": "Not a duplicate of closed #6469 (that was an AddComponentPool NRE fixed by #6482), and a different cause from #10456. The Sentry event shows ComputeBuffer.SetData hitting a disposed bones buffer. Sequence: InstantiateExistingAvatar calls ReleaseAvatar.Execute (which disposes the skinning buffers) before it rebuilds. The rebuild then throws (UNITY-EXPLORER-NQ8 / #7809, here an NRE on get_gameObject inside AttachmentAssetUtility.InstantiateOrGetCached; likely cause: line 60 calls DestroyImmediate on a parent MeshRenderer's GameObject, then reads .gameObject of a nested MeshRenderer that is already destroyed). That leaves the entity with a disposed AvatarCustomSkinningComponent while IsDirty stays true, so it retries every frame. Fixing the cascade means making the avatar rebuild transactional and ending the retry loop, which is a design change and the same one the W36 sweep skipped under #9985. No fix is on dev or in an open PR (#10083 skips #9985)."
+    },
+    {
+      "number": 10465,
+      "status": "fixed",
+      "commit": "2e9261b1f6b438475cff142be3604e885a4dd563",
+      "note": ""
+    },
+    {
+      "number": 10367,
+      "status": "skipped",
+      "commit": null,
+      "note": "design change across the native Rust Segment queue and startup: every instance shares persistentDataPath/analytics_queue_v1.sqlite3 and Segment starts before the single-instance check, and nothing repairs a corrupt DB; needs a native rebuild (recreate on DatabaseCorrupt) and/or a per-instance queue file"
+    },
+    {
+      "number": 10456,
+      "status": "skipped",
+      "commit": null,
+      "note": "design change across modules: skinning (ComputeSkinningBufferContainer), spring bones (AttachmentAssetUtility.BuildSpringBoneData, SpringBoneRegistrationSystem) and reused instances all assume joint index == base bone index; a skinning-only remap leaves spring bones broken, and it needs the reporter's GLBs plus an avatar-rendering owner"
+    },
+    {
+      "number": 10439,
+      "status": "skipped",
+      "commit": null,
+      "note": "Skipped #10439: likely root cause is that the local scene runs behind the auth screen and calls getUserData, which requests the user's own profile with DelayUntilResolved (UserIdentityApiWrapper.cs:49, retries 404 for about 2 minutes via CatalystRetryPolicy); the auth self-profile read, a single attempt that does not retry, then waits on that in-flight request (RealmProfileRepository.GetAsync TryGetExistingRequest loop) and hits the 15s timeout instead of reaching the new-account path. A fix needs an owner decision: either stop the scene API retrying 404 for the user's own profile or stop single reads from waiting on a retrying request for the same profile."
+    },
+    {
+      "number": 10444,
+      "status": "skipped",
+      "commit": null,
+      "note": "backend, not client: the community place picker shows everything /destinations?owner= returns, and the places API matches owned Genesis parcels only through places.owner (mostly null) or lands-permissions (operator grants only); fix belongs in decentraland/places (also match /lambdas/users/:addr/lands)"
+    },
+    {
+      "number": 10480,
+      "status": "skipped",
+      "commit": null,
+      "note": "looks like a broken install, not code: 5 Sentry events from one user on one machine in 10 minutes, the login music clip streams from disk and FMOD could not open it; monitor in Sentry and close if it does not recur"
+    },
+    {
+      "number": 10445,
+      "status": "skipped",
+      "commit": null,
+      "note": "not an Explorer defect: the Creator Hub default video URL (Vimeo 552481870.m3u8) now returns HTTP 404; replace it in the Creator Hub asset pack video player/screen and have scenes redeploy (Explorer's MediaStreaming test scene uses it too)"
+    },
+    {
+      "number": 9445,
+      "status": "fixed",
+      "commit": "437ce105d29ceaf96760a912558c77b242ed13c7",
+      "note": ""
+    },
+    {
+      "number": 8794,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed on dev by #8821 (350440a47): the attached logs show Dictionary.Add throwing in SceneCommunicationPipe.AddSceneMessageHandler during scene creation, which dev now replaces via the indexer; QA to verify on a current build and close"
+    },
+    {
+      "number": 10376,
+      "status": "skipped",
+      "commit": null,
+      "note": "root cause confirmed in 2026-w41 (SelfProfileModel.Read refetches whenever knowledge is Failed); a back-off needs a time source threaded into the reducer plus Sentry throttling in two layers: design change, not a minimal fix"
+    },
+    {
+      "number": 10467,
+      "status": "skipped",
+      "commit": null,
+      "note": "same failure mode as #10376 (own-profile catalyst fetch timeout retried and reported on every read); design change, not a minimal fix"
+    },
+    {
+      "number": 10436,
+      "status": "skipped",
+      "commit": null,
+      "note": "UI animation polish between onboarding screens; needs design direction and in-editor visual iteration, no defect to fix in code"
+    },
+    {
+      "number": 10437,
+      "status": "skipped",
+      "commit": null,
+      "note": "Mac-only avatar fade during a UI transition; needs in-editor visual verification on macOS, no repro here"
+    },
+    {
+      "number": 10431,
+      "status": "skipped",
+      "commit": null,
+      "note": "product call: a single stored home parcel cannot satisfy both the tag position and the toggle on multi-parcel scenes (follow-up to the reverted #10405 fix); needs a decision on what home means"
+    },
+    {
+      "number": 10416,
+      "status": "skipped",
+      "commit": null,
+      "note": "Genesis Plaza clock tower is scene content (content-team); the clocks are drawn by the scene's own code, not the Explorer"
+    },
+    {
+      "number": 10430,
+      "status": "skipped",
+      "commit": null,
+      "note": "teleport failed on a request timeout to the asset-bundle-registry gateway; network/backend condition, not a client defect"
+    },
+    {
+      "number": 10435,
+      "status": "skipped",
+      "commit": null,
+      "note": "NullReferenceException inside System.Net.Http SendAsync; BCL internal, no explorer frames (as #10378 in 2026-w41)"
+    },
+    {
+      "number": 10434,
+      "status": "skipped",
+      "commit": null,
+      "note": "account-specific Connection Error at 96%; other accounts work on the same machine, needs the affected account and logs to reproduce"
+    },
+    {
+      "number": 10441,
+      "status": "skipped",
+      "commit": null,
+      "note": "tech debt (collapse the UUAV AVProCompat facade); refactor, out of sweep scope"
+    },
+    {
+      "number": 10452,
+      "status": "skipped",
+      "commit": null,
+      "note": "Sentry stub for a bug report log attachment, not a defect (duplicate of #9644)"
+    },
+    {
+      "number": 10466,
+      "status": "skipped",
+      "commit": null,
+      "note": "network: cannot connect to destination host (duplicate of #7767); connectivity condition, not a client defect"
+    },
+    {
+      "number": 10469,
+      "status": "skipped",
+      "commit": null,
+      "note": "Thirdweb bundler request failing with status 0 (duplicate of #7713); network/third-party service failure"
+    },
+    {
+      "number": 10471,
+      "status": "skipped",
+      "commit": null,
+      "note": "Places API returns HTTP 500 (TypeError in the places server, World/utils.js); backend defect"
+    },
+    {
+      "number": 10473,
+      "status": "skipped",
+      "commit": null,
+      "note": "countdown digits turning gray in specific scenes; rendering issue that needs the scenes and an in-world repro, no client root cause identified from the report"
+    },
+    {
+      "number": 10475,
+      "status": "skipped",
+      "commit": null,
+      "note": "plaza floor blinking white; rendering issue that needs in-world repro and GPU profiling, no root cause identifiable from the report"
+    },
+    {
+      "number": 10476,
+      "status": "skipped",
+      "commit": null,
+      "note": "performance tech debt (CRDT bridge re-sends unchanged state); optimisation, out of sweep scope"
+    },
+    {
+      "number": 10484,
+      "status": "skipped",
+      "commit": null,
+      "note": "mesh with NaN/infinite vertices from a content export; content error, not a client defect"
+    },
+    {
+      "number": 10485,
+      "status": "skipped",
+      "commit": null,
+      "note": "feature request (satellite map north strip and world maps); out of sweep scope"
+    },
+    {
+      "number": 6894,
+      "status": "skipped",
+      "commit": null,
+      "note": "Genesis Plaza theater Focus Mode hint is scene content (content-team), not Explorer code"
+    },
+    {
+      "number": 6788,
+      "status": "skipped",
+      "commit": null,
+      "note": "Gaming Quest countdown banner layout belongs to the scene content (content-team), not Explorer code"
+    },
+    {
+      "number": 9581,
+      "status": "skipped",
+      "commit": null,
+      "note": "Aisha NPC bubble and dialogue text are scene content (content-team), not Explorer code"
+    },
+    {
+      "number": 9010,
+      "status": "skipped",
+      "commit": null,
+      "note": "Love Bomb emote props missing; needs the emote assets and an in-world repro to tell asset from client, no root cause from the report"
+    },
+    {
+      "number": 9498,
+      "status": "skipped",
+      "commit": null,
+      "note": "OBS stream switching audio desync in the theater; needs OBS plus admin-tool setup to reproduce, root cause spans streaming and media playback"
+    },
+    {
+      "number": 9515,
+      "status": "skipped",
+      "commit": null,
+      "note": "vending machine UI belongs to the scene, not Explorer code"
+    },
+    {
+      "number": 9440,
+      "status": "skipped",
+      "commit": null,
+      "note": "Genesis Plaza memory growth on macOS; needs profiling sessions, no single root cause identifiable in a sweep"
+    },
+    {
+      "number": 9337,
+      "status": "skipped",
+      "commit": null,
+      "note": "avatars disappearing after World round trip; spans realm switching and avatar loading, too complex for a sweep fix"
+    },
+    {
+      "number": 9308,
+      "status": "skipped",
+      "commit": null,
+      "note": "chat overlapping the theatre screen is a layout/design decision, not a defect with a code root cause"
+    },
+    {
+      "number": 9551,
+      "status": "skipped",
+      "commit": null,
+      "note": "feature request (in-world feedback for broken scenes); out of sweep scope"
+    },
+    {
+      "number": 9751,
+      "status": "skipped",
+      "commit": null,
+      "note": "feature request (offline DMs, duplicate of #4719); out of sweep scope"
+    },
+    {
+      "number": 10402,
+      "status": "skipped",
+      "commit": null,
+      "note": "UI Toolkit internal NRE in GetTextSettingsFrom; Unity engine internal, no explorer frames (as in 2026-w41)"
+    },
+    {
+      "number": 10388,
+      "status": "skipped",
+      "commit": null,
+      "note": "UI Toolkit internal MeshGenerationNode invalid state; Unity engine internal, no explorer frames (as in 2026-w41)"
+    },
+    {
+      "number": 10377,
+      "status": "skipped",
+      "commit": null,
+      "note": "remote party closed the WebSocket without handshake (duplicate of #8797); network condition, not a client defect (as in 2026-w41)"
+    }
+  ],
+  "note": "PR #10492 merged into dev on 2026-10-23T09:40:41Z"
+}
