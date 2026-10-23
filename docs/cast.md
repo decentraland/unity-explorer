@@ -52,6 +52,8 @@ When `OpenMedia()` is called:
 - **CurrentStream** → `BestInitialVideoKey()` selects in priority order: a **presentation bot** track (identity starts with `presentation-bot:`), then a **screen share** track (`TrackSource.SourceScreenshare`), then the first available video track (`FirstAvailableTrackSid()`). The selected `(identity, sid)` is stored as the current stream key.
 - **UserStream** → Directly opens the stream for the specified `(identity, sid)`.
 
+Legacy selection never picks a track named `presentation-video` (`PRESENTATION_VIDEO_TRACK_NAME`): `FindVideoTrackForParticipant()`, `FirstScreenShareVideoKey()` and `FirstAvailableTrackSid()` all skip it. That track carries only the raw video region of a cast v2 presentation, which is drawn by [presentation composition](#presentation-composition-cast-v2) instead.
+
 ### Active Speaker Tracking (video-follows-voice)
 
 In `CurrentStream` mode, the video automatically switches to whoever is speaking. This is driven by `TryFollowVideoStreamToActiveSpeaker()`, which runs every frame inside `EnsureVideoIsPlaying()` and picks the best source via `BestFollowCandidate()`.
@@ -79,7 +81,7 @@ In `CurrentStream` mode, the video automatically switches to whoever is speaking
 | Rapid speaker changes (<1.5s) | Debounced — stays on current |
 | UserStream mode | No auto-switching (early return) |
 
-**Camera-off (muted) state:** Muting a camera doesn't unpublish the track, so the last decoded frame would otherwise stay frozen on screen. `LivekitPlayer` detects this internally from the current camera track's `TrackPublication.Muted` flag, and `LivekitPlayer.LastTexture()` returns a **camera-off placeholder** (an avatar silhouette plus the streamer's name, like a video call) instead of the frozen frame. `AvatarPlaceHolderTextureSource` builds that placeholder by compositing the static `CameraOffPlaceholder` texture (configured on `MediaPlayerPluginSettings`) with the streamer name through an offscreen camera. It renders into a single reusable render texture and re-renders only when the name changes. When no name is known it shows just the background, and when no placeholder texture is configured it shows a plain dark screen with the name. `UpdateMediaPlayerSystem` blits whatever `LastTexture()` returns, so it needs no special muted-state path. Audio is unaffected, so muted participants are still heard.
+**Camera-off (muted) state:** Muting a camera doesn't unpublish the track, so the last decoded frame would otherwise stay frozen on screen. `LivekitPlayer` detects this internally from the current camera track's `TrackPublication.Muted` flag, and `LivekitPlayer.LastTexture()` returns a **camera-off placeholder** (an avatar silhouette plus the streamer's name, like a video call) instead of the frozen frame. `AvatarPlaceHolderTextureSource` builds that placeholder by compositing the static `CameraOffPlaceholder` texture (configured on `MediaPlayerPluginSettings`) with the streamer name through an offscreen camera. It renders into a single reusable render texture and re-renders only when the name changes. When no name is known it shows just the background, and when no placeholder texture is configured it shows a plain dark screen with the name. `UpdateMediaPlayerSystem` blits whatever `LastTexture()` returns, so it needs no special muted-state path. A muted screen share isn't a camera, so it keeps its last frame and never shows the placeholder. Live LiveKit frames arrive vertically flipped and the placeholder is upright, so `CurrentTextureScale` is `Vector2.one` for the placeholder and `(1, -1)` for a live frame. Audio is unaffected, so muted participants are still heard.
 
 **Key methods in `LivekitPlayer.cs`:**
 
@@ -90,7 +92,38 @@ In `CurrentStream` mode, the video automatically switches to whoever is speaking
 - `PresentationBotVideoKey()` / `PresentationBotIdentity()` — Find the presentation bot's video track / identity
 - `FindVideoTrackForParticipant(identity)` — Looks up a participant's video track by identity
 - `FirstAvailableTrackSid(kind)` — Returns the first available track of a kind (final fallback)
-- `LastTexture()` — Returns the live frame, or the camera-off placeholder when the current camera track is muted
+- `LastTexture()` — Returns the live frame, the camera-off placeholder when the current camera track is muted, or the presentation composite while composing
+
+---
+
+## Presentation composition (cast v2)
+
+When the presentation bot runs with client composition, the explorer draws the presentation itself instead of showing a pre-composited bot track. Scenes change nothing: the composite reaches the screen through the same `LastTexture()` path as any other frame.
+
+**Trigger.** `LivekitPlayer` composes while both of these hold:
+
+- the metadata of the composing bot parses (`PresentationBotMetadata.Parse`) with a `slide`;
+- the address is `current-stream`, or a `UserStream` pinned to any sid of a presentation bot (including `presentation-video`).
+
+The composing bot is the pinned identity when the requested address is a `UserStream` pinned to a `presentation-bot:` identity, and the first `presentation-bot:` participant found for `current-stream`. Every open video mode keeps the requested address apart from the target it shows, so a pinned screen never composes another bot, even after the legacy recovery has switched its target to `current-stream`. A pin to any other identity never reads participant metadata.
+
+The bot's metadata is read from `LKParticipant.Metadata` on the main thread, only while the room is connected, and re-parsed only when the raw string or the composing bot changes. The FFI-thread handlers only raise `pendingPresentationRefresh` on connect, reconnect, participant connect/disconnect and metadata changes. Unparseable or out-of-bounds metadata is warned about once per player and falls back to the legacy path. While the room can't open streams (see [Stream Recovery](#stream-recovery-self-healing)), the player drops the presentation, so `IsVideoOpened` is false and the screen renders black; once the room is connected again, the player re-reads the metadata and composes again.
+
+**Layers.** `PresentationCompositor` blits one upright `RenderTexture` the size of the slide, which parsing already bounds to 2048 px per side (`PresentationBotMetadata.MAX_SLIDE_SIZE`, the same `LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE` that caps LiveKit video). It blits on every compose while a video or camera frame is drawn; with only the slide shown, it blits again only when the slide or a rect changed, or right after a video or camera frame stops being drawn, so the circle or rect never keeps a stale frame. `LivekitPlayer` composes at most once per frame: another `LastTexture()` call in the same frame, such as the one from `GatherMediaStreamDebugSystem`, returns the same composite. A video or camera frame whose texture holds sRGB data in a linear texture (`isDataSRGB` is false) is converted to linear in the shader, as the legacy path's flip blit does in `UpdateMediaPlayerSystem`. The composite has three layers:
+
+| Layer | Source | Shown |
+|-------|--------|-------|
+| Slide | `slide.url`, loaded by `SlideTextureCache` | Always; the previous slide stays while the next one loads, fails, or is disallowed, and the slide is black until the first one loads |
+| Video rect | the bot's `presentation-video` track | While `playingVideoIndex` points at a `slideVideos` entry with valid geometry, whatever `videoState` is; black until the stream has decoded its first frame. The SDK gives no new-frame signal, so when a new video starts the rect can briefly show the previous video's last frame until the new video's first sample arrives |
+| Camera circle | the `presenterIdentity` participant's CAMERA track | While that track is published and not muted |
+
+While composing, the player holds only the `presentation-video` and presenter camera streams, and never opens the legacy track. `presentation-video` is decoded only on a compose that shows the video rect. `CurrentTextureScale` is `Vector2.one` and `IsVideoOpened` is true while composing.
+
+**Slide origin.** `SlideTextureCache` fetches only contract-shaped slide URLs: `https` on the default port, the host of `DecentralandUrl.CastPresenterService` (`cast-presenter-service.{BaseDomain}`, so it follows a [custom base domain](custom-base-domain.md)), no userinfo, query, fragment, or backslash, and a path made of an optional prefix of `[A-Za-z0-9_-]` segments followed by `/presentations/{uuid}/slides/{16 lowercase hex}.png`. In the Editor, loopback `http` URLs with the same path are allowed on any port. A URL must already be canonical, that is, equal to its own `Uri.AbsoluteUri`. The server's `PUBLIC_BASE_URL` must therefore be lowercase, with no explicit port and only `[A-Za-z0-9_-]` path segments, or every slide fails. Slide fetches don't follow redirects. The cache starts at most one fetch every 0.25 s per bot, tracks at most 32 bots, 32 rejected URLs, and 32 failed URLs, forgetting the least recently tracked one first, and logs at most 8 rejections and 32 failures per session. Slides decode on a worker thread: the cache requests them with `GetTextureArguments.DecodeOffMainThread`, which `GetTextureWebRequest` serves with a `DownloadHandlerTexture` that decodes into a non-readable texture without mipmaps, so a slide change costs no main-thread decode and no managed copy of the body. After decoding, the cache destroys a slide and rejects its URL when the body is larger than 32 MB (`MAX_SLIDE_BYTES`) or the image is larger than 2048 px on either side (`PresentationBotMetadata.MAX_SLIDE_SIZE`, which also bounds the metadata's `slide.width` and `slide.height`). These limits apply after the worker-thread decode, so they bound what the cache keeps, not the memory used while decoding, and they don't stop the download early. A body that fails to decode counts as a failed fetch. It doesn't fetch a rejected URL again until the rejected set forgets it, and counts each rejection against the rejection log budget. `GetOrRequest` returns the slide, or the `SlideState` that explains why there is none: `Loading`, `Throttled`, `CoolingDown`, `Rejected`, or `Disposed`. The cache holds up to four slides, evicting the least recently used one, and retries a failed URL after a cooldown, rejecting it after 5 failed fetches (`MAX_FETCH_ATTEMPTS`).
+
+**Slide memory.** A composing player holds a lease from `SlideTextureCache.BeginComposing()` and disposes it when it leaves the composing mode; disposing a lease twice has no further effect. The cache destroys every cached slide when the last open lease is disposed. A fetch that completes after that is destroyed instead of cached. It's registered with `CacheCleaner`, which evicts the least recently used slides under memory pressure but keeps one most recently used slide per open lease. A player whose next slide is still loading marks the slide it still shows as recently used on every compose, so the slides on screen survive. Slide requests time out after 15 s (`REQUEST_TIMEOUT_SECONDS`) and then retry after the failure cooldown.
+
+**Fallback.** The moment the bot's metadata has no `slide`, or the bot leaves, the player drops both presentation streams, releases the composite render texture, and recovers the legacy track (see [Stream Recovery](#stream-recovery-self-healing)). A pinned screen reopens its pinned stream, and falls back to `current-stream` only once that stream is dead. A reconnect releases both presentation streams from the room's cache, like the legacy stream, and the next `EnsureVideoIsPlaying()` reopens them.
 
 ---
 
@@ -119,15 +152,36 @@ When the SDK component has `spatial = true`, audio sources are positioned in 3D 
 
 ## Stream Recovery (Self-Healing)
 
-Both video and audio streams can die at any time (participant disconnects, network issues). The system self-heals via two methods called every frame from `UpdateMediaPlayerSystem`:
+Both video and audio streams can die at any time (participant disconnects, network issues). The system self-heals via two methods called every frame from `UpdateMediaPlayerSystem`.
+
+### Video modes
+
+What a `LivekitPlayer` shows is one `LivekitVideoMode`, so an invalid combination, such as a legacy track held while composing, can't be represented:
+
+| Mode | Holds |
+|------|-------|
+| `Closed` | Nothing; the player was never opened |
+| `DeferredVideo` | The requested address and the target to open: the room isn't connected, no track matches yet, the composition ended, a reconnect released the stream, or the player was closed |
+| `LegacyVideo` | The requested address, the target, and the one track shown for it |
+| `ComposingVideo` | The requested address, the composing bot, its parsed metadata, the presentation streams, the shown slide, and a slide cache lease |
+
+The player changes mode only through `Defer`, `Follow`, `StartComposing`, and `StopComposing`. Leaving `ComposingVideo` disposes its slide lease and releases the composite render texture. `CloseCurrentStream()` drops every held stream and defers the requested address, so `Play()` resumes it.
 
 ### `EnsureVideoIsPlaying()`
 
 ```
+Composing → Keep the presentation streams resolved (see Presentation composition)
+Deferred → Open its target (room connected again, composition ended, reconnect, resumed after close)
 Video dead + UserStream mode → Fallback to CurrentStream (first available track)
 Video dead + CurrentStream mode → Re-open CurrentStream
 Video alive + CurrentStream mode → TryFollowActiveSpeaker()
 ```
+
+The LiveKit room events arrive on the FFI thread. Their handlers only set `volatile` flags (`pendingVideoRediscovery`, `pendingAudioRediscovery`, `pendingVideoReset`, `pendingPresentationRefresh`), which `EnsureVideoIsPlaying()` and `EnsureAudioIsPlaying()` consume on the main thread. A rediscovery flag is consumed even while the stream is healthy, and never re-opens an established stream: re-allocating the stream while a subscription is in flight can replace the in-flight `Weak<IVideoStream>` and stall playback (observed on Windows). The room owns every stream: the player only drops its handles, and calls `VideoStreams.Release()` solely to evict streams held across a reconnect, because they belong to the torn-down connection and the reopen must get a fresh stream instead of the room's cached one. `LivekitPlayer` is otherwise main-thread only.
+
+While the room is tearing down (`canOpenStreams` is false), `EnsureVideoIsPlaying()` opens no stream, because opening one with invalid FFI handles poisons the room's reusable stream cache. The pending flags stay set for the reconnect. It drops a presentation being composed, and calls `EnsureAudioIsPlaying()`, which releases the audio sources whose streams died with the room.
+
+`EnsureVideoIsPlaying()` also drives audio discovery. `UpdateMediaPlayerSystem` drives audio from a separate `UpdateAudioStream` query for `PBAudioStream`, and entities with only `PBVideoPlayer` never enter it, so without this a LiveKit room on a video-only screen would stay silent.
 
 ### `EnsureAudioIsPlaying()`
 
@@ -143,7 +197,7 @@ No dead sources + within interval → No action
 
 ## Resolution Capping
 
-LiveKit video textures are capped at **2048x2048** (`MAX_LIVEKIT_VIDEO_WIDTH` / `MAX_LIVEKIT_VIDEO_HEIGHT` in `UpdateMediaPlayerSystem`). If a video frame exceeds these dimensions, it's scaled down via `Graphics.Blit()` before being copied to the render target. This prevents GPU stalls from unexpectedly large incoming video.
+LiveKit video textures are capped at **2048x2048** (`LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE`, used by `UpdateMediaPlayerSystem`). If a video frame exceeds these dimensions, it's scaled down via `Graphics.Blit()` before being copied to the render target. This prevents GPU stalls from unexpectedly large incoming video. Presentation slides, and so the composite, are bounded to the same 2048 px per side when the bot's metadata is parsed.
 
 When no LiveKit stream is open, the system renders a black texture. When the current camera track is muted (camera off), `LivekitPlayer.LastTexture()` returns the camera-off placeholder (avatar silhouette plus the streamer name), which the system blits like any other frame.
 
@@ -161,7 +215,9 @@ When no LiveKit stream is open, the system renders a black texture. When the cur
 
 ### Factory
 
-`MediaFactory` (built by `MediaFactoryBuilder` per scene) decides which backend to create based on the URL scheme. It holds a reference to the scene's `IRoom` from `IRoomHub`.
+`MediaFactory` (built by `MediaFactoryBuilder` per scene) decides which backend to create based on the URL scheme. It holds a reference to the scene's `IRoom` from `IRoomHub`. Each call creates a new `MultiMediaPlayer`: a `UrlMediaPlayer` around a `MediaPlayer` from `MediaPlayerCustomPool`, which reuses one parked under the same URL, or a new `LivekitPlayer`. `MediaFactoryBuilder` receives the app-wide `SlideTextureCache` and the compositor material (`CompositorMaterial` on `MediaPlayerContainer.Settings`) once, and every `LivekitPlayer` builds its `PresentationCompositor` from that material when it's created.
+
+On Linux (`UNITY_EDITOR_LINUX`, `UNITY_STANDALONE_LINUX`), `MediaPlayerPluginWrapper.InjectToWorld` compiles the media systems out, so its fields look unused to InspectCode, which runs with those defines. `MediaPlayerPlugin` creates the camera-off placeholder only where the systems are compiled in, because the placeholder builds an offscreen camera and a render texture as soon as it's created.
 
 ### Component
 
@@ -228,6 +284,7 @@ Metadata is a JSON string parsed at query time.
 | File | Role |
 |------|------|
 | `SDKComponents/MediaStream/LivekitPlayer.cs` | Core player — video/audio routing, speaker tracking, recovery |
+| `SDKComponents/MediaStream/LivekitVideoMode.cs` | The player's video modes |
 | `SDKComponents/MediaStream/LivekitAddress.cs` | `CurrentStream` / `UserStream` address REnum |
 | `SDKComponents/MediaStream/MultiMediaPlayer.cs` | Unified wrapper over the URL (UUAV) and Livekit backends |
 | `SDKComponents/MediaStream/MediaPlayerComponent.cs` | ECS component holding the player |
@@ -237,6 +294,11 @@ Metadata is a JSON string parsed at query time.
 | `SDKComponents/MediaStream/Systems/CleanUpMediaPlayerSystem.cs` | Disposal system |
 | `SDKComponents/MediaStream/MediaFactory.cs` | Factory choosing backend by URL |
 | `PluginSystem/World/MediaPlayerPlugin.cs` | Plugin settings — `FlipMaterial`, `CameraOffPlaceholder` |
+| `SDKComponents/MediaStream/Systems/MediaPlayerContainer.cs` | Container settings — `MediaPlayerPrefab`, `CompositorMaterial`; owns the `SlideTextureCache` |
+| `SDKComponents/MediaStream/PresentationBotMetadata.cs` | The bot's v2 metadata DTO, its parsing, and the video rect and camera circle |
+| `SDKComponents/MediaStream/SlideTextureCache.cs` | App-wide slide texture cache with the host allowlist |
+| `SDKComponents/MediaStream/PresentationCompositor.cs` | Blits slide, video rect and camera circle into one render texture |
+| `Rendering/Composition/PresentationCompositorShader.shader` | `DCL/PresentationCompositor` single-pass compositor shader |
 | `SDKComponents/MediaStream/LiveKitMediaExtensions.cs` | URL parsing helpers |
 | `Infrastructure/.../CommsApi/CommsApiWrap.cs` | `getActiveVideoStreams` API |
 | `Infrastructure/.../CommsApi/GetActiveVideoStreamsResponse.cs` | Response builder with display name resolution |

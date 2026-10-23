@@ -24,10 +24,12 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
+        private readonly SlideTextureCache slideCache;
+        private readonly Material compositorMaterial;
 
         public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
@@ -35,6 +37,8 @@ namespace DCL.SDKComponents.MediaStream
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
+            this.slideCache = slideCache;
+            this.compositorMaterial = compositorMaterial;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
@@ -44,6 +48,6 @@ namespace DCL.SDKComponents.MediaStream
                 () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
                 mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
-                analyticsController, placeholderSource);
+                analyticsController, placeholderSource, slideCache, compositorMaterial);
     }
 }
