@@ -89,29 +89,7 @@ namespace DCL.AvatarRendering.Wearables
                 // Include ALL user's available wearables (loop pages)
                 // Higher page size to do a lot less requests.
                 const int OWNED_PAGE_SIZE = 200;
-                IWearablesProvider.Params subParameters = parameters;
-                subParameters.PageSize = OWNED_PAGE_SIZE;
-                subParameters.PageNumber = 1;
-                int ownedTotal = int.MaxValue;
-                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
-
-                while (localBuffer.Count < ownedTotal)
-                {
-                    ownedPageBuffer.Clear();
-                    (var ownedPageResults, int ownedPageTotal) = await source.GetTrimmedByParamsAsync(
-                        subParameters,
-                        ct,
-                        results: ownedPageBuffer
-                    );
-
-                    ownedTotal = ownedPageTotal;
-
-                    if (ownedPageResults.Count == 0)
-                        break;
-
-                    localBuffer.AddRange(ownedPageResults);
-                    subParameters.PageNumber++;
-                }
+                await source.TryGetAllTrimmedAsync(parameters, ct, localBuffer, OWNED_PAGE_SIZE);
 
                 // De-duplicate by URN and paginate the unified list
                 var unified = localBuffer
