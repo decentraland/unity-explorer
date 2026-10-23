@@ -11,6 +11,8 @@ namespace DCL.Backpack.Tests
     public class OutfitRandomizerShould
     {
         private const int ROLLS = 200;
+        private const int PRIORITY_ROLLS = 2000;
+        private const string BASE_UPPER_BODY = "urn:decentraland:off-chain:base-avatars:green_hoodie";
 
         private Dictionary<string, HashSet<string>> hidesByCategory = null!;
         private HashSet<string> dropped = null!;
@@ -110,6 +112,47 @@ namespace DCL.Backpack.Tests
 
             Assert.Greater(hatRolls, 0);
             Assert.Less(hatRolls, ROLLS);
+        }
+
+        [Test]
+        public void PreferCustomWearablesMostOfTheTime()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new Random(3));
+            var custom = new URN("urn:decentraland:matic:collections-v2:0xabc:0");
+            randomizer.AddEntry(WearableCategories.Categories.UPPER_BODY, custom);
+            randomizer.AddEntry(WearableCategories.Categories.UPPER_BODY, new URN(BASE_UPPER_BODY));
+            var picks = new Dictionary<string, URN>();
+            var customRolls = 0;
+
+            // Act
+            for (var i = 0; i < PRIORITY_ROLLS; i++)
+            {
+                randomizer.Pick(picks);
+                if (picks[WearableCategories.Categories.UPPER_BODY].Equals(custom)) customRolls++;
+            }
+
+            // Assert
+            float ratio = customRolls / (float)PRIORITY_ROLLS;
+            Assert.That(ratio, Is.EqualTo(OutfitRandomizer.CUSTOM_PRIORITY_CHANCE).Within(0.05f));
+        }
+
+        [Test]
+        public void PickBaseWearablesWhenNoCustomIsOwned()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new Random(5));
+            randomizer.AddEntry(WearableCategories.Categories.UPPER_BODY, new URN(BASE_UPPER_BODY));
+            var picks = new Dictionary<string, URN>();
+
+            for (var i = 0; i < ROLLS; i++)
+            {
+                // Act
+                randomizer.Pick(picks);
+
+                // Assert
+                Assert.AreEqual(new URN(BASE_UPPER_BODY), picks[WearableCategories.Categories.UPPER_BODY]);
+            }
         }
 
         [Test]

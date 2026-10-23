@@ -14,6 +14,9 @@ namespace DCL.Backpack.AvatarSection.Randomizer
     {
         internal const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.75f;
         internal const float SKIN_INCLUDE_CHANCE = 0.2f;
+        internal const float CUSTOM_PRIORITY_CHANCE = 0.8f;
+
+        private const string BASE_WEARABLE_URN_PREFIX = "urn:decentraland:off-chain:base-avatars:";
 
         private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
         {
@@ -33,7 +36,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             WearableCategories.Categories.FACIAL_HAIR,
         };
 
-        private readonly Dictionary<string, List<URN>> catalog = new ();
+        private readonly Dictionary<string, CategoryPool> catalog = new ();
         private readonly Random random;
 
         public OutfitRandomizer(Random random)
@@ -73,57 +76,29 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         /// <summary>
         ///     Fills <paramref name="result" /> with one pick per category. Optional categories and skin are sometimes left empty.
+        ///     Where the user owns custom wearables in a category, a custom one is picked <see cref="CUSTOM_PRIORITY_CHANCE" /> of the time.
         /// </summary>
         public void Pick(Dictionary<string, URN> result)
         {
             result.Clear();
 
-            foreach ((string category, List<URN> urns) in catalog)
+            foreach ((string category, CategoryPool pool) in catalog)
             {
-                if (urns.Count == 0)
-                    continue;
-
                 if (random.NextDouble() >= IncludeChance(category))
                     continue;
 
-                result[category] = urns[random.Next(urns.Count)];
+                if (TryPickFrom(pool, null, out URN urn))
+                    result[category] = urn;
             }
         }
 
         /// <summary>
-        ///     Picks another wearable for <paramref name="category" /> that is not in <paramref name="tried" />.
+        ///     Picks another wearable for <paramref name="category" /> that is not in <paramref name="tried" />, with the same custom priority as <see cref="Pick" />.
         /// </summary>
         public bool TryRepick(string category, HashSet<URN> tried, out URN urn)
         {
             urn = default;
-
-            if (!catalog.TryGetValue(category, out List<URN>? urns))
-                return false;
-
-            int remaining = 0;
-
-            foreach (URN candidate in urns)
-                if (!tried.Contains(candidate))
-                    remaining++;
-
-            if (remaining == 0)
-                return false;
-
-            int target = random.Next(remaining);
-
-            foreach (URN candidate in urns)
-            {
-                if (tried.Contains(candidate))
-                    continue;
-
-                if (target-- == 0)
-                {
-                    urn = candidate;
-                    return true;
-                }
-            }
-
-            return false;
+            return catalog.TryGetValue(category, out CategoryPool? pool) && TryPickFrom(pool, tried, out urn);
         }
 
         /// <summary>
@@ -160,13 +135,57 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         internal void AddEntry(string category, URN urn)
         {
-            if (!catalog.TryGetValue(category, out List<URN>? urns))
+            if (!catalog.TryGetValue(category, out CategoryPool? pool))
             {
-                urns = new List<URN>();
-                catalog[category] = urns;
+                pool = new CategoryPool();
+                catalog[category] = pool;
             }
 
-            urns.Add(urn);
+            if (((string)urn).StartsWith(BASE_WEARABLE_URN_PREFIX, StringComparison.Ordinal))
+                pool.Base.Add(urn);
+            else
+                pool.Custom.Add(urn);
+        }
+
+        /// <summary>
+        ///     Tries the preferred pool first and falls back to the other one, so a category with a single kind of wearable always yields a pick.
+        /// </summary>
+        private bool TryPickFrom(CategoryPool pool, HashSet<URN>? tried, out URN urn)
+        {
+            bool preferCustom = random.NextDouble() < CUSTOM_PRIORITY_CHANCE;
+            List<URN> preferred = preferCustom ? pool.Custom : pool.Base;
+            List<URN> fallback = preferCustom ? pool.Base : pool.Custom;
+
+            return TryPickUntried(preferred, tried, out urn) || TryPickUntried(fallback, tried, out urn);
+        }
+
+        private bool TryPickUntried(List<URN> urns, HashSet<URN>? tried, out URN urn)
+        {
+            urn = default;
+            var remaining = 0;
+
+            foreach (URN candidate in urns)
+                if (tried == null || !tried.Contains(candidate))
+                    remaining++;
+
+            if (remaining == 0)
+                return false;
+
+            int target = random.Next(remaining);
+
+            foreach (URN candidate in urns)
+            {
+                if (tried != null && tried.Contains(candidate))
+                    continue;
+
+                if (target-- == 0)
+                {
+                    urn = candidate;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static float IncludeChance(string category)
@@ -186,6 +205,12 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 return false;
 
             return urnStr.AsSpan(lastColon + 1).StartsWith(prefix.AsSpan(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed class CategoryPool
+        {
+            public readonly List<URN> Custom = new ();
+            public readonly List<URN> Base = new ();
         }
     }
 }
