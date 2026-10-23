@@ -28,7 +28,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         private static readonly FieldInfo HEAD_ANCHOR_FIELD =
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-        private INearbyAudioStreamRegistry registry;
+        private INearbyAudioStreamRegistry registry = null!;
 
         private readonly List<GameObject> gameObjects = new (16);
 
