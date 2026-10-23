@@ -391,10 +391,10 @@ namespace DCL.Lobby
             viewInstance.GoToField.Submitted = OnGoToSubmitted;
 
             // The four-column sections list the same places as the seven-column ones, so their rails share the lists
-            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
-            recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
-            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
-            featuredPlaces4By2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
+            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent, PlacesSection.RecentlyVisited);
+            recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent, PlacesSection.RecentlyVisited);
+            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended, PlacesSection.Browse);
+            featuredPlaces4By2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended, PlacesSection.Browse);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
             recentPlaces4By2Rail.Show(viewInstance.RecentPlaces4By2);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
@@ -407,15 +407,15 @@ namespace DCL.Lobby
 
             // The four-column rail lists the same communities as the seven-column one; only a user the feature admits gets
             // the sections, which a verdict still pending here brings up from the fetch
-            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
-            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
+            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
 
             if (communitiesProvider != null && CommunitiesFeatureAccess.Instance.IsUserAllowedCached())
                 ShowCommunitiesSections();
 
             // The four-column rail lists the same photos as the seven-column one
-            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
-            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
+            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
 
             if (cameraReel != null && identityCache.Identity != null)
             {
@@ -785,12 +785,12 @@ namespace DCL.Lobby
         }
 
         // The origin travels with the handlers so a Jump in from the details is attributed to the card's row
-        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbyCardOrigin origin) =>
+        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbyCardOrigin origin, PlacesSection viewAllSection) =>
             new (viewInstance!.PlaceCardTemplate)
             {
                 CardClicked = index => OnPlaceClicked(places[index], origin),
                 CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
-                ViewAllClicked = ShowPlaces,
+                ViewAllClicked = () => ShowExploreSection(ExploreSections.Places, viewAllSection),
             };
 
         // A failed fetch keeps the last successful places, so the rows only hide while none have ever arrived; the four-column
@@ -1343,10 +1343,16 @@ namespace DCL.Lobby
         private void ShowEvents() =>
             ShowExploreSection(ExploreSections.Events);
 
-        private void ShowExploreSection(ExploreSections section)
+        private void ShowCommunities() =>
+            ShowExploreSection(ExploreSections.Communities);
+
+        private void ShowGallery() =>
+            ShowExploreSection(ExploreSections.CameraReel);
+
+        private void ShowExploreSection(ExploreSections section, PlacesSection? placesSection = null)
         {
             ExploreSectionOpened?.Invoke(section);
-            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section)));
+            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section, placesSection)));
         }
 
         private void RequestClose()

@@ -95,7 +95,7 @@ namespace DCL.ExplorePanel
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
-            hostableSections = new IHostableSection[] { backpackController, navmapController, placesController, eventsController, settingsController };
+            hostableSections = new IHostableSection[] { backpackController, navmapController, placesController, eventsController, settingsController, cameraReelController, communitiesBrowserController };
             CameraReelController = cameraReelController;
             this.profileButtonPresenter = profileButtonPresenter;
             dclInput = DCLInput.Instance;
