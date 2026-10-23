@@ -8,7 +8,7 @@
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "com.alttester.sdk": {
-      "version": "https://github.com/mikhail-dcl/AltTester-Unity-SDK.git?path=/Assets/AltTester#1983-unity-6000-5-getinstanceid-obsolete",
+      "version": "https://github.com/mikhail-dcl/AltTester-Unity-SDK.git?path=/Assets/AltTester#0aa90e29cb524f12b8f89f108906a4bd161b9638",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -22,7 +22,7 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.ugui": "1.0.0"
       },
-      "hash": "3c644489030a026eaf49c02eade0127ee975dbd0"
+      "hash": "0aa90e29cb524f12b8f89f108906a4bd161b9638"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
