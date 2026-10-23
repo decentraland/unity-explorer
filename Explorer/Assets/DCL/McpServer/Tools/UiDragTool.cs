@@ -79,6 +79,7 @@ namespace DCL.McpServer.Tools
             int durationFrames = Mathf.Clamp(arguments.TryGetInt("durationFrames", out int frames) ? frames : DEFAULT_DURATION_FRAMES, MIN_DURATION_FRAMES, MAX_DURATION_FRAMES);
 
             string? skippedSceneUi = null;
+            string? endedHover = uiAutomation.EndHover();
 
             if (path != DragPath.Device)
             {
@@ -87,9 +88,10 @@ namespace DCL.McpServer.Tools
 
                 SceneUiDragAttempt attempt = await uiAutomation.DragSceneUiAsync(fromImage, toImage, durationFrames, ct);
 
-                if (attempt.Result.HasValue)
+                if (attempt.Result is { } sdkResult)
                 {
-                    JObject sdkJson = attempt.Result.Value.ToJson(uiAutomation.CursorStateName());
+                    sdkResult.EndedHover = endedHover;
+                    JObject sdkJson = sdkResult.ToJson(uiAutomation.CursorStateName());
                     sdkJson["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Sdk);
                     return McpToolResult.Json(sdkJson);
                 }
@@ -97,7 +99,7 @@ namespace DCL.McpServer.Tools
                 skippedSceneUi = attempt.SkipReason;
 
                 if (path == DragPath.Sdk)
-                    return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
+                    return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}{EndedHoverNote(endedHover)}");
             }
 
             Vector2 from = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(fromX, fromY));
@@ -108,7 +110,7 @@ namespace DCL.McpServer.Tools
             UiDeviceDragOutcome outcome = await uiAutomation.DragWithDevicesAsync(from, to, durationFrames, button, ct);
 
             if (!outcome.Ok)
-                return McpToolResult.Error(outcome.FailureReason ?? "the drag failed");
+                return McpToolResult.Error((outcome.FailureReason ?? "the drag failed") + EndedHoverNote(endedHover));
 
             var result = new JObject
             {
@@ -129,7 +131,13 @@ namespace DCL.McpServer.Tools
             if (skippedSceneUi != null)
                 result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse was replayed instead";
 
+            if (endedHover != null)
+                result["hoverEnded"] = endedHover;
+
             return McpToolResult.Json(result);
         }
+
+        private static string EndedHoverNote(string? endedHover) =>
+            endedHover != null ? $" (the parked hover on {endedHover} was ended first)" : string.Empty;
     }
 }

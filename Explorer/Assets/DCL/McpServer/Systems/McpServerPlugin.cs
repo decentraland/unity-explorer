@@ -149,6 +149,7 @@ namespace DCL.McpServer.Systems
                           .Add(new UiSetTextTool(uiAutomation))
                           .Add(new UiScrollTool(uiAutomation))
                           .Add(new UiDragTool(uiAutomation))
+                          .Add(new UiHoverTool(uiAutomation))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);
