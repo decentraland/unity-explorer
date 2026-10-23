@@ -56,7 +56,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             {
                 string category = wearable.GetCategory();
 
-                if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart())
+                if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart() || isPendingGift(wearable.GetUrn()))
                     continue;
 
                 if (!wearable.IsCompatibleWithBodyShape(bodyShape))
