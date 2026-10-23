@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly int CAMERA_EDGE = Shader.PropertyToID("_CameraEdge");
         private static readonly int SLIDE_SIZE = Shader.PropertyToID("_SlideSize");
         private static readonly int VIDEO_TEX_LINEAR_DATA = Shader.PropertyToID("_VideoTexLinearData");
+        private static readonly int VIDEO_FLIP = Shader.PropertyToID("_VideoFlip");
         private static readonly int CAMERA_TEX_LINEAR_DATA = Shader.PropertyToID("_CameraTexLinearData");
 
         private readonly Material material;
@@ -35,6 +36,8 @@ namespace DCL.SDKComponents.MediaStream
 
 #if UNITY_INCLUDE_TESTS
         internal int blitCount { get; private set; }
+
+        internal float videoFlip => material.GetFloat(VIDEO_FLIP);
 #endif
 
         public PresentationCompositor(Material material)
@@ -53,14 +56,15 @@ namespace DCL.SDKComponents.MediaStream
         ///     camera circle (skipped when <paramref name="camera" /> is null) into a BGRA32 render texture of
         ///     <paramref name="width" /> × <paramref name="height" />. Rects are normalized with a top-left origin. Blits on
         ///     every call while <paramref name="video" /> or <paramref name="camera" /> is given; otherwise only when the
-        ///     slide or rects changed, or the last call drew a video or camera frame.
+        ///     slide or rects changed, or the last call drew a video or camera frame. <paramref name="flipVideo" /> samples
+        ///     <paramref name="video" /> with Unity's bottom-left origin; leave it false for frames whose first row is the top one, as LiveKit's are.
         /// </summary>
         /// <returns>
         ///     The compositor's own render texture, not a copy, and the same instance while the size is unchanged. The
         ///     caller doesn't take ownership: the next call overwrites it, and <see cref="Release" /> or
         ///     <see cref="Dispose" /> destroys it.
         /// </returns>
-        public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect)
+        public Texture Compose(int width, int height, Texture slide, bool showVideoRect, Vector4 videoRect, Texture? video, Texture? camera, Vector4 cameraRect, bool flipVideo = false)
         {
             if (composite == null || composite.width != width || composite.height != height)
             {
@@ -86,6 +90,7 @@ namespace DCL.SDKComponents.MediaStream
             material.SetFloat(VIDEO_ENABLED, showVideoRect ? 1f : 0f);
             material.SetTexture(VIDEO_TEX, video != null ? video : Texture2D.blackTexture);
             material.SetFloat(VIDEO_TEX_LINEAR_DATA, video != null && !video.isDataSRGB ? 1f : 0f);
+            material.SetFloat(VIDEO_FLIP, flipVideo ? 1f : 0f);
 
             material.SetVector(CAMERA_RECT, cameraRect);
             material.SetFloat(CAMERA_ENABLED, camera != null ? 1f : 0f);
