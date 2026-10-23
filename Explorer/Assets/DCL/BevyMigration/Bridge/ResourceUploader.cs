@@ -18,14 +18,17 @@ namespace DCL.BevyMigration.Bridge
     public unsafe class ResourceUploader
     {
         private const uint FIRST_HANDLE = 1;
-        private const int HEADER_SIZE = 5 * sizeof(uint);
+        private const int HEADER_SIZE = 6 * sizeof(uint);
+        private const int BASE_BONE_COUNT = 62;
         private const uint FORMAT_RGBA8 = 0;
         private const string FAMILY_UNLIT_TOKEN = "Unlit";
+        private const string FAMILY_TMP_SDF_TOKEN = "Distance Field";
 
         private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
         private static readonly int BASE_COLOR = Shader.PropertyToID("_BaseColor");
         private static readonly int COLOR = Shader.PropertyToID("_Color");
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+        private static readonly int FACE_COLOR = Shader.PropertyToID("_FaceColor");
         private static readonly int MAIN_TEX = Shader.PropertyToID("_MainTex");
         private static readonly int METALLIC = Shader.PropertyToID("_Metallic");
         private static readonly int SMOOTHNESS = Shader.PropertyToID("_Smoothness");
@@ -42,6 +45,8 @@ namespace DCL.BevyMigration.Bridge
         private static readonly int CULL = Shader.PropertyToID("_Cull");
 
         private readonly Dictionary<EntityId, uint> meshHandles = new ();
+        private readonly Dictionary<(EntityId, int), uint> skinnedMeshHandles = new ();
+        private readonly List<(RenderTexture, uint, bool)> dynamicTextures = new ();
         private readonly Dictionary<EntityId, uint> textureHandles = new ();
         private readonly Dictionary<EntityId, uint> materialHandles = new ();
         private readonly HashSet<EntityId> rejected = new ();
@@ -102,16 +107,16 @@ namespace DCL.BevyMigration.Bridge
 
         private uint Texture(Texture? texture, bool srgb)
         {
-            if (texture is not Texture2D texture2D) return BridgeTextures.NONE;
+            if (texture is not (Texture2D or RenderTexture) || texture == null) return BridgeTextures.NONE;
 
-            EntityId id = texture2D.GetEntityId();
+            EntityId id = texture.GetEntityId();
 
             if (textureHandles.TryGetValue(id, out uint handle)) return handle;
             if (rejected.Contains(id)) return BridgeTextures.NONE;
 
             handle = nextTexture;
 
-            if (!TryUploadTexture(texture2D, srgb, handle))
+            if (!TryUploadTexture(texture, srgb, handle))
             {
                 rejected.Add(id);
                 return BridgeTextures.NONE;
@@ -119,10 +124,59 @@ namespace DCL.BevyMigration.Bridge
 
             nextTexture++;
             textureHandles[id] = handle;
+
+            if (texture is RenderTexture dynamic)
+                dynamicTextures.Add((dynamic, handle, srgb));
+
             return handle;
         }
 
-        private bool TryUploadMesh(Mesh mesh, uint handle)
+        /// <summary>
+        ///     Re-uploads every render texture (media surfaces) under its existing handle; the bridge replaces the
+        ///     image in place. Destroyed ones drop out.
+        /// </summary>
+        public void RefreshDynamicTextures()
+        {
+            for (int i = dynamicTextures.Count - 1; i >= 0; i--)
+            {
+                (RenderTexture texture, uint handle, bool srgb) = dynamicTextures[i];
+
+                if (texture == null)
+                {
+                    dynamicTextures.RemoveAt(i);
+                    continue;
+                }
+
+                if (TryReadBack(texture, srgb))
+                    Send(BmResourceCmdKind.TextureUpload, handle, texture.name);
+            }
+        }
+
+        /// <summary>
+        ///     The handle of <paramref name="mesh" /> skinned to an avatar skeleton of <paramref name="jointCount" />
+        ///     joints: the 62 base bones first, then the wearables' spring bones, this wearable's starting at
+        ///     <paramref name="springOffset" />. Joint indices and bind poses are laid out for that skeleton.
+        /// </summary>
+        public uint SkinnedMesh(Mesh mesh, int springOffset, int jointCount)
+        {
+            (EntityId, int) key = (mesh.GetEntityId(), springOffset);
+
+            if (skinnedMeshHandles.TryGetValue(key, out uint handle)) return handle;
+
+            handle = nextMesh;
+
+            if (!TryUploadMesh(mesh, handle, new SkinLayout(springOffset, jointCount)))
+                return BridgeMeshes.PLACEHOLDER_CUBE;
+
+            nextMesh++;
+            skinnedMeshHandles[key] = handle;
+            return handle;
+        }
+
+        private bool TryUploadMesh(Mesh mesh, uint handle) =>
+            TryUploadMesh(mesh, handle, null);
+
+        private bool TryUploadMesh(Mesh mesh, uint handle, SkinLayout? skin)
         {
             if (!mesh.isReadable && !Application.isEditor)
             {
@@ -149,6 +203,7 @@ namespace DCL.BevyMigration.Bridge
             if (hasUv0) attributes |= BridgeMeshAttributes.UV0;
             if (hasUv1) attributes |= BridgeMeshAttributes.UV1;
             if (hasColors) attributes |= BridgeMeshAttributes.COLOR;
+            if (skin != null) attributes |= BridgeMeshAttributes.BONES;
 
             var indexCount = 0;
             for (var i = 0; i < submeshCount; i++) indexCount += (int)data.GetSubMesh(i).indexCount;
@@ -159,6 +214,7 @@ namespace DCL.BevyMigration.Bridge
             WriteUInt((uint)submeshCount);
             WriteUInt(attributes);
             WriteUInt(indices32 ? BridgeIndexFormat.U32 : BridgeIndexFormat.U16);
+            WriteUInt(skin != null ? (uint)skin.JointCount : 0u);
 
             using (var positions = new NativeArray<Vector3>(vertexCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory))
             {
@@ -201,6 +257,9 @@ namespace DCL.BevyMigration.Bridge
                     WriteFloats((float*)colors.GetUnsafeReadOnlyPtr(), vertexCount * 4);
                 }
 
+            if (skin != null)
+                WriteBoneWeights(mesh, vertexCount, skin);
+
             // Indices follow submesh by submesh so each submesh is a contiguous range of the index stream.
             if (indices32)
             {
@@ -230,16 +289,87 @@ namespace DCL.BevyMigration.Bridge
                 start += (uint)submesh.indexCount;
             }
 
+            if (skin != null)
+                WriteBindposes(mesh, skin);
+
             return Send(BmResourceCmdKind.MeshUpload, handle, mesh.name);
         }
 
-        private bool TryUploadTexture(Texture2D texture, bool srgb, uint handle)
+        private void WriteBoneWeights(Mesh mesh, int vertexCount, SkinLayout skin)
         {
-            bool mapped = BridgeTextureFormats.TryMap(texture.format, out uint format);
+            BoneWeight[] weights = mesh.boneWeights;
+            int last = skin.JointCount - 1;
 
-            if (texture.isReadable && mapped)
+            for (var v = 0; v < vertexCount; v++)
             {
-                NativeArray<byte> raw = texture.GetRawTextureData<byte>();
+                BoneWeight w = v < weights.Length ? weights[v] : default(BoneWeight);
+                WriteUShort(skin.Remap(w.boneIndex0, last));
+                WriteUShort(skin.Remap(w.boneIndex1, last));
+                WriteUShort(skin.Remap(w.boneIndex2, last));
+                WriteUShort(skin.Remap(w.boneIndex3, last));
+            }
+
+            for (var v = 0; v < vertexCount; v++)
+            {
+                BoneWeight w = v < weights.Length ? weights[v] : default(BoneWeight);
+                float sum = w.weight0 + w.weight1 + w.weight2 + w.weight3;
+                float scale = sum > 0f ? 1f / sum : 0f;
+                WriteFloat(w.weight0 * scale);
+                WriteFloat(w.weight1 * scale);
+                WriteFloat(w.weight2 * scale);
+                WriteFloat(w.weight3 * scale);
+            }
+        }
+
+        private void WriteBindposes(Mesh mesh, SkinLayout skin)
+        {
+            Matrix4x4[] bindposes = mesh.bindposes;
+
+            for (var joint = 0; joint < skin.JointCount; joint++)
+            {
+                int source = skin.Source(joint, bindposes.Length);
+                Matrix4x4 matrix = source >= 0 ? bindposes[source] : Matrix4x4.identity;
+
+                for (var i = 0; i < 16; i++)
+                    WriteFloat(matrix[i]);
+            }
+        }
+
+        /// <summary>Where a wearable's bone indices and bind poses land in the avatar skeleton.</summary>
+        private sealed class SkinLayout
+        {
+            private readonly int springOffset;
+
+            public SkinLayout(int springOffset, int jointCount)
+            {
+                this.springOffset = springOffset;
+                JointCount = jointCount;
+            }
+
+            public int JointCount { get; }
+
+            public ushort Remap(int boneIndex, int last)
+            {
+                int joint = boneIndex >= BASE_BONE_COUNT ? boneIndex + springOffset : boneIndex;
+                return (ushort)Mathf.Clamp(joint, 0, last);
+            }
+
+            /// <summary>The mesh bind pose feeding skeleton joint <paramref name="joint" />, or -1 for identity.</summary>
+            public int Source(int joint, int bindposeCount)
+            {
+                if (joint < BASE_BONE_COUNT) return joint < bindposeCount ? joint : -1;
+
+                int spring = joint - BASE_BONE_COUNT - springOffset;
+                int source = BASE_BONE_COUNT + spring;
+                return spring >= 0 && source < bindposeCount ? source : -1;
+            }
+        }
+
+        private bool TryUploadTexture(Texture texture, bool srgb, uint handle)
+        {
+            if (texture is Texture2D texture2D && texture2D.isReadable && BridgeTextureFormats.TryMap(texture2D.format, out uint format))
+            {
+                NativeArray<byte> raw = texture2D.GetRawTextureData<byte>();
                 WriteTextureHeader(texture, format, srgb);
                 WriteBytes((byte*)raw.GetUnsafeReadOnlyPtr(), raw.Length);
                 return Send(BmResourceCmdKind.TextureUpload, handle, texture.name);
@@ -250,11 +380,11 @@ namespace DCL.BevyMigration.Bridge
             if (TryReadBack(texture, srgb))
                 return Send(BmResourceCmdKind.TextureUpload, handle, texture.name);
 
-            ReportHub.LogWarning(REPORT_DATA, $"texture {texture.name} ({texture.format}) could not be read back");
+            ReportHub.LogWarning(REPORT_DATA, $"texture {texture.name} ({texture.graphicsFormat}) could not be read back");
             return false;
         }
 
-        private bool TryReadBack(Texture2D texture, bool srgb)
+        private bool TryReadBack(Texture texture, bool srgb)
         {
             var descriptor = new RenderTextureDescriptor(texture.width, texture.height, srgb ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm, 0)
             {
@@ -285,7 +415,7 @@ namespace DCL.BevyMigration.Bridge
             return complete;
         }
 
-        private void WriteTextureHeader(Texture2D texture, uint format, bool srgb)
+        private void WriteTextureHeader(Texture texture, uint format, bool srgb)
         {
             payload.Clear();
             WriteUInt((uint)texture.width);
@@ -301,7 +431,8 @@ namespace DCL.BevyMigration.Bridge
         private BmMaterial Describe(Material material)
         {
             bool unlit = material.shader.name.Contains(FAMILY_UNLIT_TOKEN, StringComparison.Ordinal);
-            Color baseColor = material.HasProperty(BASE_COLOR) ? material.GetColor(BASE_COLOR) : material.HasProperty(COLOR) ? material.GetColor(COLOR) : Color.white;
+            bool sdfText = material.shader.name.Contains(FAMILY_TMP_SDF_TOKEN, StringComparison.Ordinal);
+            Color baseColor = sdfText && material.HasProperty(FACE_COLOR) ? material.GetColor(FACE_COLOR) : material.HasProperty(BASE_COLOR) ? material.GetColor(BASE_COLOR) : material.HasProperty(COLOR) ? material.GetColor(COLOR) : Color.white;
             Color linear = baseColor.linear;
             Color emission = material.HasProperty(EMISSION_COLOR) ? material.GetColor(EMISSION_COLOR).linear : Color.black;
             float surface = material.HasProperty(SURFACE) ? material.GetFloat(SURFACE) : 0f;
@@ -312,8 +443,8 @@ namespace DCL.BevyMigration.Bridge
 
             var blob = new BmMaterial
             {
-                family = unlit ? BmMaterialFamily.Unlit : BmMaterialFamily.UrpLit,
-                alpha_mode = alphaClip ? BmAlphaMode.Cutout : surface > 0.5f ? BmAlphaMode.Transparent : BmAlphaMode.Opaque,
+                family = sdfText ? BmMaterialFamily.TmpSdf : unlit ? BmMaterialFamily.Unlit : BmMaterialFamily.UrpLit,
+                alpha_mode = alphaClip || sdfText ? BmAlphaMode.Cutout : surface > 0.5f ? BmAlphaMode.Transparent : BmAlphaMode.Opaque,
                 double_sided = cull < 0.5f ? 1u : 0u,
                 scene_bounds_enabled = 0,
                 metallic = material.HasProperty(METALLIC) ? material.GetFloat(METALLIC) : 0f,
@@ -361,6 +492,17 @@ namespace DCL.BevyMigration.Bridge
             return true;
         }
 
+        private void WriteUShort(ushort value)
+        {
+            payload.Add((byte)value);
+            payload.Add((byte)(value >> 8));
+        }
+
+        private void WriteFloat(float value)
+        {
+            WriteUInt(*(uint*)&value);
+        }
+
         private void WriteUInt(uint value)
         {
             payload.Add((byte)value);
@@ -387,6 +529,7 @@ namespace DCL.BevyMigration.Bridge
         public const uint UV0 = 4;
         public const uint UV1 = 8;
         public const uint COLOR = 16;
+        public const uint BONES = 32;
     }
 
     /// <summary>Mirrors `abi::index_format`.</summary>

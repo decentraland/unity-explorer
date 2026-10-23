@@ -21,6 +21,8 @@ namespace DCL.BevyMigration.Bridge
         private readonly RendererRegistry registry;
 
         private NativeArray<float4x4> worlds;
+        private NativeArray<float4x4> bones;
+        private NativeArray<BmSkinned> skinned;
         private NativeArray<BmLight> lights;
         private readonly Vector3[] ambientDirections = { Vector3.up, Vector3.down, Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
         private readonly Color[] ambientSamples = new Color[6];
@@ -37,6 +39,8 @@ namespace DCL.BevyMigration.Bridge
         public void Dispose()
         {
             if (worlds.IsCreated) worlds.Dispose();
+            if (bones.IsCreated) bones.Dispose();
+            if (skinned.IsCreated) skinned.Dispose();
             if (lights.IsCreated) lights.Dispose();
         }
 
@@ -54,10 +58,27 @@ namespace DCL.BevyMigration.Bridge
                 worlds = new NativeArray<float4x4>(math.max(count, 64), Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             }
 
+            int boneCount = registry.BoneCount;
+
+            if (!bones.IsCreated || bones.Length < boneCount)
+            {
+                if (bones.IsCreated) bones.Dispose();
+                bones = new NativeArray<float4x4>(math.max(boneCount, 64), Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            }
+
+            if (!skinned.IsCreated || skinned.Length < count)
+            {
+                if (skinned.IsCreated) skinned.Dispose();
+                skinned = new NativeArray<BmSkinned>(math.max(count, 64), Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            }
+
             if (count == 0) return default(JobHandle);
 
-            var job = new TransformGatherJob { Worlds = worlds };
-            return job.Schedule(registry.Transforms);
+            JobHandle worldsJob = new TransformGatherJob { Worlds = worlds }.Schedule(registry.Transforms);
+            if (boneCount == 0) return worldsJob;
+
+            JobHandle bonesJob = new TransformGatherJob { Worlds = bones }.Schedule(registry.BoneTransforms);
+            return JobHandle.CombineDependencies(worldsJob, bonesJob);
         }
 
         /// <summary>
@@ -71,6 +92,7 @@ namespace DCL.BevyMigration.Bridge
             int count = registry.Count;
             Color ambient = AverageAmbient();
             int lightCount = WriteLights(sceneLights);
+            int skinnedCount = WriteSkinned(count);
 
             var snapshot = new BmSnapshot
             {
@@ -78,6 +100,10 @@ namespace DCL.BevyMigration.Bridge
                 renderer_count = (uint)count,
                 handles = count > 0 ? (uint*)registry.Handles.GetUnsafeReadOnlyPtr() : null,
                 worlds = count > 0 ? (BmMat4*)worlds.GetUnsafeReadOnlyPtr() : null,
+                skinned_count = (uint)skinnedCount,
+                skinned = skinnedCount > 0 ? (BmSkinned*)skinned.GetUnsafeReadOnlyPtr() : null,
+                bone_count = skinnedCount > 0 ? (uint)registry.BoneCount : 0u,
+                bones = skinnedCount > 0 ? (BmMat4*)bones.GetUnsafeReadOnlyPtr() : null,
                 meshes = count > 0 ? (uint*)registry.Meshes.GetUnsafeReadOnlyPtr() : null,
                 flags = count > 0 ? (ushort*)registry.Flags.GetUnsafeReadOnlyPtr() : null,
                 material_first = count > 0 ? (uint*)registry.MaterialFirst.GetUnsafeReadOnlyPtr() : null,
@@ -139,6 +165,17 @@ namespace DCL.BevyMigration.Bridge
                 sum += ambientSamples[i];
 
             return sum / ambientSamples.Length;
+        }
+
+        private int WriteSkinned(int rendererCount)
+        {
+            var written = 0;
+
+            for (var i = 0; i < rendererCount; i++)
+                if (registry.TrySkeletonOf(i, out int boneOffset, out int boneCount))
+                    skinned[written++] = new BmSkinned { renderer_index = (uint)i, bone_offset = (uint)boneOffset, bone_count = (uint)boneCount };
+
+            return written;
         }
 
         private int WriteLights(IReadOnlyList<Light> sceneLights)

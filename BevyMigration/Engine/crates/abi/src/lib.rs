@@ -10,7 +10,7 @@
 use core::ffi::{c_char, c_void};
 
 /// Bumped on any layout or signature change; `bm_init` refuses a mismatching caller.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 /// Number of output buffers the bridge alternates between: Bevy renders frame N into one while Unity
 /// composites frame N-1 from the other (plan § 8).
@@ -189,6 +189,11 @@ pub struct BmSnapshot {
     /// `light_count` lights.
     pub light_count: u32,
     pub lights: *const BmLight,
+    /// `skinned_count` skinned renderers and the `bone_count` world matrices they index.
+    pub skinned_count: u32,
+    pub skinned: *const BmSkinned,
+    pub bone_count: u32,
+    pub bones: *const BmMat4,
 }
 
 /// Kinds of [`BmResourceCmd`] (plan § 8 "Resource transfer", phase 1: copy once per asset).
@@ -231,6 +236,9 @@ pub mod mesh_attributes {
     pub const UV1: u32 = 8;
     /// `[f32; 4]` per vertex, linear RGBA.
     pub const COLOR: u32 = 16;
+    /// `[u16; 4]` joint indices then `[f32; 4]` joint weights per vertex; `bindpose_count` inverse
+    /// bind poses follow the submeshes.
+    pub const BONES: u32 = 32;
 }
 
 /// Index formats in [`BmMeshHeader::index_format`].
@@ -251,6 +259,19 @@ pub struct BmMeshHeader {
     pub submesh_count: u32,
     pub attributes: u32,
     pub index_format: u32,
+    /// Inverse bind poses (`BmMat4`, one per joint of the skeleton the mesh is skinned to) after the
+    /// submeshes; 0 unless [`mesh_attributes::BONES`] is set.
+    pub bindpose_count: u32,
+}
+
+/// A skinned renderer of the snapshot: its joints are `bone_count` world matrices starting at
+/// `bone_offset` in [`BmSnapshot::bones`], in the order the mesh's joint indices and bind poses use.
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BmSkinned {
+    pub renderer_index: u32,
+    pub bone_offset: u32,
+    pub bone_count: u32,
 }
 
 /// A triangle-list submesh: a range of indices.
@@ -315,6 +336,8 @@ pub struct BmTextureHeader {
 pub enum BmMaterialFamily {
     UrpLit = 0,
     Unlit = 1,
+    /// `TextMeshPro` world text: unlit, the base map's alpha is the signed distance field.
+    TmpSdf = 2,
 }
 
 /// Alpha modes of URP Lit.
@@ -408,7 +431,8 @@ mod tests {
         assert_eq!(size_of::<BmInitConfig>(), 4 * 4 + size_of::<usize>());
         assert_eq!(size_of::<BmLight>(), 4 * 2 + 4 * 9 + 4 * 2);
         assert_eq!(size_of::<BmFog>(), 4 * 7);
-        assert_eq!(size_of::<BmMeshHeader>(), 4 * 5);
+        assert_eq!(size_of::<BmMeshHeader>(), 4 * 6);
+        assert_eq!(size_of::<BmSkinned>(), 4 * 3);
         assert_eq!(size_of::<BmSubmesh>(), 8);
         assert_eq!(size_of::<BmTextureHeader>(), 4 * 8);
         assert_eq!(

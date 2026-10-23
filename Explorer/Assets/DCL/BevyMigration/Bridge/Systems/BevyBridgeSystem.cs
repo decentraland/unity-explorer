@@ -1,11 +1,15 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.BevyMigration.Bridge.Generated;
 using DCL.BevyMigration.Composite;
 using DCL.CharacterCamera;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
+using System.Collections.Generic;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -24,6 +28,7 @@ namespace DCL.BevyMigration.Bridge.Systems
         private readonly RendererRegistry registry;
         private readonly SnapshotWriter writer;
         private readonly SceneContentScanner scanner;
+        private readonly AvatarContentScanner avatars;
         private readonly ElementBinding<string> statusBinding;
         private readonly DebugWidgetVisibilityBinding visibility;
         private int framesUntilScan;
@@ -33,11 +38,12 @@ namespace DCL.BevyMigration.Bridge.Systems
         private Entity cameraEntity = Entity.Null;
         private WorldRenderer appliedRenderer = WorldRenderer.Unity;
 
-        internal BevyBridgeSystem(World world, RendererRegistry registry, SnapshotWriter writer, SceneContentScanner scanner, ElementBinding<string> statusBinding, DebugWidgetVisibilityBinding visibility) : base(world)
+        internal BevyBridgeSystem(World world, RendererRegistry registry, SnapshotWriter writer, SceneContentScanner scanner, AvatarContentScanner avatars, ElementBinding<string> statusBinding, DebugWidgetVisibilityBinding visibility) : base(world)
         {
             this.registry = registry;
             this.writer = writer;
             this.scanner = scanner;
+            this.avatars = avatars;
             this.statusBinding = statusBinding;
             this.visibility = visibility;
         }
@@ -70,6 +76,8 @@ namespace DCL.BevyMigration.Bridge.Systems
             {
                 framesUntilScan = SCAN_EVERY_FRAMES;
                 scanner.Scan();
+                avatars.Begin();
+                ScanAvatarsQuery(World);
                 registry.SetUnityRenderingEnabled(false);
             }
 
@@ -82,7 +90,13 @@ namespace DCL.BevyMigration.Bridge.Systems
             BevyComposite.Source = completed;
 
             if (visibility.IsExpanded)
-                statusBinding.Value = $"frame {writer.Frame} ({submitted}); completed {status.completed_frame} in buffer {status.completed_buffer}; {registry.Count}/{scanner.ScannedRenderers} renderers; {scanner.SceneLights.Count} lights; {scanner.Uploader.MeshCount} meshes, {scanner.Uploader.TextureCount} textures, {scanner.Uploader.MaterialCount} materials uploaded; in flight {status.in_flight}";
+                statusBinding.Value = $"frame {writer.Frame} ({submitted}); completed {status.completed_frame} in buffer {status.completed_buffer}; {registry.Count}/{scanner.ScannedRenderers} renderers; {avatars.Avatars} avatars ({registry.BoneCount} bones); {scanner.SceneLights.Count} lights; {scanner.Uploader.MeshCount} meshes, {scanner.Uploader.TextureCount} textures, {scanner.Uploader.MaterialCount} materials uploaded; in flight {status.in_flight}";
+        }
+
+        [Query]
+        private void ScanAvatars(in AvatarShapeComponent shape, in AvatarBase avatarBase)
+        {
+            avatars.Register(in shape, avatarBase);
         }
 
         private bool TryGetCamera(out Camera? unityCamera)

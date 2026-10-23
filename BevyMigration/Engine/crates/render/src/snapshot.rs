@@ -2,7 +2,7 @@
 //! Built from slices: turning the host's raw pointers into slices is the bridge's job, the one place
 //! that may hold `unsafe` code.
 
-use abi::{BmCamera, BmFog, BmLight, BmMat4, MATERIAL_PLACEHOLDER, renderer_flags};
+use abi::{BmCamera, BmFog, BmLight, BmMat4, BmSkinned, MATERIAL_PLACEHOLDER, renderer_flags};
 use bevy::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -33,6 +33,8 @@ pub struct SnapshotRenderer {
     pub mesh: u32,
     pub visible: bool,
     pub cast_shadows: bool,
+    /// `(bone_offset, bone_count)` into [`Snapshot::bones`] when the renderer is skinned.
+    pub skin: Option<(u32, u32)>,
     /// One material handle per submesh; [`MATERIAL_PLACEHOLDER`] where the host uploaded none.
     pub materials: Vec<u32>,
 }
@@ -93,6 +95,8 @@ pub struct Snapshot {
     pub fog: SnapshotFog,
     pub renderers: Vec<SnapshotRenderer>,
     pub lights: Vec<SnapshotLight>,
+    /// Joint world matrices (Unity space) referenced by the skinned renderers.
+    pub bones: Vec<Mat4>,
 }
 
 /// The per-renderer arrays of one snapshot, all of the same length, plus the flattened material handles.
@@ -105,6 +109,8 @@ pub struct RendererArrays<'a> {
     pub material_first: &'a [u32],
     pub material_count: &'a [u8],
     pub material_handles: &'a [u32],
+    pub skinned: &'a [BmSkinned],
+    pub bones: &'a [BmMat4],
 }
 
 /// The scalar parts of a snapshot.
@@ -160,8 +166,21 @@ impl Snapshot {
                 mesh: arrays.meshes[i],
                 visible: arrays.flags[i] & renderer_flags::VISIBLE != 0,
                 cast_shadows: arrays.flags[i] & renderer_flags::CAST_SHADOWS != 0,
+                skin: None,
                 materials,
             });
+        }
+
+        for skinned in arrays.skinned {
+            let end = skinned.bone_offset.checked_add(skinned.bone_count)?;
+
+            if usize::try_from(end).ok()? > arrays.bones.len() || skinned.bone_count == 0 {
+                return None;
+            }
+
+            renderers
+                .get_mut(usize::try_from(skinned.renderer_index).ok()?)?
+                .skin = Some((skinned.bone_offset, skinned.bone_count));
         }
 
         Some(Self {
@@ -173,6 +192,11 @@ impl Snapshot {
             fog: header.fog,
             renderers,
             lights: lights.iter().map(SnapshotLight::from_abi).collect(),
+            bones: arrays
+                .bones
+                .iter()
+                .map(|m| Mat4::from_cols_array(&m.cols))
+                .collect(),
         })
     }
 }
@@ -215,6 +239,8 @@ mod tests {
             material_first: &[0, 1],
             material_count: &[1, 2],
             material_handles: &[11, 12, 13],
+            skinned: &[],
+            bones: &[],
         };
 
         let snapshot = Snapshot::new(header(), arrays, &[]);
@@ -245,6 +271,8 @@ mod tests {
             material_first: &[],
             material_count: &[],
             material_handles: &[],
+            skinned: &[],
+            bones: &[],
         };
 
         let snapshot = Snapshot::new(header(), arrays, &[]);
@@ -262,6 +290,8 @@ mod tests {
             material_first: &[],
             material_count: &[],
             material_handles: &[],
+            skinned: &[],
+            bones: &[],
         };
         assert!(Snapshot::new(header(), short, &[]).is_none());
 
@@ -273,6 +303,8 @@ mod tests {
             material_first: &[2],
             material_count: &[1],
             material_handles: &[11],
+            skinned: &[],
+            bones: &[],
         };
         assert!(Snapshot::new(header(), out_of_range, &[]).is_none());
     }

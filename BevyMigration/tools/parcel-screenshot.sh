@@ -4,7 +4,8 @@
 # the two files with `cargo run -p screenshot-diff`.
 #
 # Usage: parcel-screenshot.sh <unity|bevy> <out.png> [--parcel X,Y] [--camera "x y z lookX lookY lookZ"]
-#                             [--seconds N] [--extra "<more app parameters>"]
+#                             [--seconds N] [--extra "<more app parameters>"] [--look-player]
+# --look-player aims the camera at the player's avatar instead of the fixed pose (the step 4 gate).
 #
 # Needs: a windowed Editor (batch mode cannot build URP's renderer), a persisted identity in the Editor
 # (the session lands straight on the parcel), and the MCP server, which `--mcp` turns on.
@@ -17,6 +18,8 @@ parcel="0,0"
 camera="8 6 -12 8 2 8"
 seconds=240
 extra=""
+look_player=0
+second=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -24,6 +27,8 @@ while [ $# -gt 0 ]; do
     --camera) camera="$2"; shift 2 ;;
     --seconds) seconds="$2"; shift 2 ;;
     --extra) extra="$2"; shift 2 ;;
+    --look-player) look_player=1; shift ;;
+    --then-player) second="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -41,7 +46,7 @@ mkdir -p "$(dirname "$out")"
 unity_pid=$!
 echo "[$world] Unity pid $unity_pid, log $log"
 
-MCP_URL="$mcp" OUT="$out" CAMERA="$camera" WORLD="$world" LOG="$log" python3 -I - <<'PY'
+MCP_URL="$mcp" OUT="$out" CAMERA="$camera" WORLD="$world" LOG="$log" LOOK_PLAYER="$look_player" SECOND="$second" python3 -I - <<'PY'
 import base64, json, os, sys, time, urllib.request, urllib.error
 
 mcp, out, world = os.environ["MCP_URL"], os.environ["OUT"], os.environ["WORLD"]
@@ -94,7 +99,13 @@ while True:
 time.sleep(30)
 print(f"[{world}] camera mode:", text(call("set_camera_mode", {"mode": "free"}))[:120])
 x, y, z, lx, ly, lz = camera
-print(f"[{world}] camera pose:", text(call("set_camera_pose", {"x": x, "y": y, "z": z, "lookAtX": lx, "lookAtY": ly, "lookAtZ": lz}))[:120])
+if os.environ.get("LOOK_PLAYER") == "1":
+    player = json.loads(text(call("get_player_state", {})))
+    position = player.get("position") or {}
+    px, py, pz = (float(position.get(k, 0.0)) for k in ("x", "y", "z"))
+    x, y, z, lx, ly, lz = px, py + 1.4, pz - 3.0, px, py + 0.9, pz
+    print(f"[{world}] player at {px:.2f} {py:.2f} {pz:.2f}")
+print(f"[{world}] camera pose:", text(call("set_camera_pose", {"x": x, "y": y, "z": z, "lookAtX": lx, "lookAtY": ly, "lookAtZ": lz}))[:160].replace("\n", " "))
 time.sleep(3)
 
 shot = call("screenshot", {"maxWidth": 640, "quality": "png", "worldOnly": True}, 120)
@@ -104,6 +115,21 @@ if image is None:
 with open(out, "wb") as f:
     f.write(base64.b64decode(image["data"]))
 print(f"[{world}] wrote {out}: {text(shot)}")
+
+second = os.environ.get("SECOND")
+if second:
+    player = json.loads(text(call("get_player_state", {})))
+    position = player.get("position") or {}
+    px, py, pz = (float(position.get(k, 0.0)) for k in ("x", "y", "z"))
+    print(f"[{world}] player at {px:.2f} {py:.2f} {pz:.2f}")
+    print(f"[{world}] camera pose 2:", text(call("set_camera_pose", {"x": px, "y": py + 1.4, "z": pz - 3.0, "lookAtX": px, "lookAtY": py + 0.9, "lookAtZ": pz}))[:80].replace("\n", " "))
+    time.sleep(3)
+    shot = call("screenshot", {"maxWidth": 640, "quality": "png", "worldOnly": True}, 120)
+    image = next((c for c in shot["result"]["content"] if c.get("type") == "image"), None)
+    if image is not None:
+        with open(second, "wb") as f:
+            f.write(base64.b64decode(image["data"]))
+        print(f"[{world}] wrote {second}: {text(shot)}")
 PY
 
 echo "[$world] waiting for the play session deadline ($seconds s) so the Editor exits cleanly"

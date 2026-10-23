@@ -13,10 +13,10 @@ use bevy::{
     core_pipeline::tonemapping::Tonemapping,
     pbr::{DistanceFog, ExtendedMaterial, FogFalloff},
     prelude::*,
-    render::camera::Exposure,
     render::camera::{
         ManualTextureView, ManualTextureViewHandle, ManualTextureViews, RenderTarget,
     },
+    render::{camera::Exposure, mesh::skinning::SkinnedMesh},
 };
 use materials::{MaterialFamiliesPlugin, UrpLitExtension, UrpLitMaterial};
 use resources::{PendingResources, ResourceTables, apply_resources};
@@ -73,11 +73,22 @@ pub struct BridgeLight {
     pub index: usize,
 }
 
+/// A joint entity of a skinned renderer; its `GlobalTransform` is written from the snapshot's bones.
+#[derive(Component, Debug)]
+pub struct BridgeJoint;
+
+/// Joint entity sets keyed by their `bone_offset` in the snapshot, shared by every renderer skinned
+/// to the same skeleton.
+#[derive(Resource, Default, Debug)]
+pub struct JointSets(HashMap<u32, Vec<Entity>>);
+
 /// Marks an entity owned by a renderer handle.
 #[derive(Component, Debug)]
 pub struct BridgeRenderer {
     pub handle: u32,
     pub submesh: usize,
+    /// `(bone_offset, bone_count)` the entity's `SkinnedMesh` was built from.
+    pub skin: Option<(u32, u32)>,
 }
 
 #[derive(Resource, Debug)]
@@ -90,7 +101,7 @@ struct Placeholders {
 struct LightEntities(Vec<Entity>);
 
 /// Mirrors Z: Unity's left-handed world and Bevy's right-handed one differ by this reflection.
-const MIRROR_Z: Mat4 = Mat4::from_cols(
+pub(crate) const MIRROR_Z: Mat4 = Mat4::from_cols(
     Vec4::new(1.0, 0.0, 0.0, 0.0),
     Vec4::new(0.0, 1.0, 0.0, 0.0),
     Vec4::new(0.0, 0.0, -1.0, 0.0),
@@ -109,6 +120,7 @@ impl Plugin for BevyMigrationRenderPlugin {
             .init_resource::<HandleTable>()
             .init_resource::<CurrentFrame>()
             .init_resource::<LightEntities>()
+            .init_resource::<JointSets>()
             .add_systems(Startup, spawn_scene)
             .add_systems(
                 PreUpdate,
@@ -171,22 +183,36 @@ fn apply_snapshot(
     mut ambient: ResMut<AmbientLight>,
     mut current_frame: ResMut<CurrentFrame>,
     mut light_entities: ResMut<LightEntities>,
+    mut joint_sets: ResMut<JointSets>,
     mut cameras: Query<
         (&mut GlobalTransform, &mut Projection, &mut DistanceFog),
-        (With<BridgeCamera>, Without<BridgeSun>),
+        (With<BridgeCamera>, Without<BridgeSun>, Without<BridgeJoint>),
     >,
-    mut suns: Query<(&mut GlobalTransform, &mut DirectionalLight), With<BridgeSun>>,
+    mut suns: Query<
+        (&mut GlobalTransform, &mut DirectionalLight),
+        (With<BridgeSun>, Without<BridgeJoint>),
+    >,
+    mut joints: Query<
+        &mut GlobalTransform,
+        (
+            With<BridgeJoint>,
+            Without<BridgeCamera>,
+            Without<BridgeSun>,
+            Without<BridgeRenderer>,
+        ),
+    >,
     mut renderers: Query<
         (
             &mut GlobalTransform,
             &mut Visibility,
             &mut Mesh3d,
             &mut MeshMaterial3d<UrpLitMaterial>,
+            &mut BridgeRenderer,
         ),
         (
-            With<BridgeRenderer>,
             Without<BridgeCamera>,
             Without<BridgeSun>,
+            Without<BridgeJoint>,
         ),
     >,
 ) {
@@ -226,12 +252,14 @@ fn apply_snapshot(
     ambient.brightness = 1.0;
 
     sync_lights(&mut commands, &mut light_entities, &snapshot);
+    sync_joints(&mut commands, &mut joint_sets, &mut joints, &snapshot);
 
     sync_renderers(
         &mut commands,
         &mut table,
         &tables,
         &placeholders,
+        &joint_sets,
         &mut renderers,
         &snapshot,
     );
@@ -244,17 +272,19 @@ fn sync_renderers(
     table: &mut HandleTable,
     tables: &ResourceTables,
     placeholders: &Placeholders,
+    joint_sets: &JointSets,
     renderers: &mut Query<
         (
             &mut GlobalTransform,
             &mut Visibility,
             &mut Mesh3d,
             &mut MeshMaterial3d<UrpLitMaterial>,
+            &mut BridgeRenderer,
         ),
         (
-            With<BridgeRenderer>,
             Without<BridgeCamera>,
             Without<BridgeSun>,
+            Without<BridgeJoint>,
         ),
     >,
     snapshot: &Snapshot,
@@ -274,6 +304,17 @@ fn sync_renderers(
             _ => vec![placeholders.cube.clone()],
         };
 
+        // A skinned renderer binds its joints once; Bevy then skins in the vertex shader.
+        let skin = renderer.skin.and_then(|(offset, count)| {
+            let joints = joint_sets.0.get(&offset)?;
+            let bindposes = tables.bindposes(renderer.mesh)?;
+            (joints.len() == usize::try_from(count).ok()?).then(|| SkinnedMesh {
+                inverse_bindposes: bindposes.clone(),
+                joints: joints.clone(),
+            })
+        });
+        let skin_key = skin.as_ref().and(renderer.skin);
+
         let entities = table.entities.entry(renderer.handle).or_default();
 
         for (index, mesh) in submeshes.iter().enumerate() {
@@ -287,7 +328,7 @@ fn sync_renderers(
                 .unwrap_or_else(|| placeholders.material.clone());
 
             if let Some(entity) = entities.get(index).copied() {
-                if let Ok((mut transform, mut current, mut mesh3d, mut material3d)) =
+                if let Ok((mut transform, mut current, mut mesh3d, mut material3d, mut marker)) =
                     renderers.get_mut(entity)
                 {
                     *transform = world;
@@ -300,21 +341,38 @@ fn sync_renderers(
                     if material3d.0 != material {
                         material3d.0 = material;
                     }
+
+                    if marker.skin != skin_key {
+                        marker.skin = skin_key;
+
+                        match &skin {
+                            Some(skinned) => {
+                                commands.entity(entity).insert(skinned.clone());
+                            }
+                            None => {
+                                commands.entity(entity).remove::<SkinnedMesh>();
+                            }
+                        }
+                    }
                 }
             } else {
-                let entity = commands
-                    .spawn((
-                        BridgeRenderer {
-                            handle: renderer.handle,
-                            submesh: index,
-                        },
-                        Mesh3d(mesh.clone()),
-                        MeshMaterial3d(material),
-                        world,
-                        visibility,
-                    ))
-                    .id();
-                entities.push(entity);
+                let mut spawned = commands.spawn((
+                    BridgeRenderer {
+                        handle: renderer.handle,
+                        submesh: index,
+                        skin: skin_key,
+                    },
+                    Mesh3d(mesh.clone()),
+                    MeshMaterial3d(material),
+                    world,
+                    visibility,
+                ));
+
+                if let Some(skinned) = &skin {
+                    spawned.insert(skinned.clone());
+                }
+
+                entities.push(spawned.id());
             }
         }
 
@@ -362,6 +420,72 @@ fn unity_light_color(color: Vec3) -> (Color, f32) {
         Color::linear_rgb(normalised.x, normalised.y, normalised.z),
         strength,
     )
+}
+
+/// Keeps one joint entity per bone of every skeleton the snapshot references and writes their world
+/// transforms; skeletons no renderer references any more are despawned.
+fn sync_joints(
+    commands: &mut Commands,
+    joint_sets: &mut JointSets,
+    joints: &mut Query<
+        &mut GlobalTransform,
+        (
+            With<BridgeJoint>,
+            Without<BridgeCamera>,
+            Without<BridgeSun>,
+            Without<BridgeRenderer>,
+        ),
+    >,
+    snapshot: &Snapshot,
+) {
+    let mut seen: HashSet<u32> = HashSet::new();
+
+    for (offset, count) in snapshot.renderers.iter().filter_map(|r| r.skin) {
+        if !seen.insert(offset) {
+            continue;
+        }
+
+        let Some(bones) = usize::try_from(offset)
+            .ok()
+            .zip(usize::try_from(count).ok())
+            .and_then(|(start, len)| snapshot.bones.get(start..start.checked_add(len)?))
+        else {
+            continue;
+        };
+
+        let entities = joint_sets.0.entry(offset).or_default();
+
+        if entities.len() != bones.len() {
+            for entity in entities.drain(..) {
+                commands.entity(entity).despawn();
+            }
+        }
+
+        for (index, bone) in bones.iter().enumerate() {
+            let transform = GlobalTransform::from(renderer_world_matrix(bone));
+
+            match entities.get(index).copied() {
+                Some(entity) => {
+                    if let Ok(mut current) = joints.get_mut(entity) {
+                        *current = transform;
+                    }
+                }
+                None => entities.push(commands.spawn((BridgeJoint, transform)).id()),
+            }
+        }
+    }
+
+    joint_sets.0.retain(|offset, entities| {
+        if seen.contains(offset) {
+            return true;
+        }
+
+        for entity in entities.drain(..) {
+            commands.entity(entity).despawn();
+        }
+
+        false
+    });
 }
 
 fn sync_lights(commands: &mut Commands, light_entities: &mut LightEntities, snapshot: &Snapshot) {

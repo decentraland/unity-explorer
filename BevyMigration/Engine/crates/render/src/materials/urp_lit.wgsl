@@ -2,6 +2,7 @@
 // channel conventions for the metallic-gloss and occlusion maps, and the SceneBounds extension that
 // dithers geometry outside the parcel rectangle.
 #import bevy_pbr::{
+    pbr_bindings,
     pbr_fragment::pbr_input_from_standard_material,
     pbr_functions::alpha_discard,
 }
@@ -31,6 +32,7 @@ struct UrpLitParams {
 const FLAG_METALLIC_GLOSS_MAP: u32 = 1u;
 const FLAG_OCCLUSION_MAP: u32 = 2u;
 const FLAG_SCENE_BOUNDS: u32 = 4u;
+const FLAG_SDF_TEXT: u32 = 8u;
 
 @group(2) @binding(100) var<uniform> params: UrpLitParams;
 @group(2) @binding(101) var metallic_gloss_texture: texture_2d<f32>;
@@ -55,6 +57,18 @@ fn dither_threshold(frag: vec2<f32>) -> f32 {
 @fragment
 fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> FragmentOutput {
     var pbr_input = pbr_input_from_standard_material(in, is_front);
+
+#ifdef VERTEX_UVS_A
+    if ((params.flags & FLAG_SDF_TEXT) != 0u) {
+        // TextMeshPro atlas: the signed distance lives in alpha, the glyph colour is the material's.
+        let sdf = textureSample(pbr_bindings::base_color_texture, pbr_bindings::base_color_sampler, in.uv).a;
+        var text_color = pbr_bindings::material.base_color;
+#ifdef VERTEX_COLORS
+        text_color = text_color * in.color;
+#endif
+        pbr_input.material.base_color = vec4<f32>(text_color.rgb, text_color.a * sdf);
+    }
+#endif
 
     var metallic = params.metallic;
     var smoothness = params.smoothness;

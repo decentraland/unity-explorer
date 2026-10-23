@@ -74,6 +74,10 @@ fn snapshot(
         material_handles: std::ptr::null(),
         light_count: 0,
         lights: std::ptr::null(),
+        skinned_count: 0,
+        skinned: std::ptr::null(),
+        bone_count: 0,
+        bones: std::ptr::null(),
     }
 }
 
@@ -114,6 +118,7 @@ fn quad_payload() -> Vec<u8> {
     push_u32(&mut out, 1);
     push_u32(&mut out, mesh_attributes::NORMAL | mesh_attributes::UV0);
     push_u32(&mut out, index_format::U16);
+    push_u32(&mut out, 0);
     push_f32s(
         &mut out,
         &[

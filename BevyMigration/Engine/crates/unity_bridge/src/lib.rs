@@ -320,6 +320,13 @@ unsafe fn copy_snapshot(raw: &BmSnapshot) -> Option<Snapshot> {
         return None;
     }
 
+    let skinned_count = usize::try_from(raw.skinned_count).ok()?;
+    let bone_count = usize::try_from(raw.bone_count).ok()?;
+
+    if (skinned_count > 0 && raw.skinned.is_null()) || (bone_count > 0 && raw.bones.is_null()) {
+        return None;
+    }
+
     // SAFETY: every pointer was checked non-null above when its count is non-zero, and the caller
     // guarantees that many elements behind it.
     let (arrays, lights) = unsafe {
@@ -353,6 +360,16 @@ unsafe fn copy_snapshot(raw: &BmSnapshot) -> Option<Snapshot> {
                     std::slice::from_raw_parts(raw.material_count, count)
                 } else {
                     &[]
+                },
+                skinned: if skinned_count == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(raw.skinned, skinned_count)
+                },
+                bones: if bone_count == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(raw.bones, bone_count)
                 },
                 material_handles: if has_materials {
                     slice(raw.material_handles, material_handle_count)

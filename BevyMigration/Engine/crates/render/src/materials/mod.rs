@@ -18,6 +18,8 @@ pub mod urp_lit_flags {
     pub const METALLIC_GLOSS_MAP: u32 = 1;
     pub const OCCLUSION_MAP: u32 = 2;
     pub const SCENE_BOUNDS: u32 = 4;
+    /// The base map is a `TextMeshPro` SDF atlas: coverage comes from its alpha, colour from the material.
+    pub const SDF_TEXT: u32 = 8;
 }
 
 /// Bevy's PBR with Unity's map conventions and the scene-bounds dithering. The uniform fields share

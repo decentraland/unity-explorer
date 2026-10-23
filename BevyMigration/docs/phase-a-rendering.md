@@ -126,3 +126,54 @@ rather than `bevy`; the gate stays open and is re-run with the step 5 screenshot
 - `SceneBounds` dithering is wired but no scene bounds are sent yet (`scene_bounds_enabled` is 0).
 - Skinned renderers, world text, media surfaces and particles are not scene content yet (step 4).
 - The sync readbacks run at scan time (every 60 frames) and hitch once per newly loaded scene.
+
+## Step 4: avatars, text, media (gate G-A4)
+
+### What exists
+
+| Piece | Where | Notes |
+|---|---|---|
+| Skinned meshes | `abi` (`mesh_attributes::BONES`, `BmMeshHeader::bindpose_count`, `BmSkinned`, `BmSnapshot::{skinned, bones}`), `ResourceUploader.SkinnedMesh`, `render/src/resources.rs` | A wearable mesh is uploaded once per (mesh, spring-bone offset) with `[u16; 4]` joint indices, `[f32; 4]` weights and the inverse bind poses laid out for the avatar skeleton; the bridge mirrors them like the world matrices. |
+| Skeletons | `RendererRegistry.RegisterSkeleton`, `AvatarContentScanner`, `SnapshotWriter` | One skeleton per avatar: the 62 base bones of `AvatarBase.AvatarSkinnedMeshRenderer.bones`, then every wearable's spring bones (indices offset per wearable, as the compute skinning does). Joint world matrices are gathered by the same Burst job as the renderers and travel in the snapshot. |
+| Skinning | `render/src/lib.rs` (`sync_joints`, `SkinnedMesh`) | Bevy's own vertex-shader skinning: one joint entity per bone with its `GlobalTransform` written from the snapshot, `SkinnedMesh { inverse_bindposes, joints }` on the renderer entity (re-bound when its skeleton changes). The plan's WGSL compute port is not needed for the gate and was not written. |
+| Avatar materials | `AvatarContentScanner` | The wearable's original asset-bundle material (`CachedAttachment.OriginalAsset.RendererInfos`) through the `UrpLit` family; skin and hair colours, the Toon family and outlines are not applied yet. |
+| World text | `BmMaterialFamily::TmpSdf`, `urp_lit_flags::SDF_TEXT`, `urp_lit.wgsl` | TextMeshPro world text is already a `MeshRenderer` under the scene roots; its material maps to the SDF family: unlit, `_FaceColor` times the vertex colour, coverage from the atlas alpha, cutout at 0.5. |
+| Media surfaces | `ResourceUploader.RefreshDynamicTextures`, `render/src/resources.rs` | A material whose base map is a `RenderTexture` (UUAV output) is uploaded through the blit readback and re-uploaded under the same handle on every scan; the bridge replaces the `Image` asset in place so bound materials pick it up. |
+
+### Conventions fixed here
+
+- **Mirroring, corrected.** Every Bevy frame is Unity's mirrored (`S * M * S` for renderers, camera and
+  joints), so uploaded positions, normals, tangents and inverse bind poses have their Z negated as
+  well. Both cameras keep X right and Y up, so the on-screen winding survives the mirror and the
+  index reversal from step 2 stays. Step 2 did not mirror the vertices, which drew every mesh
+  mirrored along its local Z; the symmetric placeholder cube and near-symmetric parcel props hid it.
+- **Skeleton layout.** Joint `i < 62` is base bone `i`; a wearable's spring bone `k` is joint
+  `62 + springOffset + k`; bind poses the mesh does not provide are identity.
+
+### Running the gate
+
+```bash
+BevyMigration/tools/parcel-screenshot.sh unity /tmp/ga4/unity.png --look-player
+BevyMigration/tools/parcel-screenshot.sh bevy /tmp/ga4/bevy.png --look-player
+cd BevyMigration/Engine && cargo run -p screenshot-diff -- /tmp/ga4/unity.png /tmp/ga4/bevy.png
+```
+
+### Result on 2026-10-23 (own avatar at idle on Genesis Plaza, M1 Pro)
+
+The avatar renders through Bevy: skinned by Bevy from the snapshot's bone matrices, posed as Unity
+poses it, with the wearables' textures, next to the remote avatars; world text (`Fishing Game`,
+`Decentraland Updates`, the store signs) is readable and not mirrored. The pixel threshold stays
+uninformative on a live plaza: two Unity captures of the same pose taken minutes apart already
+differ in 83% of pixels (other avatars, animated props, time of day), so the threshold needs a
+static test parcel, which is step 9 content work. For the record, the fixed-pose parcel capture
+after the mirroring fix measures mean absolute difference 49 with 78% of pixels differing against
+the step 3 Unity reference (58 and 93% before it).
+
+### Known limits at step 4
+
+- Avatar materials go through `UrpLit` with the asset-bundle textures: no Toon cel shading, no
+  outlines, no skin or hair colour, no facial feature masks.
+- Media surfaces refresh at the scan rate (every 60 frames) through a synchronous readback; the
+  per-frame push through the resource channel is open.
+- Blend shapes (facial expressions) are not in the snapshot.
+- The emote-frame half of the gate was not run: it needs a deterministic emote frame on both sides.

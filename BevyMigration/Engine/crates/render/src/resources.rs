@@ -1,7 +1,10 @@
 //! Resource upload (plan § 8 "Resource transfer", phase 1): meshes, textures and materials copied once
 //! from the host into Bevy assets, keyed by the host's handles.
 
-use crate::materials::{UrpLitExtension, UrpLitMaterial, urp_lit_flags};
+use crate::{
+    MIRROR_Z,
+    materials::{UrpLitExtension, UrpLitMaterial, urp_lit_flags},
+};
 use abi::{
     BmAlphaMode, BmMaterial, BmMaterialFamily, BmMeshHeader, BmSubmesh, BmTextureFormat,
     BmTextureHeader, TEXTURE_NONE, filter_mode, index_format, mesh_attributes, wrap_mode,
@@ -13,6 +16,7 @@ use bevy::{
     prelude::*,
     render::{
         mesh::{Indices, PrimitiveTopology},
+        mesh::{VertexAttributeValues, skinning::SkinnedMeshInverseBindposes},
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
@@ -37,6 +41,8 @@ pub struct PendingResources(pub Vec<ResourceCommand>);
 #[derive(Resource, Debug, Default)]
 pub struct ResourceTables {
     meshes: HashMap<u32, Vec<Handle<Mesh>>>,
+    /// Inverse bind poses of skinned meshes, already in Bevy space.
+    bindposes: HashMap<u32, Handle<SkinnedMeshInverseBindposes>>,
     textures: HashMap<u32, Handle<Image>>,
     materials: HashMap<u32, Handle<UrpLitMaterial>>,
     /// Uploads that could not be decoded, kept so the snapshot can fall back to placeholders quietly.
@@ -46,6 +52,10 @@ pub struct ResourceTables {
 impl ResourceTables {
     pub fn mesh(&self, handle: u32) -> Option<&[Handle<Mesh>]> {
         self.meshes.get(&handle).map(Vec::as_slice)
+    }
+
+    pub fn bindposes(&self, handle: u32) -> Option<&Handle<SkinnedMeshInverseBindposes>> {
+        self.bindposes.get(&handle)
     }
 
     pub fn texture(&self, handle: u32) -> Option<&Handle<Image>> {
@@ -67,13 +77,28 @@ pub fn apply_resources(
     mut meshes: ResMut<Assets<Mesh>>,
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<UrpLitMaterial>>,
+    mut inverse_bindposes: ResMut<Assets<SkinnedMeshInverseBindposes>>,
 ) {
     for command in pending.0.drain(..) {
         match command {
             ResourceCommand::MeshUpload { handle, payload } => {
                 if let Some(decoded) = decode_mesh(&payload) {
-                    let handles = decoded.into_iter().map(|mesh| meshes.add(mesh)).collect();
+                    let handles = decoded
+                        .submeshes
+                        .into_iter()
+                        .map(|mesh| meshes.add(mesh))
+                        .collect();
                     tables.meshes.insert(handle, handles);
+
+                    if decoded.bindposes.is_empty() {
+                        tables.bindposes.remove(&handle);
+                    } else {
+                        tables.bindposes.insert(
+                            handle,
+                            inverse_bindposes
+                                .add(SkinnedMeshInverseBindposes::from(decoded.bindposes)),
+                        );
+                    }
                 } else {
                     tables.rejected += 1;
                     warn!("mesh upload {handle} rejected: malformed payload");
@@ -81,10 +106,19 @@ pub fn apply_resources(
             }
             ResourceCommand::MeshRelease { handle } => {
                 tables.meshes.remove(&handle);
+                tables.bindposes.remove(&handle);
             }
             ResourceCommand::TextureUpload { handle, payload } => {
                 if let Some(image) = decode_texture(&payload) {
-                    tables.textures.insert(handle, images.add(image));
+                    // A re-upload (media frames) replaces the asset in place so bound materials see it.
+                    match tables.textures.get(&handle) {
+                        Some(existing) => {
+                            images.insert(existing.id(), image);
+                        }
+                        None => {
+                            tables.textures.insert(handle, images.add(image));
+                        }
+                    }
                 } else {
                     tables.rejected += 1;
                     warn!("texture upload {handle} rejected: malformed payload");
@@ -154,6 +188,7 @@ fn read_mesh_header(reader: &mut Reader<'_>) -> Option<BmMeshHeader> {
         submesh_count: reader.u32()?,
         attributes: reader.u32()?,
         index_format: reader.u32()?,
+        bindpose_count: reader.u32()?,
     })
 }
 
@@ -185,6 +220,15 @@ fn read_texture_header(reader: &mut Reader<'_>) -> Option<BmTextureHeader> {
     })
 }
 
+/// Negates the Z component (index 2) of every vector.
+fn mirror_z<const N: usize>(mut values: Vec<[f32; N]>) -> Vec<[f32; N]> {
+    for value in &mut values {
+        value[2] = -value[2];
+    }
+
+    values
+}
+
 fn group<const N: usize>(values: Vec<f32>) -> Vec<[f32; N]> {
     values
         .chunks_exact(N)
@@ -196,29 +240,36 @@ fn group<const N: usize>(values: Vec<f32>) -> Vec<[f32; N]> {
         .collect()
 }
 
-/// Decodes a mesh upload into one Bevy mesh per submesh. Vertices stay in Unity's mesh space (the
-/// world matrix handles the mirror); the triangle winding is reversed because the mirrored world
-/// turns Unity's clockwise front faces into clockwise ones in Bevy's clip space, where front is
-/// counter-clockwise.
-pub fn decode_mesh(payload: &[u8]) -> Option<Vec<Mesh>> {
-    let mut reader = Reader::new(payload);
-    let header = read_mesh_header(&mut reader)?;
-    let vertex_count = usize::try_from(header.vertex_count).ok()?;
-    let index_count = usize::try_from(header.index_count).ok()?;
-    let submesh_count = usize::try_from(header.submesh_count).ok()?;
+/// The per-vertex streams of a mesh upload, already in Bevy space.
+#[derive(Debug)]
+struct VertexStreams {
+    positions: Vec<[f32; 3]>,
+    normals: Option<Vec<[f32; 3]>>,
+    tangents: Option<Vec<[f32; 4]>>,
+    uv0: Option<Vec<[f32; 2]>>,
+    uv1: Option<Vec<[f32; 2]>>,
+    colors: Option<Vec<[f32; 4]>>,
+    joint_indices: Option<Vec<[u16; 4]>>,
+    joint_weights: Option<Vec<[f32; 4]>>,
+}
 
-    if vertex_count == 0 || submesh_count == 0 {
-        return None;
-    }
-
-    let positions = group::<3>(reader.f32s(vertex_count.checked_mul(3)?)?);
+fn read_vertex_streams(
+    reader: &mut Reader<'_>,
+    header: &BmMeshHeader,
+    vertex_count: usize,
+) -> Option<VertexStreams> {
+    let positions = mirror_z(group::<3>(reader.f32s(vertex_count.checked_mul(3)?)?));
     let normals = if header.attributes & mesh_attributes::NORMAL != 0 {
-        Some(group::<3>(reader.f32s(vertex_count.checked_mul(3)?)?))
+        Some(mirror_z(group::<3>(
+            reader.f32s(vertex_count.checked_mul(3)?)?,
+        )))
     } else {
         None
     };
     let tangents = if header.attributes & mesh_attributes::TANGENT != 0 {
-        Some(group::<4>(reader.f32s(vertex_count.checked_mul(4)?)?))
+        Some(mirror_z(group::<4>(
+            reader.f32s(vertex_count.checked_mul(4)?)?,
+        )))
     } else {
         None
     };
@@ -237,6 +288,82 @@ pub fn decode_mesh(payload: &[u8]) -> Option<Vec<Mesh>> {
     } else {
         None
     };
+    let skinned = header.attributes & mesh_attributes::BONES != 0;
+    let joint_indices = if skinned {
+        Some(
+            reader
+                .take(vertex_count.checked_mul(8)?)?
+                .chunks_exact(8)
+                .map(|c| {
+                    [
+                        u16::from_le_bytes([c[0], c[1]]),
+                        u16::from_le_bytes([c[2], c[3]]),
+                        u16::from_le_bytes([c[4], c[5]]),
+                        u16::from_le_bytes([c[6], c[7]]),
+                    ]
+                })
+                .collect::<Vec<[u16; 4]>>(),
+        )
+    } else {
+        None
+    };
+    let joint_weights = if skinned {
+        Some(group::<4>(reader.f32s(vertex_count.checked_mul(4)?)?))
+    } else {
+        None
+    };
+
+    Some(VertexStreams {
+        positions,
+        normals,
+        tangents,
+        uv0,
+        uv1,
+        colors,
+        joint_indices,
+        joint_weights,
+    })
+}
+
+/// Reads `count` inverse bind poses and moves them into Bevy space, the same change of basis as the
+/// world matrices.
+fn read_bindposes(reader: &mut Reader<'_>, count: usize) -> Option<Vec<Mat4>> {
+    let mut bindposes = Vec::with_capacity(count);
+
+    for _ in 0..count {
+        let mut cols = [0.0f32; 16];
+        cols.copy_from_slice(&reader.f32s(16)?);
+        bindposes.push(MIRROR_Z * Mat4::from_cols_array(&cols) * MIRROR_Z);
+    }
+
+    Some(bindposes)
+}
+
+/// A decoded mesh upload: one Bevy mesh per submesh plus the inverse bind poses of a skinned mesh.
+#[derive(Debug)]
+pub struct DecodedMesh {
+    pub submeshes: Vec<Mesh>,
+    pub bindposes: Vec<Mat4>,
+}
+
+/// Decodes a mesh upload into one Bevy mesh per submesh. Bevy's world is Unity's with Z mirrored
+/// and so is every local frame (`renderer_world_matrix` is `S * L * S`), so positions, normals and
+/// tangents get their Z negated here. Both cameras keep X to the right and Y up, so the on-screen
+/// winding survives the mirror, and Unity's clockwise front faces still have to be rewound into the
+/// counter-clockwise ones Bevy treats as front.
+pub fn decode_mesh(payload: &[u8]) -> Option<DecodedMesh> {
+    let mut reader = Reader::new(payload);
+    let header = read_mesh_header(&mut reader)?;
+    let vertex_count = usize::try_from(header.vertex_count).ok()?;
+    let index_count = usize::try_from(header.index_count).ok()?;
+    let submesh_count = usize::try_from(header.submesh_count).ok()?;
+
+    if vertex_count == 0 || submesh_count == 0 {
+        return None;
+    }
+
+    let streams = read_vertex_streams(&mut reader, &header, vertex_count)?;
+    let skinned = streams.joint_indices.is_some();
 
     let indices: Vec<u32> = match header.index_format {
         index_format::U16 => reader
@@ -261,6 +388,13 @@ pub fn decode_mesh(payload: &[u8]) -> Option<Vec<Mesh>> {
         });
     }
 
+    let bindpose_count = if skinned {
+        usize::try_from(header.bindpose_count).ok()?
+    } else {
+        0
+    };
+    let bindposes = read_bindposes(&mut reader, bindpose_count)?;
+
     let max_index = u32::try_from(vertex_count).ok()?;
     let mut meshes = Vec::with_capacity(submesh_count);
 
@@ -273,48 +407,59 @@ pub fn decode_mesh(payload: &[u8]) -> Option<Vec<Mesh>> {
             return None;
         }
 
+        let mut mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::RENDER_WORLD,
+        );
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, streams.positions.clone());
+
+        if let Some(normals) = &streams.normals {
+            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals.clone());
+        }
+
+        if let Some(tangents) = &streams.tangents {
+            mesh.insert_attribute(Mesh::ATTRIBUTE_TANGENT, tangents.clone());
+        }
+
+        if let Some(uv0) = &streams.uv0 {
+            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uv0.clone());
+        }
+
+        if let (Some(indices), Some(weights)) = (&streams.joint_indices, &streams.joint_weights) {
+            mesh.insert_attribute(
+                Mesh::ATTRIBUTE_JOINT_INDEX,
+                VertexAttributeValues::Uint16x4(indices.clone()),
+            );
+            mesh.insert_attribute(Mesh::ATTRIBUTE_JOINT_WEIGHT, weights.clone());
+        }
+
+        if let Some(uv1) = &streams.uv1 {
+            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, uv1.clone());
+        }
+
+        if let Some(colors) = &streams.colors {
+            mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
+        }
+
         let mut rewound = Vec::with_capacity(range.len());
 
         for triangle in range.chunks_exact(3) {
             rewound.extend_from_slice(&[triangle[0], triangle[2], triangle[1]]);
         }
 
-        let mut mesh = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD,
-        );
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
-
-        if let Some(normals) = &normals {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals.clone());
-        }
-
-        if let Some(tangents) = &tangents {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_TANGENT, tangents.clone());
-        }
-
-        if let Some(uv0) = &uv0 {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uv0.clone());
-        }
-
-        if let Some(uv1) = &uv1 {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, uv1.clone());
-        }
-
-        if let Some(colors) = &colors {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
-        }
-
         mesh.insert_indices(Indices::U32(rewound));
 
-        if normals.is_none() {
+        if streams.normals.is_none() {
             mesh.compute_normals();
         }
 
         meshes.push(mesh);
     }
 
-    Some(meshes)
+    Some(DecodedMesh {
+        submeshes: meshes,
+        bindposes,
+    })
 }
 
 fn texture_format(format: BmTextureFormat, srgb: bool) -> TextureFormat {
@@ -436,7 +581,7 @@ fn build_material(material: &BmMaterial, tables: &ResourceTables) -> UrpLitMater
         material.emission[1],
         material.emission[2],
     );
-    let unlit = material.family == BmMaterialFamily::Unlit;
+    let unlit = material.family != BmMaterialFamily::UrpLit;
 
     let alpha_mode = match material.alpha_mode {
         BmAlphaMode::Opaque => AlphaMode::Opaque,
@@ -474,6 +619,10 @@ fn build_material(material: &BmMaterial, tables: &ResourceTables) -> UrpLitMater
 
     if metallic_gloss_map.is_some() {
         flags |= urp_lit_flags::METALLIC_GLOSS_MAP;
+    }
+
+    if material.family == BmMaterialFamily::TmpSdf {
+        flags |= urp_lit_flags::SDF_TEXT;
     }
 
     if occlusion_map.is_some() {
@@ -520,6 +669,7 @@ mod tests {
         push_u32(&mut out, 1); // submeshes
         push_u32(&mut out, mesh_attributes::UV0);
         push_u32(&mut out, index_format::U16);
+        push_u32(&mut out, 0); // bind poses
         push_f32s(
             &mut out,
             &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0],
@@ -534,11 +684,14 @@ mod tests {
     }
 
     #[test]
-    fn decodes_a_quad_and_rewinds_its_triangles() {
+    fn decodes_a_quad_and_mirrors_it_into_bevy_space() {
         let meshes = decode_mesh(&quad_payload());
 
         assert!(meshes.is_some());
-        let Some(meshes) = meshes else {
+        let Some(DecodedMesh {
+            submeshes: meshes, ..
+        }) = meshes
+        else {
             return;
         };
         assert_eq!(meshes.len(), 1);
@@ -547,7 +700,7 @@ mod tests {
             .and_then(|m| m.indices())
             .map(|i| i.iter().map(|v| u32::try_from(v).unwrap_or(0)).collect())
             .unwrap_or_default();
-        assert_eq!(indices, vec![0, 2, 1, 0, 3, 2]);
+        assert_eq!(indices, vec![0, 2, 1, 0, 3, 2], "the winding is reversed");
         assert!(
             meshes
                 .first()
@@ -562,7 +715,7 @@ mod tests {
         assert!(decode_mesh(&payload[..payload.len() - 4]).is_none());
 
         let mut bad = payload.clone();
-        let index_offset = 20 + 12 * 4 + 8 * 4;
+        let index_offset = 24 + 12 * 4 + 8 * 4;
         bad[index_offset] = 9;
         assert!(
             decode_mesh(&bad).is_none(),

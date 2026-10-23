@@ -50,6 +50,7 @@ namespace DCL.BevyMigration.Bridge
             registry.PruneDestroyed();
             sceneLights.Clear();
             Sun = RenderSettings.sun != null ? RenderSettings.sun : StrongestDirectionalLight();
+            uploader.RefreshDynamicTextures();
             ScannedRenderers = 0;
 
             Scene active = SceneManager.GetActiveScene();

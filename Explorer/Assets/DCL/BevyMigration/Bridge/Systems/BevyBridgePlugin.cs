@@ -27,6 +27,7 @@ namespace DCL.BevyMigration.Bridge.Systems
         private readonly ResourceUploader uploader = new ();
         private readonly SnapshotWriter writer;
         private readonly SceneContentScanner scanner;
+        private readonly AvatarContentScanner avatars;
         private readonly ElementBinding<string> statusBinding = new (string.Empty);
         private readonly DebugWidgetVisibilityBinding visibility = new (true);
         private readonly WorldRenderer initialRenderer;
@@ -39,6 +40,7 @@ namespace DCL.BevyMigration.Bridge.Systems
             this.debugBuilder = debugBuilder;
             writer = new SnapshotWriter(registry);
             scanner = new SceneContentScanner(registry, uploader);
+            avatars = new AvatarContentScanner(registry, uploader);
 
             appArgs.TryGetValue(AppArgsFlags.WORLD, out string? world);
             WorldRendererFlag.TryParse(world, out initialRenderer);
@@ -57,7 +59,7 @@ namespace DCL.BevyMigration.Bridge.Systems
                         .AddSingleButton("Remove test cube", RemoveTestCube)
                         .AddCustomMarker("Bridge:", statusBinding);
 
-            BevyBridgeSystem.InjectToWorld(ref builder, registry, writer, scanner, statusBinding, visibility);
+            BevyBridgeSystem.InjectToWorld(ref builder, registry, writer, scanner, avatars, statusBinding, visibility);
 
             if (spawnTestCubeAtStart)
                 SpawnTestCube();

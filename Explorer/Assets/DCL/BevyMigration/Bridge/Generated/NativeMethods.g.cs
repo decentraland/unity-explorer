@@ -271,6 +271,13 @@ namespace DCL.BevyMigration.Bridge.Generated
         /// </summary>
         public uint light_count;
         public BmLight* lights;
+        /// <summary>
+        ///  `skinned_count` skinned renderers and the `bone_count` world matrices they index.
+        /// </summary>
+        public uint skinned_count;
+        public BmSkinned* skinned;
+        public uint bone_count;
+        public BmMat4* bones;
     }
 
     /// <summary>
@@ -284,6 +291,18 @@ namespace DCL.BevyMigration.Bridge.Generated
         public uint handle;
         public byte* data;
         public nuint len;
+    }
+
+    /// <summary>
+    ///  A skinned renderer of the snapshot: its joints are `bone_count` world matrices starting at
+    ///  `bone_offset` in [`BmSnapshot::bones`], in the order the mesh's joint indices and bind poses use.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct BmSkinned
+    {
+        public uint renderer_index;
+        public uint bone_offset;
+        public uint bone_count;
     }
 
     /// <summary>
@@ -446,6 +465,10 @@ namespace DCL.BevyMigration.Bridge.Generated
     {
         UrpLit = 0,
         Unlit = 1,
+        /// <summary>
+        ///  `TextMeshPro` world text: unlit, the base map's alpha is the signed distance field.
+        /// </summary>
+        TmpSdf = 2,
     }
 
     /// <summary>

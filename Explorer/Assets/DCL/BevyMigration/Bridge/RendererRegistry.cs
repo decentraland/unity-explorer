@@ -17,14 +17,19 @@ namespace DCL.BevyMigration.Bridge
         private const int GENERATION_SHIFT = 20;
         private const uint INDEX_MASK = (1u << GENERATION_SHIFT) - 1;
 
+        private const int NO_SKELETON = -1;
         private static readonly uint[] PLACEHOLDER_MATERIALS = { BridgeMaterials.PLACEHOLDER };
 
         private readonly List<Renderer> renderers = new (INITIAL_CAPACITY);
         private readonly List<uint> generations = new (INITIAL_CAPACITY);
         private readonly List<uint[]> materials = new (INITIAL_CAPACITY);
         private readonly Dictionary<uint, int> indexByHandle = new (INITIAL_CAPACITY);
+        private readonly List<int> skeletons = new (INITIAL_CAPACITY);
+        private readonly List<int> skeletonOffsets = new (16);
+        private readonly List<int> skeletonCounts = new (16);
 
         private TransformAccessArray transforms;
+        private TransformAccessArray boneTransforms;
         private NativeList<uint> handles;
         private NativeList<uint> meshes;
         private NativeList<ushort> flags;
@@ -37,6 +42,7 @@ namespace DCL.BevyMigration.Bridge
         public RendererRegistry()
         {
             transforms = new TransformAccessArray(INITIAL_CAPACITY);
+            boneTransforms = new TransformAccessArray(INITIAL_CAPACITY);
             handles = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
             meshes = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
             flags = new NativeList<ushort>(INITIAL_CAPACITY, Allocator.Persistent);
@@ -48,6 +54,11 @@ namespace DCL.BevyMigration.Bridge
         public int Count => renderers.Count;
 
         public TransformAccessArray Transforms => transforms;
+
+        /// <summary>Joint transforms of every registered skeleton, in registration order.</summary>
+        public TransformAccessArray BoneTransforms => boneTransforms;
+
+        public int BoneCount => boneTransforms.isCreated ? boneTransforms.length : 0;
 
         public NativeList<uint> Handles => handles;
 
@@ -87,7 +98,13 @@ namespace DCL.BevyMigration.Bridge
         ///     Registers the renderer with its uploaded mesh and one material handle per submesh. Registering twice
         ///     returns the existing handle.
         /// </summary>
-        public uint Register(Renderer renderer, uint mesh, uint[] materialHandlesOfRenderer)
+        public uint Register(Renderer renderer, uint mesh, uint[] materialHandlesOfRenderer) =>
+            Register(renderer, mesh, materialHandlesOfRenderer, NO_SKELETON);
+
+        /// <summary>
+        ///     Registers a renderer skinned to <paramref name="skeleton" /> (from <see cref="RegisterSkeleton" />).
+        /// </summary>
+        public uint Register(Renderer renderer, uint mesh, uint[] materialHandlesOfRenderer, int skeleton)
         {
             for (var i = 0; i < renderers.Count; i++)
                 if (ReferenceEquals(renderers[i], renderer))
@@ -102,6 +119,7 @@ namespace DCL.BevyMigration.Bridge
             renderers.Add(renderer);
             generations.Add(generation);
             materials.Add(materialHandlesOfRenderer);
+            skeletons.Add(skeleton);
             transforms.Add(renderer.transform);
             handles.Add(handle);
             meshes.Add(mesh);
@@ -109,6 +127,57 @@ namespace DCL.BevyMigration.Bridge
             indexByHandle[handle] = renderers.Count - 1;
             materialTableDirty = true;
             return handle;
+        }
+
+        /// <summary>
+        ///     Adds a skeleton (joint transforms in the order the skinned meshes index them) and returns its index;
+        ///     <see cref="ClearSkeletons" /> drops them all before a rescan.
+        /// </summary>
+        public int RegisterSkeleton(IReadOnlyList<Transform> joints)
+        {
+            skeletonOffsets.Add(boneTransforms.length);
+            skeletonCounts.Add(joints.Count);
+
+            for (var i = 0; i < joints.Count; i++)
+                boneTransforms.Add(joints[i]);
+
+            return skeletonOffsets.Count - 1;
+        }
+
+        public void ClearSkeletons()
+        {
+            skeletonOffsets.Clear();
+            skeletonCounts.Clear();
+
+            while (boneTransforms.length > 0)
+                boneTransforms.RemoveAtSwapBack(boneTransforms.length - 1);
+
+            for (var i = 0; i < skeletons.Count; i++)
+                skeletons[i] = NO_SKELETON;
+        }
+
+        public void SetSkeleton(Renderer renderer, int skeleton)
+        {
+            for (var i = 0; i < renderers.Count; i++)
+                if (ReferenceEquals(renderers[i], renderer))
+                    skeletons[i] = skeleton;
+        }
+
+        /// <summary>Bone range of the renderer at <paramref name="index" />; false when it is not skinned.</summary>
+        public bool TrySkeletonOf(int index, out int boneOffset, out int boneCount)
+        {
+            int skeleton = skeletons[index];
+
+            if (skeleton < 0 || skeleton >= skeletonOffsets.Count)
+            {
+                boneOffset = 0;
+                boneCount = 0;
+                return false;
+            }
+
+            boneOffset = skeletonOffsets[skeleton];
+            boneCount = skeletonCounts[skeleton];
+            return boneCount > 0;
         }
 
         public bool Contains(Renderer renderer)
@@ -165,6 +234,7 @@ namespace DCL.BevyMigration.Bridge
                 renderers[index] = renderers[last];
                 generations[index] = generations[last];
                 materials[index] = materials[last];
+                skeletons[index] = skeletons[last];
                 handles[index] = handles[last];
                 meshes[index] = meshes[last];
                 flags[index] = flags[last];
@@ -174,6 +244,7 @@ namespace DCL.BevyMigration.Bridge
             renderers.RemoveAt(last);
             generations.RemoveAt(last);
             materials.RemoveAt(last);
+            skeletons.RemoveAt(last);
             materialTableDirty = true;
             // RemoveAtSwapBack mirrors the swap above so the transform array stays parallel.
             transforms.RemoveAtSwapBack(index);

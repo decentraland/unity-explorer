@@ -211,6 +211,6 @@ namespace DCL.BevyMigration.Bridge
     /// </summary>
     public static class BridgeAbi
     {
-        public const uint VERSION = 2;
+        public const uint VERSION = 3;
     }
 }
