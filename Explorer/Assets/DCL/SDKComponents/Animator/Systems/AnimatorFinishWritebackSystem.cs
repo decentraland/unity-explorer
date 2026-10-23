@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.Animator.Components;
+using DCL.UnityFacades;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -154,9 +155,9 @@ namespace DCL.SDKComponents.Animator.Systems
 
                 if (layerIndex == -1) continue;
 
-                AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
+                animator.GetState(layerIndex, out int currentState, out float normalizedTime);
 
-                if (IsMecanimStateActive(stateInfo.shortNameHash == state.ClipHash, stateInfo.normalizedTime))
+                if (IsMecanimStateActive(currentState == state.ClipHash, normalizedTime))
                     return true;
             }
 

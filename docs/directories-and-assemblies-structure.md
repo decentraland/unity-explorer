@@ -77,6 +77,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.CharacterMotion.Components` | `DCL/Character/CharacterMotion/Components` | Character motion data components leaf. |
 | `AssetsProvision` | `DCL/AssetsProvision` | Addressables provisioning helpers. |
 | `Quality.RenderFeatures` | `DCL/Quality/RenderFeatures` | URP render features used by quality settings. |
+| `DCL.UnityFacades` | `DCL/Infrastructure/UnityFacades` | Unity-backed implementations of the narrow APIs the Bevy migration puts in front of expensive-to-shim engine members (Animator state queries, `AssetReference` load state). References only Unity packages, never project code; `Utility` sits above it. New Unity call sites that read engine state through a struct or handle go through a facade here, not through the member directly. See [`BevyMigration/docs/README.md`](../BevyMigration/docs/README.md) § 6 and § 9. |
 
 ### Infrastructure (scene & ECS stack)
 

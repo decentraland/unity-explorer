@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.UnityFacades;
 using System.Threading;
 using UnityEngine;
 
@@ -25,13 +26,13 @@ namespace DCL.Utility.Extensions
             animator.SetTrigger(triggerHash);
 
             await UniTask.WaitUntil(
-                () => animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == stateHash,
+                () => animator.IsInState(layer, stateHash),
                 cancellationToken: ct);
 
             await UniTask.WaitWhile(() =>
             {
-                AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(layer);
-                return info.shortNameHash == stateHash && info.normalizedTime < 1f;
+                animator.GetState(layer, out int currentState, out float normalizedTime);
+                return currentState == stateHash && normalizedTime < 1f;
             }, cancellationToken: ct);
         }
     }

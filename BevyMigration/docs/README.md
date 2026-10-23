@@ -236,6 +236,7 @@ removed_by_refactor = ["UnityEngine.Animator.GetCurrentAnimatorStateInfo(int)"]
 - `tools/allowlist-analyzer` is a Roslyn analyzer referenced by every generated csproj. Any use of a `UnityEngine`, `Unity.*` or `TMPro` member not in the allowlist is a build error, so `dotnet build` is the enforcement.
 - Groups have a `phase`. The shim must implement every member in groups with phase `B` before step 10.
 - `removed_by_refactor` records members eliminated inside Unity so they are not re-introduced.
+- Facade assemblies (`DCL.UnityFacades`, listed in `tools/api-inventory`) hold the Unity-backed implementation of the narrow project APIs that step 1 refactors introduce. They are excluded from the inventory because the shim replaces them wholesale with its own implementation of the same API; a member whose last non-facade use disappears moves to `removed_by_refactor`.
 
 ---
 

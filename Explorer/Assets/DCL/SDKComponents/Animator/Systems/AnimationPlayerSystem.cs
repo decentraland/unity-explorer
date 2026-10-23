@@ -5,6 +5,7 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Animator.Components;
+using DCL.UnityFacades;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -130,7 +131,7 @@ namespace DCL.SDKComponents.Animator.Systems
                 {
                     animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
 
-                    bool isAnimationAlreadyPlaying = animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(name);
+                    bool isAnimationAlreadyPlaying = animator.IsInStateNamed(layerIndex, name);
 
                     // This check fixes a border case that happens on sdk-goerli-plaza pirate island (78,7) with opening the chest the first time.
                     // The AB converter sets the first clip in the animator to play as default, since it is required by the sdk definitions.

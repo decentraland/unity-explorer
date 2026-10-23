@@ -85,6 +85,18 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ## Scene & Environment Flags
 
+### `shader-inventory`
+**Type:** String (optional)
+**Description:** Records every shader bound by any renderer during the session, with distinct material and renderer counts per shader, and writes a `shader-families.md` report on quit. Without a value the report goes to `Application.persistentDataPath/shader-families.md`; with a value, to that path. Used by the Bevy migration to size its material families (see `BevyMigration/docs/README.md` § 7, step 1). Command line only.
+
+**Usage:**
+```bash
+--shader-inventory
+--shader-inventory /path/to/shader-families.md
+```
+
+---
+
 ### `scene-console`
 **Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
 

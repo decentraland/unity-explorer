@@ -2,7 +2,8 @@
     "name": "BevyMigration.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:7476468734004d07a7eaa70464a85956"
+        "GUID:7476468734004d07a7eaa70464a85956",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [
         "Editor"

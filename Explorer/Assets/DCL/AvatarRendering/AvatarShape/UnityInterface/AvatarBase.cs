@@ -1,14 +1,15 @@
+using AvatarEmoteMask = DCL.ECSComponents.AvatarEmoteMask;
 using CommunicationData.URLHelpers;
 using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using DCL.UnityFacades;
+using Random = UnityEngine.Random;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using Utility.Animations;
-using AvatarEmoteMask = DCL.ECSComponents.AvatarEmoteMask;
-using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
@@ -280,10 +281,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         }
 
         public bool IsAnimatorInTag(int hashTag) =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+            AvatarAnimator.GetStateTag(0) == hashTag;
 
         public int GetAnimatorCurrentStateTag(int layerIndex) =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+            AvatarAnimator.GetStateTag(layerIndex);
 
         public int GetEmoteLayerIndex(AvatarEmoteMask mask) =>
             mask == AvatarEmoteMask.AemUpperBody ? upperBodyLayerIndex : AnimatorEmoteLayers.BASE_LAYER_INDEX;

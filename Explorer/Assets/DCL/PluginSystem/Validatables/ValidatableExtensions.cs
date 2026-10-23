@@ -1,8 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.UnityFacades;
+using Object = UnityEngine.Object;
 using System;
 using UnityEngine.AddressableAssets;
-using Object = UnityEngine.Object;
 
 namespace DCL.Utilities.Addressables
 {
@@ -34,15 +35,15 @@ namespace DCL.Utilities.Addressables
             public EnsureInitialState(AssetReference reference) : this()
             {
                 this.reference = reference;
-                isLoaded = reference.IsDone;
+                isLoaded = reference.IsLoadDone();
 
-                if (this.reference.IsDone)
+                if (this.reference.IsLoadDone())
                     this.reference.ReleaseAsset();
             }
 
             public void Dispose()
             {
-                if (isLoaded && reference.IsDone == false)
+                if (isLoaded && !reference.IsLoadDone())
                     reference.LoadAssetAsync<Object>().ToUniTask().Forget();
             }
         }

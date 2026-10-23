@@ -10,16 +10,17 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.UnityFacades;
 using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
+using Object = UnityEngine.Object;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.SkyBox
 {
@@ -69,7 +70,7 @@ namespace DCL.SkyBox
                 // A load cancelled before it reached its slot still holds the reference's handle.
                 if (lookPresets[i] is { } provided)
                     provided.Dispose();
-                else if (lookEntries[i].Preset.OperationHandle.IsValid())
+                else if (lookEntries[i].Preset.HasActiveLoad())
                     lookEntries[i].Preset.ReleaseAsset();
             }
         }
@@ -261,8 +262,7 @@ namespace DCL.SkyBox
 
                 // A load cancelled by an earlier pick keeps running on the reference, and the provisioner hands that
                 // handle back unfinished; waiting on it first means the provided asset is always complete.
-                if (reference.OperationHandle.IsValid())
-                    await reference.OperationHandle.WithCancellation(ct);
+                await reference.WaitForActiveLoadAsync(ct);
 
                 loaded = await assetsProvisioner.ProvideMainAssetAsync(reference, ct);
                 lookPresets[entryIndex] = loaded;

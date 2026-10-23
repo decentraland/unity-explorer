@@ -1,6 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Step 1 deliverable (BevyMigration/docs/README.md § 7): emits every UnityEngine, Unity.* and TMPro
+       member the runtime assemblies use to ledger/api-inventory.json and generates or checks
+       ledger/allowlist.toml. Input is the solution Unity generates (Explorer/Explorer.sln), the same
+       prerequisite as scripts/lint/run-inspectcode.sh. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>BevyMigration.Tools</RootNamespace>
+    <RootNamespace>BevyMigration.Tools.ApiInventory</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Tomlyn" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="api-inventory.Tests" />
+  </ItemGroup>
 </Project>

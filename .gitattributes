@@ -87,5 +87,6 @@ BevyMigration/**/*.csv text eol=lf
 BevyMigration/**/*.sh text eol=lf
 # Generated files do not count towards the PR diff ceiling.
 BevyMigration/Engine/Cargo.lock linguist-generated=true
+BevyMigration/ledger/api-inventory.json linguist-generated=true
 BevyMigration/Explorer.Net/**/packages.lock.json linguist-generated=true
 Explorer/Assets/DCL/BevyMigration/Bridge/Generated/** linguist-generated=true

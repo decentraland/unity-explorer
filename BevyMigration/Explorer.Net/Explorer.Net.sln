@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-inventory", "tools\api-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "allowlist-analyzer", "tools\allowlist-analyzer\allowlist-analyzer.csproj", "{9CEC703C-6C6F-4835-A47A-81BF28C356DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-inventory.Tests", "tools\api-inventory.Tests\api-inventory.Tests.csproj", "{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,18 @@ Global
 		{9CEC703C-6C6F-4835-A47A-81BF28C356DC}.Release|x64.Build.0 = Release|Any CPU
 		{9CEC703C-6C6F-4835-A47A-81BF28C356DC}.Release|x86.ActiveCfg = Release|Any CPU
 		{9CEC703C-6C6F-4835-A47A-81BF28C356DC}.Release|x86.Build.0 = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|x64.Build.0 = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Debug|x86.Build.0 = Debug|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|x64.ActiveCfg = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|x64.Build.0 = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|x86.ActiveCfg = Release|Any CPU
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,5 +107,6 @@ Global
 		{1E72D98D-220A-42F7-BB83-E28ED2285038} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{8D14348F-D6B7-444E-8EE3-49BB2B89F497} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{9CEC703C-6C6F-4835-A47A-81BF28C356DC} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{6D1B50C2-BC0F-4C2D-9C06-E33A55A21F0F} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal

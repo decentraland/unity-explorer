@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
+using DCL.UnityFacades;
 using MVC;
 using System;
 using System.Threading;
@@ -58,7 +59,7 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > ANIMATION_LOCK_DURATION,
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetStateNormalizedTime(0) > ANIMATION_LOCK_DURATION,
                 cancellationToken: ct);
         }
 
@@ -66,7 +67,7 @@ namespace DCL.EmotesWheel
         {
             EmotesWheelAnimator.SetTrigger(UIAnimationHashes.OUT);
 
-            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetStateNormalizedTime(0) > 1,
                 cancellationToken: ct);
         }
     }

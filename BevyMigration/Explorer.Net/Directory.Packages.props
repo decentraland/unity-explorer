@@ -15,5 +15,7 @@
          are written against the NUnit 3 API (Assert.AreEqual and friends) that Unity bundles. -->
     <PackageVersion Include="NUnit" Version="3.14.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.1" />
+    <!-- Reads the hand-maintained ledger/allowlist.toml (comments and layout must survive hand edits). -->
+    <PackageVersion Include="Tomlyn" Version="2.10.1" />
   </ItemGroup>
 </Project>

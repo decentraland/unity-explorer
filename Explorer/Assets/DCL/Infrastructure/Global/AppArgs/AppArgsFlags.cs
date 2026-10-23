@@ -13,6 +13,12 @@ namespace Global.AppArgs
 
         public const string SCENE_CONSOLE = "scene-console";
 
+        /// <summary>
+        ///     Records every shader bound by a renderer during the session to a shader-families report, optionally at
+        ///     the given path (BevyMigration/docs/README.md § 7, step 1). Command line only.
+        /// </summary>
+        public const string SHADER_INVENTORY = "shader-inventory";
+
         public const string AUTOPILOT = "autopilot";
         public const string MEASURE_LOADING_TIME = "measure-loading-time";
         public const string AUTOPILOT_CSV = "csv";
