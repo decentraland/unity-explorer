@@ -21,7 +21,7 @@ namespace DCL.BevyMigration.Editor
         private const string FEATURES_PROPERTY = "m_RendererFeatures";
         private const string FEATURE_MAP_PROPERTY = "m_RendererFeatureMap";
 
-        private static readonly ReportData REPORT_DATA = new (ReportCategory.ENGINE);
+        private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
 
         [MenuItem(MENU)]
         public static void Install()

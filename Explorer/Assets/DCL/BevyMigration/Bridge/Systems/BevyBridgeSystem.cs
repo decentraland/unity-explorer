@@ -19,20 +19,25 @@ namespace DCL.BevyMigration.Bridge.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class BevyBridgeSystem : BaseUnityLoopSystem
     {
+        private const int SCAN_EVERY_FRAMES = 60;
+
         private readonly RendererRegistry registry;
         private readonly SnapshotWriter writer;
+        private readonly SceneContentScanner scanner;
         private readonly ElementBinding<string> statusBinding;
         private readonly DebugWidgetVisibilityBinding visibility;
+        private int framesUntilScan;
 
         private static readonly QueryDescription CAMERA_QUERY = new QueryDescription().WithAll<CameraComponent>();
 
         private Entity cameraEntity = Entity.Null;
         private WorldRenderer appliedRenderer = WorldRenderer.Unity;
 
-        internal BevyBridgeSystem(World world, RendererRegistry registry, SnapshotWriter writer, ElementBinding<string> statusBinding, DebugWidgetVisibilityBinding visibility) : base(world)
+        internal BevyBridgeSystem(World world, RendererRegistry registry, SnapshotWriter writer, SceneContentScanner scanner, ElementBinding<string> statusBinding, DebugWidgetVisibilityBinding visibility) : base(world)
         {
             this.registry = registry;
             this.writer = writer;
+            this.scanner = scanner;
             this.statusBinding = statusBinding;
             this.visibility = visibility;
         }
@@ -61,16 +66,23 @@ namespace DCL.BevyMigration.Bridge.Systems
             if (!TryGetCamera(out Camera? unityCamera) || unityCamera == null)
                 return;
 
+            if (--framesUntilScan <= 0)
+            {
+                framesUntilScan = SCAN_EVERY_FRAMES;
+                scanner.Scan();
+                registry.SetUnityRenderingEnabled(false);
+            }
+
             registry.RefreshFlags();
             JobHandle gather = writer.ScheduleGather();
             gather.Complete();
-            BmResult submitted = writer.Submit(unityCamera);
+            BmResult submitted = writer.Submit(unityCamera, scanner.Sun, scanner.SceneLights);
 
             Texture2D? completed = BevyBridge.BeginFrame(out BmFrameStatus status);
             BevyComposite.Source = completed;
 
             if (visibility.IsExpanded)
-                statusBinding.Value = $"frame {writer.Frame} submitted ({submitted}); completed {status.completed_frame} in buffer {status.completed_buffer}; {registry.Count} renderers; in flight {status.in_flight}";
+                statusBinding.Value = $"frame {writer.Frame} ({submitted}); completed {status.completed_frame} in buffer {status.completed_buffer}; {registry.Count}/{scanner.ScannedRenderers} renderers; {scanner.SceneLights.Count} lights; {scanner.Uploader.MeshCount} meshes, {scanner.Uploader.TextureCount} textures, {scanner.Uploader.MaterialCount} materials uploaded; in flight {status.in_flight}";
         }
 
         private bool TryGetCamera(out Camera? unityCamera)

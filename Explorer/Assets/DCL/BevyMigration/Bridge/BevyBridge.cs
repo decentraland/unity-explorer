@@ -16,7 +16,7 @@ namespace DCL.BevyMigration.Bridge
     {
         public const int OUTPUT_BUFFER_COUNT = 2;
 
-        private static readonly ReportData REPORT_DATA = new (ReportCategory.ENGINE);
+        private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
         private static readonly Texture2D?[] OUTPUTS = new Texture2D?[OUTPUT_BUFFER_COUNT];
         // Kept alive for the process lifetime: the native side holds the function pointer.
         private static readonly NativeLogCallback LOG_CALLBACK = OnNativeLog;
@@ -144,6 +144,25 @@ namespace DCL.BevyMigration.Bridge
                 return NativeMethods.bm_submit_snapshot(ptr);
         }
 
+        /// <summary>
+        ///     Queues one resource command; the native side copies the payload before returning.
+        /// </summary>
+        public static BmResult Resource(ref BmResourceCmd command)
+        {
+            if (!initialized) return BmResult.NotInitialized;
+
+            fixed (BmResourceCmd* ptr = &command)
+                return NativeMethods.bm_resource_cmd(ptr);
+        }
+
+        public static BmResult UploadMaterial(uint handle, ref BmMaterial material)
+        {
+            if (!initialized) return BmResult.NotInitialized;
+
+            fixed (BmMaterial* ptr = &material)
+                return NativeMethods.bm_upload_material(handle, ptr);
+        }
+
         public static IntPtr RenderEventFunction =>
             initialized ? (IntPtr)NativeMethods.bm_get_render_event_func() : IntPtr.Zero;
 
@@ -192,6 +211,6 @@ namespace DCL.BevyMigration.Bridge
     /// </summary>
     public static class BridgeAbi
     {
-        public const uint VERSION = 1;
+        public const uint VERSION = 2;
     }
 }

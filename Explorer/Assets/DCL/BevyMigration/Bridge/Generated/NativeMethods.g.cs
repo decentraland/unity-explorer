@@ -59,13 +59,22 @@ namespace DCL.BevyMigration.Bridge.Generated
         public static extern BmResult bm_submit_snapshot(BmSnapshot* snapshot);
 
         /// <summary>
-        ///  Resource upload entry point; the first command kinds land with step 3.
+        ///  Copies one resource command out of host memory and queues it (plan § 8 "Resource transfer").
         ///
         ///  # Safety
-        ///  `cmd` must be null or point to a readable [`BmResourceCmd`].
+        ///  `cmd` must be null or point to a readable [`BmResourceCmd`] whose `data` holds `len` readable bytes.
         /// </summary>
         [DllImport(__DllName, EntryPoint = "bm_resource_cmd", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern BmResult bm_resource_cmd(BmResourceCmd* cmd);
+
+        /// <summary>
+        ///  Copies one material description out of host memory and queues it under `handle`.
+        ///
+        ///  # Safety
+        ///  `material` must be null or point to a readable [`BmMaterial`].
+        /// </summary>
+        [DllImport(__DllName, EntryPoint = "bm_upload_material", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern BmResult bm_upload_material(uint handle, BmMaterial* material);
 
         /// <summary>
         ///  Describes output buffer `index` so the host can wrap it as an external texture.
@@ -163,6 +172,52 @@ namespace DCL.BevyMigration.Bridge.Generated
     }
 
     /// <summary>
+    ///  One light of the snapshot (plan § 8 "Lights").
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct BmLight
+    {
+        public uint kind;
+        /// <summary>
+        ///  Non-zero when the light casts shadows.
+        /// </summary>
+        public uint shadows;
+        /// <summary>
+        ///  World position (point, spot).
+        /// </summary>
+        public fixed float position[3];
+        /// <summary>
+        ///  Direction the light travels, world space (directional, spot).
+        /// </summary>
+        public fixed float direction[3];
+        /// <summary>
+        ///  Linear RGB already multiplied by intensity.
+        /// </summary>
+        public fixed float color[3];
+        /// <summary>
+        ///  Metres (point, spot).
+        /// </summary>
+        public float range;
+        /// <summary>
+        ///  Full cone angle in degrees (spot).
+        /// </summary>
+        public float spot_angle;
+    }
+
+    /// <summary>
+    ///  Scene fog as Unity's `RenderSettings` hold it.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct BmFog
+    {
+        public uint mode;
+        public fixed float color[3];
+        public float density;
+        public float start;
+        public float end;
+    }
+
+    /// <summary>
     ///  One frame of renderer state, structure of arrays, pointed into the host's double buffer. The bridge
     ///  copies everything out during `bm_submit_snapshot`; nothing is retained past the call (plan § 9 threading).
     /// </summary>
@@ -180,6 +235,7 @@ namespace DCL.BevyMigration.Bridge.Generated
         /// </summary>
         public fixed float sun_direction[3];
         public fixed float sun_color[3];
+        public BmFog fog;
         public uint renderer_count;
         /// <summary>
         ///  `renderer_count` generational handles (plan § 16 "Handle").
@@ -190,17 +246,36 @@ namespace DCL.BevyMigration.Bridge.Generated
         /// </summary>
         public BmMat4* worlds;
         /// <summary>
-        ///  `renderer_count` mesh handles ([`MESH_PLACEHOLDER_CUBE`] in step 2).
+        ///  `renderer_count` mesh handles ([`MESH_PLACEHOLDER_CUBE`] for the built-in cube).
         /// </summary>
         public uint* meshes;
         /// <summary>
         ///  `renderer_count` [`renderer_flags`].
         /// </summary>
         public ushort* flags;
+        /// <summary>
+        ///  `renderer_count` offsets into `material_handles`.
+        /// </summary>
+        public uint* material_first;
+        /// <summary>
+        ///  `renderer_count` counts of materials (one per submesh) starting at `material_first`.
+        /// </summary>
+        public byte* material_count;
+        /// <summary>
+        ///  `material_handle_count` material handles, [`MATERIAL_PLACEHOLDER`] where none was uploaded.
+        /// </summary>
+        public uint material_handle_count;
+        public uint* material_handles;
+        /// <summary>
+        ///  `light_count` lights.
+        /// </summary>
+        public uint light_count;
+        public BmLight* lights;
     }
 
     /// <summary>
-    ///  A resource command: `kind` decides how `data` is read; `handle` is allocated by the host.
+    ///  A resource command: `kind` decides how `data` is read; `handle` is allocated by the host and must
+    ///  be non-zero. The bridge copies the payload before returning.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public unsafe partial struct BmResourceCmd
@@ -209,6 +284,55 @@ namespace DCL.BevyMigration.Bridge.Generated
         public uint handle;
         public byte* data;
         public nuint len;
+    }
+
+    /// <summary>
+    ///  The URP Lit property blob, with the `SceneBounds` extension that dithers geometry outside the
+    ///  parcel (plan § 7, step 3). Texture fields hold texture handles or [`TEXTURE_NONE`].
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct BmMaterial
+    {
+        public BmMaterialFamily family;
+        public BmAlphaMode alpha_mode;
+        public uint double_sided;
+        /// <summary>
+        ///  Non-zero when `scene_bounds_min`/`max` apply.
+        /// </summary>
+        public uint scene_bounds_enabled;
+        /// <summary>
+        ///  Linear RGBA.
+        /// </summary>
+        public fixed float base_color[4];
+        public float metallic;
+        public float smoothness;
+        public float alpha_cutoff;
+        public float normal_scale;
+        public float occlusion_strength;
+        /// <summary>
+        ///  Linear RGB.
+        /// </summary>
+        public fixed float emission[3];
+        public uint base_map;
+        public uint normal_map;
+        /// <summary>
+        ///  Unity's `_MetallicGlossMap`: metallic in R, smoothness in A.
+        /// </summary>
+        public uint metallic_gloss_map;
+        /// <summary>
+        ///  Unity's `_OcclusionMap`: occlusion in G.
+        /// </summary>
+        public uint occlusion_map;
+        public uint emission_map;
+        /// <summary>
+        ///  `_BaseMap_ST`: scale xy, offset zw.
+        /// </summary>
+        public fixed float base_map_st[4];
+        /// <summary>
+        ///  World-space XZ rectangle of the scene's parcels.
+        /// </summary>
+        public fixed float scene_bounds_min[2];
+        public fixed float scene_bounds_max[2];
     }
 
     /// <summary>
@@ -293,11 +417,46 @@ namespace DCL.BevyMigration.Bridge.Generated
     }
 
     /// <summary>
-    ///  Kinds of [`BmResourceCmd`]; the first real kinds land with mesh and texture upload in step 3.
+    ///  Kinds of [`BmResourceCmd`] (plan § 8 "Resource transfer", phase 1: copy once per asset).
     /// </summary>
     public enum BmResourceCmdKind : uint
     {
         None = 0,
+        /// <summary>
+        ///  `data` is a [`BmMeshHeader`] followed by the streams it describes.
+        /// </summary>
+        MeshUpload = 1,
+        MeshRelease = 2,
+        /// <summary>
+        ///  `data` is a [`BmTextureHeader`] followed by every mip level, tightly packed, largest first.
+        /// </summary>
+        TextureUpload = 3,
+        TextureRelease = 4,
+        /// <summary>
+        ///  `data` is one [`BmMaterial`].
+        /// </summary>
+        MaterialUpload = 5,
+        MaterialRelease = 6,
+    }
+
+    /// <summary>
+    ///  Material families (plan § 8 "Material families"); the inventory's `UrpLit` and `Unlit` arrive first.
+    /// </summary>
+    public enum BmMaterialFamily : uint
+    {
+        UrpLit = 0,
+        Unlit = 1,
+    }
+
+    /// <summary>
+    ///  Alpha modes of URP Lit.
+    /// </summary>
+    public enum BmAlphaMode : uint
+    {
+        Opaque = 0,
+        Cutout = 1,
+        Fade = 2,
+        Transparent = 3,
     }
 
 

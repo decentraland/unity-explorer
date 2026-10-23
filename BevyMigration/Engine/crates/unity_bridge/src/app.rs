@@ -26,6 +26,7 @@ use bevy::{
 use render::{
     BevyMigrationRenderPlugin, PendingSnapshot,
     readback::{LatestPixels, ReadbackPlugin, ReadbackSource},
+    resources::PendingResources,
 };
 use std::{
     panic::{AssertUnwindSafe, catch_unwind},
@@ -80,6 +81,13 @@ pub fn run(args: ThreadArgs) {
     while let Ok(command) = commands.recv() {
         let snapshot = match command {
             Command::Snapshot(snapshot) => snapshot,
+            Command::Resource(resource) => {
+                app.world_mut()
+                    .resource_mut::<PendingResources>()
+                    .0
+                    .push(resource);
+                continue;
+            }
             Command::Shutdown => break,
         };
 

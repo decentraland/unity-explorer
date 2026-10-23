@@ -1,23 +1,25 @@
 //! Bevy render plugin of the migration (BevyMigration/docs/README.md § 8): handle tables, a flat entity
 //! set whose `GlobalTransform` is written straight from the snapshot (no `Transform`, no hierarchy), the
-//! camera driven by Unity's matrices, and output into texture views the embedder supplies.
-//!
-//! Step 2 scope: every renderer is drawn as the built-in unit cube with one placeholder material; mesh,
-//! texture and material upload are step 3.
-#![cfg_attr(
-    test,
-    allow(clippy::expect_used, clippy::unwrap_used, clippy::float_cmp)
-)]
+//! camera driven by Unity's matrices, lights and fog from the snapshot, resources uploaded once from the
+//! host, and output into texture views the embedder supplies.
 
+pub mod materials;
 pub mod readback;
+pub mod resources;
 pub mod snapshot;
 
+use abi::{MATERIAL_PLACEHOLDER, MESH_PLACEHOLDER_CUBE, fog_mode, light_kind};
 use bevy::{
+    core_pipeline::tonemapping::Tonemapping,
+    pbr::{DistanceFog, ExtendedMaterial, FogFalloff},
     prelude::*,
+    render::camera::Exposure,
     render::camera::{
         ManualTextureView, ManualTextureViewHandle, ManualTextureViews, RenderTarget,
     },
 };
+use materials::{MaterialFamiliesPlugin, UrpLitExtension, UrpLitMaterial};
+use resources::{PendingResources, ResourceTables, apply_resources};
 use snapshot::Snapshot;
 use std::collections::{HashMap, HashSet};
 
@@ -33,10 +35,10 @@ pub struct OutputViews {
 #[derive(Resource, Debug, Default)]
 pub struct PendingSnapshot(pub Option<Snapshot>);
 
-/// Renderer handle to entity, the only persistent mapping (plan § 8 "Bevy side: handle tables").
+/// Renderer handle to entities (one per submesh), the only persistent mapping (plan § 8).
 #[derive(Resource, Debug, Default)]
 pub struct HandleTable {
-    entities: HashMap<u32, Entity>,
+    entities: HashMap<u32, Vec<Entity>>,
 }
 
 impl HandleTable {
@@ -48,30 +50,44 @@ impl HandleTable {
         self.entities.is_empty()
     }
 
-    pub fn entity(&self, handle: u32) -> Option<Entity> {
-        self.entities.get(&handle).copied()
+    pub fn entities(&self, handle: u32) -> Option<&[Entity]> {
+        self.entities.get(&handle).map(Vec::as_slice)
     }
 }
+
+/// The frame number the current update renders; the embedder reads it to pick the output buffer.
+#[derive(Resource, Debug, Clone, Copy, Default)]
+pub struct CurrentFrame(pub u64);
 
 /// Marks the camera the snapshot drives.
 #[derive(Component, Debug)]
 pub struct BridgeCamera;
 
-/// Marks the directional light the snapshot drives.
+/// Marks the directional light the snapshot's sun drives.
 #[derive(Component, Debug)]
 pub struct BridgeSun;
+
+/// Marks a light spawned from the snapshot's light array, by index.
+#[derive(Component, Debug)]
+pub struct BridgeLight {
+    pub index: usize,
+}
 
 /// Marks an entity owned by a renderer handle.
 #[derive(Component, Debug)]
 pub struct BridgeRenderer {
     pub handle: u32,
+    pub submesh: usize,
 }
 
 #[derive(Resource, Debug)]
 struct Placeholders {
     cube: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
+    material: Handle<UrpLitMaterial>,
 }
+
+#[derive(Resource, Debug, Default)]
+struct LightEntities(Vec<Entity>);
 
 /// Mirrors Z: Unity's left-handed world and Bevy's right-handed one differ by this reflection.
 const MIRROR_Z: Mat4 = Mat4::from_cols(
@@ -86,25 +102,35 @@ pub struct BevyMigrationRenderPlugin;
 
 impl Plugin for BevyMigrationRenderPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PendingSnapshot>()
+        app.add_plugins(MaterialFamiliesPlugin)
+            .init_resource::<PendingSnapshot>()
+            .init_resource::<PendingResources>()
+            .init_resource::<ResourceTables>()
             .init_resource::<HandleTable>()
             .init_resource::<CurrentFrame>()
+            .init_resource::<LightEntities>()
             .add_systems(Startup, spawn_scene)
-            .add_systems(PreUpdate, (apply_snapshot, select_output_view).chain());
+            .add_systems(
+                PreUpdate,
+                (apply_resources, apply_snapshot, select_output_view).chain(),
+            );
     }
 }
 
 fn spawn_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<UrpLitMaterial>>,
 ) {
     commands.insert_resource(Placeholders {
         cube: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-        material: materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.5, 0.2),
-            perceptual_roughness: 0.6,
-            ..default()
+        material: materials.add(ExtendedMaterial {
+            base: StandardMaterial {
+                base_color: Color::srgb(0.8, 0.5, 0.2),
+                perceptual_roughness: 0.6,
+                ..default()
+            },
+            extension: UrpLitExtension::default(),
         }),
     });
 
@@ -117,6 +143,10 @@ fn spawn_scene(
         },
         Projection::Perspective(PerspectiveProjection::default()),
         GlobalTransform::IDENTITY,
+        DistanceFog::default(),
+        // Unity's volume stack tone maps after the composite; Bevy outputs scene-linear encoded as sRGB.
+        Tonemapping::None,
+        UNITY_EXPOSURE,
     ));
 
     commands.spawn((
@@ -136,16 +166,23 @@ fn apply_snapshot(
     mut commands: Commands,
     mut pending: ResMut<PendingSnapshot>,
     mut table: ResMut<HandleTable>,
+    tables: Res<ResourceTables>,
     placeholders: Res<Placeholders>,
     mut ambient: ResMut<AmbientLight>,
     mut current_frame: ResMut<CurrentFrame>,
+    mut light_entities: ResMut<LightEntities>,
     mut cameras: Query<
-        (&mut GlobalTransform, &mut Projection),
+        (&mut GlobalTransform, &mut Projection, &mut DistanceFog),
         (With<BridgeCamera>, Without<BridgeSun>),
     >,
     mut suns: Query<(&mut GlobalTransform, &mut DirectionalLight), With<BridgeSun>>,
     mut renderers: Query<
-        (&mut GlobalTransform, &mut Visibility),
+        (
+            &mut GlobalTransform,
+            &mut Visibility,
+            &mut Mesh3d,
+            &mut MeshMaterial3d<UrpLitMaterial>,
+        ),
         (
             With<BridgeRenderer>,
             Without<BridgeCamera>,
@@ -157,7 +194,7 @@ fn apply_snapshot(
         return;
     };
 
-    for (mut transform, mut projection) in &mut cameras {
+    for (mut transform, mut projection, mut fog) in &mut cameras {
         *transform = GlobalTransform::from(camera_world_matrix(&snapshot.camera.view));
 
         if let Projection::Perspective(perspective) = projection.as_mut() {
@@ -165,9 +202,14 @@ fn apply_snapshot(
             perspective.near = snapshot.camera.near;
             perspective.far = snapshot.camera.far;
         }
+
+        *fog = fog_component(&snapshot.fog);
     }
 
     for (mut transform, mut light) in &mut suns {
+        let (color, strength) = unity_light_color(snapshot.sun_color);
+        light.color = color;
+        light.illuminance = strength * UNITY_DIRECTIONAL_TO_LUX;
         let direction = MIRROR_Z
             .transform_vector3(snapshot.sun_direction)
             .normalize_or_zero();
@@ -178,16 +220,45 @@ fn apply_snapshot(
                 direction,
             )));
         }
-
-        light.color = Color::linear_rgb(
-            snapshot.sun_color.x,
-            snapshot.sun_color.y,
-            snapshot.sun_color.z,
-        );
     }
 
     ambient.color = Color::linear_rgb(snapshot.ambient.x, snapshot.ambient.y, snapshot.ambient.z);
+    ambient.brightness = 1.0;
 
+    sync_lights(&mut commands, &mut light_entities, &snapshot);
+
+    sync_renderers(
+        &mut commands,
+        &mut table,
+        &tables,
+        &placeholders,
+        &mut renderers,
+        &snapshot,
+    );
+    current_frame.0 = snapshot.frame;
+}
+
+/// Spawns, updates and despawns renderer entities so they match the snapshot, one entity per submesh.
+fn sync_renderers(
+    commands: &mut Commands,
+    table: &mut HandleTable,
+    tables: &ResourceTables,
+    placeholders: &Placeholders,
+    renderers: &mut Query<
+        (
+            &mut GlobalTransform,
+            &mut Visibility,
+            &mut Mesh3d,
+            &mut MeshMaterial3d<UrpLitMaterial>,
+        ),
+        (
+            With<BridgeRenderer>,
+            Without<BridgeCamera>,
+            Without<BridgeSun>,
+        ),
+    >,
+    snapshot: &Snapshot,
+) {
     let mut seen: HashSet<u32> = HashSet::with_capacity(snapshot.renderers.len());
 
     for renderer in &snapshot.renderers {
@@ -198,51 +269,202 @@ fn apply_snapshot(
         } else {
             Visibility::Hidden
         };
+        let submeshes: Vec<Handle<Mesh>> = match tables.mesh(renderer.mesh) {
+            Some(handles) if renderer.mesh != MESH_PLACEHOLDER_CUBE => handles.to_vec(),
+            _ => vec![placeholders.cube.clone()],
+        };
 
-        if let Some(&entity) = table.entities.get(&renderer.handle) {
-            if let Ok((mut transform, mut current)) = renderers.get_mut(entity) {
-                *transform = world;
-                *current = visibility;
+        let entities = table.entities.entry(renderer.handle).or_default();
+
+        for (index, mesh) in submeshes.iter().enumerate() {
+            let material = renderer
+                .materials
+                .get(index)
+                .or_else(|| renderer.materials.last())
+                .copied()
+                .filter(|&handle| handle != MATERIAL_PLACEHOLDER)
+                .and_then(|handle| tables.material(handle).cloned())
+                .unwrap_or_else(|| placeholders.material.clone());
+
+            if let Some(entity) = entities.get(index).copied() {
+                if let Ok((mut transform, mut current, mut mesh3d, mut material3d)) =
+                    renderers.get_mut(entity)
+                {
+                    *transform = world;
+                    *current = visibility;
+
+                    if mesh3d.0 != *mesh {
+                        mesh3d.0 = mesh.clone();
+                    }
+
+                    if material3d.0 != material {
+                        material3d.0 = material;
+                    }
+                }
+            } else {
+                let entity = commands
+                    .spawn((
+                        BridgeRenderer {
+                            handle: renderer.handle,
+                            submesh: index,
+                        },
+                        Mesh3d(mesh.clone()),
+                        MeshMaterial3d(material),
+                        world,
+                        visibility,
+                    ))
+                    .id();
+                entities.push(entity);
             }
-        } else {
-            let entity = commands
-                .spawn((
-                    BridgeRenderer {
-                        handle: renderer.handle,
-                    },
-                    Mesh3d(placeholders.cube.clone()),
-                    MeshMaterial3d(placeholders.material.clone()),
-                    world,
-                    visibility,
-                ))
-                .id();
-            table.entities.insert(renderer.handle, entity);
+        }
+
+        while entities.len() > submeshes.len() {
+            if let Some(extra) = entities.pop() {
+                commands.entity(extra).despawn();
+            }
         }
     }
 
-    table.entities.retain(|handle, entity| {
+    table.entities.retain(|handle, entities| {
         if seen.contains(handle) {
             return true;
         }
 
-        commands.entity(*entity).despawn();
+        for entity in entities.drain(..) {
+            commands.entity(entity).despawn();
+        }
+
         false
     });
-
-    current_frame.0 = snapshot.frame;
 }
 
-/// The frame number the current update renders; the embedder reads it to pick the output buffer.
-#[derive(Resource, Debug, Clone, Copy, Default)]
-pub struct CurrentFrame(pub u64);
+/// Unity's light units are unitless multipliers of the albedo: a surface facing a light of intensity
+/// `I` reflects `albedo * I`. Bevy's PBR reflects `albedo / pi * illuminance * exposure` for a
+/// directional light and `albedo / pi * lumens / (4 pi) / d^2 * exposure` for a punctual one, so with
+/// the exposure pinned to 1.0 these factors make both renderers agree on a white diffuse surface.
+const UNITY_DIRECTIONAL_TO_LUX: f32 = core::f32::consts::PI;
+const UNITY_PUNCTUAL_TO_LUMENS: f32 = 4.0 * core::f32::consts::PI * core::f32::consts::PI;
+/// `Exposure` is `1 / (1.2 * 2^ev100)`; this ev100 makes it exactly 1.0 (`-log2(1.2)`).
+const UNITY_EXPOSURE: Exposure = Exposure {
+    ev100: -0.263_034_4,
+};
+
+/// Splits a Unity `color * intensity` into Bevy's normalised colour and a scalar strength.
+fn unity_light_color(color: Vec3) -> (Color, f32) {
+    let strength = color.max_element();
+
+    if strength <= 0.0 {
+        return (Color::WHITE, 0.0);
+    }
+
+    let normalised = color / strength;
+    (
+        Color::linear_rgb(normalised.x, normalised.y, normalised.z),
+        strength,
+    )
+}
+
+fn sync_lights(commands: &mut Commands, light_entities: &mut LightEntities, snapshot: &Snapshot) {
+    // Lights are few and change rarely; respawning them each frame keeps the logic trivial.
+    for entity in light_entities.0.drain(..) {
+        commands.entity(entity).despawn();
+    }
+
+    for (index, light) in snapshot.lights.iter().enumerate() {
+        let (color, strength) = unity_light_color(light.color);
+        let position = MIRROR_Z.transform_point3(light.position);
+        let direction = MIRROR_Z
+            .transform_vector3(light.direction)
+            .normalize_or_zero();
+        let rotation = if direction == Vec3::ZERO {
+            Quat::IDENTITY
+        } else {
+            Quat::from_rotation_arc(Vec3::NEG_Z, direction)
+        };
+        let transform =
+            GlobalTransform::from(Transform::from_translation(position).with_rotation(rotation));
+
+        let entity = match light.kind {
+            light_kind::POINT => commands
+                .spawn((
+                    BridgeLight { index },
+                    PointLight {
+                        color,
+                        intensity: strength * UNITY_PUNCTUAL_TO_LUMENS,
+                        range: light.range,
+                        shadows_enabled: light.shadows,
+                        ..default()
+                    },
+                    transform,
+                ))
+                .id(),
+            light_kind::SPOT => commands
+                .spawn((
+                    BridgeLight { index },
+                    SpotLight {
+                        color,
+                        intensity: strength * UNITY_PUNCTUAL_TO_LUMENS,
+                        range: light.range,
+                        outer_angle: (light.spot_angle_degrees * 0.5).to_radians(),
+                        inner_angle: (light.spot_angle_degrees * 0.4).to_radians(),
+                        shadows_enabled: light.shadows,
+                        ..default()
+                    },
+                    transform,
+                ))
+                .id(),
+            _ => commands
+                .spawn((
+                    BridgeLight { index },
+                    DirectionalLight {
+                        color,
+                        illuminance: strength * UNITY_DIRECTIONAL_TO_LUX,
+                        shadows_enabled: light.shadows,
+                        ..default()
+                    },
+                    transform,
+                ))
+                .id(),
+        };
+
+        light_entities.0.push(entity);
+    }
+}
+
+fn fog_component(fog: &snapshot::SnapshotFog) -> DistanceFog {
+    let color = Color::linear_rgb(fog.color.x, fog.color.y, fog.color.z);
+
+    let falloff = match fog.mode {
+        fog_mode::LINEAR => FogFalloff::Linear {
+            start: fog.start,
+            end: fog.end,
+        },
+        fog_mode::EXPONENTIAL => FogFalloff::Exponential {
+            density: fog.density,
+        },
+        fog_mode::EXPONENTIAL_SQUARED => FogFalloff::ExponentialSquared {
+            density: fog.density,
+        },
+        _ => FogFalloff::Linear {
+            start: f32::MAX / 4.0,
+            end: f32::MAX / 2.0,
+        },
+    };
+
+    DistanceFog {
+        color,
+        falloff,
+        ..default()
+    }
+}
 
 /// Points the camera at the output view of this frame's buffer.
 fn select_output_view(
-    frame: Option<Res<CurrentFrame>>,
+    frame: Res<CurrentFrame>,
     views: Option<Res<OutputViews>>,
     mut cameras: Query<&mut Camera, With<BridgeCamera>>,
 ) {
-    let (Some(frame), Some(views)) = (frame, views) else {
+    let Some(views) = views else {
         return;
     };
 

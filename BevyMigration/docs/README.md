@@ -55,7 +55,7 @@ The first deliverable is the **host flip** (step 10): the desktop client boots, 
 | Host during rendering phase | Unity | Unity can still render the same frame, which gives a built-in A/B for every rendering milestone. |
 | UI | Web renderer (CEF offscreen on desktop), React | Two Unity UI stacks and TextMeshPro are more expensive to shim than to rewrite. |
 | Hybrid builds | Internal only | Removes release-quality, crash isolation and VRAM parity constraints until step 10. |
-| First platform | macOS, Metal | Development machines. Windows follows inside the rendering phase through D3D11 shared handles. |
+| First platform | macOS, Metal, and nothing else until the feature is validated there | Development machines. The Windows path (D3D11 shared handles opened by a D3D12 wgpu device) is deferred out of the rendering phase; `cfg(target_os)` gates stay honest instead of carrying stubs. |
 | Editor Play mode | Must keep working in hybrid builds | Developers iterate in the Editor through step 9. |
 | Repository | This monorepo, two `BevyMigration` folders | Path-scoped CI already exists. The migration is self-contained and promotable at the flip. |
 | Scene runtime during transition | ClearScript V8 on CoreCLR, unchanged | Runs on plain .NET. Moves to Rust in step 11 behind a flag. |
@@ -312,15 +312,15 @@ Gate `G-A4`: fixed profile at idle and at a fixed emote frame matches within thr
 
 ### Step 5: Unity renders no world
 
-Purpose: close the rendering phase on both platforms.
+Purpose: close the rendering phase on macOS.
 
 Deliverables:
 - Unity main camera culling mask empty; only composite feature and UI remain.
-- Windows path: D3D11 shared NT handles opened by a D3D12 wgpu device. Document the Unity player graphics API requirement.
 - Landscape, particle systems and skybox disabled behind `world=bevy`, recorded in the ledger as deferred to step 11.
 - Per-frame gather cost budget measured and documented.
+- Deferred (section 2, "First platform"): the Windows path, D3D11 shared NT handles opened by a D3D12 wgpu device, with the Unity player graphics API requirement documented. It joins the deferred list (section 15) until macOS is validated.
 
-Gate `G-A5`: screenshot suite green on macOS and Windows with `world=bevy` default; frame gather under budget on the reference machine.
+Gate `G-A5`: screenshot suite green on macOS with `world=bevy` default; frame gather under budget on the reference machine.
 
 ### Step 6: Shim foundation (parallel with steps 2 to 5)
 
@@ -427,7 +427,7 @@ Phase 2, only if measured necessary: shared device, zero copy. Create Bevy's ren
 ### Output sharing
 
 - macOS: IOSurface-backed textures, both devices wrap the same surface.
-- Windows: D3D11 shared NT handle created by Unity, opened by the D3D12 wgpu device.
+- Windows (deferred, section 2 "First platform"): D3D11 shared NT handle created by Unity, opened by the D3D12 wgpu device.
 - Synchronisation: double buffering and a per-frame fence or shared event; CPU wait before composite as fallback. No `waitUntilCompleted` on the render thread.
 
 ### Snapshot schema (SoA, unmanaged, double-buffered)
@@ -578,6 +578,9 @@ Recorded in the ledger as `planned` with step 11:
 - Quality settings beyond the minimum the HUD needs.
 - WebAssembly target.
 - SDK scene UI in Bevy UI.
+
+Not in the ledger (no Unity feature row), deferred by decision (section 2, "First platform"):
+- Windows rendering path: D3D11 shared NT handles opened by a D3D12 wgpu device, and the player graphics API requirement that comes with it.
 
 ---
 

@@ -5,8 +5,10 @@
 //! macOS development machines have.
 
 use abi::{
-    BmCamera, BmFrameStatus, BmInitConfig, BmMat4, BmOutputKind, BmResult, BmSnapshot,
-    MESH_PLACEHOLDER_CUBE, renderer_flags,
+    BmAlphaMode, BmCamera, BmFog, BmFrameStatus, BmInitConfig, BmMat4, BmMaterial,
+    BmMaterialFamily, BmOutputKind, BmOutputTexture, BmResourceCmd, BmResourceCmdKind, BmResult,
+    BmSnapshot, MESH_PLACEHOLDER_CUBE, TEXTURE_NONE, fog_mode, index_format, mesh_attributes,
+    renderer_flags,
 };
 use parking_lot::Mutex;
 use std::time::{Duration, Instant};
@@ -54,11 +56,106 @@ fn snapshot(
         ambient: [0.3, 0.3, 0.3],
         sun_direction: [0.2, -1.0, 0.5],
         sun_color: [1.0, 1.0, 1.0],
+        fog: BmFog {
+            mode: fog_mode::NONE,
+            color: [0.0; 3],
+            density: 0.0,
+            start: 0.0,
+            end: 0.0,
+        },
         renderer_count: u32::try_from(handles.len()).unwrap_or(0),
         handles: handles.as_ptr(),
         worlds: worlds.as_ptr(),
         meshes: meshes.as_ptr(),
         flags: flags.as_ptr(),
+        material_first: std::ptr::null(),
+        material_count: std::ptr::null(),
+        material_handle_count: 0,
+        material_handles: std::ptr::null(),
+        light_count: 0,
+        lights: std::ptr::null(),
+    }
+}
+
+/// A snapshot whose single renderer uses mesh `mesh` and material `material` (handles from uploads).
+fn snapshot_with_material(
+    frame: u64,
+    handles: &[u32],
+    worlds: &[BmMat4],
+    meshes: &[u32],
+    flags: &[u16],
+    material_first: &[u32],
+    material_count: &[u8],
+    material_handles: &[u32],
+) -> BmSnapshot {
+    let mut snapshot = snapshot(frame, handles, worlds, meshes, flags);
+    snapshot.material_first = material_first.as_ptr();
+    snapshot.material_count = material_count.as_ptr();
+    snapshot.material_handle_count = u32::try_from(material_handles.len()).unwrap_or(0);
+    snapshot.material_handles = material_handles.as_ptr();
+    snapshot
+}
+
+fn push_u32(out: &mut Vec<u8>, value: u32) {
+    out.extend_from_slice(&value.to_le_bytes());
+}
+
+fn push_f32s(out: &mut Vec<u8>, values: &[f32]) {
+    for value in values {
+        out.extend_from_slice(&value.to_le_bytes());
+    }
+}
+
+/// A 2x2 m quad facing Unity's -Z (towards a camera looking down +Z), clockwise as Unity winds it.
+fn quad_payload() -> Vec<u8> {
+    let mut out = Vec::new();
+    push_u32(&mut out, 4);
+    push_u32(&mut out, 6);
+    push_u32(&mut out, 1);
+    push_u32(&mut out, mesh_attributes::NORMAL | mesh_attributes::UV0);
+    push_u32(&mut out, index_format::U16);
+    push_f32s(
+        &mut out,
+        &[
+            -1.0, -1.0, 0.0, -1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, -1.0, 0.0,
+        ],
+    );
+    push_f32s(
+        &mut out,
+        &[
+            0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0,
+        ],
+    );
+    push_f32s(&mut out, &[0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]);
+    for index in [0u16, 1, 2, 0, 2, 3] {
+        out.extend_from_slice(&index.to_le_bytes());
+    }
+    push_u32(&mut out, 0);
+    push_u32(&mut out, 6);
+    out
+}
+
+fn green_unlit_material() -> BmMaterial {
+    BmMaterial {
+        family: BmMaterialFamily::Unlit,
+        alpha_mode: BmAlphaMode::Opaque,
+        double_sided: 0,
+        scene_bounds_enabled: 0,
+        base_color: [0.0, 1.0, 0.0, 1.0],
+        metallic: 0.0,
+        smoothness: 0.5,
+        alpha_cutoff: 0.5,
+        normal_scale: 1.0,
+        occlusion_strength: 1.0,
+        emission: [0.0; 3],
+        base_map: TEXTURE_NONE,
+        normal_map: TEXTURE_NONE,
+        metallic_gloss_map: TEXTURE_NONE,
+        occlusion_map: TEXTURE_NONE,
+        emission_map: TEXTURE_NONE,
+        base_map_st: [1.0, 1.0, 0.0, 0.0],
+        scene_bounds_min: [0.0; 2],
+        scene_bounds_max: [0.0; 2],
     }
 }
 
@@ -197,6 +294,155 @@ fn renders_a_cube_offscreen_and_reads_it_back() {
         BmResult::Ok,
         "shutdown is idempotent"
     );
+}
+
+#[test]
+#[cfg_attr(
+    not(target_os = "macos"),
+    ignore = "needs a GPU; exercised on the macOS development machines"
+)]
+fn renders_an_uploaded_quad_with_an_uploaded_material() {
+    let _guard = BRIDGE_LOCK.lock();
+    // SAFETY: valid config pointer.
+    assert_eq!(
+        unsafe { unity_bridge::bm_init(std::ptr::from_ref(&config(BmOutputKind::Offscreen))) },
+        BmResult::Ok
+    );
+
+    let payload = quad_payload();
+    let mesh_cmd = BmResourceCmd {
+        kind: BmResourceCmdKind::MeshUpload,
+        handle: 1,
+        data: payload.as_ptr(),
+        len: payload.len(),
+    };
+    // SAFETY: `data` holds `len` readable bytes.
+    assert_eq!(
+        unsafe { unity_bridge::bm_resource_cmd(std::ptr::from_ref(&mesh_cmd)) },
+        BmResult::Ok
+    );
+
+    let material = green_unlit_material();
+    // SAFETY: a valid material pointer.
+    assert_eq!(
+        unsafe { unity_bridge::bm_upload_material(1, std::ptr::from_ref(&material)) },
+        BmResult::Ok
+    );
+
+    let handles = [5u32];
+    let worlds = [cube_at(4.0)];
+    let meshes = [1u32];
+    let flags = [renderer_flags::VISIBLE];
+    let material_first = [0u32];
+    let material_count = [1u8];
+    let material_handles = [1u32];
+
+    for frame in 1..=2u64 {
+        let snapshot = snapshot_with_material(
+            frame,
+            &handles,
+            &worlds,
+            &meshes,
+            &flags,
+            &material_first,
+            &material_count,
+            &material_handles,
+        );
+        // SAFETY: the arrays hold renderer_count elements and one material handle.
+        assert_eq!(
+            unsafe { unity_bridge::bm_submit_snapshot(std::ptr::from_ref(&snapshot)) },
+            BmResult::Ok
+        );
+        wait_for_frame(frame);
+    }
+
+    let pixels = read_pixels();
+    let center = pixel(&pixels, WIDTH / 2, HEIGHT / 2);
+    let corner = pixel(&pixels, 1, 1);
+    // BGRA: green is index 1; the unlit quad must be green in front of the blue-grey clear colour.
+    assert!(
+        center[1] > 150 && center[1] > center[0] * 2 && center[1] > center[2] * 2,
+        "centre pixel {center:?} (BGRA) should be green"
+    );
+    assert_ne!(center, corner);
+
+    let bad = BmResourceCmd {
+        kind: BmResourceCmdKind::MeshUpload,
+        handle: 0,
+        data: payload.as_ptr(),
+        len: payload.len(),
+    };
+    // SAFETY: valid pointer; handle 0 is reserved and must be refused.
+    assert_eq!(
+        unsafe { unity_bridge::bm_resource_cmd(std::ptr::from_ref(&bad)) },
+        BmResult::InvalidArgument
+    );
+
+    assert_eq!(unity_bridge::bm_shutdown(), BmResult::Ok);
+}
+
+#[test]
+#[cfg(target_os = "macos")]
+fn renders_into_an_iosurface_readable_from_the_cpu() {
+    let _guard = BRIDGE_LOCK.lock();
+
+    // No Unity device in a test process: the bridge keeps the Bevy-side surface and the host reads it.
+    // SAFETY: valid config pointer.
+    assert_eq!(
+        unsafe { unity_bridge::bm_init(std::ptr::from_ref(&config(BmOutputKind::IoSurface))) },
+        BmResult::Ok
+    );
+
+    let mut output = BmOutputTexture {
+        width: 0,
+        height: 0,
+        host_texture: std::ptr::null_mut(),
+        io_surface: std::ptr::null_mut(),
+    };
+    // SAFETY: valid out pointer.
+    assert_eq!(
+        unsafe { unity_bridge::bm_get_output(1, std::ptr::from_mut(&mut output)) },
+        BmResult::Ok
+    );
+    assert_eq!((output.width, output.height), (WIDTH, HEIGHT));
+    assert!(
+        !output.io_surface.is_null(),
+        "IOSurface outputs expose the surface"
+    );
+    assert!(
+        output.host_texture.is_null(),
+        "no Unity device, so no host texture"
+    );
+
+    let handles = [7u32];
+    let worlds = [cube_at(4.0)];
+    let meshes = [MESH_PLACEHOLDER_CUBE];
+    let flags = [renderer_flags::VISIBLE];
+
+    for frame in 1..=2u64 {
+        let snapshot = snapshot(frame, &handles, &worlds, &meshes, &flags);
+        // SAFETY: the arrays hold renderer_count elements.
+        assert_eq!(
+            unsafe { unity_bridge::bm_submit_snapshot(std::ptr::from_ref(&snapshot)) },
+            BmResult::Ok
+        );
+        wait_for_frame(frame);
+    }
+
+    let pixels = read_pixels();
+    let center = pixel(&pixels, WIDTH / 2, HEIGHT / 2);
+    let corner = pixel(&pixels, 1, 1);
+    assert_eq!(center[3], 255, "opaque output expected, got {center:?}");
+    assert!(
+        center[2] > center[0],
+        "centre pixel {center:?} (BGRA) should be the reddish placeholder cube"
+    );
+    assert!(
+        corner[0] >= corner[2],
+        "corner pixel {corner:?} (BGRA) should be the blue-grey clear colour"
+    );
+
+    assert_eq!(unity_bridge::bm_shutdown(), BmResult::Ok);
 }
 
 #[test]

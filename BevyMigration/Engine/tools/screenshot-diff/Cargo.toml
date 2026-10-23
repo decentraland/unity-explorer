@@ -1,0 +1,13 @@
+[package]
+name = "screenshot-diff"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Compares two screenshots within a per-case threshold and writes a diff image (plan § 7, step 3)."
+
+[dependencies]
+png = { workspace = true }
+
+[lints]
+workspace = true

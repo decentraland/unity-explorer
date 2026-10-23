@@ -1,8 +1,8 @@
 using DCL.BevyMigration.Bridge;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 namespace DCL.BevyMigration.Composite
@@ -64,13 +64,16 @@ namespace DCL.BevyMigration.Composite
                     importedTexture = source;
                 }
 
-                TextureHandle sourceHandle = renderGraph.ImportTexture(imported);
-                Vector2 scale = BevyComposite.FlipVertically ? new Vector2(1f, -1f) : Vector2.one;
-                Vector2 offset = BevyComposite.FlipVertically ? new Vector2(0f, 1f) : Vector2.zero;
+                if (imported == null) return;
 
-                using (IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass(PASS_NAME + " event", out RenderEventPassData passData))
+                // An external texture has no RenderGraph descriptor, so it is imported with explicit info and
+                // sampled by hand instead of through the blit utility.
+                var info = new RenderTargetInfo { width = source.width, height = source.height, volumeDepth = 1, msaaSamples = 1, format = GraphicsFormat.B8G8R8A8_SRGB };
+                TextureHandle sourceHandle = renderGraph.ImportTexture(imported, info);
+
+                using (IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass(PASS_NAME + " event", out RenderEventPassData eventData))
                 {
-                    passData.Function = BevyBridge.RenderEventFunction;
+                    eventData.Function = BevyBridge.RenderEventFunction;
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (RenderEventPassData data, UnsafeGraphContext context) =>
                     {
@@ -79,7 +82,22 @@ namespace DCL.BevyMigration.Composite
                     });
                 }
 
-                renderGraph.AddBlitPass(sourceHandle, resourceData.activeColorTexture, scale, offset, passName: PASS_NAME);
+                using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass(PASS_NAME, out BlitPassData passData))
+                {
+                    passData.Source = imported;
+                    passData.ScaleBias = BevyComposite.FlipVertically ? new Vector4(1f, -1f, 0f, 1f) : new Vector4(1f, 1f, 0f, 0f);
+                    builder.UseTexture(sourceHandle);
+                    builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.Write);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (BlitPassData data, RasterGraphContext context) =>
+                        Blitter.BlitTexture(context.cmd, data.Source, data.ScaleBias, 0f, false));
+                }
+            }
+
+            private class BlitPassData
+            {
+                public RTHandle Source = null!;
+                public Vector4 ScaleBias;
             }
 
             private class RenderEventPassData

@@ -13,12 +13,15 @@ mod output;
 mod unity_plugin;
 
 use abi::{
-    BmFrameStatus, BmInitConfig, BmOutputTexture, BmResourceCmd, BmResourceCmdKind, BmResult,
-    BmSnapshot,
+    BmFrameStatus, BmInitConfig, BmLight, BmMaterial, BmOutputTexture, BmResourceCmd,
+    BmResourceCmdKind, BmResult, BmSnapshot,
 };
 use bridge::Bridge;
 use parking_lot::{Mutex, MutexGuard};
-use render::snapshot::{RendererArrays, Snapshot, SnapshotCamera};
+use render::{
+    resources::ResourceCommand,
+    snapshot::{RendererArrays, Snapshot, SnapshotCamera, SnapshotFog, SnapshotHeader},
+};
 use std::{
     ffi::c_void,
     panic::{AssertUnwindSafe, catch_unwind},
@@ -116,13 +119,13 @@ pub unsafe extern "C" fn bm_submit_snapshot(snapshot: *const BmSnapshot) -> BmRe
     })
 }
 
-/// Resource upload entry point; the first command kinds land with step 3.
+/// Copies one resource command out of host memory and queues it (plan § 8 "Resource transfer").
 ///
 /// # Safety
-/// `cmd` must be null or point to a readable [`BmResourceCmd`].
+/// `cmd` must be null or point to a readable [`BmResourceCmd`] whose `data` holds `len` readable bytes.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn bm_resource_cmd(cmd: *const BmResourceCmd) -> BmResult {
-    with_bridge("bm_resource_cmd", |_| {
+    with_bridge("bm_resource_cmd", |bridge| {
         if cmd.is_null() {
             return BmResult::InvalidArgument;
         }
@@ -130,9 +133,65 @@ pub unsafe extern "C" fn bm_resource_cmd(cmd: *const BmResourceCmd) -> BmResult 
         // SAFETY: checked non-null; the caller guarantees it points to a BmResourceCmd.
         let cmd = unsafe { *cmd };
 
-        match cmd.kind {
-            BmResourceCmdKind::None => BmResult::InvalidArgument,
+        if cmd.handle == 0 {
+            return BmResult::InvalidArgument;
         }
+
+        // SAFETY: the caller guarantees `len` readable bytes behind a non-null `data`.
+        let payload = |len: usize| -> Option<Vec<u8>> {
+            if cmd.data.is_null() {
+                return None;
+            }
+
+            Some(unsafe { std::slice::from_raw_parts(cmd.data, len) }.to_vec())
+        };
+
+        let command = match cmd.kind {
+            // Materials are typed: they go through `bm_upload_material`.
+            BmResourceCmdKind::None | BmResourceCmdKind::MaterialUpload => {
+                return BmResult::InvalidArgument;
+            }
+            BmResourceCmdKind::MeshUpload => match payload(cmd.len) {
+                Some(payload) => ResourceCommand::MeshUpload {
+                    handle: cmd.handle,
+                    payload,
+                },
+                None => return BmResult::InvalidArgument,
+            },
+            BmResourceCmdKind::MeshRelease => ResourceCommand::MeshRelease { handle: cmd.handle },
+            BmResourceCmdKind::TextureUpload => match payload(cmd.len) {
+                Some(payload) => ResourceCommand::TextureUpload {
+                    handle: cmd.handle,
+                    payload,
+                },
+                None => return BmResult::InvalidArgument,
+            },
+            BmResourceCmdKind::TextureRelease => {
+                ResourceCommand::TextureRelease { handle: cmd.handle }
+            }
+            BmResourceCmdKind::MaterialRelease => {
+                ResourceCommand::MaterialRelease { handle: cmd.handle }
+            }
+        };
+
+        bridge.resource(command)
+    })
+}
+
+/// Copies one material description out of host memory and queues it under `handle`.
+///
+/// # Safety
+/// `material` must be null or point to a readable [`BmMaterial`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn bm_upload_material(handle: u32, material: *const BmMaterial) -> BmResult {
+    with_bridge("bm_upload_material", |bridge| {
+        if handle == 0 || material.is_null() {
+            return BmResult::InvalidArgument;
+        }
+
+        // SAFETY: checked non-null; the caller guarantees it points to a BmMaterial.
+        let material = unsafe { material.read_unaligned() };
+        bridge.resource(ResourceCommand::MaterialUpload { handle, material })
     })
 }
 
@@ -236,9 +295,11 @@ fn with_bridge(name: &str, body: impl FnOnce(&mut Bridge) -> BmResult) -> BmResu
 }
 
 /// # Safety
-/// Each non-null array in `raw` must hold `raw.renderer_count` readable elements.
+/// Each non-null array in `raw` must hold the element count the snapshot declares for it.
 unsafe fn copy_snapshot(raw: &BmSnapshot) -> Option<Snapshot> {
     let count = usize::try_from(raw.renderer_count).ok()?;
+    let material_handle_count = usize::try_from(raw.material_handle_count).ok()?;
+    let light_count = usize::try_from(raw.light_count).ok()?;
 
     if count > 0
         && (raw.handles.is_null()
@@ -249,31 +310,72 @@ unsafe fn copy_snapshot(raw: &BmSnapshot) -> Option<Snapshot> {
         return None;
     }
 
-    let arrays = if count == 0 {
-        RendererArrays {
-            handles: &[],
-            worlds: &[],
-            meshes: &[],
-            flags: &[],
-        }
-    } else {
-        // SAFETY: non-null, and the caller guarantees `count` elements behind each pointer.
-        unsafe {
-            RendererArrays {
-                handles: std::slice::from_raw_parts(raw.handles, count),
-                worlds: std::slice::from_raw_parts(raw.worlds, count),
-                meshes: std::slice::from_raw_parts(raw.meshes, count),
-                flags: std::slice::from_raw_parts(raw.flags, count),
+    let has_materials = count > 0 && !raw.material_first.is_null() && !raw.material_count.is_null();
+
+    if has_materials && material_handle_count > 0 && raw.material_handles.is_null() {
+        return None;
+    }
+
+    if light_count > 0 && raw.lights.is_null() {
+        return None;
+    }
+
+    // SAFETY: every pointer was checked non-null above when its count is non-zero, and the caller
+    // guarantees that many elements behind it.
+    let (arrays, lights) = unsafe {
+        let slice = |ptr: *const u32, len: usize| {
+            if len == 0 || ptr.is_null() {
+                &[][..]
+            } else {
+                std::slice::from_raw_parts(ptr, len)
             }
-        }
+        };
+        (
+            RendererArrays {
+                handles: slice(raw.handles, count),
+                worlds: if count == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(raw.worlds, count)
+                },
+                meshes: slice(raw.meshes, count),
+                flags: if count == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(raw.flags, count)
+                },
+                material_first: if has_materials {
+                    slice(raw.material_first, count)
+                } else {
+                    &[]
+                },
+                material_count: if has_materials {
+                    std::slice::from_raw_parts(raw.material_count, count)
+                } else {
+                    &[]
+                },
+                material_handles: if has_materials {
+                    slice(raw.material_handles, material_handle_count)
+                } else {
+                    &[]
+                },
+            },
+            if light_count == 0 {
+                &[][..]
+            } else {
+                std::slice::from_raw_parts::<BmLight>(raw.lights, light_count)
+            },
+        )
     };
 
-    Snapshot::new(
-        raw.frame,
-        SnapshotCamera::from_abi(&raw.camera),
-        bevy::math::Vec3::from_array(raw.ambient),
-        bevy::math::Vec3::from_array(raw.sun_direction),
-        bevy::math::Vec3::from_array(raw.sun_color),
-        arrays,
-    )
+    let header = SnapshotHeader {
+        frame: raw.frame,
+        camera: SnapshotCamera::from_abi(&raw.camera),
+        ambient: bevy::math::Vec3::from_array(raw.ambient),
+        sun_direction: bevy::math::Vec3::from_array(raw.sun_direction),
+        sun_color: bevy::math::Vec3::from_array(raw.sun_color),
+        fog: SnapshotFog::from_abi(&raw.fog),
+    };
+
+    Snapshot::new(header, arrays, lights)
 }

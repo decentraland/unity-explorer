@@ -2,7 +2,7 @@
 
 use crate::{app, logging, output::OutputHandles};
 use abi::{BmFrameStatus, BmInitConfig, BmOutputTexture, BmResult, OUTPUT_BUFFER_COUNT};
-use render::{readback::Pixels, snapshot::Snapshot};
+use render::{readback::Pixels, resources::ResourceCommand, snapshot::Snapshot};
 use std::{
     sync::{
         Arc,
@@ -18,6 +18,7 @@ const READY_TIMEOUT: Duration = Duration::from_mins(1);
 
 pub enum Command {
     Snapshot(Box<Snapshot>),
+    Resource(ResourceCommand),
     Shutdown,
 }
 
@@ -36,6 +37,7 @@ pub struct Bridge {
     thread: Option<JoinHandle<()>>,
     status: Arc<Status>,
     outputs: Vec<OutputHandles>,
+    output_kind: abi::BmOutputKind,
     pixels: render::readback::LatestPixels,
 }
 
@@ -112,6 +114,7 @@ impl Bridge {
             thread: Some(thread),
             status,
             outputs,
+            output_kind: config.output,
             pixels,
         })
     }
@@ -135,6 +138,18 @@ impl Bridge {
         BmResult::Ok
     }
 
+    pub fn resource(&self, command: ResourceCommand) -> BmResult {
+        if self.status.failed.load(Ordering::Acquire) {
+            return BmResult::Internal;
+        }
+
+        if self.commands.send(Command::Resource(command)).is_err() {
+            BmResult::Internal
+        } else {
+            BmResult::Ok
+        }
+    }
+
     pub fn frame_status(&self) -> BmFrameStatus {
         BmFrameStatus {
             completed_frame: self.status.completed_frame.load(Ordering::Acquire),
@@ -151,6 +166,31 @@ impl Bridge {
     }
 
     pub fn latest_pixels(&self) -> Option<Pixels> {
+        #[cfg(target_os = "macos")]
+        if self.output_kind == abi::BmOutputKind::IoSurface {
+            let status = self.frame_status();
+
+            if status.completed_frame == 0 {
+                return None;
+            }
+
+            let output = self.outputs.get(status.completed_buffer as usize)?;
+            // SAFETY: the surface stays alive as long as the Bevy thread, which `self` owns.
+            let data = unsafe {
+                crate::output::iosurface::read_pixels(
+                    output.io_surface,
+                    output.width,
+                    output.height,
+                )
+            }?;
+
+            return Some(Pixels {
+                size: bevy::math::UVec2::new(output.width, output.height),
+                bytes_per_pixel: 4,
+                data,
+            });
+        }
+
         self.pixels.0.lock().clone()
     }
 

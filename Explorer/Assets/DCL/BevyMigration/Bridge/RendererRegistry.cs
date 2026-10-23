@@ -17,15 +17,22 @@ namespace DCL.BevyMigration.Bridge
         private const int GENERATION_SHIFT = 20;
         private const uint INDEX_MASK = (1u << GENERATION_SHIFT) - 1;
 
+        private static readonly uint[] PLACEHOLDER_MATERIALS = { BridgeMaterials.PLACEHOLDER };
+
         private readonly List<Renderer> renderers = new (INITIAL_CAPACITY);
         private readonly List<uint> generations = new (INITIAL_CAPACITY);
+        private readonly List<uint[]> materials = new (INITIAL_CAPACITY);
         private readonly Dictionary<uint, int> indexByHandle = new (INITIAL_CAPACITY);
 
         private TransformAccessArray transforms;
         private NativeList<uint> handles;
         private NativeList<uint> meshes;
         private NativeList<ushort> flags;
+        private NativeList<uint> materialFirst;
+        private NativeList<byte> materialCount;
+        private NativeList<uint> materialHandles;
         private uint nextGeneration = 1;
+        private bool materialTableDirty;
 
         public RendererRegistry()
         {
@@ -33,6 +40,9 @@ namespace DCL.BevyMigration.Bridge
             handles = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
             meshes = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
             flags = new NativeList<ushort>(INITIAL_CAPACITY, Allocator.Persistent);
+            materialFirst = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
+            materialCount = new NativeList<byte>(INITIAL_CAPACITY, Allocator.Persistent);
+            materialHandles = new NativeList<uint>(INITIAL_CAPACITY, Allocator.Persistent);
         }
 
         public int Count => renderers.Count;
@@ -45,21 +55,39 @@ namespace DCL.BevyMigration.Bridge
 
         public NativeList<ushort> Flags => flags;
 
+        /// <summary>Per-renderer offset into <see cref="MaterialHandles" />; rebuilt lazily by <see cref="RebuildMaterialTable" />.</summary>
+        public NativeList<uint> MaterialFirst => materialFirst;
+
+        public NativeList<byte> MaterialCount => materialCount;
+
+        public NativeList<uint> MaterialHandles => materialHandles;
+
         public void Dispose()
         {
             if (transforms.isCreated) transforms.Dispose();
             if (handles.IsCreated) handles.Dispose();
             if (meshes.IsCreated) meshes.Dispose();
             if (flags.IsCreated) flags.Dispose();
+            if (materialFirst.IsCreated) materialFirst.Dispose();
+            if (materialCount.IsCreated) materialCount.Dispose();
+            if (materialHandles.IsCreated) materialHandles.Dispose();
             renderers.Clear();
             generations.Clear();
+            materials.Clear();
             indexByHandle.Clear();
         }
 
         /// <summary>
-        ///     Registers the renderer and returns its handle. Registering twice returns the existing handle.
+        ///     Registers the renderer drawn as the placeholder cube with the placeholder material.
         /// </summary>
-        public uint Register(Renderer renderer)
+        public uint Register(Renderer renderer) =>
+            Register(renderer, BridgeMeshes.PLACEHOLDER_CUBE, PLACEHOLDER_MATERIALS);
+
+        /// <summary>
+        ///     Registers the renderer with its uploaded mesh and one material handle per submesh. Registering twice
+        ///     returns the existing handle.
+        /// </summary>
+        public uint Register(Renderer renderer, uint mesh, uint[] materialHandlesOfRenderer)
         {
             for (var i = 0; i < renderers.Count; i++)
                 if (ReferenceEquals(renderers[i], renderer))
@@ -73,12 +101,56 @@ namespace DCL.BevyMigration.Bridge
 
             renderers.Add(renderer);
             generations.Add(generation);
+            materials.Add(materialHandlesOfRenderer);
             transforms.Add(renderer.transform);
             handles.Add(handle);
-            meshes.Add(BridgeMeshes.PLACEHOLDER_CUBE);
+            meshes.Add(mesh);
             flags.Add(FlagsOf(renderer));
             indexByHandle[handle] = renderers.Count - 1;
+            materialTableDirty = true;
             return handle;
+        }
+
+        public bool Contains(Renderer renderer)
+        {
+            for (var i = 0; i < renderers.Count; i++)
+                if (ReferenceEquals(renderers[i], renderer))
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Unregisters every renderer that was destroyed since the last call.
+        /// </summary>
+        public void PruneDestroyed()
+        {
+            for (int i = renderers.Count - 1; i >= 0; i--)
+                if (renderers[i] == null)
+                    Unregister(handles[i]);
+        }
+
+        /// <summary>
+        ///     Rebuilds the flat material arrays when registrations changed; called before each snapshot.
+        /// </summary>
+        public void RebuildMaterialTable()
+        {
+            if (!materialTableDirty) return;
+
+            materialTableDirty = false;
+            materialFirst.Clear();
+            materialCount.Clear();
+            materialHandles.Clear();
+
+            for (var i = 0; i < materials.Count; i++)
+            {
+                uint[] list = materials[i];
+                materialFirst.Add((uint)materialHandles.Length);
+                materialCount.Add((byte)Mathf.Min(list.Length, byte.MaxValue));
+
+                for (var m = 0; m < list.Length && m < byte.MaxValue; m++)
+                    materialHandles.Add(list[m]);
+            }
         }
 
         public void Unregister(uint handle)
@@ -92,6 +164,7 @@ namespace DCL.BevyMigration.Bridge
             {
                 renderers[index] = renderers[last];
                 generations[index] = generations[last];
+                materials[index] = materials[last];
                 handles[index] = handles[last];
                 meshes[index] = meshes[last];
                 flags[index] = flags[last];
@@ -100,6 +173,8 @@ namespace DCL.BevyMigration.Bridge
 
             renderers.RemoveAt(last);
             generations.RemoveAt(last);
+            materials.RemoveAt(last);
+            materialTableDirty = true;
             // RemoveAtSwapBack mirrors the swap above so the transform array stays parallel.
             transforms.RemoveAtSwapBack(index);
             handles.RemoveAtSwapBack(index);
@@ -128,6 +203,7 @@ namespace DCL.BevyMigration.Bridge
         private static ushort FlagsOf(Renderer renderer)
         {
             var value = (ushort)0;
+            if (renderer == null) return value;
             if (renderer.enabled && renderer.gameObject.activeInHierarchy) value |= BridgeRendererFlags.VISIBLE;
             if (renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off) value |= BridgeRendererFlags.CAST_SHADOWS;
             if (renderer.receiveShadows) value |= BridgeRendererFlags.RECEIVE_SHADOWS;
@@ -147,5 +223,11 @@ namespace DCL.BevyMigration.Bridge
     public static class BridgeMeshes
     {
         public const uint PLACEHOLDER_CUBE = 0;
+    }
+
+    /// <summary>Mirrors `abi::MATERIAL_PLACEHOLDER`.</summary>
+    public static class BridgeMaterials
+    {
+        public const uint PLACEHOLDER = 0;
     }
 }

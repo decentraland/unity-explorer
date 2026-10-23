@@ -4,7 +4,7 @@
 # and `cargo test --locked` (plan § 7, step 0). No CI workflow exists for it.
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["crates/*", "tools/*"]
 
 [workspace.package]
 version = "0.1.0"
@@ -33,6 +33,8 @@ bevy = { version = "=0.16.1", default-features = false, features = [
 wgpu = { version = "24", default-features = false }
 # No poisoning, const constructors for statics; the std mutex is not used in this workspace.
 parking_lot = "0.12"
+# PNG decode/encode for the screenshot harness (plan § 7, step 3).
+png = "0.17"
 
 # Same patch set as bevy-explorer (ecosystem crates reference bevy subcrates directly, so every one of
 # them has to come from the fork), pinned to the revisions bevy-explorer's Cargo.lock resolved on 2026-10-23.

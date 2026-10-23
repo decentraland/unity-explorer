@@ -36,10 +36,9 @@ namespace DCL.BevyMigration.Editor
         private const string APP_PARAMS_KEY = "BevyMigration.PlaySession.AppParams";
         private const string RECORD_KEY = "BevyMigration.PlaySession.RecordShaders";
         private const string EXIT_KEY = "BevyMigration.PlaySession.ExitPending";
-        private const string RELOAD_KEY = "BevyMigration.PlaySession.ReloadPending";
         private const char PARAM_SEPARATOR = ' ';
 
-        private static readonly ReportData REPORT_DATA = new (ReportCategory.DEBUG);
+        private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
 
         public static void RunBatch()
         {
@@ -88,14 +87,6 @@ namespace DCL.BevyMigration.Editor
                 return;
             }
 
-            if (SessionState.GetBool(RELOAD_KEY, false))
-            {
-                SessionState.EraseBool(RELOAD_KEY);
-                // After the script reload the next cycle starts from a clean domain.
-                EditorApplication.delayCall += BeginCycle;
-                return;
-            }
-
             if (SessionState.GetBool(ACTIVE_KEY, false))
                 EditorApplication.update += Tick;
         }
@@ -139,9 +130,8 @@ namespace DCL.BevyMigration.Editor
 
             if (SessionState.GetInt(CYCLES_LEFT_KEY, 0) > 0)
             {
-                SessionState.SetBool(RELOAD_KEY, true);
-                ReportHub.Log(REPORT_DATA, "Play session: requesting a script reload before the next cycle");
-                EditorUtility.RequestScriptReload();
+                // Next frame, so the state change that called this has finished unwinding.
+                EditorApplication.delayCall += BeginCycle;
                 return;
             }
 

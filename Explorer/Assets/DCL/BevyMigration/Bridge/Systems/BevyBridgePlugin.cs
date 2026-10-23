@@ -20,11 +20,13 @@ namespace DCL.BevyMigration.Bridge.Systems
         private const string TEST_CUBE_NAME = "[BevyMigration] Test Cube";
         private const float TEST_CUBE_DISTANCE = 4f;
 
-        private static readonly ReportData REPORT_DATA = new (ReportCategory.ENGINE);
+        private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
 
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RendererRegistry registry = new ();
+        private readonly ResourceUploader uploader = new ();
         private readonly SnapshotWriter writer;
+        private readonly SceneContentScanner scanner;
         private readonly ElementBinding<string> statusBinding = new (string.Empty);
         private readonly DebugWidgetVisibilityBinding visibility = new (true);
         private readonly WorldRenderer initialRenderer;
@@ -36,6 +38,7 @@ namespace DCL.BevyMigration.Bridge.Systems
         {
             this.debugBuilder = debugBuilder;
             writer = new SnapshotWriter(registry);
+            scanner = new SceneContentScanner(registry, uploader);
 
             appArgs.TryGetValue(AppArgsFlags.WORLD, out string? world);
             WorldRendererFlag.TryParse(world, out initialRenderer);
@@ -54,7 +57,7 @@ namespace DCL.BevyMigration.Bridge.Systems
                         .AddSingleButton("Remove test cube", RemoveTestCube)
                         .AddCustomMarker("Bridge:", statusBinding);
 
-            BevyBridgeSystem.InjectToWorld(ref builder, registry, writer, statusBinding, visibility);
+            BevyBridgeSystem.InjectToWorld(ref builder, registry, writer, scanner, statusBinding, visibility);
 
             if (spawnTestCubeAtStart)
                 SpawnTestCube();
