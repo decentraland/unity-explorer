@@ -23,6 +23,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         // Kept from the last time the panel was shown, since the profile it publishes on hiding lands after it moved back home
         private string source = EXPLORE_SOURCE;
 
+        // Null while the panel is hidden, so a deactivation with no open before it reports nothing
+        private float? openedAt;
+
         public event Action<IWearable> SelectWearableEvent;
         public event Action<IWearable, bool> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
@@ -150,11 +153,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             // The lobby's modal is the only host that borrows the view out of the explore panel
             source = isInExplorePanel ? EXPLORE_SOURCE : LOBBY_SOURCE;
+            openedAt = UnityEngine.Time.realtimeSinceStartup;
             analytics.Track(AnalyticsEvents.Backpack.BACKPACK_OPENED, new JObject { { "source", source } });
         }
 
-        private void OnDeactivate() =>
+        private void OnDeactivate()
+        {
             DeactivateEvent?.Invoke();
+
+            if (openedAt == null) return;
+
+            analytics.Track(AnalyticsEvents.Backpack.BACKPACK_CLOSED, new JObject
+            {
+                { "source", source },
+                { "duration_sec", UnityEngine.Time.realtimeSinceStartup - openedAt.Value },
+            });
+
+            openedAt = null;
+        }
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
