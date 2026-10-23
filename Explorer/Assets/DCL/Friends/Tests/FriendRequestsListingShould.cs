@@ -36,6 +36,12 @@ namespace DCL.Friends.Tests
             service = new RPCFriendsService(Substitute.For<IFriendsEventBus>(), new FriendsCache(), selfProfile, socialServices);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            EcsTestsUtils.TearDownFeaturesRegistry();
+        }
+
         [TestCase(Listing.Received)]
         [TestCase(Listing.Sent)]
         public async Task ReturnAnEmptyPageWithoutAskingTheServerWhileTheOwnProfileIsNotDeployed(Listing listing)
