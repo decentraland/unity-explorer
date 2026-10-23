@@ -59,7 +59,6 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
-                new AvatarHighlightComponent(),
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
                 new HeadIKComponent());
