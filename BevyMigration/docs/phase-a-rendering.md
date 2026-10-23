@@ -177,3 +177,33 @@ the step 3 Unity reference (58 and 93% before it).
   per-frame push through the resource channel is open.
 - Blend shapes (facial expressions) are not in the snapshot.
 - The emote-frame half of the gate was not run: it needs a deterministic emote frame on both sides.
+
+## Step 5: Unity renders no world (gate G-A5, macOS)
+
+### What exists
+
+| Piece | Where | Notes |
+|---|---|---|
+| Camera takeover | `BevyBridgeSystem.TakeOverCamera` | Behind `world=bevy` the main camera's culling mask is emptied and its clear flags set to a solid colour, so Unity draws no world geometry and no skybox pass; only the composite feature and the UI remain. The previous mask and flags are restored when the flag flips back. |
+| Deferred families | `ledger.csv` | Landscape, roads (GPU instancing) and both skyboxes move to `planned`, step 11; particle systems are SDK components and stay with that row. None of them is drawn behind `world=bevy`. |
+| Gather budget | `BevyBridgeSystem.TrackBudget` | Gather job plus snapshot submit measured per frame (smoothed), shown in the debug widget and logged every 600 frames as `Bevy gather+submit ... ms/frame`. |
+| Windows | deferred | See README § 2 "First platform": the D3D11 shared-handle path is out of scope until macOS is validated. |
+
+### Result on 2026-10-23 (Genesis Plaza, M1 Pro, 2560x1440 Editor)
+
+With `world=bevy` the main camera's mask is the parked virtual-camera layer only, so Unity draws no
+world and no skybox; the world-only MCP screenshot shows only Bevy's frame under the UI, and the
+free camera keeps working (Cinemachine needs its virtual cameras inside the mask, hence the parking).
+Gather plus submit, smoothed per frame, from the Editor log:
+
+| Registered | Bones | Gather + submit |
+|---|---|---|
+| 16 renderers | 74 | 0.08 ms |
+| 2017 renderers | 74 | 3.05 ms (scan frame included) |
+| 2768 renderers | 1286 | 1.95 ms |
+| 3952 renderers | 1472 | 3.05 ms |
+
+The gather itself is a Burst job; the cost scales with the registered count because the snapshot
+is rebuilt each frame (material table, flags, skinned entries). Budget for the reference machine:
+3 ms at the Genesis Plaza load, the scan frame (every 60 frames, resource uploads included) being
+the spike to address when the readbacks go asynchronous.
