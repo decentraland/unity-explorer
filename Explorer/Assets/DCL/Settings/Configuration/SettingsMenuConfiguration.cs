@@ -15,6 +15,7 @@ namespace DCL.Settings.Configuration
         [field: SerializeField] internal SettingsSectionConfig SoundSectionConfig { get; set; } = null!;
         [field: SerializeField] internal SettingsSectionConfig ControlsSectionConfig { get; set; } = null!;
         [field: SerializeField] internal SettingsSectionConfig ChatSectionConfig { get; set; } = null!;
+        [field: SerializeField] internal SettingsSectionConfig LobbySectionConfig { get; set; } = null!;
     }
 
     [Serializable]

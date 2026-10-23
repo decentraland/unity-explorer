@@ -54,7 +54,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);

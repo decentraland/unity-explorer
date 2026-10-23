@@ -40,7 +40,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting);
     }
 
     [Serializable]

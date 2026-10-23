@@ -1158,6 +1158,35 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <StagePresets>k__BackingField:
+        - Name: Halloween 2026
+          Preset:
+            m_AssetGUID: 3d6760cb640ed184fa85b02a099559c7
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+        - Name: Game Arena
+          Preset:
+            m_AssetGUID: 6d9cf781e3084f74699ed2c2582acbf5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+        - Name: Game Night
+          Preset:
+            m_AssetGUID: 3088324c393cd6f46bbd8a98592beff3
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+        - Name: Game World
+          Preset:
+            m_AssetGUID: 8432a9b8907c42d49bd4b0f72dfd4a00
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <AvatarSettings>k__BackingField:
           <FlavourEmotes>k__BackingField:
           - wave

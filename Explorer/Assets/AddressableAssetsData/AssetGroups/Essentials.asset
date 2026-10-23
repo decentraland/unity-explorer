@@ -260,6 +260,26 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d6760cb640ed184fa85b02a099559c7
+    m_Address: Assets/DCL/Lobby/Presets/Halloween_26.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d9cf781e3084f74699ed2c2582acbf5
+    m_Address: Assets/DCL/Lobby/Presets/GameArena.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3088324c393cd6f46bbd8a98592beff3
+    m_Address: Assets/DCL/Lobby/Presets/GameNight.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8432a9b8907c42d49bd4b0f72dfd4a00
+    m_Address: Assets/DCL/Lobby/Presets/GameWorld_01.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
     m_ReadOnly: 0

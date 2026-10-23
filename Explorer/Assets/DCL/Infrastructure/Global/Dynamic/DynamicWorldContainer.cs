@@ -48,6 +48,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.AvatarNametag;
+using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Systems;
@@ -534,6 +535,15 @@ namespace Global.Dynamic
 
             var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
 
+            // Read here because Settings needs the names even in a session where the lobby plugin is not created
+            LobbyPlugin.LobbyPluginSettings.StagePresetEntry[] stagePresets = dynamicWorldDependencies.SettingsContainer.GetSettings<LobbyPlugin.LobbyPluginSettings>().StagePresets;
+            var stagePresetNames = new string[stagePresets.Length];
+
+            for (var i = 0; i < stagePresets.Length; i++)
+                stagePresetNames[i] = stagePresets[i].Name;
+
+            var lobbyStagePresetSetting = new LobbyStagePresetSetting(stagePresetNames);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -702,7 +712,8 @@ namespace Global.Dynamic
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService,
-                    marketplaceCreditsApiClient
+                    marketplaceCreditsApiClient,
+                    lobbyStagePresetSetting
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -857,7 +868,7 @@ namespace Global.Dynamic
                     identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
                     userLogout, marketplaceCreditsApiClient, notificationsRequestController,
                     FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
-                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null, lobbyStagePresetSetting));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))

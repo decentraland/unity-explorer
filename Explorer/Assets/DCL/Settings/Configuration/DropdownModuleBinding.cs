@@ -46,6 +46,7 @@ namespace DCL.Settings.Configuration
             MsaaFeature = 13,
             ShadowsQualityFeature = 14,
             PointAtMarkerFeature = 15,
+            LobbyStagePresetFeature = 16,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -62,7 +63,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -97,6 +99,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.ShadowsQualityFeature => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
 
                 DropdownFeatures.PointAtMarkerFeature => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
+                DropdownFeatures.LobbyStagePresetFeature => new LobbyStagePresetSettingsController(viewInstance, lobbyStagePresetSetting, settingsEventListener),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

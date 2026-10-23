@@ -12,6 +12,7 @@ namespace DCL.Settings
         [field: SerializeField] public Transform SoundSectionContainer { get; private set; }
         [field: SerializeField] public Transform ControlsSectionContainer { get; private set; }
         [field: SerializeField] public Transform ChatSectionContainer { get; private set; }
+        [field: SerializeField] public Transform LobbySectionContainer { get; private set; } = null!;
 
         [field: Header("Header Buttons")]
         [field: SerializeField] public ButtonWithSelectableStateView GeneralSectionButton { get; private set; }
@@ -19,6 +20,7 @@ namespace DCL.Settings
         [field: SerializeField] public ButtonWithSelectableStateView SoundSectionButton { get; private set; }
         [field: SerializeField] public ButtonWithSelectableStateView ControlsSectionButton { get; private set; }
         [field: SerializeField] public ButtonWithSelectableStateView ChatSectionButton { get; private set; }
+        [field: SerializeField] public ButtonWithSelectableStateView LobbySectionButton { get; private set; } = null!;
 
         [field: Header("Sections Backgrounds")]
         [field: SerializeField] public Image BackgroundImage { get; private set; }
@@ -27,6 +29,7 @@ namespace DCL.Settings
         [field: SerializeField] public Sprite SoundSectionBackground { get; private set; }
         [field: SerializeField] public Sprite ControlsSectionBackground { get; private set; }
         [field: SerializeField] public Sprite ChatSectionBackground { get; private set; }
+        [field: SerializeField] public Sprite LobbySectionBackground { get; private set; } = null!;
 
         [field: Header("Others")]
         [field: SerializeField] public ScrollRect ContentScrollRect { get; private set; }

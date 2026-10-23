@@ -37,7 +37,7 @@ Additional types of controls will need to be created by following the same struc
 
 ## Settings Sections
 
-The settings panel is organized into 4 main sections:
+The settings panel is organized into these sections (a `General` section also exists but is hidden while it has no groups):
 
 ### 1. Graphics Section
 - Visual quality settings
@@ -66,6 +66,10 @@ The settings panel is organized into 4 main sections:
 - Chat privacy settings
 - Audio modes for different chat types
 - Blocked users management
+
+### 5. Lobby Section
+- Lobby on/off toggle (takes effect after a restart)
+- Stage preset dropdown listing the looks configured in `LobbyPlugin.LobbyPluginSettings.StagePresets`; it is greyed out while the toggle is off and follows the toggle live through `ISettingsModuleEventListener.LobbyEnabledChanged`
 
 ## Adding New Settings
 
@@ -132,7 +136,7 @@ SettingsFeatureController controller = Feature switch
 ### Step 4: Configure in Settings Menu
 
 1. Open the `SettingsMenuConfiguration` asset in Unity
-2. Navigate to the appropriate section (Graphics, Sound, Controls, or Chat)
+2. Navigate to the appropriate section (Graphics, Sound, Controls, Chat, or Lobby)
 3. Add a new `SettingsGroup` or use an existing one
 4. Add your module binding to the group's modules list
 5. Configure the module with appropriate title, description, and default values

@@ -27,6 +27,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
@@ -79,8 +80,10 @@ namespace DCL.PluginSystem.Global
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly CommunitiesDataProvider? communitiesDataProvider;
         private readonly CameraReelContainer? cameraReelContainer;
+        private readonly LobbyStagePresetSetting stagePresetSetting;
 
         private LobbyStage? lobbyStage;
+        private LobbyStagePresetSwitcher? stagePresetSwitcher;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
         private LobbyConnectedFriendsPresenter? connectedFriendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
@@ -124,7 +127,8 @@ namespace DCL.PluginSystem.Global
             IFriendsService? friendsService,
             IOnlineUsersProvider onlineUsersProvider,
             CommunitiesDataProvider? communitiesDataProvider,
-            CameraReelContainer? cameraReelContainer)
+            CameraReelContainer? cameraReelContainer,
+            LobbyStagePresetSetting stagePresetSetting)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -160,10 +164,13 @@ namespace DCL.PluginSystem.Global
             this.onlineUsersProvider = onlineUsersProvider;
             this.communitiesDataProvider = communitiesDataProvider;
             this.cameraReelContainer = cameraReelContainer;
+            this.stagePresetSetting = stagePresetSetting;
         }
 
         public void Dispose()
         {
+            stagePresetSwitcher?.Dispose();
+
             if (lobbyStage != null)
                 Object.Destroy(lobbyStage.gameObject);
 
@@ -196,6 +203,9 @@ namespace DCL.PluginSystem.Global
 
             lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
             lobbyStage.gameObject.SetActive(false);
+
+            stagePresetSwitcher = new LobbyStagePresetSwitcher(lobbyStage, settings.StagePresets, stagePresetSetting, assetsProvisioner);
+            stagePresetSwitcher.Start();
 
             // The top-bar presenters bind to the view, so it is instantiated up front
             ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView lobbyView);

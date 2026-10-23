@@ -24,6 +24,10 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public LobbyStageRef StagePrefab { get; private set; }
 
+            [field: Tooltip("Stage looks offered in Settings > Lobby, loaded only when picked; the first entry is the default and should match the look serialized in the stage prefab")]
+            [field: SerializeField]
+            public StagePresetEntry[] StagePresets { get; private set; }
+
             [field: SerializeField]
             public LobbyAvatarSettings AvatarSettings { get; private set; }
 
@@ -52,6 +56,13 @@ namespace DCL.PluginSystem.Global
             public class LobbyStageRef : ComponentReference<LobbyStage>
             {
                 public LobbyStageRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class StagePresetEntry
+            {
+                public string Name = string.Empty;
+                public AssetReferenceT<LobbyStagePreset> Preset = null!;
             }
         }
     }
