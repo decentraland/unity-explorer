@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Profiles;
@@ -14,6 +15,9 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using Entity = Arch.Core.Entity;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using QueryDescription = Arch.Core.QueryDescription;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -24,6 +28,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private static readonly string FAKE_NAME = "FAKE_NAME_1";
         private static readonly string FAKE_ID = "1";
         private static readonly List<string> FAKE_WEARABLES = new () { "WEARABLE_1", "WEARABLE_2" };
+        private static readonly URN PROFILE_WEARABLE = new ("urn:decentraland:off-chain:base-avatars:blue_tshirt");
+        private static readonly URN SCENE_WEARABLE = new ("urn:decentraland:off-chain:scene-wearable:scene-hat");
+        private static readonly URN OTHER_SCENE_WEARABLE = new ("urn:decentraland:off-chain:scene-wearable:scene-kilt");
+        private static readonly QueryDescription EMOTE_PROMISES_QUERY = new QueryDescription().WithAll<EmotePromise>();
 
         private PBAvatarShape pbAvatarShape;
         private List<URN> fakePointers;
@@ -123,6 +131,158 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public void AppendSceneWearablesAfterMainPlayerProfileWearables()
+        {
+            // Arrange
+            var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true };
+            Entity entity = world.Create(new PlayerComponent(), CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+        }
+
+        [Test]
+        public void RebuildMainPlayerAvatarWhenSceneWearablesChange()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(new PlayerComponent(), profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }));
+            system.Update(0);
+
+            Entity originalPromise = world.Get<AvatarShapeComponent>(entity).WearablePromise.Entity;
+            int emotePromisesCount = world.CountEntities(in EMOTE_PROMISES_QUERY);
+
+            ref SceneWearablesOverride sceneWearables = ref world.Get<SceneWearablesOverride>(entity);
+            sceneWearables.Urns.Clear();
+            sceneWearables.Urns.Add(OTHER_SCENE_WEARABLE);
+            sceneWearables.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            Assert.IsTrue(avatarShapeComponent.IsDirty);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, OTHER_SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+            Assert.IsFalse(profile.IsDirty);
+            CollectionAssert.AreEquivalent(new[] { PROFILE_WEARABLE }, profile.Avatar.Wearables);
+            Assert.AreEqual(emotePromisesCount, world.CountEntities(in EMOTE_PROMISES_QUERY));
+        }
+
+        [Test]
+        public void MergeSceneWearablesWhenProfileAndOverrideChangeTogether()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(new PlayerComponent(), profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN>()));
+            system.Update(0);
+
+            ref SceneWearablesOverride sceneWearables = ref world.Get<SceneWearablesOverride>(entity);
+            sceneWearables.Urns.Add(SCENE_WEARABLE);
+            sceneWearables.IsDirty = true;
+            profile.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+            Assert.IsFalse(profile.IsDirty);
+        }
+
+        [Test]
+        public void AppendExistingSceneWearablesWhenCreatingRemoteAvatar()
+        {
+            // Arrange
+            var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true };
+            Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+        }
+
+        [Test]
+        public void MergeSceneWearablesWhenRemoteProfileChanges()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(profile, PartitionComponent.TOP_PRIORITY, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }));
+            system.Update(0);
+
+            Entity originalPromise = world.Get<AvatarShapeComponent>(entity).WearablePromise.Entity;
+            profile.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(profile.IsDirty);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+        }
+
+        [Test]
+        public void RebuildRemoteAvatarWhenSceneWearablesChange()
+        {
+            // Arrange
+            Profile profile = CreateProfile();
+            Entity entity = world.Create(profile, PartitionComponent.TOP_PRIORITY);
+            system.Update(0);
+
+            Entity originalPromise = world.Get<AvatarShapeComponent>(entity).WearablePromise.Entity;
+            int emotePromisesCount = world.CountEntities(in EMOTE_PROMISES_QUERY);
+
+            world.Add(entity, new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE }) { IsDirty = true });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AvatarShapeComponent avatarShapeComponent = world.Get<AvatarShapeComponent>(entity);
+            Assert.That(world.IsAlive(originalPromise), Is.False);
+            Assert.IsTrue(avatarShapeComponent.IsDirty);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE, SCENE_WEARABLE }, avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
+            Assert.IsFalse(world.Get<SceneWearablesOverride>(entity).IsDirty);
+            Assert.IsFalse(profile.IsDirty);
+            Assert.AreEqual(emotePromisesCount, world.CountEntities(in EMOTE_PROMISES_QUERY));
+        }
+
+        [Test]
+        public void RestoreRemoteProfileWearablesWhenSceneWearablesAreCleared()
+        {
+            // Arrange
+            var sceneWearables = new SceneWearablesOverride(new List<URN> { SCENE_WEARABLE });
+            Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneWearables);
+            system.Update(0);
+
+            ref SceneWearablesOverride sceneWearablesRef = ref world.Get<SceneWearablesOverride>(entity);
+            sceneWearablesRef.Urns.Clear();
+            sceneWearablesRef.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE }, world.Get<AvatarShapeComponent>(entity).WearablePromise.LoadingIntention.Pointers);
+        }
+
+        [Test]
         public void AddAvatarHighlightComponentWhenCreatingAvatarFromSDKComponent()
         {
             // Arrange
@@ -152,5 +312,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             AvatarHighlightComponent highlightComponent = world.Get<AvatarHighlightComponent>(entity);
             Assert.That(highlightComponent.Opacity, Is.EqualTo(0));
         }
+
+        private static Profile CreateProfile() =>
+            new ProfileBuilder()
+               .WithUserId(FAKE_ID)
+               .WithBodyShape(BodyShape.MALE)
+               .WithWearables(new[] { PROFILE_WEARABLE })
+               .Build();
     }
 }

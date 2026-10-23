@@ -13,5 +13,8 @@ namespace CrdtEcsBridge.Components
         public const int AVATAR_POSITION_REFERENCE = 4;
         public const int FIRST_PERSON_CAMERA_ENTITY_REFERENCE = 5;
         public const int THIRD_PERSON_CAMERA_ENTITY_REFERENCE = 6;
+
+        public static bool IsOtherPlayerEntity(int entityNumber) =>
+            entityNumber is >= OTHER_PLAYER_ENTITIES_FROM and < OTHER_PLAYER_ENTITIES_TO;
     }
 }
