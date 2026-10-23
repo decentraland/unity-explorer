@@ -181,6 +181,17 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `lsd-raw-gltf`
+**Type:** Bool (presence flag)
+**Description:** Local scene development only. Skips the embedded [abgen sidecar](abgen-sidecar.md) and loads the scene's raw GLTFs instead of local asset bundles — the way local scene development worked before. Off by default: without it the scene is served as JIT-converted asset bundles, degrading to raw GLTFs on its own only when the sidecar cannot be installed or started or no manifest can be produced. Ignored outside local scene development.
+
+**Usage:**
+```bash
+--lsd-raw-gltf
+```
+
+---
+
 ### `position`
 **Type:** String (coordinates)
 **Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.

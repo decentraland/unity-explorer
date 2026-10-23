@@ -151,6 +151,11 @@ namespace Global.AppArgs
             // denied parameter in the startup warning; it unlocks nothing.
             AppArgsFlags.LOCAL_AB,
 
+            // Local-scene development only: skips the embedded abgen sidecar and loads the scene's raw GLTFs. A
+            // pure boolean that removes a capability (no bundle server is started), so it adds no
+            // attacker-controllable input; whitelisted-realm-gated only because it is meaningless elsewhere.
+            AppArgsFlags.LSD_RAW_GLTF,
+
             // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like
             // autopilot, suppresses the auth screen — it cannot bypass authentication: when no valid identity is
             // cached the client quits instead (RealUserInAppInitializationFlow). Whitelisted-realm-gated because

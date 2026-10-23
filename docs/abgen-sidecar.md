@@ -1,7 +1,8 @@
 # Local asset bundles via the abgen sidecar
 
-**Pinned:** abgen v0.21.0 · **Always on** in local scene development — there is no flag and no
-Editor switch (Creator Hub's legacy `local-ab=true` is accepted and ignored) · **Guarantee:** every
+**Pinned:** abgen v0.21.0 · **On by default** in local scene development — no Editor switch, no
+opt-in flag (Creator Hub's legacy `local-ab=true` is accepted and ignored); `--lsd-raw-gltf` is the
+opt-out and skips the sidecar entirely · **Guarantee:** every
 failure — install, launch, manifest, a single file, the server dying later — degrades to raw GLTFs
 and is reported on the AB tab, never a broken scene.
 

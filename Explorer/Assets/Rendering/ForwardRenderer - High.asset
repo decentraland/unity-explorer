@@ -105,7 +105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f09f39579534653887b8ee087826266, type: 3}
   m_Name: RendererFeature_AvatarOutline
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
 --- !u!114 &-4061656716891564487
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
   - {fileID: 1757973802043764545}
-  - {fileID: 0}
+  - {fileID: 4908790961291395409}
   - {fileID: -4982935907446270823}
   - {fileID: 5175788798212861771}
   - {fileID: -4991993260910906933}

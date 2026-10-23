@@ -736,6 +736,14 @@ MonoBehaviour:
       Severity: 1
     - Category: SDK_FONTS
       Severity: 2
+    - Category: LIVEKIT
+      Severity: 3
+    - Category: LIVEKIT
+      Severity: 2
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 3
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

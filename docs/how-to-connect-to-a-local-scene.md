@@ -130,10 +130,17 @@ starts with `RAW GLTFs — <reason>`, and per-file fallbacks show as `FAILED <fi
 GLTF`); the sidebar's AB button stays lit until the tab has been looked at. The `HIGHLIGHT SOURCES`
 button in the tab tints bundle-sourced objects green and raw-GLTF ones red.
 
-There is no switch: local scene development always does this, so no `--local-ab` argument or
-Editor checkbox exists any more (Creator Hub's `local-ab=true` is still accepted and ignored). To
-inspect the raw-GLTF path, make the sidecar fail — the simplest way is to hold its port before
-launching (`python3 -m http.server 5147 --bind 127.0.0.1`).
+This is what local scene development always does: there is no `--local-ab` argument or Editor
+checkbox any more (Creator Hub's `local-ab=true` is still accepted and ignored). The one switch is
+the opt-out, off by default:
+
+```
+--lsd-raw-gltf
+```
+
+It skips the sidecar entirely and loads the scene's raw GLTFs, the pre-asset-bundle behaviour. To
+inspect the *fallback* path instead (sidecar wanted but failing), hold its port before launching
+(`python3 -m http.server 5147 --bind 127.0.0.1`).
 
 In the Unity Editor (Initial Realm = Localhost) the same applies: the client launches its embedded
 sidecar on abgen's default loopback port (5147) and wires the URL override itself.
