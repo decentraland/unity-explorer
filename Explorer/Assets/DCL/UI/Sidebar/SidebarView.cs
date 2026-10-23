@@ -16,10 +16,7 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarView : ViewBase, IView
     {
-        public delegate void AutohideStatusChangedDelegate(bool status);
         public delegate void BlockStatusChangedDelegate(bool status);
-        public event AutohideStatusChangedDelegate? AutohideStatusChanged;
-
         public event BlockStatusChangedDelegate? BlockStatusChanged;
 
         [field: Header("Map")]
@@ -118,15 +115,11 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Pending Port")]
         [field: SerializeField] public SidebarConfigPanelView SidebarConfigPanelView { get; private set; } = null!;
+        [field: SerializeField] internal ButtonView sidebarConfigButton { get; private set; } = null!;
 
         public void BlockSidebar()
         {
             BlockStatusChanged?.Invoke(true);
-        }
-
-        public void SetAutoHideSidebarStatus(bool value)
-        {
-            AutohideStatusChanged?.Invoke(value);
         }
 
         public void UnblockSidebar()

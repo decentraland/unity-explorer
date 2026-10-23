@@ -131,6 +131,7 @@ MonoBehaviour:
   <SmartWearablesButton>k__BackingField: {fileID: 8215331601358191189}
   <SmartWearablesTooltipView>k__BackingField: {fileID: 736300087059758624}
   <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
+  <sidebarConfigButton>k__BackingField: {fileID: 7076015699362886066}
 --- !u!114 &359438563268453406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2482,5 +2483,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d7a5f6ad86d4f1c9af147d6bfbdf429, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7076015699362886066 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7867368112766383369, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

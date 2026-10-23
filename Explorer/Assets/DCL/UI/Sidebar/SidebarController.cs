@@ -35,7 +35,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 using Utility;
@@ -154,6 +153,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.EmotesButton.onClick.RemoveListener(OnEmotesButtonClicked);
                 viewInstance.SmartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.SmartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
+                viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarConfigButtonClicked);
 
                 if (isFriendsFeatureEnabled)
                     viewInstance.FriendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
@@ -252,6 +252,9 @@ namespace DCL.UI.Sidebar
                 smartWearablesTooltipController.Close();
         }
 
+        private void OnSidebarConfigButtonClicked() =>
+            OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
+
         private void OnSmartWearablesButtonHover()
         {
             smartWearablesTooltipCts = smartWearablesTooltipCts.SafeRestart();
@@ -308,6 +311,7 @@ namespace DCL.UI.Sidebar
             viewInstance.EmotesButton.onClick.AddListener(OnEmotesButtonClicked);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarConfigButtonClicked);
 
             SubscribeToOption(viewInstance.discoverPlacesOption, OnPlacesOptionClicked);
             SubscribeToOption(viewInstance.discoverEventsOption, OnEventsOptionClicked);
