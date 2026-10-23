@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.Backpack.AvatarSection.Randomizer
 {
@@ -16,7 +17,8 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         internal const float SKIN_INCLUDE_CHANCE = 0.2f;
         internal const float CUSTOM_PRIORITY_CHANCE = 0.8f;
 
-        private const string BASE_WEARABLE_URN_PREFIX = "urn:decentraland:off-chain:base-avatars:";
+        private const string MALE_BASE_PREFIX = "m_";
+        private const string FEMALE_BASE_PREFIX = "f_";
 
         private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
         {
@@ -45,9 +47,10 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         }
 
         /// <summary>
-        ///     Replaces the catalog with the wearables that fit <paramref name="bodyShape" />. Body shapes and smart wearables are left out.
+        ///     Replaces the catalog with the wearables that fit <paramref name="bodyShape" />.
+        ///     Body shapes, smart wearables and wearables whose every owned copy is pending a gift are left out.
         /// </summary>
-        public void BuildCatalog(IReadOnlyList<ITrimmedWearable> wearables, BodyShape bodyShape)
+        public void BuildCatalog(IReadOnlyList<ITrimmedWearable> wearables, BodyShape bodyShape, Func<URN, bool> isPendingGift)
         {
             catalog.Clear();
             bool isFemale = bodyShape.Equals(BodyShape.FEMALE);
@@ -56,7 +59,9 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             {
                 string category = wearable.GetCategory();
 
-                if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart())
+                URN urn = wearable.GetUrn();
+
+                if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart() || isPendingGift(urn))
                     continue;
 
                 if (!wearable.IsCompatibleWithBodyShape(bodyShape))
@@ -65,9 +70,8 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 if (isFemale && FEMALE_EXCLUDED_CATEGORIES.Contains(category))
                     continue;
 
-                URN urn = wearable.GetUrn();
-
-                if (HasBodyTypePrefix(urn, isFemale ? "m_" : "f_"))
+                // Only base avatars encode the body type in their id; other ids are free text
+                if (urn.IsBaseWearable() && HasBodyTypePrefix(urn, isFemale ? MALE_BASE_PREFIX : FEMALE_BASE_PREFIX))
                     continue;
 
                 AddEntry(category, urn);
@@ -109,7 +113,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         {
             dropped.Clear();
             hidden.Clear();
-            var kept = new HashSet<string>();
+            using PooledObject<HashSet<string>> _ = HashSetPool<string>.Get(out HashSet<string> kept);
 
             foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
             {
@@ -141,7 +145,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 catalog[category] = pool;
             }
 
-            if (((string)urn).StartsWith(BASE_WEARABLE_URN_PREFIX, StringComparison.Ordinal))
+            if (urn.IsBaseWearable())
                 pool.Base.Add(urn);
             else
                 pool.Custom.Add(urn);

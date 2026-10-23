@@ -26,8 +26,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, BodyShape bodyShape, CancellationToken ct, List<IWearable> result, bool useFullUrns)
         {
-            if (wearableUrns == null || wearableUrns.Count == 0)
-                return;
+            // An empty outfit still resolves its body shape, otherwise equipping it strips the avatar
+            wearableUrns ??= Array.Empty<URN>();
 
             using var a = HashSetPool<URN>.Get(out var baseUrns);
             using var b = ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Get(out var tokenMappings);

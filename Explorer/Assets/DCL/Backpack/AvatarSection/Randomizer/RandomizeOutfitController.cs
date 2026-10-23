@@ -1,9 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.BackpackBus;
 using DCL.Diagnostics;
@@ -13,9 +15,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.UI;
 using Utility;
-using Random = System.Random;
 
 namespace DCL.Backpack.AvatarSection.Randomizer
 {
@@ -27,39 +27,48 @@ namespace DCL.Backpack.AvatarSection.Randomizer
     {
         private const int OWNED_PAGE_SIZE = 200;
         private const int MAX_REPICK_ROUNDS = 3;
-        private const float LOCKED_ALPHA = 0.2f;
 
         private readonly RandomizeOutfitView view;
+        private readonly OutfitRandomizer randomizer;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly OutfitRandomizer randomizer = new (new Random());
+        private readonly CacheOutfitWearablesCommand cacheOutfitWearablesCommand;
+        private readonly Func<URN, bool> isPendingGift;
         private readonly List<ITrimmedWearable> ownedWearables = new ();
-        private readonly Stack<OutfitSnapshot> undoStack = new ();
-        private readonly Stack<OutfitSnapshot> redoStack = new ();
+        private readonly Stack<BackpackEquipOutfitCommand> undoStack = new ();
+        private readonly Stack<BackpackEquipOutfitCommand> redoStack = new ();
 
         private CancellationTokenSource? randomizeCts;
+        private bool isAvatarReady;
         private bool isRolling;
         private bool isApplying;
 
         private bool isBusy => isRolling || isApplying;
 
         public RandomizeOutfitController(RandomizeOutfitView view,
+            OutfitRandomizer randomizer,
             BackpackCommandBus backpackCommandBus,
             IBackpackEventBus backpackEventBus,
             IEquippedWearables equippedWearables,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            CacheOutfitWearablesCommand cacheOutfitWearablesCommand,
+            IWearableStorage wearableStorage,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
+            this.randomizer = randomizer;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
             this.equippedWearables = equippedWearables;
             this.wearablesProvider = wearablesProvider;
+            this.cacheOutfitWearablesCommand = cacheOutfitWearablesCommand;
+            isPendingGift = urn => ownedNftFilter.IsFullyPending(wearableStorage, urn);
 
-            view.UndoButton.onClick.AddListener(Undo);
-            view.RandomizeButton.onClick.AddListener(Randomize);
-            view.RedoButton.onClick.AddListener(Redo);
+            view.UndoClicked.AddListener(Undo);
+            view.RandomizeClicked.AddListener(Randomize);
+            view.RedoClicked.AddListener(Redo);
             backpackEventBus.EquipOutfitCompletedEvent += OnEquipOutfitCompleted;
             RefreshButtons();
         }
@@ -67,19 +76,30 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         public void Dispose()
         {
             randomizeCts.SafeCancelAndDispose();
-            view.UndoButton.onClick.RemoveListener(Undo);
-            view.RandomizeButton.onClick.RemoveListener(Randomize);
-            view.RedoButton.onClick.RemoveListener(Redo);
+            view.UndoClicked.RemoveListener(Undo);
+            view.RandomizeClicked.RemoveListener(Randomize);
+            view.RedoClicked.RemoveListener(Redo);
             backpackEventBus.EquipOutfitCompletedEvent -= OnEquipOutfitCompleted;
         }
 
         /// <summary>
+        ///     Randomize stays locked until the backpack has equipped the profile's outfit, so the first undo step is the complete starting outfit.
+        /// </summary>
+        public void SetAvatarReady(bool ready)
+        {
+            isAvatarReady = ready;
+            RefreshButtons();
+        }
+
+        /// <summary>
         ///     Forgets the history and the cached owned wearables, so the next session starts clean and sees new purchases.
+        ///     Randomize locks again until the next session reports its avatar ready.
         /// </summary>
         public void Reset()
         {
             randomizeCts.SafeCancelAndDispose();
             randomizeCts = null;
+            isAvatarReady = false;
             isRolling = false;
             isApplying = false;
             undoStack.Clear();
@@ -90,6 +110,8 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         private void Randomize()
         {
+            if (isBusy || !isAvatarReady) return;
+
             randomizeCts = randomizeCts.SafeRestart();
             RandomizeAsync(randomizeCts.Token).Forget();
         }
@@ -127,23 +149,29 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             try
             {
-                if (ownedWearables.Count == 0)
-                    await LoadOwnedWearablesAsync(ct);
+                if (ownedWearables.Count == 0 && !await TryLoadOwnedWearablesAsync(ct))
+                    return;
 
                 if (ct.IsCancellationRequested) return;
 
-                OutfitSnapshot current = CaptureCurrent();
+                BackpackEquipOutfitCommand current = CaptureCurrent();
                 BodyShape bodyShape = BodyShape.FromStringSafe(current.BodyShape);
-                randomizer.BuildCatalog(ownedWearables, bodyShape);
+                randomizer.BuildCatalog(ownedWearables, bodyShape, isPendingGift);
 
                 var outfit = new List<string>();
                 await RollAsync(bodyShape, outfit, ct);
 
                 if (ct.IsCancellationRequested) return;
 
+                if (outfit.Count == 0)
+                {
+                    ReportHub.LogWarning(ReportCategory.BACKPACK, "Randomize resolved no wearables, the current outfit is kept");
+                    return;
+                }
+
                 undoStack.Push(current);
                 redoStack.Clear();
-                Apply(new OutfitSnapshot(current.BodyShape, outfit, current.EyesColor, current.HairColor, current.SkinColor, Array.Empty<string>()));
+                Apply(new BackpackEquipOutfitCommand(current.BodyShape, outfit, current.EyesColor, current.HairColor, current.SkinColor, Array.Empty<string>(), useFullUrns: true));
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
@@ -157,74 +185,77 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             }
         }
 
-        private async UniTask LoadOwnedWearablesAsync(CancellationToken ct)
+        private async UniTask<bool> TryLoadOwnedWearablesAsync(CancellationToken ct)
         {
             using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> loaded);
-            using PooledObject<List<ITrimmedWearable>> __ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> page);
 
-            var parameters = new IWearablesProvider.Params(OWNED_PAGE_SIZE, 1);
-            int total = int.MaxValue;
+            bool complete = await wearablesProvider.TryGetAllTrimmedAsync(new IWearablesProvider.Params(OWNED_PAGE_SIZE, 1), ct, loaded, OWNED_PAGE_SIZE);
 
-            while (loaded.Count < total)
+            if (!complete)
             {
-                page.Clear();
-                (IReadOnlyList<ITrimmedWearable> results, int totalAmount) = await wearablesProvider.GetTrimmedByParamsAsync(parameters, ct, page);
-                total = totalAmount;
-
-                if (results.Count == 0)
-                    break;
-
-                loaded.AddRange(results);
-                parameters.PageNumber++;
+                ReportHub.LogWarning(ReportCategory.BACKPACK, $"Owned wearables stopped loading after {loaded.Count}, the list is not cached and the outfit is kept");
+                return false;
             }
 
             ownedWearables.AddRange(loaded);
+            return true;
         }
 
         private async UniTask RollAsync(BodyShape bodyShape, List<string> outfit, CancellationToken ct)
         {
-            var picks = new Dictionary<string, URN>();
-            randomizer.Pick(picks);
+            using PooledObject<Dictionary<string, URN>> a = DictionaryPool<string, URN>.Get(out Dictionary<string, URN> picks);
+            using PooledObject<Dictionary<string, IWearable>> b = DictionaryPool<string, IWearable>.Get(out Dictionary<string, IWearable> wearablesByCategory);
+            using PooledObject<Dictionary<string, HashSet<string>>> c = DictionaryPool<string, HashSet<string>>.Get(out Dictionary<string, HashSet<string>> hidesByCategory);
+            using PooledObject<HashSet<URN>> d = HashSetPool<URN>.Get(out HashSet<URN> tried);
+            using PooledObject<HashSet<string>> e = HashSetPool<string>.Get(out HashSet<string> dropped);
+            using PooledObject<HashSet<string>> f = HashSetPool<string>.Get(out HashSet<string> hidden);
+            using PooledObject<List<URN>> g = ListPool<URN>.Get(out List<URN> pending);
 
-            var wearablesByCategory = new Dictionary<string, IWearable>();
-            var hidesByCategory = new Dictionary<string, HashSet<string>>();
-            var tried = new HashSet<URN>();
-            var dropped = new HashSet<string>();
-            var hidden = new HashSet<string>();
-            var pending = new List<URN>(picks.Values);
-
-            for (var round = 0; round <= MAX_REPICK_ROUNDS; round++)
+            try
             {
-                await ResolveAsync(pending, bodyShape, wearablesByCategory, hidesByCategory, ct);
+                randomizer.Pick(picks);
+                pending.AddRange(picks.Values);
 
-                if (ct.IsCancellationRequested) return;
-
-                foreach (URN urn in pending)
-                    tried.Add(urn);
-
-                OutfitRandomizer.ResolveConflicts(hidesByCategory, dropped, hidden);
-
-                pending.Clear();
-
-                foreach (string category in dropped)
+                for (var round = 0; round <= MAX_REPICK_ROUNDS; round++)
                 {
-                    wearablesByCategory.Remove(category);
-                    hidesByCategory.Remove(category);
+                    await ResolveAsync(pending, bodyShape, wearablesByCategory, hidesByCategory, ct);
 
-                    // A core category hidden by a kept pick is covered on the avatar; one dropped for hiding a kept pick is left bare, so it gets another try.
-                    if (round < MAX_REPICK_ROUNDS
-                        && OutfitRandomizer.IsCoreCategory(category)
-                        && !hidden.Contains(category)
-                        && randomizer.TryRepick(category, tried, out URN replacement))
-                        pending.Add(replacement);
+                    if (ct.IsCancellationRequested) return;
+
+                    foreach (URN urn in pending)
+                        tried.Add(urn);
+
+                    OutfitRandomizer.ResolveConflicts(hidesByCategory, dropped, hidden);
+
+                    pending.Clear();
+
+                    foreach (string category in dropped)
+                    {
+                        wearablesByCategory.Remove(category);
+
+                        if (hidesByCategory.Remove(category, out HashSet<string>? hides))
+                            HashSetPool<string>.Release(hides);
+
+                        // A core category hidden by a kept pick is covered on the avatar; one dropped for hiding a kept pick is left bare, so it gets another try.
+                        if (round < MAX_REPICK_ROUNDS
+                            && OutfitRandomizer.IsCoreCategory(category)
+                            && !hidden.Contains(category)
+                            && randomizer.TryRepick(category, tried, out URN replacement))
+                            pending.Add(replacement);
+                    }
+
+                    if (pending.Count == 0)
+                        break;
                 }
 
-                if (pending.Count == 0)
-                    break;
+                foreach (IWearable wearable in wearablesByCategory.Values)
+                    outfit.Add(wearable.GetUrn());
             }
-
-            foreach (IWearable wearable in wearablesByCategory.Values)
-                outfit.Add(wearable.GetUrn());
+            finally
+            {
+                foreach (HashSet<string> hides in hidesByCategory.Values)
+                    HashSetPool<string>.Release(hides);
+            }
         }
 
         private async UniTask ResolveAsync(List<URN> urns, BodyShape bodyShape,
@@ -237,7 +268,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             using PooledObject<List<IWearable>> _ = ListPool<IWearable>.Get(out List<IWearable> resolved);
 
-            await wearablesProvider.GetByPointersAsync(urns, bodyShape, ct, resolved);
+            await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolved, useFullUrns: true);
 
             foreach (IWearable wearable in resolved)
             {
@@ -246,14 +277,19 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 if (category == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
-                var hides = new HashSet<string>();
+                if (!hidesByCategory.TryGetValue(category, out HashSet<string>? hides))
+                {
+                    hides = HashSetPool<string>.Get();
+                    hidesByCategory[category] = hides;
+                }
+
+                hides.Clear();
                 wearable.GetHidingList(bodyShape, hides);
                 wearablesByCategory[category] = wearable;
-                hidesByCategory[category] = hides;
             }
         }
 
-        private OutfitSnapshot CaptureCurrent()
+        private BackpackEquipOutfitCommand CaptureCurrent()
         {
             var wearables = new List<string>();
             string bodyShape = BodyShape.MALE;
@@ -271,54 +307,16 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             (Color hair, Color eyes, Color skin) = equippedWearables.GetColors();
 
-            return new OutfitSnapshot(bodyShape, wearables, eyes, hair, skin, new List<string>(equippedWearables.ForceRenderCategories));
+            return new BackpackEquipOutfitCommand(bodyShape, wearables, eyes, hair, skin, new List<string>(equippedWearables.ForceRenderCategories), useFullUrns: true);
         }
 
-        private void Apply(OutfitSnapshot snapshot)
+        private void Apply(BackpackEquipOutfitCommand command)
         {
             isApplying = true;
-
-            backpackCommandBus.SendCommand(new BackpackEquipOutfitCommand(
-                snapshot.BodyShape,
-                snapshot.Wearables,
-                snapshot.EyesColor,
-                snapshot.HairColor,
-                snapshot.SkinColor,
-                snapshot.ForceRender,
-                useFullUrns: true));
+            backpackCommandBus.SendCommand(command);
         }
 
-        private void RefreshButtons()
-        {
-            view.RandomizeButton.interactable = !isBusy;
-            SetLocked(view.UndoButton, view.UndoCanvasGroup, isBusy || undoStack.Count == 0);
-            SetLocked(view.RedoButton, view.RedoCanvasGroup, isBusy || redoStack.Count == 0);
-        }
-
-        private static void SetLocked(Button button, CanvasGroup canvasGroup, bool locked)
-        {
-            button.interactable = !locked;
-            canvasGroup.alpha = locked ? LOCKED_ALPHA : 1f;
-        }
-
-        private readonly struct OutfitSnapshot
-        {
-            public readonly string BodyShape;
-            public readonly IReadOnlyCollection<string> Wearables;
-            public readonly Color EyesColor;
-            public readonly Color HairColor;
-            public readonly Color SkinColor;
-            public readonly IReadOnlyCollection<string> ForceRender;
-
-            public OutfitSnapshot(string bodyShape, IReadOnlyCollection<string> wearables, Color eyesColor, Color hairColor, Color skinColor, IReadOnlyCollection<string> forceRender)
-            {
-                BodyShape = bodyShape;
-                Wearables = wearables;
-                EyesColor = eyesColor;
-                HairColor = hairColor;
-                SkinColor = skinColor;
-                ForceRender = forceRender;
-            }
-        }
+        private void RefreshButtons() =>
+            view.SetState(!isBusy && isAvatarReady, !isBusy && undoStack.Count > 0, !isBusy && redoStack.Count > 0);
     }
 }

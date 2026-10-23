@@ -86,7 +86,8 @@ namespace DCL.AvatarRendering.Wearables
             results ??= new List<ITrimmedWearable>();
 
             var intentionResults = new List<ITrimmedWearable>();
-            var intention = new GetTrimmedWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, intentionResults, 0, needsBuilderAPISigning);
+            // The URL is built from these parameters frames later, so the intention gets its own copy instead of the list the next call clears
+            var intention = new GetTrimmedWearableByParamIntention(new List<(string, string)>(requestParameters), web3IdentityCache.Identity!.Address, intentionResults, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 

@@ -116,7 +116,8 @@ namespace DCL.Backpack
             Sprite deleteIcon,
             IDecentralandUrlsSource decentralandUrlsSource,
             IOwnedNftFilter ownedNftFilter,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            CacheOutfitWearablesCommand cacheOutfitWearablesCommand)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -215,10 +216,14 @@ namespace DCL.Backpack
                 decentralandUrlsSource);
 
             randomizeOutfitController = new RandomizeOutfitController(view.RandomizeOutfitView,
+                new OutfitRandomizer(new System.Random()),
                 backpackCommandBus,
                 backpackEventBus,
                 equippedWearables,
-                wearablesProvider);
+                wearablesProvider,
+                cacheOutfitWearablesCommand,
+                wearableStorage,
+                ownedNftFilter);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
@@ -301,6 +306,7 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return;
 
             isAvatarLoaded = false;
+            randomizeOutfitController.SetAvatarReady(false);
 
             Profile? inWorldProfile = world.Has<Profile>(playerEntity) ? world.Get<Profile>(playerEntity) : null;
 
@@ -353,6 +359,7 @@ namespace DCL.Backpack
             }
 
             isAvatarLoaded = true;
+            randomizeOutfitController.SetAvatarReady(true);
         }
 
         public void Activate()
