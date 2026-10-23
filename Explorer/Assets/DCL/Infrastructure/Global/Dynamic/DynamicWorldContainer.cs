@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.BevyMigration.Bridge.Systems;
 using DCL.AvatarRendering.Emotes;
 using DCL.BadgesAPIService;
 using DCL.Browser;
@@ -536,6 +537,8 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+                // The migration's one composition-root hook (BevyMigration/docs/README.md § 4); inert unless --world bevy.
+                new BevyBridgePlugin(appArgs, debugBuilder),
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),

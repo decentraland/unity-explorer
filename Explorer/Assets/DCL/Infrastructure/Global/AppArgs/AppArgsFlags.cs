@@ -19,6 +19,17 @@ namespace Global.AppArgs
         /// </summary>
         public const string SHADER_INVENTORY = "shader-inventory";
 
+        /// <summary>
+        ///     Which engine draws the world: <c>unity</c> (default) or <c>bevy</c>, the render bridge of the Bevy migration
+        ///     (BevyMigration/docs/README.md § 7, step 2). Flips at runtime from the debug panel. Command line only.
+        /// </summary>
+        public const string WORLD = "world";
+
+        /// <summary>
+        ///     Spawns the migration's test cube in front of the camera at startup (gate G-A1). Command line only.
+        /// </summary>
+        public const string BEVY_TEST_CUBE = "bevy-test-cube";
+
         public const string AUTOPILOT = "autopilot";
         public const string MEASURE_LOADING_TIME = "measure-loading-time";
         public const string AUTOPILOT_CSV = "csv";

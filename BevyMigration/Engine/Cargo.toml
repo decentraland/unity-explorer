@@ -12,12 +12,54 @@ edition = "2024"
 rust-version = "1.97"
 publish = false
 
-# Bevy is pinned once, here, for the whole workspace (plan § 2: "current stable at
-# step 0, pinned per workspace"). No crate depends on it until step 2, so it is not in
-# Cargo.lock yet; crates take it with `bevy = { workspace = true }` and never pin their
-# own version. Bumping it is an isolated upgrade PR (plan § 14).
+# Bevy is pinned once, here, for the whole workspace: the decentraland/bevy-explorer fork lineage
+# (robtfm/bevy, branch release-0.16-dcl) rather than upstream, because that fork already carries the
+# patches a streaming open-world client needs (plan § 13). bevy-explorer tracks the branch; this
+# workspace pins the commit so every build resolves the same sources. Crates take it with
+# `bevy = { workspace = true }` and never pin their own version. Bumping it is an isolated upgrade PR.
 [workspace.dependencies]
-bevy = { version = "=0.20.0", default-features = false }
+bevy = { version = "=0.16.1", default-features = false, features = [
+    "bevy_asset",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_render",
+    "bevy_window",
+    "bevy_log",
+    "multi_threaded",
+    "std",
+    "tonemapping_luts",
+] }
+# The wgpu the fork is built against; the Metal interop in crates/unity_bridge goes through its hal API.
+wgpu = { version = "24", default-features = false }
+# No poisoning, const constructors for statics; the std mutex is not used in this workspace.
+parking_lot = "0.12"
+
+# Same patch set as bevy-explorer (ecosystem crates reference bevy subcrates directly, so every one of
+# them has to come from the fork), pinned to the revisions bevy-explorer's Cargo.lock resolved on 2026-10-23.
+[patch.crates-io]
+bevy = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_a11y = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_asset = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_app = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_derive = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_ecs = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_image = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_input = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_log = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_math = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_color = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_transform = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_reflect = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_render = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_time = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_winit = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_window = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+bevy_platform = { git = "https://github.com/robtfm/bevy", rev = "4a9e4a68d04163fe1f2995db73dcdba64f0ae23c" }
+wgpu = { git = "https://github.com/robtfm/wgpu", rev = "e25f3d4b0d7f478ea12105984270a25bbeeb0a64" }
+wgpu-types = { git = "https://github.com/robtfm/wgpu", rev = "e25f3d4b0d7f478ea12105984270a25bbeeb0a64" }
+naga = { git = "https://github.com/robtfm/wgpu", rev = "e25f3d4b0d7f478ea12105984270a25bbeeb0a64" }
+# Deterministic override emit order in composed shaders; the fork's render pipelines rely on it.
+naga_oil = { git = "https://github.com/robtfm/naga_oil", rev = "9007b2ffe3e8f509ffc9b1481f039de78cf31699" }
 
 [workspace.lints.rust]
 # Denied, not forbidden: abi and unity_bridge lift it per module when the extern "C"
@@ -30,9 +72,20 @@ pedantic = { level = "warn", priority = -1 }
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 must_use_candidate = "allow"
+# Bevy systems take `Res<T>` and `Query` by value and routinely need more than seven parameters.
+needless_pass_by_value = "allow"
+type_complexity = "allow"
+too_many_arguments = "allow"
 # Panics never cross the FFI boundary (plan § 12), so none may exist to begin with.
 unwrap_used = "deny"
 expect_used = "deny"
 panic = "deny"
 todo = "deny"
 unimplemented = "deny"
+
+# The cdylib ships inside the Unity project: small and without symbols; panics still resolve
+# through the log line catch_unwind emits.
+[profile.release]
+strip = "symbols"
+lto = "thin"
+codegen-units = 1

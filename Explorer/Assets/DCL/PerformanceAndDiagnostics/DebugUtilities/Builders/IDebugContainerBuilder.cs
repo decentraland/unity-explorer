@@ -58,6 +58,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName MEDIA_PLAYER = "Media Player".AsWidgetName();
             public static readonly WidgetName BUG_REPORT = "Bug Report".AsWidgetName();
             public static readonly WidgetName SKYBOX = "Skybox".AsWidgetName();
+            public static readonly WidgetName BEVY_MIGRATION = "Bevy Migration".AsWidgetName();
         }
     }
 

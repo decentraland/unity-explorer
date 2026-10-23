@@ -146,6 +146,19 @@ MonoBehaviour:
     enable: 0
     range: 500
     cellSize: 0.25
+--- !u!114 &-233657491033222113
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb603fe13e584ac1812d3a5e41d1828c, type: 3}
+  m_Name: BevyCompositeFeature
+  m_EditorClassIdentifier: BevyMigration::DCL.BevyMigration.Composite.BevyCompositeFeature
+  m_Active: 1
 --- !u!114 &-45786123811880791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,7 +220,8 @@ MonoBehaviour:
   - {fileID: -4991993260910906933}
   - {fileID: 8054367766033506950}
   - {fileID: -7900794056938074830}
-  m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f4499542062310ed9ba4b6fec4d7d18d447cbf142f293e0b8ba86a2c830cfdcc66f324db058aabd5a92
+  - {fileID: -233657491033222113}
+  m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f4499542062310ed9ba4b6fec4d7d18d447cbf142f293e0b8ba86a2c830cfdcc66f324db058aabd5a921f14dbf7bfe1c1fc
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   m_AssetVersion: 3
@@ -413,6 +427,7 @@ MonoBehaviour:
     dimensions: 256
     executeInEditMode: 0
     assignAsReflectionProbe: 1
+    regenerationInterval: 8
 --- !u!114 &8407763759742182732
 MonoBehaviour:
   m_ObjectHideFlags: 0

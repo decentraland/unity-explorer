@@ -4,9 +4,13 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
-description = "Bevy render plugin: material families, skinning compute, offscreen target (plan § 8)."
+description = "Bevy render plugin: handle tables, snapshot ingest, placeholder materials, offscreen readback (plan § 8)."
 
 [dependencies]
+abi = { path = "../abi" }
+bevy = { workspace = true }
+wgpu = { workspace = true }
+parking_lot = { workspace = true }
 
 [lints]
 workspace = true

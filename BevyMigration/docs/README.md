@@ -49,7 +49,7 @@ The first deliverable is the **host flip** (step 10): the desktop client boots, 
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Target engine | Bevy, current stable at step 0, pinned per workspace | Stated goal. Expect to carry a fork (see section 14). |
+| Target engine | Bevy 0.16.1 as carried by the decentraland/bevy-explorer fork (robtfm/bevy `release-0.16-dcl`), pinned by commit per workspace, with the same wgpu and naga_oil patches | Stated goal. The fork already carries the streaming-client patches (section 13); starting from it avoids re-deriving them against a newer upstream. Upgrades follow bevy-explorer. |
 | Transitional C# runtime | CoreCLR hosted in-process through hostfxr | Fast iteration on existing logic. Real .NET replaces IL2CPP. |
 | Facade shape | UnityEngine-compatible, semantics preserved | The tested C# application code must run unchanged at the application layer. The shim is scoped by an allowlist and verified against Unity recordings, never by reading Unity. |
 | Host during rendering phase | Unity | Unity can still render the same frame, which gives a built-in A/B for every rendering milestone. |

@@ -85,6 +85,27 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ## Scene & Environment Flags
 
+### `world`
+**Type:** String (`unity` | `bevy`)
+**Description:** Which engine draws the world. `unity` is the default. `bevy` starts the Bevy render bridge (`BevyMigration/docs/README.md` § 7, step 2): renderers registered with the bridge are hidden from Unity and drawn by Bevy into a shared surface that the `BevyCompositeFeature` blits under the UI. The debug panel's "Bevy Migration" widget flips it at runtime. Command line only; internal builds only until the host flip.
+
+**Usage:**
+```bash
+--world bevy
+```
+
+---
+
+### `bevy-test-cube`
+**Description:** Spawns the migration's URP Lit test cube in front of the camera at startup and registers it with the bridge (gate G-A1). Command line only.
+
+**Usage:**
+```bash
+--world bevy --bevy-test-cube
+```
+
+---
+
 ### `shader-inventory`
 **Type:** String (optional)
 **Description:** Records every shader bound by any renderer during the session, with distinct material and renderer counts per shader, and writes a `shader-families.md` report on quit. Without a value the report goes to `Application.persistentDataPath/shader-families.md`; with a value, to that path. Used by the Bevy migration to size its material families (see `BevyMigration/docs/README.md` § 7, step 1). Command line only.

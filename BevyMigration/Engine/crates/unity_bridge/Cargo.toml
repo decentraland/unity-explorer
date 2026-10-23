@@ -4,14 +4,34 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
-description = "cdylib Unity loads: snapshot ingest, handle tables, resource upload (plan § 8)."
+description = "cdylib Unity loads: snapshot ingest, handle tables, shared output textures (plan § 8)."
 
-# The library Unity loads as a native plugin (plan § 8). rlib as well so the
-# test harness and crates/app can link it in-process.
+# The library Unity loads as a native plugin (plan § 8). rlib as well so the tests and crates/app can
+# link it in-process.
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+abi = { path = "../abi" }
+render = { path = "../render" }
+bevy = { workspace = true }
+wgpu = { workspace = true }
+parking_lot = { workspace = true }
+tracing = "0.1"
+tracing-log = "0.2"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Same `metal` the fork's wgpu-hal is built on: its Texture type is what texture_from_raw takes.
+metal = "0.31"
+# objc2 for everything else, as the UUAV plugin in this repository already does.
+objc2 = "0.6"
+objc2-core-foundation = "0.3"
+objc2-io-surface = { version = "0.3", features = ["libc", "objc2-core-foundation"] }
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+
+[build-dependencies]
+csbindgen = "1.9"
 
 [lints]
 workspace = true
