@@ -76,10 +76,12 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
 // The maps need a UV set; a mesh without one keeps the scalar properties.
 #ifdef VERTEX_UVS_A
     if ((params.flags & FLAG_METALLIC_GLOSS_MAP) != 0u) {
-        // Unity: metallic in R, smoothness in A, both scaled by the scalar properties.
+        // DCL/Scene reads the map with the glTF layout (Scene_Input.hlsl SampleMetallicSpecGloss):
+        // roughness in G, metallic in B scaled by the scalar, R is height and A is unused. The
+        // smoothness scalar only applies without a map.
         let mg = textureSample(metallic_gloss_texture, metallic_gloss_sampler, in.uv);
-        metallic = mg.r * params.metallic;
-        smoothness = mg.a * params.smoothness;
+        metallic = mg.b * params.metallic;
+        smoothness = 1.0 - mg.g;
     }
 #endif
 

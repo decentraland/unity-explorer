@@ -23,6 +23,7 @@ namespace DCL.BevyMigration.Bridge
         private const uint FORMAT_RGBA8 = 0;
         private const string FAMILY_UNLIT_TOKEN = "Unlit";
         private const string FAMILY_TMP_SDF_TOKEN = "Distance Field";
+        private const string METALLIC_GLOSS_MAP_KEYWORD = "_METALLICSPECGLOSSMAP";
 
         private static readonly ReportData REPORT_DATA = new (ReportCategory.ALWAYS);
         private static readonly int BASE_COLOR = Shader.PropertyToID("_BaseColor");
@@ -454,7 +455,7 @@ namespace DCL.BevyMigration.Bridge
                 occlusion_strength = material.HasProperty(OCCLUSION_STRENGTH) ? material.GetFloat(OCCLUSION_STRENGTH) : 1f,
                 base_map = Texture(baseMap, true),
                 normal_map = material.HasProperty(BUMP_MAP) ? Texture(material.GetTexture(BUMP_MAP), false) : BridgeTextures.NONE,
-                metallic_gloss_map = material.HasProperty(METALLIC_GLOSS_MAP) ? Texture(material.GetTexture(METALLIC_GLOSS_MAP), false) : BridgeTextures.NONE,
+                metallic_gloss_map = material.HasProperty(METALLIC_GLOSS_MAP) && material.IsKeywordEnabled(METALLIC_GLOSS_MAP_KEYWORD) ? Texture(material.GetTexture(METALLIC_GLOSS_MAP), false) : BridgeTextures.NONE,
                 occlusion_map = material.HasProperty(OCCLUSION_MAP) ? Texture(material.GetTexture(OCCLUSION_MAP), false) : BridgeTextures.NONE,
                 emission_map = material.HasProperty(EMISSION_MAP) ? Texture(material.GetTexture(EMISSION_MAP), true) : BridgeTextures.NONE,
             };

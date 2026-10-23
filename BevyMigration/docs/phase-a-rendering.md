@@ -66,7 +66,7 @@ each cycle logs "Bevy bridge initialized" once.
 | Piece | Where | Notes |
 |---|---|---|
 | Resource commands | `abi` (`BmResourceCmd`, `BmMeshHeader`, `BmTextureHeader`, `BmMaterial`), `unity_bridge` (`bm_resource_cmd`, `bm_upload_material`), `render/src/resources.rs` | Meshes and textures cross as byte payloads behind a header (`BmMeshHeader` + streams + indices + submeshes; `BmTextureHeader` + the full mip chain in Unity's own block format). Materials are typed (`bm_upload_material`) so csbindgen emits the struct. Handles are `u32`, allocated on the C# side, 0 reserved for the placeholders. Every decoder is bounds-checked; a malformed payload is logged and the handle lands in a rejected set. |
-| Material family `UrpLit` | `render/src/materials/{mod.rs,urp_lit.wgsl}` | `ExtendedMaterial<StandardMaterial, UrpLitExtension>`: base colour, metallic and smoothness scalars, metallic-gloss map (Unity channels: metallic R, smoothness A), normal map, occlusion map (G, blended by strength), emission, alpha modes (opaque, cutout, fade, transparent), double-sided, `SceneBounds` dithering outside the parcel rectangle. The Unlit family is the same material with `unlit` set. |
+| Material family `UrpLit` | `render/src/materials/{mod.rs,urp_lit.wgsl}` | `ExtendedMaterial<StandardMaterial, UrpLitExtension>`: base colour, metallic and smoothness scalars, metallic-gloss map (the `DCL/Scene` glTF layout: roughness G, metallic B times the scalar, sent only when the material enables `_METALLICSPECGLOSSMAP`), normal map, occlusion map (G, blended by strength), emission, alpha modes (opaque, cutout, fade, transparent), double-sided, `SceneBounds` dithering outside the parcel rectangle. The Unlit family is the same material with `unlit` set. |
 | Lights, fog, ambient | `SnapshotWriter`, `SceneContentScanner`, `render/src/lib.rs` | The sun (`RenderSettings.sun`, else the strongest directional light), the point and spot lights under the scene roots, `RenderSettings` fog, and the ambient probe averaged over six axes (works for flat, trilight and skybox ambient modes). |
 | Scene content scan | `SceneContentScanner` | Every 60 frames: walks the `<parcel>_<name>_Container` roots, registers new `MeshRenderer`s with their uploaded mesh and materials, prunes destroyed ones. Skinned meshes, landscape, particles and skybox stay with Unity until their steps. |
 | Screenshot harness | `BevyMigration/tools/parcel-screenshot.sh`, `Engine/tools/screenshot-diff` | A driven Editor session (`EditorPlaySession` + the MCP server) lands on a parcel, poses the free camera and saves a world-only PNG; the Rust tool compares two PNGs against a threshold. |
@@ -149,6 +149,10 @@ rather than `bevy`; the gate stays open and is re-run with the step 5 screenshot
   mirrored along its local Z; the symmetric placeholder cube and near-symmetric parcel props hid it.
 - **Skeleton layout.** Joint `i < 62` is base bone `i`; a wearable's spring bone `k` is joint
   `62 + springOffset + k`; bind poses the mesh does not provide are identity.
+- **A boned mesh is hidden until its skin binds.** Bevy chooses the skinned pipeline from the mesh's joint
+  attributes but the bind group from the skin uniforms, so a boned mesh drawn without a bound skin is a wgpu
+  validation panic that kills the render thread (every later upload then returns `Internal`). `sync_renderers`
+  keeps such a renderer `Visibility::Hidden` until its joint set and bind poses resolve.
 
 ### Running the gate
 

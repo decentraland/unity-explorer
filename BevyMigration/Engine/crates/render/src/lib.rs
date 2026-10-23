@@ -294,11 +294,6 @@ fn sync_renderers(
     for renderer in &snapshot.renderers {
         seen.insert(renderer.handle);
         let world = GlobalTransform::from(renderer_world_matrix(&renderer.world));
-        let visibility = if renderer.visible {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        };
         let submeshes: Vec<Handle<Mesh>> = match tables.mesh(renderer.mesh) {
             Some(handles) if renderer.mesh != MESH_PLACEHOLDER_CUBE => handles.to_vec(),
             _ => vec![placeholders.cube.clone()],
@@ -314,6 +309,15 @@ fn sync_renderers(
             })
         });
         let skin_key = skin.as_ref().and(renderer.skin);
+        // A mesh with joint attributes selects Bevy's skinned pipeline, which panics in wgpu when the
+        // entity has no skin bound (`skinned_mesh_layout` against `model_only_mesh_bind_group`), so
+        // such a mesh stays hidden until its skeleton resolves.
+        let drawable = skin.is_some() || tables.bindposes(renderer.mesh).is_none();
+        let visibility = if renderer.visible && drawable {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
 
         let entities = table.entities.entry(renderer.handle).or_default();
 
