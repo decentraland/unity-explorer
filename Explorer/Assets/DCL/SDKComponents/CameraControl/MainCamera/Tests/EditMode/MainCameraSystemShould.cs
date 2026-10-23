@@ -26,14 +26,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         private Entity virtualCameraEntity1;
         private Entity virtualCameraEntity2;
         private Entity globalWorldCameraEntity;
-        private ISceneStateProvider sceneStateProvider;
-        private IExposedCameraData cameraData;
-        private World globalWorld;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IExposedCameraData cameraData = null!;
+        private World globalWorld = null!;
         private Dictionary<CRDTEntity, Entity> entitiesMap = new Dictionary<CRDTEntity, Entity>();
-        private CinemachineBrain cinemachineBrain;
-        private CinemachineFreeLook sdkCinemachineCam1;
-        private CinemachineFreeLook sdkCinemachineCam2;
-        private CinemachineFreeLook defaultCinemachineCam;
+        private CinemachineBrain cinemachineBrain = null!;
+        private CinemachineFreeLook sdkCinemachineCam1 = null!;
+        private CinemachineFreeLook sdkCinemachineCam2 = null!;
+        private CinemachineFreeLook defaultCinemachineCam = null!;
 
         [SetUp]
         public void Setup()
@@ -104,10 +104,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             entitiesMap.Clear();
             world.Dispose();
             globalWorld.Dispose();
-            GameObject.DestroyImmediate(sdkCinemachineCam1.gameObject);
-            GameObject.DestroyImmediate(sdkCinemachineCam2.gameObject);
-            GameObject.DestroyImmediate(defaultCinemachineCam.gameObject);
-            GameObject.DestroyImmediate(cinemachineBrain.gameObject);
+            Object.DestroyImmediate(sdkCinemachineCam1.gameObject);
+            Object.DestroyImmediate(sdkCinemachineCam2.gameObject);
+            Object.DestroyImmediate(defaultCinemachineCam.gameObject);
+            Object.DestroyImmediate(cinemachineBrain.gameObject);
         }
 
         [Test]
@@ -418,14 +418,14 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
             Assert.IsNotNull(mainCameraComponent.virtualCameraCRDTEntity, "Virtual camera CRDT entity should be set after component is available");
-            Assert.AreEqual(vCamCRDTEntity.Id, mainCameraComponent.virtualCameraCRDTEntity.Value.Id, "Virtual camera CRDT entity should match the target entity");
+            Assert.AreEqual(vCamCRDTEntity.Id, mainCameraComponent.virtualCameraCRDTEntity!.Value.Id, "Virtual camera CRDT entity should match the target entity");
             Assert.IsNotNull(mainCameraComponent.virtualCameraInstance, "Virtual camera instance should be set after component is available");
             Assert.AreSame(sdkCinemachineCam, mainCameraComponent.virtualCameraInstance, "Virtual camera instance should match the created camera");
             Assert.IsTrue(sdkCinemachineCam.enabled, "Virtual camera should be enabled after successful application");
             Assert.AreSame(sdkCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject, "Virtual camera should be the active camera");
 
             // Cleanup
-            GameObject.DestroyImmediate(sdkCinemachineCam.gameObject);
+            Object.DestroyImmediate(sdkCinemachineCam.gameObject);
         }
 
         [Test]
@@ -458,7 +458,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             // The virtualCameraCRDTEntity should still be the previous one (from virtualCameraEntity1)
             Assert.IsNotNull(mainCameraComponent.virtualCameraCRDTEntity, "Virtual camera CRDT entity should retain the previous successful assignment");
-            Assert.AreEqual(world.Get<CRDTEntity>(virtualCameraEntity1).Id, mainCameraComponent.virtualCameraCRDTEntity.Value.Id,
+            Assert.AreEqual(world.Get<CRDTEntity>(virtualCameraEntity1).Id, mainCameraComponent.virtualCameraCRDTEntity!.Value.Id,
                 "Virtual camera CRDT entity should still be the previous successful one, not the failed target");
             Assert.AreSame(sdkCinemachineCam1, mainCameraComponent.virtualCameraInstance, "Virtual camera instance should remain unchanged when application fails");
             Assert.IsTrue(sdkCinemachineCam1.enabled, "Previous virtual camera should remain enabled when new application fails");
@@ -499,7 +499,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
 
             Assert.IsNotNull(mainCameraComponent.virtualCameraCRDTEntity, "Virtual camera CRDT entity should be set when application succeeds");
-            Assert.AreEqual(vCamCRDTEntity.Id, mainCameraComponent.virtualCameraCRDTEntity.Value.Id,
+            Assert.AreEqual(vCamCRDTEntity.Id, mainCameraComponent.virtualCameraCRDTEntity!.Value.Id,
                 "Virtual camera CRDT entity should match the successfully applied camera");
             Assert.IsNotNull(mainCameraComponent.virtualCameraInstance, "Virtual camera instance should be set when application succeeds");
             Assert.AreSame(sdkCinemachineCam, mainCameraComponent.virtualCameraInstance, "Virtual camera instance should match the applied camera");
@@ -508,12 +508,44 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
                 "Virtual camera should be the active camera after successful application");
 
             // Cleanup
-            GameObject.DestroyImmediate(sdkCinemachineCam.gameObject);
+            Object.DestroyImmediate(sdkCinemachineCam.gameObject);
+        }
+
+        [Test]
+        public void ApplyVirtualCameraWhenBrainHasNoActiveCamera()
+        {
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            // The brain picks from the static CinemachineCore queue, which other fixtures leak enabled vCams into,
+            // so it is restricted to a layer that holds only this test's cameras.
+            const int LAYER = 31;
+            Camera outputCamera = cinemachineBrain.gameObject.AddComponent<Camera>();
+            outputCamera.cullingMask = 1 << LAYER;
+            defaultCinemachineCam.gameObject.layer = LAYER;
+            sdkCinemachineCam1.gameObject.layer = LAYER;
+
+            defaultCinemachineCam.enabled = false;
+            cinemachineBrain.ManualUpdate();
+            Assert.IsNull(cinemachineBrain.ActiveVirtualCamera);
+
+            var pbMainCameraComponent = new PBMainCamera { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            SystemUpdate();
+
+            MainCameraComponent mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
+            Assert.AreEqual(world.Get<CRDTEntity>(virtualCameraEntity1).Id, mainCameraComponent.virtualCameraCRDTEntity!.Value.Id);
+            Assert.AreSame(sdkCinemachineCam1, mainCameraComponent.virtualCameraInstance);
+            Assert.IsTrue(sdkCinemachineCam1.enabled);
+
+            ICinemachineCamera? activeVirtualCamera = cinemachineBrain.ActiveVirtualCamera;
+            Assert.IsNotNull(activeVirtualCamera);
+            Assert.AreSame(sdkCinemachineCam1.gameObject, activeVirtualCamera.VirtualCameraGameObject);
         }
 
         private void SystemUpdate()
         {
-            system!.Update(1f);
+            system.Update(1f);
             cinemachineBrain.ManualUpdate();
         }
     }
