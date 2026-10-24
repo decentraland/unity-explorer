@@ -80,7 +80,7 @@ namespace DCL.UI.Skybox
         {
             if (isRestrictedByScene) return;
 
-            SetTimeSliderInteractable(!isOn);
+            SetTimeSliderInteractable(IsTimeSliderInteractable(isRestrictedByScene, isOn));
             skyboxSettings.IsUIControlled = !isOn;
 
             if (skyboxSettings.IsUIControlled)
@@ -132,8 +132,12 @@ namespace DCL.UI.Skybox
             }
 
             SetTimeProgressionInteractable(isInteractable);
-            SetTimeSliderInteractable(isInteractable);
+            SetTimeSliderInteractable(IsTimeSliderInteractable(!isInteractable, viewInstance!.TimeProgressionToggle.isOn));
         }
+
+        // The automatic day cycle owns the time while it runs, so the slider only opens when neither it nor the scene holds it
+        internal static bool IsTimeSliderInteractable(bool isRestrictedByScene, bool isDayCycleOn) =>
+            !isRestrictedByScene && !isDayCycleOn;
 
         private void SetTimeProgressionInteractable(bool isInteractable)
         {
