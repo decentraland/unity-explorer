@@ -13,6 +13,8 @@ namespace UUAV
         private static readonly TimeQuery currentTimeQuery = NativeMethods.uuav_player_current_time;
         private static readonly TimeQuery durationQuery = NativeMethods.uuav_player_duration;
 
+        private const uint MIN_PLANE_DIMENSION = 2;
+
         /// <summary>
         /// M stands for "Managed" mirrors the original MediaInfo and makes it serializable
         /// </summary>
@@ -418,6 +420,11 @@ namespace UUAV
                 return false;
             }
 
+            // native can hand out a texture while still reporting a 0-sized
+            // frame; Unity cannot wrap it, so wait for a real size instead
+            if (IsWrappableSize(size) == false)
+                return false;
+
             // the native texture is recreated on every resolution change,
             // including mid-play adaptive/IDR switches, so pointer + size
             // comparison catches first frame, re-open and mid-stream changes
@@ -432,6 +439,10 @@ namespace UUAV
 
             return yPlane != null;
         }
+
+        // the UV plane is half the Y plane in each dimension
+        internal static bool IsWrappableSize(VideoSize size) =>
+            size.Width >= MIN_PLANE_DIMENSION && size.Height >= MIN_PLANE_DIMENSION;
 
         private void RecreatePlaneViews(IntPtr yTexture, IntPtr uvTexture, VideoSize size)
         {
