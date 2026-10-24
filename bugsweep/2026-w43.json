@@ -38,9 +38,9 @@
     },
     {
       "number": 10516,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "third-party outage: Thirdweb's guest callback answered HTTP 524 (Cloudflare timeout) with an HTML page, which the Thirdweb SDK's CheckStatusCodeAsync fails to parse as JSON; silencing it at the Sentry gateway would mean filtering every JsonReaderException on '<', which also hides genuine client bugs, and the SDK frames are not reliably present to match on"
     },
     {
       "number": 10528,
@@ -88,13 +88,13 @@
       "number": 10496,
       "status": "skipped",
       "commit": null,
-      "note": "TaskCompletionSource.SetResult called twice inside BCL/UniTask internals; the il2cpp trace has no Explorer frames to locate the caller"
+      "note": "BCL/UniTask-internal TaskCompletionSource double completion with no Explorer frames; note for the team: SentryReportHandler.BeforeSend has dropped this exact message since v0.184 (#10275), yet these v0.189 events (mechanism Unity.LogException, handled=no) still reached Sentry, so the gateway appears to miss that capture path — worth checking whether @event.Exception is null there and only SentryExceptions is set"
     },
     {
       "number": 10498,
       "status": "skipped",
       "commit": null,
-      "note": "TaskCompletionSource.SetResult called twice inside System.Net HttpWebRequest.GetRequestStream; BCL-internal, no Explorer frames in the trace"
+      "note": "BCL/UniTask-internal TaskCompletionSource double completion with no Explorer frames; note for the team: SentryReportHandler.BeforeSend has dropped this exact message since v0.184 (#10275), yet these v0.189 events (mechanism Unity.LogException, handled=no) still reached Sentry, so the gateway appears to miss that capture path — worth checking whether @event.Exception is null there and only SentryExceptions is set"
     },
     {
       "number": 10502,
