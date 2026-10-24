@@ -151,6 +151,25 @@ namespace DCL.CharacterPreview
         public bool IsAvatarLoaded() =>
             !globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty;
 
+        /// <summary>
+        ///     World position of the instantiated avatar's root and its rest-pose bounds in world space; false until an avatar is instantiated.
+        /// </summary>
+        public bool TryGetAvatarWorldBounds(out Vector3 feet, out Bounds bounds)
+        {
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarCustomSkinningComponent skinning)
+                && globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+            {
+                Transform avatarTransform = avatarBase.transform;
+                feet = avatarTransform.position;
+                bounds = skinning.ToWorldBounds(avatarTransform);
+                return true;
+            }
+
+            feet = default(Vector3);
+            bounds = default(Bounds);
+            return false;
+        }
+
         public void PlayEmote(string emoteId)
         {
             var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.Preview };
