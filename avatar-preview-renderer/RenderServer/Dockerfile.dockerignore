@@ -1,0 +1,7 @@
+# Build context is avatar-preview-renderer/; only the built player and the entrypoint are needed.
+*
+!Builds/RenderServer/
+!RenderServer/entrypoint.sh
+# Debug data Unity writes next to the player, not needed to run it.
+Builds/RenderServer/*_BackUpThisFolder_ButDontShipItWithYourGame
+Builds/RenderServer/*_DoNotShip

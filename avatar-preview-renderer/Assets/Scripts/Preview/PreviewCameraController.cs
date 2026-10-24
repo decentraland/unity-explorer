@@ -5,7 +5,7 @@ using Utils;
 
 namespace Preview
 {
-    public class PreviewCameraController : MonoBehaviour
+    public partial class PreviewCameraController : MonoBehaviour
     {
         // Floor for the fit's view-axis depth, so a subject sitting on the lens cannot divide by zero.
         private const float MIN_FRUSTUM_DEPTH = 0.01f;
