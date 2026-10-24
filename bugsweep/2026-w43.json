@@ -68,9 +68,9 @@
     },
     {
       "number": 9961,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "QA has now validated it, but the scene shader (DCL/Scene in unity-shared-dependencies) has no unlit variant: honouring KHR_materials_unlit needs a new shader path or keyword in DecentralandMaterialGenerator, which the asset-bundle converter also uses, plus in-editor visual verification; a material-pipeline change beyond a sweep"
     },
     {
       "number": 10533,
