@@ -44,9 +44,9 @@
     },
     {
       "number": 10528,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "follow-up to the still-open #10518: the proposed fix threads FetchBehaviour.CallerReportsFailures and the per-streak ReportFetchFailure, neither of which exists on dev yet, so it has to land on top of #10518 (and needs its own QA pass for the login-flow change)"
     },
     {
       "number": 10515,
