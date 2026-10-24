@@ -1,239 +1,239 @@
 {
- "status": "active",
- "prUrl": null,
- "requester": "U0ADNDHL1T7",
- "originChannel": "C0BB9H2CS5D",
- "since": "2026-10-17T12:02:21Z",
- "collectedAt": "2026-10-24T12:01:32Z",
- "groups": [],
- "issues": [
-  {
-   "number": 10537,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10514,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10494,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10495,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10516,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10528,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10515,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10523,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10511,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 9961,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10533,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10490,
-   "status": "skipped",
-   "commit": null,
-   "note": "duplicate of the older open #9878 (same 'Profile fetch timed out after 15s' from ProfileFetchingAuthState); tracked there, and the own-profile fetch back-off is being reworked in #10518/#10528"
-  },
-  {
-   "number": 10496,
-   "status": "skipped",
-   "commit": null,
-   "note": "TaskCompletionSource.SetResult called twice inside BCL/UniTask internals; the il2cpp trace has no Explorer frames to locate the caller"
-  },
-  {
-   "number": 10498,
-   "status": "skipped",
-   "commit": null,
-   "note": "TaskCompletionSource.SetResult called twice inside System.Net HttpWebRequest.GetRequestStream; BCL-internal, no Explorer frames in the trace"
-  },
-  {
-   "number": 10502,
-   "status": "skipped",
-   "commit": null,
-   "note": "duplicate of the older open #10387 (same IndexOutOfRange in a Burst/ParallelFor job Execute); trace has no managed Explorer frames"
-  },
-  {
-   "number": 10506,
-   "status": "skipped",
-   "commit": null,
-   "note": "native access violation in Il2CppFakeBoxBuffer::SizeNeededFor inside a ParallelFor job; engine/il2cpp-internal crash with no Explorer frames"
-  },
-  {
-   "number": 10500,
-   "status": "skipped",
-   "commit": null,
-   "note": "an open contributor PR #10501 already implements this exact fix (mipmaps + anisotropy on the raw glTF path); reviewing and merging it is the team's call, a second copy would conflict"
-  },
-  {
-   "number": 10507,
-   "status": "skipped",
-   "commit": null,
-   "note": "CI / Unity Cloud Build tech debt: build pipeline files are outside what a sweep may modify, and the work is in progress in #10519"
-  },
-  {
-   "number": 10522,
-   "status": "skipped",
-   "commit": null,
-   "note": "general low-FPS report across Genesis City and Worlds with no single defect; needs profiling sessions, not a sweep fix"
-  },
-  {
-   "number": 10535,
-   "status": "skipped",
-   "commit": null,
-   "note": "Gallery scrollbar missing on some machines; the gallery is being rewritten onto LoopListView2 in the open #10531 (which references this issue), a fix on the old layout would conflict"
-  },
-  {
-   "number": 10536,
-   "status": "skipped",
-   "commit": null,
-   "note": "Passport Photos scrollbar missing on Windows; the Passport photo grid is part of the gallery rewrite in the open #10531 (which references this issue), a fix on the old layout would conflict"
-  },
-  {
-   "number": 10388,
-   "status": "skipped",
-   "commit": null,
-   "note": "UI Toolkit invalid MeshGenerationNode: reported to Unity by lorenzo-ranciaffi, and hotfix #10505 (merged) names this exception as a symptom of the emoji lookup-table race it fixes; verify on Sentry after that release"
-  },
-  {
-   "number": 10367,
-   "status": "skipped",
-   "commit": null,
-   "note": "closed by NickKhalow as a duplicate of #8218 and reopened only by Sentry; the fix is in flight in #10525 (one owner for the Segment queue file), which covers this issue"
-  },
-  {
-   "number": 7906,
-   "status": "skipped",
-   "commit": null,
-   "note": "Segment send-loop network error; covered by the open #10525 (Segment queue ownership and typed health), which lists this issue"
-  },
-  {
-   "number": 8146,
-   "status": "skipped",
-   "commit": null,
-   "note": "launcher self-update failure (dcl_launcher.exe holds a handle on the 'latest' folder); the launcher is a separate codebase, not unity-explorer"
-  },
-  {
-   "number": 10445,
-   "status": "skipped",
-   "commit": null,
-   "note": "re-checked: no Explorer defect found; the w42 analysis traced it to the Creator Hub default video URL returning 404, and the only movement since is a QA-validation label toggle with no new evidence"
-  },
-  {
-   "number": 10245,
-   "status": "skipped",
-   "commit": null,
-   "note": "voice-chat speaker promotion stuck; only movement is a title edit, still no client-side root cause in the attached logs and it needs LiveKit/comms-server investigation with a live session"
-  },
-  {
-   "number": 9498,
-   "status": "skipped",
-   "commit": null,
-   "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate after recent streaming fixes; waiting on that validation before any code change"
-  },
-  {
-   "number": 9440,
-   "status": "skipped",
-   "commit": null,
-   "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate after recent memory-leak fixes; waiting on that validation, and it needs profiling sessions"
-  },
-  {
-   "number": 8794,
-   "status": "skipped",
-   "commit": null,
-   "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate; it was fixed by #8821"
-  },
-  {
-   "number": 10396,
-   "status": "skipped",
-   "commit": null,
-   "note": "still no reproduction steps; the only movement is a QA-validation label removal"
-  },
-  {
-   "number": 10416,
-   "status": "skipped",
-   "commit": null,
-   "note": "Genesis Plaza clock tower is drawn by the scene's own code (content team), not by the Explorer; the only movement is label removal"
-  },
-  {
-   "number": 10436,
-   "status": "skipped",
-   "commit": null,
-   "note": "UI animation polish between onboarding screens; needs design direction and in-editor visual iteration, no code defect to fix"
-  },
-  {
-   "number": 10437,
-   "status": "skipped",
-   "commit": null,
-   "note": "Mac-only avatar fade during a UI transition; needs in-editor visual verification on macOS, cannot be reproduced here"
-  },
-  {
-   "number": 10439,
-   "status": "skipped",
-   "commit": null,
-   "note": "per NickKhalow's triage (2026-10-20) the report is from v0.186, which predates the self-profile FSM change in #10350 (v0.187+); needs QA re-validation on a current build"
-  },
-  {
-   "number": 10456,
-   "status": "skipped",
-   "commit": null,
-   "note": "design change across skinning, spring bones and wearable loading modules (bind joints by bone name); too broad for a sweep"
-  },
-  {
-   "number": 10449,
-   "status": "skipped",
-   "commit": null,
-   "note": "already fixed on dev by the w42 sweep PR #10492 (merged 2026-10-23); stays open until it ships to main"
-  },
-  {
-   "number": 10489,
-   "status": "skipped",
-   "commit": null,
-   "note": "already fixed on dev by the w42 sweep PR #10492 (merged 2026-10-23); stays open until it ships to main"
-  }
- ]
+  "status": "active",
+  "prUrl": null,
+  "requester": "U0ADNDHL1T7",
+  "originChannel": "C0BB9H2CS5D",
+  "since": "2026-10-17T12:02:21Z",
+  "collectedAt": "2026-10-24T12:01:32Z",
+  "groups": [],
+  "issues": [
+    {
+      "number": 10537,
+      "status": "fixed",
+      "commit": "81e1ec233",
+      "note": null
+    },
+    {
+      "number": 10514,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10494,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10495,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10516,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10528,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10515,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10523,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10511,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9961,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10533,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10490,
+      "status": "skipped",
+      "commit": null,
+      "note": "duplicate of the older open #9878 (same 'Profile fetch timed out after 15s' from ProfileFetchingAuthState); tracked there, and the own-profile fetch back-off is being reworked in #10518/#10528"
+    },
+    {
+      "number": 10496,
+      "status": "skipped",
+      "commit": null,
+      "note": "TaskCompletionSource.SetResult called twice inside BCL/UniTask internals; the il2cpp trace has no Explorer frames to locate the caller"
+    },
+    {
+      "number": 10498,
+      "status": "skipped",
+      "commit": null,
+      "note": "TaskCompletionSource.SetResult called twice inside System.Net HttpWebRequest.GetRequestStream; BCL-internal, no Explorer frames in the trace"
+    },
+    {
+      "number": 10502,
+      "status": "skipped",
+      "commit": null,
+      "note": "duplicate of the older open #10387 (same IndexOutOfRange in a Burst/ParallelFor job Execute); trace has no managed Explorer frames"
+    },
+    {
+      "number": 10506,
+      "status": "skipped",
+      "commit": null,
+      "note": "native access violation in Il2CppFakeBoxBuffer::SizeNeededFor inside a ParallelFor job; engine/il2cpp-internal crash with no Explorer frames"
+    },
+    {
+      "number": 10500,
+      "status": "skipped",
+      "commit": null,
+      "note": "an open contributor PR #10501 already implements this exact fix (mipmaps + anisotropy on the raw glTF path); reviewing and merging it is the team's call, a second copy would conflict"
+    },
+    {
+      "number": 10507,
+      "status": "skipped",
+      "commit": null,
+      "note": "CI / Unity Cloud Build tech debt: build pipeline files are outside what a sweep may modify, and the work is in progress in #10519"
+    },
+    {
+      "number": 10522,
+      "status": "skipped",
+      "commit": null,
+      "note": "general low-FPS report across Genesis City and Worlds with no single defect; needs profiling sessions, not a sweep fix"
+    },
+    {
+      "number": 10535,
+      "status": "skipped",
+      "commit": null,
+      "note": "Gallery scrollbar missing on some machines; the gallery is being rewritten onto LoopListView2 in the open #10531 (which references this issue), a fix on the old layout would conflict"
+    },
+    {
+      "number": 10536,
+      "status": "skipped",
+      "commit": null,
+      "note": "Passport Photos scrollbar missing on Windows; the Passport photo grid is part of the gallery rewrite in the open #10531 (which references this issue), a fix on the old layout would conflict"
+    },
+    {
+      "number": 10388,
+      "status": "skipped",
+      "commit": null,
+      "note": "UI Toolkit invalid MeshGenerationNode: reported to Unity by lorenzo-ranciaffi, and hotfix #10505 (merged) names this exception as a symptom of the emoji lookup-table race it fixes; verify on Sentry after that release"
+    },
+    {
+      "number": 10367,
+      "status": "skipped",
+      "commit": null,
+      "note": "closed by NickKhalow as a duplicate of #8218 and reopened only by Sentry; the fix is in flight in #10525 (one owner for the Segment queue file), which covers this issue"
+    },
+    {
+      "number": 7906,
+      "status": "skipped",
+      "commit": null,
+      "note": "Segment send-loop network error; covered by the open #10525 (Segment queue ownership and typed health), which lists this issue"
+    },
+    {
+      "number": 8146,
+      "status": "skipped",
+      "commit": null,
+      "note": "launcher self-update failure (dcl_launcher.exe holds a handle on the 'latest' folder); the launcher is a separate codebase, not unity-explorer"
+    },
+    {
+      "number": 10445,
+      "status": "skipped",
+      "commit": null,
+      "note": "re-checked: no Explorer defect found; the w42 analysis traced it to the Creator Hub default video URL returning 404, and the only movement since is a QA-validation label toggle with no new evidence"
+    },
+    {
+      "number": 10245,
+      "status": "skipped",
+      "commit": null,
+      "note": "voice-chat speaker promotion stuck; only movement is a title edit, still no client-side root cause in the attached logs and it needs LiveKit/comms-server investigation with a live session"
+    },
+    {
+      "number": 9498,
+      "status": "skipped",
+      "commit": null,
+      "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate after recent streaming fixes; waiting on that validation before any code change"
+    },
+    {
+      "number": 9440,
+      "status": "skipped",
+      "commit": null,
+      "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate after recent memory-leak fixes; waiting on that validation, and it needs profiling sessions"
+    },
+    {
+      "number": 8794,
+      "status": "skipped",
+      "commit": null,
+      "note": "alejandro-jimenez-dcl asked QA on 2026-10-19 to re-validate; it was fixed by #8821"
+    },
+    {
+      "number": 10396,
+      "status": "skipped",
+      "commit": null,
+      "note": "still no reproduction steps; the only movement is a QA-validation label removal"
+    },
+    {
+      "number": 10416,
+      "status": "skipped",
+      "commit": null,
+      "note": "Genesis Plaza clock tower is drawn by the scene's own code (content team), not by the Explorer; the only movement is label removal"
+    },
+    {
+      "number": 10436,
+      "status": "skipped",
+      "commit": null,
+      "note": "UI animation polish between onboarding screens; needs design direction and in-editor visual iteration, no code defect to fix"
+    },
+    {
+      "number": 10437,
+      "status": "skipped",
+      "commit": null,
+      "note": "Mac-only avatar fade during a UI transition; needs in-editor visual verification on macOS, cannot be reproduced here"
+    },
+    {
+      "number": 10439,
+      "status": "skipped",
+      "commit": null,
+      "note": "per NickKhalow's triage (2026-10-20) the report is from v0.186, which predates the self-profile FSM change in #10350 (v0.187+); needs QA re-validation on a current build"
+    },
+    {
+      "number": 10456,
+      "status": "skipped",
+      "commit": null,
+      "note": "design change across skinning, spring bones and wearable loading modules (bind joints by bone name); too broad for a sweep"
+    },
+    {
+      "number": 10449,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed on dev by the w42 sweep PR #10492 (merged 2026-10-23); stays open until it ships to main"
+    },
+    {
+      "number": 10489,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed on dev by the w42 sweep PR #10492 (merged 2026-10-23); stays open until it ships to main"
+    }
+  ]
 }
