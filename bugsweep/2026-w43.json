@@ -50,9 +50,9 @@
     },
     {
       "number": 10515,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "raised inside the LiveKit SDK package (com.decentraland.livekit-sdk, FfiClient.Quit -> Dispose -> FfiNewRequest), a separate repo: at quit the SDK issues an FFI request even in sessions with no earlier LiveKit activity in the breadcrumbs, and livekit_ffi.dll fails to load (WinError 126: missing file or dependency on the user's install); the fix (skip the FFI dispose when the library was never loaded) belongs in the SDK, and hiding it in Sentry could mask a packaging defect"
     },
     {
       "number": 10523,
