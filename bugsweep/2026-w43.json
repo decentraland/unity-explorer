@@ -5,7 +5,12 @@
   "originChannel": "C0BB9H2CS5D",
   "since": "2026-10-17T12:02:21Z",
   "collectedAt": "2026-10-24T12:01:32Z",
-  "groups": [],
+  "groups": [
+    [
+      10494,
+      10495
+    ]
+  ],
   "issues": [
     {
       "number": 10537,
@@ -21,15 +26,15 @@
     },
     {
       "number": 10494,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "one root cause for both: a remote avatar entity whose CharacterTransform was destroyed while the entity stayed alive, so TrackPlayersPositionSystem, PartitionGlobalAssetEntitiesSystem and RemotePlayerAnimationSystem all fail on Transform.position in the same frames; Sentry has one user, one 5-second burst on v0.189 and only exception breadcrumbs, so what destroyed the transform cannot be identified, and guarding each system would only move the symptom"
     },
     {
       "number": 10495,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "one root cause for both: a remote avatar entity whose CharacterTransform was destroyed while the entity stayed alive, so TrackPlayersPositionSystem, PartitionGlobalAssetEntitiesSystem and RemotePlayerAnimationSystem all fail on Transform.position in the same frames; Sentry has one user, one 5-second burst on v0.189 and only exception breadcrumbs, so what destroyed the transform cannot be identified, and guarding each system would only move the symptom"
     },
     {
       "number": 10516,
