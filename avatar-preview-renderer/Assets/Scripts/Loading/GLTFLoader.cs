@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Data;
 using DCL.GLTFast.Wrappers;
 using GLTFast;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
@@ -49,7 +50,7 @@ namespace Loading
 
                 Debug.Log($"GLB loaded: {representation.MainFile}");
 
-                return new LoadedModel(entityDefinition, root, importer);
+                return new LoadedModel(entityDefinition, root, importer, ModelMetrics.Measure(root, importer));
             }
 
             throw new Exception($"Failed to load GLB: {representation.MainFile}");
@@ -85,7 +86,12 @@ namespace Loading
             }
         }
 
-        public static async Awaitable<LoadedEmote> LoadEmote(BodyShape bodyShape, EntityDefinition entityDefinition, Transform propParent)
+        /// <summary>
+        /// Loads an emote's clips, prop and audio. With <paramref name="social"/>, the clips, loop and
+        /// audio are that social emote animation's, including the clip for the other avatar.
+        /// </summary>
+        public static async Awaitable<LoadedEmote> LoadEmote(BodyShape bodyShape, EntityDefinition entityDefinition,
+            Transform propParent, [CanBeNull] SocialEmoteAnimation social)
         {
             var rep = entityDefinition[bodyShape];
 
@@ -111,10 +117,17 @@ namespace Loading
             AudioClip audioClip = null;
 
             // TODO: Clean this up cmon
-            var audioFile = rep.Files.FirstOrDefault(kvp =>
-                kvp.Key.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.EndsWith(".wav", StringComparison.OrdinalIgnoreCase));
+            // A social emote animation plays the audio it names and none otherwise, as Babylon does.
+            var audioFile = social != null
+                ? string.IsNullOrEmpty(social.audio)
+                    ? default
+                    : rep.Files.FirstOrDefault(kvp =>
+                        kvp.Key.Equals(social.audio, StringComparison.OrdinalIgnoreCase)
+                        || kvp.Key.EndsWith("/" + social.audio, StringComparison.OrdinalIgnoreCase))
+                : rep.Files.FirstOrDefault(kvp =>
+                    kvp.Key.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                    kvp.Key.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                    kvp.Key.EndsWith(".wav", StringComparison.OrdinalIgnoreCase));
             if (audioFile.Key != null)
             {
                 Debug.Log($"Loading audio clip: {audioFile.Key} - {audioFile.Value}");
@@ -148,14 +161,34 @@ namespace Loading
             if (success)
             {
                 var clips = importer.GetAnimationClips();
-                var looping = (entityDefinition.Flags & EntityFlags.Looping) != 0;
+                var looping = social?.loop ?? (entityDefinition.Flags & EntityFlags.Looping) != 0;
                 Debug.Log($"Loaded emote: {rep.MainFile} with clips: {clips.Length}");
                 
-                var (avatarClip, propClip) = ExtractClips(clips);
+                AnimationClip avatarClip, propClip, otherClip;
+
+                try
+                {
+                    (avatarClip, propClip, otherClip) =
+                        social != null ? SelectSocialClips(clips, social) : ExtractClips(clips);
+                }
+                catch
+                {
+                    // An animation the page named may match no clip; the import is released with the load.
+                    importer.Dispose();
+                    if (audioClip != null) Object.Destroy(audioClip);
+                    throw;
+                }
                 GameObject prop = null;
                 Animation propAnim = null;
                 
                 avatarClip.wrapMode = looping ? WrapMode.Loop : WrapMode.Clamp;
+
+                if (otherClip != null)
+                {
+                    // Restarted with the avatar's clip, as the prop is, under the same state name.
+                    otherClip.wrapMode = WrapMode.Clamp;
+                    otherClip.name = entityDefinition.URN;
+                }
 
                 if (propClip != null)
                 {
@@ -177,13 +210,34 @@ namespace Loading
                     Sanitize(prop.transform);
                 }
 
-                return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer);
+                var metrics = prop != null
+                    ? ModelMetrics.Measure(prop, importer)
+                    : ModelMetrics.Empty;
+
+                return new LoadedEmote(entityDefinition, avatarClip, audioClip, prop, propAnim, importer, metrics, otherClip);
             }
 
+            importer.Dispose();
+            if (audioClip != null) Object.Destroy(audioClip);
             throw new NotSupportedException($"Failed to load emote: {rep.MainFile}");
         }
 
-        private static (AnimationClip avatarCliP, AnimationClip propClip) ExtractClips(AnimationClip[] clips)
+        private static (AnimationClip avatarClip, AnimationClip propClip, AnimationClip otherClip) SelectSocialClips(
+            AnimationClip[] clips, SocialEmoteAnimation social)
+        {
+            var names = new string[clips.Length];
+            for (var i = 0; i < clips.Length; i++) names[i] = clips[i].name;
+
+            var (avatar, other, prop) = social.SelectClips(names);
+
+            if (avatar < 0)
+                throw new InvalidOperationException(
+                    $"No clip for the social emote animation {social.AvatarAnimation} among: {string.Join(", ", names)}");
+
+            return (clips[avatar], prop >= 0 ? clips[prop] : null, other >= 0 ? clips[other] : null);
+        }
+
+        private static (AnimationClip avatarClip, AnimationClip propClip, AnimationClip otherClip) ExtractClips(AnimationClip[] clips)
         {
             // Note, some GLB's just don't have an animation that ends with _Avatar, because of course they bloody don't.
             // Even though conventions say they should: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
@@ -212,7 +266,7 @@ namespace Loading
             
             if (avatarClip == null) throw new InvalidOperationException("Failed to determine animation clip assignment from names: " + clips.Select(c => c.name).Aggregate((a, b) => a + ", " + b));
             
-            return (avatarClip, propClip);
+            return (avatarClip, propClip, null);
         } 
         
         /// <summary>
