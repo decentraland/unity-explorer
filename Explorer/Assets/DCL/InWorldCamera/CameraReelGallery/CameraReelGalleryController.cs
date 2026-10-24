@@ -59,7 +59,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 1;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
-        private const int GRID_POOL_MAX_SIZE = 500;
+        private const int GRID_POOL_MAX_SIZE = 1000;
         private const int ANIMATION_DELAY = 300;
 
         private static readonly ListObjectPool<CameraReelResponseCompact> CAMERA_REEL_RESPONSES_POOL = new ();
