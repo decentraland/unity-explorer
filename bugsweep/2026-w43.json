@@ -74,9 +74,9 @@
     },
     {
       "number": 10533,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "client side checked: a photo taken in a world is tagged with the worlds-endpoint id, which is the world name (kenz0.dcl.eth), and the community card resolves its place ids through destinations, which only resolves worlds by name, so both sides use the same id and the client sends the right placesIds to camera-reel POST /places/images; why the public photo is not returned needs checking in camera-reel-service (indexing or public filter for world photos); the community Photos tab is also being rewritten in the open #10531"
     },
     {
       "number": 10490,
