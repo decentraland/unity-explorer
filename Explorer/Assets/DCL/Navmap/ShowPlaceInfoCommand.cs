@@ -39,7 +39,7 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Expand();
 
             placeInfoPanelController.Set(placeInfo);
-            placeInfoPanelController.SetOriginParcel(additionalParams?.OriginalParcel);
+            placeInfoPanelController.SetOriginParcel(additionalParams?.OriginalParcel, additionalParams is { LandOnOriginalParcel: true });
             placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.Overview);
             placeInfoPanelController.HideLiveEvent();
             searchBarController.ToggleClearButton(true);

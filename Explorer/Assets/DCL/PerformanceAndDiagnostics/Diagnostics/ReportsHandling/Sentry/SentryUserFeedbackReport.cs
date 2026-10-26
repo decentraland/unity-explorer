@@ -6,16 +6,12 @@ namespace DCL.Diagnostics.Sentry
         public readonly string Message;
         public readonly string? ContactEmail;
         public readonly string? UserName;
-        public readonly byte[]? Image;
-        public readonly string? ImageContentType;
 
-        public SentryUserFeedbackReport(string message, string? contactEmail, string? userName, byte[]? image, string? imageContentType)
+        public SentryUserFeedbackReport(string message, string? contactEmail, string? userName)
         {
             Message = message;
             ContactEmail = contactEmail;
             UserName = userName;
-            Image = image;
-            ImageContentType = imageContentType;
         }
     }
 }
