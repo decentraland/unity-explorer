@@ -11,6 +11,10 @@ namespace DCL.SDKComponents.MediaStream
 
         public const string PRESENTATION_BOT_IDENTITY_PREFIX = "presentation-bot:";
 
+        public const string PRESENTATION_VIDEO_TRACK_NAME = "presentation-video";
+
+        public const int MAX_LIVEKIT_TEXTURE_SIZE = 2048;
+
         [SuppressMessage("ReSharper", "StringStartsWithIsCultureSpecific")]
         public static bool IsLivekitAddress(this string address) =>
             address.StartsWith("livekit-video://");
