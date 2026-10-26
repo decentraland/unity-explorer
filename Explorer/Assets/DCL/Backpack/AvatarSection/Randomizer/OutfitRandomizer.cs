@@ -13,8 +13,19 @@ namespace DCL.Backpack.AvatarSection.Randomizer
     /// </summary>
     public class OutfitRandomizer
     {
+        /// <summary>
+        ///     Chance that an optional accessory category (hat, mask, earring, facial hair, …) gets a pick on a roll.
+        /// </summary>
         internal const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.75f;
+
+        /// <summary>
+        ///     Chance that a roll includes a skin, kept low because a skin covers most of the outfit.
+        /// </summary>
         internal const float SKIN_INCLUDE_CHANCE = 0.2f;
+
+        /// <summary>
+        ///     Chance that a category picks from the user's own wearables before falling back to the base ones.
+        /// </summary>
         internal const float CUSTOM_PRIORITY_CHANCE = 0.8f;
 
         private const string MALE_BASE_PREFIX = "m_";

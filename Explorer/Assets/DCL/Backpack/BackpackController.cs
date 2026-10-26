@@ -349,6 +349,7 @@ namespace DCL.Backpack
                 avatar.ForceRender,
                 useFullUrns: true
             );
+            randomizeOutfitController.SetAvatarReady(true);
             backpackCommandBus.SendCommand(command);
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
@@ -359,7 +360,6 @@ namespace DCL.Backpack
             }
 
             isAvatarLoaded = true;
-            randomizeOutfitController.SetAvatarReady(true);
         }
 
         public void Activate()

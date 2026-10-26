@@ -25,7 +25,9 @@ namespace DCL.Backpack.AvatarSection.Randomizer
     /// </summary>
     public class RandomizeOutfitController : IDisposable
     {
-        private const int OWNED_PAGE_SIZE = 200;
+        /// <summary>
+        ///     How many times a roll retries the core categories left bare by a conflict or a failed load before giving up on them.
+        /// </summary>
         private const int MAX_REPICK_ROUNDS = 3;
 
         private readonly RandomizeOutfitView view;
@@ -83,11 +85,13 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         }
 
         /// <summary>
-        ///     Randomize stays locked until the backpack has equipped the profile's outfit, so the first undo step is the complete starting outfit.
+        ///     Unlocks Randomize, keeping every button held until the next <see cref="IBackpackEventBus.EquipOutfitCompletedEvent" />.
+        ///     Call it right before sending the profile's own equip command, so the first undo step is the complete starting outfit.
         /// </summary>
         public void SetAvatarReady(bool ready)
         {
             isAvatarReady = ready;
+            isApplying = ready;
             RefreshButtons();
         }
 
@@ -163,15 +167,22 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
                 if (ct.IsCancellationRequested) return;
 
+                // The rest of the backpack stays usable while the roll loads, so the outfit is captured again to keep edits made meanwhile
+                BackpackEquipOutfitCommand latest = CaptureCurrent();
+
+                // The picks were filtered and resolved for the old body shape
+                if (!string.Equals(latest.BodyShape, current.BodyShape, StringComparison.OrdinalIgnoreCase))
+                    return;
+
                 if (outfit.Count == 0)
                 {
                     ReportHub.LogWarning(ReportCategory.BACKPACK, "Randomize resolved no wearables, the current outfit is kept");
                     return;
                 }
 
-                undoStack.Push(current);
+                undoStack.Push(latest);
                 redoStack.Clear();
-                Apply(new BackpackEquipOutfitCommand(current.BodyShape, outfit, current.EyesColor, current.HairColor, current.SkinColor, Array.Empty<string>(), useFullUrns: true));
+                Apply(new BackpackEquipOutfitCommand(latest.BodyShape, outfit, latest.EyesColor, latest.HairColor, latest.SkinColor, Array.Empty<string>(), useFullUrns: true));
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
@@ -189,7 +200,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         {
             using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> loaded);
 
-            bool complete = await wearablesProvider.TryGetAllTrimmedAsync(new IWearablesProvider.Params(OWNED_PAGE_SIZE, 1), ct, loaded, OWNED_PAGE_SIZE);
+            bool complete = await wearablesProvider.TryGetAllTrimmedAsync(new IWearablesProvider.Params(WearablesProviderExtensions.MAX_PAGE_SIZE, 1), ct, loaded);
 
             if (!complete)
             {
@@ -239,6 +250,18 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                         // A core category hidden by a kept pick is covered on the avatar; one dropped for hiding a kept pick is left bare, so it gets another try.
                         if (round < MAX_REPICK_ROUNDS
                             && OutfitRandomizer.IsCoreCategory(category)
+                            && !hidden.Contains(category)
+                            && randomizer.TryRepick(category, tried, out URN replacement))
+                            pending.Add(replacement);
+                    }
+
+                    // A core pick that failed to load never reaches the conflict check, so its slot is bare too
+                    foreach (string category in picks.Keys)
+                    {
+                        if (round < MAX_REPICK_ROUNDS
+                            && OutfitRandomizer.IsCoreCategory(category)
+                            && !wearablesByCategory.ContainsKey(category)
+                            && !dropped.Contains(category)
                             && !hidden.Contains(category)
                             && randomizer.TryRepick(category, tried, out URN replacement))
                             pending.Add(replacement);

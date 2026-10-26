@@ -91,11 +91,11 @@ namespace DCL.AvatarRendering.Wearables
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
-            var wearablesPromise = ParamPromise.Create(world!,
+            var wearablesPromise = ParamPromise.Create(world,
                 intention,
                 PartitionComponent.TOP_PRIORITY);
 
-            wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);
+            wearablesPromise = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             ct.ThrowIfCancellationRequested();
 

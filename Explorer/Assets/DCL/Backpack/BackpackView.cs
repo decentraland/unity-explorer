@@ -10,28 +10,28 @@ namespace DCL.Backpack
     public class BackpackView : MonoBehaviour
     {
         [field: SerializeField]
-        public BackpackPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
+        public BackpackPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; } = null!;
 
         [field: SerializeField]
-        public BackpackSortDropdownView BackpackSortView { get; private set; }
+        public BackpackSortDropdownView BackpackSortView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button TipsButton { get; private set; }
+        public Button TipsButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public DeselectableUiElement TipsPanelDeselectable { get; private set; }
+        public DeselectableUiElement TipsPanelDeselectable { get; private set; } = null!;
 
         [field: SerializeField]
-        public CharacterPreviewView CharacterPreviewView { get; private set; }
+        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
         public RandomizeOutfitView RandomizeOutfitView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Animator PanelAnimator { get; private set; }
+        public Animator PanelAnimator { get; private set; } = null!;
 
         [field: SerializeField]
-        public Animator HeaderAnimator { get; private set; }
+        public Animator HeaderAnimator { get; private set; } = null!;
 
         [field: Header("Compact layout")]
         [field: SerializeField]

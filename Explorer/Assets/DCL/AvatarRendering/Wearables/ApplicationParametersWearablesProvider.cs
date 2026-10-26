@@ -87,9 +87,7 @@ namespace DCL.AvatarRendering.Wearables
                 }
 
                 // Include ALL user's available wearables (loop pages)
-                // Higher page size to do a lot less requests.
-                const int OWNED_PAGE_SIZE = 200;
-                await source.TryGetAllTrimmedAsync(parameters, ct, localBuffer, OWNED_PAGE_SIZE);
+                await source.TryGetAllTrimmedAsync(parameters, ct, localBuffer);
 
                 // De-duplicate by URN and paginate the unified list
                 var unified = localBuffer

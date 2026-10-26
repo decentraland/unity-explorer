@@ -14,19 +14,19 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         public Button.ButtonClickedEvent RedoClicked => RedoButton.onClick;
 
         [field: SerializeField]
-        internal Button UndoButton { get; set; } = null!;
+        public Button UndoButton { get; internal set; } = null!;
 
         [field: SerializeField]
-        internal Button RandomizeButton { get; set; } = null!;
+        public Button RandomizeButton { get; internal set; } = null!;
 
         [field: SerializeField]
-        internal Button RedoButton { get; set; } = null!;
+        public Button RedoButton { get; internal set; } = null!;
 
         [field: SerializeField]
-        internal CanvasGroup UndoCanvasGroup { get; set; } = null!;
+        public CanvasGroup UndoCanvasGroup { get; internal set; } = null!;
 
         [field: SerializeField]
-        internal CanvasGroup RedoCanvasGroup { get; set; } = null!;
+        public CanvasGroup RedoCanvasGroup { get; internal set; } = null!;
 
         /// <summary>
         ///     Locked undo and redo fade the whole button instead of greying it, so the arrows stay readable.

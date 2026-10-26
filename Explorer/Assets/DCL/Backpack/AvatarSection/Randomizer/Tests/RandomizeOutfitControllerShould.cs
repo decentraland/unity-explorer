@@ -60,7 +60,8 @@ namespace DCL.Backpack.Tests
                      {
                          (SHIRT_A, WearableCategories.Categories.UPPER_BODY), (SHIRT_B, WearableCategories.Categories.UPPER_BODY),
                          (PANTS_A, WearableCategories.Categories.LOWER_BODY), (PANTS_B, WearableCategories.Categories.LOWER_BODY),
-                         (STARTING_SHIRT, WearableCategories.Categories.UPPER_BODY), ((string)BodyShape.MALE, WearableCategories.Categories.BODY_SHAPE),
+                         (STARTING_SHIRT, WearableCategories.Categories.UPPER_BODY), (BodyShape.MALE, WearableCategories.Categories.BODY_SHAPE),
+                         (BodyShape.FEMALE, WearableCategories.Categories.BODY_SHAPE),
                      })
                 fullWearables[new URN(urn)] = RandomizerTestWearables.Full(urn, category);
 
@@ -119,10 +120,26 @@ namespace DCL.Backpack.Tests
         }
 
         [Test]
+        public void KeepRandomizeLockedUntilTheProfileOutfitIsEquipped()
+        {
+            // Act
+            controller.SetAvatarReady(true);
+
+            // Assert
+            Assert.IsFalse(view.RandomizeButton.interactable);
+
+            // Act
+            eventBus.EquipOutfitCompletedEvent += Raise.Event<Action>();
+
+            // Assert
+            Assert.IsTrue(view.RandomizeButton.interactable);
+        }
+
+        [Test]
         public void EquipARandomOutfitKeepingBodyShapeAndColors()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
 
             // Act
             view.RandomizeClicked.Invoke();
@@ -142,7 +159,7 @@ namespace DCL.Backpack.Tests
         public void UndoBackToTheOutfitBeforeTheFirstRoll()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
             view.RandomizeClicked.Invoke();
             view.RandomizeClicked.Invoke();
             view.RandomizeClicked.Invoke();
@@ -163,7 +180,7 @@ namespace DCL.Backpack.Tests
         public void RedoUpToTheLastRolledOutfit()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
             view.RandomizeClicked.Invoke();
             view.RandomizeClicked.Invoke();
             IReadOnlyCollection<string?> lastRoll = sentCommands[^1].Wearables;
@@ -184,7 +201,7 @@ namespace DCL.Backpack.Tests
         public void ClearRedoOnANewRoll()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
             view.RandomizeClicked.Invoke();
             view.UndoClicked.Invoke();
 
@@ -200,7 +217,7 @@ namespace DCL.Backpack.Tests
         public void LockAllButtonsUntilTheOutfitIsApplied()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
             completeEquipsImmediately = false;
 
             // Act
@@ -222,7 +239,7 @@ namespace DCL.Backpack.Tests
         public void ForgetTheHistoryOnReset()
         {
             // Arrange
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
             view.RandomizeClicked.Invoke();
 
             // Act
@@ -239,7 +256,7 @@ namespace DCL.Backpack.Tests
             // Arrange
             wearablesProvider.GetByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<BodyShape>(), Arg.Any<CancellationToken>(), Arg.Any<List<IWearable>?>())
                              .Returns(UniTask.FromResult<IReadOnlyCollection<IWearable>?>(null));
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
 
             // Act
             view.RandomizeClicked.Invoke();
@@ -255,7 +272,7 @@ namespace DCL.Backpack.Tests
         {
             // Arrange
             GivenOwnedWearables();
-            controller.SetAvatarReady(true);
+            GivenAvatarReady();
 
             // Act
             view.RandomizeClicked.Invoke();
@@ -263,6 +280,50 @@ namespace DCL.Backpack.Tests
             // Assert
             Assert.IsEmpty(sentCommands);
             Assert.IsTrue(view.RandomizeButton.interactable);
+        }
+
+        [Test]
+        public void DropARollWhenTheBodyShapeChangesWhileItLoads()
+        {
+            // Arrange
+            GivenAvatarReady();
+            var pointersGate = new UniTaskCompletionSource();
+            GivenPointersResolve(pointersGate);
+            view.RandomizeClicked.Invoke();
+
+            // Act
+            equipped[WearableCategories.Categories.BODY_SHAPE] = fullWearables[new URN(BodyShape.FEMALE)];
+            pointersGate.TrySetResult();
+
+            // Assert
+            Assert.IsEmpty(sentCommands);
+            Assert.IsFalse(view.UndoButton.interactable);
+            Assert.IsTrue(view.RandomizeButton.interactable);
+        }
+
+        [Test]
+        public void RepickACorePickThatFailsToLoad()
+        {
+            // Arrange
+            GivenOwnedWearables(
+                RandomizerTestWearables.Trimmed(SHIRT_A, WearableCategories.Categories.UPPER_BODY),
+                RandomizerTestWearables.Trimmed(SHIRT_B, WearableCategories.Categories.UPPER_BODY),
+                RandomizerTestWearables.Trimmed(PANTS_A, WearableCategories.Categories.LOWER_BODY));
+            fullWearables.Remove(new URN(SHIRT_A));
+            GivenAvatarReady();
+
+            // Act
+            view.RandomizeClicked.Invoke();
+
+            // Assert
+            Assert.AreEqual(1, sentCommands.Count);
+            CollectionAssert.AreEquivalent(new[] { SHIRT_B, PANTS_A }, sentCommands[0].Wearables);
+        }
+
+        private void GivenAvatarReady()
+        {
+            controller.SetAvatarReady(true);
+            eventBus.EquipOutfitCompletedEvent += Raise.Event<Action>();
         }
 
         private void OnEquipOutfitSent(BackpackEquipOutfitCommand command)
@@ -282,6 +343,8 @@ namespace DCL.Backpack.Tests
 
             foreach (string? urn in command.Wearables)
             {
+                if (urn == null) continue;
+
                 IWearable wearable = fullWearables[new URN(urn)];
                 equipped[wearable.GetCategory()] = wearable;
             }
@@ -301,19 +364,24 @@ namespace DCL.Backpack.Tests
                               });
         }
 
-        private void GivenPointersResolve()
+        private void GivenPointersResolve(UniTaskCompletionSource? gate = null)
         {
             wearablesProvider.GetByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<BodyShape>(), Arg.Any<CancellationToken>(), Arg.Any<List<IWearable>?>())
-                             .Returns(call =>
-                              {
-                                  List<IWearable> results = call.ArgAt<List<IWearable>?>(3) ?? new List<IWearable>();
+                             .Returns(call => ResolvePointersAsync(call.ArgAt<IReadOnlyCollection<URN>>(0), call.ArgAt<List<IWearable>?>(3), gate));
+        }
 
-                                  foreach (URN pointer in call.ArgAt<IReadOnlyCollection<URN>>(0))
-                                      if (fullWearables.TryGetValue(pointer, out IWearable wearable))
-                                          results.Add(wearable);
+        private async UniTask<IReadOnlyCollection<IWearable>?> ResolvePointersAsync(IReadOnlyCollection<URN> pointers, List<IWearable>? results, UniTaskCompletionSource? gate)
+        {
+            if (gate != null)
+                await gate.Task;
 
-                                  return UniTask.FromResult<IReadOnlyCollection<IWearable>?>(results);
-                              });
+            results ??= new List<IWearable>();
+
+            foreach (URN pointer in pointers)
+                if (fullWearables.TryGetValue(pointer, out IWearable wearable))
+                    results.Add(wearable);
+
+            return results;
         }
 
         private RandomizeOutfitView CreateView()

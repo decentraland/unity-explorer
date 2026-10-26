@@ -9,14 +9,19 @@ namespace DCL.AvatarRendering.Wearables
     public static class WearablesProviderExtensions
     {
         /// <summary>
+        ///     Largest page the wearables endpoint serves, so walking every page takes the fewest requests.
+        /// </summary>
+        public const int MAX_PAGE_SIZE = 200;
+
+        /// <summary>
         ///     Walks every page matching <paramref name="parameters" /> into <paramref name="results" />.
-        ///     Returns false when the walk stopped before the reported total, which is how a failed page shows up.
+        ///     Returns false when a page came back empty before the reported total was reached.
         /// </summary>
         public static async UniTask<bool> TryGetAllTrimmedAsync(this IWearablesProvider provider,
             IWearablesProvider.Params parameters,
             CancellationToken ct,
             List<ITrimmedWearable> results,
-            int pageSize)
+            int pageSize = MAX_PAGE_SIZE)
         {
             using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> page);
 
