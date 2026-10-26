@@ -258,7 +258,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
                 if (placesCts.IsCancellationRequested)
                     return;
 
-                navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value).Forget();
+                navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value, landOnOriginalParcel: true).Forget();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

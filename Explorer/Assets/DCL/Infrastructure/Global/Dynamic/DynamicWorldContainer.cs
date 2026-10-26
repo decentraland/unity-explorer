@@ -547,7 +547,7 @@ namespace Global.Dynamic
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsServices?.FriendsCache, multiplayerContainer.MovementMessageBus),
-                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler),
+                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler, staticContainer.CurrentSceneUiOnly),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),

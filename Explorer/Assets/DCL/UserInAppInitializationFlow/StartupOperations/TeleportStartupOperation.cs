@@ -42,10 +42,13 @@ namespace DCL.UserInAppInitializationFlow
             string? spawnPointName = startParcel.SpawnPointName;
             Vector2Int destination = await ResolveDestinationAsync(ct);
 
+            // A manifest or local-scene destination is not the parcel the request was made for
+            bool landOnParcel = startParcel.LandOnParcel && destination == startParcel.Peek();
+
             // Consumed on every path: a consumed start parcel is the mark that the startup teleport happened
             startParcel.ConsumeByTeleportOperation();
 
-            return await InternalExecuteAsync(args, destination, ct, spawnPointName: spawnPointName);
+            return await InternalExecuteAsync(args, destination, ct, landOnParcel: landOnParcel, spawnPointName: spawnPointName);
         }
 
         private async UniTask<Vector2Int> ResolveDestinationAsync(CancellationToken ct)
