@@ -144,15 +144,6 @@ namespace Global.Dynamic
 
                 if (container.IdentityCache != null)
                 {
-                    if (container.IdentityCache.Identity != null)
-                        UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-
-                    container.IdentityCache.OnIdentityChanged += () =>
-                    {
-                        if (container.IdentityCache.Identity != null)
-                            UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-                    };
-
                     // Hand the logged-in identity to the launcher (for crash-report signed fetch) via a file it
                     // reads. Deleted on clean shutdown so it only survives a crash. Skipped without a session id.
                     if (hasSessionId)

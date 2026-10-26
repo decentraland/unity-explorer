@@ -143,6 +143,13 @@ def clone_current_target(use_cache):
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
         body['settings']['buildSchedule']['isEnabled'] = False
 
+        # The player build already builds Addressables (m_BuildAddressablesWithPlayerBuild: 1),
+        # so the Cloud Build pre-player Addressables pass only builds them a second time.
+        addressables = body['settings']['advanced']['unity'].get('addressables')
+        if isinstance(addressables, dict) and addressables.get('buildAddressables'):
+            addressables['buildAddressables'] = False
+            print("Disabled the Cloud Build Addressables pass (the player build builds them)")
+
         print(f"Using cache strategy target: {remoteCacheStrategy}")
 
         # Remove cache for new targets
