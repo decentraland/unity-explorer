@@ -119,11 +119,7 @@ namespace DCL.Profiles.Self
                 if (!realmData.Configured)
                     await UniTask.WaitUntil(realmData, static realm => realm.Configured, cancellationToken: ct);
 
-                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
-                // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
-                Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
-                    getFromCacheIfPossible: false,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+                Profile? profile = await GetWithTimeoutAsync(address, ct);
 
                 if (profile == null)
                 {
@@ -148,6 +144,26 @@ namespace DCL.Profiles.Self
 
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e))));
+            }
+        }
+
+        /// <summary>The profile requests carry no transport timeout, so a stalled connection is ended here as a <see cref="TimeoutException" />.</summary>
+        private async UniTask<Profile?> GetWithTimeoutAsync(UserId address, CancellationToken ct)
+        {
+            using CancellationTokenSource requestCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            using IDisposable timeoutTimer = requestCts.CancelAfterSlim(SelfProfile.FETCH_REQUEST_TIMEOUT);
+
+            try
+            {
+                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
+                // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
+                return await profileRepository.GetAsync(address.Value, 0, null, requestCts.Token,
+                    getFromCacheIfPossible: false,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+            }
+            catch (OperationCanceledException) when (requestCts.IsCancellationRequested && !ct.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Self profile request timed out after {SelfProfile.FETCH_REQUEST_TIMEOUT.TotalSeconds:F0}s");
             }
         }
 

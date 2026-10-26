@@ -17,6 +17,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -164,6 +165,27 @@ namespace DCL.Profiles.Tests
             profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
             Assert.That(inbox.Sent, Is.Empty);
         }
+
+        [UnityTest]
+        public IEnumerator ReportAFetchFailureWhenTheRequestStalls() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                AnyGet().Returns(call => UniTask.Never<ProfileTier?>(call.Arg<CancellationToken>()));
+                LogAssert.Expect(LogType.Exception, new Regex(nameof(TimeoutException)));
+
+                // Act
+                executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+                float deadline = UnityEngine.Time.realtimeSinceStartup + (float)SelfProfile.FETCH_REQUEST_TIMEOUT.TotalSeconds + 1.5f;
+
+                while (inbox.Sent.Count == 0 && UnityEngine.Time.realtimeSinceStartup < deadline)
+                    await UniTask.Yield();
+
+                // Assert
+                Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True, "a stalled request must settle, or the model stays Fetching");
+                Assert.That(msg.Failure.Exception, Is.TypeOf<TimeoutException>());
+            });
 
         [Test]
         public void FillAnEmptyEmoteWheelWithTheBaseEmotes()
