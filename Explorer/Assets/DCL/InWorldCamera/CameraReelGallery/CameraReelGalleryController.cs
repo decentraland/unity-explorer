@@ -14,10 +14,8 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using Utility;
@@ -51,10 +49,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
             Action<CameraReelResponseCompact> reelListRefreshIntention);
         public event ThumbnailClick? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
-        public event Action ScreenshotDeleted;
-        public event Action ScreenshotShared;
-        public event Action ScreenshotDownloaded;
-        public event Action<int> MaxThumbnailsUpdated;
+        public event Action? ScreenshotDeleted;
+        public event Action? ScreenshotShared;
+        public event Action? ScreenshotDownloaded;
+        public event Action<int>? MaxThumbnailsUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 1;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
@@ -90,7 +88,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private int beginVisible;
         private int endVisible;
         private int currentSize;
-        private CameraReelResponseCompact reelToDelete;
+        private CameraReelResponseCompact? reelToDelete;
         private PagedCameraReelManager pagedCameraReelManager;
 
         public CameraReelGalleryController(CameraReelGalleryView view,
@@ -254,7 +252,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.deleteReelModal.DOFade(1f, view.deleteModalAnimationDuration);
         }
 
-        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
+        private void HideDeleteModal()
         {
             view.deleteReelModal.DOFade(0f, view.deleteModalAnimationDuration).OnComplete(() => view.deleteReelModal.gameObject.SetActive(false));
         }
@@ -379,6 +377,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
+        /// <summary>
+        ///     Sizes the grids of the next show; <see cref="RestoreGridLayout" /> brings the authored layout back.
+        /// </summary>
+        public void SetGridLayout(int columns, int thumbnailWidth, int thumbnailHeight) =>
+            reelGalleryPoolManager.SetGridLayout(columns, new Vector2(thumbnailWidth, thumbnailHeight));
+
+        public void RestoreGridLayout() =>
+            SetGridLayout(reelGalleryConfigParams.GridLayoutFixedColumnCount, reelGalleryConfigParams.ThumbnailWidth, reelGalleryConfigParams.ThumbnailHeight);
+
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
@@ -456,19 +463,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private MonthGridController GetMonthGrid(DateTime dateTime)
         {
-            MonthGridController monthGridView = null;
-
             if (!reelGalleryConfigParams.GroupByMonth && monthViews.Count == 1)
                 foreach (MonthGridController controller in monthViews.Values)
-                    monthGridView = controller;
-            else if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
-                monthGridView = monthView;
-            else
-            {
-                monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
-                monthViews.Add(dateTime, monthGridView);
-            }
+                    return controller;
 
+            if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
+                return monthView;
+
+            MonthGridController monthGridView = reelGalleryPoolManager.GetGridElement(view.scrollContentRect);
+            monthViews.Add(dateTime, monthGridView);
             return monthGridView;
         }
 
@@ -491,9 +494,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse =>
                         ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse),
-                            reelToDelete =>
+                            reel =>
                             {
-                                this.reelToDelete = reelToDelete;
+                                reelToDelete = reel;
                                 DeleteScreenshot();
                             },
                             HideReelFromList)
@@ -652,7 +655,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             monthViews.Clear();
 
             foreach (KeyValuePair<CameraReelResponseCompact, Texture> row in reelThumbnailCache)
-                GameObject.Destroy(row.Value);
+                UnityEngine.Object.Destroy(row.Value);
 
             reelThumbnailCache.Clear();
             beginVisible = 0;
