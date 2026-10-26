@@ -19,7 +19,7 @@ namespace DCL.MapRenderer.Culling
         private readonly LinkedList<TrackedState> dirtyObjects = new ();
         private readonly Dictionary<IMapPositionProvider, TrackedState> trackedObjs = new ();
 
-        private int dirtyCamerasFlag = 0;
+        private int dirtyCamerasFlag;
         private CancellationTokenSource disposingCts = new ();
 
         public event Action? CamerasChanged;

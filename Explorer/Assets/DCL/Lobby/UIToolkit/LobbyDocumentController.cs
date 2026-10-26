@@ -715,13 +715,19 @@ namespace DCL.Lobby
             if (landingPlace == null) return;
 
             // Before the world loads the card mirrors the destination already picked, so there is nothing to reassign
-            if (startParcel.IsConsumed())
-                OnPlaceJumpIn(landingPlace, LobbyCardOrigin.Landing);
-            else
+            if (!startParcel.IsConsumed())
             {
                 PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
                 RequestClose();
             }
+            // A home is the exact parcel the user stood on, not a place
+            else if (startParcel.Source == StartParcelSource.Home && landingDestination is { WorldName: null } home)
+            {
+                PlaceJumpedIn?.Invoke(landingPlace, LobbyCardOrigin.Landing);
+                PickParcel(home.Parcel, landOnParcel: true);
+            }
+            else
+                OnPlaceJumpIn(landingPlace, LobbyCardOrigin.Landing);
         }
 
         private void OnAvatarClicked() =>
@@ -1271,7 +1277,7 @@ namespace DCL.Lobby
         {
             if (!startParcel.IsConsumed())
             {
-                StartAt(GenesisUrl(), parcel, spawnPointName: null);
+                StartAt(GenesisUrl(), parcel, spawnPointName: null, landOnParcel);
                 return;
             }
 
@@ -1282,12 +1288,12 @@ namespace DCL.Lobby
 
         // Hands the pick to the startup teleport: the realm, the parcel if one is given and the realm's own spawn otherwise,
         // and the spawn point if one is named
-        private void StartAt(URLDomain realm, Vector2Int? parcel, string? spawnPointName)
+        private void StartAt(URLDomain realm, Vector2Int? parcel, string? spawnPointName, bool landOnParcel = false)
         {
             startParcel.AssignRealm(realm, spawnPointName);
 
             if (parcel is { } startAt)
-                startParcel.Assign(startAt, spawnPointName);
+                startParcel.Assign(startAt, spawnPointName, landOnParcel);
 
             RequestClose();
         }

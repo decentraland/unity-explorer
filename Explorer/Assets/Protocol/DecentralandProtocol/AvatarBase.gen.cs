@@ -26,16 +26,17 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci1kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2Jhc2UucHJv",
             "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxogZGVjZW50cmFsYW5k",
-            "L2NvbW1vbi9jb2xvcnMucHJvdG8ixwEKDFBCQXZhdGFyQmFzZRIvCgpza2lu",
+            "L2NvbW1vbi9jb2xvcnMucHJvdG8i6QEKDFBCQXZhdGFyQmFzZRIvCgpza2lu",
             "X2NvbG9yGAEgASgLMhsuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjMSLwoK",
             "ZXllc19jb2xvchgCIAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3Iz",
             "Ei8KCmhhaXJfY29sb3IYAyABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNv",
-            "bG9yMxIWCg5ib2R5X3NoYXBlX3VybhgEIAEoCRIMCgRuYW1lGAUgASgJQhSq",
-            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "bG9yMxIWCg5ib2R5X3NoYXBlX3VybhgEIAEoCRIMCgRuYW1lGAUgASgJEhQK",
+            "B3RhbGtpbmcYBiABKAhIAIgBAUIKCghfdGFsa2luZ0IUqgIRRENMLkVDU0Nv",
+            "bXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarBase), global::DCL.ECSComponents.PBAvatarBase.Parser, new[]{ "SkinColor", "EyesColor", "HairColor", "BodyShapeUrn", "Name" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarBase), global::DCL.ECSComponents.PBAvatarBase.Parser, new[]{ "SkinColor", "EyesColor", "HairColor", "BodyShapeUrn", "Name", "Talking" }, new[]{ "Talking" }, null, null, null)
           }));
     }
     #endregion
@@ -53,6 +54,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBAvatarBase> _parser = new pb::MessageParser<PBAvatarBase>(() => new PBAvatarBase());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBAvatarBase> Parser { get { return _parser; } }
@@ -80,11 +82,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBAvatarBase(PBAvatarBase other) : this() {
+      _hasBits0 = other._hasBits0;
       skinColor_ = other.skinColor_ != null ? other.skinColor_.Clone() : null;
       eyesColor_ = other.eyesColor_ != null ? other.eyesColor_.Clone() : null;
       hairColor_ = other.hairColor_ != null ? other.hairColor_.Clone() : null;
       bodyShapeUrn_ = other.bodyShapeUrn_;
       name_ = other.name_;
+      talking_ = other.talking_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -154,6 +158,36 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "talking" field.</summary>
+    public const int TalkingFieldNumber = 6;
+    private readonly static bool TalkingDefaultValue = false;
+
+    private bool talking_;
+    /// <summary>
+    /// true while the player is speaking in voice chat; unset when the engine does not report voice activity
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Talking {
+      get { if ((_hasBits0 & 1) != 0) { return talking_; } else { return TalkingDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        talking_ = value;
+      }
+    }
+    /// <summary>Gets whether the "talking" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTalking {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "talking" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTalking() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -174,6 +208,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(HairColor, other.HairColor)) return false;
       if (BodyShapeUrn != other.BodyShapeUrn) return false;
       if (Name != other.Name) return false;
+      if (Talking != other.Talking) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -186,6 +221,7 @@ namespace DCL.ECSComponents {
       if (hairColor_ != null) hash ^= HairColor.GetHashCode();
       if (BodyShapeUrn.Length != 0) hash ^= BodyShapeUrn.GetHashCode();
       if (Name.Length != 0) hash ^= Name.GetHashCode();
+      if (HasTalking) hash ^= Talking.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -224,6 +260,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(42);
         output.WriteString(Name);
       }
+      if (HasTalking) {
+        output.WriteRawTag(48);
+        output.WriteBool(Talking);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -254,6 +294,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(42);
         output.WriteString(Name);
       }
+      if (HasTalking) {
+        output.WriteRawTag(48);
+        output.WriteBool(Talking);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -278,6 +322,9 @@ namespace DCL.ECSComponents {
       }
       if (Name.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
+      }
+      if (HasTalking) {
+        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -314,6 +361,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Name.Length != 0) {
         Name = other.Name;
+      }
+      if (other.HasTalking) {
+        Talking = other.Talking;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -363,6 +413,10 @@ namespace DCL.ECSComponents {
             Name = input.ReadString();
             break;
           }
+          case 48: {
+            Talking = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -409,6 +463,10 @@ namespace DCL.ECSComponents {
           }
           case 42: {
             Name = input.ReadString();
+            break;
+          }
+          case 48: {
+            Talking = input.ReadBool();
             break;
           }
         }

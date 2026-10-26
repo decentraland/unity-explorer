@@ -5,12 +5,12 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
 using DCL.UI;
+using DCL.Utilities;
 using ECS.Abstract;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using Utility;
 
@@ -20,20 +20,30 @@ namespace DCL.Input.Systems
     [UpdateBefore(typeof(InputGroup))]
     public partial class UpdateShowHideUIInputSystem : BaseUnityLoopSystem
     {
+        private enum UiVisibility
+        {
+            AllVisible,
+            ExplorerHidden,
+            AllHidden,
+        }
+
         private const int TOAST_DURATION_MS = 3000;
+        private const string EXPLORER_HIDDEN_TOAST = "Press   <link=key>U</link>   to hide the scene UI.";
+        private const string ALL_HIDDEN_TOAST = "Press   <link=key>U</link>   to show the UI again.";
 
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
+        private readonly IReactiveProperty<bool> currentSceneUiOnly;
 
         private SingleInstanceEntity camera;
         private CancellationTokenSource? toastCt;
         private readonly WarningNotificationView warningNotificationView;
 
-        private bool currentUIVisibilityState = true;
+        private UiVisibility visibility = UiVisibility.AllVisible;
 
         private readonly IReadOnlyList<InputAction> actionsThatEnableUI;
 
-        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
+        internal UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView, IReactiveProperty<bool> currentSceneUiOnly) : base(world)
         {
             dclInput = DCLInput.Instance;
             actionsThatEnableUI = new List<InputAction>
@@ -50,6 +60,7 @@ namespace DCL.Input.Systems
 
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
+            this.currentSceneUiOnly = currentSceneUiOnly;
         }
 
         public override void Initialize()
@@ -61,46 +72,58 @@ namespace DCL.Input.Systems
         {
             // TODO: Should this really be in a system? It's not really updating anything, just checking for input triggers
 
-            bool? fromInputs = CheckInputs();
+            UiVisibility? fromInputs = CheckInputs();
 
             if (fromInputs.HasValue)
             {
-                currentUIVisibilityState = fromInputs.Value;
+                visibility = fromInputs.Value;
 
                 // Common UIs
-                mvcManager.SetAllViewsCanvasActive(currentUIVisibilityState);
+                mvcManager.SetAllViewsCanvasActive(visibility == UiVisibility.AllVisible);
 
                 ShowOrHideToast();
             }
             else if (World.TryGet(camera, out ToggleUIRequest request))
             {
-                currentUIVisibilityState = request.Enable;
+                visibility = request.Enable ? UiVisibility.AllVisible : UiVisibility.AllHidden;
 
                 // Common UIs
-                mvcManager.SetAllViewsCanvasActive(request.Except, currentUIVisibilityState);
+                mvcManager.SetAllViewsCanvasActive(request.Except, visibility == UiVisibility.AllVisible);
 
                 World.Remove<ToggleUIRequest>(camera);
 
                 ShowOrHideToast();
             }
 
+            currentSceneUiOnly.UpdateValue(visibility == UiVisibility.ExplorerHidden);
+
             foreach (UIDocumentTracker tracker in UIDocumentTracker.ActiveDocuments)
             {
-                if(!tracker.CanBeHidden)
+                if (!tracker.CanBeHidden)
                     continue;
-                tracker.Document.rootVisualElement.SetVisible(currentUIVisibilityState);
+
+                bool visible = tracker.IsSceneUi
+                    ? visibility != UiVisibility.AllHidden
+                    : visibility == UiVisibility.AllVisible;
+
+                tracker.Document.rootVisualElement.SetVisible(visible);
             }
         }
 
-        private bool? CheckInputs()
+        private UiVisibility? CheckInputs()
         {
             if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
-                return !currentUIVisibilityState;
+                return visibility switch
+                {
+                    UiVisibility.AllVisible => UiVisibility.ExplorerHidden,
+                    UiVisibility.ExplorerHidden => UiVisibility.AllHidden,
+                    _ => UiVisibility.AllVisible,
+                };
 
             foreach (InputAction inputAction in actionsThatEnableUI)
             {
                 if (inputAction.WasPressedThisFrame())
-                    return true;
+                    return UiVisibility.AllVisible;
             }
 
             return null;
@@ -108,19 +131,20 @@ namespace DCL.Input.Systems
 
         private void ShowOrHideToast()
         {
-            if (!currentUIVisibilityState)
-            {
-                toastCt = toastCt.SafeRestart();
-
-                warningNotificationView.AnimatedShowAsync(TOAST_DURATION_MS, toastCt.Token)
-                                       .SuppressCancellationThrow()
-                                       .Forget();
-            }
-            else
+            if (visibility == UiVisibility.AllVisible)
             {
                 toastCt.SafeCancelAndDispose();
                 warningNotificationView.Hide();
+                return;
             }
+
+            string text = visibility == UiVisibility.ExplorerHidden ? EXPLORER_HIDDEN_TOAST : ALL_HIDDEN_TOAST;
+
+            toastCt = toastCt.SafeRestart();
+
+            warningNotificationView.AnimatedShowAsync(text, TOAST_DURATION_MS, toastCt.Token)
+                                   .SuppressCancellationThrow()
+                                   .Forget();
         }
     }
 }
