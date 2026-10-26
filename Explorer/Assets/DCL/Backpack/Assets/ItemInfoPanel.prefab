@@ -2133,8 +2133,8 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  <SpacingX>k__BackingField: 8
-  <SpacingY>k__BackingField: 5
+  <SpacingX>k__BackingField: 5
+  <SpacingY>k__BackingField: 8
 --- !u!114 &2552612508868533306
 MonoBehaviour:
   m_ObjectHideFlags: 0

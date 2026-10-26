@@ -61,7 +61,7 @@ namespace DCL.Diagnostics
                 if (isLocalSceneDevelopment)
                     sentryMatrix = new CategoryExclusionMatrix(sentryMatrix, ReportCategory.JAVASCRIPT);
 
-                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, sessionId));
+                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, isLocalSceneDevelopment, sessionId));
             }
 
             var logger = new ReportHubLogger(handlers);

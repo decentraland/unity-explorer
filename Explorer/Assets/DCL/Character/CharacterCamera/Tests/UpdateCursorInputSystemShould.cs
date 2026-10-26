@@ -155,6 +155,52 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
+        public void SetCursorToInteractableWhenHoveringOverAGraphicOfClickableUi()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
+
+            var button = new GameObject("BUTTON");
+            button.AddComponent<Button>();
+            var label = new GameObject("LABEL");
+            label.AddComponent<Image>();
+            label.transform.SetParent(button.transform);
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = label } });
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(CursorStyle.Interaction);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Interaction);
+
+            Object.DestroyImmediate(button);
+        }
+
+        [Test]
+        public void SetCursorToNormalWhenClickableUiIsCoveredByNotClickableUi()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
+
+            var cover = new GameObject("COVER");
+            cover.AddComponent<Image>();
+            var button = new GameObject("BUTTON");
+            button.AddComponent<Button>();
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = cover }, new () { gameObject = button } });
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Normal);
+
+            Object.DestroyImmediate(cover);
+            Object.DestroyImmediate(button);
+        }
+
+        [Test]
         public void SetCursorToNormalWhenHoveringOverNotClickableUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });

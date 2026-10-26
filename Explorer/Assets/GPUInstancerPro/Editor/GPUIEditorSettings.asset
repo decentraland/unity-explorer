@@ -24,6 +24,6 @@ MonoBehaviour:
   stripDOTSInstancingVariants: 1
   stripObjectMotionVectorVariants: 0
   stripPerInstanceLightProbeVariants: 0
-  stripNonProceduralGPUIGeneratedVariants: 0
+  stripNonProceduralGPUIGeneratedVariants: 1
   _customEditorSettings: []
   packageImportList: []

@@ -6,7 +6,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using Ipfs;
 using System.Collections.Generic;
-using UnityEngine;
 using Utility.Multithreading;*/
 
 namespace DCL.SceneLifeCycle.Tests

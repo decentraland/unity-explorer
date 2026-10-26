@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.MediaStream
             ToggleCurrentStreamsStateQuery(World, enteredScene);
         }
 
-        // Drops players whose AVPro object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // Drops players whose MediaPlayer object was destroyed under them (pool eviction / scene teardown). Runs first so no
         // later query dereferences the stale ref; recreated from the SDK component next frame.
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureAudioIsPlaying();
+                        livekitPlayer.EnsureAudioIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -156,7 +156,6 @@ namespace DCL.SDKComponents.MediaStream
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
             if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
-            if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
@@ -176,7 +175,7 @@ namespace DCL.SDKComponents.MediaStream
                     // Covers cases like leaving and re-entering the scene
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureVideoIsPlaying();
+                        livekitPlayer.EnsureVideoIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -197,7 +196,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
                 if (ConsumePromise(ref component, false))
-                    component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+                    component.MediaPlayer.SetPlaybackProperties(sdkComponent, component.IsLiveStream);
 
                 component.UpdateState();
 
@@ -264,7 +263,7 @@ namespace DCL.SDKComponents.MediaStream
             if (assignedTexture.Texture.width != targetWidth || assignedTexture.Texture.height != targetHeight)
                 assignedTexture.Resize(targetWidth, targetHeight);
 
-            bool needsFlip = playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1));
+            bool needsFlip = playerComponent.MediaPlayer.TextureScale.Equals(new Vector2(1, -1));
             bool dimensionsCapped = targetWidth != avText.width || targetHeight != avText.height;
 
             if (needsFlip)
@@ -389,7 +388,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
                 string selfUrl = urlMediaAddress.Url;
-                string otherUrl = other!.Url;
+                string otherUrl = other.Url;
 
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
@@ -425,10 +424,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
-            // On macOS, enforce minimum gap between HLS stream opens to prevent
-            // AVFoundation crashes when opening multiple streams simultaneously.
-            // If too soon since last open, defer the opening.
-            // On windows deferr to avoid frame drops when opening multiple streams simultaneously, as the media player can consume a lot of resources while opening a stream.
+            // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
+            // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
+            // the gap still pays for delaying the Nth stream by N × MIN_OPEN_MEDIA_INTERVAL_SECONDS.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
             float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 
@@ -457,9 +455,7 @@ namespace DCL.SDKComponents.MediaStream
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
                     $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
-                Profiler.BeginSample(component.MediaPlayer.HasControl
-                    ? "MediaPlayer.OpenMedia"
-                    : "MediaPlayer.InitialiseAndOpenMedia");
+                Profiler.BeginSample("MediaPlayer.OpenMedia");
 
                 try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }

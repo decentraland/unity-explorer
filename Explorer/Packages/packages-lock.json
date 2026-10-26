@@ -73,7 +73,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
+      "hash": "22fcfed12671a94cde7f3b2ed955680873e299b1"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -177,13 +177,6 @@
       "source": "git",
       "dependencies": {},
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
-    },
-    "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -351,7 +344,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.2",
-      "depth": 1,
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -414,27 +407,6 @@
       "depth": 2,
       "source": "registry",
       "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.services.cloud-diagnostics": {
-      "version": "1.0.12",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.services.core": "1.12.5",
-        "com.unity.modules.unityanalytics": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.services.core": {
-      "version": "1.18.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.modules.androidjni": "1.0.0",
-        "com.unity.nuget.newtonsoft-json": "3.2.2",
-        "com.unity.modules.unitywebrequest": "1.0.0"
-      },
       "url": "https://packages.unity.com"
     },
     "com.unity.shadergraph": {
@@ -508,7 +480,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
+      "hash": "22fcfed12671a94cde7f3b2ed955680873e299b1"
     },
     "decentraland.renderfeatures": {
       "version": "file:../../render-features",

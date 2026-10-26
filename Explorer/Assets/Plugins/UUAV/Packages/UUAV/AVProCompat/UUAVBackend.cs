@@ -4,9 +4,6 @@ namespace UUAV.Compat
 {
     internal sealed class UUAVBackend : IMediaControl, IMediaInfo, ITextureProducer
     {
-        private static readonly TimeRanges NotBuffered = new TimeRanges(0);
-        private static readonly TimeRanges Buffered = new TimeRanges(1);
-
         private readonly UUAVPlayer player;
 
         private bool seekRequested;
@@ -69,22 +66,6 @@ namespace UUAV.Compat
 
         public ErrorCode GetLastError() =>
             player.State == UUAVState.Error ? ErrorCode.LoadFailed : ErrorCode.None;
-
-        // The consumer reads only Count, waiting for a buffered range to exist
-        // before applying loop/rate/volume. Report one range once media is ready.
-        public TimeRanges GetBufferedTimes()
-        {
-            switch (player.State)
-            {
-                case UUAVState.Ready:
-                case UUAVState.Playing:
-                case UUAVState.Paused:
-                case UUAVState.Ended:
-                    return Buffered;
-                default:
-                    return NotBuffered;
-            }
-        }
 
         public double GetDuration() => player.Duration;
 

@@ -8,24 +8,27 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Fsm;
+using Utility.Times;
 
 namespace DCL.Profiles.Self
 {
     /// <summary>
     ///     Performs the self-profile FSM commands and reports outcomes as messages. A fetch cancels the activity in flight; a deploy
     ///     never cancels a deploy in flight; <c>ResetLocalState</c> and <c>Dispose</c> cancel any. A cancelled IO reports nothing;
-    ///     any other failure is logged and sent as a failure message.
+    ///     any other failure is sent as a failure message.
     /// </summary>
     public class SelfProfileCmdExecutor : ICmdExecutor<SelfProfileCmd, SelfProfileMsg>
     {
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
@@ -40,6 +43,7 @@ namespace DCL.Profiles.Self
             IProfileRepository profileRepository,
             IProfileCache profileCache,
             IWeb3IdentityCache identityCache,
+            IRealmData realmData,
             IWearableStorage wearableStorage,
             IEmoteStorage emoteStorage,
             IEquippedWearables equippedWearables,
@@ -52,6 +56,7 @@ namespace DCL.Profiles.Self
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
             this.identityCache = identityCache;
+            this.realmData = realmData;
             this.wearableStorage = wearableStorage;
             this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
@@ -77,6 +82,7 @@ namespace DCL.Profiles.Self
                 onFetch: static (ctx, address) => ctx.executor.StartFetch(address, ctx.inbox),
                 onPublish: static (ctx, profile) => ctx.executor.Publish(profile),
                 onDeploy: static (ctx, deploy) => ctx.executor.StartDeploy(deploy, ctx.inbox),
+                onReportFetchFailure: static (_, failure) => ReportFetchFailure(failure),
                 onBatch: static (ctx, batch) => ctx.executor.ExecuteBatch(batch, ctx.inbox)
             );
 
@@ -110,11 +116,16 @@ namespace DCL.Profiles.Self
         {
             try
             {
+                // The profile endpoints are resolved from the realm, so a fetch started before it is configured
+                // waits for it instead of sending a request built from a placeholder url.
+                if (!realmData.Configured)
+                    await UniTask.WaitUntil(realmData, static realm => realm.Configured, cancellationToken: ct);
+
                 // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
                 // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
                 Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
                     getFromCacheIfPossible: false,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
 
                 if (profile == null)
                 {
@@ -137,9 +148,16 @@ namespace DCL.Profiles.Self
                 if (ct.IsCancellationRequested)
                     return;
 
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e))));
+                inbox.Send(SelfProfileMsg.FromFetchFailed(new FetchFailed(address, new ProfileFailure(e, UnixTimeMs.Now()))));
             }
+        }
+
+        private static void ReportFetchFailure(in ProfileFailure failure)
+        {
+            if (failure.Streak == 1)
+                ReportHub.LogException(failure.Exception, ReportCategory.PROFILE);
+            else
+                ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
         /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
@@ -204,10 +222,15 @@ namespace DCL.Profiles.Self
                     getFromCacheIfPossible: false,
                     batchBehaviour: IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
-                if (saved == null)
+                // The re-read falls back to the last profile it fetched once its retries run out, so it can still be behind the sent version.
+                if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, Copy(saved))));
+                // The re-read profile gets the same overrides as a fetched one, e.g. a new account deploys an empty emote wheel.
+                Profile reported = Copy(saved);
+                ApplySessionOverrides(reported);
+
+                inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)

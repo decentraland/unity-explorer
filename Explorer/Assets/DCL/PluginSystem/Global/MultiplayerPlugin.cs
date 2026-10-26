@@ -28,7 +28,6 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
@@ -38,8 +37,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {

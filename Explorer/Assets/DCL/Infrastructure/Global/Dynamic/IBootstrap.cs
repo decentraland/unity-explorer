@@ -14,7 +14,6 @@ using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using Global.Versioning;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 

@@ -81,7 +81,9 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
-                var authRequestId = Guid.NewGuid().ToString();
+                // It is derived from a verifier that never leaves this method except to retrieve the identity.
+                string verifier = DeepLinkSignInVerifier.CreateVerifier();
+                string authRequestId = DeepLinkSignInVerifier.DeriveAuthRequestId(verifier);
                 // `forceBridgeOnly` keeps the login in the deeplink bridge so the launcher does not
                 // spawn a new explorer instance during the confirmation from the website.
                 string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), forceBridgeOnly, referrer);
@@ -91,7 +93,7 @@ namespace DCL.Web3.Authenticators
                 // Resolves when the OS delivers the deep link that carries the identity id.
                 string identityId = await WaitForSigninAsync(authRequestId, ct);
 
-                return await FetchIdentityByIdAsync(identityId, payload.Method, ct);
+                return await FetchIdentityByIdAsync(identityId, verifier, payload.Method, ct);
             }
             finally { loginMutex.Release(); }
         }
@@ -123,7 +125,20 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, LoginMethod method, CancellationToken ct)
+        internal static WebRequestHeadersInfo CreateRetrievalHeaders(string verifier) =>
+            new WebRequestHeadersInfo().Add(DeepLinkSignInVerifier.HEADER, verifier);
+
+        internal static Exception MapRetrievalException(long responseCode, string identityId, Exception original) =>
+            responseCode switch
+            {
+                401 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.VerifierMismatch, identityId),
+                403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IpMismatch, identityId),
+                404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NotFound, identityId),
+                410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.Expired, identityId),
+                _ => original,
+            };
+
+        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, string verifier, LoginMethod method, CancellationToken ct)
         {
             urlBuilder.Clear();
 
@@ -132,15 +147,9 @@ namespace DCL.Web3.Authenticators
 
             var commonArguments = new CommonArguments(urlBuilder.Build());
 
-            IdentityAuthResponseDto json = await webRequestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
+            IdentityAuthResponseDto json = await webRequestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION, CreateRetrievalHeaders(verifier))
                                                                      .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>()
-                                                                     .WithCustomExceptionAsync(e => e.ResponseCode switch
-                                                                                                    {
-                                                                                                        404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NotFound, identityId),
-                                                                                                        410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.Expired, identityId),
-                                                                                                        403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IpMismatch, identityId),
-                                                                                                        _ => e,
-                                                                                                    });
+                                                                     .WithCustomExceptionAsync(e => MapRetrievalException(e.ResponseCode, identityId, e));
 
             string? signerAddress = null;
             string? ephemeralPayload = null;
