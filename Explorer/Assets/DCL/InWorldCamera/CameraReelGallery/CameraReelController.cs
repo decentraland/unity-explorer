@@ -28,6 +28,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private readonly CameraReelView view;
         private readonly RectTransform homeHost;
+
+        // The delete confirmation is authored beside the view, over the whole explore panel, rather than inside it
+        private readonly RectTransform deleteModal;
+        private readonly Transform deleteModalHome;
+        private readonly int deleteModalHomeIndex;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IMVCManager mvcManager;
@@ -60,6 +65,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.galleryEventBus = galleryEventBus;
 
             homeHost = view.transform.parent.GetComponent<RectTransform>();
+            deleteModal = (RectTransform)view.CameraReelGalleryView.deleteReelModal.transform;
+            deleteModalHome = deleteModal.parent;
+            deleteModalHomeIndex = deleteModal.GetSiblingIndex();
 
             this.view.MouseEnter += StorageFullIconEnter;
             this.view.MouseExit += StorageFullIconExit;
@@ -155,10 +163,20 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             if (!SectionHosting.MoveUnder(viewRect, host)) return;
 
+            // The delete confirmation follows the view: stretched over the host, above the view, so it shows and takes
+            // the clicks wherever the section is shown
             if (host == homeHost)
+            {
+                deleteModal.SetParent(deleteModalHome, false);
+                deleteModal.SetSiblingIndex(deleteModalHomeIndex);
                 CameraReelGalleryController.RestoreGridLayout();
+            }
             else
+            {
+                deleteModal.SetParent(host, false);
+                deleteModal.SetAsLastSibling();
                 CameraReelGalleryController.SetGridLayout(COMPACT_GRID_COLUMNS, COMPACT_THUMBNAIL_WIDTH, COMPACT_THUMBNAIL_HEIGHT);
+            }
         }
 
         public void AttachToHome() =>
