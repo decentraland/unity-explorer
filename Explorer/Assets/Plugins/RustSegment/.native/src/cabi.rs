@@ -171,6 +171,7 @@ pub extern "C" fn segment_server_pump_next_event() -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn segment_server_dispose() -> bool {
-    SEGMENT_SERVER.dispose()
+pub extern "C" fn segment_server_dispose() -> u32 {
+    // 1 - disposed, 0 - was not running
+    u32::from(SEGMENT_SERVER.dispose())
 }

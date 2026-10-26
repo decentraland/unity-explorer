@@ -113,9 +113,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 cancellationTokenSource.Dispose();
 
                 instanceGuard.Value = null;
-                bool result = NativeMethods.SegmentServerDispose();
+                uint result = NativeMethods.SegmentServerDispose();
 
-                if (result == false)
+                if (result == 0)
                     throw new Exception("Rust Segment dispose failed");
             }
         }

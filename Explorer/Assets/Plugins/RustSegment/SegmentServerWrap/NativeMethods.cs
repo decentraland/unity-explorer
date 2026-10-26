@@ -111,6 +111,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         internal static extern int SegmentServerPumpNextEvent(); // 1 - pumped, 0 - nothing
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_dispose")]
-        internal static extern bool SegmentServerDispose();
+        internal static extern uint SegmentServerDispose(); // 1 - disposed, 0 - was not running
     }
 }
