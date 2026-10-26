@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.Global
             LauncherVersion = appArgs.TryGetValue(AppArgsFlags.Launcher.VERSION, out string? version) && !string.IsNullOrWhiteSpace(version) ? version : null;
         }
 
-        public bool? MeetsMinimumSpecs => UnityDiagnosticsCenter.Instance.MeetsMinimumRequirements;
+        public bool? MeetsMinimumSpecs => MinimumSpecsStatus.Instance.MeetsMinimumRequirements;
 
         public string? SceneSdkVersion
         {
