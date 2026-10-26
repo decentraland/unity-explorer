@@ -818,7 +818,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityLeft(string communityId, bool success)
         {
-            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, false, success);
+            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, success, isJoined: false);
         }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
