@@ -292,6 +292,8 @@ namespace DCL.Lobby
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
             startParcel.JumpInRequestRaised -= RequestClose;
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            UnsubscribeFromCommunityChanges();
+            UnsubscribeFromReelDeletions();
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
@@ -443,13 +445,17 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
             ShowEventsAsync(eventsCts.Token).Forget();
 
-            // Every show fetches again: a community joined or left from a panel over the lobby is reflected on the way back
+            // Every show fetches again: a community joined or left while the lobby was down is reflected on the way back;
+            // one changed from a panel over the lobby refetches through the provider's events
             communitiesCts = communitiesCts.SafeRestart();
             ShowCommunitiesAsync(communitiesCts.Token).Forget();
+            SubscribeToCommunityChanges();
 
-            // Every show fetches again: a photo taken since the lobby was last up is reflected on the way back
+            // Every show fetches again: a photo taken since the lobby was last up is reflected on the way back; one
+            // deleted from a panel over the lobby drops out through the gallery's events
             galleryCts = galleryCts.SafeRestart();
             ShowGalleryAsync(galleryCts.Token).Forget();
+            SubscribeToReelDeletions();
 
             if (inputData.IsStartup)
                 startParcel.JumpInRequestRaised += RequestClose;
@@ -464,6 +470,8 @@ namespace DCL.Lobby
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            UnsubscribeFromCommunityChanges();
+            UnsubscribeFromReelDeletions();
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
@@ -924,6 +932,49 @@ namespace DCL.Lobby
         private void OnCommunityClicked(int index) =>
             mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communities[index].id, spriteCache)));
 
+        private void SubscribeToCommunityChanges()
+        {
+            if (communitiesProvider == null) return;
+
+            communitiesProvider.CommunityCreated += OnCommunityCreated;
+            communitiesProvider.CommunityDeleted += OnCommunityChanged;
+            communitiesProvider.CommunityUpdated += OnCommunityChanged;
+            communitiesProvider.CommunityUserRemoved += OnCommunityChanged;
+            communitiesProvider.CommunityJoined += OnCommunityMembershipChanged;
+            communitiesProvider.CommunityLeft += OnCommunityMembershipChanged;
+        }
+
+        private void UnsubscribeFromCommunityChanges()
+        {
+            if (communitiesProvider == null) return;
+
+            communitiesProvider.CommunityCreated -= OnCommunityCreated;
+            communitiesProvider.CommunityDeleted -= OnCommunityChanged;
+            communitiesProvider.CommunityUpdated -= OnCommunityChanged;
+            communitiesProvider.CommunityUserRemoved -= OnCommunityChanged;
+            communitiesProvider.CommunityJoined -= OnCommunityMembershipChanged;
+            communitiesProvider.CommunityLeft -= OnCommunityMembershipChanged;
+        }
+
+        private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData _) =>
+            RefetchCommunities();
+
+        private void OnCommunityChanged(string _) =>
+            RefetchCommunities();
+
+        private void OnCommunityMembershipChanged(string _, bool success)
+        {
+            if (success)
+                RefetchCommunities();
+        }
+
+        // Refetched rather than patched: the rails list the server's order and member counts
+        private void RefetchCommunities()
+        {
+            communitiesCts = communitiesCts.SafeRestart();
+            ShowCommunitiesAsync(communitiesCts.Token).Forget();
+        }
+
         // A failed fetch keeps the last photos, so the banner only shows while none have ever arrived; the reel lists
         // the latest first, as the rails do
         private async UniTaskVoid ShowGalleryAsync(CancellationToken ct)
@@ -980,8 +1031,8 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested || !result.Success) return;
 
-            cameraReel.GalleryEventBus.ReelDeleted(photo.id);
             RemovePhoto(photo);
+            cameraReel.GalleryEventBus.ReelDeleted(photo.id);
         }
 
         // Keeps the page the rails are on; a hidden lobby only drops the photo from the list, the next show refetches
@@ -991,6 +1042,32 @@ namespace DCL.Lobby
 
             ShowPhotoCards(galleryRail!, galleryCts.Token, rewind: false);
             ShowPhotoCards(gallery4By2Rail!, galleryCts.Token, rewind: false);
+        }
+
+        private void SubscribeToReelDeletions()
+        {
+            if (cameraReel == null) return;
+
+            cameraReel.GalleryEventBus.ReelDeletedEvent += OnReelDeleted;
+        }
+
+        private void UnsubscribeFromReelDeletions()
+        {
+            if (cameraReel == null) return;
+
+            cameraReel.GalleryEventBus.ReelDeletedEvent -= OnReelDeleted;
+        }
+
+        // A photo deleted from a panel over the lobby, which lists it too
+        private void OnReelDeleted(string reelId)
+        {
+            for (var i = 0; i < photos.Count; i++)
+            {
+                if (photos[i].id != reelId) continue;
+
+                RemovePhoto(photos[i]);
+                return;
+            }
         }
 
         private LobbyUpcomingEventsRail CreateUpcomingEventsRail() =>
