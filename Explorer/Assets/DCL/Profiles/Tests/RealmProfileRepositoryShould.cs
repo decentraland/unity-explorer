@@ -16,9 +16,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.Profiles.Tests
 {
@@ -29,12 +31,12 @@ namespace DCL.Profiles.Tests
 
         private static readonly URLDomain LAMBDAS = URLDomain.FromString("https://test-url.com/lambdas");
 
-        private RealmProfileRepository repository;
-        private IWebRequestController webRequestController;
-        private IProfileCache profileCache;
+        private RealmProfileRepository repository = null!;
+        private IWebRequestController webRequestController = null!;
+        private IProfileCache profileCache = null!;
 
         // 19 profiles
-        private List<Profile> dtos;
+        private List<Profile> dtos = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -49,7 +51,7 @@ namespace DCL.Profiles.Tests
         {
             webRequestController = Substitute.For<IWebRequestController>();
             profileCache = Substitute.For<IProfileCache>();
-            repository = new RealmProfileRepository(webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false);
+            repository = NewRepository(false);
 
             dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }
@@ -166,6 +168,123 @@ namespace DCL.Profiles.Tests
             // Still should be completed
             foreach (Action action in onProfilesResolved)
                 action.Received(1);
+        }
+
+        [Test]
+        public async Task ReportAFailedSingleGetByDefault()
+        {
+            // Arrange
+            var error = new Exception("catalyst timed out");
+            FailSingleGetWith(error);
+            LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task LeaveAFailedSingleGetUnreportedWhenTheCallerReportsFailures()
+        {
+            // Arrange
+            var error = new Exception("catalyst timed out");
+            FailSingleGetWith(error);
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task ReportAFailedSinglePostByDefault()
+        {
+            // Arrange
+            repository = NewRepository(true);
+            var error = new Exception("profiles endpoint timed out");
+            FailSinglePostWith(error);
+            LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task LeaveAFailedSinglePostUnreportedWhenTheCallerReportsFailures()
+        {
+            // Arrange
+            repository = NewRepository(true);
+            var error = new Exception("profiles endpoint timed out");
+            FailSinglePostWith(error);
+
+            // Act
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert
+            Assert.That(thrown, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task ResolveASinglePostWithoutTheProfileAsMissing()
+        {
+            // Arrange
+            repository = NewRepository(true);
+
+            webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>
+                                 (Arg.Any<RequestEnvelope<GenericPostRequest, GenericPostArguments>>(), Arg.Any<GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>>())!
+                                .Returns(_ => UniTask.FromResult<IList<Profile>>(new List<Profile>()));
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+
+            // Assert
+            Assert.That(profile, Is.Null);
+        }
+
+        private RealmProfileRepository NewRepository(bool useCentralizedProfiles) =>
+            new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
+
+        private void FailSinglePostWith(Exception error) =>
+            webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>
+                                 (Arg.Any<RequestEnvelope<GenericPostRequest, GenericPostArguments>>(), Arg.Any<GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>>())!
+                                .Returns(_ => UniTask.FromException<IList<Profile>>(error));
+
+        private void FailSingleGetWith(Exception error) =>
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
+                                .Returns(UniTask.FromException<Profile>(error));
+
+        /// <summary>Runs the finalizers now and the player loop tick on which UniTask reports an exception nobody took from a source.</summary>
+        private static async UniTask FinalizeUnobservedExceptionsAsync()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            await UniTask.Yield();
+        }
+
+        private async UniTask<Exception?> SingleGetFailureAsync(IProfileRepository.FetchBehaviour fetchBehaviour)
+        {
+            try
+            {
+                await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false, fetchBehaviour, ProfileTier.Kind.Full);
+                return null;
+            }
+            catch (Exception e) { return e; }
         }
 
         private ProfilesBatchRequest[] AssertBatch(int batches, int requests)

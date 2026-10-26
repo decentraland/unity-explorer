@@ -28,7 +28,7 @@ namespace DCL.Profiles.Self
                 onDeployProfileOnEditRequested: static (model, request) => OnDeployProfileOnEditRequested(model, request),
                 onDeploySucceeded: static (model, deployed) => OnDeploySucceeded(model, deployed),
                 onDeployFailed: static (model, failed) => OnDeployFailed(model, failed),
-                onProfileReadRequested: static (model, id) => OnProfileReadRequested(model, id),
+                onProfileReadRequested: static (model, request) => OnProfileReadRequested(model, request),
                 onRequestClosed: static (model, id) => (model.WithoutRequest(id), SelfProfileCmd.None())
             );
 
@@ -71,39 +71,55 @@ namespace DCL.Profiles.Self
 
         private static (SelfProfileModel, SelfProfileCmd) OnFetchFailed(in SelfProfileModel model, in FetchFailed msg)
         {
+            // A stale failure changes nothing, but its exception is still reported.
             if (StaleFetchReason(model, msg.Address, out Identified current) is { } reason)
-                return Ignored(model, reason);
+                return (model, Then(SelfProfileCmd.FromIgnore(reason), SelfProfileCmd.FromReportFetchFailure(StaleFailure(model, msg))));
 
             // A trusted profile outlives a failed read.
-            ProfileKnowledge knowledge = current.Knowledge.Match(
+            (ProfileKnowledge knowledge, ProfileFailure failure) = current.Knowledge.Match(
                 msg.Failure,
-                onUnknown: static failure => ProfileKnowledge.FromFailed(failure),
-                onKnown: static (_, known) => ProfileKnowledge.FromKnown(known),
-                onMissing: static failure => ProfileKnowledge.FromFailed(failure),
-                onFailed: static (failure, _) => ProfileKnowledge.FromFailed(failure)
+                onUnknown: static failure => Failed(failure),
+                onKnown: static (failure, known) => (ProfileKnowledge.FromKnown(known), failure),
+                onMissing: static failure => Failed(failure),
+                onFailed: static (failure, previous) => Failed(failure.Following(previous))
             );
 
-            return SettleReads(model, current.With(knowledge, ProfileActivity.Idle()), SelfProfileCmd.None());
+            return SettleReads(model, current.With(knowledge, ProfileActivity.Idle()), SelfProfileCmd.FromReportFetchFailure(failure));
         }
 
-        private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, RequestId id) =>
+        private static (ProfileKnowledge, ProfileFailure) Failed(in ProfileFailure failure) =>
+            (ProfileKnowledge.FromFailed(failure), failure);
+
+        /// <summary>A stale failure of an identity that is still failing continues its streak instead of starting one.</summary>
+        private static ProfileFailure StaleFailure(in SelfProfileModel model, in FetchFailed msg) =>
+            model.Session.IsIdentified(out Identified current) && current.Address.Equals(msg.Address) && current.Knowledge.IsFailed(out ProfileFailure previous)
+                ? msg.Failure.Following(previous)
+                : msg.Failure;
+
+        private static (SelfProfileModel, SelfProfileCmd) OnProfileReadRequested(in SelfProfileModel model, in ReadRequest request) =>
             model.Session.Match(
-                (model: model.WithLastRequest(id), id),
-                onNoIdentity: static ctx => (ctx.model.WithReadResult(ctx.id, ProfileReadResult.FromError(ProfileReadError.NoIdentity)), SelfProfileCmd.None()),
-                onIdentified: static (ctx, current) => Read(ctx.model, current, ctx.id)
+                (model: model.WithLastRequest(request.Id), request),
+                onNoIdentity: static ctx => (ctx.model.WithReadResult(ctx.request.Id, ProfileReadResult.FromError(ProfileReadError.NoIdentity)), SelfProfileCmd.None()),
+                onIdentified: static (ctx, current) => Read(ctx.model, current, ctx.request)
             );
 
         /// <summary>
-        ///     A read is answered at once from settled knowledge, which a missing profile is not while its first deploy is in flight;
-        ///     otherwise it waits on the fetch or deploy in flight, or starts a fetch when nothing is in flight, which is the one refetch after a failed fetch.
+        ///     A read is answered at once from settled knowledge, which a missing profile is not while its first deploy is in flight
+        ///     and a failed fetch is only inside its back-off window, unless the read ignores it; otherwise it waits on the activity
+        ///     in flight, or starts the one refetch.
         /// </summary>
-        private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, RequestId id)
+        private static (SelfProfileModel, SelfProfileCmd) Read(in SelfProfileModel model, in Identified current, in ReadRequest request)
         {
+            RequestId id = request.Id;
+
             if (current.Knowledge.IsKnown(out Profile? known))
                 return (model.WithReadResult(id, ProfileReadResult.FromOk(known)), SelfProfileCmd.None());
 
             if (current.Knowledge.IsMissing() && !current.Activity.IsDeploying(out _))
                 return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.NotFound)), SelfProfileCmd.None());
+
+            if (!request.IgnoreBackOff && current.Knowledge.IsFailed(out ProfileFailure failure) && failure.IsBackingOffAt(request.At) && current.Activity.IsIdle())
+                return (model.WithReadResult(id, ProfileReadResult.FromError(ProfileReadError.FetchFailed)), SelfProfileCmd.None());
 
             Identified queued = current.WithPendingReads(current.PendingReads.Add(id));
 

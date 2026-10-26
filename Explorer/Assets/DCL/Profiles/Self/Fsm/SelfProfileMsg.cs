@@ -1,6 +1,7 @@
 using REnum;
 using System;
 using System.Runtime.CompilerServices;
+using Utility.Times;
 
 namespace DCL.Profiles.Self
 {
@@ -111,6 +112,35 @@ namespace DCL.Profiles.Self
             $"{Address.Value} sent v{Sent.Version} {Exception.GetType().Name}: {Exception.Message}";
     }
 
+    public readonly struct ReadRequest : IEquatable<ReadRequest>
+    {
+        public readonly RequestId Id;
+
+        public readonly UnixTimeMs At;
+
+        /// <summary>The read refetches a failed profile even inside its back-off window.</summary>
+        public readonly bool IgnoreBackOff;
+
+        public ReadRequest(RequestId id, UnixTimeMs at, bool ignoreBackOff = false)
+        {
+            Id = id;
+            At = at;
+            IgnoreBackOff = ignoreBackOff;
+        }
+
+        public bool Equals(ReadRequest other) =>
+            Id.Equals(other.Id) && At == other.At && IgnoreBackOff == other.IgnoreBackOff;
+
+        public override bool Equals(object? obj) =>
+            obj is ReadRequest other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Id, At, IgnoreBackOff);
+
+        public override string ToString() =>
+            IgnoreBackOff ? $"{Id} at {At} ignoring back-off" : $"{Id} at {At}";
+    }
+
     public readonly struct DeployRequest : IEquatable<DeployRequest>
     {
         public readonly RequestId Id;
@@ -148,7 +178,7 @@ namespace DCL.Profiles.Self
     [REnumField(typeof(DeployRequest), "DeployProfileOnEditRequested")]
     [REnumField(typeof(DeploySucceeded))]
     [REnumField(typeof(DeployFailed))]
-    [REnumField(typeof(RequestId), "ProfileReadRequested")]
+    [REnumField(typeof(ReadRequest), "ProfileReadRequested")]
     [REnumField(typeof(RequestId), "RequestClosed")]
     public readonly partial struct SelfProfileMsg
     {
