@@ -28,12 +28,15 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         [field: SerializeField]
         public CanvasGroup RedoCanvasGroup { get; internal set; } = null!;
 
+        [field: SerializeField]
+        public CanvasGroup RandomizeCanvasGroup { get; internal set; } = null!;
+
         /// <summary>
-        ///     Locked undo and redo fade the whole button instead of greying it, so the arrows stay readable.
+        ///     Locked buttons fade as a whole instead of greying, so the icons and label stay readable.
         /// </summary>
         public void SetState(bool canRandomize, bool canUndo, bool canRedo)
         {
-            RandomizeButton.interactable = canRandomize;
+            SetLocked(RandomizeButton, RandomizeCanvasGroup, !canRandomize);
             SetLocked(UndoButton, UndoCanvasGroup, !canUndo);
             SetLocked(RedoButton, RedoCanvasGroup, !canRedo);
         }

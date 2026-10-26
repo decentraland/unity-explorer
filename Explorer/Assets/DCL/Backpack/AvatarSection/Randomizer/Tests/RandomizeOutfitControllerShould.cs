@@ -249,6 +249,7 @@ namespace DCL.Backpack.Tests
             // Assert
             Assert.AreEqual(1, sentCommands.Count);
             Assert.IsFalse(view.RandomizeButton.interactable);
+            Assert.AreEqual(0.2f, view.RandomizeCanvasGroup.alpha, 0.001f);
             Assert.IsFalse(view.UndoButton.interactable);
 
             // Act
@@ -414,7 +415,8 @@ namespace DCL.Backpack.Tests
             RandomizeOutfitView randomizeView = viewObject.AddComponent<RandomizeOutfitView>();
             randomizeView.UndoButton = CreateButton("Undo", out CanvasGroup undoGroup);
             randomizeView.UndoCanvasGroup = undoGroup;
-            randomizeView.RandomizeButton = CreateButton("Randomize", out _);
+            randomizeView.RandomizeButton = CreateButton("Randomize", out CanvasGroup randomizeGroup);
+            randomizeView.RandomizeCanvasGroup = randomizeGroup;
             randomizeView.RedoButton = CreateButton("Redo", out CanvasGroup redoGroup);
             randomizeView.RedoCanvasGroup = redoGroup;
             return randomizeView;

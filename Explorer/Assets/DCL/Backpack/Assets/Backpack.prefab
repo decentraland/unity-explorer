@@ -21242,6 +21242,7 @@ MonoBehaviour:
   <RandomizeButton>k__BackingField: {fileID: 6017277798282278702}
   <RedoButton>k__BackingField: {fileID: 8948159243506208969}
   <UndoCanvasGroup>k__BackingField: {fileID: 7454722075773511906}
+  <RandomizeCanvasGroup>k__BackingField: {fileID: 2647479342879790711}
   <RedoCanvasGroup>k__BackingField: {fileID: 4335675318609542704}
 --- !u!1 &1664014452004993220
 GameObject:
@@ -22178,6 +22179,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!225 &2647479342879790711
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8451828011709069011}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8451828011709069011
 GameObject:
   m_ObjectHideFlags: 0
@@ -22192,6 +22205,7 @@ GameObject:
   - component: {fileID: 6017277798282278702}
   - component: {fileID: 3537247055477608708}
   - component: {fileID: 3583752699937024552}
+  - component: {fileID: 2647479342879790711}
   m_Layer: 5
   m_Name: RandomizeButton
   m_TagString: Untagged
