@@ -90,7 +90,7 @@ namespace DCL.Character.Plugin
                 new CharacterTransform(characterObject.Value.Transform),
                 new PlayerMovementNetworkComponent(characterObject.Value.Controller)
               , new InputModifierComponent()
-              , new SceneWearablesOverride(new List<URN>()));
+              , new SceneAvatarShapeOverride(new List<URN>()));
         }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings

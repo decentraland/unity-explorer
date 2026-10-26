@@ -43,6 +43,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static bool IsSceneWearablePath(string pointer) =>
             pointer.EndsWith(GLB_EXTENSION, StringComparison.Ordinal);
 
+        public static bool IsSceneWearableUrn(string pointer) =>
+            pointer.StartsWith(SCENE_WEARABLE_URN_START, StringComparison.OrdinalIgnoreCase);
+
         public static string GetUrnPrefix(string? sceneId) =>
             $"{SCENE_WEARABLE_URN_START}{sceneId}-";
 
