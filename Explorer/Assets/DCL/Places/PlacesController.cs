@@ -144,6 +144,7 @@ namespace DCL.Places
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
             view.SetFiltersVisible(newFilters.Section == PlacesSection.Browse);
+            view.SetSortInteractable(!newFilters.IsBrowsingFeatured);
             view.SetCategoriesVisible(newFilters.Section == PlacesSection.Browse && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }

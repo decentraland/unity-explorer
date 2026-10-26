@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
 using DCL.Prefs;
 using NSubstitute;
+using NSubstitute.Core;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -96,6 +97,56 @@ namespace DCL.Tests.Editor
 
             Assert.That(place.user_like, Is.False);
             Assert.That(place.user_dislike, Is.True);
+        }
+
+        [Test]
+        public async Task ForwardOnlyHighlightedWhenSearchingDestinations()
+        {
+            // Arrange
+            StubDestinations();
+
+            // Act
+            await service.SearchDestinationsAsync(0, 20, CancellationToken.None, onlyHighlighted: true);
+
+            // Assert
+            Assert.That(LastDestinationsArgument("onlyHighlighted"), Is.True);
+        }
+
+        [Test]
+        public async Task LeaveOnlyHighlightedUnsetWhenSearchingDestinations()
+        {
+            // Arrange
+            StubDestinations();
+
+            // Act
+            await service.SearchDestinationsAsync(0, 20, CancellationToken.None);
+
+            // Assert
+            Assert.That(LastDestinationsArgument("onlyHighlighted"), Is.Null);
+        }
+
+        private void StubDestinations() =>
+            client.GetDestinationsAsync(default)
+                  .ReturnsForAnyArgs(UniTask.FromResult(new PlacesData.PlacesAPIResponse { ok = true, data = new List<PlacesData.PlaceInfo>() }));
+
+        // Reads the argument by parameter name so the assertion survives reordering of the client's many optional parameters.
+        private object? LastDestinationsArgument(string parameterName)
+        {
+            ICall? call = null;
+
+            foreach (ICall received in client.ReceivedCalls())
+                if (received.GetMethodInfo().Name == nameof(IPlacesAPIClient.GetDestinationsAsync))
+                    call = received;
+
+            Assert.That(call, Is.Not.Null, $"{nameof(IPlacesAPIClient.GetDestinationsAsync)} was never called");
+
+            ParameterInfo[] parameters = call!.GetMethodInfo().GetParameters();
+
+            for (var i = 0; i < parameters.Length; i++)
+                if (parameters[i].Name == parameterName)
+                    return call.GetArguments()[i];
+
+            throw new ArgumentException($"{nameof(IPlacesAPIClient.GetDestinationsAsync)} has no parameter named {parameterName}");
         }
 
         private static void SetPrefs(IDCLPrefs? prefs)

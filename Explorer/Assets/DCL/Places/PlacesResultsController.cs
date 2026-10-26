@@ -301,15 +301,19 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.Browse:
+                    bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
+                    bool onlyFeatured = currentFilters.IsBrowsingFeatured;
+
                     placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.Browse ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.Browse && !onlyFeatured ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              category: isSearching || onlyFeatured ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
                                                               onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY,
-                                                              withLiveEvents: true)
+                                                              withLiveEvents: true,
+                                                              onlyHighlighted: onlyFeatured ? true : null)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.Favorites:
