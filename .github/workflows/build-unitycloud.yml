@@ -594,7 +594,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
@@ -624,7 +624,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60
+          POLL_TIME: 30
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
           LOG_STALL_THRESHOLD: 900
@@ -799,9 +799,6 @@ jobs:
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
           fi
-
-      - name: Install jq
-        run: sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Enforce artifact size budget
         id: size_check

@@ -43,7 +43,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private Button cancelInviteButton { get; set; } = null!;
 
         private bool canUnHover = true;
-        private bool isUserCard = false;
+        private bool isUserCard;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.Members;
 
         public ICommunityMemberData? UserProfile { get; protected set; }

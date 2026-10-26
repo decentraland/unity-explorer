@@ -406,9 +406,21 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
-            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-
             receivedFriendRequestsBuffer.Clear();
+
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            // An account that has not deployed its profile yet (onboarding) is not asked for requests: there is no own profile to list them against.
+            if (HasNoDeployedProfile(ownRead))
+                return new PaginatedFriendRequestsResult(receivedFriendRequestsBuffer, 0);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipRequestsPayload
             {
@@ -424,14 +436,6 @@ namespace DCL.Friends
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
-
-            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
-
-            if (ownRead.IsCancelled)
-                throw new OperationCanceledException(ct);
-
-            if (!ownRead.IsOk(out Profile? myProfile))
-                throw new InvalidOperationException($"Cannot list received friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
@@ -474,9 +478,21 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
-            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-
             sentFriendRequestsBuffer.Clear();
+
+            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+            if (ownRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            // An account that has not deployed its profile yet (onboarding) is not asked for requests: there is no own profile to list them against.
+            if (HasNoDeployedProfile(ownRead))
+                return new PaginatedFriendRequestsResult(sentFriendRequestsBuffer, 0);
+
+            if (!ownRead.IsOk(out Profile? myProfile))
+                throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipRequestsPayload
             {
@@ -492,14 +508,6 @@ namespace DCL.Friends
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
                                                                                  .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
-
-            ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
-
-            if (ownRead.IsCancelled)
-                throw new OperationCanceledException(ct);
-
-            if (!ownRead.IsOk(out Profile? myProfile))
-                throw new InvalidOperationException($"Cannot list sent friend requests: own profile is not resolved ({ownRead})");
 
             switch (response.ResponseCase)
             {
@@ -696,6 +704,13 @@ namespace DCL.Friends
 
             return accepted;
         }
+
+        /// <summary>
+        ///     The catalyst holds no profile for the signed-in wallet: an account that has not deployed one yet.
+        ///     A failed read is not that: it keeps surfacing as an error.
+        /// </summary>
+        internal static bool HasNoDeployedProfile(in ProfileReadResult ownRead) =>
+            ownRead.IsError(out ProfileReadError error) && error == ProfileReadError.NotFound;
 
         internal static UpsertFriendshipResponse.Types.Accepted? ToAccepted(UpsertFriendshipResponse response) =>
             response.ResponseCase switch

@@ -172,8 +172,15 @@ namespace DCL.Profiles
 
         private void ResolveException(string userId, Exception ex)
         {
-            if (TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
-                continuation.TrySetException(ex);
+            if (!TryRemoveOngoingRequest(userId, out UniTaskCompletionSource<ProfileTier?>? continuation))
+                return;
+
+            continuation.TrySetException(ex);
+
+            // The exception is taken from the source once: the issuer of a single request rethrows its own copy without awaiting
+            // this source, and UniTask reports an exception nobody took when the source is finalized.
+            try { continuation.Task.GetAwaiter().GetResult(); }
+            catch (Exception) { }
         }
 
         private bool TryRemoveOngoingRequest(string userId, [NotNullWhen(true)] out UniTaskCompletionSource<ProfileTier?>? ongoingRequest)
@@ -255,6 +262,7 @@ namespace DCL.Profiles
 
             bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DelayUntilResolved);
             bool forceCatalyst = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst);
+            bool reportFailures = !EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.CallerReportsFailures);
 
             // Compact Tiers are not supported on catalysts
             if (!useCentralizedProfiles || forceCatalyst)
@@ -322,7 +330,7 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, forceCatalyst, ct);
+                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, forceCatalyst, reportFailures, ct);
             }
         }
 
@@ -353,7 +361,7 @@ namespace DCL.Profiles
         /// </summary>
         /// <returns></returns>
         private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, bool forceCatalyst,
-            CancellationToken ct)
+            bool reportFailures, CancellationToken ct)
         {
             try
             {
@@ -390,8 +398,8 @@ namespace DCL.Profiles
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                // Report other exceptions normally
-                ReportHub.LogException(e, ReportCategory.PROFILE);
+                if (reportFailures)
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
 
                 ResolveException(id, e);
 
