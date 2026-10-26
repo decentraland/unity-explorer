@@ -65,6 +65,10 @@ namespace DCL.AvatarRendering.Wearables
             if (!string.IsNullOrEmpty(parameters.Category))
                 requestParameters.Add((CATEGORY, parameters.Category));
 
+            if (parameters.Categories != null)
+                foreach (string category in parameters.Categories)
+                    requestParameters.Add((CATEGORY, category));
+
             requestParameters.Add((IElementsProviderQueryParams.ORDER_BY, parameters.SortingField.ToString()));
             requestParameters.Add((IElementsProviderQueryParams.ORDER_DIRECTION, GetDirectionParamValue(parameters.OrderBy)));
 
@@ -107,16 +111,29 @@ namespace DCL.AvatarRendering.Wearables
             return (results, wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
-        public async UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
+        public UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct,
-            List<IWearable>? results = null)
+            List<IWearable>? results = null) =>
+            ResolvePointersAsync(pointers, bodyShape, false, ct, results);
+
+        public UniTask<IReadOnlyCollection<IWearable>?> GetDTOsByPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            CancellationToken ct,
+            List<IWearable>? results = null) =>
+            ResolvePointersAsync(pointers, bodyShape, true, ct, results);
+
+        private async UniTask<IReadOnlyCollection<IWearable>?> ResolvePointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            bool dtoOnly,
+            CancellationToken ct,
+            List<IWearable>? results)
         {
             var promise = WearablePromise.Create(world,
 
                 // We pass all categories as force renderer to force the download of all of them
                 // Otherwise they will be skipped if any wearable is hiding the category
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories, dtoOnly),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);

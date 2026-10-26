@@ -87,7 +87,31 @@ namespace DCL.AvatarRendering.Wearables
                 }
 
                 // Include ALL user's available wearables (loop pages)
-                await source.TryGetAllTrimmedAsync(parameters, ct, localBuffer);
+                // Higher page size to do a lot less requests.
+                const int OWNED_PAGE_SIZE = 200;
+                IWearablesProvider.Params subParameters = parameters;
+                subParameters.PageSize = OWNED_PAGE_SIZE;
+                subParameters.PageNumber = 1;
+                int ownedTotal = int.MaxValue;
+                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
+
+                while (localBuffer.Count < ownedTotal)
+                {
+                    ownedPageBuffer.Clear();
+                    (var ownedPageResults, int ownedPageTotal) = await source.GetTrimmedByParamsAsync(
+                        subParameters,
+                        ct,
+                        results: ownedPageBuffer
+                    );
+
+                    ownedTotal = ownedPageTotal;
+
+                    if (ownedPageResults.Count == 0)
+                        break;
+
+                    localBuffer.AddRange(ownedPageResults);
+                    subParameters.PageNumber++;
+                }
 
                 // De-duplicate by URN and paginate the unified list
                 var unified = localBuffer
@@ -117,5 +141,9 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape, CancellationToken ct, List<IWearable>? results = null)
             => await source.GetByPointersAsync(pointers, bodyShape, ct, results);
+
+        public UniTask<IReadOnlyCollection<IWearable>?> GetDTOsByPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape, CancellationToken ct, List<IWearable>? results = null) =>
+            source.GetDTOsByPointersAsync(pointers, bodyShape, ct, results);
     }
 }

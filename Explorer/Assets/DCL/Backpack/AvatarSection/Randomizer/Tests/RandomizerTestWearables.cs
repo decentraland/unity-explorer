@@ -15,6 +15,16 @@ namespace DCL.Backpack.Tests
         public static ITrimmedWearable Trimmed(string urn, string category, bool isSmart = false, string[]? bodyShapes = null) =>
             new TrimmedFake(urn, category, isSmart, bodyShapes ?? BOTH_BODY_SHAPES);
 
+        public static ITrimmedWearable[] Trimmed(string urnPrefix, string category, int count, bool isSmart = false)
+        {
+            var wearables = new ITrimmedWearable[count];
+
+            for (var i = 0; i < count; i++)
+                wearables[i] = Trimmed($"{urnPrefix}{i}", category, isSmart);
+
+            return wearables;
+        }
+
         public static IWearable Full(string urn, string category, params string[] hides) =>
             new Wearable(new StreamableLoadingResult<WearableDTO>(new WearableDTO
             {
@@ -68,5 +78,26 @@ namespace DCL.Backpack.Tests
             public bool IsCompatibleWithBodyShape(string bodyShape) =>
                 Array.IndexOf(bodyShapes, bodyShape) >= 0;
         }
+    }
+
+    /// <summary>
+    ///     Returns the same value for every odds roll and the same index, clamped to the range, for every index.
+    /// </summary>
+    internal sealed class ScriptedRandom : Random
+    {
+        private readonly int nextIndex;
+        private readonly double nextDouble;
+
+        public ScriptedRandom(int nextIndex, double nextDouble = 0)
+        {
+            this.nextIndex = nextIndex;
+            this.nextDouble = nextDouble;
+        }
+
+        public override double NextDouble() =>
+            nextDouble;
+
+        public override int Next(int maxValue) =>
+            Math.Min(nextIndex, maxValue - 1);
     }
 }

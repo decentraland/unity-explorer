@@ -16,8 +16,10 @@ namespace DCL.Backpack.Tests
         private const int PRIORITY_ROLLS = 2000;
         private const string BASE_UPPER_BODY = "urn:decentraland:off-chain:base-avatars:green_hoodie";
         private const string BASE_BEARD = "urn:decentraland:off-chain:base-avatars:beard";
+        private const string CUSTOM_UPPER_BODY = "urn:decentraland:matic:collections-v2:0xabc:upper_";
 
         private static readonly Func<URN, bool> NOT_PENDING = _ => false;
+        private static readonly IReadOnlyDictionary<string, int> NO_OWNED = new Dictionary<string, int>();
 
         private Dictionary<string, HashSet<string>> hidesByCategory = null!;
         private HashSet<string> dropped = null!;
@@ -108,7 +110,7 @@ namespace DCL.Backpack.Tests
             for (var i = 0; i < ROLLS; i++)
             {
                 // Act
-                randomizer.Pick(picks);
+                Roll(randomizer, picks);
 
                 // Assert
                 Assert.IsTrue(picks.ContainsKey(WearableCategories.Categories.UPPER_BODY));
@@ -133,7 +135,7 @@ namespace DCL.Backpack.Tests
             // Act
             for (var i = 0; i < PRIORITY_ROLLS; i++)
             {
-                randomizer.Pick(picks);
+                Roll(randomizer, picks);
                 if (picks[WearableCategories.Categories.UPPER_BODY].Equals(custom)) customRolls++;
             }
 
@@ -153,7 +155,7 @@ namespace DCL.Backpack.Tests
             for (var i = 0; i < ROLLS; i++)
             {
                 // Act
-                randomizer.Pick(picks);
+                Roll(randomizer, picks);
 
                 // Assert
                 Assert.AreEqual(new URN(BASE_UPPER_BODY), picks[WearableCategories.Categories.UPPER_BODY]);
@@ -269,6 +271,80 @@ namespace DCL.Backpack.Tests
             Assert.IsFalse(repickedWhenExhausted);
         }
 
+        [Test]
+        public void PickTheOwnedWearableItsPageWasFetchedFor()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new ScriptedRandom(0));
+            ITrimmedWearable[] page = RandomizerTestWearables.Trimmed(CUSTOM_UPPER_BODY, WearableCategories.Categories.UPPER_BODY, 3);
+            randomizer.BuildCatalog(new[] { RandomizerTestWearables.Trimmed(BASE_UPPER_BODY, WearableCategories.Categories.UPPER_BODY) }, BodyShape.MALE, NOT_PENDING);
+
+            // Act
+            randomizer.AddCustomPage(WearableCategories.Categories.UPPER_BODY, page, 2);
+
+            // Assert
+            CollectionAssert.AreEquivalent(new[] { page[2].GetUrn() }, PickedOver(randomizer, WearableCategories.Categories.UPPER_BODY));
+        }
+
+        [Test]
+        public void KeepOnlyTheUsableWearablesOfThePageCategory()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new Random(29));
+            const string KEPT = CUSTOM_UPPER_BODY + "kept";
+
+            ITrimmedWearable[] page =
+            {
+                RandomizerTestWearables.Trimmed(KEPT, WearableCategories.Categories.UPPER_BODY),
+                RandomizerTestWearables.Trimmed(CUSTOM_UPPER_BODY + "smart", WearableCategories.Categories.UPPER_BODY, isSmart: true),
+                RandomizerTestWearables.Trimmed(CUSTOM_UPPER_BODY + "hat", WearableCategories.Categories.HAT),
+            };
+
+            randomizer.BuildCatalog(Array.Empty<ITrimmedWearable>(), BodyShape.MALE, NOT_PENDING);
+
+            // Act
+            randomizer.AddCustomPage(WearableCategories.Categories.UPPER_BODY, page, 0);
+
+            // Assert
+            CollectionAssert.AreEquivalent(new[] { new URN(KEPT) }, PickedOver(randomizer, WearableCategories.Categories.UPPER_BODY));
+            Assert.IsEmpty(PickedOver(randomizer, WearableCategories.Categories.HAT));
+        }
+
+        [Test]
+        public void DropThePreviousRollPagesOnANewCatalog()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new Random(31));
+            randomizer.AddCustomPage(WearableCategories.Categories.UPPER_BODY, RandomizerTestWearables.Trimmed(CUSTOM_UPPER_BODY, WearableCategories.Categories.UPPER_BODY, 2), 0);
+
+            // Act
+            randomizer.BuildCatalog(Array.Empty<ITrimmedWearable>(), BodyShape.MALE, NOT_PENDING);
+
+            // Assert
+            Assert.IsEmpty(PickedOver(randomizer, WearableCategories.Categories.UPPER_BODY));
+        }
+
+        [Test]
+        public void ChooseACategoryThatOnlyHasOwnedWearables()
+        {
+            // Arrange
+            var randomizer = new OutfitRandomizer(new ScriptedRandom(0));
+            var chosen = new HashSet<string>();
+
+            // Act
+            randomizer.ChooseCategories(new Dictionary<string, int> { [WearableCategories.Categories.FEET] = 4 }, chosen);
+
+            // Assert
+            CollectionAssert.AreEquivalent(new[] { WearableCategories.Categories.FEET }, chosen);
+        }
+
+        private static void Roll(OutfitRandomizer randomizer, Dictionary<string, URN> picks)
+        {
+            var chosen = new HashSet<string>();
+            randomizer.ChooseCategories(NO_OWNED, chosen);
+            randomizer.Pick(chosen, picks);
+        }
+
         private static HashSet<URN> PickedOver(OutfitRandomizer randomizer, string category)
         {
             var picked = new HashSet<URN>();
@@ -276,7 +352,7 @@ namespace DCL.Backpack.Tests
 
             for (var i = 0; i < ROLLS; i++)
             {
-                randomizer.Pick(picks);
+                Roll(randomizer, picks);
 
                 if (picks.TryGetValue(category, out URN urn))
                     picked.Add(urn);

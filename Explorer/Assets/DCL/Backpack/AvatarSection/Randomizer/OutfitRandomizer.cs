@@ -10,6 +10,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 {
     /// <summary>
     ///     Picks one random wearable per category for a body shape, and resolves picks that hide each other.
+    ///     The catalog holds every base wearable plus the pages of owned wearables fetched for the current roll.
     /// </summary>
     public class OutfitRandomizer
     {
@@ -31,6 +32,13 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         private const string MALE_BASE_PREFIX = "m_";
         private const string FEMALE_BASE_PREFIX = "f_";
 
+        /// <summary>
+        ///     Every category a roll can fill, in hiding priority order.
+        /// </summary>
+        public static readonly IReadOnlyList<string> CATEGORIES = OutfitCategories();
+
+        private static readonly Func<URN, bool> NOT_PENDING = _ => false;
+
         private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
         {
             WearableCategories.Categories.FACIAL_HAIR,
@@ -51,6 +59,10 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         private readonly Dictionary<string, CategoryPool> catalog = new ();
         private readonly Random random;
+        private BodyShape bodyShape = BodyShape.MALE;
+        private Func<URN, bool> isPendingGift = NOT_PENDING;
+
+        private bool isFemale => bodyShape.Equals(BodyShape.FEMALE);
 
         public OutfitRandomizer(Random random)
         {
@@ -58,53 +70,95 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         }
 
         /// <summary>
-        ///     Replaces the catalog with the wearables that fit <paramref name="bodyShape" />.
-        ///     Body shapes, smart wearables and wearables whose every owned copy is pending a gift are left out.
+        ///     Replaces the catalog with the base wearables that fit <paramref name="bodyShape" />, dropping the owned pages of the previous roll.
+        ///     Body shapes, smart wearables and wearables whose every owned copy is pending a gift are left out, here and in <see cref="AddCustomPage" />.
         /// </summary>
-        public void BuildCatalog(IReadOnlyList<ITrimmedWearable> wearables, BodyShape bodyShape, Func<URN, bool> isPendingGift)
+        public void BuildCatalog(IReadOnlyList<ITrimmedWearable> baseWearables, BodyShape bodyShape, Func<URN, bool> isPendingGift)
         {
-            catalog.Clear();
-            bool isFemale = bodyShape.Equals(BodyShape.FEMALE);
+            foreach (CategoryPool pool in catalog.Values)
+                pool.Clear();
 
-            foreach (ITrimmedWearable wearable in wearables)
+            this.bodyShape = bodyShape;
+            this.isPendingGift = isPendingGift;
+
+            foreach (ITrimmedWearable wearable in baseWearables)
             {
                 string category = wearable.GetCategory();
 
-                URN urn = wearable.GetUrn();
-
-                if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart() || isPendingGift(urn))
-                    continue;
-
-                if (!wearable.IsCompatibleWithBodyShape(bodyShape))
-                    continue;
-
-                if (isFemale && FEMALE_EXCLUDED_CATEGORIES.Contains(category))
-                    continue;
-
-                // Only base avatars encode the body type in their id; other ids are free text
-                if (urn.IsBaseWearable() && HasBodyTypePrefix(urn, isFemale ? MALE_BASE_PREFIX : FEMALE_BASE_PREFIX))
-                    continue;
-
-                AddEntry(category, urn);
+                if (IsUsable(wearable, category, out URN urn))
+                    AddEntry(category, urn);
             }
         }
 
         /// <summary>
-        ///     Fills <paramref name="result" /> with one pick per category. Optional categories and skin are sometimes left empty.
-        ///     Where the user owns custom wearables in a category, a custom one is picked <see cref="CUSTOM_PRIORITY_CHANCE" /> of the time.
+        ///     Fills <paramref name="chosen" /> with the categories this roll fills: every core category and, by their odds, the optional ones and skin.
+        ///     A category is a candidate when the catalog has wearables for it or <paramref name="ownedTotals" /> reports owned ones.
         /// </summary>
-        public void Pick(Dictionary<string, URN> result)
+        public void ChooseCategories(IReadOnlyDictionary<string, int> ownedTotals, HashSet<string> chosen)
         {
-            result.Clear();
+            chosen.Clear();
 
-            foreach ((string category, CategoryPool pool) in catalog)
+            foreach (string category in CATEGORIES)
             {
+                if (isFemale && FEMALE_EXCLUDED_CATEGORIES.Contains(category))
+                    continue;
+
+                bool hasEntries = catalog.TryGetValue(category, out CategoryPool? pool) && pool.HasEntries;
+                bool hasOwned = ownedTotals.TryGetValue(category, out int total) && total > 0;
+
+                if (!hasEntries && !hasOwned)
+                    continue;
+
                 if (random.NextDouble() >= IncludeChance(category))
                     continue;
 
-                if (TryPickFrom(pool, null, out URN urn))
-                    result[category] = urn;
+                chosen.Add(category);
             }
+        }
+
+        /// <summary>
+        ///     A uniform random index in [0, <paramref name="count" />).
+        /// </summary>
+        public int PickIndex(int count) =>
+            random.Next(count);
+
+        /// <summary>
+        ///     Adds the usable wearables of <paramref name="category" /> from a fetched page of owned wearables.
+        ///     The one at <paramref name="preferredIndex" />, when usable, is the first pick for the category whenever custom is preferred.
+        /// </summary>
+        public void AddCustomPage(string category, IReadOnlyList<ITrimmedWearable> page, int preferredIndex)
+        {
+            for (var i = 0; i < page.Count; i++)
+            {
+                ITrimmedWearable wearable = page[i];
+
+                if (wearable.GetCategory() != category || !IsUsable(wearable, category, out URN urn))
+                    continue;
+
+                // The base wearables are already in the catalog
+                if (urn.IsBaseWearable())
+                    continue;
+
+                CategoryPool pool = GetOrCreatePool(category);
+
+                if (i == preferredIndex)
+                    pool.PreferredCustom = pool.Custom.Count;
+
+                pool.Custom.Add(urn);
+            }
+        }
+
+        /// <summary>
+        ///     Fills <paramref name="result" /> with one pick per category in <paramref name="chosen" /> that has wearables.
+        ///     Where the catalog has custom wearables in a category, a custom one is picked <see cref="CUSTOM_PRIORITY_CHANCE" /> of the time.
+        /// </summary>
+        public void Pick(IReadOnlyCollection<string> chosen, Dictionary<string, URN> result)
+        {
+            result.Clear();
+
+            foreach (string category in chosen)
+                if (catalog.TryGetValue(category, out CategoryPool? pool) && TryPickFrom(pool, null, out URN urn))
+                    result[category] = urn;
         }
 
         /// <summary>
@@ -150,11 +204,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         internal void AddEntry(string category, URN urn)
         {
-            if (!catalog.TryGetValue(category, out CategoryPool? pool))
-            {
-                pool = new CategoryPool();
-                catalog[category] = pool;
-            }
+            CategoryPool pool = GetOrCreatePool(category);
 
             if (urn.IsBaseWearable())
                 pool.Base.Add(urn);
@@ -162,12 +212,48 @@ namespace DCL.Backpack.AvatarSection.Randomizer
                 pool.Custom.Add(urn);
         }
 
+        private CategoryPool GetOrCreatePool(string category)
+        {
+            if (!catalog.TryGetValue(category, out CategoryPool? pool))
+            {
+                pool = new CategoryPool();
+                catalog[category] = pool;
+            }
+
+            return pool;
+        }
+
+        private bool IsUsable(ITrimmedWearable wearable, string category, out URN urn)
+        {
+            urn = wearable.GetUrn();
+
+            if (category == WearableCategories.Categories.BODY_SHAPE || wearable.IsSmart() || isPendingGift(urn))
+                return false;
+
+            if (!wearable.IsCompatibleWithBodyShape(bodyShape))
+                return false;
+
+            if (isFemale && FEMALE_EXCLUDED_CATEGORIES.Contains(category))
+                return false;
+
+            // Only base avatars encode the body type in their id; other ids are free text
+            return !urn.IsBaseWearable() || !HasBodyTypePrefix(urn, isFemale ? MALE_BASE_PREFIX : FEMALE_BASE_PREFIX);
+        }
+
         /// <summary>
         ///     Tries the preferred pool first and falls back to the other one, so a category with a single kind of wearable always yields a pick.
+        ///     A first pick that prefers custom takes the custom wearable its page was fetched for, so every owned wearable is equally likely.
         /// </summary>
         private bool TryPickFrom(CategoryPool pool, HashSet<URN>? tried, out URN urn)
         {
             bool preferCustom = random.NextDouble() < CUSTOM_PRIORITY_CHANCE;
+
+            if (preferCustom && tried == null && pool.PreferredCustom >= 0)
+            {
+                urn = pool.Custom[pool.PreferredCustom];
+                return true;
+            }
+
             List<URN> preferred = preferCustom ? pool.Custom : pool.Base;
             List<URN> fallback = preferCustom ? pool.Base : pool.Custom;
 
@@ -222,10 +308,31 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             return urnStr.AsSpan(lastColon + 1).StartsWith(prefix.AsSpan(), StringComparison.OrdinalIgnoreCase);
         }
 
+        private static string[] OutfitCategories()
+        {
+            var categories = new List<string>(WearableCategories.CATEGORIES_PRIORITY);
+            categories.Remove(WearableCategories.Categories.BODY_SHAPE);
+            return categories.ToArray();
+        }
+
         private sealed class CategoryPool
         {
             public readonly List<URN> Custom = new ();
             public readonly List<URN> Base = new ();
+
+            /// <summary>
+            ///     Index in <see cref="Custom" /> of the wearable its page was fetched for, or -1.
+            /// </summary>
+            public int PreferredCustom = -1;
+
+            public bool HasEntries => Custom.Count > 0 || Base.Count > 0;
+
+            public void Clear()
+            {
+                Custom.Clear();
+                Base.Clear();
+                PreferredCustom = -1;
+            }
         }
     }
 }

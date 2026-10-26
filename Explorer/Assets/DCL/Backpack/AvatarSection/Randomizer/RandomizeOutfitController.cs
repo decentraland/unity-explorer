@@ -30,6 +30,18 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         /// </summary>
         private const int MAX_REPICK_ROUNDS = 3;
 
+        /// <summary>
+        ///     Size of the owned wearables page a roll fetches per category; the rest of the page is the category's repick pool.
+        /// </summary>
+        private const int OWNED_PAGE_SIZE = 30;
+
+        /// <summary>
+        ///     Large enough for every base wearable to arrive in one page.
+        /// </summary>
+        private const int BASE_PAGE_SIZE = 1000;
+
+        private const IWearablesProvider.CollectionType OWNED_COLLECTIONS = IWearablesProvider.CollectionType.OnChain | IWearablesProvider.CollectionType.ThirdParty;
+
         private readonly RandomizeOutfitView view;
         private readonly OutfitRandomizer randomizer;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -38,7 +50,8 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         private readonly IWearablesProvider wearablesProvider;
         private readonly CacheOutfitWearablesCommand cacheOutfitWearablesCommand;
         private readonly Func<URN, bool> isPendingGift;
-        private readonly List<ITrimmedWearable> ownedWearables = new ();
+        private readonly List<ITrimmedWearable> baseWearables = new ();
+        private readonly Dictionary<string, int> ownedTotals = new ();
         private readonly Stack<BackpackEquipOutfitCommand> undoStack = new ();
         private readonly Stack<BackpackEquipOutfitCommand> redoStack = new ();
 
@@ -106,7 +119,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         }
 
         /// <summary>
-        ///     Forgets the history and the cached owned wearables, so the next session starts clean and sees new purchases.
+        ///     Forgets the history, the base wearables and the owned totals, so the next session starts clean and sees new purchases.
         ///     Randomize locks again until the next session reports its avatar ready.
         /// </summary>
         public void Reset()
@@ -118,7 +131,8 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             isApplying = false;
             undoStack.Clear();
             redoStack.Clear();
-            ownedWearables.Clear();
+            baseWearables.Clear();
+            ownedTotals.Clear();
             RefreshButtons();
         }
 
@@ -163,17 +177,26 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             try
             {
-                if (ownedWearables.Count == 0 && !await TryLoadOwnedWearablesAsync(ct))
+                if (baseWearables.Count == 0 && !await TryLoadBaseWearablesAsync(ct))
                     return;
+
+                if (ownedTotals.Count == 0)
+                    await LoadOwnedTotalsAsync(ct);
 
                 if (ct.IsCancellationRequested) return;
 
                 BackpackEquipOutfitCommand current = CaptureCurrent();
                 BodyShape bodyShape = BodyShape.FromStringSafe(current.BodyShape);
-                randomizer.BuildCatalog(ownedWearables, bodyShape, isPendingGift);
+                randomizer.BuildCatalog(baseWearables, bodyShape, isPendingGift);
+
+                using PooledObject<HashSet<string>> _ = HashSetPool<string>.Get(out HashSet<string> chosen);
+                randomizer.ChooseCategories(ownedTotals, chosen);
+                await LoadOwnedPagesAsync(chosen, ct);
+
+                if (ct.IsCancellationRequested) return;
 
                 var outfit = new List<string>();
-                await RollAsync(bodyShape, outfit, ct);
+                await RollAsync(bodyShape, chosen, outfit, ct);
 
                 if (ct.IsCancellationRequested) return;
 
@@ -206,23 +229,92 @@ namespace DCL.Backpack.AvatarSection.Randomizer
             }
         }
 
-        private async UniTask<bool> TryLoadOwnedWearablesAsync(CancellationToken ct)
+        private async UniTask<bool> TryLoadBaseWearablesAsync(CancellationToken ct)
         {
-            using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> loaded);
+            var parameters = new IWearablesProvider.Params(BASE_PAGE_SIZE, 1) { CollectionType = IWearablesProvider.CollectionType.Base };
+            await wearablesProvider.GetTrimmedByParamsAsync(parameters, ct, baseWearables);
 
-            bool complete = await wearablesProvider.TryGetAllTrimmedAsync(new IWearablesProvider.Params(WearablesProviderExtensions.MAX_PAGE_SIZE, 1), ct, loaded);
+            if (baseWearables.Count > 0)
+                return true;
 
-            if (!complete)
-            {
-                ReportHub.LogWarning(ReportCategory.BACKPACK, $"Owned wearables stopped loading after {loaded.Count}, the list is not cached and the outfit is kept");
-                return false;
-            }
-
-            ownedWearables.AddRange(loaded);
-            return true;
+            ReportHub.LogWarning(ReportCategory.BACKPACK, "Base wearables failed to load, the outfit is kept");
+            return false;
         }
 
-        private async UniTask RollAsync(BodyShape bodyShape, List<string> outfit, CancellationToken ct)
+        /// <summary>
+        ///     One single-item request per category, read only for the total it reports.
+        /// </summary>
+        private async UniTask LoadOwnedTotalsAsync(CancellationToken ct)
+        {
+            IReadOnlyList<string> categories = OutfitRandomizer.CATEGORIES;
+            var requests = new UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)>[categories.Count];
+
+            for (var i = 0; i < categories.Count; i++)
+                requests[i] = wearablesProvider.GetTrimmedByParamsAsync(OwnedPage(categories[i], 1, 1), ct);
+
+            (IReadOnlyList<ITrimmedWearable> results, int totalAmount)[] totals = await UniTask.WhenAll(requests);
+
+            for (var i = 0; i < categories.Count; i++)
+                ownedTotals[categories[i]] = totals[i].totalAmount;
+        }
+
+        /// <summary>
+        ///     Fetches, for each chosen category with owned wearables, the page holding a random owned index, so the request count does not grow with the inventory.
+        ///     The optional categories share one request.
+        /// </summary>
+        private async UniTask LoadOwnedPagesAsync(HashSet<string> chosen, CancellationToken ct)
+        {
+            using PooledObject<List<UniTask>> a = ListPool<UniTask>.Get(out List<UniTask> requests);
+            using PooledObject<List<string>> b = ListPool<string>.Get(out List<string> optional);
+            var optionalTotal = 0;
+
+            foreach (string category in chosen)
+            {
+                if (!ownedTotals.TryGetValue(category, out int total) || total == 0)
+                    continue;
+
+                if (OutfitRandomizer.IsCoreCategory(category))
+                    requests.Add(LoadOwnedPageAsync(category, randomizer.PickIndex(total), ct));
+                else
+                {
+                    optional.Add(category);
+                    optionalTotal += total;
+                }
+            }
+
+            if (optional.Count > 0)
+                requests.Add(LoadOptionalPageAsync(optional, randomizer.PickIndex(optionalTotal), ct));
+
+            await UniTask.WhenAll(requests);
+        }
+
+        private async UniTask LoadOwnedPageAsync(string category, int index, CancellationToken ct)
+        {
+            using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> page);
+
+            await wearablesProvider.GetTrimmedByParamsAsync(OwnedPage(category, OWNED_PAGE_SIZE, (index / OWNED_PAGE_SIZE) + 1), ct, page);
+            randomizer.AddCustomPage(category, page, index % OWNED_PAGE_SIZE);
+        }
+
+        /// <summary>
+        ///     A category missing from the page is left to the base wearables.
+        /// </summary>
+        private async UniTask LoadOptionalPageAsync(List<string> categories, int index, CancellationToken ct)
+        {
+            using PooledObject<List<ITrimmedWearable>> _ = ListPool<ITrimmedWearable>.Get(out List<ITrimmedWearable> page);
+
+            IWearablesProvider.Params parameters = OwnedPage(null, OWNED_PAGE_SIZE, (index / OWNED_PAGE_SIZE) + 1);
+            parameters.Categories = categories;
+            await wearablesProvider.GetTrimmedByParamsAsync(parameters, ct, page);
+
+            foreach (string category in categories)
+                randomizer.AddCustomPage(category, page, index % OWNED_PAGE_SIZE);
+        }
+
+        private static IWearablesProvider.Params OwnedPage(string? category, int pageSize, int pageNumber) =>
+            new (pageSize, pageNumber) { CollectionType = OWNED_COLLECTIONS, Category = category };
+
+        private async UniTask RollAsync(BodyShape bodyShape, IReadOnlyCollection<string> chosen, List<string> outfit, CancellationToken ct)
         {
             using PooledObject<Dictionary<string, URN>> a = DictionaryPool<string, URN>.Get(out Dictionary<string, URN> picks);
             using PooledObject<Dictionary<string, IWearable>> b = DictionaryPool<string, IWearable>.Get(out Dictionary<string, IWearable> wearablesByCategory);
@@ -234,7 +326,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             try
             {
-                randomizer.Pick(picks);
+                randomizer.Pick(chosen, picks);
                 pending.AddRange(picks.Values);
 
                 for (var round = 0; round <= MAX_REPICK_ROUNDS; round++)
@@ -301,7 +393,7 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
             using PooledObject<List<IWearable>> _ = ListPool<IWearable>.Get(out List<IWearable> resolved);
 
-            await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolved, useFullUrns: true);
+            await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolved, useFullUrns: true, dtoOnly: true);
 
             foreach (IWearable wearable in resolved)
             {
