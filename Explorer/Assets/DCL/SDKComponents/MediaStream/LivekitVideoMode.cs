@@ -86,8 +86,8 @@ namespace DCL.SDKComponents.MediaStream
     }
 
     /// <summary>
-    ///     Composing the presentation of the bot from its slide, its presentation video and the presenter
-    ///     camera. Holds a <see cref="SlideTextureCache" /> composing lease until the player leaves this mode.
+    ///     Composing the presentation of the bot from its slide, its presentation video or client-played video, and the
+    ///     presenter camera. Holds a <see cref="SlideTextureCache" /> composing lease until the player leaves this mode.
     /// </summary>
     public sealed class ComposingVideo
     {
@@ -109,6 +109,8 @@ namespace DCL.SDKComponents.MediaStream
 
         internal string slideUrl { get; private set; }
 
+        internal string? clientVideoUrl { get; private set; }
+
         internal ComposingVideo(LivekitAddress requested, IDisposable slideLease, string bot, PresentationBotMetadata presentation, PresentationSlide slide, string slideUrl)
         {
             this.requested = requested;
@@ -117,6 +119,7 @@ namespace DCL.SDKComponents.MediaStream
             this.presentation = presentation;
             this.slide = slide;
             this.slideUrl = slideUrl;
+            clientVideoUrl = ClientVideoUrlOf(presentation);
         }
 
         /// <summary>
@@ -128,8 +131,12 @@ namespace DCL.SDKComponents.MediaStream
             presentation = nextPresentation;
             slide = nextSlide;
             slideUrl = nextSlideUrl;
+            clientVideoUrl = ClientVideoUrlOf(nextPresentation);
             composedFrame = -1;
         }
+
+        private static string? ClientVideoUrlOf(PresentationBotMetadata presentation) =>
+            presentation.TryClientVideoUrl(out string url) ? url : null;
     }
 
     /// <summary>
