@@ -65,12 +65,8 @@ pub fn open(
     let code = match SqliteCondition::of(&error) {
         SqliteCondition::OwnedByAnotherInstance => QueueHealthCode::OwnedByAnotherInstance,
         SqliteCondition::Corrupt => return Ok(recreate(path, event_count_limit)),
-        SqliteCondition::DiskFull => QueueHealthCode::DegradedDiskFull,
-        SqliteCondition::ReadOnly => QueueHealthCode::DegradedReadOnly,
-        SqliteCondition::IoError => QueueHealthCode::DegradedIoError,
-        SqliteCondition::PermissionDenied => QueueHealthCode::DegradedPermissionDenied,
-        SqliteCondition::CannotOpen => QueueHealthCode::DegradedCannotOpen,
         SqliteCondition::Other => return Err(error),
+        condition => degraded(condition),
     };
 
     Ok((in_memory(event_count_limit), code))
@@ -99,9 +95,26 @@ fn recreate(path: &Path, event_count_limit: u32) -> (CombinedAnalyticsEventQueue
             in_memory(event_count_limit),
             match SqliteCondition::of(&error) {
                 SqliteCondition::OwnedByAnotherInstance => QueueHealthCode::OwnedByAnotherInstance,
-                _ => QueueHealthCode::DegradedCorrupt,
+                SqliteCondition::Corrupt | SqliteCondition::Other => {
+                    QueueHealthCode::DegradedCorrupt
+                }
+                condition => degraded(condition),
             },
         ),
+    }
+}
+
+/// The code of a queue file given up for the session because of its environment.
+fn degraded(condition: SqliteCondition) -> QueueHealthCode {
+    match condition {
+        SqliteCondition::DiskFull => QueueHealthCode::DegradedDiskFull,
+        SqliteCondition::ReadOnly => QueueHealthCode::DegradedReadOnly,
+        SqliteCondition::IoError => QueueHealthCode::DegradedIoError,
+        SqliteCondition::PermissionDenied => QueueHealthCode::DegradedPermissionDenied,
+        SqliteCondition::CannotOpen => QueueHealthCode::DegradedCannotOpen,
+        SqliteCondition::OwnedByAnotherInstance
+        | SqliteCondition::Corrupt
+        | SqliteCondition::Other => QueueHealthCode::DegradedOther,
     }
 }
 

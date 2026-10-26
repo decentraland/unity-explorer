@@ -118,7 +118,7 @@ Each operation completes through `FfiCallbackFn` with one of:
 
 ### Error channel
 
-`FfiErrorCallbackFn` receives genuine faults only: an operation that failed for a reason that is not an environment condition, a queued row the API can never take, a row that could not be read. The conditions of the queue file are returned by `segment_server_initialize` as a health code.
+`FfiErrorCallbackFn` receives genuine faults only: an operation that failed for a reason that is not an environment condition, a queued row the API can never take, a request the API rejects, a row that could not be read. The conditions of the queue file are returned by `segment_server_initialize` as a health code.
 
 ### Health codes
 
@@ -138,9 +138,9 @@ How the queue keeps the events of the session is decided once, when the file is 
 | 9 | `DegradedOther` | The queue file is given up for the session: it failed in a way that says nothing about the file or its environment, reported on the error channel. |
 | 255 | `NotInitialized` | This call did not start the server: it already runs. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
 
-A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s.
+A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s and reported once per failure streak. A row that was sent but could not be removed is not sent again.
 
-A send that fails on the network is retried with a delay that doubles up to 60 s and is not reported.
+A send that fails on the network (no answer, a 5xx, 408 or 429) is retried with a delay that doubles up to 60 s and is not reported. A send the API rejects with any other status except 400, such as 401 for an invalid write key, is retried the same way and reported once per failure streak. A 400 drops the row and is reported.
 
 ---
 
