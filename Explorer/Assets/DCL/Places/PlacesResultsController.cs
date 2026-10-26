@@ -52,7 +52,6 @@ namespace DCL.Places
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
@@ -93,7 +92,6 @@ namespace DCL.Places
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
-            this.worldPermissionsService = worldPermissionsService;
             this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
@@ -339,7 +337,7 @@ namespace DCL.Places
                     }
 
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
-                                                              ownerAddress: ownProfile.UserId,
+                                                              ownerAddress: ownProfile.UserId!,
                                                               ct: ct,
                                                               withConnectedUsers: true,
                                                               onlySdk7: false,
