@@ -608,6 +608,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ReleasePresentationStreams_WhenAFrameRunsWhileReconnecting()
+        {
+            // Act
+            ComposeThenReconnect(runReconnectingFrame: true);
+
+            // Assert
+            videoStreams.Received().Release(new StreamKey(BOT, "TR_pv"));
+            videoStreams.Received().Release(new StreamKey(PRESENTER, "TR_cam"));
+        }
+
+        [Test]
         public void ReopenPresentationStreams_AfterReconnect()
         {
             // Act
@@ -1115,7 +1126,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private static string SlideUrl(int index) =>
             $"{ALLOWED_SLIDES}{index:x16}.png";
 
-        private void ComposeThenReconnect()
+        private void ComposeThenReconnect(bool runReconnectingFrame = false)
         {
             LKParticipant bot = AddParticipant(BOT, V2_METADATA);
             Subscribe(bot, AddTrack(bot, "TR_pv", TrackKind.KindVideo, TrackSource.SourceScreenshare, LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME));
@@ -1124,6 +1135,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
             LivekitPlayer p = NewPlayer();
             p.OpenMedia(LivekitAddress.CurrentStream());
             p.EnsureVideoIsPlaying();
+
+            if (runReconnectingFrame)
+            {
+                room.Info.ConnectionState.Returns(LKConnectionState.ConnReconnecting);
+                p.EnsureVideoIsPlaying();
+                room.Info.ConnectionState.Returns(LKConnectionState.ConnConnected);
+            }
 
             room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, ConnectionUpdate.Reconnected, null);
             p.EnsureVideoIsPlaying();

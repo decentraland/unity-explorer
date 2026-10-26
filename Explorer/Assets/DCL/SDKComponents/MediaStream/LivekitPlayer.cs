@@ -121,6 +121,9 @@ namespace DCL.SDKComponents.MediaStream
             // which would poison the reusable stream cache. Pending flags stay set for reconnect.
             if (!canOpenStreams)
             {
+                if (video.IsComposingVideo(out _))
+                    ReleaseHeldVideoStreams();
+
                 DropPresentation();
                 EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
                 return;
