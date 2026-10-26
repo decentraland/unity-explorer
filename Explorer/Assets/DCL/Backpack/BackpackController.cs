@@ -272,6 +272,7 @@ namespace DCL.Backpack
             if (isOn)
             {
                 lastShownSection = shownSection;
+                randomizeOutfitController.SetSectionShown(shownSection == BackpackSections.Avatar);
                 backpackEventBus.SendChangedBackpackSectionEvent(shownSection);
             }
         }

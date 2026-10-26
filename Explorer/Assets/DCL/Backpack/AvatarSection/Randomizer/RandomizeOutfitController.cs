@@ -44,10 +44,11 @@ namespace DCL.Backpack.AvatarSection.Randomizer
 
         private CancellationTokenSource? randomizeCts;
         private bool isAvatarReady;
+        private bool isSectionShown = true;
         private bool isRolling;
         private bool isApplying;
 
-        private bool isBusy => isRolling || isApplying;
+        private bool isBusy => isRolling || isApplying || !isSectionShown;
 
         public RandomizeOutfitController(RandomizeOutfitView view,
             OutfitRandomizer randomizer,
@@ -92,6 +93,15 @@ namespace DCL.Backpack.AvatarSection.Randomizer
         {
             isAvatarReady = ready;
             isApplying = ready;
+            RefreshButtons();
+        }
+
+        /// <summary>
+        ///     Locks every button while another backpack section is shown, keeping the bar on screen.
+        /// </summary>
+        public void SetSectionShown(bool shown)
+        {
+            isSectionShown = shown;
             RefreshButtons();
         }
 

@@ -236,6 +236,30 @@ namespace DCL.Backpack.Tests
         }
 
         [Test]
+        public void LockAllButtonsWhileAnotherSectionIsShown()
+        {
+            // Arrange
+            GivenAvatarReady();
+            view.RandomizeClicked.Invoke();
+
+            // Act
+            controller.SetSectionShown(false);
+            view.UndoClicked.Invoke();
+
+            // Assert
+            Assert.AreEqual(1, sentCommands.Count);
+            Assert.IsFalse(view.RandomizeButton.interactable);
+            Assert.IsFalse(view.UndoButton.interactable);
+
+            // Act
+            controller.SetSectionShown(true);
+
+            // Assert
+            Assert.IsTrue(view.RandomizeButton.interactable);
+            Assert.IsTrue(view.UndoButton.interactable);
+        }
+
+        [Test]
         public void ForgetTheHistoryOnReset()
         {
             // Arrange
