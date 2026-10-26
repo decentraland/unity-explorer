@@ -31,15 +31,20 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneData sceneData;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly PlazaSnow? plazaSnow;
+        private readonly bool sceneHasSnow;
 
         public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IPerformanceBudget capBudget,
-            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
+            PlazaSnow? plazaSnow, bool sceneHasSnow) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.capBudget = capBudget;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
+            this.plazaSnow = plazaSnow;
+            this.sceneHasSnow = sceneHasSnow;
         }
 
         protected override void Update(float t)
@@ -96,6 +101,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, asset);
                 ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in asset, in sceneCircumscribedPlanes, sceneHeight);
+                plazaSnow?.TagRenderers(asset, component.Name, sceneHasSnow);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
 

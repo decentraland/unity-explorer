@@ -161,6 +161,10 @@ Shader "DCL/Scene"
             #pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            // Seasonal snow, only in this shader: Scene_TexArray shares the forward pass without it
+            #pragma dynamic_branch_fragment _DCL_SNOW
+            #define SCENE_SNOW
+
             #include "Scene_Input.hlsl"
             #include "Scene_ForwardPass.hlsl"
             ENDHLSL

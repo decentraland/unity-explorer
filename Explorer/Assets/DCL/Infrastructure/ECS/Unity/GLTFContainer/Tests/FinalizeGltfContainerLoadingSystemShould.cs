@@ -54,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             system = new FinalizeGltfContainerLoadingSystem(
                 world, sceneRoot, releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
-                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
+                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), null, false);
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);

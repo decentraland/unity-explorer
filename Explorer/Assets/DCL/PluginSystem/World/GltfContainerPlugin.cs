@@ -1,10 +1,12 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.Utility;
 using DCL.WebRequests;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -41,6 +43,8 @@ namespace DCL.PluginSystem.World
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
         private readonly Transform poolsRoot;
+        private readonly IRealmData realmData;
+        private readonly PlazaSnow? plazaSnow;
 
         // Process-wide raw-GLTF cache. Combined with per-consumer Root cloning in
         // CreateGltfAssetFromRawGltfSystem, multiple entities referencing the same hash share
@@ -57,7 +61,8 @@ namespace DCL.PluginSystem.World
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
             IAppArgs appArgs,
-            Transform poolsRoot)
+            Transform poolsRoot,
+            IRealmData realmData)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -69,6 +74,21 @@ namespace DCL.PluginSystem.World
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
             this.appArgs = appArgs;
             this.poolsRoot = poolsRoot;
+            this.realmData = realmData;
+
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PLAZA_SNOW)
+                || !FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.PLAZA_SNOW, FeatureFlagsStrings.CONFIG_VARIANT, out PlazaSnowConfig? snowConfig))
+                snowConfig = null;
+
+#if UNITY_EDITOR
+            snowConfig ??= PlazaSnow.EditorConfig();
+#endif
+
+            if (snowConfig != null)
+            {
+                plazaSnow = new PlazaSnow(snowConfig);
+                plazaSnow.EnableShaderGlobals();
+            }
 
             cacheCleaner.Register(assetsCache);
             cacheCleaner.Register(gltfLoadCache);
@@ -78,6 +98,7 @@ namespace DCL.PluginSystem.World
         {
             assetsCache.Dispose();
             gltfLoadCache.Dispose();
+            plazaSnow?.DisableShaderGlobals();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -124,8 +145,10 @@ namespace DCL.PluginSystem.World
             var sceneData = sharedDependencies.SceneData;
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
                 hash => sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed.ComposeCacheKey(hash));
+            bool sceneHasSnow = plazaSnow != null && realmData.IsGenesis() && plazaSnow.IncludesScene(sceneData.SceneShortInfo.BaseParcel);
+
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
-                sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
+                sharedDependencies.EntityCollidersSceneCache, sceneData, buffer, plazaSnow, sceneHasSnow);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);

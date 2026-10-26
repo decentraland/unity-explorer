@@ -10,6 +10,9 @@
 #include "Scene_InputData.hlsl"
 #include "Scene_Lighting.hlsl"
 #include "Scene_PlaneClipping.hlsl"
+#if defined(SCENE_SNOW)
+    #include "Scene_Snow.hlsl"
+#endif
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
@@ -289,6 +292,12 @@ void LitPassFragment(
     InputData_Scene inputData;
     InitializeInputData(input, surfaceData.normalTS, inputData);
     SETUP_DEBUG_TEXTURE_DATA(inputData, UNDO_TRANSFORM_TEX(input.uv, _BaseMap));
+
+    // GPU-instanced draws have no per-renderer rendering layer, so they never receive snow
+#if defined(SCENE_SNOW) && !defined(_GPU_INSTANCER_BATCHER)
+    if (_DCL_SNOW && !IsSurfaceTypeTransparent(_Surface) && (GetMeshRenderingLayer() & SNOW_RENDERING_LAYER_MASK) != 0)
+        ApplySnow(input.positionWS, input.normalWS, surfaceData, inputData);
+#endif
 
     #if defined(_DBUFFER)
         ApplyDecalToSurfaceData(input.positionCS, surfaceData, inputData);
