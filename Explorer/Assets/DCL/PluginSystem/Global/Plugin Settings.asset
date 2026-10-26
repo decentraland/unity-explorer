@@ -1188,6 +1188,7 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
         <AvatarSettings>k__BackingField:
+          <IntroEmoteURN>k__BackingField: wave
           <FlavourEmotes>k__BackingField:
           - wave
           - fistpump
