@@ -15,6 +15,8 @@ namespace DCL.Minimap
     /// </summary>
     public class SkyboxTimePresenter : IDisposable
     {
+        private const int MINUTES_PER_HOUR = 60;
+
         private readonly Toggle timeProgressionToggle;
         private readonly Slider timeSlider;
         private readonly TMP_Text timeText;
@@ -23,6 +25,7 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         private bool isRestrictedByScene;
+        private int lastTotalMinutes = -1;
 
         public SkyboxTimePresenter(
             Toggle timeProgressionToggle,
@@ -67,7 +70,14 @@ namespace DCL.Minimap
         private void OnTimeOfDayChanged(float time)
         {
             timeSlider.SetValueWithoutNotify(time);
-            timeText.text = FormatTime(time);
+
+            var totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
+
+            if (totalMinutes == lastTotalMinutes) return;
+
+            lastTotalMinutes = totalMinutes;
+            // ReSharper disable once PossibleLossOfFraction
+            timeText.SetText("{0:00}:{1:00}", totalMinutes / MINUTES_PER_HOUR, totalMinutes % MINUTES_PER_HOUR);
         }
 
         private void OnTimeSliderValueChanged(float sliderValue)
@@ -110,16 +120,6 @@ namespace DCL.Minimap
             timeProgressionToggle.interactable = !isRestrictedByScene;
             timeSlider.interactable = !isRestrictedByScene && !timeProgressionToggle.isOn;
             sectionCanvasGroup.interactable = !isRestrictedByScene;
-        }
-
-        private static string FormatTime(float time)
-        {
-            var totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
-
-            int hours = totalMinutes / 60;
-            int minutes = totalMinutes % 60;
-
-            return $"{hours:00}:{minutes:00}";
         }
     }
 }
