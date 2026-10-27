@@ -1326,7 +1326,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 3
-  m_Spacing: 2
+  m_Spacing: 5
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 1
@@ -5239,8 +5239,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6423285587092867117}
   - {fileID: 6423328223121998152}
+  - {fileID: 6423285587092867117}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -6038,7 +6038,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 684450512256360453, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 58
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4631154171231165118, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
       propertyPath: m_Alpha
@@ -6050,7 +6050,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4966924927682336045, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7434166619040309165, guid: ce62870d41fed4cd7a4116ce6791c410, type: 3}
       propertyPath: m_Pivot.x
