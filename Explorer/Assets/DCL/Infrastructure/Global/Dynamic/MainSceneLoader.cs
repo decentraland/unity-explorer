@@ -351,9 +351,10 @@ namespace Global.Dynamic
             // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
             // the scene loads either way. --lsd-raw-gltf skips the sidecar and takes that raw-GLTF wiring directly.
             string? localAbBaseUrl = null;
+            var abgenConversionMetrics = new AbgenConversionMetrics();
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+                abgenConversionMetrics.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
             else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
@@ -363,7 +364,7 @@ namespace Global.Dynamic
                     : launchSettings.customRealm;
 
                 string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
-                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain, abgenConversionMetrics);
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
@@ -401,6 +402,7 @@ namespace Global.Dynamic
                 pluginSettingsContainer,
                 launchSettings,
                 useLocalAssetBundles: localAbBaseUrl != null,
+                abgenConversionMetrics,
                 applicationParametersParser,
                 splashScreen.Value,
                 diskCache,

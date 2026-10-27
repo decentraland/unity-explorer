@@ -15,6 +15,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.World
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
@@ -51,6 +53,7 @@ namespace DCL.PluginSystem.World
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
             bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.World
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
@@ -109,7 +113,7 @@ namespace DCL.PluginSystem.World
             CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             // A bundle the local JIT converter could not serve is loaded as the raw file instead of failing the container.
             CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget,
-                rawGltfFallback: localSceneDevelopment && useLocalAssetBundles);
+                rawGltfFallback: localSceneDevelopment && useLocalAssetBundles, abgenConversionMetrics);
 
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);

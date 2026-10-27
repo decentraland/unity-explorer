@@ -26,12 +26,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly bool rawGltfFallback;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, bool rawGltfFallback) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, bool rawGltfFallback,
+            AbgenConversionMetrics abgenConversionMetrics) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
             this.rawGltfFallback = rawGltfFallback;
+            this.abgenConversionMetrics = abgenConversionMetrics;
         }
 
         protected override void Update(float t)
@@ -89,7 +92,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void FallBackToRawGltf(Entity entity, string name, string hash, string reason)
         {
             ReportHub.LogWarning(GetReportCategory(), $"{name}: asset bundle unavailable ({reason}), loading the raw GLTF instead");
-            AbgenConversionMetrics.INSTANCE.OnFailed(name, $"{reason} — loaded as raw GLTF");
+            abgenConversionMetrics.OnFailed(name, $"{reason} — loaded as raw GLTF");
 
             World.Get<StreamableLoadingState>(entity).Dispose();
             World.Set(entity, StreamableLoadingState.Create());

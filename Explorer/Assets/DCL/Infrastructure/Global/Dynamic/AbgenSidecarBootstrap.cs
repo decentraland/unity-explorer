@@ -19,6 +19,7 @@ namespace Global.Dynamic
     public sealed class AbgenSidecarBootstrap : IDisposable
     {
         private readonly string baseDomain;
+        private readonly AbgenConversionMetrics metrics;
         private readonly CancellationTokenSource lifeCycleCancellationTokenSource = new ();
 
         private AbgenSidecar? sidecar;
@@ -32,9 +33,10 @@ namespace Global.Dynamic
         /// </summary>
         public UniTask WarmUpTask { get; private set; } = UniTask.CompletedTask;
 
-        public AbgenSidecarBootstrap(string baseDomain)
+        public AbgenSidecarBootstrap(string baseDomain, AbgenConversionMetrics metrics)
         {
             this.baseDomain = baseDomain;
+            this.metrics = metrics;
         }
 
         public void Dispose()
@@ -56,18 +58,18 @@ namespace Global.Dynamic
 
             try
             {
-                AbgenSidecar? created = AbgenSidecar.TryCreate(BaseUrl, baseDomain,
+                AbgenSidecar? created = AbgenSidecar.TryCreate(BaseUrl, baseDomain, metrics,
                     realmRootOverride: realmRoot, jitContentDigest: true);
 
                 if (created == null)
                 {
                     // First run: download the pinned binary; the AB panel is asked to open so the wait is visible.
-                    AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
+                    metrics.RequestPanelOpen();
 
-                    if (!await AbgenSidecar.EnsurePinnedBinaryAsync(ct))
+                    if (!await AbgenSidecar.EnsurePinnedBinaryAsync(metrics, ct))
                         return DegradeToRawGltfs("the abgen binary could not be installed");
 
-                    created = AbgenSidecar.TryCreate(BaseUrl, baseDomain,
+                    created = AbgenSidecar.TryCreate(BaseUrl, baseDomain, metrics,
                         realmRootOverride: realmRoot, jitContentDigest: true);
 
                     if (created == null)
@@ -94,10 +96,10 @@ namespace Global.Dynamic
         ///     Records that the scene loads raw GLTFs and why. Always false, so a failure path is
         ///     <c>return DegradeToRawGltfs(...)</c> and nothing else.
         /// </summary>
-        private static bool DegradeToRawGltfs(string reason)
+        private bool DegradeToRawGltfs(string reason)
         {
             ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"local asset bundles unavailable — the scene loads raw GLTFs: {reason}");
-            AbgenConversionMetrics.INSTANCE.OnRawGltfFallback(reason);
+            metrics.OnRawGltfFallback(reason);
             return false;
         }
 

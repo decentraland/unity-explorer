@@ -25,7 +25,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false, new AbgenConversionMetrics());
         }
 
         [TearDown]
@@ -115,7 +115,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: true);
+            var metrics = new AbgenConversionMetrics();
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: true, metrics);
 
             Entity e = world.Create(
                 new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource()),
@@ -133,6 +134,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(gltfIntention.Name, Is.EqualTo("TEST"));
             Assert.That(gltfIntention.Hash, Is.EqualTo("TEST_HASH"));
             Assert.That(world.Get<StreamableLoadingState>(e).Value, Is.EqualTo(StreamableLoadingState.Status.NotStarted));
+
+            // The fallback is recorded as a failed conversion.
+            Assert.That(metrics.Failed, Is.EqualTo(1));
         }
 
         [Test]

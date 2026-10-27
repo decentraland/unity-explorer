@@ -31,6 +31,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Systems;
@@ -73,6 +74,7 @@ namespace Global.Dynamic
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly bool localSceneDevelopment;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IProfileRepository profileRepository;
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
@@ -97,6 +99,7 @@ namespace Global.Dynamic
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
             bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             EntitiesAnalytics entitiesAnalytics,
@@ -121,6 +124,7 @@ namespace Global.Dynamic
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
@@ -152,8 +156,8 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));

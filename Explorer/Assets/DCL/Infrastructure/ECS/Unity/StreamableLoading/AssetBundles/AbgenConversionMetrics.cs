@@ -5,8 +5,8 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     Live record of the session's abgen conversions, written from the sidecar's warm-up flow and read
     ///     by the scene dev console's "AB Conversion" panel on the main thread: per-file entries and the
-    ///     whole-scene warm-up stage of the eager build. A process-wide instance: the writers are static or
-    ///     singular and the reader lives in the global UI, so there is exactly one pipeline to describe.
+    ///     whole-scene warm-up stage of the eager build. Every member is guarded by one lock, so writers may
+    ///     run off the main thread.
     /// </summary>
     public sealed class AbgenConversionMetrics
     {
@@ -31,8 +31,6 @@ namespace ECS.StreamableLoading.AssetBundles
             Ready,
             Failed,
         }
-
-        public static readonly AbgenConversionMetrics INSTANCE = new ();
 
         private readonly object gate = new ();
         private readonly Dictionary<string, Entry> entries = new ();

@@ -121,6 +121,7 @@ namespace Global.Dynamic
                 bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics,
                 world,
                 playerEntity,
                 memoryCap,

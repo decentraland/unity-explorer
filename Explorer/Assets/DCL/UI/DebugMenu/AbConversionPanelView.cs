@@ -24,6 +24,7 @@ namespace DCL.UI.DebugMenu
         private static readonly int BASE_COLOR_ID = Shader.PropertyToID("_BaseColor");
         private static readonly int COLOR_ID = Shader.PropertyToID("_Color");
 
+        private readonly AbgenConversionMetrics metrics;
         private readonly List<AbgenConversionMetrics.Entry> rows = new ();
         private readonly ListView list;
         private readonly ScrollView? scrollView;
@@ -35,8 +36,9 @@ namespace DCL.UI.DebugMenu
         private int lastVersion = -1;
         private bool highlightActive;
 
-        public AbConversionPanelView(VisualElement root, Button sidebarButton, Action closeClicked) : base(root, sidebarButton, closeClicked)
+        public AbConversionPanelView(VisualElement root, Button sidebarButton, Action closeClicked, AbgenConversionMetrics metrics) : base(root, sidebarButton, closeClicked)
         {
+            this.metrics = metrics;
             summary = root.Q<Label>("AbConversionSummary");
             clearCacheButton = root.Q<Button>("AbConversionClearCacheButton");
             clearCacheButton.clicked += OnClearCacheClicked;
@@ -65,7 +67,6 @@ namespace DCL.UI.DebugMenu
         {
             if (!Visible) return;
 
-            AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
             if (metrics.Version == lastVersion) return;
 
             lastVersion = metrics.Version;
@@ -166,7 +167,7 @@ namespace DCL.UI.DebugMenu
                 }
             }
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"highlight — {abRoots} objects from asset bundles (green) · {gltfRoots} from raw GLTF (red)");
+            metrics.OnMilestone($"highlight — {abRoots} objects from asset bundles (green) · {gltfRoots} from raw GLTF (red)");
         }
 
         private void OnClearCacheClicked() =>

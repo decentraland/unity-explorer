@@ -1090,7 +1090,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     assetsProvisioner,
                     debugBuilder,
-                    staticContainer.ScenesCache
+                    staticContainer.ScenesCache,
+                    bootstrapContainer.AbgenConversionMetrics
                 ));
 
             if (!localSceneDevelopment)
@@ -1113,6 +1114,7 @@ namespace Global.Dynamic
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
                 bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,

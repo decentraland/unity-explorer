@@ -26,13 +26,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly IWebRequestController webRequestController;
         private readonly bool isLocalSceneDevelopment;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -50,7 +53,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
 
             if (isLocalSceneDevelopment && useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
-                AbgenConversionMetrics.INSTANCE.OnSceneManifestUnavailable();
+                abgenConversionMetrics.OnSceneManifestUnavailable();
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.

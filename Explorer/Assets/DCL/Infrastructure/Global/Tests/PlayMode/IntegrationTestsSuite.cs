@@ -35,6 +35,7 @@ using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
@@ -104,6 +105,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
                 useLocalAssetBundles: false,
+                new AbgenConversionMetrics(),
                 world,
                 playerEntity,
                 new SystemMemoryCap(),
