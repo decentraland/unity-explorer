@@ -185,8 +185,8 @@ namespace DCL.Places
         public void SetFiltersVisible(bool isVisible) =>
             filtersDropdown.gameObject.SetActive(isVisible);
 
-        public void SetSortInteractable(bool isInteractable) =>
-            filtersDropdown.SetSortInteractable(isInteractable);
+        public void SetFiltersInteractable(bool isInteractable) =>
+            filtersDropdown.SetDropdownInteractable(isInteractable);
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
