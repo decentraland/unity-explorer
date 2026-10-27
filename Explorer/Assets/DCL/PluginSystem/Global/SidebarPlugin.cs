@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Credits;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.MarketplaceCredits;
@@ -24,6 +25,7 @@ using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.SubMenus;
 using DCL.UI.Skybox;
 using DCL.UI.SystemMenu;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -79,6 +81,7 @@ namespace DCL.PluginSystem.Global
         private SidebarProfileMenuPresenter? sidebarProfileMenuPresenter;
 
         private CancellationTokenSource? controlsShortcutCts;
+        private bool disposed;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -132,6 +135,8 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            disposed = true;
+
             DCLInput.Instance.Shortcuts.Controls.performed -= OnControlsShortcutPerformed;
             DCLInput.Instance.Shortcuts.Support.performed -= OnSupportShortcutPerformed;
             controlsShortcutCts.SafeCancelAndDispose();
@@ -176,8 +181,9 @@ namespace DCL.PluginSystem.Global
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUiView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUiView.SidebarView.NearbyVoiceWidget);
 
-            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(
-                mainUiView.SidebarView.ShopCreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
+            EnableShopCreditsPanelAsync(ct)
+               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+               .Forget();
 
             sidebarProfileMenuPresenter = new SidebarProfileMenuPresenter(
                 mainUiView.SidebarView, web3IdentityCache, profileRepository, profileChangesBus,
@@ -221,6 +227,18 @@ namespace DCL.PluginSystem.Global
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
             DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
+        }
+
+        // The panel can resolve after Dispose has run, in which case nothing else will release it
+        private async UniTask EnableShopCreditsPanelAsync(CancellationToken ct)
+        {
+            ICreditsPanelController panel = await CreditsPanelSetup.EnableIfUserAllowedAsync(
+                mainUiView.SidebarView.ShopCreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
+
+            if (disposed)
+                panel.Dispose();
+            else
+                shopCreditsPanelController = panel;
         }
 
         [Serializable]
