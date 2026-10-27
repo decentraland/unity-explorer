@@ -84,11 +84,12 @@ public class PreviewConfiguration
     /// The emote that the avatar will play. Default value is idle, other possible values are:
     /// clap, dab, dance, fashion, fashion-2, fashion-3,fashion-4, love, money, fist-pump and head-explode.
     /// <see cref="NO_EMOTE"/> plays none, so the avatar stands in the rig's idle unless a requested
-    /// item is an emote; <see cref="DisableDefaultEmotes"/> reads as that whatever was named.
+    /// item is an emote. <see cref="DisableDefaultEmotes"/> drops only the default: an emote named
+    /// on its own still plays, as in the Babylon preview.
     /// </summary>
     public string Emote
     {
-        get => DisableDefaultEmotes ? NO_EMOTE : _emote;
+        get => DisableDefaultEmotes && _emote == DEFAULT_EMOTE ? NO_EMOTE : _emote;
         set => _emote = value;
     }
 

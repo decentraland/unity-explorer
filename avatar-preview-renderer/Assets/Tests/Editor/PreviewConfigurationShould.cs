@@ -138,7 +138,7 @@ namespace Tests
             Assert.AreEqual("A&B Co", PreviewConfiguration.Instance.Username);
             Assert.AreEqual(PreviewMode.Builder, PreviewConfiguration.Instance.Mode);
             Assert.IsTrue(PreviewConfiguration.Instance.DisableDefaultEmotes);
-            Assert.AreEqual(PreviewConfiguration.NO_EMOTE, PreviewConfiguration.Instance.Emote);
+            Assert.AreEqual("dance", PreviewConfiguration.Instance.Emote);
         }
 
         [TestCase("https://")]
@@ -154,16 +154,17 @@ namespace Tests
             Assert.IsNull(PreviewConfiguration.Instance.PeerUrl);
         }
 
-        [TestCase("?disableDefaultEmotes=true")]
-        [TestCase("?disableDefaultEmotes=true&emote=dance")]
-        [TestCase("?emote=dance&disableDefaultEmotes=true")]
-        public void MapDisableDefaultEmotesToNoEmoteWhateverTheOrder(string url)
+        [TestCase("?disableDefaultEmotes=true", PreviewConfiguration.NO_EMOTE)]
+        [TestCase("?disableDefaultEmotes=true&emote=idle", PreviewConfiguration.NO_EMOTE)]
+        [TestCase("?disableDefaultEmotes=true&emote=dance", "dance")]
+        [TestCase("?emote=dance&disableDefaultEmotes=true", "dance")]
+        public void DropOnlyTheDefaultEmoteWhateverTheOrder(string url, string expected)
         {
             // Act
             PreviewConfiguration.RecreateFrom(url);
 
             // Assert
-            Assert.AreEqual(PreviewConfiguration.NO_EMOTE, PreviewConfiguration.Instance.Emote);
+            Assert.AreEqual(expected, PreviewConfiguration.Instance.Emote);
         }
 
         [Test]
