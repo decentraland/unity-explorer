@@ -117,6 +117,38 @@ namespace Tests
         }
 
         [Test]
+        public void HoldBackTheEndOfAClearedEmoteUntilTheReloadSettles()
+        {
+            // Arrange
+            PlayEmote();
+
+            // Act
+            _controller.ClearEmote(deferEnd: true);
+            var beforeSettle = Events();
+            _controller.SettleDeferredEnd();
+            _controller.SettleDeferredEnd();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play }, beforeSettle);
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play, EmotePlaybackEvent.End }, Events());
+        }
+
+        [Test]
+        public void ReportOnlyThePlayOfAnEmoteThatReplacesAnother()
+        {
+            // Arrange: a reload clears the running emote, then plays the next one.
+            PlayEmote();
+            _controller.ClearEmote(deferEnd: true);
+
+            // Act
+            PlayEmote();
+            _controller.SettleDeferredEnd();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { EmotePlaybackEvent.Play, EmotePlaybackEvent.Play }, Events());
+        }
+
+        [Test]
         public void ReportTheEndOnceWhenAStoppedClipReturnsToIdle()
         {
             // Arrange

@@ -370,7 +370,8 @@ namespace Preview
                 return;
             }
 
-            Cleanup();
+            // A reload replaces the emote rather than ending it, so its End waits until the reload settles.
+            Cleanup(deferEmoteEnd: true);
             previewUIPresenter.ShowLoader(true);
             _loading = true;
             ReloadGeneration++;
@@ -582,6 +583,8 @@ namespace Preview
             {
                 Cleanup();
             }
+
+            emoteAnimationController.SettleDeferredEnd();
         }
 
         private async Awaitable LoadForBuilder(PreviewConfiguration config)
@@ -859,7 +862,11 @@ namespace Preview
             return new List<string>();
         }
 
-        public void Cleanup()
+        /// <summary>
+        /// Forgets the emote. With <paramref name="deferEmoteEnd"/> its End waits for the reload to
+        /// settle, so an emote the reload plays next reports only its Play.
+        /// </summary>
+        public void Cleanup(bool deferEmoteEnd = false)
         {
             if (_loading)
             {
@@ -869,7 +876,7 @@ namespace Preview
 
             _shouldCleanup = false;
 
-            emoteAnimationController.ClearEmote();
+            emoteAnimationController.ClearEmote(deferEmoteEnd);
             avatarLoader.ClearEmote();
         }
     }

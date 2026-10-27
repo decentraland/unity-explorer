@@ -15,6 +15,9 @@ namespace Preview
         private const float MIN_ZOOM_FACTOR = 1f;
         private const float MAX_ZOOM_FACTOR = 2.8f;
 
+        // The divisor Babylon frames an avatar with when the page sets no zoom: the view the fit matches.
+        private const float BABYLON_DEFAULT_ZOOM = 1.75f;
+
         // The farthest pull-back a page may ask for, so the farthest radius stays a finite float.
         private const float MAX_WHEEL_ZOOM = 100f;
 
@@ -38,10 +41,12 @@ namespace Preview
         }
 
         /// <summary>
-        /// Babylon's <c>zoom</c> option, 0 to 100, as a factor over the fitted view.
+        /// Babylon's <c>zoom</c> option, 0 to 100, as a factor over the fitted view, which shows what
+        /// Babylon's default zoom does.
         /// </summary>
         public static float FactorFromPercent(float percent) =>
-            MIN_ZOOM_FACTOR + (MAX_ZOOM_FACTOR - MIN_ZOOM_FACTOR) * Mathf.Clamp(percent, 0f, MAX_PERCENT) / MAX_PERCENT;
+            (MIN_ZOOM_FACTOR + (MAX_ZOOM_FACTOR - MIN_ZOOM_FACTOR) * Mathf.Clamp(percent, 0f, MAX_PERCENT) / MAX_PERCENT)
+            / BABYLON_DEFAULT_ZOOM;
 
         /// <summary>
         /// With neither option, the renderer's own range around the fitted view. Otherwise Babylon's

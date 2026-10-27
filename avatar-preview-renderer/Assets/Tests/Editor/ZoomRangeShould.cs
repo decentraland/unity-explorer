@@ -6,11 +6,11 @@ namespace Preview.Tests
     {
         private const float TOLERANCE = 0.0001f;
 
-        [TestCase(0f, 1f)]
-        [TestCase(50f, 1.9f)]
-        [TestCase(100f, 2.8f)]
-        [TestCase(-10f, 1f)]
-        [TestCase(250f, 2.8f)]
+        [TestCase(0f, 1f / 1.75f)]
+        [TestCase(50f, 1.9f / 1.75f)]
+        [TestCase(100f, 1.6f)]
+        [TestCase(-10f, 1f / 1.75f)]
+        [TestCase(250f, 1.6f)]
         public void MapBabylonZoomPercentToAFactor(float percent, float expected)
         {
             // Act
@@ -18,6 +18,29 @@ namespace Preview.Tests
 
             // Assert
             Assert.AreEqual(expected, factor, TOLERANCE);
+        }
+
+        [Test]
+        public void ShowTheFittedViewForBabylonsDefaultZoom()
+        {
+            // Act: zoom 41.67 is Babylon's default divisor of 1.75.
+            var factor = ZoomRange.FactorFromPercent(0.75f / 1.8f * 100f);
+
+            // Assert
+            Assert.AreEqual(1f, factor, TOLERANCE);
+        }
+
+        [Test]
+        public void StartAtTheFittedViewWithTheEditorsScaledRange()
+        {
+            // Arrange: the creators editor's options, Babylon's default zoom scaled by 3 with a wheel of 5.
+            const float zoomScale = 3f;
+
+            // Act
+            var range = ZoomRange.FromOptions(0.75f / 1.8f * 100f, 5f, 50f, 2f, 1.5f);
+
+            // Assert
+            Assert.AreEqual(1f, range.Start * zoomScale, TOLERANCE);
         }
 
         [Test]
@@ -39,9 +62,9 @@ namespace Preview.Tests
             var range = ZoomRange.FromOptions(100f, null, 50f, 2f, 1.5f);
 
             // Assert
-            Assert.AreEqual(2.8f, range.Min, TOLERANCE);
-            Assert.AreEqual(2.8f, range.Max, TOLERANCE);
-            Assert.AreEqual(2.8f, range.Start, TOLERANCE);
+            Assert.AreEqual(1.6f, range.Min, TOLERANCE);
+            Assert.AreEqual(1.6f, range.Max, TOLERANCE);
+            Assert.AreEqual(1.6f, range.Start, TOLERANCE);
         }
 
         [Test]
@@ -63,19 +86,19 @@ namespace Preview.Tests
             var range = ZoomRange.FromOptions(100f, 2f, 0f, 2f, 1.5f);
 
             // Assert
-            Assert.AreEqual(1.4f, range.Min, TOLERANCE);
-            Assert.AreEqual(2.8f, range.Max, TOLERANCE);
-            Assert.AreEqual(1.4f, range.Start, TOLERANCE);
+            Assert.AreEqual(0.8f, range.Min, TOLERANCE);
+            Assert.AreEqual(1.6f, range.Max, TOLERANCE);
+            Assert.AreEqual(0.8f, range.Start, TOLERANCE);
         }
 
         [Test]
         public void StartHalfwayInRadiusWhenWheelStartIs50()
         {
-            // Act: radius limits 1.25 and 2.5 give a start radius of 1.875, a factor of 2.8 / 1.5.
+            // Act: radius limits 2.1875 and 4.375 give a start radius of 3.28125, a factor of 1.6 / 1.5.
             var range = ZoomRange.FromOptions(100f, 2f, 50f, 2f, 1.5f);
 
             // Assert
-            Assert.AreEqual(2.8f / 1.5f, range.Start, TOLERANCE);
+            Assert.AreEqual(1.6f / 1.5f, range.Start, TOLERANCE);
         }
 
         [Test]
@@ -85,8 +108,8 @@ namespace Preview.Tests
             var range = ZoomRange.FromOptions(100f, 1000f, 0f, 2f, 1.5f);
 
             // Assert
-            Assert.AreEqual(0.028f, range.Min, TOLERANCE);
-            Assert.AreEqual(0.028f, range.Start, TOLERANCE);
+            Assert.AreEqual(0.016f, range.Min, TOLERANCE);
+            Assert.AreEqual(0.016f, range.Start, TOLERANCE);
         }
 
         [Test]

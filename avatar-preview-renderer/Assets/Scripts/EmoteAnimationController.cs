@@ -70,6 +70,10 @@ public class EmoteAnimationController : MonoBehaviour
     // once Unity stops it there.
     private float? _stillSeek;
 
+    // The End of an emote cleared to be replaced: the next one's Play takes its place, and
+    // SettleDeferredEnd reports it when none came.
+    private bool _endDeferred;
+
     /// <summary>
     /// Plays <paramref name="loadedEmote"/> from the start. <paramref name="partner"/> is the other
     /// avatar of a social emote, playing <paramref name="partnerAnimation"/> in step with it.
@@ -78,8 +82,8 @@ public class EmoteAnimationController : MonoBehaviour
         [CanBeNull] Animation partnerAnimation = null)
     {
         // The previous emote's state would otherwise stay on the rig, bound to a clip its importer
-        // has disposed.
-        ClearEmote();
+        // has disposed. Its End is held back: this emote's Play follows.
+        ClearEmote(deferEnd: true);
 
         _loadedEmote = loadedEmote;
 
@@ -168,6 +172,7 @@ public class EmoteAnimationController : MonoBehaviour
         _state = PlaybackState.Playing;
         _stillSeek = null;
         _reportedLoops = 0;
+        _endDeferred = false;
 
         // A pause or a stop left the speeds at zero.
         var urn = _loadedEmote.Value.Entity.URN;
@@ -241,7 +246,9 @@ public class EmoteAnimationController : MonoBehaviour
     /// <summary>
     /// Leaves the emote for the rig's idle clip, with its prop hidden and its audio stopped.
     /// </summary>
-    public void ReturnToIdle(bool withCrossFade)
+    public void ReturnToIdle(bool withCrossFade) => LeaveEmote(withCrossFade, reportEnd: true);
+
+    private void LeaveEmote(bool withCrossFade, bool reportEnd)
     {
         if (!_loadedEmote.HasValue) return;
 
@@ -262,7 +269,10 @@ public class EmoteAnimationController : MonoBehaviour
         }
 
         // A clip that already ended or was held reported its End then.
-        if (wasRunning) PlaybackChanged?.Invoke(EmotePlaybackEvent.End, time);
+        if (!wasRunning) return;
+
+        if (reportEnd) PlaybackChanged?.Invoke(EmotePlaybackEvent.End, time);
+        else _endDeferred = true;
     }
 
     /// <summary>
@@ -315,13 +325,14 @@ public class EmoteAnimationController : MonoBehaviour
 
     /// <summary>
     /// Leaves the emote and forgets it. The state is removed by name, so the clip object need not
-    /// still exist.
+    /// still exist. With <paramref name="deferEnd"/> a running emote's End waits for
+    /// <see cref="SettleDeferredEnd"/>, so an emote that replaces it reports only its Play.
     /// </summary>
-    public void ClearEmote()
+    public void ClearEmote(bool deferEnd = false)
     {
         if (!_loadedEmote.HasValue) return;
 
-        ReturnToIdle(false);
+        LeaveEmote(false, reportEnd: !deferEnd);
         avatarAnimation.RemoveClip(_loadedEmote.Value.Entity.URN);
         _loadedEmote = null;
         _emoteAudioClip = null;
@@ -329,6 +340,17 @@ public class EmoteAnimationController : MonoBehaviour
         audioSource.clip = null;
         _state = PlaybackState.Idle;
         _stillSeek = null;
+    }
+
+    /// <summary>
+    /// Reports the End a clear held back, unless an emote has played since.
+    /// </summary>
+    public void SettleDeferredEnd()
+    {
+        if (!_endDeferred) return;
+
+        _endDeferred = false;
+        PlaybackChanged?.Invoke(EmotePlaybackEvent.End, 0f);
     }
 
     /// <summary>
