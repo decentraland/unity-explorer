@@ -178,5 +178,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         LodAssetBundlesCDN = 107,
 
         SatelliteMapTiles = 108,
+
+        CastPresenterService = 109,
     }
 }

@@ -3,13 +3,18 @@ using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class UrlResolverServiceShould
     {
+        private const string SIGNED_VIMEO_URL = "https://player.vimeo.com/external/123456.m3u8?s=secret-token";
+
         private IWebRequestController webRequestController = null!;
         private IYouTubeUrlResolver youTubeResolver = null!;
         private UrlResolverService service = null!;
@@ -126,6 +131,34 @@ namespace DCL.SDKComponents.MediaStream.Tests
             // Assert
             Assert.That(result.DirectUrl, Is.EqualTo(URL));
             Assert.That(result.IsReachable, Is.False);
+        }
+
+        [Test]
+        public async Task ResolveAsync_WhenSignedVimeoUrl_SkipsHeadProbe()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act
+            await service.ResolveAsync(SIGNED_VIMEO_URL, default, cts.Token).AsTask();
+
+            // Assert
+            _ = webRequestController.DidNotReceiveWithAnyArgs()
+                                    .SendAsync<GenericHeadRequest, GenericHeadArguments, WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(
+                                         default, default, default);
+        }
+
+        [Test]
+        public async Task ResolveAsync_WhenDirectUrl_LogsItWithoutQuery()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            LogAssert.Expect(LogType.Log, new Regex(@"Resource <https://player\.vimeo\.com/external/123456\.m3u8> isReachable"));
+
+            // Act & Assert
+            await service.ResolveAsync(SIGNED_VIMEO_URL, default, cts.Token).AsTask();
         }
 
         // --- Cancellation ---

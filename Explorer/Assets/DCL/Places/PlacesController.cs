@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace DCL.Places
 {
-    public class PlacesController : IHostableSection, IDisposable
+    public class PlacesController : IHostableSection, IPlacesSectionOpener, IDisposable
     {
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
@@ -140,6 +140,9 @@ namespace DCL.Places
             view.SetFiltersVisible(section == PlacesSection.Browse);
             view.OpenSection(section, force, invokeEvent, cleanSearch, resetCategory);
         }
+
+        void IPlacesSectionOpener.OpenSection(PlacesSection section) =>
+            OpenSection(section);
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
