@@ -123,21 +123,26 @@ namespace DCL.UI.Sidebar
         {
             if (identityCache.Identity == null) return;
 
-            Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(identityCache.Identity.Address, ct);
+            try
+            {
+                Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(identityCache.Identity.Address, ct);
 
-            if (compactInfo == null) return;
+                if (compactInfo == null) return;
 
-            Profile.CompactInfo profile = compactInfo.Value;
+                Profile.CompactInfo profile = compactInfo.Value;
 
-            string wallet = identityCache.Identity.Address;
+                string wallet = identityCache.Identity.Address;
 
-            view.ProfileNameLabel.text = BuildName(profile);
-            view.ProfileVerifiedMark.SetActive(profile.HasClaimedName);
-            view.ProfileFoundationMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(wallet));
-            view.ProfileWalletAddressLabel.text = ShortenAddress(wallet);
+                view.ProfileNameLabel.text = BuildName(profile);
+                view.ProfileVerifiedMark.SetActive(profile.HasClaimedName);
+                view.ProfileFoundationMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(wallet));
+                view.ProfileWalletAddressLabel.text = ShortenAddress(wallet);
 
-            thumbnail.SetLoading(profile.UserNameColor);
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
+                thumbnail.SetLoading(profile.UserNameColor);
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
         }
 
         /// <summary>
