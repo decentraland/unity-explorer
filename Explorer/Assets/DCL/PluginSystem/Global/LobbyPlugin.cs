@@ -84,7 +84,6 @@ namespace DCL.PluginSystem.Global
         private readonly LobbyStagePresetCatalog stagePresetCatalog;
 
         private LobbyStage? lobbyStage;
-        private LobbyStagePresetSwitcher? stagePresetSwitcher;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
         private LobbyConnectedFriendsPresenter? connectedFriendsPresenter;
         private SidebarProfileButtonPresenter? profileButtonPresenter;
@@ -172,7 +171,8 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            stagePresetSwitcher?.Dispose();
+            stagePresetSetting.SelectedChanged -= ApplyStagePreset;
+            stagePresetCatalog.PresetLoaded -= OnStagePresetLoaded;
 
             if (lobbyStage != null)
                 Object.Destroy(lobbyStage.gameObject);
@@ -207,8 +207,9 @@ namespace DCL.PluginSystem.Global
             lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
             lobbyStage.gameObject.SetActive(false);
 
-            stagePresetSwitcher = new LobbyStagePresetSwitcher(lobbyStage, stagePresetCatalog, stagePresetSetting);
-            stagePresetSwitcher.Start();
+            stagePresetSetting.SelectedChanged += ApplyStagePreset;
+            stagePresetCatalog.PresetLoaded += OnStagePresetLoaded;
+            ApplyStagePreset(stagePresetSetting.SelectedIndex);
 
             // The top-bar presenters bind to the view, so it is instantiated up front
             ControllerBase<LobbyDocumentView, LobbyParameter>.ViewFactoryMethod viewFactory = LobbyDocumentController.Preallocate(documentPrefab, null, out LobbyDocumentView lobbyView);
@@ -256,6 +257,18 @@ namespace DCL.PluginSystem.Global
             debugContainerBuilder
                .TryAddWidget("Lobby")?
                .AddSingleButton("Open", () => mvcManager.ShowAndForget(LobbyDocumentController.IssueCommand(new LobbyParameter(isStartup: false))));
+        }
+
+        private void OnStagePresetLoaded(int index)
+        {
+            if (index == stagePresetSetting.SelectedIndex)
+                ApplyStagePreset(index);
+        }
+
+        private void ApplyStagePreset(int index)
+        {
+            if (lobbyStage != null && index >= 0 && stagePresetCatalog.PresetAt(index) is { } preset)
+                lobbyStage.ApplyPreset(preset);
         }
 
         // The panel can resolve after Dispose has run, in which case nothing else will release it

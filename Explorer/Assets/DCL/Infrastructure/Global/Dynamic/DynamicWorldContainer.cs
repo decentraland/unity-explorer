@@ -539,7 +539,7 @@ namespace Global.Dynamic
 
             var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
 
-            // Read here because Settings needs the names even in a session where the lobby plugin is not created
+            // Read here because Settings needs the names and backdrops even in a session without the lobby plugin
             LobbyPlugin.LobbyPluginSettings.StagePresetEntry[] stagePresets = dynamicWorldDependencies.SettingsContainer.GetSettings<LobbyPlugin.LobbyPluginSettings>().StagePresets;
             var stagePresetNames = new string[stagePresets.Length];
 
@@ -548,7 +548,6 @@ namespace Global.Dynamic
 
             var lobbyStagePresetSetting = new LobbyStagePresetSetting(stagePresetNames);
 
-            // Settings needs the backdrops even in a session without the lobby plugin
             var lobbyStagePresetCatalog = new LobbyStagePresetCatalog(stagePresets, lobbyStagePresetSetting, assetsProvisioner);
             lobbyStagePresetCatalog.Start();
 

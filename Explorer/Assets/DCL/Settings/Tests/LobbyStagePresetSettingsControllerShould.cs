@@ -22,7 +22,7 @@ namespace DCL.Settings.Tests
 
         // The settings live in player prefs, which the editor never initializes; see ChatBubblesVisibilityControllerShould
         private static readonly FieldInfo DCL_PREFS_BACKING_FIELD =
-            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static);
+            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         private IDCLPrefs originalPrefs = null!;
         private GameObject viewGameObject = null!;
@@ -168,7 +168,7 @@ namespace DCL.Settings.Tests
 
             // Act
             Entry(1).OnPointerEnter(pointer);
-            Texture whileHovered = view.PreviewTexture;
+            Texture? whileHovered = view.PreviewTexture;
             Entry(1).OnPointerExit(pointer);
 
             // Assert

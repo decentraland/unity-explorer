@@ -16,7 +16,7 @@ namespace DCL.Settings.Tests
 
         // The setting lives in player prefs, which the editor never initializes; see ChatBubblesVisibilityControllerShould
         private static readonly FieldInfo DCL_PREFS_BACKING_FIELD =
-            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static);
+            typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         private IDCLPrefs originalPrefs = null!;
 

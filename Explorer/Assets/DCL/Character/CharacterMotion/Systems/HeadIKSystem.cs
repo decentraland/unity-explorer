@@ -92,7 +92,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            // Over the figure the pointer is on the face already, and a drag spins the body under it, so the head settles back into the animation
+            // Over the figure the pointer is already on the face, and a drag spins the body under it
             bool isEnabled = emoteComponent.CurrentEmoteReference == null && debugHeadIKIsEnabled && headIK.IsEnabled && !previewComponent.IsHovered;
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 

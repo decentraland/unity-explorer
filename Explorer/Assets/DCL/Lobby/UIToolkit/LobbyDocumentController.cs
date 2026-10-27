@@ -1124,7 +1124,6 @@ namespace DCL.Lobby
             if (!result.Success) return;
 
             eventPlacesResolved = ResolveEventPlacesAsync(ct).Preserve();
-            await eventPlacesResolved;
         }
 
         private async UniTask ResolveEventPlacesAsync(CancellationToken ct)

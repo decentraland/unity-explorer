@@ -44,6 +44,10 @@ namespace DCL.Settings.ModuleViews
         {
             if (texture == PreviewTexture) return;
 
+            // A fade cut short keeps its half-shown image as the base of the next one instead of snapping back
+            if (IncomingPreview.enabled)
+                CoverFit.Apply(Preview, PreviewFitter, PreviewTexture);
+
             PreviewTexture = texture;
             fadeCancellation = fadeCancellation.SafeRestart();
 

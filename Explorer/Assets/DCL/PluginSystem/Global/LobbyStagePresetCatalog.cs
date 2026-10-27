@@ -19,7 +19,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyList<LobbyPlugin.LobbyPluginSettings.StagePresetEntry> entries;
         private readonly LobbyStagePresetSetting setting;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly LobbyStagePreset?[] presets;
+        private readonly ProvidedAsset<LobbyStagePreset>?[] presets;
         private readonly CancellationTokenSource loadCancellation = new ();
 
         public event Action<int>? PresetLoaded;
@@ -29,47 +29,42 @@ namespace DCL.PluginSystem.Global
             this.entries = entries;
             this.setting = setting;
             this.assetsProvisioner = assetsProvisioner;
-            presets = new LobbyStagePreset?[entries.Count];
+            presets = new ProvidedAsset<LobbyStagePreset>?[entries.Count];
         }
 
         public void Dispose()
         {
             loadCancellation.SafeCancelAndDispose();
 
-            // A cancelled load keeps running on the reference, so its handle still needs releasing
+            // A cancelled load keeps running on the reference with no provided asset to release it through
             for (var i = 0; i < entries.Count; i++)
-                if (entries[i].Preset.OperationHandle.IsValid())
+                if (presets[i] is { } preset)
+                    preset.Dispose();
+                else if (entries[i].Preset.OperationHandle.IsValid())
                     entries[i].Preset.ReleaseAsset();
         }
 
-        public void Start() =>
-            LoadAllAsync(loadCancellation.Token).Forget();
-
-        public LobbyStagePreset? PresetAt(int index) =>
-            presets[index];
-
-        private async UniTaskVoid LoadAllAsync(CancellationToken ct)
+        public void Start()
         {
-            var loads = new UniTask[entries.Count];
-
-            for (var i = 0; i < loads.Length; i++)
-                loads[i] = LoadAsync(i, ct);
-
-            await UniTask.WhenAll(loads);
+            for (var i = 0; i < entries.Count; i++)
+                LoadAsync(i, loadCancellation.Token).Forget();
         }
 
-        private async UniTask LoadAsync(int index, CancellationToken ct)
+        public LobbyStagePreset? PresetAt(int index) =>
+            presets[index]?.Value;
+
+        private async UniTaskVoid LoadAsync(int index, CancellationToken ct)
         {
             try
             {
-                LobbyStagePreset preset = (await assetsProvisioner.ProvideMainAssetAsync(entries[index].Preset, ct)).Value;
+                ProvidedAsset<LobbyStagePreset> preset = await assetsProvisioner.ProvideMainAssetAsync(entries[index].Preset, ct);
 
                 if (ct.IsCancellationRequested) return;
 
                 presets[index] = preset;
 
-                if (preset.Backdrop != null)
-                    setting.SetBackdrop(index, preset.Backdrop);
+                if (preset.Value.Backdrop != null)
+                    setting.SetBackdrop(index, preset.Value.Backdrop);
 
                 PresetLoaded?.Invoke(index);
             }
