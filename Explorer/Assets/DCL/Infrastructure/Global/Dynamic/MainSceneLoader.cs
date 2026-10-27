@@ -545,7 +545,10 @@ namespace Global.Dynamic
                 // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
                 // hold realm loading until the whole-scene warm-up settles.
                 if (abgenSidecar != null)
+                {
                     await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
+                    TrackLocalAssetBundleConversion(bootstrapContainer.Analytics.Controller, bootstrapContainer.AbgenConversionMetrics);
+                }
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
@@ -814,6 +817,20 @@ namespace Global.Dynamic
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        /// <summary>
+        ///     One event per local-scene session: success when the scene was converted and the session loads asset
+        ///     bundles. Single files abgen could not convert do not count as a failure.
+        /// </summary>
+        private static void TrackLocalAssetBundleConversion(IAnalyticsController analytics, AbgenConversionMetrics metrics)
+        {
+            bool succeeded = metrics.RawGltfFallbackReason == null && metrics.WarmUp == AbgenConversionMetrics.WarmUpStage.Ready;
+
+            analytics.Track(AnalyticsEvents.LocalSceneDevelopment.AB_CONVERSION, new JObject
+            {
+                ["result"] = succeeded ? "success" : "failed",
+            });
         }
 
         private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, UnityAppWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
