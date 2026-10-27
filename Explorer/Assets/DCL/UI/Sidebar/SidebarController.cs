@@ -61,6 +61,7 @@ namespace DCL.UI.Sidebar
         private readonly SelfProfile selfProfile;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
@@ -128,6 +129,7 @@ namespace DCL.UI.Sidebar
             isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
 
+            this.chatEventBus = chatEventBus;
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
@@ -151,6 +153,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.NotificationsButton.onClick.RemoveListener(OnNotificationsButtonClicked);
                 viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfileButtonClicked);
                 viewInstance.EmotesButton.onClick.RemoveListener(OnEmotesButtonClicked);
+                viewInstance.UnreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
                 viewInstance.SmartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.SmartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
                 viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarConfigButtonClicked);
@@ -309,6 +312,7 @@ namespace DCL.UI.Sidebar
             viewInstance.NotificationsButton.onClick.AddListener(OnNotificationsButtonClicked);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfileButtonClicked);
             viewInstance.EmotesButton.onClick.AddListener(OnEmotesButtonClicked);
+            viewInstance.UnreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
             viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarConfigButtonClicked);
@@ -684,6 +688,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
             OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
+
+        private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
