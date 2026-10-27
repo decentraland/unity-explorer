@@ -1,3 +1,5 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+
 using System;
 using System.Threading;
 
@@ -9,28 +11,28 @@ namespace Plugins.NativeAudioAnalysis
     /// </summary>
     public sealed class LastAudioFrameBuffer
     {
-        // 0 = nothing written or already consumed, 1 = new frame available.
-        private int readyFlag;
+        private const int FREE = 0;
+        private const int WRITING = 1;
+        private const int READY = 2;
+
+        private int state = FREE;
         private float[] buffer = Array.Empty<float>();
         private int channels;
 
-        public int SampleRate { get; }
-
-        public LastAudioFrameBuffer(int sampleRate)
-        {
-            SampleRate = sampleRate;
-        }
+        /// <summary>
+        ///     Rate the published frames are sampled at. Written on the main thread only.
+        /// </summary>
+        public int SampleRate { get; set; }
 
         /// <summary>
         ///     Main thread tries to consume the latest audio frame. Output is not owned and must be used in place.
         /// </summary>
         public bool TryConsume(out float[]? output, out int outChannels, out int outSampleRate)
         {
-            outChannels = channels;
             outSampleRate = SampleRate;
 
-            // Atomically check and clear readyFlag.
-            bool result = Interlocked.Exchange(ref readyFlag, 0) == 1;
+            bool result = Interlocked.CompareExchange(ref state, FREE, READY) == READY;
+            outChannels = channels;
             output = result ? buffer : null;
             return result;
         }
@@ -40,7 +42,7 @@ namespace Plugins.NativeAudioAnalysis
         /// </summary>
         public void Write(float[] data, int dataChannels)
         {
-            if (Interlocked.CompareExchange(ref readyFlag, 1, 0) != 0)
+            if (Interlocked.CompareExchange(ref state, WRITING, FREE) != FREE)
                 return;
 
             // One-time resize only: the DSP buffer size is stable for the lifetime of the audio configuration.
@@ -49,14 +51,16 @@ namespace Plugins.NativeAudioAnalysis
 
             data.CopyTo(buffer, 0);
             channels = dataChannels;
+            Volatile.Write(ref state, READY);
         }
 
         /// <summary>
         ///     Discards a pending frame so a consumer cannot read audio produced before a pause or re-enable.
+        ///     A frame being written at this moment is published as usual.
         /// </summary>
         public void Reset()
         {
-            Interlocked.Exchange(ref readyFlag, 0);
+            Interlocked.CompareExchange(ref state, FREE, READY);
         }
     }
 }

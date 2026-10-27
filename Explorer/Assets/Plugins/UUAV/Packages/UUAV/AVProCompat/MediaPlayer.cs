@@ -41,7 +41,8 @@ namespace UUAV.Compat
             }
         }
 
-        private void Awake()
+        // internal: EditMode tests run it by hand, since Unity never awakes components there
+        internal void Awake()
         {
             uuavPlayer = gameObject.AddComponent<UUAVPlayer>();
             backend = new UUAVBackend(uuavPlayer);

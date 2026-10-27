@@ -56,9 +56,7 @@ namespace DCL.SDKComponents.MediaStream
         public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         /// <summary>
-        ///     Receives the URL player's DSP output straight from <see cref="UUAV.Compat.MediaPlayer.AudioFrameTap" />.
-        ///     A sibling filter component on the player's GameObject receives an independent zeroed buffer
-        ///     (see UUAV's AudioTapBehaviour), so it cannot observe what the video actually plays.
+        ///     URL players' DSP output, received through <see cref="UUAV.Compat.MediaPlayer.AudioFrameTap" />.
         /// </summary>
         private LastAudioFrameBuffer? dspAudioFrameBuffer;
 
@@ -167,7 +165,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (buffer == null)
                 {
-                    buffer = new LastAudioFrameBuffer(AudioSettings.outputSampleRate);
+                    buffer = new LastAudioFrameBuffer { SampleRate = AudioSettings.outputSampleRate };
                     urlMediaPlayer.MediaPlayer.AudioFrameTap = buffer.Write;
                     dspAudioFrameBuffer = buffer;
                 }

@@ -84,7 +84,6 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     PBAudioAnalysisMode.ModeRaw => AnalysisResultMode.Raw,
                     PBAudioAnalysisMode.ModeLogarithmic => AnalysisResultMode.Logarithmic,
-                    _ => AnalysisResultMode.Raw,
                 };
                 float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN; 
                 float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN; 

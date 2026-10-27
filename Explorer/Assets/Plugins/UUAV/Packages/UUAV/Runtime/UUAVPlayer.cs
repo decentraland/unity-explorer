@@ -355,7 +355,7 @@ namespace UUAV
 
 
         // audio mixer thread
-        private void OnAudioFilterRead(float[] data, int channels)
+        internal void OnAudioFilterRead(float[] data, int channels)
         {
             FillAudio(data, channels);
             Volatile.Read(ref audioFrameTap)?.Invoke(data, channels);

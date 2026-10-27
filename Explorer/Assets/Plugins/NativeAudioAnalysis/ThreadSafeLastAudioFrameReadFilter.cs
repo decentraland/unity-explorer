@@ -10,13 +10,13 @@ namespace Plugins.NativeAudioAnalysis
     /// </summary>
     public class ThreadSafeLastAudioFrameReadFilter : MonoBehaviour
     {
-        private LastAudioFrameBuffer? buffer;
         private bool enableRead;
 
-        public LastAudioFrameBuffer Buffer => buffer ??= new LastAudioFrameBuffer(AudioSettings.outputSampleRate);
+        public LastAudioFrameBuffer Buffer { get; } = new ();
 
         private void OnEnable()
         {
+            Buffer.SampleRate = AudioSettings.outputSampleRate;
             Buffer.Reset();
             enableRead = true;
         }
@@ -24,7 +24,7 @@ namespace Plugins.NativeAudioAnalysis
         private void OnDisable()
         {
             enableRead = false;
-            buffer?.Reset();
+            Buffer.Reset();
         }
 
 // TODO OnAudioFilterRead is not available in WebGL
@@ -34,7 +34,7 @@ namespace Plugins.NativeAudioAnalysis
             if (!enableRead)
                 return;
 
-            buffer?.Write(data, readChannels);
+            Buffer.Write(data, readChannels);
         }
 #endif
     }

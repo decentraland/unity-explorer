@@ -11,7 +11,7 @@ namespace Plugins.NativeAudioAnalysis.Tests
         public void ReturnNothingBeforeFirstWrite()
         {
             // Arrange
-            var buffer = new LastAudioFrameBuffer(SAMPLE_RATE);
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
 
             // Act
             bool consumed = buffer.TryConsume(out float[]? output, out _, out int sampleRate);
@@ -26,7 +26,7 @@ namespace Plugins.NativeAudioAnalysis.Tests
         public void HandOverTheWrittenFrameOnce()
         {
             // Arrange
-            var buffer = new LastAudioFrameBuffer(SAMPLE_RATE);
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
             float[] frame = { 0.1f, 0.2f, 0.3f, 0.4f };
 
             // Act
@@ -46,7 +46,7 @@ namespace Plugins.NativeAudioAnalysis.Tests
         public void DropWritesUntilThePendingFrameIsConsumed()
         {
             // Arrange
-            var buffer = new LastAudioFrameBuffer(SAMPLE_RATE);
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
             float[] first = { 1f, 1f };
             float[] second = { 2f, 2f };
 
@@ -63,7 +63,7 @@ namespace Plugins.NativeAudioAnalysis.Tests
         public void CopyTheFrameInsteadOfKeepingTheCallerArray()
         {
             // Arrange
-            var buffer = new LastAudioFrameBuffer(SAMPLE_RATE);
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
             float[] frame = { 0.5f, 0.5f };
 
             // Act
@@ -77,10 +77,26 @@ namespace Plugins.NativeAudioAnalysis.Tests
         }
 
         [Test]
+        public void ReportTheChannelCountOfTheConsumedFrame()
+        {
+            // Arrange
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
+            buffer.Write(new[] { 0.5f, 0.5f }, CHANNELS);
+            buffer.TryConsume(out _, out _, out _);
+
+            // Act
+            buffer.Write(new[] { 0.5f }, 1);
+            buffer.TryConsume(out _, out int channels, out _);
+
+            // Assert
+            Assert.That(channels, Is.EqualTo(1));
+        }
+
+        [Test]
         public void DiscardThePendingFrameOnReset()
         {
             // Arrange
-            var buffer = new LastAudioFrameBuffer(SAMPLE_RATE);
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
             buffer.Write(new[] { 0.5f, 0.5f }, CHANNELS);
 
             // Act
@@ -89,6 +105,23 @@ namespace Plugins.NativeAudioAnalysis.Tests
 
             // Assert
             Assert.That(consumed, Is.False);
+        }
+
+        [Test]
+        public void AcceptAFrameWrittenAfterReset()
+        {
+            // Arrange
+            var buffer = new LastAudioFrameBuffer { SampleRate = SAMPLE_RATE };
+            buffer.Write(new[] { 0.5f, 0.5f }, CHANNELS);
+            buffer.Reset();
+
+            // Act
+            buffer.Write(new[] { 0.25f, 0.25f }, CHANNELS);
+            bool consumed = buffer.TryConsume(out float[]? output, out _, out _);
+
+            // Assert
+            Assert.That(consumed, Is.True);
+            Assert.That(output![0], Is.EqualTo(0.25f));
         }
     }
 }
