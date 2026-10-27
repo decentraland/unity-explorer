@@ -90,13 +90,14 @@ public class PreviewConfiguration
     public string Emote
     {
         get => DisableDefaultEmotes && _emote == DEFAULT_EMOTE ? NO_EMOTE : _emote;
-        set => _emote = value;
+        set => _emote = string.IsNullOrEmpty(value) ? DEFAULT_EMOTE : value;
     }
 
     private string _emote = DEFAULT_EMOTE;
 
     /// <summary>
-    /// The other spelling of "no emote", kept as its own flag so the parameter order never matters.
+    /// Drops only the default emote, as Babylon's option of the same name does: an emote named on its
+    /// own still plays. Kept as its own flag so the parameter order never matters.
     /// </summary>
     public bool DisableDefaultEmotes { get; private set; }
 

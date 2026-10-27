@@ -158,6 +158,7 @@ namespace Tests
         [TestCase("?disableDefaultEmotes=true&emote=idle", PreviewConfiguration.NO_EMOTE)]
         [TestCase("?disableDefaultEmotes=true&emote=dance", "dance")]
         [TestCase("?emote=dance&disableDefaultEmotes=true", "dance")]
+        [TestCase("?disableDefaultEmotes=true&emote=", PreviewConfiguration.NO_EMOTE)]
         public void DropOnlyTheDefaultEmoteWhateverTheOrder(string url, string expected)
         {
             // Act

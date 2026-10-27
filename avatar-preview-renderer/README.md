@@ -39,7 +39,7 @@ The renderer can run in five different modes, depending on its usage: Marketplac
 * `url`: A URL returning a wearable or emote definition (the JSON the Builder serializes), loaded like a `base64` one. Can be included multiple times in `marketplace` and `builder` mode.
 * `disableDefaultWearables`: Only the requested items are worn: in `marketplace` mode the profile dresses nothing, in `builder` mode the empty categories are not filled with the base wearables. Default is `false`.
 * `disableFace`: Hides the eyes, eyebrows and mouth in every mode. Default is `false`.
-* `disableDefaultEmotes`: The same as `emote=none`: no default emote plays, so the avatar stands in its idle pose unless a requested item is an emote. The Babylon preview leaves the bind pose instead. Default is `false`.
+* `disableDefaultEmotes`: Drops only the default `idle` emote: an emote named with `emote` still plays, as in the Babylon preview. Without one, the avatar stands in its idle pose unless a requested item is an emote; the Babylon preview leaves the bind pose instead. Default is `false`.
 * `peerUrl`, `marketplaceServerUrl`: Hosts for the Catalyst and the Marketplace API, replacing the ones `env` picks.
 * `type`: Which view to open in. Only used in `marketplace` mode, and only when a single wearable is being previewed (an emote or several urns at once can only be shown on the avatar). If omitted, the view the user last switched to is used. Possible values:
   * `wearable` - the item on its own
