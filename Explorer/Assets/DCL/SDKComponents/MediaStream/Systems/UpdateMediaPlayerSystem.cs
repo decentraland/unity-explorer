@@ -27,8 +27,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
-        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
 
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
@@ -253,9 +251,9 @@ namespace DCL.SDKComponents.MediaStream
             int targetHeight = avText.height;
 
             // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
-            if (livekitPlayer != null && (avText.width > MAX_LIVEKIT_VIDEO_WIDTH || avText.height > MAX_LIVEKIT_VIDEO_HEIGHT))
+            if (livekitPlayer != null && Mathf.Max(avText.width, avText.height) > LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE)
             {
-                float scale = Mathf.Min((float)MAX_LIVEKIT_VIDEO_WIDTH / avText.width, (float)MAX_LIVEKIT_VIDEO_HEIGHT / avText.height);
+                float scale = (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(avText.width, avText.height);
                 targetWidth = Mathf.RoundToInt(avText.width * scale);
                 targetHeight = Mathf.RoundToInt(avText.height * scale);
             }

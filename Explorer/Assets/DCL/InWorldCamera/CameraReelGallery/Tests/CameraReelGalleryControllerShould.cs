@@ -22,12 +22,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
         private const string PREFAB_PATH = "Assets/DCL/InWorldCamera/CameraReelGallery/Assets/CameraReel.prefab";
         private const string WALLET = "0x1234";
         private const int COLUMNS = 6;
+        private const int COMPACT_COLUMNS = 5;
         private const int MAX_SCREENSHOTS = 500;
         private const float VIEWPORT_HEIGHT = 1080f;
         private const float TALL_VIEWPORT_HEIGHT = 20000f;
 
         private static readonly DateTime MARCH = new (2025, 3, 15, 12, 0, 0, DateTimeKind.Local);
         private static readonly DateTime FEBRUARY = new (2025, 2, 10, 12, 0, 0, DateTimeKind.Local);
+        private static readonly Vector2 AUTHORED_CELL = new (306f, 230f);
+        private static readonly Vector2 COMPACT_CELL = new (292f, 219f);
 
         private GameObject rootGameObject = null!;
         private RectTransform rootTransform = null!;
@@ -63,7 +66,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
                    .Returns(call => UniTask.FromResult(Page(call.ArgAt<int>(1), call.ArgAt<int>(2))));
 
             controller = new CameraReelGalleryController(view, storage, cache,
-                new ReelGalleryConfigParams(COLUMNS, 230, 306, gridShowMonth: true, groupByMonth: true), useSignedRequest: true, bus);
+                new ReelGalleryConfigParams(COLUMNS, (int)AUTHORED_CELL.y, (int)AUTHORED_CELL.x, gridShowMonth: true, groupByMonth: true), useSignedRequest: true, bus);
         }
 
         [TearDown]
@@ -96,6 +99,42 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             Assert.AreEqual(1, ActiveSlots(items[3]));
             Assert.IsFalse(view.loadingSpinner.activeSelf);
             Assert.IsFalse(view.emptyState.activeSelf);
+        }
+
+        [Test]
+        public async Task LayOutTheRowsWithTheCompactGridOnceSet()
+        {
+            // Arrange
+            AddReels(MARCH, 7);
+            controller.SetGridLayout(COMPACT_COLUMNS, (int)COMPACT_CELL.x, (int)COMPACT_CELL.y);
+
+            // Act
+            await controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
+
+            // Assert
+            List<LoopListViewItem2> items = view.loopList.ItemList;
+            Assert.AreEqual(COMPACT_COLUMNS, ActiveSlots(items[2]));
+            Assert.AreEqual(2, ActiveSlots(items[3]));
+            Assert.AreEqual(COMPACT_CELL, ((RectTransform)FirstRowSlot(0).transform).sizeDelta);
+        }
+
+        [Test]
+        public async Task RelayOutThePooledRowsWhenTheAuthoredGridIsRestored()
+        {
+            // Arrange
+            AddReels(MARCH, 7);
+            controller.SetGridLayout(COMPACT_COLUMNS, (int)COMPACT_CELL.x, (int)COMPACT_CELL.y);
+            await controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
+            controller.RestoreGridLayout();
+
+            // Act
+            await controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
+
+            // Assert
+            List<LoopListViewItem2> items = view.loopList.ItemList;
+            Assert.AreEqual(COLUMNS, ActiveSlots(items[2]));
+            Assert.AreEqual(1, ActiveSlots(items[3]));
+            Assert.AreEqual(AUTHORED_CELL, ((RectTransform)FirstRowSlot(0).transform).sizeDelta);
         }
 
         [Test]

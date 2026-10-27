@@ -124,6 +124,49 @@ namespace DCL.Profiles.Tests
             });
 
         [UnityTest]
+        public IEnumerator AnswerAReadInsideTheBackOffWindowWithoutRefetching() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var error = new TimeoutException("catalyst timed out");
+                AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+                LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
+                selfProfile = NewSelfProfile();
+                ProfileReadResult first = await selfProfile.ProfileAsync(CancellationToken.None);
+                Assert.That(IsFetchFailed(first), Is.True, $"the first read must fail, got {first}");
+                profileRepository.ClearReceivedCalls();
+
+                // Act
+                ProfileReadResult second = await selfProfile.ProfileAsync(CancellationToken.None);
+
+                // Assert
+                Assert.That(IsFetchFailed(second), Is.True, $"expected FetchFailed, got {second}");
+                AssertGets(0);
+            });
+
+        [UnityTest]
+        public IEnumerator RefetchInsideTheBackOffWindowWhenTheReadIgnoresIt() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var error = new TimeoutException("catalyst timed out");
+                AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+                LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
+                selfProfile = NewSelfProfile();
+                ProfileReadResult first = await selfProfile.ProfileAsync(CancellationToken.None);
+                Assert.That(IsFetchFailed(first), Is.True, $"the first read must fail, got {first}");
+                AnyGet().Returns(UniTask.FromResult<ProfileTier?>(Profile.NewRandomProfile(WALLET)));
+                profileRepository.ClearReceivedCalls();
+
+                // Act
+                ProfileReadResult second = await selfProfile.ProfileAsync(CancellationToken.None, ignoreBackOff: true);
+
+                // Assert
+                Assert.That(second.IsOk(out _), Is.True, $"expected the refetched profile, got {second}");
+                AssertGets(1);
+            });
+
+        [UnityTest]
         public IEnumerator RevertToAnIntactProfileWhenADeployFails() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -183,8 +226,15 @@ namespace DCL.Profiles.Tests
                 Assert.That(results[i].IsOk(out _), Is.True, $"read {i} of {results.Length} got {results[i]}");
         }
 
+        private static bool IsFetchFailed(in ProfileReadResult result) =>
+            result.IsError(out ProfileReadError error) && error == ProfileReadError.FetchFailed;
+
         private UniTask<ProfileTier?> AnyGet() =>
             profileRepository.GetAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(),
+                Arg.Any<bool>(), Arg.Any<IProfileRepository.FetchBehaviour>(), Arg.Any<ProfileTier.Kind>(), Arg.Any<IPartitionComponent?>());
+
+        private void AssertGets(int count) =>
+            profileRepository.Received(count).GetAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(),
                 Arg.Any<bool>(), Arg.Any<IProfileRepository.FetchBehaviour>(), Arg.Any<ProfileTier.Kind>(), Arg.Any<IPartitionComponent?>());
     }
 }

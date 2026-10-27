@@ -121,6 +121,7 @@ namespace Global
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
+        public ReactiveProperty<bool> CurrentSceneUiOnly { get; } = new (false);
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
@@ -218,7 +219,7 @@ namespace Global
             container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller, decentralandUrlsSource);
             container.EmotesContainer = new EmotesContainer(assetsProvisioner);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
@@ -255,12 +256,6 @@ namespace Global
                 if (container.ScenesCache.CurrentScene.Value != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
             });
-
-            container.ScenesCache.CurrentScene.OnUpdate += scene =>
-            {
-                if (scene != null)
-                    UnityDiagnosticsCenter.Instance.SetCurrentScene(scene.Info);
-            };
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
@@ -306,7 +301,7 @@ namespace Global
                 new AudioAnalysisPlugin(sharedDependencies),
                 assetBundlePlugin,
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.CurrentSceneUiOnly),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),

@@ -56,6 +56,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private bool isLoading;
         private bool isBindingRows;
+        private ReelGalleryConfigParams gridLayout;
         private int highestBoundIndex = -1;
         private CancellationTokenSource loadNextPageCts = new ();
         private CancellationTokenSource setPublicCts = new ();
@@ -95,6 +96,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
             this.galleryEventBus = galleryEventBus;
+            gridLayout = reelGalleryConfigParams;
 
             onThumbnailClicked = OnThumbnailClicked;
             deleteReelIntention = DeleteReelFromDetail;
@@ -201,6 +203,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             await ShowGalleryAsync(new PagedCameraReelManagerParameters(placeIds), storageStatus.MaxScreenshots, ct);
         }
 
+        /// <summary>
+        ///     Lays out the rows built from now on; <see cref="RestoreGridLayout" /> brings the authored layout back.
+        /// </summary>
+        public void SetGridLayout(int columns, int thumbnailWidth, int thumbnailHeight) =>
+            gridLayout = reelGalleryConfigParams.WithGridLayout(columns, thumbnailWidth, thumbnailHeight);
+
+        public void RestoreGridLayout() =>
+            gridLayout = reelGalleryConfigParams;
+
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
@@ -270,7 +281,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void RebuildRows(PagedCameraReelManager manager, bool resetPosition)
         {
-            ReelGalleryRow.Build(rows, manager.AllOrderedResponses, in reelGalleryConfigParams, view.paddingTop, view.paddingBottom, view.monthSpacing);
+            ReelGalleryRow.Build(rows, manager.AllOrderedResponses, in gridLayout, view.paddingTop, view.paddingBottom, view.monthSpacing);
 
             // Binding runs synchronously inside these calls; a page request started from a bind would re-enter the list.
             isBindingRows = true;
@@ -310,8 +321,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     item = list.NewListViewItem(thumbnailRowPrefabName);
                     ReelGalleryRowView rowView = item.GetComponent<ReelGalleryRowView>();
 
-                    if (!rowView.IsInitialized)
-                        rowView.Initialize(view.thumbnailViewPrefab, in reelGalleryConfigParams, optionButtonController, onThumbnailClicked);
+                    if (!rowView.HasLayout(in gridLayout))
+                        rowView.Initialize(view.thumbnailViewPrefab, in gridLayout, optionButtonController, onThumbnailClicked);
 
                     rowView.Bind(manager.AllOrderedResponses, row.StartIndex, row.Count, reelThumbnailCache);
 
@@ -553,5 +564,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             EnableDeleteContextOption = enableDeleteContextOption;
             HideReelOnPrivateSet = hideReelOnPrivateSet;
         }
+
+        public ReelGalleryConfigParams WithGridLayout(int columns, int thumbnailWidth, int thumbnailHeight) =>
+            new (columns, thumbnailHeight, thumbnailWidth, GridShowMonth, GroupByMonth, EnableDeleteContextOption, HideReelOnPrivateSet);
     }
 }

@@ -186,15 +186,15 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Teleports the player to a parcel.
         /// </summary>
-        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
+        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null, bool landOnParcel = false)
         {
-            if (TryStartAt(local ? null : genesisDomain, targetPosition, spawnPointName))
+            if (TryStartAt(local ? null : genesisDomain, targetPosition, spawnPointName, landOnParcel))
                 return HeadingTo($"{targetPosition.x},{targetPosition.y}");
 
             if (!await WaitForStartupTeleportAsync(ct))
                 return CANCELLED_MESSAGE;
 
-            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
+            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, landOnParcel, spawnPointName);
 
             if (result.Success)
                 return $"🟢 You teleported to {targetPosition.x},{targetPosition.y}.";
@@ -211,13 +211,13 @@ namespace DCL.Chat.Commands
                    };
         }
 
-        private bool TryStartAt(URLDomain? realmUrl, Vector2Int? parcel, string? spawnPointName)
+        private bool TryStartAt(URLDomain? realmUrl, Vector2Int? parcel, string? spawnPointName, bool landOnParcel = false)
         {
             if (startParcel.IsConsumed()) return false;
 
             if (realmUrl is { } realm && !CanJoinStartupRealm(realm)) return false;
 
-            return startParcel.TryTakeAsStartupDestination(realmUrl, parcel, spawnPointName);
+            return startParcel.TryTakeAsStartupDestination(realmUrl, parcel, spawnPointName, landOnParcel);
         }
 
         // Once the startup realm is applied, only a link to the picked realm can still join the startup destination

@@ -171,6 +171,7 @@ namespace UUAV
         public void CloseMedia()
         {
             Check(NativeMethods.uuav_player_close_media(playerId), "close media");
+            ReleaseFrame();
         }
 
         [ContextMenu(nameof(Play))]
@@ -328,14 +329,7 @@ namespace UUAV
                 NativeMethods.uuav_player_free(playerId);
             }
 
-            ReleasePlaneViews();
-
-            if (runtimeSurface != null)
-            {
-                runtimeSurface.Release();
-                Destroy(runtimeSurface);
-                runtimeSurface = null;
-            }
+            ReleaseFrame();
 
             if (nv12Material != null)
             {
@@ -500,6 +494,18 @@ namespace UUAV
             GL.sRGBWrite = QualitySettings.activeColorSpace == ColorSpace.Linear;
             Graphics.Blit(null, surface, nv12Material);
             GL.sRGBWrite = previousSRGBWrite;
+        }
+
+        private void ReleaseFrame()
+        {
+            ReleasePlaneViews();
+
+            if (runtimeSurface != null)
+            {
+                runtimeSurface.Release();
+                Destroy(runtimeSurface);
+                runtimeSurface = null;
+            }
         }
 
         private void ReleasePlaneViews()

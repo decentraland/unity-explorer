@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1543178135746264026}
   - component: {fileID: 3126077387850639307}
   - component: {fileID: 1538415999955952809}
+  - component: {fileID: 6142580297301154877}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -75,6 +76,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &6142580297301154877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 245111923243512100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee9550d70694a238d3029d1c4e46ca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  text: {fileID: 7394566054464337732}
 --- !u!1 &9028689041508988311
 GameObject:
   m_ObjectHideFlags: 0
@@ -329,7 +343,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7587919746443121769, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_text
-      value: Press   U   to show the UI again.
+      value: Press   <link=key>U</link>   to show the UI again.
       objectReference: {fileID: 0}
     - target: {fileID: 7587919746443121769, guid: aae56f4776100974ba051333a3974811, type: 3}
       propertyPath: m_enableAutoSizing

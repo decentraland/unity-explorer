@@ -120,7 +120,9 @@ namespace SceneRunner.Tests
                 string.Empty);
         }
 
-        [OneTimeTearDown]
+        // Not [OneTimeTearDown]: NUnit awaits an async one-time teardown by blocking the main thread,
+        // which deadlocks DisposeAsync whenever it has to yield for an in-flight scene tick.
+        [TearDown]
         public async Task TearDown()
         {
             foreach (ISceneFacade sceneFacade in sceneFacades)

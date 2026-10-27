@@ -44,12 +44,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             optionButton = optionButtonController;
             clicked = onClicked;
-            ((RectTransform)transform).sizeDelta = cellSize;
+            Resize(cellSize);
             button.onClick.AddListener(OnClick);
 
             if (optionButtonController != null)
                 optionButtonController.Hide += ToNormal;
         }
+
+        public void Resize(Vector2 cellSize) =>
+            ((RectTransform)transform).sizeDelta = cellSize;
 
         public void Bind(CameraReelResponseCompact reel, int index, ISpriteCache thumbnailCache)
         {

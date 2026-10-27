@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -11,7 +10,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.ColorComponent;
-using System;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
@@ -30,29 +28,36 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         public override void Initialize()
         {
             UpdateAvatarBaseQuery(World, true);
+            UpdateAvatarBaseWithTalkingQuery(World, true);
         }
 
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
             UpdateAvatarBaseQuery(World, false);
+            UpdateAvatarBaseWithTalkingQuery(World, false);
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(SDKTalking))]
         private void UpdateAvatarBase([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
             if (!force && !profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) => FillAvatarBase(pbComponent, profile), playerCRDTEntity.CRDTEntity, profile);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateAvatarBaseWithTalking([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile, in SDKTalking talking)
+        {
+            if (!force && !profile.IsDirty && !talking.IsDirty) return;
+
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, (SDKProfile profile, bool talking)>(static (pbComponent, data) =>
             {
-                pbComponent.Name = profile.Name;
-                SDKProfile.SDKAvatar avatar = profile.Avatar;
-                pbComponent.BodyShapeUrn = avatar.BodyShape;
-                pbComponent.SkinColor = avatar.SkinColor.ToColor3();
-                pbComponent.EyesColor = avatar.EyesColor.ToColor3();
-                pbComponent.HairColor = avatar.HairColor.ToColor3();
-            }, playerCRDTEntity.CRDTEntity, profile);
+                FillAvatarBase(pbComponent, data.profile);
+                pbComponent.Talking = data.talking;
+            }, playerCRDTEntity.CRDTEntity, (profile, talking.IsTalking));
         }
 
         [Query]
@@ -60,6 +65,16 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         private void HandleComponentRemoval(PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarBase>(playerCRDTEntity.CRDTEntity);
+        }
+
+        private static void FillAvatarBase(PBAvatarBase pbComponent, SDKProfile profile)
+        {
+            pbComponent.Name = profile.Name;
+            SDKProfile.SDKAvatar avatar = profile.Avatar;
+            pbComponent.BodyShapeUrn = avatar.BodyShape;
+            pbComponent.SkinColor = avatar.SkinColor.ToColor3();
+            pbComponent.EyesColor = avatar.EyesColor.ToColor3();
+            pbComponent.HairColor = avatar.HairColor.ToColor3();
         }
     }
 }

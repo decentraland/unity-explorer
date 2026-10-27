@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Places;
 using DCL.UI;
 using MVC;
 using NSubstitute;
@@ -20,6 +21,7 @@ namespace DCL.ExplorePanel.Tests
         private InstantModalView view = null!;
         private IHostableSection places = null!;
         private IHostableSection events = null!;
+        private IPlacesSectionOpener placesSections = null!;
         private ExploreSectionModalController controller = null!;
 
         [SetUp]
@@ -33,12 +35,13 @@ namespace DCL.ExplorePanel.Tests
 
             places = Substitute.For<IHostableSection>();
             events = Substitute.For<IHostableSection>();
+            placesSections = Substitute.For<IPlacesSectionOpener>();
 
             controller = new ExploreSectionModalController(() => view, new Dictionary<ExploreSections, IHostableSection>
             {
                 { ExploreSections.Places, places },
                 { ExploreSections.Events, events },
-            });
+            }, placesSections);
         }
 
         [TearDown]
@@ -64,6 +67,36 @@ namespace DCL.ExplorePanel.Tests
 
             places.DidNotReceive().AttachTo(Arg.Any<RectTransform>());
             places.DidNotReceive().Activate();
+
+            view.CloseButton.onClick.Invoke();
+            await lifecycle;
+        }
+
+        [Test]
+        public async Task OpenTheRequestedPlacesSectionOnceThePlacesAreActive()
+        {
+            // Act
+            UniTask lifecycle = controller.LaunchViewLifeCycleAsync(ORDERING, new ExploreSectionModalParameter(ExploreSections.Places, PlacesSection.RecentlyVisited), CancellationToken.None);
+
+            // Assert
+            Received.InOrder(() =>
+            {
+                places.Activate();
+                placesSections.OpenSection(PlacesSection.RecentlyVisited);
+            });
+
+            view.CloseButton.onClick.Invoke();
+            await lifecycle;
+        }
+
+        [Test]
+        public async Task LeaveThePlacesOnTheirDefaultSectionWhenNoneIsRequested()
+        {
+            // Act
+            UniTask lifecycle = controller.LaunchViewLifeCycleAsync(ORDERING, new ExploreSectionModalParameter(ExploreSections.Places), CancellationToken.None);
+
+            // Assert
+            placesSections.DidNotReceive().OpenSection(Arg.Any<PlacesSection>());
 
             view.CloseButton.onClick.Invoke();
             await lifecycle;
