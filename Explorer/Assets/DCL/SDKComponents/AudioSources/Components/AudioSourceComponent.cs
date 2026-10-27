@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
+        public bool TryGetOrAttachAudioFrameBuffer([NotNullWhen(true)] out LastAudioFrameBuffer? output)
         {
             if (AudioSource is { } audioSource)
                 return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.AudioSources
             return false;
         }
 
-        public void EnsureLastAudioFrameReadFilterIsRemoved()
+        public void EnsureAudioFrameBufferIsRemoved()
         {
             lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
         }
@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.AudioSources
                 AudioSource.clip = null;
 
             AudioSource = null;
-            EnsureLastAudioFrameReadFilterIsRemoved();
+            EnsureAudioFrameBufferIsRemoved();
         }
     }
 }

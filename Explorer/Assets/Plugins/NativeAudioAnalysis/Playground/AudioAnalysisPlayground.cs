@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Plugins.NativeAudioAnalysis;
 
 namespace Plugins.NativeAudioAnalysis.Playground
 {
@@ -14,8 +13,8 @@ namespace Plugins.NativeAudioAnalysis.Playground
         [SerializeField]
         private float bandsGain = 0.05f;
         [Space]
-        [SerializeField] private AudioAnalysis medianAnalysis = default(AudioAnalysis);
-        [SerializeField] private AudioAnalysis lastAnalysis = default(AudioAnalysis);
+        [SerializeField] private AudioAnalysis medianAnalysis;
+        [SerializeField] private AudioAnalysis lastAnalysis;
         [Space]
         [SerializeField]
         private GameObject[] bars = Array.Empty<GameObject>(); // Length is supposed to be equal to BANDS
@@ -35,9 +34,6 @@ namespace Plugins.NativeAudioAnalysis.Playground
         [SerializeField]
         private float rotateByBpmSpeed = 10;
 
-        private Camera mainCamera = null!;
-        private int sampleRate;
-
         private ThreadSafeLastAudioFrameReadFilter lastAudioFrame = null!;
 
         private void Start() {
@@ -46,10 +42,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
             Assert.IsNotNull(bmpCenter, "BPM center is missing");
             Assert.IsNotNull(particles, "Particles are missing");
 
-            mainCamera = Camera.main;
-            sampleRate = AudioSettings.outputSampleRate;
-
-            Assert.IsTrue(TryGetComponent<AudioSource>(out AudioSource source), "AudioSource is not attached");
+            Assert.IsTrue(TryGetComponent(out AudioSource source), "AudioSource is not attached");
             Assert.IsNotNull(source.clip, "Clip is not selected");
 
             lastAudioFrame = GetComponent<ThreadSafeLastAudioFrameReadFilter>();
@@ -58,7 +51,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
 
         private void Update() 
         {
-            if (lastAudioFrame.TryConsume(out float[]? output, out int outChannels, out int outSampleRate))
+            if (lastAudioFrame.Buffer.TryConsume(out float[]? output, out _, out int outSampleRate))
             {
                 lastAnalysis = NativeMethods.AnalyzeAudioBuffer(output!, outSampleRate, analysisMode, amplitudeGain, bandsGain);
             }

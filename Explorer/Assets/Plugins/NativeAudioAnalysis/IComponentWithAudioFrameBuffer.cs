@@ -5,16 +5,16 @@ namespace Plugins.NativeAudioAnalysis
 {
     public interface IComponentWithAudioFrameBuffer
     {
-        bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output);
+        bool TryGetOrAttachAudioFrameBuffer([NotNullWhen(true)] out LastAudioFrameBuffer? output);
 
-        void EnsureLastAudioFrameReadFilterIsRemoved();
+        void EnsureAudioFrameBufferIsRemoved();
     }
 
     /// <summary>
     ///     Use ThreadSafeLastAudioFrameReadFilter because it has to be attached to the same GameObject.
     ///     But GameObject is owned by AudioSource MonoBehavour in practice, and gets repooled with it.
     ///     To avoid LifeCycle complications ThreadSafeLastAudioFrameReadFilter is referenced directly and owned by AudioSourceComponent.
-    ///     MonoBehaviour cannot be easily pooled because the ownership issue arise. 
+    ///     MonoBehaviour cannot be easily pooled because the ownership issue arise.
     ///     AudioSource and ThreadSafeLastAudioFrameReadFilter share the same GameObject.
     /// </summary>
     public struct ThreadSafeLastAudioFrameReadFilterWrap
@@ -24,20 +24,20 @@ namespace Plugins.NativeAudioAnalysis
 
         public bool TryAttachLastAudioFrameReadFilterOrUseExisting(
             AudioSource audioSource,
-            [NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output
+            [NotNullWhen(true)] out LastAudioFrameBuffer? output
         )
         {
             if (lastAudioFrameReadFilter != null)
             {
-                output = lastAudioFrameReadFilter;
+                output = lastAudioFrameReadFilter.Buffer;
                 return true;
             }
 
-
-            if (audioSource != null) 
+            if (audioSource != null)
             {
-                output = lastAudioFrameReadFilter = audioSource.gameObject.AddComponent<ThreadSafeLastAudioFrameReadFilter>();
-                return lastAudioFrameReadFilter != null;
+                lastAudioFrameReadFilter = audioSource.gameObject.AddComponent<ThreadSafeLastAudioFrameReadFilter>();
+                output = lastAudioFrameReadFilter.Buffer;
+                return true;
             }
 
             output = null;
@@ -46,10 +46,10 @@ namespace Plugins.NativeAudioAnalysis
 
         public void EnsureLastAudioFrameReadFilterIsRemoved()
         {
-            if (lastAudioFrameReadFilter != null) 
+            if (lastAudioFrameReadFilter != null)
             {
                 // Can be pooled
-                UnityEngine.Object.Destroy(lastAudioFrameReadFilter);
+                Object.Destroy(lastAudioFrameReadFilter);
                 lastAudioFrameReadFilter = null;
             }
         }

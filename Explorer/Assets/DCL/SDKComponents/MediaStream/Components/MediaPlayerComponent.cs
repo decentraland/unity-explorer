@@ -56,6 +56,14 @@ namespace DCL.SDKComponents.MediaStream
         public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         /// <summary>
+        ///     Receives the URL player's DSP output straight from <see cref="UUAV.Compat.MediaPlayer.AudioFrameTap" />.
+        ///     A sibling filter component on the player's GameObject receives an independent zeroed buffer
+        ///     (see UUAV's AudioTapBehaviour), so it cannot observe what the video actually plays.
+        /// </summary>
+        private LastAudioFrameBuffer? dspAudioFrameBuffer;
+
+        /// <summary>
+        ///     Filter-chain fallback for players that only expose an AudioSource (LiveKit).
         ///     Use ThreadSafeLastAudioFrameReadFilter because it has to be attached to the same GameObject.
         ///     But GameObject is owned by AudioSource MonoBehavour in practice, and gets repooled with it.
         ///     To avoid LifeCycle complications ThreadSafeLastAudioFrameReadFilter is referenced directly and owned by AudioSourceComponent.
@@ -151,8 +159,23 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
+        public bool TryGetOrAttachAudioFrameBuffer([NotNullWhen(true)] out LastAudioFrameBuffer? output)
         {
+            if (MediaPlayer.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+            {
+                LastAudioFrameBuffer? buffer = dspAudioFrameBuffer;
+
+                if (buffer == null)
+                {
+                    buffer = new LastAudioFrameBuffer(AudioSettings.outputSampleRate);
+                    urlMediaPlayer.MediaPlayer.AudioFrameTap = buffer.Write;
+                    dspAudioFrameBuffer = buffer;
+                }
+
+                output = buffer;
+                return true;
+            }
+
             AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 
             if (audioSource == null)
@@ -164,19 +187,26 @@ namespace DCL.SDKComponents.MediaStream
             return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
         }
 
-        public void EnsureLastAudioFrameReadFilterIsRemoved() 
+        public void EnsureAudioFrameBufferIsRemoved()
         {
             lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
-        }
 
+            if (dspAudioFrameBuffer == null) return;
+
+            dspAudioFrameBuffer = null;
+
+            // The pooled player outlives this component: detach the tap so the next owner starts clean.
+            if (MediaPlayer.IsValid && MediaPlayer.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+                urlMediaPlayer.MediaPlayer.AudioFrameTap = null;
+        }
 
         public void Dispose()
         {
             State = VideoState.VsNone;
             HasFailed = false;
             isFrozen = false;
+            EnsureAudioFrameBufferIsRemoved();
             MediaPlayer.Dispose(MediaAddress);
-            EnsureLastAudioFrameReadFilterIsRemoved();
             Cts.SafeCancelAndDispose();
         }
 

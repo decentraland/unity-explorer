@@ -103,6 +103,9 @@ namespace UUAV
         private long dspFramesReturned;
         private long dspSilencedCallbacks;
 
+        // set on the main thread, invoked on the audio mixer thread
+        private Action<float[], int>? audioFrameTap;
+
         public string CurrentUrl => url;
 
         // 0 = the runtime never negotiated an output format: every DSP
@@ -131,6 +134,18 @@ namespace UUAV
             targetTexture != null ? targetTexture : runtimeSurface;
 
         public AudioSource AudioSource => audioSource;
+
+        /// <summary>
+        /// Invoked on the audio mixer thread with every buffer this player's
+        /// DSP callback produces, after it is filled or silenced. A sibling
+        /// OnAudioFilterRead component does not observe this player's output
+        /// (see AudioTapBehaviour), so this is the only way to inspect it.
+        /// </summary>
+        public Action<float[], int>? AudioFrameTap
+        {
+            get => audioFrameTap;
+            set => Volatile.Write(ref audioFrameTap, value);
+        }
 
         public void OpenMedia(string mediaUrl)
         {
@@ -339,9 +354,16 @@ namespace UUAV
         }
 
 
+        // audio mixer thread
+        private void OnAudioFilterRead(float[] data, int channels)
+        {
+            FillAudio(data, channels);
+            Volatile.Read(ref audioFrameTap)?.Invoke(data, channels);
+        }
+
         // audio mixer thread. playerId is immutable, safe to read directly;
         // a stale id after uuav_player_free is a native no-op returning 0
-        private void OnAudioFilterRead(float[] data, int channels)
+        private void FillAudio(float[] data, int channels)
         {
             if (playerId == 0 || channels != nativeChannels)
             {

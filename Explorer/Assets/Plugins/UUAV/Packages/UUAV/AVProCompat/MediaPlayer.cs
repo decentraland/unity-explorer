@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace UUAV.Compat
@@ -15,6 +16,15 @@ namespace UUAV.Compat
         public ITextureProducer TextureProducer => backend;
 
         public AudioSource AudioSource => uuavPlayer.AudioSource;
+
+        /// <summary>
+        /// Audio-thread callback receiving every buffer the player's DSP produces; see <see cref="UUAVPlayer.AudioFrameTap"/>.
+        /// </summary>
+        public Action<float[], int>? AudioFrameTap
+        {
+            get => uuavPlayer.AudioFrameTap;
+            set => uuavPlayer.AudioFrameTap = value;
+        }
 
         public bool MediaOpened =>
             uuavPlayer is not null && uuavPlayer.State is not (UUAVState.Closed or UUAVState.Error or UUAVState.Unknown);

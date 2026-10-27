@@ -72,9 +72,9 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
-            if (!component.TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output))
+            if (!component.TryGetOrAttachAudioFrameBuffer(out LastAudioFrameBuffer? output))
             {
-                ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
+                ReportHub.LogError(GetReportCategory(), "Cannot attach the audio frame buffer");
                 return;
             }
 
@@ -84,6 +84,7 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     PBAudioAnalysisMode.ModeRaw => AnalysisResultMode.Raw,
                     PBAudioAnalysisMode.ModeLogarithmic => AnalysisResultMode.Logarithmic,
+                    _ => AnalysisResultMode.Raw,
                 };
                 float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN; 
                 float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN; 
