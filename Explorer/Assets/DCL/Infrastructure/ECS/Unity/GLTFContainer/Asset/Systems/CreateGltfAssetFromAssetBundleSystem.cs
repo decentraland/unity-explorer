@@ -16,8 +16,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     /// <summary>
     ///     Creates <see cref="GltfContainerAsset" /> from the <see cref="StreamableLoadingResult{T}" />.
     ///     With <c>rawGltfFallback</c> a bundle that fails to load, or loads without a GameObject, is not
-    ///     a failed container: the request is re-issued as a raw GLTF load instead, for local scene
-    ///     development, where the bundle came from a JIT converter that may have skipped the file or gone away.
+    ///     a failed container: the request is re-issued as a raw GLTF load instead.
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
@@ -87,11 +86,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         ///     Re-issues the request as a raw GLTF load on the same promise entity: the bundle lane's
         ///     intention and result are dropped, and the pooled loading state — finished, with no transition
         ///     back — is swapped for a fresh one so deferred loading admits the GLTF lane like any new request.
-        ///     The file is reported to the AB panel as a failed conversion.
         /// </summary>
         private void FallBackToRawGltf(Entity entity, string name, string hash, string reason)
         {
-            ReportHub.LogWarning(GetReportCategory(), $"{name}: asset bundle unavailable ({reason}), loading the raw GLTF instead");
+            if (abgenConversionMetrics.RawGltfFallbackReason == null)
+                ReportHub.LogWarning(GetReportCategory(), $"{name}: asset bundle unavailable ({reason}), loading the raw GLTF instead");
+
             abgenConversionMetrics.OnFailed(name, $"{reason} — loaded as raw GLTF");
 
             World.Get<StreamableLoadingState>(entity).Dispose();

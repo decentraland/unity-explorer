@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //from the local asset-bundle server (the embedded abgen sidecar).
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
 
-            if (isLocalSceneDevelopment && useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+            if (useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
                 abgenConversionMetrics.OnSceneManifestUnavailable();
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)

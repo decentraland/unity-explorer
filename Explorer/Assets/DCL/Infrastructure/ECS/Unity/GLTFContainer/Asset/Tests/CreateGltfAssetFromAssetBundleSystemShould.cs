@@ -13,6 +13,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
@@ -137,6 +138,33 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             // The fallback is recorded as a failed conversion.
             Assert.That(metrics.Failed, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ReleaseBundleAndFallBackToRawGltfWhenBundleHasNoGameObject()
+        {
+            // Arrange
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: true, new AbgenConversionMetrics());
+
+            var bundle = new AssetBundleData(null, Array.Empty<UnityEngine.Object>(), typeof(GameObject), Array.Empty<AssetBundleData>());
+            bundle.AddReference();
+
+            Entity e = world.Create(
+                new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource()),
+                GetAssetBundleIntention.FromHash("TEST_HASH", AssetBundleManifestVersion.FAILED),
+                new StreamableLoadingResult<AssetBundleData>(bundle),
+                StreamableLoadingState.Create());
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(bundle.referenceCount, Is.EqualTo(0));
+            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
+            Assert.That(world.Has<StreamableLoadingResult<AssetBundleData>>(e), Is.False);
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
         }
 
         [Test]

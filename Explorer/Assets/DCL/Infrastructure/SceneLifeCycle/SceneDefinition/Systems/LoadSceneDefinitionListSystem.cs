@@ -149,7 +149,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //from the local asset-bundle server; failures there are expected (whole-scene raw-GLTF degrade).
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: isLocalSceneDevelopment);
 
-            if (isLocalSceneDevelopment && useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+            if (useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
                 abgenConversionMetrics.OnSceneManifestUnavailable();
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)

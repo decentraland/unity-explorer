@@ -166,12 +166,17 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        /// <summary>Records the degrade to raw GLTFs, adds it as a row, and asks for the panel so the verdict is seen.</summary>
+        /// <summary>
+        ///     Records the degrade to raw GLTFs, adds it as a row, and asks for the panel so the verdict is seen.
+        ///     Only the first reason is recorded; later calls do nothing.
+        /// </summary>
         public void OnRawGltfFallback(string reason)
         {
             lock (gate)
             {
-                rawGltfFallbackReason ??= reason;
+                if (rawGltfFallbackReason != null) return;
+
+                rawGltfFallbackReason = reason;
                 panelOpenRequested = true;
                 version++;
             }
@@ -338,18 +343,22 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        /// <summary>A file already marked failed is counted once, however many times it fails.</summary>
         public void OnFailed(string contentPath, string error)
         {
             lock (gate)
             {
-                Entry entry = TakeEntry(contentPath);
-                bool wasInFlight = entry.Status == ConversionStatus.Converting;
+                bool known = entries.TryGetValue(contentPath, out Entry entry);
+                if (!known) entry = new Entry { Path = contentPath, Sequence = sequence++ };
+
+                bool wasInFlight = known && entry.Status == ConversionStatus.Converting;
+                bool wasFailed = known && entry.Status == ConversionStatus.Failed;
                 entry.Status = ConversionStatus.Failed;
                 entry.Error = error;
                 entries[contentPath] = entry;
 
                 if (wasInFlight) inFlight--;
-                failed++;
+                if (!wasFailed) failed++;
                 version++;
             }
         }

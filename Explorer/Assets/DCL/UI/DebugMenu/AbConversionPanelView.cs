@@ -80,7 +80,6 @@ namespace DCL.UI.DebugMenu
             if (atBottom && rows.Count > 0)
                 list.ScrollToItem(rows.Count - 1);
 
-            // The verdict leads: once the session degraded, every counter below describes bundles nobody loads.
             string fallback = metrics.RawGltfFallbackReason is { } reason
                 ? $"<color=#FF6C6C>RAW GLTFs</color> — {reason} · "
                 : string.Empty;

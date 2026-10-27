@@ -368,14 +368,9 @@ namespace Global.Dynamic
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
 
-            // Local scene development serves the scene as local asset bundles: the embedded abgen JIT server
-            // becomes the optimized-assets source (it serves the local scene and read-throughs everything else
-            // from production). Brought up to health serially, before the URL sources are built, so the override
-            // is seeded only when the server is actually serving; the whole-scene warm-up continues in the
-            // background and realm loading holds on it below. When the server does not come up nothing is
-            // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
-            // the scene loads either way. --lsd-raw-gltf, or the alfa-lsd-forced-ab flag not being on, skips the
-            // sidecar and takes that raw-GLTF wiring directly.
+            // Local scene development: the embedded abgen server becomes the optimized-assets source. It is started to
+            // health before the URL sources are built, so the override is set only when it is actually serving.
+            // --lsd-raw-gltf, or the alfa-lsd-forced-ab flag not being on, skips the server.
             string? localAbBaseUrl = null;
             var abgenConversionMetrics = new AbgenConversionMetrics();
 
