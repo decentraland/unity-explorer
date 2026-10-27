@@ -475,6 +475,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase(DecentralandUrl.Pulse, "pulse-server." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.ApiRpc, "wss://rpc." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.ChainRpc, "https://rpc." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.CastPresenterService, "https://cast-presenter-service." + CUSTOM_DOMAIN)]
         public void MoveEveryHostOntoTheCustomBaseDomain(DecentralandUrl url, string expected)
         {
             InitializeFeatureFlags(optimizedAssets: false);

@@ -12,6 +12,7 @@ using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.AvatarSection.Randomizer;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -52,6 +53,7 @@ namespace DCL.Backpack
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform homeHost;
         private readonly AvatarController avatarController;
+        private readonly RandomizeOutfitController randomizeOutfitController;
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
         private readonly ICursor cursor;
         private readonly World world;
@@ -113,7 +115,9 @@ namespace DCL.Backpack
             IEventBus eventBus,
             Sprite deleteIcon,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IOwnedNftFilter ownedNftFilter)
+            IOwnedNftFilter ownedNftFilter,
+            IWearablesProvider wearablesProvider,
+            CacheOutfitWearablesCommand cacheOutfitWearablesCommand)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -211,6 +215,16 @@ namespace DCL.Backpack
                 thumbnailProvider,
                 decentralandUrlsSource);
 
+            randomizeOutfitController = new RandomizeOutfitController(view.RandomizeOutfitView,
+                new OutfitRandomizer(new System.Random()),
+                backpackCommandBus,
+                backpackEventBus,
+                equippedWearables,
+                wearablesProvider,
+                cacheOutfitWearablesCommand,
+                wearableStorage,
+                ownedNftFilter);
+
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
                 { BackpackSections.Avatar, avatarController },
@@ -258,6 +272,7 @@ namespace DCL.Backpack
             if (isOn)
             {
                 lastShownSection = shownSection;
+                randomizeOutfitController.SetSectionShown(shownSection == BackpackSections.Avatar);
                 backpackEventBus.SendChangedBackpackSectionEvent(shownSection);
             }
         }
@@ -267,6 +282,7 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
             view.CloseButton.onClick.RemoveListener(RequestClose);
             avatarController.Dispose();
+            randomizeOutfitController.Dispose();
             emotesController.Dispose();
             backpackEmoteGridController.Dispose();
             animationCts.SafeCancelAndDispose();
@@ -291,6 +307,7 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return;
 
             isAvatarLoaded = false;
+            randomizeOutfitController.SetAvatarReady(false);
 
             Profile? inWorldProfile = world.Has<Profile>(playerEntity) ? world.Get<Profile>(playerEntity) : null;
 
@@ -333,6 +350,7 @@ namespace DCL.Backpack
                 avatar.ForceRender,
                 useFullUrns: true
             );
+            randomizeOutfitController.SetAvatarReady(true);
             backpackCommandBus.SendCommand(command);
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
@@ -377,6 +395,7 @@ namespace DCL.Backpack
                 tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
 
             profileLoadingCts.SafeCancelAndDispose();
+            randomizeOutfitController.Reset();
 
             if (isAvatarLoaded)
                 backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
@@ -500,18 +519,31 @@ namespace DCL.Backpack
                 // The render texture is measured from the raw image and renewed when the preview resizes, so the image goes first
                 previewImageFull.ApplyTo(previewImageRect);
                 previewFull.ApplyTo(previewRect);
-                return;
+            }
+            else
+            {
+                previewImageRect.anchorMin = Vector2.zero;
+                previewImageRect.anchorMax = Vector2.one;
+                previewImageRect.offsetMin = Vector2.zero;
+                previewImageRect.offsetMax = Vector2.zero;
+
+                previewRect.anchorMin = new Vector2(0f, previewRect.anchorMin.y);
+                previewRect.anchorMax = new Vector2(1f, previewRect.anchorMax.y);
+                previewRect.offsetMin = new Vector2(0f, previewFull.OffsetMin.y);
+                previewRect.offsetMax = new Vector2(-(COMPACT_HOST_MARGIN + contentWidth), previewFull.OffsetMax.y);
             }
 
-            previewImageRect.anchorMin = Vector2.zero;
-            previewImageRect.anchorMax = Vector2.one;
-            previewImageRect.offsetMin = Vector2.zero;
-            previewImageRect.offsetMax = Vector2.zero;
+            CenterRandomizeOutfitBar(previewRect);
+        }
 
-            previewRect.anchorMin = new Vector2(0f, previewRect.anchorMin.y);
-            previewRect.anchorMax = new Vector2(1f, previewRect.anchorMax.y);
-            previewRect.offsetMin = new Vector2(0f, previewFull.OffsetMin.y);
-            previewRect.offsetMax = new Vector2(-(COMPACT_HOST_MARGIN + contentWidth), previewFull.OffsetMax.y);
+        /// <summary>
+        ///     Keeps the randomize bar under the avatar. Both layouts anchor the preview symmetrically around the panel centre,
+        ///     so its centre sits at the mean of its horizontal offsets at any screen width, where the centre-anchored bar follows it.
+        /// </summary>
+        private void CenterRandomizeOutfitBar(RectTransform previewRect)
+        {
+            var barRect = (RectTransform)view.RandomizeOutfitView.transform;
+            barRect.anchoredPosition = new Vector2((previewRect.offsetMin.x + previewRect.offsetMax.x) / 2f, barRect.anchoredPosition.y);
         }
 
         // The explore panel toggles and positions its own section slot, so it stays behind when the view is borrowed

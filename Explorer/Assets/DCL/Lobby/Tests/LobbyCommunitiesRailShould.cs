@@ -1,6 +1,7 @@
 using DCL.UIToolkit.Elements;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.Lobby.Tests
@@ -12,12 +13,24 @@ namespace DCL.Lobby.Tests
 
         private VisualElement section = null!;
         private LobbyCommunitiesRail communities = null!;
+        private GameObject? documentGameObject;
+        private PanelSettings? panelSettings;
 
         [SetUp]
         public void SetUp()
         {
             section = CreateSection();
             communities = new LobbyCommunitiesRail(AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(CARD_TEMPLATE_PATH));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (documentGameObject != null)
+                Object.DestroyImmediate(documentGameObject);
+
+            if (panelSettings != null)
+                Object.DestroyImmediate(panelSettings);
         }
 
         [Test]
@@ -131,6 +144,23 @@ namespace DCL.Lobby.Tests
             Assert.AreEqual(0, clicked);
         }
 
+        [Test]
+        public void ReportTheViewAllClickOfItsSection()
+        {
+            //Arrange
+            var clicked = 0;
+            communities.ViewAllClicked = () => clicked++;
+            Button viewAll = AddViewAll(section);
+            AttachToPanel(section);
+
+            //Act
+            communities.Show(section);
+            Submit(viewAll);
+
+            //Assert
+            Assert.AreEqual(1, clicked);
+        }
+
         private LobbyRailElement Rail() =>
             section.Q<LobbyRailElement>();
 
@@ -150,6 +180,31 @@ namespace DCL.Lobby.Tests
             communitiesSection.Add(new VisualElement { name = "Empty" });
             communitiesSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 3 });
             return communitiesSection;
+        }
+
+        private static Button AddViewAll(VisualElement communitiesSection)
+        {
+            var viewAll = new Button { name = "ViewAll" };
+            communitiesSection.Add(viewAll);
+            return viewAll;
+        }
+
+        // A button hears a submit only through a panel
+        private void AttachToPanel(VisualElement element)
+        {
+            documentGameObject = new GameObject(nameof(LobbyCommunitiesRailShould));
+            var document = documentGameObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            document.panelSettings = panelSettings;
+            document.rootVisualElement.Add(element);
+        }
+
+        // A submit is reported as a click like a keyboard press; unlike a pointer click it needs no laid-out panel
+        private static void Submit(Button button)
+        {
+            using NavigationSubmitEvent evt = NavigationSubmitEvent.GetPooled();
+            evt.target = button;
+            button.SendEvent(evt);
         }
     }
 }
