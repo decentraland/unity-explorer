@@ -23,6 +23,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility.Fsm;
+using Utility.Times;
 
 namespace DCL.Profiles.Tests
 {
@@ -114,7 +115,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             profileRepository.Received(1).GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
-                IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
         }
 
         [Test]
@@ -137,7 +138,6 @@ namespace DCL.Profiles.Tests
             // Arrange
             var error = new TimeoutException("catalyst timed out");
             AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
-            ExpectReportedException(error);
 
             // Act
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -146,6 +146,56 @@ namespace DCL.Profiles.Tests
             Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
             Assert.That(msg.Address, Is.EqualTo(ALICE));
             Assert.That(msg.Failure.Exception, Is.SameAs(error));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void LogTheFirstFetchFailureOfAStreakAsAnException()
+        {
+            // Arrange
+            var error = new TimeoutException("catalyst timed out");
+            var failure = new ProfileFailure(error, UnixTimeMs.Now());
+            ExpectReportedException(error);
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromReportFetchFailure(failure), inbox);
+
+            // Assert
+            Assert.That(inbox.Sent, Is.Empty);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void LogARepeatedFetchFailureAsAWarning()
+        {
+            // Arrange
+            var error = new TimeoutException("catalyst timed out");
+            var failure = new ProfileFailure(error, UnixTimeMs.Now(), 2);
+            LogAssert.Expect(LogType.Warning, new Regex(Regex.Escape($"Self profile fetch failed again: {failure}")));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromReportFetchFailure(failure), inbox);
+
+            // Assert
+            Assert.That(inbox.Sent, Is.Empty);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void StampTheFetchFailureWithUnixTime()
+        {
+            // Arrange
+            var error = new TimeoutException("catalyst timed out");
+            AnyGet().Returns(UniTask.FromException<ProfileTier?>(error));
+            UnixTimeMs before = UnixTimeMs.Now();
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True);
+            Assert.That(msg.Failure.FailedAt.Value, Is.InRange(before.Value, UnixTimeMs.Now().Value));
+            Assert.That(msg.Failure.Streak, Is.EqualTo(1));
         }
 
         [Test]
@@ -237,7 +287,6 @@ namespace DCL.Profiles.Tests
             // Arrange
             // UniTask surfaces a faulted cancellation as its own OperationCanceledException, so only the type is observable.
             AnyGet().Returns(UniTask.FromException<ProfileTier?>(new OperationCanceledException("another token")));
-            LogAssert.Expect(LogType.Exception, new Regex(nameof(OperationCanceledException)));
 
             // Act
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -254,7 +303,6 @@ namespace DCL.Profiles.Tests
             var error = new InvalidOperationException("emote storage is not ready");
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(NewProfile(ALICE, 3)));
             emoteStorage.BaseEmotesUrns.Returns(_ => throw error);
-            ExpectReportedException(error);
 
             // Act
             executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -465,6 +513,9 @@ namespace DCL.Profiles.Tests
             // Arrange
             Profile sent = NewProfile(BOB, 4);
             Profile saved = NewProfile(ALICE, 4);
+
+            // A non-empty emote wheel, so no session override changes the reported profile.
+            saved.Avatar.emotes[0] = BASE_EMOTE;
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
 
             // Act
@@ -478,6 +529,23 @@ namespace DCL.Profiles.Tests
             Assert.That(msg.Sent, Is.SameAs(sent));
             Assert.That(msg.Saved, Is.Not.SameAs(saved), "the cache owns the re-read instance");
             Assert.That(msg.Saved.IsSameProfile(saved), Is.True);
+        }
+
+        [Test]
+        public void FillAnEmptyEmoteWheelOfTheSavedProfileWithTheBaseEmotes()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 4);
+            Profile saved = NewProfile(ALICE, 4);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Saved.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+            Assert.That(saved.Avatar.Emotes[0].IsNullOrEmpty(), Is.True, "the cached instance is left as saved");
         }
 
         [Test]
@@ -641,7 +709,7 @@ namespace DCL.Profiles.Tests
             {
                 equippedWearables.Clear();
                 profileRepository.GetAsync(ALICE.Value, 0, null, Arg.Any<CancellationToken>(), false,
-                    IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
+                    IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full, Arg.Any<IPartitionComponent?>());
             });
 
             Assert.That(SingleSent().IsFetchSucceeded(out _), Is.True);

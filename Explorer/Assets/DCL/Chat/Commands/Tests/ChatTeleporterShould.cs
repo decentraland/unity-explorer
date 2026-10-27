@@ -298,6 +298,31 @@ namespace DCL.Chat.Commands.Tests
         }
 
         [Test]
+        public void PassLandOnParcelToTheParcelTeleport()
+        {
+            // Act
+            chatTeleporter.TeleportToParcelAsync(new Vector2Int(-4, 1), false, CancellationToken.None, landOnParcel: true).GetAwaiter().GetResult();
+
+            // Assert
+            realmNavigator.Received(1).TeleportToParcelAsync(new Vector2Int(-4, 1), Arg.Any<CancellationToken>(), false, landOnParcel: true);
+        }
+
+        [Test]
+        public void TakeAParcelWithLandOnParcelAsTheStartupDestinationBeforeTheWorldLoads()
+        {
+            // Arrange
+            var pending = new StartParcel(Vector2Int.zero);
+
+            // Act
+            NewTeleporter(pending).TeleportToParcelAsync(new Vector2Int(-4, 1), false, CancellationToken.None, landOnParcel: true).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.That(pending.Peek(), Is.EqualTo(new Vector2Int(-4, 1)));
+            Assert.That(pending.LandOnParcel, Is.True);
+            realmNavigator.DidNotReceiveWithAnyArgs().TeleportToParcelAsync(default, default, default);
+        }
+
+        [Test]
         public void TeleportWithinRealmWhenAlreadyThereAndSpawnPointIsGiven()
         {
             // Arrange
