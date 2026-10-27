@@ -156,8 +156,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             var viewRect = (RectTransform)view.transform;
 
-            // The previous host may still be showing the view, so it is deactivated there first; that hands the
-            // grids back to the pool, so the next show lays them out for the new host.
+            // The previous host may still be showing the view, so it is deactivated there first; that clears the
+            // rows, so the next show lays them out for the new host.
             if (isSectionActivated && viewRect.parent != host)
                 Deactivate();
 

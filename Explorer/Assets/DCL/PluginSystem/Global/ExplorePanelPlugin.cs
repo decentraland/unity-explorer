@@ -110,7 +110,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
@@ -200,7 +199,6 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
@@ -271,7 +269,6 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
@@ -446,7 +443,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, new SpriteCache(webRequestController),
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -531,7 +528,7 @@ namespace DCL.PluginSystem.Global
                 new CameraReelGalleryController(
                     cameraReelView.CameraReelGalleryView,
                     this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage,
+                    new SpriteCache(webRequestController),
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,

@@ -286,9 +286,7 @@ namespace DCL.Backpack
         // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base items have no
         // registry and are never pending.
         private bool IsFullyPending(URN itemUrn) =>
-            wearableStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
-            && registry.Count > 0
-            && !ownedNftFilter.HasAvailableInstance(registry);
+            ownedNftFilter.IsFullyPending(wearableStorage, itemUrn);
 
         private void EquipItem(int slot, string itemId)
         {

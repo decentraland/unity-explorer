@@ -151,6 +151,8 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
+            var cacheOutfitWearablesCommand = new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage);
+
             busController = new BackpackBusController(wearableStorage,
                 backpackEventBus,
                 backpackCommandBus,
@@ -159,7 +161,7 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 wearablesProvider,
                 emoteProvider,
-                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
+                cacheOutfitWearablesCommand);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -291,7 +293,9 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 deleteIcon,
                 decentralandUrlsSource,
-                ownedNftFilter
+                ownedNftFilter,
+                wearablesProvider,
+                cacheOutfitWearablesCommand
             );
         }
 
