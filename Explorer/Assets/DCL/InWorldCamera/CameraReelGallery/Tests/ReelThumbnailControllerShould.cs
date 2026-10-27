@@ -12,7 +12,7 @@ using UnityEngine;
 namespace DCL.InWorldCamera.CameraReelGallery.Tests
 {
     [TestFixture]
-    public class ReelThumbnailViewShould
+    public class ReelThumbnailControllerShould
     {
         private const string PREFAB_PATH = "Assets/DCL/InWorldCamera/CameraReelGallery/Assets/ThumbnailElement.prefab";
         private const string URL = "https://example.com/thumbnail.png";
@@ -22,6 +22,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
 
         private GameObject viewGameObject = null!;
         private ReelThumbnailView view = null!;
+        private ReelThumbnailController controller = null!;
         private ISpriteCache cache = null!;
         private Texture2D texture = null!;
         private Sprite sprite = null!;
@@ -44,13 +45,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             reel = new CameraReelResponseCompact { id = "reel", thumbnailUrl = URL, dateTime = "0" };
             clickedIndex = -1;
 
-            view.Initialize(null, index => clickedIndex = index, CELL);
+            view.Resize(CELL);
+            controller = new ReelThumbnailController(view, null, index => clickedIndex = index);
         }
 
         [TearDown]
         public void TearDown()
         {
-            view.Unbind();
+            controller.Dispose();
             Object.DestroyImmediate(viewGameObject);
             Object.DestroyImmediate(sprite);
             Object.DestroyImmediate(texture);
@@ -63,7 +65,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             cache.GetCachedSprite(URL).Returns(sprite);
 
             // Act
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Assert
             Assert.AreSame(texture, view.thumbnailImage.texture);
@@ -80,7 +82,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             cache.GetSpriteAsync(URL, true, null, Arg.Any<CancellationToken>()).Returns(download.Task);
 
             // Act
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Assert
             Assert.IsNull(view.thumbnailImage.texture);
@@ -101,16 +103,16 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             CancellationToken token = default;
 
             cache.GetSpriteAsync(URL, true, null, Arg.Do<CancellationToken>(ct => token = ct)).Returns(download.Task);
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Act
-            view.Unbind();
+            controller.Unbind();
             download.TrySetResult(sprite);
 
             // Assert
             Assert.IsTrue(token.IsCancellationRequested);
             Assert.IsNull(view.thumbnailImage.texture);
-            Assert.IsNull(view.Reel);
+            Assert.IsNull(controller.Reel);
         }
 
         [Test]
@@ -119,7 +121,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             // Arrange
             var download = new UniTaskCompletionSource<Sprite?>();
             cache.GetSpriteAsync(URL, true, null, Arg.Any<CancellationToken>()).Returns(download.Task);
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Act
             view.button.onClick.Invoke();
@@ -142,7 +144,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             float cropped = texture.width - shownWidth;
 
             // Act
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Assert
             Rect uv = view.thumbnailImage.uvRect;
@@ -158,16 +160,33 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             // Arrange
             var download = new UniTaskCompletionSource<Sprite?>();
             cache.GetSpriteAsync(URL, true, null, Arg.Any<CancellationToken>()).Returns(download.Task);
-            view.Bind(reel, INDEX, cache);
+            controller.Bind(reel, INDEX, cache);
 
             // Act
-            view.Bind(reel, INDEX + 1, cache);
+            controller.Bind(reel, INDEX + 1, cache);
             download.TrySetResult(sprite);
             view.button.onClick.Invoke();
 
             // Assert
             cache.Received(1).GetSpriteAsync(URL, true, null, Arg.Any<CancellationToken>());
             Assert.AreEqual(INDEX + 1, clickedIndex);
+        }
+
+        [Test]
+        public void StopListeningToTheViewOnceDisposed()
+        {
+            // Arrange
+            cache.GetCachedSprite(URL).Returns(sprite);
+            controller.Bind(reel, INDEX, cache);
+
+            // Act
+            controller.Dispose();
+            view.button.onClick.Invoke();
+
+            // Assert
+            Assert.AreEqual(-1, clickedIndex);
+            Assert.IsNull(controller.Reel);
+            Assert.IsNull(view.thumbnailImage.texture);
         }
     }
 }

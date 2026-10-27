@@ -47,6 +47,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
         private readonly List<ReelGalleryRow> rows = new ();
+        internal readonly Dictionary<ReelGalleryRowView, ReelGalleryRowController> rowControllers = new ();
         private readonly string paddingPrefabName;
         private readonly string monthHeaderPrefabName;
         private readonly string thumbnailRowPrefabName;
@@ -142,6 +143,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
             downloadScreenshotCts.SafeCancelAndDispose();
 
+            foreach (ReelGalleryRowController rowController in rowControllers.Values)
+                rowController.Dispose();
+
+            rowControllers.Clear();
             optionButtonController?.Dispose();
 
             if (this.optionButtonController != null)
@@ -321,10 +326,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     item = list.NewListViewItem(thumbnailRowPrefabName);
                     ReelGalleryRowView rowView = item.GetComponent<ReelGalleryRowView>();
 
-                    if (!rowView.HasLayout(in gridLayout))
-                        rowView.Initialize(view.thumbnailViewPrefab, in gridLayout, optionButtonController, onThumbnailClicked);
+                    if (!rowControllers.TryGetValue(rowView, out ReelGalleryRowController? rowController))
+                        rowControllers[rowView] = rowController = new ReelGalleryRowController(rowView, optionButtonController, onThumbnailClicked);
 
-                    rowView.Bind(manager.AllOrderedResponses, row.StartIndex, row.Count, reelThumbnailCache);
+                    rowController.EnsureLayout(view.thumbnailViewPrefab, in gridLayout);
+                    rowController.Bind(manager.AllOrderedResponses, row.StartIndex, row.Count, reelThumbnailCache);
 
                     int lastIndex = row.StartIndex + row.Count - 1;
                     highestBoundIndex = Math.Max(highestBoundIndex, lastIndex);

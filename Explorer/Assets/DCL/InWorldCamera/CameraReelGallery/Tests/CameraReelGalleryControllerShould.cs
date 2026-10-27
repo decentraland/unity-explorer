@@ -115,7 +115,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             List<LoopListViewItem2> items = view.loopList.ItemList;
             Assert.AreEqual(COMPACT_COLUMNS, ActiveSlots(items[2]));
             Assert.AreEqual(2, ActiveSlots(items[3]));
-            Assert.AreEqual(COMPACT_CELL, ((RectTransform)FirstRowSlot(0).transform).sizeDelta);
+            Assert.AreEqual(COMPACT_CELL, ((RectTransform)FirstRowSlotView(0).transform).sizeDelta);
         }
 
         [Test]
@@ -134,7 +134,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             List<LoopListViewItem2> items = view.loopList.ItemList;
             Assert.AreEqual(COLUMNS, ActiveSlots(items[2]));
             Assert.AreEqual(1, ActiveSlots(items[3]));
-            Assert.AreEqual(AUTHORED_CELL, ((RectTransform)FirstRowSlot(0).transform).sizeDelta);
+            Assert.AreEqual(AUTHORED_CELL, ((RectTransform)FirstRowSlotView(0).transform).sizeDelta);
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             await controller.ShowWalletGalleryAsync(WALLET, CancellationToken.None, new CameraReelStorageStatus(serverReels.Count, MAX_SCREENSHOTS));
 
             // Act
-            SecondRowSlot(0).button.onClick.Invoke();
+            SecondRowSlotView(0).button.onClick.Invoke();
 
             // Assert
             Assert.AreEqual(COLUMNS, clickedIndex);
@@ -339,10 +339,16 @@ namespace DCL.InWorldCamera.CameraReelGallery.Tests
             view.loopList.UpdateListView(defaults.mDistanceForRecycle0, defaults.mDistanceForRecycle1, defaults.mDistanceForNew0, defaults.mDistanceForNew1);
         }
 
-        private ReelThumbnailView FirstRowSlot(int slot) =>
+        private ReelThumbnailController FirstRowSlot(int slot) =>
+            RowController(2).thumbnails[slot];
+
+        private ReelThumbnailView FirstRowSlotView(int slot) =>
             view.loopList.ItemList[2].GetComponent<ReelGalleryRowView>().slots[slot];
 
-        private ReelThumbnailView SecondRowSlot(int slot) =>
+        private ReelThumbnailView SecondRowSlotView(int slot) =>
             view.loopList.ItemList[3].GetComponent<ReelGalleryRowView>().slots[slot];
+
+        private ReelGalleryRowController RowController(int itemIndex) =>
+            controller.rowControllers[view.loopList.ItemList[itemIndex].GetComponent<ReelGalleryRowView>()];
     }
 }

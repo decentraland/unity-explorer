@@ -1,5 +1,3 @@
-using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,6 +18,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         /// </summary>
         internal IReadOnlyList<ReelThumbnailView> slots => thumbnails;
 
+        internal event Action? Disabled;
+
         public bool HasLayout(in ReelGalleryConfigParams config) =>
             columns == config.GridLayoutFixedColumnCount && cell == new Vector2(config.ThumbnailWidth, config.ThumbnailHeight);
 
@@ -27,7 +27,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         ///     The column count and cell size come from the host's config, so the slots cannot be authored in the prefab.
         ///     Slots are kept across layouts: the row is pooled, and a shown slot is never destroyed.
         /// </summary>
-        public void Initialize(ReelThumbnailView thumbnailPrefab, in ReelGalleryConfigParams config, CameraReelOptionButtonController? optionButton, Action<int> clicked)
+        public void Initialize(ReelThumbnailView thumbnailPrefab, in ReelGalleryConfigParams config)
         {
             columns = config.GridLayoutFixedColumnCount;
             cell = new Vector2(config.ThumbnailWidth, config.ThumbnailHeight);
@@ -42,7 +42,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     ReelThumbnailView slot = Instantiate(thumbnailPrefab, transform, false);
                     var rect = (RectTransform)slot.transform;
                     rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
-                    slot.Initialize(optionButton, clicked, cell);
                     thumbnails[i] = slot;
                 }
             }
@@ -50,7 +49,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             for (var i = 0; i < thumbnails.Length; i++)
             {
                 ReelThumbnailView slot = thumbnails[i];
-                slot.Unbind();
                 slot.gameObject.SetActive(false);
 
                 if (i >= columns) continue;
@@ -64,16 +62,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             ((RectTransform)transform).sizeDelta = new Vector2((columns * cell.x) + ((columns - 1) * ReelGalleryRow.ROW_SPACING), cell.y);
         }
 
-        public void Bind(IReadOnlyList<CameraReelResponseCompact> reels, int startIndex, int count, ISpriteCache thumbnailCache)
+        private void OnDisable()
         {
-            for (var i = 0; i < columns; i++)
-                if (i < count)
-                    thumbnails[i].Bind(reels[startIndex + i], startIndex + i, thumbnailCache);
-                else
-                {
-                    thumbnails[i].Unbind();
-                    thumbnails[i].gameObject.SetActive(false);
-                }
+            Disabled?.Invoke();
         }
     }
 }

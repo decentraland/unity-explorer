@@ -1,20 +1,14 @@
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI;
 using DG.Tweening;
 using System;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     /// <summary>
-    ///     One thumbnail slot of a gallery row. Slots are pooled with their row, so a slot is bound many times
-    ///     and loads each image through the gallery's sprite cache.
+    ///     One thumbnail slot of a gallery row, driven by <see cref="ReelThumbnailController" />.
     /// </summary>
     public class ReelThumbnailView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -31,165 +25,47 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         [field: SerializeField] internal float scaleAnimationDuration { get; private set; } = 0.3f;
         [field: SerializeField] internal float thumbnailLoadedAnimationDuration { get; private set; } = 0.3f;
 
-        private CameraReelOptionButtonController? optionButton;
-        private Action<int>? clicked;
-        private CancellationTokenSource? loadCts;
-        private int flatIndex = -1;
-        private bool imageLoaded;
-        private bool hovered;
-
-        public CameraReelResponseCompact? Reel { get; private set; }
-
-        public void Initialize(CameraReelOptionButtonController? optionButtonController, Action<int> onClicked, Vector2 cellSize)
-        {
-            optionButton = optionButtonController;
-            clicked = onClicked;
-            Resize(cellSize);
-            button.onClick.AddListener(OnClick);
-
-            if (optionButtonController != null)
-                optionButtonController.Hide += ToNormal;
-        }
+        internal event Action? PointerEnter;
+        internal event Action? PointerExit;
 
         public void Resize(Vector2 cellSize) =>
             ((RectTransform)transform).sizeDelta = cellSize;
 
-        public void Bind(CameraReelResponseCompact reel, int index, ISpriteCache thumbnailCache)
+        /// <summary>
+        ///     Centre-crops the texture to the cell aspect.
+        /// </summary>
+        public void ShowTexture(Texture texture, bool fadeIn)
         {
-            // The same reel keeps its in-flight load; only the index may have shifted.
-            if (ReferenceEquals(Reel, reel))
-            {
-                flatIndex = index;
-                return;
-            }
-
-            Unbind();
-            Reel = reel;
-            flatIndex = index;
-            gameObject.SetActive(true);
-
-            Sprite? cached = thumbnailCache.GetCachedSprite(reel.thumbnailUrl);
-
-            if (cached != null)
-            {
-                loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
-                Show(cached.texture);
-                return;
-            }
-
-            thumbnailImage.texture = null;
-            loadCts = loadCts.SafeRestart();
-            LoadAsync(reel.thumbnailUrl, thumbnailCache, loadCts.Token).Forget();
-        }
-
-        public void Unbind()
-        {
-            loadCts.SafeCancelAndDispose();
-            loadCts = null;
-            thumbnailImage.DOKill();
-            transform.DOKill();
-            transform.localScale = Vector3.one;
-            outline.SetActive(false);
-            thumbnailImage.texture = null;
-            imageLoaded = false;
-            hovered = false;
-
-            // A recycled row never receives PointerExit, so the shared options button would stay parked here.
-            if (optionButton != null && optionButton.IsShownUnder(optionButtonContainer))
-                optionButton.HideControl();
-
-            Reel = null;
-            flatIndex = -1;
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            CameraReelResponseCompact? reel = Reel;
-
-            if (!imageLoaded || reel == null) return;
-
-            hovered = true;
-            transform.DOScale(Vector3.one * scaleFactorOnHover, scaleAnimationDuration);
-            optionButton?.TryShow(reel, optionButtonContainer.transform, optionButtonOffset);
-            outline.SetActive(true);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            if (!imageLoaded) return;
-
-            if (optionButton == null)
-            {
-                ToNormal();
-                return;
-            }
-
-            if (optionButton.IsContextMenuOpen()) return;
-
-            optionButton.HideControl();
-        }
-
-        private void OnDisable()
-        {
-            Unbind();
-        }
-
-        private void OnDestroy()
-        {
-            button.onClick.RemoveListener(OnClick);
-
-            if (optionButton != null)
-                optionButton.Hide -= ToNormal;
-        }
-
-        private async UniTaskVoid LoadAsync(string url, ISpriteCache thumbnailCache, CancellationToken ct)
-        {
-            loadingBrightView.StartLoadingAnimation(thumbnailImage.gameObject);
-            Sprite? sprite = null;
-
-            try { sprite = await thumbnailCache.GetSpriteAsync(url, useKtx: true, ct: ct); }
-            catch (OperationCanceledException) { return; }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL)); }
-
-            // The cache resolves null instead of throwing when the token is cancelled.
-            if (ct.IsCancellationRequested) return;
-
-            loadingBrightView.FinishLoadingAnimation(thumbnailImage.gameObject);
-
-            if (sprite == null) return;
-
-            Show(sprite.texture);
-            thumbnailImage.DOFade(1f, thumbnailLoadedAnimationDuration);
-        }
-
-        private void Show(Texture texture)
-        {
-            // The cache keeps textures readable; the gallery never reads pixels back, so the CPU copy is dropped.
-            if (texture is Texture2D { isReadable: true } readableTexture)
-                readableTexture.Apply(false, true);
-
             Vector2 cell = ((RectTransform)transform).sizeDelta;
             float originalToSmallerRatio = texture.height * 1f / cell.y;
             float realWidth = originalToSmallerRatio * cell.x;
             float realWidthDiff = texture.width - realWidth;
             thumbnailImage.texture = texture;
             thumbnailImage.uvRect = new Rect(realWidthDiff / 2f / texture.width, 0, (texture.width - realWidthDiff) / texture.width, 1);
-            imageLoaded = true;
+
+            if (fadeIn)
+                thumbnailImage.DOFade(1f, thumbnailLoadedAnimationDuration);
         }
 
-        private void OnClick()
+        public void SetHovered(bool hovered)
         {
-            if (imageLoaded)
-                clicked?.Invoke(flatIndex);
+            transform.DOScale(hovered ? Vector3.one * scaleFactorOnHover : Vector3.one, scaleAnimationDuration);
+            outline.SetActive(hovered);
         }
 
-        private void ToNormal()
+        public void Clear()
         {
-            if (!hovered) return;
-
-            hovered = false;
-            transform.DOScale(Vector3.one, scaleAnimationDuration);
+            thumbnailImage.DOKill();
+            transform.DOKill();
+            transform.localScale = Vector3.one;
             outline.SetActive(false);
+            thumbnailImage.texture = null;
         }
+
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PointerEnter?.Invoke();
+
+        public void OnPointerExit(PointerEventData eventData) =>
+            PointerExit?.Invoke();
     }
 }
