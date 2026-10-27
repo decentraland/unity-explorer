@@ -43,11 +43,12 @@ namespace DCL.Minimap
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
             sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
 
+            OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
+            timeProgressionToggle.SetIsOnWithoutNotify(skyboxSettings.IsDayCycleEnabled);
+            timeSlider.interactable = !isRestrictedByScene && !skyboxSettings.IsDayCycleEnabled;
+
             timeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
             timeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
-
-            OnDayCycleChanged(skyboxSettings.IsDayCycleEnabled);
-            OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
         }
 
         public void Dispose()
