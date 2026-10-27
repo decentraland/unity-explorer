@@ -89,6 +89,7 @@ namespace DCL.Minimap
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
+        private int lastOnlineUsersCount = -1;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -256,8 +257,15 @@ namespace DCL.Minimap
             viewInstance.SetSkyboxWidgetVisible(show);
         }
 
-        private void RefreshOnlineUsersCount() =>
-            viewInstance!.onlineUsersText.text = roomHub.ParticipantsCount().ToString();
+        private void RefreshOnlineUsersCount()
+        {
+            int count = roomHub.ParticipantsCount();
+
+            if (count == lastOnlineUsersCount) return;
+
+            lastOnlineUsersCount = count;
+            viewInstance!.onlineUsersText.SetText("{0}", count);
+        }
 
         private void OnMinimapRendererButtonClicked()
         {
