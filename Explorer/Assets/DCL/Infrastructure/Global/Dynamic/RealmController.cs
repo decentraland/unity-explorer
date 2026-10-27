@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -188,11 +187,6 @@ namespace Global.Dynamic
                 FFIBridgeExtensions.UseTransportAllForLoopbackUrls = LocalUntrustedRealmCommsPolicy.ShouldUseTransportAll(
                     appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM),
                     realmData.Ipfs.CatalystBaseUrl.Value);
-
-                UnityDiagnosticsCenter.Instance.SetRealmInfo(
-                    realmData.Ipfs.CatalystBaseUrl.Value,
-                    realmData.Ipfs.ContentBaseUrl.Value,
-                    realmData.Ipfs.LambdasBaseUrl.Value);
 
                 // Add the realm component
                 var realmComp = new RealmComponent(realmData);

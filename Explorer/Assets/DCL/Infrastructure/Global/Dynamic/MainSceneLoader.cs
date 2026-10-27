@@ -123,6 +123,31 @@ namespace Global.Dynamic
             Shutdown();
         }
 
+        private void ShutdownOnExit()
+        {
+            // Unity still renders the frame in which the quit was requested, after the UI below has been torn down
+            CoverScreen();
+            Shutdown();
+        }
+
+        private static void CoverScreen()
+        {
+            var canvas = new GameObject("ExitCurtain", typeof(Canvas)).GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = short.MaxValue;
+
+            var image = new GameObject("Black", typeof(Image)).GetComponent<Image>();
+            image.color = Color.black;
+            image.raycastTarget = false;
+
+            RectTransform rect = image.rectTransform;
+            rect.SetParent(canvas.transform, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
         private void Shutdown()
         {
             if (PlayerLoopHelper.IsMainThread == false)
@@ -236,7 +261,7 @@ namespace Global.Dynamic
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             canShutdown = true;
-            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), ShutdownOnExit));
 
             string[] rawApplicationParameters =
 #if UNITY_EDITOR
@@ -796,7 +821,7 @@ namespace Global.Dynamic
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
             bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
-            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
+            MinimumSpecsStatus.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
 
             var specsProperties = new JObject
             {

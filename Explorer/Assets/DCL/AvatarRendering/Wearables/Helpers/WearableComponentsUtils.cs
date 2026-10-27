@@ -69,13 +69,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
+        public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender,
+            bool dtoOnly = false)
         {
             List<URN> pointers = POINTERS_POOL.Get()!;
             pointers.Add(bodyShape);
             pointers.AddRange(wearables);
 
-            return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
+            return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender, dtoOnly: dtoOnly);
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId,

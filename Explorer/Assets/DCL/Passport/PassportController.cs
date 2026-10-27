@@ -98,7 +98,6 @@ namespace DCL.Passport
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
         private readonly IWebRequestController webRequestController;
         private readonly MarketplaceShopAPIClient marketplaceShopApiClient;
@@ -189,7 +188,6 @@ namespace DCL.Passport
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             IFriendsService? friendsService,
             FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             IOnlineUsersProvider onlineUsersProvider,
@@ -230,7 +228,6 @@ namespace DCL.Passport
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -367,7 +364,7 @@ namespace DCL.Passport
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
+                new SpriteCache(webRequestController),
                 new ReelGalleryConfigParams(
                     gridLayoutFixedColumnCount,
                     thumbnailHeight,

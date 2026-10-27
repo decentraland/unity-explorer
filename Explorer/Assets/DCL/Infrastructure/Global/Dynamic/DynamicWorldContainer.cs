@@ -544,7 +544,7 @@ namespace Global.Dynamic
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsServices?.FriendsCache, multiplayerContainer.MovementMessageBus),
-                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler),
+                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler, staticContainer.CurrentSceneUiOnly),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
@@ -642,7 +642,6 @@ namespace Global.Dynamic
                     placesAndEventsContainer.PlacesAPIService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
-                    cameraReelContainer.StorageService,
                     cameraReelContainer.StorageService,
                     uiShellContainer.Clipboard,
                     bootstrapContainer.DecentralandUrlsSource,
@@ -763,7 +762,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     commsContainer.RemoteMetadata,
                     cameraReelContainer.StorageService,
-                    cameraReelContainer.StorageService,
                     globalWorld,
                     playerEntity,
                     friendsServices?.FriendsService,
@@ -853,10 +851,11 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
                 globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, uiShellContainer.Cursor, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
-                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, chatContainer.ChatMessagesBus, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
                     userLogout, marketplaceCreditsApiClient, notificationsRequestController,
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
@@ -1041,7 +1040,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.InputBlock,
                     cameraReelContainer.StorageService,
-                    cameraReelContainer.ScreenshotsStorage,
                     profileContainer.ProfileRepositoryWrapper,
                     friendsServices?.FriendsService,
                     communitiesContainer.DataProvider,

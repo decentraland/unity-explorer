@@ -96,8 +96,5 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public UniTask<Texture2D> GetScreenshotImageAsync(string url, bool compressed, CancellationToken ct = default) =>
             screenshotsStorage.GetScreenshotImageAsync(url, compressed, ct);
-
-        public UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
-            screenshotsStorage.GetScreenshotThumbnailAsync(url, ct);
     }
 }

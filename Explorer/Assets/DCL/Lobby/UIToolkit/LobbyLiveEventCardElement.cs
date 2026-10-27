@@ -1,10 +1,11 @@
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Live event card; its hierarchy comes from LobbyLiveEventCard.uxml and LobbyLiveEventCard.uss lays it out.
-    ///     The attendees counter is only shown while somebody is there.
+    ///     Live event card; its hierarchy comes from LobbyLiveEventCard.uxml, laid out and hover-animated by
+    ///     LobbyLiveEventCard.uss. The attendees counter is only shown while somebody is there.
     /// </summary>
     [UxmlElement]
     public partial class LobbyLiveEventCardElement : LobbyThumbnailCardElement
@@ -15,11 +16,15 @@ namespace DCL.Lobby
         private const string TITLE_NAME = "Title";
         private const string HOST_NAME = "Host";
         private const string ATTENDEES_NAME = "Attendees";
+        private const string JUMP_IN_NAME = "JumpIn";
         private const string CONNECTED_FRIENDS_NAME = "ConnectedFriends";
+
+        public Action? JumpInClicked;
 
         private Label? titleLabel;
         private Label? hostLabel;
         private Label? attendeesLabel;
+        private Button? jumpInButton;
         private LobbyConnectedFriendsElement? connectedFriends;
 
         private string title = string.Empty;
@@ -79,11 +84,17 @@ namespace DCL.Lobby
             titleLabel = this.Q<Label>(TITLE_NAME);
             hostLabel = this.Q<Label>(HOST_NAME);
             attendeesLabel = this.Q<Label>(ATTENDEES_NAME);
+            jumpInButton = this.Q<Button>(JUMP_IN_NAME);
             connectedFriends = this.Q<LobbyConnectedFriendsElement>(CONNECTED_FRIENDS_NAME);
+
+            jumpInButton.clicked += OnJumpInClicked;
 
             titleLabel.text = title;
             hostLabel.text = host;
             attendeesLabel.text = attendees.ToString();
         }
+
+        private void OnJumpInClicked() =>
+            JumpInClicked?.Invoke();
     }
 }

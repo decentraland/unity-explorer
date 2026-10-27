@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -152,6 +151,8 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
+            var cacheOutfitWearablesCommand = new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage);
+
             busController = new BackpackBusController(wearableStorage,
                 backpackEventBus,
                 backpackCommandBus,
@@ -160,7 +161,7 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 wearablesProvider,
                 emoteProvider,
-                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
+                cacheOutfitWearablesCommand);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -292,7 +293,9 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 deleteIcon,
                 decentralandUrlsSource,
-                ownedNftFilter
+                ownedNftFilter,
+                wearablesProvider,
+                cacheOutfitWearablesCommand
             );
         }
 

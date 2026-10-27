@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Places;
 using DCL.UI;
 using MVC;
 using System.Collections.Generic;
@@ -12,14 +13,16 @@ namespace DCL.ExplorePanel
     public class ExploreSectionModalController : ControllerBase<ExploreSectionModalView, ExploreSectionModalParameter>
     {
         private readonly IReadOnlyDictionary<ExploreSections, IHostableSection> sections;
+        private readonly IPlacesSectionOpener placesSections;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private IHostableSection section => sections[inputData.Section];
 
-        public ExploreSectionModalController(ViewFactoryMethod viewFactory, IReadOnlyDictionary<ExploreSections, IHostableSection> sections) : base(viewFactory)
+        public ExploreSectionModalController(ViewFactoryMethod viewFactory, IReadOnlyDictionary<ExploreSections, IHostableSection> sections, IPlacesSectionOpener placesSections) : base(viewFactory)
         {
             this.sections = sections;
+            this.placesSections = placesSections;
         }
 
         protected override void OnBeforeViewShow() =>
@@ -32,6 +35,10 @@ namespace DCL.ExplorePanel
 
             // The view may still sit on the OUT frame of its last hide.
             shown.ResetAnimator();
+
+            // Activation resets the places to Browse.
+            if (inputData.PlacesSection != null)
+                placesSections.OpenSection(inputData.PlacesSection.Value);
         }
 
         protected override void OnViewClose()
@@ -52,10 +59,12 @@ namespace DCL.ExplorePanel
     public readonly struct ExploreSectionModalParameter
     {
         public readonly ExploreSections Section;
+        public readonly PlacesSection? PlacesSection;
 
-        public ExploreSectionModalParameter(ExploreSections section)
+        public ExploreSectionModalParameter(ExploreSections section, PlacesSection? placesSection = null)
         {
             Section = section;
+            PlacesSection = placesSection;
         }
     }
 }

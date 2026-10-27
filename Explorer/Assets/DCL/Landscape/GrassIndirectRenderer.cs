@@ -94,8 +94,8 @@ namespace Decentraland.Terrain
             public float4 colour;
         }
 
-        private readonly int[] arrLOD = new int[3] { 0, 0, 0 };
-        private int[] arrLODPull = new int[3] { 0, 0, 0 };
+        private readonly int[] arrLOD = new int[] { 0, 0, 0 };
+        private int[] arrLODPull = new int[] { 0, 0, 0 };
 
         //private int renderTextureSize = 512;
         private readonly int maxDepth = 10;
