@@ -40,7 +40,7 @@ namespace DCL.Settings.Configuration
             ShadowDistanceFeature = 13,
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
             VideoPrioritizationSettings videoPrioritizationSettings,

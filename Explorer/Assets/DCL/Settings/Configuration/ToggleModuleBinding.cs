@@ -45,7 +45,7 @@ namespace DCL.Settings.Configuration
             LobbyFeature = 17,
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
             VideoPrioritizationSettings videoPrioritizationSettings,

@@ -83,7 +83,7 @@ namespace DCL.CharacterPreview
 
             StopEmotes();
 
-            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase? avatarBase) && avatarBase != null)
                 avatarBase.HeadIKRig.weight = 0;
 
             characterPreviewAvatarContainer.DeInitialize();
@@ -133,7 +133,7 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
+            if (world.TryGet(avatarEntity, out AvatarBase? avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
             {
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
@@ -197,7 +197,7 @@ namespace DCL.CharacterPreview
         {
             // Activation rebinds the Animator, which captures the current pose as its defaults: the Armature must hold its
             // prefab transform at that moment rather than the frame an interrupted emote froze on.
-            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase? avatarBase) && avatarBase != null)
                 avatarBase.ResetArmatureTransform();
 
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);

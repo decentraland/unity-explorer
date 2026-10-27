@@ -30,8 +30,8 @@ namespace DCL.Settings.ModuleViews
     [Serializable]
     public class SettingsModuleViewConfiguration
     {
-        [field: SerializeField] public string ModuleName { get; private set; }
-        [field: SerializeField] public string Description { get; private set; }
+        [field: SerializeField] public string ModuleName { get; private set; } = null!;
+        [field: SerializeField] public string Description { get; private set; } = null!;
         [field: SerializeField] public bool IsEnabled { get; private set; } = true;
     }
 

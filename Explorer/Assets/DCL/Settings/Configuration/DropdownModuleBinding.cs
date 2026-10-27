@@ -48,7 +48,7 @@ namespace DCL.Settings.Configuration
             PointAtMarkerFeature = 15,
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
             VideoPrioritizationSettings videoPrioritizationSettings,
