@@ -337,7 +337,7 @@ namespace DCL.Places
                     }
 
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
-                                                              ownerAddress: ownProfile.UserId!,
+                                                              ownerAddress: ownProfile.UserId.Value,
                                                               ct: ct,
                                                               withConnectedUsers: true,
                                                               onlySdk7: false,
