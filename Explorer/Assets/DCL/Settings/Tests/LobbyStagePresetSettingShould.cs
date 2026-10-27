@@ -4,6 +4,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Tests
 {
@@ -101,6 +103,28 @@ namespace DCL.Settings.Tests
             Assert.AreEqual(0, setting.SelectedIndex);
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_STAGE_PRESET));
             Assert.IsEmpty(notified);
+        }
+
+        [Test]
+        public void HaveNoBackdropUntilOneIsSet()
+        {
+            // Arrange
+            var setting = new LobbyStagePresetSetting(NAMES);
+            var notified = new List<int>();
+            setting.BackdropChanged += notified.Add;
+            var texture = new Texture2D(2, 2);
+
+            // Act
+            Texture? before = setting.BackdropOf(1);
+            setting.SetBackdrop(1, texture);
+
+            // Assert
+            Assert.IsNull(before);
+            Assert.AreEqual(texture, setting.BackdropOf(1));
+            Assert.IsNull(setting.BackdropOf(0));
+            Assert.AreEqual(new[] { 1 }, notified);
+
+            Object.DestroyImmediate(texture);
         }
 
         [Test]

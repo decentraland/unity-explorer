@@ -46,7 +46,6 @@ namespace DCL.Settings.Configuration
             MsaaFeature = 13,
             ShadowsQualityFeature = 14,
             PointAtMarkerFeature = 15,
-            LobbyStagePresetFeature = 16,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -99,7 +98,6 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.ShadowsQualityFeature => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
 
                 DropdownFeatures.PointAtMarkerFeature => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
-                DropdownFeatures.LobbyStagePresetFeature => new LobbyStagePresetSettingsController(viewInstance, lobbyStagePresetSetting, settingsEventListener),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
@@ -113,7 +111,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISettingsModuleEventListener settingsEventListener)
         {
-            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+            if (view.ModuleTitle != null && !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
                 view.ModuleTitle.text = "In-World Chat Bubbles";
 
             return new ChatBubblesVisibilityController(view, chatSettingsAsset, settingsEventListener);

@@ -198,7 +198,9 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
+                // An unassigned reference is an object with an empty key, never null
+                SettingsGroupViewRef groupPrefab = group.GroupPrefabOverride.RuntimeKeyIsValid() ? group.GroupPrefabOverride : settingsMenuConfiguration.SettingsGroupPrefab!;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(groupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;

@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public LobbyStageRef StagePrefab { get; private set; }
 
-            [field: Tooltip("Stage looks offered in Settings > Lobby, loaded only when picked; the first entry is the default and should match the look serialized in the stage prefab")]
+            [field: Tooltip("Stage looks offered in Settings > Lobby, all loaded at startup for the picker thumbnails; the first entry is the default and should match the look serialized in the stage prefab")]
             [field: SerializeField]
             public StagePresetEntry[] StagePresets { get; private set; }
 

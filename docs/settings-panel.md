@@ -69,7 +69,7 @@ The settings panel is organized into these sections (a `General` section also ex
 
 ### 5. Lobby Section
 - Lobby on/off toggle (takes effect after a restart)
-- Stage preset dropdown listing the looks configured in `LobbyPlugin.LobbyPluginSettings.StagePresets`; it is greyed out while the toggle is off and follows the toggle live through `ISettingsModuleEventListener.LobbyEnabledChanged`
+- "Background" group: a preview of the chosen stage look above one thumbnail per look configured in `LobbyPlugin.LobbyPluginSettings.StagePresets`; hovering a thumbnail shows the look's name and previews it, clicking selects it; with nothing hovered the preview shows the selection, and each change cross-fades over the previous image. Every look is loaded at startup by `LobbyStagePresetCatalog` (owned by `DynamicWorldContainer`), which hands each backdrop to `LobbyStagePresetSetting`, so the picker works whether or not the lobby is enabled. The group uses `SettingsGroup_SingleColumn.prefab` through `SettingsGroup.GroupPrefabOverride`, because the shared group prefab lays modules out in fixed-size grid cells.
 
 ## Adding New Settings
 

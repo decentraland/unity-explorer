@@ -81,6 +81,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider? communitiesDataProvider;
         private readonly CameraReelContainer? cameraReelContainer;
         private readonly LobbyStagePresetSetting stagePresetSetting;
+        private readonly LobbyStagePresetCatalog stagePresetCatalog;
 
         private LobbyStage? lobbyStage;
         private LobbyStagePresetSwitcher? stagePresetSwitcher;
@@ -128,7 +129,8 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             CommunitiesDataProvider? communitiesDataProvider,
             CameraReelContainer? cameraReelContainer,
-            LobbyStagePresetSetting stagePresetSetting)
+            LobbyStagePresetSetting stagePresetSetting,
+            LobbyStagePresetCatalog stagePresetCatalog)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -165,6 +167,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.cameraReelContainer = cameraReelContainer;
             this.stagePresetSetting = stagePresetSetting;
+            this.stagePresetCatalog = stagePresetCatalog;
         }
 
         public void Dispose()
@@ -204,7 +207,7 @@ namespace DCL.PluginSystem.Global
             lobbyStage = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StagePrefab, ct: ct)).Value);
             lobbyStage.gameObject.SetActive(false);
 
-            stagePresetSwitcher = new LobbyStagePresetSwitcher(lobbyStage, settings.StagePresets, stagePresetSetting, assetsProvisioner);
+            stagePresetSwitcher = new LobbyStagePresetSwitcher(lobbyStage, stagePresetCatalog, stagePresetSetting);
             stagePresetSwitcher.Start();
 
             // The top-bar presenters bind to the view, so it is instantiated up front

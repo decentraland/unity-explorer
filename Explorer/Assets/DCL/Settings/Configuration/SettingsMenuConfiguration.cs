@@ -30,6 +30,10 @@ namespace DCL.Settings.Configuration
         [field: SerializeField] internal string GroupTitle { get; set; } = null!;
         [field: SerializeField] internal FeatureFlag FeatureFlagName { get; set; }
         [field: SerializeField] internal FeatureId FeatureId { get; set; }
+
+        [field: Tooltip("Replaces the shared group prefab for this group only; leave empty to use it")]
+        [field: SerializeField] internal SettingsGroupViewRef GroupPrefabOverride { get; set; } = null!;
+
         [field: SerializeReference] [field: SubclassSelector] internal List<SettingsModuleBindingBase> Modules { get; set; } = null!;
     }
 

@@ -1,14 +1,17 @@
 using DCL.Prefs;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Settings.Settings
 {
     /// <summary>
-    ///     Which of the configured lobby stage looks the user picked; the choice is stored by display name and the first entry is the default.
+    ///     Which of the configured lobby stage looks the user picked, stored by display name with the first entry as default, plus each look's backdrop once loaded.
     /// </summary>
     public class LobbyStagePresetSetting
     {
+        private readonly Texture?[] backdrops;
+
         public IReadOnlyList<string> Names { get; }
 
         /// <summary>
@@ -18,9 +21,12 @@ namespace DCL.Settings.Settings
 
         public event Action<int>? SelectedChanged;
 
+        public event Action<int>? BackdropChanged;
+
         public LobbyStagePresetSetting(IReadOnlyList<string> names)
         {
             Names = names;
+            backdrops = new Texture?[names.Count];
             SelectedIndex = IndexOfStored();
         }
 
@@ -31,6 +37,15 @@ namespace DCL.Settings.Settings
             SelectedIndex = index;
             DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_LOBBY_STAGE_PRESET, Names[index], save: true);
             SelectedChanged?.Invoke(index);
+        }
+
+        public Texture? BackdropOf(int index) =>
+            backdrops[index];
+
+        public void SetBackdrop(int index, Texture texture)
+        {
+            backdrops[index] = texture;
+            BackdropChanged?.Invoke(index);
         }
 
         // A stored name no longer in the list falls back to the default rather than to nothing

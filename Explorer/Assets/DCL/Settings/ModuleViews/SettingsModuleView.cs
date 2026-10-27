@@ -6,12 +6,14 @@ namespace DCL.Settings.ModuleViews
 {
     public abstract class SettingsModuleView<TConfig> : MonoBehaviour, ISettingsModuleView where TConfig: SettingsModuleViewConfiguration
     {
-        [field: SerializeField] public TMP_Text ModuleTitle { get; private set; }
-        [field: SerializeField] public TMP_Text DescriptionText { get; private set; }
+        [field: SerializeField] public TMP_Text? ModuleTitle { get; private set; }
+        [field: SerializeField] public TMP_Text? DescriptionText { get; private set; }
 
         public void Configure(SettingsModuleViewConfiguration configuration)
         {
-            ModuleTitle.text = configuration.ModuleName;
+            if (ModuleTitle != null)
+                ModuleTitle.text = configuration.ModuleName;
+
             if (DescriptionText != null)
                 DescriptionText.text = configuration.Description;
 

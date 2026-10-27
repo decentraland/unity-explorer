@@ -128,9 +128,15 @@ MonoBehaviour:
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 7000000000000000002
-    - <GroupTitle>k__BackingField: 
+    - <GroupTitle>k__BackingField: Background
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
+      <GroupPrefabOverride>k__BackingField:
+        m_AssetGUID: 2e214c9790df4c01b964b55f0feb6fab
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
       <Modules>k__BackingField:
       - rid: 7000000000000000003
   references:
@@ -855,7 +861,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Experimental Lobby (requires restart)
+          <ModuleName>k__BackingField: Enable Lobby (Requires Restart)
           <Description>k__BackingField: Starts the client in the lobby instead of
             jumping straight into the world. Close and reopen the client for the
             change to take effect.
@@ -880,21 +886,17 @@ MonoBehaviour:
           defaultIsOn: 0
         <Feature>k__BackingField: 12
     - rid: 7000000000000000003
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      type: {class: LobbyStagePresetModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
-          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_AssetGUID: 7a9ad3746de349f4895c7ed85ad130d9
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Stage Preset
-          <Description>k__BackingField: The backdrop, lighting and props behind your
-            avatar in the lobby.
+          <ModuleName>k__BackingField: 
+          <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
-          isMultiselect: 0
-          options: []
-          defaultOptionIndex: 0
-        <Feature>k__BackingField: 16
+        <Feature>k__BackingField: 0
