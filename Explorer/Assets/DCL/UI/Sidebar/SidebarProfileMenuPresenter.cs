@@ -10,6 +10,7 @@ using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.SystemMenu;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using MVC;
@@ -213,7 +214,9 @@ namespace DCL.UI.Sidebar
             if (identityCache.Identity == null) return;
 
             string userId = identityCache.Identity.Address;
-            passportBridge.ShowAsync(new PassportParams(userId, badgeIdSelected, isOwnProfile: true)).Forget();
+            passportBridge.ShowAsync(new PassportParams(userId, badgeIdSelected, isOwnProfile: true))
+                          .SuppressToResultAsync(ReportCategory.PROFILE)
+                          .Forget();
         }
 
         private async UniTaskVoid SignOutAsync(CancellationToken ct)
