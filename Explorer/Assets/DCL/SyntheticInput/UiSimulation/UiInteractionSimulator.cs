@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.SDKComponents.SceneUI.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -20,6 +21,11 @@ namespace DCL.SyntheticInput.UiSimulation
         // The scene system is throttled, so one drain can take many frames.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
+        // A result written at tick N reaches the scene in the batch of tick N or N + 1, so it has been read once the
+        // tick number is N + 2.
+        private const uint SCENE_TICKS_PER_EVENT = 2;
+        private const float MAX_SCENE_TICK_WAIT_SEC = 2f;
+
         private readonly EventSystem eventSystem;
         private readonly SdkUiResolver sdkResolver;
         private readonly PointerEventData pointerEventData;
@@ -27,6 +33,9 @@ namespace DCL.SyntheticInput.UiSimulation
         // Kept apart from pointerEventData, which every other gesture resets while a hover stays parked.
         private readonly PointerEventData hoverEventData;
         private readonly List<RaycastResult> raycastResults = new ();
+
+        // The slot of the last leave sent without waiting, settled by the next SDK gesture whichever element it targets.
+        private UITransformComponent? unsettledSlot;
 
         public UiInteractionSimulator(EventSystem eventSystem, SdkUiResolver sdkResolver)
         {
@@ -129,7 +138,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!await DrainSdkSlotAsync(element.Transform, ct))
                 return UiActionResult.Failure("the scene did not consume the release (is the scene paused?)", null, imageRect);
 
-            SendPooled<PointerLeaveEvent>(target);
+            SendSdkLeave(target, element.Transform);
 
             return UiActionResult.Success(imageRect);
         }
@@ -157,9 +166,12 @@ namespace DCL.SyntheticInput.UiSimulation
             return (UiActionResult.Success(imageRect), true);
         }
 
-        /// <summary>Returns without waiting for the scene to consume the leave.</summary>
-        public static void SendSdkLeave(VisualElement target) =>
+        /// <summary>Returns without waiting for the scene to consume the leave; the next SDK gesture waits for it.</summary>
+        public void SendSdkLeave(VisualElement target, UITransformComponent? slot)
+        {
             SendPooled<PointerLeaveEvent>(target);
+            unsettledSlot = slot;
+        }
 
         /// <summary>
         ///     Enters the top raycast hit (the target itself when forced past a cover) and each ancestor, as the input
@@ -277,16 +289,27 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>Returns at once when the slot is empty, so a gesture on an idle element starts without a frame of delay.</summary>
-        private static async UniTask<bool> DrainPendingSdkEventAsync(UITransformComponent? slotOwner, CancellationToken ct) =>
-            slotOwner?.PointerEventTriggered == null || await DrainSdkSlotAsync(slotOwner, ct);
+        /// <summary>
+        ///     Settles the last leave sent without waiting, on any element, then the slot's own pending event. Returns
+        ///     at once when neither is pending, so a gesture on an idle element starts without a frame of delay.
+        /// </summary>
+        private async UniTask<bool> DrainPendingSdkEventAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        {
+            UITransformComponent? unsettled = unsettledSlot;
+            unsettledSlot = null;
+
+            // A detached element's slot is never consumed, and its leave reaches no handler.
+            if (unsettled is { Transform: { panel: not null } } && !await DrainSdkSlotAsync(unsettled, ct))
+                return false;
+
+            return slotOwner == unsettled || slotOwner?.PointerEventTriggered == null || await DrainSdkSlotAsync(slotOwner, ct);
+        }
 
         /// <summary>
         ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
-        ///     consumed the previous one. Always yields at least one frame, so consecutive events land on separate
-        ///     frames. A null owner has no slot to wait on.
+        ///     consumed the previous one and the scene has read it. A null owner has no slot to wait on.
         /// </summary>
-        private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        private async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
@@ -298,7 +321,26 @@ namespace DCL.SyntheticInput.UiSimulation
             while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            return slotOwner.PointerEventTriggered == null;
+            return slotOwner.PointerEventTriggered == null && await WaitForSceneToReadAsync(ct);
+        }
+
+        /// <summary>
+        ///     The scene reads the results written since its last tick as one batch and runs that batch's handlers in
+        ///     registration order, not event order: a leave and the next enter in one batch reach the scene as enter,
+        ///     then leave. Waits until the result written so far has been read, so the next one lands in a later batch.
+        /// </summary>
+        private async UniTask<bool> WaitForSceneToReadAsync(CancellationToken ct)
+        {
+            if (!sdkResolver.TryGetRunningSceneState(out ISceneStateProvider? sceneState))
+                return true;
+
+            uint readTick = sceneState.TickNumber + SCENE_TICKS_PER_EVENT;
+            float deadline = UnityEngine.Time.realtimeSinceStartup + MAX_SCENE_TICK_WAIT_SEC;
+
+            while (sceneState.TickNumber < readTick && UnityEngine.Time.realtimeSinceStartup < deadline)
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+            return sceneState.TickNumber >= readTick;
         }
 
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
@@ -359,7 +401,7 @@ namespace DCL.SyntheticInput.UiSimulation
             bool consumed = await DrainSdkSlotAsync(slot, ct);
 
             if (consumed)
-                SendPooled<PointerLeaveEvent>(target);
+                SendSdkLeave(target, slot);
 
             return consumed;
         }

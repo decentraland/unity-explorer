@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterCamera.Components;
+using DCL.SDKComponents.SceneUI.Components;
 using DCL.SyntheticInput.Core;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
@@ -43,7 +44,7 @@ namespace DCL.SyntheticInput.UiSimulation
         private readonly List<GameObject> parkedChain = new ();
         private ParkedHoverKind parkedKind;
         private string parkedAddress = string.Empty;
-        private VisualElement? parkedSdkTarget;
+        private UITransformComponent? parkedSdkSlot;
 
         // Resolved lazily: the cursor entity may not exist yet when the session is built.
         private Entity cursorEntity = Entity.Null;
@@ -88,7 +89,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             // An enter the scene has not consumed yet still reaches it later, so it is parked to be left.
             if (enterSent)
-                Park(ParkedHoverKind.Sdk, address, element.Transform.Transform);
+                Park(ParkedHoverKind.Sdk, address, element.Transform);
 
             return result;
         }
@@ -165,8 +166,8 @@ namespace DCL.SyntheticInput.UiSimulation
             switch (parkedKind)
             {
                 case ParkedHoverKind.Sdk:
-                    if (parkedSdkTarget is { panel: not null })
-                        UiInteractionSimulator.SendSdkLeave(parkedSdkTarget);
+                    if (parkedSdkSlot is { Transform: { panel: not null } })
+                        Simulator.SendSdkLeave(parkedSdkSlot.Transform, parkedSdkSlot);
                     else
                         ended += " (the element is gone; no leave was sent)";
 
@@ -181,17 +182,17 @@ namespace DCL.SyntheticInput.UiSimulation
 
             parkedKind = ParkedHoverKind.None;
             parkedAddress = string.Empty;
-            parkedSdkTarget = null;
+            parkedSdkSlot = null;
             parkedChain.Clear();
 
             return ended;
         }
 
-        private void Park(ParkedHoverKind kind, UiElementAddress address, VisualElement? sdkTarget)
+        private void Park(ParkedHoverKind kind, UiElementAddress address, UITransformComponent? sdkSlot)
         {
             parkedKind = kind;
             parkedAddress = address.ToString();
-            parkedSdkTarget = sdkTarget;
+            parkedSdkSlot = sdkSlot;
         }
 
         /// <summary>
