@@ -206,6 +206,8 @@ namespace DCL.UI.Sidebar
             checkForLiveEventsCts.SafeCancelAndDispose();
             smartWearablesTooltipCts.SafeCancelAndDispose();
             smartWearablesSubscription?.Dispose();
+
+            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
         }
 
         protected override void OnViewInstantiated()
