@@ -77,7 +77,6 @@ namespace DCL.UI.Sidebar
         private readonly List<AudioSliderBinder> audioSliderBinders = new ();
         private readonly bool isCameraReelFeatureEnabled;
 
-        private readonly CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource openPanelCts = new ();
@@ -199,7 +198,6 @@ namespace DCL.UI.Sidebar
             foreach (AudioSliderBinder binder in audioSliderBinders)
                 binder.Dispose();
 
-            profileWidgetCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
@@ -289,12 +287,6 @@ namespace DCL.UI.Sidebar
                 viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
                 await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
             }
-        }
-
-        protected override void OnViewClose()
-        {
-            base.OnViewClose();
-            profileWidgetCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
