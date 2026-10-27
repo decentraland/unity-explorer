@@ -384,9 +384,11 @@ namespace Global.Dynamic
                 if (manifestRequest.result != UnityWebRequest.Result.Success)
                     throw new IOException($"manifest request failed ({manifestRequest.responseCode}): {manifestRequest.error}");
 
+                CorpusManifest manifest = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text);
+
                 // The progress poll only samples whichever file is converting at each tick, so fast files
                 // leave no row; backfill the panel with the scene's full convertible file list.
-                await ReconcileCensusAsync(entityId, ct);
+                await ReconcileCensusAsync(entityId, manifest, ct);
 
                 metrics.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
 
@@ -398,12 +400,10 @@ namespace Global.Dynamic
                     ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {stopwatch.Elapsed.TotalSeconds:F1}s"
                     : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {stopwatch.Elapsed.TotalSeconds:F1}s");
 
-                int exitCode = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode;
-
-                if (exitCode != 0)
+                if (manifest.exitCode != 0)
                 {
-                    metrics.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
+                    metrics.OnMilestone($"some files failed server-side conversion (manifest exitCode {manifest.exitCode})");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {manifest.exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
                 }
             }
             catch (OperationCanceledException)
@@ -426,9 +426,10 @@ namespace Global.Dynamic
         /// <summary>
         ///     Backfills the AB panel with every convertible file of the scene entity, sourced from the
         ///     entity definition's content list (readable paths — the manifest only carries hashed artifact
-        ///     names). Best effort: a failure leaves the sampled rows as they are.
+        ///     names). When the manifest reports a failure, each convertible file with no artifact in it is
+        ///     marked failed. Best effort: a failure leaves the sampled rows as they are.
         /// </summary>
-        private async UniTask ReconcileCensusAsync(string entityId, CancellationToken ct)
+        private async UniTask ReconcileCensusAsync(string entityId, CorpusManifest manifest, CancellationToken ct)
         {
             try
             {
@@ -446,11 +447,29 @@ namespace Global.Dynamic
                         files.Add(entry.file);
 
                 metrics.ReconcileWarmUpCensus(files);
+
+                if (manifest.exitCode == 0) return;
+
+                foreach (EntityContent.FileEntry entry in entity.content)
+                    if (IsConvertible(entry.file) && !HasArtifact(manifest.files, entry.hash))
+                        metrics.OnFailed(entry.file, $"not converted (manifest exitCode {manifest.exitCode})");
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
             }
+        }
+
+        /// <summary>Artifact names are <c>{lowercased content hash}_{digest}_{platform}</c>.</summary>
+        private static bool HasArtifact(string[] artifacts, string contentHash)
+        {
+            string prefix = $"{contentHash.ToLowerInvariant()}_";
+
+            foreach (string artifact in artifacts)
+                if (artifact.StartsWith(prefix, StringComparison.Ordinal))
+                    return true;
+
+            return false;
         }
 
         /// <summary>
@@ -1033,11 +1052,12 @@ namespace Global.Dynamic
             public string file = null!;
         }
 
-        /// <summary>The corpus manifest's failure indicator (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
+        /// <summary>The corpus manifest's failure indicator and artifact list (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
         [Serializable]
         private class CorpusManifest
         {
             public int exitCode;
+            public string[] files = null!;
         }
 
         /// <summary>The content mapping of a deployed entity (ADR-80 entity schema); the rest of the document is ignored here.</summary>
@@ -1050,6 +1070,7 @@ namespace Global.Dynamic
             public class FileEntry
             {
                 public string file = null!;
+                public string hash = null!;
             }
         }
     }
