@@ -91,6 +91,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             ComposeHiddenCategoriesOrdered(bodyShapeId, hideWearablesResolution.ForceRender, visibleWearables, combinedHidingList);
 
+            // Scene wearables are always rendered
+            for (var i = 0; i < visibleWearables.Count; i++)
+                if (SceneWearableDTOFactory.IsSceneWearableUrn(visibleWearables[i].GetUrn()))
+                    combinedHidingList.Remove(visibleWearables[i].GetCategory());
+
             for (int i = visibleWearables.Count - 1; i >= 0; i--)
                 if (combinedHidingList.Contains(visibleWearables[i].GetCategory()))
                     visibleWearables.RemoveAt(i);

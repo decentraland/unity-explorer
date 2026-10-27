@@ -255,12 +255,39 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             resolution.Release();
         }
 
+        [Test]
+        public void AlwaysRenderSceneWearables()
+        {
+            // Arrange
+            IWearable helmet = CreateWearable(WearableCategories.Categories.HELMET, WearableCategories.Categories.HAT, WearableCategories.Categories.HAIR);
+            IWearable hair = CreateWearable(WearableCategories.Categories.HAIR);
+            IWearable sceneHat = CreateSceneWearable(WearableCategories.Categories.HAT);
+            var resolution = new HideWearablesResolution(Array.Empty<string>());
+
+            // Act
+            WearableComponentsUtils.ExtractVisibleWearables(TEST_BODY_SHAPE, new List<IWearable> { helmet, hair, sceneHat }, ref resolution);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { helmet, sceneHat }, resolution.VisibleWearables);
+            Assert.IsTrue(resolution.HiddenCategories!.Contains(WearableCategories.Categories.HAIR));
+            Assert.IsFalse(resolution.HiddenCategories.Contains(WearableCategories.Categories.HAT));
+
+            resolution.Release();
+        }
+
         private static IWearable CreateWearable(string category, params string[] hides) =>
+            CreateWearableWithUrn("urn:decentraland:off-chain:base-avatars:" + category, category, hides);
+
+        private static IWearable CreateSceneWearable(string category) =>
+            CreateWearableWithUrn(SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":bafkreisceneid-" + category, category);
+
+        private static IWearable CreateWearableWithUrn(string urn, string category, params string[] hides) =>
             new FakeWearable(
                 new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto
                     {
+                        id = urn,
                         data = new WearableDTO.WearableMetadataDto.DataDto { category = category },
                     },
                 },
