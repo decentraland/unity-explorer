@@ -374,12 +374,16 @@ namespace Global.Dynamic
             // is seeded only when the server is actually serving; the whole-scene warm-up continues in the
             // background and realm loading holds on it below. When the server does not come up nothing is
             // overridden and the containers below are built for raw GLTFs (manual LSD manifest, GLTF lane), so
-            // the scene loads either way. --lsd-raw-gltf skips the sidecar and takes that raw-GLTF wiring directly.
+            // the scene loads either way. --lsd-raw-gltf, or the alfa-lsd-forced-ab flag not being on, skips the
+            // sidecar and takes that raw-GLTF wiring directly.
             string? localAbBaseUrl = null;
             var abgenConversionMetrics = new AbgenConversionMetrics();
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
                 abgenConversionMetrics.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment
+                     && !await LsdForcedAbFlagProvider.IsEnabledAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct))
+                abgenConversionMetrics.OnMilestone($"raw GLTFs — local asset bundles need the {FeatureFlagsStrings.LSD_FORCED_AB} feature flag, which is off or unreachable");
             else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
@@ -785,14 +789,20 @@ namespace Global.Dynamic
 
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
         {
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync(FeatureFlagsDocumentUrl(appArgs), ct);
+            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
+        }
+
+        /// <summary>The app's feature-flags document, honouring <see cref="AppArgsFlags.FeatureFlags.URL" />.</summary>
+        private string FeatureFlagsDocumentUrl(IAppArgs appArgs)
+        {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
                 ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
-            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
-            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
+            return $"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json";
         }
 
         private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
