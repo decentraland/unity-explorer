@@ -57,8 +57,6 @@ namespace DCL.UI.Sidebar
 
             if (DCLPlayerPrefs.HasKey(prefKey))
                 slider.SetValueWithoutNotify(DCLPlayerPrefs.GetFloat(prefKey) / PERCENTAGE);
-
-            Apply(slider.value);
         }
 
         private void Apply(float normalisedVolume)
