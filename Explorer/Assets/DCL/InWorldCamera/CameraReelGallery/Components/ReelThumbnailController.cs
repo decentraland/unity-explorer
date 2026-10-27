@@ -32,8 +32,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.optionButton = optionButton;
             this.clicked = clicked;
 
-            view.PointerEnter += OnPointerEnter;
-            view.PointerExit += OnPointerExit;
+            view.PointerEntered += OnPointerEnter;
+            view.PointerExited += OnPointerExit;
             view.button.onClick.AddListener(OnClick);
 
             if (optionButton != null)
@@ -43,8 +43,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public void Dispose()
         {
             Unbind();
-            view.PointerEnter -= OnPointerEnter;
-            view.PointerExit -= OnPointerExit;
+            view.PointerEntered -= OnPointerEnter;
+            view.PointerExited -= OnPointerExit;
             view.button.onClick.RemoveListener(OnClick);
 
             if (optionButton != null)
@@ -89,7 +89,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             imageLoaded = false;
             hovered = false;
 
-            // A recycled row never receives PointerExit, so the shared options button would stay parked here.
+            // A recycled row never receives a pointer exit, so the shared options button would stay parked here.
             if (optionButton != null && optionButton.IsShownUnder(view.optionButtonContainer))
                 optionButton.HideControl();
 

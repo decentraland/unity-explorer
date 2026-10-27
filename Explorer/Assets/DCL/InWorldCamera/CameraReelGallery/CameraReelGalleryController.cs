@@ -35,6 +35,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int THUMBNAIL_ROW_PREFAB_INDEX = 2;
         private const int ANIMATION_DELAY = 300;
 
+        internal readonly Dictionary<ReelGalleryRowView, ReelGalleryRowController> rowControllers = new ();
+
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ISpriteCache reelThumbnailCache;
@@ -47,7 +49,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
         private readonly List<ReelGalleryRow> rows = new ();
-        internal readonly Dictionary<ReelGalleryRowView, ReelGalleryRowController> rowControllers = new ();
         private readonly string paddingPrefabName;
         private readonly string monthHeaderPrefabName;
         private readonly string thumbnailRowPrefabName;

@@ -25,15 +25,12 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         [field: SerializeField] internal float scaleAnimationDuration { get; private set; } = 0.3f;
         [field: SerializeField] internal float thumbnailLoadedAnimationDuration { get; private set; } = 0.3f;
 
-        internal event Action? PointerEnter;
-        internal event Action? PointerExit;
+        internal event Action? PointerEntered;
+        internal event Action? PointerExited;
 
         public void Resize(Vector2 cellSize) =>
             ((RectTransform)transform).sizeDelta = cellSize;
 
-        /// <summary>
-        ///     Centre-crops the texture to the cell aspect.
-        /// </summary>
         public void ShowTexture(Texture texture, bool fadeIn)
         {
             Vector2 cell = ((RectTransform)transform).sizeDelta;
@@ -63,9 +60,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
-            PointerEnter?.Invoke();
+            PointerEntered?.Invoke();
 
         public void OnPointerExit(PointerEventData eventData) =>
-            PointerExit?.Invoke();
+            PointerExited?.Invoke();
     }
 }
