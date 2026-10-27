@@ -364,9 +364,6 @@ namespace DCL.UI.Sidebar
         ///     Opens the menu nested under the clicked button, closing whichever menu was open before it.
         ///     Clicking the button whose menu is already open closes it.
         /// </summary>
-        /// <summary>
-        ///     Submenus run as MVC popups, so the shared popup closer dismisses them on an outside click.
-        /// </summary>
         private void ToggleSubMenu<TView>(SimpleHoverableButton? button) where TView: ViewBase, IView
         {
             bool alreadyOpen = openSubMenu == typeof(TView);
