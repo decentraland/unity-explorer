@@ -59,6 +59,7 @@ namespace DCL.UI.DebugMenu
         private bool seenWarmUpFailure;
         private bool seenRawGltfFallback;
         private bool abPanelAutoOpened;
+        private bool abPanelCloseHintShown;
         private float abPanelAutoCloseAt = -1f;
         private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
         private long lastMetricsCollectionCount = -1;
@@ -208,6 +209,12 @@ namespace DCL.UI.DebugMenu
                 TogglePanel(panelView);
                 abPanelAutoOpened = true;
                 abPanelAutoCloseAt = -1f;
+
+                if (!abPanelCloseHintShown)
+                {
+                    metrics.OnMilestone("you can now close this tab with its X button or the AB button in the sidebar");
+                    abPanelCloseHintShown = true;
+                }
             }
 
             // Cheap when nothing changed: a version check against the conversion metrics.
