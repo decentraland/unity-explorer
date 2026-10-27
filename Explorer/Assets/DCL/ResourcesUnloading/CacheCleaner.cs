@@ -22,6 +22,9 @@ using System.Collections.Generic;
 
 namespace DCL.ResourcesUnloading
 {
+    /// <summary>
+    ///     Not thread-safe: register caches and unload them from the main thread only.
+    /// </summary>
     public class CacheCleaner : ICacheCleaner
     {
         private const int POOLS_UNLOAD_CHUNK = 10;
@@ -38,7 +41,7 @@ namespace DCL.ResourcesUnloading
         private readonly DebugWidgetBuilder? widgetBuilder;
         private readonly List<Action> updateCallbacks = new ();
 
-        private readonly List<IThrottledClearable> extendedObjectPools;
+        private readonly List<IThrottledClearable> throttledClearables;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
         private IStreamableCache<GLTFData, GetGLTFIntention>? gltfLoadCache;
@@ -63,7 +66,7 @@ namespace DCL.ResourcesUnloading
             this.fpsCapBudget = fpsCapBudget;
             this.widgetBuilder = widgetBuilder;
             unlimitedFPSBudget = new NullPerformanceBudget();
-            extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
+            throttledClearables = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
 
             widgetBuilder?.AddSingleButton("Update", () =>
             {
@@ -96,7 +99,7 @@ namespace DCL.ResourcesUnloading
             roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             jsSourcesCache?.Unload(budgetToUse);
 
-            ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
+            ClearThrottledClearables(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }
 
         public void EvictGltfModel(string hash)
@@ -110,11 +113,11 @@ namespace DCL.ResourcesUnloading
                 typedCache.RemoveByHash(hash);
         }
 
-        private void ClearExtendedObjectPools(IPerformanceBudget budgetToUse, int maxUnload)
+        private void ClearThrottledClearables(IPerformanceBudget budgetToUse, int maxUnload)
         {
-            foreach (IThrottledClearable pool in extendedObjectPools)
+            foreach (IThrottledClearable clearable in throttledClearables)
                 if (budgetToUse.TrySpendBudget())
-                    pool.ClearThrottled(maxUnload);
+                    clearable.ClearThrottled(maxUnload);
         }
 
         public void Register(ILODCache lodAssetsPool)
@@ -158,8 +161,8 @@ namespace DCL.ResourcesUnloading
         public void Register(ITrimmedEmoteStorage storage) =>
             trimmedEmoteStorage = storage;
 
-        public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
-            extendedObjectPools.Add(extendedObjectPool);
+        public void Register(IThrottledClearable clearable) =>
+            throttledClearables.Add(clearable);
 
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
