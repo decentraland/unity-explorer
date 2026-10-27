@@ -10,8 +10,7 @@ using UnityEngine.UI;
 namespace DCL.Minimap
 {
     /// <summary>
-    ///     Drives the skybox time controls embedded in the minimap. Mirrors the behaviour of the standalone
-    ///     skybox panel without the MVC view lifecycle, since this widget is an inline section rather than a popup.
+    ///     Binds the minimap skybox section (day-cycle toggle, time slider, time label) to <see cref="SkyboxSettingsAsset" />.
     /// </summary>
     public class SkyboxTimePresenter : IDisposable
     {
