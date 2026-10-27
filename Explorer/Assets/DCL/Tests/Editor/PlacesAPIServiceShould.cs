@@ -125,6 +125,22 @@ namespace DCL.Tests.Editor
             Assert.That(LastDestinationsArgument("onlyHighlighted"), Is.Null);
         }
 
+        [TestCase("featured", "", true)]
+        [TestCase("featured", "plaza", false)]
+        [TestCase("social", "", false)]
+        [TestCase(null, "", false)]
+        public void BrowseFeaturedOnlyWithoutSearch(string? categoryId, string searchText, bool expected)
+        {
+            // Arrange
+            var filters = new DCL.Places.PlacesFilters { CategoryId = categoryId, SearchText = searchText };
+
+            // Act
+            bool isBrowsingFeatured = filters.IsBrowsingFeatured;
+
+            // Assert
+            Assert.That(isBrowsingFeatured, Is.EqualTo(expected));
+        }
+
         private void StubDestinations() =>
             client.GetDestinationsAsync(default)
                   .ReturnsForAnyArgs(UniTask.FromResult(new PlacesData.PlacesAPIResponse { ok = true, data = new List<PlacesData.PlaceInfo>() }));
