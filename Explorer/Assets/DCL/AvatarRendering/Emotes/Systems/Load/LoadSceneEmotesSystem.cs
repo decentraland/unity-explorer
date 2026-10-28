@@ -24,16 +24,19 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IEmoteStorage emoteStorage;
+        private readonly bool useLocalAssetBundles;
 
         public LoadSceneEmotesSystem(
             World world,
             IEmoteStorage emoteStorage,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            bool useLocalAssetBundles
         )
             : base(world)
         {
             this.emoteStorage = emoteStorage;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.useLocalAssetBundles = useLocalAssetBundles;
         }
 
         protected override void Update(float t)
@@ -64,6 +67,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromLocalSceneIntention intention,
             ref IPartitionComponent partitionComponent)
         {
+            // A scene whose manifest could not be fetched from the local asset-bundle server has no bundles to load.
+            AssetBundleManifestVersion? sceneManifest = intention.SceneData.SceneEntityDefinition.assetBundleManifestVersion;
+            intention.LocalBundleManifest = useLocalAssetBundles && sceneManifest is { assetBundleManifestRequestFailed: false } ? sceneManifest : null;
+
             ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, AssetBundleManifestVersion.CreateLSDAsset());
         }
 

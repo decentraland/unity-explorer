@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             mockEmoteStorage = new MockEmoteStorage();
             urnPool = new ListObjectPool<URN>();
-            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage);
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, new AbgenConversionMetrics());
 
             // Common mock assets
             mockGameObject = new GameObject("MockAsset");
@@ -349,6 +349,41 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue, "Asset result should be set to a failed result to prevent retry loops.");
             Assert.IsFalse(mockEmote.AssetResults[bodyShape].Value.Succeeded, "Asset result should be marked as failed.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote loading status should be false after failure.");
+        }
+
+        [Test]
+        public void FallBackToRawGltfWhenLocalSceneEmoteBundleFails()
+        {
+            // Arrange
+            var metrics = new AbgenConversionMetrics();
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, metrics);
+
+            var emoteURN = new URN("urn:ab:local_scene_emote_fail");
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { IsLoading = true };
+            mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, false));
+            ((MockEmote)mockEmote).IsLoading = true;
+
+            BodyShape bodyShape = BodyShape.FEMALE;
+            var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated local AssetBundle load failure");
+
+            Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
+            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY));
+            Entity resultHolderEntity = promise.Entity;
+
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
+            world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, exception));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.IsAlive(emoteEntity));
+            Assert.IsFalse(world.IsAlive(resultHolderEntity));
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>()));
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].HasValue);
+            Assert.IsTrue(mockEmote.IsLoading);
+            Assert.AreEqual(1, metrics.Failed);
         }
 
         [Test]
