@@ -15,6 +15,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -23,10 +24,12 @@ using NUnit.Framework;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
@@ -42,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomSkinColor;
         private Color randomHairColor;
         private Color randomEyesColor;
-        private Mesh avatarMesh;
+        private Mesh avatarMesh = null!;
 
         private async Task SetupAsync()
         {
@@ -105,19 +108,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 new AvatarTransformMatrixJobWrapper(), new[] { facialFeatureTextures });
         }
 
-        private IEmote GetMockEmote(string materialName, string category)
+        private IWearable GetMockWearable(string materialName, string category, bool withMesh = true)
         {
-            (IEmote mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
-
-            mockWearable.AssetResults.Returns(
-                new StreamableLoadingResult<AttachmentRegularAsset>?[] { new StreamableLoadingResult<AttachmentRegularAsset>(wearableAsset) });
-
-            return mockWearable;
-        }
-
-        private IWearable GetMockWearable(string materialName, string category)
-        {
-            (IWearable mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category);
+            (IWearable mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category, withMesh);
 
             mockWearable.WearableAssetResults.Returns(new WearableAssets[]
             {
@@ -127,7 +120,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             return mockWearable;
         }
 
-        private (T, AttachmentRegularAsset) GetMockedAvatarAttachment<T>(string materialName, string category) where T: class, IAvatarAttachment
+        private (T, AttachmentRegularAsset) GetMockedAvatarAttachment<T>(string materialName, string category, bool withMesh = true) where T: class, IAvatarAttachment
         {
             T mockWearable = Substitute.For<T>();
 
@@ -137,9 +130,14 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             //Creating a fake SMR
             SkinnedMeshRenderer skinnedMeshRenderer = avatarGameObject.AddComponent<SkinnedMeshRenderer>();
-            skinnedMeshRenderer.sharedMesh = avatarMesh;
             skinnedMeshRenderer.bones = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
-            skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BASE_BONE_COUNT];
+
+            // A renderer without a mesh is the broken wearable: the skinning setup reads its vertex count and throws
+            if (withMesh)
+            {
+                skinnedMeshRenderer.sharedMesh = avatarMesh;
+                skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BASE_BONE_COUNT];
+            }
 
             //Creating a fake standard material
             var fakeABMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"))
@@ -158,7 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             var rendererInfo = new AttachmentRegularAsset.RendererInfo(fakeABMaterial);
 
-            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, IStreamableRefCountData.Null.INSTANCE);
             wearableAsset.AddReference();
 
             return (mockWearable, wearableAsset);
@@ -207,6 +205,39 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Assert
             Assert.IsFalse(world.Get<AvatarShapeComponent>(avatarEntity).IsDirty);
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, 1);
+        }
+
+        /// <summary>
+        ///     A re-instantiation releases the previous skinning before building the new one. When building the new one
+        ///     fails, the released components must not stay on the entity: the skinning dispatch would otherwise write the
+        ///     bones into the released buffer every frame.
+        /// </summary>
+        [Test]
+        public async Task StripTheReleasedSkinningWhenReinstantiationFails()
+        {
+            // Arrange
+            await InstantiateAvatar();
+
+            var brokenWearablePromise = WearablePromise.Create(world,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
+                new PartitionComponent());
+
+            world.Add(brokenWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
+                { GetMockWearable("body_shape", WearableCategories.Categories.BODY_SHAPE, withMesh: false) })));
+
+            world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
+            world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = brokenWearablePromise;
+
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(NullReferenceException)));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.Has<AvatarCustomSkinningComponent>(avatarEntity), "the released skinning component must not stay on the entity");
+            Assert.IsFalse(world.Has<AvatarTransformMatrixComponent>(avatarEntity), "the transform matrix component goes with the skinning it indexes");
+            Assert.IsFalse(world.Get<AvatarShapeComponent>(avatarEntity).IsDirty, "the broken resolution must not be retried every frame");
+            Assert.AreEqual(0, world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, "the wearables appended by the failed attempt go back to the cache");
         }
 
         [Test]

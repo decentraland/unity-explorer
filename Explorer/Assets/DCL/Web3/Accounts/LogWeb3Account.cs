@@ -2,7 +2,6 @@ using DCL.Diagnostics;
 using DCL.Web3.Abstract;
 using Nethereum.Signer;
 using System;
-using UnityEngine;
 
 namespace DCL.Web3.Accounts
 {

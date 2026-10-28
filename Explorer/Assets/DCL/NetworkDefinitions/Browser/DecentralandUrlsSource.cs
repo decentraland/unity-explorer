@@ -351,6 +351,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Map => $"https://places.{BaseDomain}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.{BaseDomain}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.{BaseDomain}"),
+                DecentralandUrl.CastPresenterService => $"https://cast-presenter-service.{BaseDomain}",
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
                 // The local gatekeeper is pinned to org for the decentraland environments (that is where it runs);
                 // a custom deployment runs its own, so it resolves against the base domain instead of reaching for org.
@@ -410,6 +411,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.{BaseDomain}/v2/communities",
                 DecentralandUrl.ReferralProgress => $"https://social-api.{BaseDomain}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.{BaseDomain}/social/communities/{{0}}/raw-thumbnail.png",
+                DecentralandUrl.SatelliteMapTiles => $"https://abgen-cdn.{BaseDomain}/SatelliteMaps",
                 DecentralandUrl.Members => $"https://social-api.{BaseDomain}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.{BaseDomain}/v2/members",
                 DecentralandUrl.CommunityProfileLink => $"https://{BaseDomain}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",

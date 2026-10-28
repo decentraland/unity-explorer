@@ -594,7 +594,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
@@ -624,7 +624,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60
+          POLL_TIME: 30
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
           LOG_STALL_THRESHOLD: 900
@@ -799,9 +799,6 @@ jobs:
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
           fi
-
-      - name: Install jq
-        run: sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Enforce artifact size budget
         id: size_check
@@ -978,11 +975,29 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          TARGET: ${{ matrix.target }}
         run: |
+          # A new launcher zip invalidates the delta patch set made for the previous zip of this
+          # tag and platform (docs/delta-updates.md): remove it before the zip is replaced and
+          # again after, so a manifest a concurrent run published during the upload is not kept.
+          # Epic zips have no patches, and a zip of one platform says nothing about the other.
+          DELTA_PREFIX="s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/delta/$TARGET/"
+          REPLACES_PATCHES=false
+          if [ "$IS_RELEASE_BUILD" = "true" ] && [ "$INSTALL_SOURCE" = "launcher" ]; then
+            REPLACES_PATCHES=true
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+          if [ "$REPLACES_PATCHES" = "true" ]; then
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
 
       - name: Print S3 upload URL
         run: |

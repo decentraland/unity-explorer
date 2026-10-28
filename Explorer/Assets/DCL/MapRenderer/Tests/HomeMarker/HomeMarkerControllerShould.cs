@@ -1,5 +1,7 @@
 using System;
 using System.Reflection;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -443,6 +445,22 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             Assert.AreEqual(ownHome, controller.CurrentCoordinates);
             Assert.IsFalse(controller.IsWorldHome);
             Assert.IsFalse(DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME_LEGACY));
+        }
+
+        [Test]
+        public void OpenTheHomePlacePanelLandingOnTheHomeParcel()
+        {
+            // Arrange
+            controller.Initialize();
+            var home = new Vector2Int(-4, 1);
+            var placeInfo = new PlacesData.PlaceInfo(new Vector2Int(-4, -4));
+            placesAPIService.GetPlaceAsync(home, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<PlacesData.PlaceInfo?>(placeInfo));
+
+            // Act
+            controller.DisplayPlacesInfoPanelAsync(home).GetAwaiter().GetResult();
+
+            // Assert
+            navmapBus.Received(1).SelectPlaceAsync(placeInfo, Arg.Any<CancellationToken>(), true, home, true);
         }
 
         [Test]

@@ -90,6 +90,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 - **[Security Review](security-review.md)** — Jarvis pilot rollout, validation and recovery
 - **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, Unity Cloud, and the app-local Visual C++ runtime
+- **[Delta Updates](delta-updates.md)** — Per-file binary patches for launcher updates: release pipeline, S3 layout and retention, manifest format, launcher contract, and the `scripts/delta/` Rust tool (vocabulary, stages, workflows, local run)
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
 

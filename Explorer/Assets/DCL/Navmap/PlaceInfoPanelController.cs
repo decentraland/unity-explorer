@@ -65,6 +65,7 @@ namespace DCL.Navmap
         private Vector2Int? destination;
         private Section? currentSection;
         private Vector2Int? originParcel;
+        private bool landOnOriginParcel;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
             ImageControllerProvider imageControllerProvider,
@@ -80,7 +81,7 @@ namespace DCL.Navmap
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
-            ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
+            ISpriteCache? reelThumbnailCache = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
             bool? reelUseSignedRequest = null,
             GalleryEventBus? galleryEventBus = null)
@@ -110,7 +111,7 @@ namespace DCL.Navmap
                 this.cameraReelGalleryController = new CameraReelGalleryController(
                     view.CameraReelGalleryView,
                     cameraReelStorageService!,
-                    cameraReelScreenshotsStorage!,
+                    reelThumbnailCache!,
                     reelGalleryConfigParams!.Value,
                     reelUseSignedRequest!.Value,
                     galleryEventBus!);
@@ -231,9 +232,10 @@ namespace DCL.Navmap
             ClearEventElements();
         }
 
-        public void SetOriginParcel(Vector2Int? parcel)
+        public void SetOriginParcel(Vector2Int? parcel, bool landOnParcel = false)
         {
             this.originParcel = parcel;
+            landOnOriginParcel = landOnParcel && parcel.HasValue;
 
             if (parcel == null) return;
             if (place == null) return;
@@ -368,7 +370,9 @@ namespace DCL.Navmap
 
         private void JumpIn()
         {
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
+            if (place == null) return;
+
+            Vector2Int? destinationParcel = (landOnOriginParcel || TeleportUtils.IsRoad(place.title)) && originParcel != null ? originParcel : currentBaseParcel;
 
             // A place with nowhere to go is not reported as a jump-in.
             if (!place.IsWorld && destinationParcel == null) return;
@@ -382,7 +386,7 @@ namespace DCL.Navmap
             if (place.IsWorld)
                 chatTeleporter.TeleportToRealmAsync(place.world_name, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
             else
-                chatTeleporter.TeleportToParcelAsync(destinationParcel!.Value, local: false, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
+                chatTeleporter.TeleportToParcelAsync(destinationParcel!.Value, local: false, jumpInCancellationToken.Token, landOnParcel: landOnOriginParcel).SuppressToResultAsync(ReportCategory.PLACES).Forget();
         }
 
         private void Share()

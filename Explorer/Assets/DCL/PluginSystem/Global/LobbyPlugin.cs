@@ -4,7 +4,9 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Credits;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -12,6 +14,7 @@ using DCL.Events;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Lobby;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
@@ -59,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemClipboard clipboard;
         private readonly StartParcel startParcel;
         private readonly IWebRequestController webRequestController;
@@ -71,7 +75,10 @@ namespace DCL.PluginSystem.Global
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly FriendsConnectivityStatusTracker? friendsConnectivity;
+        private readonly IFriendsService? friendsService;
         private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly CommunitiesDataProvider? communitiesDataProvider;
+        private readonly CameraReelContainer? cameraReelContainer;
 
         private LobbyStage? lobbyStage;
         private LobbyDocumentFriendsPresenter? friendsPresenter;
@@ -101,6 +108,7 @@ namespace DCL.PluginSystem.Global
             HttpEventsApiService eventsApiService,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource,
+            IChatMessagesBus chatMessagesBus,
             ISystemClipboard clipboard,
             StartParcel startParcel,
             IWebRequestController webRequestController,
@@ -113,7 +121,10 @@ namespace DCL.PluginSystem.Global
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             NotificationsRequestController notificationsRequestController,
             FriendsConnectivityStatusTracker? friendsConnectivity,
-            IOnlineUsersProvider onlineUsersProvider)
+            IFriendsService? friendsService,
+            IOnlineUsersProvider onlineUsersProvider,
+            CommunitiesDataProvider? communitiesDataProvider,
+            CameraReelContainer? cameraReelContainer)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -132,6 +143,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.chatMessagesBus = chatMessagesBus;
             this.clipboard = clipboard;
             this.startParcel = startParcel;
             this.webRequestController = webRequestController;
@@ -144,7 +156,10 @@ namespace DCL.PluginSystem.Global
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.notificationsRequestController = notificationsRequestController;
             this.friendsConnectivity = friendsConnectivity;
+            this.friendsService = friendsService;
             this.onlineUsersProvider = onlineUsersProvider;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.cameraReelContainer = cameraReelContainer;
         }
 
         public void Dispose()
@@ -204,8 +219,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 mvcManager);
 
-            friendsPresenter = friendsConnectivity != null
-                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, onlineUsersProvider, placesAPIService, passportBridge)
+            friendsPresenter = friendsConnectivity != null && friendsService != null
+                ? new LobbyDocumentFriendsPresenter(new LobbyFriendsRail(lobbyView.FriendCardTemplate), friendsConnectivity, friendsService, onlineUsersProvider, placesAPIService, passportBridge)
                 : null;
 
             connectedFriendsPresenter = friendsConnectivity != null ? new LobbyConnectedFriendsPresenter(friendsConnectivity) : null;
@@ -215,8 +230,8 @@ namespace DCL.PluginSystem.Global
             var lobbyController = new LobbyDocumentController(viewFactory,
                 inputBlock, cursor, loadingStatus, mvcManager,
                 selfProfile, profileChangesBus, characterPreviewFactory, characterPreviewEventBus, settings.AvatarSettings, lobbyStage, world,
-                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, startParcel, new SpriteCache(webRequestController), profileButtonPresenter, profileMenuPresenter,
-                notificationsPanel, friendsPresenter, connectedFriendsPresenter);
+                placesAPIService, realmData, homePlace, eventsApiService, eventCardActions, realmNavigator, decentralandUrlsSource, webRequestController, chatMessagesBus, startParcel, new SpriteCache(webRequestController), profileButtonPresenter, profileMenuPresenter,
+                notificationsPanel, friendsPresenter, connectedFriendsPresenter, communitiesDataProvider, cameraReelContainer, identityCache);
 
             mvcManager.RegisterController(lobbyController);
             mvcManager.RegisterController(notificationsPanel);

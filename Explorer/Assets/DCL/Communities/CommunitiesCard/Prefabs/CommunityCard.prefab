@@ -1500,10 +1500,6 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1141706281707765984, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2915824871567506940, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
       propertyPath: <elementMask>k__BackingField
       value: 

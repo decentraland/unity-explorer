@@ -51,7 +51,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IFriendsService? friendsService;
@@ -87,7 +86,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
             IFriendsService? friendsService,
@@ -123,7 +121,6 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -182,7 +179,6 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 remoteMetadata,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
                 friendsService,
                 friendOnlineStatusCache,
                 onlineUsersProvider,
