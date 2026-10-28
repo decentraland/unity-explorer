@@ -28,7 +28,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         }
 
         /// <summary>
-        ///     Captures the current avatar preview, downscales it, encodes a PNG into memory,
+        ///     Captures the current avatar preview, downscales it into a square sized by the preview height, encodes a PNG into memory,
         ///     and returns both the thumbnail texture and the PNG bytes. Does NOT write to disk —
         ///     callers persist via <see cref="PersistPngAsync"/> only after a successful backend save.
         ///     Restores platform visibility in the finally block so the avatar doesn't stay hidden
@@ -37,6 +37,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         public async UniTask<CapturedScreenshot?> CaptureAsync(CharacterPreviewControllerBase controller, CancellationToken ct)
         {
             RenderTexture? downscaledSRGB = null;
+            RenderTexture? squareFrame = null;
             Texture2D? thumbnailTex = null;
 
             try
@@ -64,12 +65,25 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 };
 
                 downscaledSRGB = RenderTexture.GetTemporary(desc);
-
                 Graphics.Blit(source, downscaledSRGB);
-                thumbnailTex = MakeThumbnailFromRT(downscaledSRGB);
+
+                // The preview camera keeps a fixed vertical FOV, so the height carries the framing whatever width the host gives the preview
+                ThumbnailFraming framing = SquareFraming(w, h);
+                desc.width = framing.Side;
+                desc.height = framing.Side;
+                squareFrame = RenderTexture.GetTemporary(desc);
+
+                // A temporary target starts with undefined content and the padding columns must stay transparent
+                RenderTexture? previousActive = RenderTexture.active;
+                RenderTexture.active = squareFrame;
+                GL.Clear(false, true, Color.clear);
+                RenderTexture.active = previousActive;
+
+                Graphics.CopyTexture(downscaledSRGB, 0, 0, framing.SourceX, 0, framing.CopyWidth, h, squareFrame, 0, 0, framing.DestinationX, 0);
+                thumbnailTex = MakeThumbnailFromRT(squareFrame);
 
                 var req = await AsyncGPUReadback
-                    .Request(downscaledSRGB)
+                    .Request(squareFrame)
                     .WithCancellation(ct);
 
                 if (req.hasError)
@@ -82,7 +96,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 var srgbNative = req.GetData<byte>();
                 byte[] pngBytes;
                 using (var pngNative = ImageConversion.EncodeNativeArrayToPNG(
-                           srgbNative, downscaledSRGB.graphicsFormat, (uint)w, (uint)h))
+                           srgbNative, squareFrame.graphicsFormat, (uint)framing.Side, (uint)framing.Side))
                 {
                     pngBytes = pngNative.ToArray();
                 }
@@ -103,6 +117,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             finally
             {
                 if (downscaledSRGB != null) RenderTexture.ReleaseTemporary(downscaledSRGB);
+                if (squareFrame != null) RenderTexture.ReleaseTemporary(squareFrame);
                 await UniTask.SwitchToMainThread();
                 controller.SetPlatformVisible(true);
             }
@@ -193,6 +208,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             }
         }
 
+        /// <summary>
+        ///     Square framing of a frame whose side is the frame height: a narrower frame is centred between padding columns, a wider one is cropped around its centre.
+        /// </summary>
+        internal static ThumbnailFraming SquareFraming(int width, int height)
+        {
+            int copyWidth = Mathf.Min(width, height);
+            int sourceX = Mathf.Max(0, (width - height) / 2);
+            int destinationX = Mathf.Max(0, (height - width) / 2);
+            return new ThumbnailFraming(height, sourceX, copyWidth, destinationX);
+        }
+
         private string GetFilePathForSlot(string userId, int slotIndex)
         {
             string userDirectory = Path.Combine(baseOutfitsDirectory, userId);
@@ -232,6 +258,22 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             var tex = new Texture2D(src.width, src.height, src.graphicsFormat, TextureCreationFlags.None);
             Graphics.CopyTexture(src, tex);
             return tex;
+        }
+
+        internal readonly struct ThumbnailFraming
+        {
+            public readonly int Side;
+            public readonly int SourceX;
+            public readonly int CopyWidth;
+            public readonly int DestinationX;
+
+            public ThumbnailFraming(int side, int sourceX, int copyWidth, int destinationX)
+            {
+                Side = side;
+                SourceX = sourceX;
+                CopyWidth = copyWidth;
+                DestinationX = destinationX;
+            }
         }
     }
 }
