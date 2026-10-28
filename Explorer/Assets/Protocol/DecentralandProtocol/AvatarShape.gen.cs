@@ -52,13 +52,21 @@ namespace DCL.ECSComponents {
   #region Messages
   /// <summary>
   /// The AvatarShape component contains the information required to draw and animate avatar, acting as
-  /// a simplified GLTF container for this specific case. 
+  /// a simplified GLTF container for this specific case.
   ///
-  /// All fields (except ID) are optional have reasonable default values. In the case of `wearables`,
+  /// All fields (except ID) are optional and have reasonable default values. In the case of `wearables`,
   /// each slot on the Avatar's body that is not explicitly included in the list has its own default.
   ///
-  /// Note that, while AvatarShape can be attached to any Entity, it's only actually used in the global 
-  /// Avatar Scene. Other requirements are usually better served by GLTFs.
+  /// AvatarShape can be attached to any Entity, where it draws an avatar (e.g. an NPC). Other requirements
+  /// are usually better served by GLTFs.
+  ///
+  /// On `engine.PlayerEntity` or another player's reserved entity, AvatarShape draws no separate avatar.
+  /// It overrides that player's own avatar instead: unset fields keep the player's profile values, and a
+  /// non-empty `wearables` replaces the player's whole wearable set (with the same default-slot rules as any
+  /// entity). An empty `wearables` list is the same as an unset one, so it keeps the player's own wearables.
+  /// Fields marked as ignored below have no effect there. The override is local to the viewer, is never
+  /// broadcast, and applies only while the scene that wrote it is the current one. AvatarBase and
+  /// AvatarEquippedData keep reporting the player's profile, not the override.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarShape : pb::IMessage<PBAvatarShape>
@@ -122,7 +130,7 @@ namespace DCL.ECSComponents {
     public const int IdFieldNumber = 1;
     private string id_ = "";
     /// <summary>
-    /// the user ID
+    /// the user ID; ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -139,7 +147,7 @@ namespace DCL.ECSComponents {
 
     private string name_;
     /// <summary>
-    /// visible name (default: "NPC")
+    /// visible name (default: "NPC"); ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -242,7 +250,7 @@ namespace DCL.ECSComponents {
 
     private string expressionTriggerId_;
     /// <summary>
-    /// current emote animations
+    /// current emote animations; ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -271,7 +279,7 @@ namespace DCL.ECSComponents {
 
     private long expressionTriggerTimestamp_;
     /// <summary>
-    /// start of emote animations (in the same order)
+    /// start of emote animations (in the same order); ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -301,7 +309,7 @@ namespace DCL.ECSComponents {
 
     private bool talking_;
     /// <summary>
-    /// whether to display the floating voice chat icon
+    /// whether to display the floating voice chat icon; ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -331,15 +339,20 @@ namespace DCL.ECSComponents {
         = pb::FieldCodec.ForString(82);
     private readonly pbc::RepeatedField<string> wearables_ = new pbc::RepeatedField<string>();
     /// <summary>
-    /// Wearable URNs, one for each body slot.
+    /// Wearables, one per body slot. Each item is a wearable URN, or the path of a scene content GLB named
+    /// `&lt;name>_&lt;category>.glb`, where `&lt;category>` is a wearable category such as `hat` or `upper_body`.
+    /// A later item replaces an earlier one of the same category. A scene GLB is always rendered and hides
+    /// nothing, except that a `skin` one hides the body parts it replaces; URNs keep their own hiding rules.
+    /// An item that is neither a URN nor a `.glb` path, or that cannot be resolved, is skipped and the rest
+    /// still applies.
     ///   Default values for each unspecified slot:
-    ///     Eyes    : "urn:decentraland:off-chain:base-avatars:f_eyes_00", 
+    ///     Eyes    : "urn:decentraland:off-chain:base-avatars:f_eyes_00",
     ///     Eyebrows: "urn:decentraland:off-chain:base-avatars:f_eyebrows_00",
-    ///     Mouth   : "urn:decentraland:off-chain:base-avatars:f_mouth_00" 
-    ///     Hair    : "urn:decentraland:off-chain:base-avatars:standard_hair", 
-    ///     Shirt   : "urn:decentraland:off-chain:base-avatars:f_simple_yellow_tshirt", 
-    ///     Trousers: "urn:decentraland:off-chain:base-avatars:f_brown_trousers", 
-    ///     Shoes   : "urn:decentraland:off-chain:base-avatars:bun_shoes"]
+    ///     Mouth   : "urn:decentraland:off-chain:base-avatars:f_mouth_00",
+    ///     Hair    : "urn:decentraland:off-chain:base-avatars:standard_hair",
+    ///     Shirt   : "urn:decentraland:off-chain:base-avatars:f_simple_yellow_tshirt",
+    ///     Trousers: "urn:decentraland:off-chain:base-avatars:f_brown_trousers",
+    ///     Shoes   : "urn:decentraland:off-chain:base-avatars:bun_shoes"
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -353,7 +366,7 @@ namespace DCL.ECSComponents {
         = pb::FieldCodec.ForString(90);
     private readonly pbc::RepeatedField<string> emotes_ = new pbc::RepeatedField<string>();
     /// <summary>
-    /// available emotes (default empty)
+    /// available emotes (default empty); ignored on player entities
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

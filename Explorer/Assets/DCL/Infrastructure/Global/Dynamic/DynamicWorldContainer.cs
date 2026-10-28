@@ -436,10 +436,11 @@ namespace Global.Dynamic
 
             IEmotesMessageBus multiplayerEmotesMessageBus = multiplayerContainer.EmotesMessageBus;
 
-            // Scene-world plugins that depend on comms/multiplayer services, which exist only in this container.
+            // Scene-world plugins that depend on services which exist only in this container (comms, multiplayer, wearables).
             // They join StaticContainer.ECSWorldPlugins for initialization and scene-world injection.
             var worldPlugins = new List<IDCLWorldPlugin>
             {
+                new DCL.PluginSystem.World.MultiplayerPlugin(globalWorld, playerEntity, staticContainer.CharacterDataPropagationUtility, wearableContainer.WearableCatalog),
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
                 new SceneWearablesPlugin(wearableContainer.WearableCatalog, globalWorld, playerEntity, commsContainer.EntityParticipantTable, localSceneDevelopment && !bootstrapContainer.UseRemoteAssetBundles),

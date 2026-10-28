@@ -95,6 +95,25 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             CollectionAssert.AreEqual(new[] { CATALYST_WEARABLE }, pbAvatarShape.Wearables);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DropItemsThatAreNeitherUrnNorGlbPath(bool onPlayerEntity)
+        {
+            // Arrange
+            var pbAvatarShape = new PBAvatarShape { Wearables = { "wearables/kilt/kilt.json", CATALYST_WEARABLE, "not-a-urn" }, IsDirty = true };
+
+            if (onPlayerEntity)
+                world.Create(pbAvatarShape, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            else
+                world.Create(pbAvatarShape);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { CATALYST_WEARABLE }, pbAvatarShape.Wearables);
+        }
+
         [Test]
         public void BeIdempotent()
         {

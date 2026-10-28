@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 {
     /// <summary>
     ///     Replaces scene content <c>*.glb</c> paths in <see cref="PBAvatarShape.Wearables" /> with scene wearable URNs seeded into
-    ///     <see cref="IWearableStorage" />; unresolvable paths are dropped.
+    ///     <see cref="IWearableStorage" />; unresolvable paths and items that are neither a URN nor a path are dropped.
     /// </summary>
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateBefore(typeof(AvatarShapeHandlerSystem))]
@@ -53,7 +53,16 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
             for (int i = wearables.Count - 1; i >= 0; i--)
             {
-                if (!SceneWearableDTOFactory.IsSceneWearablePath(wearables[i])) continue;
+                if (!SceneWearableDTOFactory.IsSceneWearablePath(wearables[i]))
+                {
+                    if (!new URN(wearables[i]).IsValid())
+                    {
+                        ReportHub.LogWarning(GetReportData(), $"Scene wearable '{wearables[i]}' skipped: it is neither a URN nor a '.glb' path");
+                        wearables.RemoveAt(i);
+                    }
+
+                    continue;
+                }
 
                 if (SceneWearableDTOFactory.TryCreate(sceneData, wearables[i], loadFromLocalScene, out URN urn, out WearableDTO? dto))
                 {

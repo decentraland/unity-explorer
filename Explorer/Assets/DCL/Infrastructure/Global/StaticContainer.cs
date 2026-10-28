@@ -63,7 +63,6 @@ using ECS.Unity.AssetLoad.Cache;
 using Global.Dynamic;
 using Utility;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
 #pragma warning disable CS8618 // two-phase init: all members are assigned in CreateAsync before the container is returned
 
@@ -324,7 +323,6 @@ namespace Global
                     container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
-                new MultiplayerPlugin(globalWorld, playerEntity, container.CharacterDataPropagationUtility),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),

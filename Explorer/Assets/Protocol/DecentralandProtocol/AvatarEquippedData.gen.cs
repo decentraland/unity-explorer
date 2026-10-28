@@ -25,14 +25,17 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjZkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2VxdWlwcGVk",
-            "X2RhdGEucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJBChRQ",
-            "QkF2YXRhckVxdWlwcGVkRGF0YRIVCg13ZWFyYWJsZV91cm5zGAEgAygJEhIK",
-            "CmVtb3RlX3VybnMYAiADKAlCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90",
-            "bzM="));
+            "X2RhdGEucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyLbAQoU",
+            "UEJBdmF0YXJFcXVpcHBlZERhdGESFQoNd2VhcmFibGVfdXJucxgBIAMoCRIS",
+            "CgplbW90ZV91cm5zGAIgAygJElUKCXdlYXJhYmxlcxgDIAMoCzJCLmRlY2Vu",
+            "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQkF2YXRhckVxdWlwcGVkRGF0YS5F",
+            "cXVpcHBlZFdlYXJhYmxlGkEKEEVxdWlwcGVkV2VhcmFibGUSCwoDdXJuGAEg",
+            "ASgJEhQKB3Zpc2libGUYAiABKAhIAIgBAUIKCghfdmlzaWJsZUIUqgIRRENM",
+            "LkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEquippedData), global::DCL.ECSComponents.PBAvatarEquippedData.Parser, new[]{ "WearableUrns", "EmoteUrns" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEquippedData), global::DCL.ECSComponents.PBAvatarEquippedData.Parser, new[]{ "WearableUrns", "EmoteUrns", "Wearables" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable), global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable.Parser, new[]{ "Urn", "Visible" }, new[]{ "Visible" }, null, null, null)})
           }));
     }
     #endregion
@@ -42,7 +45,8 @@ namespace DCL.ECSComponents {
   /// <summary>
   /// AvatarEquipData is used to read the information about the avatar's owneables.
   /// this component is written by the engine using the communications transports'
-  /// data.
+  /// data. It describes the player's own outfit from their profile; an AvatarShape
+  /// written by a scene on the player entity does not change it.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarEquippedData : pb::IMessage<PBAvatarEquippedData>
@@ -81,6 +85,7 @@ namespace DCL.ECSComponents {
     public PBAvatarEquippedData(PBAvatarEquippedData other) : this() {
       wearableUrns_ = other.wearableUrns_.Clone();
       emoteUrns_ = other.emoteUrns_.Clone();
+      wearables_ = other.wearables_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -112,6 +117,20 @@ namespace DCL.ECSComponents {
       get { return emoteUrns_; }
     }
 
+    /// <summary>Field number for the "wearables" field.</summary>
+    public const int WearablesFieldNumber = 3;
+    private static readonly pb::FieldCodec<global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable> _repeated_wearables_codec
+        = pb::FieldCodec.ForMessage(26, global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable.Parser);
+    private readonly pbc::RepeatedField<global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable> wearables_ = new pbc::RepeatedField<global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable>();
+    /// <summary>
+    /// one per item of wearable_urns, in the same order
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::DCL.ECSComponents.PBAvatarEquippedData.Types.EquippedWearable> Wearables {
+      get { return wearables_; }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -129,6 +148,7 @@ namespace DCL.ECSComponents {
       }
       if(!wearableUrns_.Equals(other.wearableUrns_)) return false;
       if(!emoteUrns_.Equals(other.emoteUrns_)) return false;
+      if(!wearables_.Equals(other.wearables_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -138,6 +158,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       hash ^= wearableUrns_.GetHashCode();
       hash ^= emoteUrns_.GetHashCode();
+      hash ^= wearables_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -158,6 +179,7 @@ namespace DCL.ECSComponents {
     #else
       wearableUrns_.WriteTo(output, _repeated_wearableUrns_codec);
       emoteUrns_.WriteTo(output, _repeated_emoteUrns_codec);
+      wearables_.WriteTo(output, _repeated_wearables_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -170,6 +192,7 @@ namespace DCL.ECSComponents {
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
       wearableUrns_.WriteTo(ref output, _repeated_wearableUrns_codec);
       emoteUrns_.WriteTo(ref output, _repeated_emoteUrns_codec);
+      wearables_.WriteTo(ref output, _repeated_wearables_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -182,6 +205,7 @@ namespace DCL.ECSComponents {
       int size = 0;
       size += wearableUrns_.CalculateSize(_repeated_wearableUrns_codec);
       size += emoteUrns_.CalculateSize(_repeated_emoteUrns_codec);
+      size += wearables_.CalculateSize(_repeated_wearables_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -196,6 +220,7 @@ namespace DCL.ECSComponents {
       }
       wearableUrns_.Add(other.wearableUrns_);
       emoteUrns_.Add(other.emoteUrns_);
+      wearables_.Add(other.wearables_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -221,6 +246,10 @@ namespace DCL.ECSComponents {
           }
           case 18: {
             emoteUrns_.AddEntriesFrom(input, _repeated_emoteUrns_codec);
+            break;
+          }
+          case 26: {
+            wearables_.AddEntriesFrom(input, _repeated_wearables_codec);
             break;
           }
         }
@@ -250,10 +279,278 @@ namespace DCL.ECSComponents {
             emoteUrns_.AddEntriesFrom(ref input, _repeated_emoteUrns_codec);
             break;
           }
+          case 26: {
+            wearables_.AddEntriesFrom(ref input, _repeated_wearables_codec);
+            break;
+          }
         }
       }
     }
     #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the PBAvatarEquippedData message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+      public sealed partial class EquippedWearable : pb::IMessage<EquippedWearable>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<EquippedWearable> _parser = new pb::MessageParser<EquippedWearable>(() => new EquippedWearable());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<EquippedWearable> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAvatarEquippedData.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EquippedWearable() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EquippedWearable(EquippedWearable other) : this() {
+          _hasBits0 = other._hasBits0;
+          urn_ = other.urn_;
+          visible_ = other.visible_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EquippedWearable Clone() {
+          return new EquippedWearable(this);
+        }
+
+        /// <summary>Field number for the "urn" field.</summary>
+        public const int UrnFieldNumber = 1;
+        private string urn_ = "";
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public string Urn {
+          get { return urn_; }
+          set {
+            urn_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+
+        /// <summary>Field number for the "visible" field.</summary>
+        public const int VisibleFieldNumber = 2;
+        private readonly static bool VisibleDefaultValue = false;
+
+        private bool visible_;
+        /// <summary>
+        /// whether the wearable is shown in the player's own outfit, after hides, replaces and
+        /// force-rendered categories; unset until the wearable has loaded
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Visible {
+          get { if ((_hasBits0 & 1) != 0) { return visible_; } else { return VisibleDefaultValue; } }
+          set {
+            _hasBits0 |= 1;
+            visible_ = value;
+          }
+        }
+        /// <summary>Gets whether the "visible" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasVisible {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "visible" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearVisible() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as EquippedWearable);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(EquippedWearable other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (Urn != other.Urn) return false;
+          if (Visible != other.Visible) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (Urn.Length != 0) hash ^= Urn.GetHashCode();
+          if (HasVisible) hash ^= Visible.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (Urn.Length != 0) {
+            output.WriteRawTag(10);
+            output.WriteString(Urn);
+          }
+          if (HasVisible) {
+            output.WriteRawTag(16);
+            output.WriteBool(Visible);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Urn.Length != 0) {
+            output.WriteRawTag(10);
+            output.WriteString(Urn);
+          }
+          if (HasVisible) {
+            output.WriteRawTag(16);
+            output.WriteBool(Visible);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (Urn.Length != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(Urn);
+          }
+          if (HasVisible) {
+            size += 1 + 1;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(EquippedWearable other) {
+          if (other == null) {
+            return;
+          }
+          if (other.Urn.Length != 0) {
+            Urn = other.Urn;
+          }
+          if (other.HasVisible) {
+            Visible = other.Visible;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                Urn = input.ReadString();
+                break;
+              }
+              case 16: {
+                Visible = input.ReadBool();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+          if ((tag & 7) == 4) {
+            // Abort on any end group tag.
+            return;
+          }
+          switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                Urn = input.ReadString();
+                break;
+              }
+              case 16: {
+                Visible = input.ReadBool();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
 
   }
 

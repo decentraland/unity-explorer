@@ -4,6 +4,8 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
@@ -12,9 +14,15 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.LifeCycle.Systems;
+using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
+    /// <summary>
+    ///     Writes the profile outfit, never the scene's AvatarShape override. The visibility of each wearable is resolved from the profile
+    ///     alone and stays unset until every profile wearable is in <see cref="IWearableStorage" />, then the component is written again.
+    /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<SDKProfile>))]
@@ -22,10 +30,12 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IWearableStorage wearableStorage;
 
-        public WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        internal WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IWearableStorage wearableStorage) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.wearableStorage = wearableStorage;
         }
 
         public override void Initialize()
@@ -36,25 +46,28 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
+            RetryWearablesVisibilityQuery(World);
             UpdateAvatarEquippedDataQuery(World, false);
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData([Data] bool force, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
+        [None(typeof(WearablesVisibilityPending), typeof(DeleteEntityIntention))]
+        private void UpdateAvatarEquippedData([Data] bool force, Entity entity, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
         {
             if (!force && !profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, SDKProfile>(static (pbComponent, profile) =>
-            {
-                foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
+            if (!TryWrite(crdtEntity.CRDTEntity, profile, true))
+                World.Add(entity, new WearablesVisibilityPending());
+        }
 
-                foreach (URN urn in profile.Avatar.Emotes)
-                {
-                    if (!urn.IsNullOrEmpty())
-                        pbComponent.EmoteUrns.Add(urn);
-                }
-            }, crdtEntity.CRDTEntity, profile);
+        [Query]
+        [All(typeof(WearablesVisibilityPending))]
+        [None(typeof(DeleteEntityIntention))]
+        private void RetryWearablesVisibility(Entity entity, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
+        {
+            // A changed profile is written by UpdateAvatarEquippedData later in this frame
+            if (profile.IsDirty || TryWrite(crdtEntity.CRDTEntity, profile, false))
+                World.Remove<WearablesVisibilityPending>(entity);
         }
 
         [Query]
@@ -63,5 +76,104 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
         }
+
+        /// <returns>Whether the visibility was resolved and written</returns>
+        private bool TryWrite(CRDTEntity crdtEntity, SDKProfile profile, bool writeUnresolved)
+        {
+            List<bool> visibility = ListPool<bool>.Get();
+            bool resolved = TryResolveVisibility(profile.Avatar, visibility);
+
+            if (resolved || writeUnresolved)
+                ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, (SDKProfile profile, List<bool>? visibility)>(static (pbComponent, data) =>
+                    Fill(pbComponent, data.profile, data.visibility), crdtEntity, (profile, resolved ? visibility : null));
+
+            ListPool<bool>.Release(visibility);
+            return resolved;
+        }
+
+        private bool TryResolveVisibility(SDKProfile.SDKAvatar avatar, List<bool> visibility)
+        {
+            IReadOnlyList<URN> pointers = avatar.ShortenedWearables;
+            List<IWearable> byPointer = WearableComponentsUtils.WEARABLES_POOL.Get()!;
+            List<IWearable> loaded = WearableComponentsUtils.WEARABLES_POOL.Get()!;
+            var resolved = true;
+
+            for (var i = 0; i < pointers.Count; i++)
+            {
+                if (!wearableStorage.TryGetElement(pointers[i], out IWearable wearable)
+                    || wearable.Model is { Succeeded: false, Exception: null })
+                {
+                    resolved = false;
+                    break;
+                }
+
+                byPointer.Add(wearable);
+
+                // A wearable that failed to load is not rendered and hides nothing
+                if (wearable.Model.Succeeded)
+                    loaded.Add(wearable);
+            }
+
+            if (resolved)
+            {
+                var resolution = new HideWearablesResolution(avatar.ForceRender);
+                WearableComponentsUtils.ExtractVisibleWearables(avatar.BodyShape, loaded, ref resolution);
+
+                for (var i = 0; i < byPointer.Count; i++)
+                    visibility.Add(IsVisible(byPointer, i, resolution.VisibleWearables!));
+
+                resolution.Release();
+            }
+
+            WearableComponentsUtils.WEARABLES_POOL.Release(loaded);
+            WearableComponentsUtils.WEARABLES_POOL.Release(byPointer);
+            return resolved;
+        }
+
+        /// <summary>
+        ///     Two pointers can share one stored wearable (e.g. two tokens of the same item), so the later one of a category wins by index.
+        /// </summary>
+        private static bool IsVisible(List<IWearable> byPointer, int index, List<IWearable> visibleWearables)
+        {
+            IWearable wearable = byPointer[index];
+
+            if (!wearable.Model.Succeeded || !visibleWearables.Contains(wearable)) return false;
+
+            string category = wearable.GetCategory();
+
+            for (int i = index + 1; i < byPointer.Count; i++)
+                if (byPointer[i].Model.Succeeded && byPointer[i].GetCategory() == category)
+                    return false;
+
+            return true;
+        }
+
+        private static void Fill(PBAvatarEquippedData pbComponent, SDKProfile profile, List<bool>? visibility)
+        {
+            IReadOnlyList<URN> wearables = profile.Avatar.Wearables;
+
+            for (var i = 0; i < wearables.Count; i++)
+            {
+                pbComponent.WearableUrns.Add(wearables[i]);
+
+                var equipped = new PBAvatarEquippedData.Types.EquippedWearable { Urn = wearables[i] };
+
+                if (visibility != null)
+                    equipped.Visible = visibility[i];
+
+                pbComponent.Wearables.Add(equipped);
+            }
+
+            foreach (URN urn in profile.Avatar.Emotes)
+            {
+                if (!urn.IsNullOrEmpty())
+                    pbComponent.EmoteUrns.Add(urn);
+            }
+        }
+
+        /// <summary>
+        ///     The written component lacks the visibility because a profile wearable is not loaded yet.
+        /// </summary>
+        private struct WearablesVisibilityPending { }
     }
 }
