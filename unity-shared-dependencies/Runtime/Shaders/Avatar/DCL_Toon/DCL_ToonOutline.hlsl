@@ -31,6 +31,7 @@ struct VertexOutput
     float3 bitangentDir : TEXCOORD3;
     float4 positionCS : TEXCOORD4;
     float3 positionWS : TEXCOORD5;
+    half fogFactor : TEXCOORD6;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -103,6 +104,7 @@ VertexOutput vert (VertexInput v)
     o.pos.z = o.pos.z + fOffset_Z * _ClipCameraPos.z;
     o.positionCS = TransformWorldToHClip(positionWS);
     o.positionWS = positionWS;
+    o.fogFactor = ComputeFogFactor(o.positionCS.z);
     return o;
 }
 
@@ -156,6 +158,8 @@ float4 frag(VertexOutput i) : SV_Target
         float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
         clip(Set_MainTexAlpha - 0.5);
         float4 Set_Outline_Color = float4(_Is_BlendBaseColor_var,Set_Clipping);//lerp( float4(_Is_BlendBaseColor_var,Set_Clipping), float4((_OutlineTex_var.rgb*_Outline_Color.rgb*lightColor),Set_Clipping), _Is_OutlineTex );
+        half fogFactor = InitializeInputDataFog(float4(i.positionWS, 1.0), i.fogFactor);
+        Set_Outline_Color.rgb = MixFog(Set_Outline_Color.rgb, fogFactor);
         return Set_Outline_Color;
     //#endif
 }
