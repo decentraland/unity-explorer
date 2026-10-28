@@ -153,6 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -256,7 +257,8 @@ namespace DCL.PluginSystem.Global
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
             IPendingTransferService ownedNftFilter,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            LobbyStagePresetSetting lobbyStagePresetSetting
             )
         {
             this.eventBus = eventBus;
@@ -327,6 +329,7 @@ namespace DCL.PluginSystem.Global
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.lobbyStagePresetSetting = lobbyStagePresetSetting;
         }
 
         public void Dispose()
@@ -495,7 +498,8 @@ namespace DCL.PluginSystem.Global
                 volumeBus,
                 assetsProvisioner,
                 eventBus,
-                settings.PointAtMarkerVisibilitySettings);
+                settings.PointAtMarkerVisibilitySettings,
+                lobbyStagePresetSetting);
 
             await settingsController.InitializeAsync();
 

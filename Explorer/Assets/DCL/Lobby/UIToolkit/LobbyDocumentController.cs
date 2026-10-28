@@ -115,6 +115,8 @@ namespace DCL.Lobby
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
+        private readonly List<string> eventPlaceIds = new ();
+        private readonly Dictionary<string, PlacesData.PlaceInfo> eventPlaces = new ();
         private readonly List<GetUserCommunitiesData.CommunityData> communities = new ();
         private readonly List<CameraReelResponseCompact> photos = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
@@ -156,6 +158,9 @@ namespace DCL.Lobby
         // One menu serves every Share button; the event it acts on is the one whose button opened it
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
+
+        // Without its place the details show a world event at the raw parcel, 0,0, so they wait for the places request
+        private UniTask eventPlacesResolved = UniTask.CompletedTask;
 
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
@@ -1115,7 +1120,45 @@ namespace DCL.Lobby
 
             for (var i = 0; i < upcomingEvents.Count; i++)
                 ShowUpcomingEventCard(upcomingEventsRail.Cards[i], upcomingEvents[i], ct);
+
+            if (!result.Success) return;
+
+            eventPlacesResolved = ResolveEventPlacesAsync(ct).Preserve();
         }
+
+        private async UniTask ResolveEventPlacesAsync(CancellationToken ct)
+        {
+            eventPlaces.Clear();
+            eventPlaceIds.Clear();
+            CollectEventPlaceIds(liveEvents);
+            CollectEventPlaceIds(upcomingEvents);
+
+            if (eventPlaceIds.Count == 0) return;
+
+            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetDestinationsByIdsAsync(eventPlaceIds, ct)
+                                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            IReadOnlyList<PlacesData.PlaceInfo> places = result.Value.Data;
+
+            for (var i = 0; i < places.Count; i++)
+                eventPlaces[places[i].id] = places[i];
+        }
+
+        private void CollectEventPlaceIds(List<EventDTO> events)
+        {
+            for (var i = 0; i < events.Count; i++)
+            {
+                string placeId = events[i].place_id;
+
+                if (!string.IsNullOrEmpty(placeId) && !eventPlaceIds.Contains(placeId))
+                    eventPlaceIds.Add(placeId);
+            }
+        }
+
+        private PlacesData.PlaceInfo? EventPlace(string? placeId) =>
+            !string.IsNullOrEmpty(placeId) && eventPlaces.TryGetValue(placeId, out PlacesData.PlaceInfo? place) ? place : null;
 
         private void ShowLiveEventCard(LobbyLiveEventCardElement card, EventDTO @event, CancellationToken ct)
         {
@@ -1219,13 +1262,17 @@ namespace DCL.Lobby
             if (eventsCts == null) return;
 
             EventOpened?.Invoke(@event, origin);
-            ShowEventDetailsAsync(@event, origin, eventsCts.Token).Forget();
+            ShowEventDetailsAsync(@event, @event.place_id, origin, eventsCts.Token).Forget();
         }
 
         // The details toggle interest on their boxed copy, so the listed event is synced from it once they close
-        private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, LobbyCardOrigin origin, CancellationToken ct)
+        private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, string? placeId, LobbyCardOrigin origin, CancellationToken ct)
         {
-            try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
+            await eventPlacesResolved;
+
+            if (ct.IsCancellationRequested) return;
+
+            try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, EventPlace(placeId), jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.EVENTS); return; }
 

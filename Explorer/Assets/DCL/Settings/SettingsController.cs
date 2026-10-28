@@ -28,7 +28,8 @@ namespace DCL.Settings
             Graphics,
             Sound,
             Controls,
-            Chat
+            Chat,
+            Lobby,
         }
 
         private readonly SettingsView view;
@@ -47,6 +48,7 @@ namespace DCL.Settings
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
+        private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
@@ -73,7 +75,8 @@ namespace DCL.Settings
             VolumeBus volumeBus,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -89,6 +92,7 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
+            this.lobbyStagePresetSetting = lobbyStagePresetSetting;
             homeHost = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -98,6 +102,7 @@ namespace DCL.Settings
                 [SettingsSection.Sound] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
                 [SettingsSection.Controls] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
                 [SettingsSection.Chat] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
+                [SettingsSection.Lobby] = (view.LobbySectionContainer, view.LobbySectionButton, view.LobbySectionBackground, settingsMenuConfiguration.LobbySectionConfig),
             };
 
             foreach (var pair in sections)
@@ -193,7 +198,9 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
+                // An unassigned reference is an object with an empty key, never null
+                SettingsGroupViewRef groupPrefab = group.GroupPrefabOverride.RuntimeKeyIsValid() ? group.GroupPrefabOverride : settingsMenuConfiguration.SettingsGroupPrefab!;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(groupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -222,7 +229,8 @@ namespace DCL.Settings
                                 assetsProvisioner,
                                 volumeBus,
                                 eventBus,
-                                pointAtMarkerVisibilitySettings);
+                                pointAtMarkerVisibilitySettings,
+                                lobbyStagePresetSetting);
 
                         if (controller != null)
                             controllers.Add(controller);

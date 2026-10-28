@@ -830,6 +830,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a9ad3746de349f4895c7ed85ad130d9
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_LobbyStagePreset.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e214c9790df4c01b964b55f0feb6fab
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsGroup_SingleColumn.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f9b91c66bb8dc8547849cb992d9cffea
     m_Address: Assets/Textures/ExplorePanel/SettingsTabHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
