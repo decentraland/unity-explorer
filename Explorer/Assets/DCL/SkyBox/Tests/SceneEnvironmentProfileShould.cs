@@ -3,7 +3,6 @@ using Decentraland.Common;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.SkyBox.Tests
 {
@@ -62,8 +61,6 @@ namespace DCL.SkyBox.Tests
             Assert.That(profile.FogColor, Is.Null);
             Assert.That(profile.FogDensity, Is.Null);
             Assert.That(profile.SunVisible, Is.Null);
-            Assert.That(profile.SunIntensity, Is.Null);
-            Assert.That(profile.SunDirection, Is.Null);
         }
 
         [Test]
@@ -111,6 +108,41 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
+        public void TreatNonFiniteValuesAsUnset()
+        {
+            // Arrange
+            var pbSkybox = new PBSkybox
+            {
+                Clouds = new PBSkybox.Types.Clouds { Opacity = float.NaN, Speed = float.PositiveInfinity },
+                Stars = new PBSkybox.Types.Stars { Brightness = float.NegativeInfinity },
+            };
+
+            var pbSun = new PBSun { Visible = false };
+            var pbFog = new PBEnvironmentFog { Density = float.NaN };
+
+            // Act
+            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.CloudsOpacity, Is.Null);
+            Assert.That(profile.CloudsSpeed, Is.Null);
+            Assert.That(profile.StarsBrightness, Is.Null);
+            Assert.That(profile.FogDensity, Is.Null);
+            Assert.That(profile.SunVisible, Is.False);
+        }
+
+        [Test]
+        public void ReturnNullWhenOnlyNonFiniteValuesAreSet()
+        {
+            // Arrange
+            var pbFog = new PBEnvironmentFog { Density = float.PositiveInfinity };
+
+            // Act & Assert
+            Assert.That(SceneEnvironmentProfile.FromProto(null, null, pbFog), Is.Null);
+        }
+
+        [Test]
         public void BuildProfileFromSunVisibilityAlone()
         {
             // Arrange
@@ -123,78 +155,6 @@ namespace DCL.SkyBox.Tests
             Assert.That(profile, Is.Not.Null);
             Assert.That(profile!.SunVisible, Is.False);
             Assert.That(profile.SunColor, Is.Null);
-        }
-
-        [Test]
-        public void BuildProfileFromSunIntensityAlone()
-        {
-            // Arrange
-            var pbSun = new PBSun { Intensity = 2.5f };
-
-            // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
-
-            // Assert
-            Assert.That(profile, Is.Not.Null);
-            Assert.That(profile!.SunIntensity, Is.EqualTo(2.5f));
-            Assert.That(profile.SunDirection, Is.Null);
-            Assert.That(profile.SunVisible, Is.Null);
-        }
-
-        [Test]
-        public void ClampNegativeSunIntensityToZero()
-        {
-            // Arrange
-            var pbSun = new PBSun { Intensity = -3f };
-
-            // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
-
-            // Assert
-            Assert.That(profile, Is.Not.Null);
-            Assert.That(profile!.SunIntensity, Is.EqualTo(0f));
-        }
-
-        [Test]
-        public void NormalizeSunDirection()
-        {
-            // Arrange
-            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 0f, Y = -4f, Z = 3f } };
-
-            // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
-
-            // Assert
-            Assert.That(profile, Is.Not.Null);
-            Assert.That(profile!.SunDirection, Is.Not.Null);
-            Vector3 direction = profile.SunDirection!.Value;
-            Assert.That(direction.x, Is.EqualTo(0f).Within(1e-5f));
-            Assert.That(direction.y, Is.EqualTo(-0.8f).Within(1e-5f));
-            Assert.That(direction.z, Is.EqualTo(0.6f).Within(1e-5f));
-        }
-
-        [Test]
-        public void IgnoreZeroSunDirection()
-        {
-            // Arrange
-            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 0f, Y = 0f, Z = 0f }, Intensity = 1f };
-
-            // Act
-            SceneEnvironmentProfile? profile = SceneEnvironmentProfile.FromProto(null, pbSun, null);
-
-            // Assert
-            Assert.That(profile, Is.Not.Null);
-            Assert.That(profile!.SunDirection, Is.Null);
-        }
-
-        [Test]
-        public void ReturnNullWhenOnlyANearZeroSunDirectionIsSet()
-        {
-            // Arrange
-            var pbSun = new PBSun { Direction = new Decentraland.Common.Vector3 { X = 1e-5f, Y = 0f, Z = 0f } };
-
-            // Act & Assert
-            Assert.That(SceneEnvironmentProfile.FromProto(null, pbSun, null), Is.Null);
         }
 
         [Test]
@@ -212,7 +172,6 @@ namespace DCL.SkyBox.Tests
             Assert.That(profile, Is.Not.Null);
             Assert.That(profile!.StarsBrightness, Is.EqualTo(2f));
             ColorGradientConverterShould.AssertColor(profile.SunColor!.Evaluate(0.5f), Color.red);
-            Assert.That(profile.SunIntensity, Is.EqualTo(0.5f));
             Assert.That(profile.FogDensity, Is.EqualTo(0.01f));
         }
 

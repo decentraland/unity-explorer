@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.SkyBox;
+using Decentraland.Common;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -8,8 +9,8 @@ namespace DCL.SDKComponents.Skybox
 {
     /// <summary>
     ///     State of the scene environment components on the scene root entity: the texture slot of the PBSkybox sky
-    ///     texture, the environment profile built from PBSkybox, PBSun and PBEnvironmentFog, and which of those
-    ///     components the profile was built from.
+    ///     texture, the look profile built from PBSkybox, PBSun and PBEnvironmentFog, the sun override of PBSun, and
+    ///     which of those components the profile was built from.
     /// </summary>
     public struct SceneSkyboxComponent
     {
@@ -28,7 +29,15 @@ namespace DCL.SDKComponents.Skybox
 
         public TextureSlot SkyboxTexture;
         public SceneEnvironmentProfile? Environment;
+        public SceneSunOverride Sun;
         public EnvironmentSources Sources;
+
+        /// <summary>
+        ///     Copies of the PBSun look fields the profile was last built from. A PBSun update that leaves them as they
+        ///     are only moves the sun, so the profile and its gradients are kept.
+        /// </summary>
+        public ColorGradient? SunColor;
+        public bool? SunVisible;
 
         /// <summary>
         ///     One requested texture source, loaded through a promise. The intention stays after the promise resolves so

@@ -214,17 +214,28 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
-    ///     Switches the look: writes the preset's static material values once and re-evaluates the current
-    ///     time of day so the change is visible immediately. Before <see cref="Initialize" /> it only stores the
-    ///     preset, which Initialize then reports on and applies. Any preset but the scene copy becomes the look
-    ///     a scene hands back to when it stops controlling the skybox.
+    ///     Picks the base look: the one that shows while no scene controls the skybox and that a scene hands back to
+    ///     when it stops. While a scene controls the skybox the pick is only stored and takes effect on release;
+    ///     otherwise it switches the look at once. Before <see cref="Initialize" /> it only stores the preset,
+    ///     which Initialize then reports on and applies.
     /// </summary>
     public void ApplyPreset(SkyboxLookPreset newPreset)
     {
-        preset = newPreset;
+        basePreset = newPreset;
 
-        if (newPreset != scenePreset)
-            basePreset = newPreset;
+        if (scenePreset != null && preset == scenePreset)
+            return;
+
+        SwitchPreset(newPreset);
+    }
+
+    /// <summary>
+    ///     Switches the look: writes the preset's static material values once and re-evaluates the current
+    ///     time of day so the change is visible immediately.
+    /// </summary>
+    private void SwitchPreset(SkyboxLookPreset newPreset)
+    {
+        preset = newPreset;
 
         if (!skyboxMaterial)
             return;
@@ -240,10 +251,9 @@ public class SkyboxRenderController : MonoBehaviour
     }
 
     /// <summary>
-    ///     Puts the scene-controlled look on or takes it off. On: the scene look preset is copied once, the environment
+    ///     Puts the scene-controlled look on or takes it off. On: the scene look preset is copied once, the look
     ///     fields of the profile (null = none set) are written over that copy and it becomes the current look, so the
-    ///     time-of-day evaluation needs no override branches; the sun intensity multiplier and fixed direction are kept
-    ///     on the controller and applied after each light evaluation. Off: the base look returns and the sun is neutral again.
+    ///     time-of-day evaluation needs no override branches. Off: the base look returns and the sun override is neutral again.
     /// </summary>
     public void SetSceneLook(bool sceneControlled, SceneEnvironmentProfile? environment)
     {
@@ -253,7 +263,7 @@ public class SkyboxRenderController : MonoBehaviour
             sceneSunDirection = null;
 
             if (basePreset != null && preset != basePreset)
-                ApplyPreset(basePreset);
+                SwitchPreset(basePreset);
             else
                 RefreshLook();
 
@@ -261,14 +271,27 @@ public class SkyboxRenderController : MonoBehaviour
         }
 
         SceneEnvironmentProfile profile = environment ?? SceneEnvironmentProfile.EMPTY;
-        sceneSunIntensity = profile.SunIntensity ?? 1f;
-        sceneSunDirection = profile.SunDirection;
-
         SkyboxLookPreset target = scenePreset ??= CreateScenePreset();
         profile.ApplyTo(target, sceneLookPreset);
 
-        // Re-evaluates the light at the current time, so the sun change shows while skybox time is paused
-        ApplyPreset(target);
+        // Re-evaluates the light at the current time, so a hidden sun shows while skybox time is paused
+        SwitchPreset(target);
+    }
+
+    /// <summary>
+    ///     Sets the sun intensity multiplier and fixed direction the light evaluation applies after the time-of-day
+    ///     sample, and re-evaluates the light at the current time so the change shows while skybox time is paused.
+    ///     The palette and the preset statics are not touched.
+    /// </summary>
+    public void SetSceneSun(in SceneSunOverride sun)
+    {
+        sceneSunIntensity = sun.Intensity ?? 1f;
+        sceneSunDirection = sun.Direction;
+
+        if (skyboxMaterial == null || currentTimeOfDay <= float.MinValue)
+            return;
+
+        UpdateDirectionalLight(skyboxMaterial, currentTimeOfDay, preset.EvaluatePhase(currentTimeOfDay));
     }
 
     /// <summary>
@@ -739,7 +762,7 @@ public class SkyboxRenderController : MonoBehaviour
     private void OnValidate()
     {
         if (Application.isPlaying && skyboxMaterial && preset)
-            ApplyPreset(preset);
+            SwitchPreset(preset);
     }
 #endif
 }

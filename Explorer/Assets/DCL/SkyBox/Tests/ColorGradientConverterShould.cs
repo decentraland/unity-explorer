@@ -185,6 +185,53 @@ namespace DCL.SkyBox.Tests
             Assert.That(ColorGradientConverter.ToGradient(gradient), Is.Null);
         }
 
+        [Test]
+        public void SkipKeysWithANonFiniteTimeOrChannel()
+        {
+            // Arrange
+            ColorGradient gradient = Gradient((0f, Color.red), (float.NaN, Color.blue));
+            gradient.Keys.Add(new ColorKey { Time = 1f, Color = new Color4 { R = float.PositiveInfinity, G = 0f, B = 0f, A = 1f } });
+            gradient.Keys.Add(new ColorKey { Time = 1f, Color = new Color4 { R = 0f, G = float.NaN, B = 0f, A = 1f } });
+
+            // Act
+            Gradient? ramp = ColorGradientConverter.ToGradient(gradient);
+
+            // Assert
+            Assert.That(ramp, Is.Not.Null);
+            AssertColor(ramp!.Evaluate(0f), Color.red);
+            AssertColor(ramp.Evaluate(1f), Color.red);
+        }
+
+        [Test]
+        public void ReturnNullWhenNoKeyIsFinite()
+        {
+            // Arrange
+            ColorGradient gradient = Gradient((float.PositiveInfinity, Color.red));
+
+            // Act & Assert
+            Assert.That(ColorGradientConverter.ToGradient(gradient), Is.Null);
+        }
+
+        [Test]
+        public void ReadOnlyTheFirstMaxInputKeys()
+        {
+            // Arrange: the keys past the cap would turn the ramp blue
+            var gradient = new ColorGradient();
+
+            for (var i = 0; i < ColorGradientConverter.MAX_INPUT_KEYS; i++)
+                gradient.Keys.Add(new ColorKey { Time = 0f, Color = new Color4 { R = 1f, G = 0f, B = 0f, A = 1f } });
+
+            for (var i = 0; i < ColorGradientConverter.MAX_INPUT_KEYS; i++)
+                gradient.Keys.Add(new ColorKey { Time = 1f, Color = new Color4 { R = 0f, G = 0f, B = 1f, A = 1f } });
+
+            // Act
+            Gradient? ramp = ColorGradientConverter.ToGradient(gradient);
+
+            // Assert
+            Assert.That(ramp, Is.Not.Null);
+            AssertColor(ramp!.Evaluate(1f), Color.red);
+        }
+
         internal static ColorGradient Gradient(params (float time, Color color)[] keys)
         {
             var gradient = new ColorGradient();

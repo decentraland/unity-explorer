@@ -22,9 +22,10 @@ using TextureSlot = DCL.SDKComponents.Skybox.SceneSkyboxComponent.TextureSlot;
 namespace DCL.SDKComponents.Skybox.Systems
 {
     /// <summary>
-    ///     Loads the sky texture of the PBSkybox on the scene root entity, builds the environment profile of its PBSkybox,
-    ///     PBSun and PBEnvironmentFog and, while the scene is current, publishes them to the global world as the scene
-    ///     environment overrides. Any of the three components makes the scene the owner of the overrides.
+    ///     Loads the sky texture of the PBSkybox on the scene root entity, builds the look profile of its PBSkybox,
+    ///     PBSun and PBEnvironmentFog and the sun override of its PBSun and, while the scene is current, publishes them
+    ///     to the global world as the scene environment overrides. Any of the three components makes the scene the owner
+    ///     of the overrides.
     /// </summary>
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -68,6 +69,9 @@ namespace DCL.SDKComponents.Skybox.Systems
 
         public void OnSceneIsCurrentChanged(bool value)
         {
+            // Nothing to publish or clear before Initialize has added the state component
+            if (!World.Has<SceneSkyboxComponent>(rootEntity)) return;
+
             if (value)
             {
                 Sync(skipDirtyCheck: true);
@@ -115,14 +119,22 @@ namespace DCL.SDKComponents.Skybox.Systems
             bool sourcesChanged = sources != component.Sources;
             component.Sources = sources;
 
-            bool skyboxDirty = skipDirtyCheck || sourcesChanged || pbSkybox is { IsDirty: true };
+            bool rebuildAll = skipDirtyCheck || sourcesChanged;
+            bool skyboxDirty = rebuildAll || pbSkybox is { IsDirty: true };
+            bool sunDirty = rebuildAll || pbSun is { IsDirty: true };
+
+            // A PBSun update that only moves the sun keeps the profile and its gradients
+            bool lookDirty = skyboxDirty || pbFog is { IsDirty: true } || (sunDirty && SunLookChanged(pbSun, in component));
             var changed = false;
 
             if (skyboxDirty)
                 changed |= UpdateSlot(pbSkybox is { HasSkyboxTexture: true } ? pbSkybox.SkyboxTexture : null, ref component.SkyboxTexture);
 
-            if (skyboxDirty || pbSun is { IsDirty: true } || pbFog is { IsDirty: true })
+            if (lookDirty)
                 changed |= UpdateEnvironment(pbSkybox, pbSun, pbFog, ref component);
+
+            if (sunDirty)
+                changed |= UpdateSun(pbSun, ref component);
 
             changed |= ResolveSlot(ref component.SkyboxTexture);
 
@@ -143,6 +155,12 @@ namespace DCL.SDKComponents.Skybox.Systems
 
         private T? GetRootComponent<T>() where T : class =>
             World.TryGet(rootEntity, out T? component) ? component : null;
+
+        private static bool? SunVisible(PBSun? pbSun) =>
+            pbSun is { HasVisible: true } ? pbSun.Visible : null;
+
+        private static bool SunLookChanged(PBSun? pbSun, in SceneSkyboxComponent component) =>
+            SunVisible(pbSun) != component.SunVisible || !Equals(pbSun?.Color, component.SunColor);
 
         /// <summary>
         ///     Starts loading the requested texture source when it differs from the one the slot already tracks.
@@ -199,7 +217,6 @@ namespace DCL.SDKComponents.Skybox.Systems
             if (!result.Succeeded)
             {
                 result.TryLogException();
-                ReportHub.LogWarning(GetReportData(), $"{nameof(PBSkybox)} texture {promise.LoadingIntention.Src} failed to load, keeping the default environment");
                 return false;
             }
 
@@ -219,17 +236,25 @@ namespace DCL.SDKComponents.Skybox.Systems
         {
             component.SkyboxTexture.CleanUp(World);
             component.Environment = null;
+            component.Sun = SceneSunOverride.NONE;
+            component.SunColor = null;
+            component.SunVisible = null;
             component.Sources = EnvironmentSources.None;
         }
 
         /// <summary>
-        ///     Rebuilds the environment profile from the components, also on the re-push that skips the dirty check:
+        ///     Rebuilds the look profile from the components, also on the re-push that skips the dirty check:
         ///     the dirty flags are reset every frame while the scene is not current, so a profile cached before leaving
-        ///     could miss changes made in the meantime.
+        ///     could miss changes made in the meantime. Keeps a copy of the PBSun look fields the profile was built from.
         /// </summary>
         /// <returns>True when the profile changed.</returns>
         private static bool UpdateEnvironment(PBSkybox? pbSkybox, PBSun? pbSun, PBEnvironmentFog? pbFog, ref SceneSkyboxComponent component)
         {
+            component.SunVisible = SunVisible(pbSun);
+
+            if (!Equals(pbSun?.Color, component.SunColor))
+                component.SunColor = pbSun?.Color?.Clone();
+
             SceneEnvironmentProfile? environment = SceneEnvironmentProfile.FromProto(pbSkybox, pbSun, pbFog);
 
             if (environment == null && component.Environment == null)
@@ -239,11 +264,24 @@ namespace DCL.SDKComponents.Skybox.Systems
             return true;
         }
 
+        /// <returns>True when the sun override changed.</returns>
+        private static bool UpdateSun(PBSun? pbSun, ref SceneSkyboxComponent component)
+        {
+            SceneSunOverride sun = SceneSunOverride.FromProto(pbSun);
+
+            if (sun.Equals(component.Sun))
+                return false;
+
+            component.Sun = sun;
+            return true;
+        }
+
         private void PushOverrides(in SceneSkyboxComponent component)
         {
             ref SceneSkyboxOverrides overrides = ref globalWorld.Get<SceneSkyboxOverrides>(globalSkyboxEntity);
             overrides.SkyboxTexture = component.SkyboxTexture.TextureData?.Asset.Texture;
             overrides.Environment = component.Environment;
+            overrides.Sun = component.Sun;
             overrides.Owner = sceneInfo;
         }
 
@@ -255,6 +293,7 @@ namespace DCL.SDKComponents.Skybox.Systems
 
             overrides.SkyboxTexture = null;
             overrides.Environment = null;
+            overrides.Sun = SceneSunOverride.NONE;
             overrides.Owner = null;
         }
     }

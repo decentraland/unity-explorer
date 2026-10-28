@@ -228,21 +228,71 @@ namespace DCL.SkyBox.Tests
             Assert.That(skyboxRenderController.Preset, Is.SameAs(legacyPreset));
         }
 
-        // Next iteration: the explicit reflection map (PBSkybox.reflection_map) was removed from the protocol and
-        // SceneSkyboxOverrides; reflections are always derived from the skybox texture. Restore with that field.
-        // [Test]
-        // public void PushReflectionMapOnChange()
-        // {
-        //     // Arrange
-        //     Overrides().ReflectionMap = reflectionMap;
-        //
-        //     // Act
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
-        //     Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(reflectionMap));
-        // }
+        [Test]
+        public void KeepTheSceneLookWhenABaseLookIsPickedWhileASceneOwnsTheSkybox()
+        {
+            // Arrange
+            Control();
+            system.Update(0);
+            SkyboxLookPreset sceneLook = skyboxRenderController.Preset;
+
+            // Act: the debug dropdown picks a look while the scene owns the skybox
+            skyboxRenderController.ApplyPreset(legacyPreset);
+
+            // Assert
+            Assert.That(skyboxRenderController.Preset, Is.SameAs(sceneLook));
+
+            // Act
+            Release();
+            system.Update(0);
+
+            // Assert
+            Assert.That(skyboxRenderController.Preset, Is.SameAs(legacyPreset));
+        }
+
+        [Test]
+        public void PushTheSunWithoutReapplyingTheLook()
+        {
+            // Arrange
+            Control();
+            Overrides().Environment = Profile(fog: new PBEnvironmentFog { Color = Gradient((0f, Color.red)) });
+            system.Update(0);
+            SceneEnvironmentProfile? applied = Overrides().AppliedEnvironment;
+            genesisCopy.SetColor(HORIZON_COLOR, Color.magenta);
+
+            // Act
+            Overrides().Sun = Sun(new PBSun { Intensity = 0.5f });
+            system.Update(0);
+
+            // Assert: the sun went through, the look statics were not rewritten
+            Assert.That(Overrides().AppliedSun, Is.EqualTo(Overrides().Sun));
+            Assert.That(Overrides().AppliedEnvironment, Is.SameAs(applied));
+            Assert.That(genesisCopy.GetColor(HORIZON_COLOR), Is.EqualTo(Color.magenta));
+        }
+
+        [Test]
+        public void ClearTheSunWhenTheSceneReleasesTheSkybox()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: false);
+            system = new ApplySceneSkyboxOverridesSystem(world, rendererFeaturesCache, sunController!, skyboxEntity);
+            float shippedIntensity = sunLight.intensity;
+            Control();
+            system.Update(0);
+            float sceneLookIntensity = sunLight.intensity;
+            Overrides().Sun = Sun(new PBSun { Intensity = 0.5f });
+            system.Update(0);
+            Assert.That(sunLight.intensity, Is.EqualTo(sceneLookIntensity * 0.5f).Within(1e-4f));
+
+            // Act
+            Release();
+            Overrides().Sun = SceneSunOverride.NONE;
+            system.Update(0);
+
+            // Assert
+            Assert.That(Overrides().AppliedSun, Is.EqualTo(SceneSunOverride.NONE));
+            Assert.That(sunLight.intensity, Is.EqualTo(shippedIntensity).Within(1e-4f));
+        }
 
         [Test]
         public void ClearDerivedReflectionWhenSkyboxTextureIsCleared()
@@ -359,23 +409,6 @@ namespace DCL.SkyBox.Tests
             Assert.That(feature.ReflectionOverride, Is.SameAs(skyboxTexture));
             Assert.That(Overrides().AppliedReflectionSource, Is.SameAs(skyboxTexture));
         }
-
-        // Next iteration: the explicit reflection map (PBSkybox.reflection_map) was removed from the protocol and
-        // SceneSkyboxOverrides; reflections are always derived from the skybox texture. Restore with that field.
-        // [Test]
-        // public void PreferReflectionMapOverSkyboxTexture()
-        // {
-        //     // Arrange
-        //     Overrides().SkyboxTexture = skyboxTexture;
-        //     Overrides().ReflectionMap = reflectionMap;
-        //
-        //     // Act
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(feature.ReflectionOverride, Is.SameAs(reflectionMap));
-        //     Assert.That(RenderSettings.skybox.mainTexture, Is.SameAs(skyboxTexture));
-        // }
 
         [Test]
         public void ApplyConstantFogColorAtFrozenTime()
@@ -749,11 +782,11 @@ namespace DCL.SkyBox.Tests
             sunController!.SetSceneLook(true, null);
             float timeOfDayIntensity = sunLight.intensity;
             Assert.That(timeOfDayIntensity, Is.GreaterThan(0f), "the legacy light is lit at noon");
-            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Intensity = 0.5f });
+            SceneSunOverride sun = Sun(new PBSun { Intensity = 0.5f });
 
             // Act
-            sunController.SetSceneLook(true, profile);
-            sunController.SetSceneLook(true, profile);
+            sunController.SetSceneSun(in sun);
+            sunController.SetSceneSun(in sun);
             sunController.UpdateSkybox(TIME_OF_DAY + 0.1f);
             sunController.UpdateSkybox(TIME_OF_DAY);
 
@@ -761,7 +794,7 @@ namespace DCL.SkyBox.Tests
             Assert.That(sunLight.intensity, Is.EqualTo(timeOfDayIntensity * 0.5f).Within(1e-4f));
 
             // Act
-            sunController.SetSceneLook(true, null);
+            sunController.SetSceneSun(SceneSunOverride.NONE);
 
             // Assert
             Assert.That(sunLight.intensity, Is.EqualTo(timeOfDayIntensity).Within(1e-4f));
@@ -775,11 +808,11 @@ namespace DCL.SkyBox.Tests
             sunController!.SetSceneLook(true, null);
             float fallbackIntensity = sunLight.intensity;
             Assert.That(fallbackIntensity, Is.GreaterThan(0f));
-            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Intensity = 0.5f });
+            SceneSunOverride sun = Sun(new PBSun { Intensity = 0.5f });
 
             // Act
-            sunController.SetSceneLook(true, profile);
-            sunController.SetSceneLook(true, profile);
+            sunController.SetSceneSun(in sun);
+            sunController.SetSceneSun(in sun);
             sunController.UpdateSkybox(TIME_OF_DAY + 0.1f);
             sunController.UpdateSkybox(TIME_OF_DAY);
 
@@ -794,7 +827,8 @@ namespace DCL.SkyBox.Tests
             Light sunLight = CreateSunController(lensFlareEnabled: false);
 
             // Act
-            sunController!.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 0f }));
+            sunController!.SetSceneLook(true, null);
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 0f }));
 
             // Assert
             Assert.That(sunLight.intensity, Is.EqualTo(0f));
@@ -806,10 +840,11 @@ namespace DCL.SkyBox.Tests
             // Arrange
             Light sunLight = CreateSunController(lensFlareEnabled: false);
             Vector3 travelDirection = new Vector3(1f, -1f, 0.5f).normalized;
-            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Direction = new Decentraland.Common.Vector3 { X = 1f, Y = -1f, Z = 0.5f } });
+            SceneSunOverride sun = Sun(new PBSun { Direction = new Decentraland.Common.Vector3 { X = 1f, Y = -1f, Z = 0.5f } });
 
             // Act
-            sunController!.SetSceneLook(true, profile);
+            sunController!.SetSceneLook(true, null);
+            sunController.SetSceneSun(in sun);
 
             // Assert
             AssertDirection(sunLight.transform.forward, travelDirection);
@@ -829,10 +864,11 @@ namespace DCL.SkyBox.Tests
         {
             // Arrange
             Light sunLight = CreateSunController(lensFlareEnabled: false);
-            SceneEnvironmentProfile profile = Profile(sun: new PBSun { Direction = new Decentraland.Common.Vector3 { X = x, Y = y, Z = z } });
+            SceneSunOverride sun = Sun(new PBSun { Direction = new Decentraland.Common.Vector3 { X = x, Y = y, Z = z } });
 
             // Act
-            sunController!.SetSceneLook(true, profile);
+            sunController!.SetSceneLook(true, null);
+            sunController.SetSceneSun(in sun);
 
             // Assert
             AssertDirection(sunLight.transform.forward, new Vector3(x, y, z));
@@ -850,17 +886,17 @@ namespace DCL.SkyBox.Tests
             Vector3 timeOfDayForward = sunLight.transform.forward;
             Vector3 travelDirection = Vector3.right;
             Assume.That(Vector3.Angle(timeOfDayForward, travelDirection), Is.GreaterThan(1f));
-            sunController.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
             AssertDirection(sunLight.transform.forward, travelDirection);
 
             // Act
-            sunController.SetSceneLook(true, null);
+            sunController.SetSceneSun(SceneSunOverride.NONE);
 
             // Assert
             AssertDirection(sunLight.transform.forward, timeOfDayForward);
 
             // Act
-            sunController.SetSceneLook(true, Profile(sun: new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 2f, Direction = new Decentraland.Common.Vector3 { X = 1f } }));
             sunController.SetSceneLook(false, null);
 
             // Assert
@@ -917,6 +953,9 @@ namespace DCL.SkyBox.Tests
 
         private static ColorGradient Gradient(params (float time, Color color)[] keys) =>
             ColorGradientConverterShould.Gradient(keys);
+
+        private static SceneSunOverride Sun(PBSun pbSun) =>
+            SceneSunOverride.FromProto(pbSun);
 
         private static SceneEnvironmentProfile Profile(PBSkybox? skybox = null, PBSun? sun = null, PBEnvironmentFog? fog = null)
         {

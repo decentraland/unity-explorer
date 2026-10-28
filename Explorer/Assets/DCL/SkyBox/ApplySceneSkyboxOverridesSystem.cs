@@ -13,6 +13,7 @@ namespace DCL.SkyBox
     ///     Pushes the environment overrides requested by the current scene to the time-of-day controller, the visible sky
     ///     and the reflection cubemap. While a scene owns the skybox the controller runs the scene look
     ///     (the legacy preset with the scene's environment written over it); without one the base look returns.
+    ///     The sun override goes through its own channel, so moving the sun never re-applies the look.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [LogCategory(ReportCategory.SKYBOX)]
@@ -37,6 +38,13 @@ namespace DCL.SkyBox
             ref SceneSkyboxOverrides overrides = ref World.Get<SceneSkyboxOverrides>(skyboxEntity);
 
             bool sceneControlled = overrides.SceneControlled;
+
+            // Sun first, so a look applied in the same frame already evaluates the light with the new sun
+            if (!overrides.Sun.Equals(overrides.AppliedSun))
+            {
+                skyboxRenderController.SetSceneSun(in overrides.Sun);
+                overrides.AppliedSun = overrides.Sun;
+            }
 
             if (sceneControlled != overrides.AppliedSceneControlled || !ReferenceEquals(overrides.Environment, overrides.AppliedEnvironment))
             {

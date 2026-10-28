@@ -27,6 +27,10 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+            // Portable experiences are always current, so they would contend with the parcel scene for the global environment
+            if (sharedDependencies.SceneData.IsPortableExperience())
+                return;
+
             ResetDirtyFlagSystem<PBSkybox>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBSun>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBEnvironmentFog>.InjectToWorld(ref builder);

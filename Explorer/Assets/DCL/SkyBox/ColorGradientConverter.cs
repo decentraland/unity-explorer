@@ -6,7 +6,8 @@ namespace DCL.SkyBox
     /// <summary>
     ///     Builds a <see cref="Gradient" /> from a protocol color gradient so it can be evaluated like the ramps of a
     ///     <see cref="SkyboxLookPreset" />: keys sorted by time, both ends clamped, colors kept unclamped so HDR values
-    ///     survive, alpha ignored.
+    ///     survive, alpha ignored. Keys without a color or with a non-finite time or channel are skipped, and only the
+    ///     first <see cref="MAX_INPUT_KEYS" /> keys are read.
     /// </summary>
     public static class ColorGradientConverter
     {
@@ -15,20 +16,26 @@ namespace DCL.SkyBox
         /// </summary>
         public const int MAX_KEYS = 8;
 
+        /// <summary>
+        ///     Keys past this many are ignored: the repeated field is unbounded and the sort below is quadratic.
+        /// </summary>
+        public const int MAX_INPUT_KEYS = 64;
+
         private static readonly GradientAlphaKey[] OPAQUE = { new (1f, 0f) };
 
         /// <summary>
-        ///     Null when the gradient is unset, has no keys, or none of its keys carries a color.
+        ///     Null when the gradient is unset, has no keys, or none of its keys is usable.
         /// </summary>
         public static Gradient? ToGradient(ColorGradient? gradient)
         {
             if (gradient == null || gradient.Keys.Count == 0)
                 return null;
 
+            int scanned = Mathf.Min(gradient.Keys.Count, MAX_INPUT_KEYS);
             var validKeys = 0;
 
-            for (var i = 0; i < gradient.Keys.Count; i++)
-                if (gradient.Keys[i].Color != null)
+            for (var i = 0; i < scanned; i++)
+                if (IsUsable(gradient.Keys[i]))
                     validKeys++;
 
             if (validKeys == 0)
@@ -38,14 +45,14 @@ namespace DCL.SkyBox
             var colors = new Color[validKeys];
             var index = 0;
 
-            for (var i = 0; i < gradient.Keys.Count; i++)
+            for (var i = 0; i < scanned; i++)
             {
                 ColorKey key = gradient.Keys[i];
-                Color4? color = key.Color;
 
-                if (color == null)
+                if (!IsUsable(key))
                     continue;
 
+                Color4 color = key.Color;
                 times[index] = Mathf.Clamp01(key.Time);
                 colors[index] = new Color(color.R, color.G, color.B, color.A);
                 index++;
@@ -60,6 +67,10 @@ namespace DCL.SkyBox
             result.SetKeys(colorKeys, OPAQUE);
             return result;
         }
+
+        private static bool IsUsable(ColorKey key) =>
+            key.Color != null && float.IsFinite(key.Time)
+            && float.IsFinite(key.Color.R) && float.IsFinite(key.Color.G) && float.IsFinite(key.Color.B);
 
         private static GradientColorKey[] ToColorKeys(float[] times, Color[] colors, int count)
         {

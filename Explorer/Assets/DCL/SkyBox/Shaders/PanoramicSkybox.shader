@@ -24,6 +24,7 @@ Shader "DCL/PanoramicSkybox"
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            float4 _MainTex_TexelSize;
 
             struct Attributes
             {
@@ -50,6 +51,9 @@ Shader "DCL/PanoramicSkybox"
                 float3 d = normalize(input.direction);
                 // u wraps around +Z (image centre), v runs from -Y (bottom row) to +Y (top row)
                 float2 uv = float2(atan2(d.x, d.z) / (2.0 * PI) + 0.5, asin(d.y) / PI + 0.5);
+                // The texture wraps in both axes so the u seam is continuous; v is kept half a texel inside the edge rows,
+                // or bilinear filtering would blend the zenith row into the nadir row.
+                uv.y = clamp(uv.y, 0.5 * _MainTex_TexelSize.y, 1.0 - 0.5 * _MainTex_TexelSize.y);
                 return half4(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv).rgb, 1.0);
             }
             ENDHLSL

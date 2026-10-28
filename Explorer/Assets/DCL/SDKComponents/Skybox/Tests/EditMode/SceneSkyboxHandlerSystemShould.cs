@@ -364,49 +364,6 @@ namespace DCL.SDKComponents.Skybox.Tests
             Assert.That(Slot().TextureData, Is.Null);
         }
 
-        // Next iteration: the explicit reflection map (PBSkybox.reflection_map) was removed from the protocol, the handler
-        // and SceneSkyboxOverrides; reflections are always derived from the skybox texture. Restore with that field.
-        // [Test]
-        // public void ReleaseOnlyTheClearedSlot()
-        // {
-        //     // Arrange
-        //     PBSkybox pbSkybox = AddPbSkybox(FileTexture(SRC_A), FileTexture(SRC_B));
-        //     system.Update(0);
-        //     ResolvePromise(true);
-        //     TextureData skyboxData = ResolvePromise(false);
-        //     system.Update(0);
-        //
-        //     // Act
-        //     pbSkybox.ReflectionMap = null;
-        //     pbSkybox.IsDirty = true;
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(Overrides().ReflectionMap, Is.Null);
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(skyboxData.EnsureTexture2D()));
-        //     Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
-        //     Assert.That(Slot(true).TextureData, Is.Null);
-        //     Assert.That(Slot(false).TextureData, Is.SameAs(skyboxData));
-        // }
-        //
-        // [Test]
-        // public void PushBothWhenBothFieldsAreSet()
-        // {
-        //     // Arrange
-        //     AddPbSkybox(FileTexture(SRC_A), FileTexture(SRC_B));
-        //     system.Update(0);
-        //     TextureData reflectionData = ResolvePromise(true);
-        //     TextureData skyboxData = ResolvePromise(false);
-        //
-        //     // Act
-        //     system.Update(0);
-        //
-        //     // Assert
-        //     Assert.That(Overrides().ReflectionMap, Is.SameAs(reflectionData.EnsureTexture2D()));
-        //     Assert.That(Overrides().SkyboxTexture, Is.SameAs(skyboxData.EnsureTexture2D()));
-        //     Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
-        // }
-
         [Test]
         public void PushFogFromPBEnvironmentFogAlone()
         {
@@ -464,9 +421,9 @@ namespace DCL.SDKComponents.Skybox.Tests
             Assert.That(environment, Is.Not.Null);
             Assert.That(environment!.SunColor!.Evaluate(0.5f), Is.EqualTo(Color.green));
             Assert.That(environment.SunVisible, Is.False);
-            Assert.That(environment.SunIntensity, Is.EqualTo(2f));
-            Assert.That(environment.SunDirection, Is.EqualTo(Vector3.down));
             Assert.That(environment.FogColor, Is.Null);
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(2f));
+            Assert.That(Overrides().Sun.Direction, Is.EqualTo(Vector3.down));
             Assert.That(Overrides().SkyboxTexture, Is.Null);
             Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
         }
@@ -508,8 +465,8 @@ namespace DCL.SDKComponents.Skybox.Tests
             SceneEnvironmentProfile? environment = Overrides().Environment;
             Assert.That(environment, Is.Not.Null);
             Assert.That(environment!.StarsBrightness, Is.EqualTo(2f));
-            Assert.That(environment.SunIntensity, Is.EqualTo(0.5f));
             Assert.That(environment.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(0.5f));
         }
 
         [Test]
@@ -551,23 +508,68 @@ namespace DCL.SDKComponents.Skybox.Tests
         }
 
         [Test]
-        public void RebuildProfileWhenOnlyPBSunIsDirty()
+        public void KeepProfileAndTextureWhenOnlyTheSunMoves()
         {
             // Arrange
             PBSkybox pbSkybox = AddPbSkybox(SRC_A);
             PBSun pbSun = AddSun(1f);
+            pbSun.Color = Gradient(Color.green);
             system.Update(0);
             Entity promiseEntity = Slot().LoadingPromise!.Value.Entity;
+            SceneEnvironmentProfile? previous = Overrides().Environment;
+            Assert.That(previous, Is.Not.Null);
             pbSkybox.IsDirty = false;
 
-            // Act
+            // Act: an update carrying the same color and a new intensity and direction
             pbSun.Intensity = 3f;
+            pbSun.Direction = new Decentraland.Common.Vector3 { X = 0f, Y = -1f, Z = 0f };
             pbSun.IsDirty = true;
             system.Update(0);
 
             // Assert
-            Assert.That(Overrides().Environment!.SunIntensity, Is.EqualTo(3f));
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(3f));
+            Assert.That(Overrides().Sun.Direction, Is.EqualTo(Vector3.down));
+            Assert.That(Overrides().Environment, Is.SameAs(previous));
             Assert.That(Slot().LoadingPromise!.Value.Entity, Is.EqualTo(promiseEntity));
+        }
+
+        [Test]
+        public void RebuildProfileWhenTheSunColorChanges()
+        {
+            // Arrange
+            PBSun pbSun = AddSun(1f);
+            pbSun.Color = Gradient(Color.green);
+            system.Update(0);
+            SceneEnvironmentProfile? previous = Overrides().Environment;
+
+            // Act
+            pbSun.Color = Gradient(Color.blue);
+            pbSun.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            SceneEnvironmentProfile? environment = Overrides().Environment;
+            Assert.That(environment, Is.Not.SameAs(previous));
+            Assert.That(environment!.SunColor!.Evaluate(0.5f), Is.EqualTo(Color.blue));
+        }
+
+        [Test]
+        public void RebuildProfileWhenTheSunVisibilityChanges()
+        {
+            // Arrange
+            PBSun pbSun = AddSun(1f);
+            system.Update(0);
+            Assert.That(Overrides().Environment, Is.Null);
+
+            // Act
+            pbSun.Visible = false;
+            pbSun.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            Assert.That(Overrides().Environment, Is.Not.Null);
+            Assert.That(Overrides().Environment!.SunVisible, Is.False);
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(1f));
         }
 
         [Test]
@@ -589,8 +591,8 @@ namespace DCL.SDKComponents.Skybox.Tests
             SceneEnvironmentProfile? environment = Overrides().Environment;
             Assert.That(environment, Is.Not.Null);
             Assert.That(environment, Is.Not.SameAs(previous));
-            Assert.That(environment!.SunIntensity, Is.Null);
-            Assert.That(environment.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(environment!.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(Overrides().Sun, Is.EqualTo(SceneSunOverride.NONE));
             Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
         }
 
@@ -614,7 +616,7 @@ namespace DCL.SDKComponents.Skybox.Tests
             Assert.That(Overrides().SkyboxTexture, Is.Null);
             Assert.That(Slot().TextureData, Is.Null);
             Assert.That(data.CanBeDisposed(), Is.True);
-            Assert.That(Overrides().Environment!.SunIntensity, Is.EqualTo(2f));
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(2f));
             Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
         }
 
@@ -631,9 +633,8 @@ namespace DCL.SDKComponents.Skybox.Tests
             system.Update(0);
 
             // Assert
-            SceneEnvironmentProfile? environment = Overrides().Environment;
-            Assert.That(environment!.SunIntensity, Is.EqualTo(2f));
-            Assert.That(environment.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(Overrides().Environment!.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.red));
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(2f));
         }
 
         [Test]
@@ -697,9 +698,42 @@ namespace DCL.SDKComponents.Skybox.Tests
             SceneEnvironmentProfile? environment = Overrides().Environment;
             Assert.That(environment, Is.Not.Null);
             Assert.That(environment!.FogColor!.Evaluate(0.5f), Is.EqualTo(Color.blue));
-            Assert.That(environment.SunIntensity, Is.EqualTo(2f));
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(2f));
             Assert.That(Component().Environment, Is.SameAs(environment));
             Assert.That(Overrides().Owner, Is.EqualTo(OWN_SCENE));
+        }
+
+        [Test]
+        public void IgnoreCurrentChangesBeforeInitialize()
+        {
+            // Arrange: portable experiences flag themselves current from the facade constructor, before the systems initialize
+            Entity otherRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY));
+            var uninitialized = new SceneSkyboxHandlerSystem(world, globalWorld, otherRoot, sceneData, PartitionComponent.TOP_PRIORITY, sceneStateProvider);
+            world.Add(otherRoot, new PBSun { IsDirty = true, Intensity = 2f });
+
+            // Act
+            uninitialized.OnSceneIsCurrentChanged(true);
+            uninitialized.OnSceneIsCurrentChanged(false);
+
+            // Assert
+            Assert.That(world.Has<SceneSkyboxComponent>(otherRoot), Is.False);
+            AssertGlobalCleared();
+        }
+
+        [Test]
+        public void ClearSunOverrideOnLeave()
+        {
+            // Arrange
+            AddSun(2f);
+            system.Update(0);
+            Assert.That(Overrides().Sun.Intensity, Is.EqualTo(2f));
+
+            // Act
+            system.OnSceneIsCurrentChanged(false);
+
+            // Assert
+            AssertGlobalCleared();
+            Assert.That(Component().Sun.Intensity, Is.EqualTo(2f), "the override stays on the scene for an instant re-apply");
         }
 
         [Test]
@@ -832,6 +866,7 @@ namespace DCL.SDKComponents.Skybox.Tests
         {
             Assert.That(Overrides().SkyboxTexture, Is.Null);
             Assert.That(Overrides().Environment, Is.Null);
+            Assert.That(Overrides().Sun, Is.EqualTo(SceneSunOverride.NONE));
             Assert.That(Overrides().Owner, Is.Null);
         }
     }

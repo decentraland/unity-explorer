@@ -124,12 +124,15 @@ Shader "DCL/EquirectToCube"
                 }
 
                 sampler2D _MainTex;
+                float4 _MainTex_TexelSize;
 
                 // Latitude-longitude lookup: u wraps around +Z (image centre), v runs from -Y (bottom row) to +Y (top row).
                 float4 frag(v2f IN) : SV_Target
                 {
                     float3 d = normalize(IN.direction);
                     float2 uv = float2(atan2(d.x, d.z) / (2.0 * UNITY_PI) + 0.5, asin(d.y) / UNITY_PI + 0.5);
+                    // v stays half a texel inside the edge rows so the wrapping texture does not blend zenith into nadir
+                    uv.y = clamp(uv.y, 0.5 * _MainTex_TexelSize.y, 1.0 - 0.5 * _MainTex_TexelSize.y);
                     return float4(tex2D(_MainTex, uv).rgb, 1.0);
                 }
             ENDHLSL
