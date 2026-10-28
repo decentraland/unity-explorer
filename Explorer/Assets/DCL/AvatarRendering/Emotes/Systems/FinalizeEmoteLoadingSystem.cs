@@ -30,7 +30,12 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateAfter(typeof(LoadSceneEmotesSystem))]
     public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesDTOByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
     {
-        public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world, emoteStorage, new ListObjectPool<URN>()) { }
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
+
+        public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage, AbgenConversionMetrics abgenConversionMetrics) : base(world, emoteStorage, new ListObjectPool<URN>())
+        {
+            this.abgenConversionMetrics = abgenConversionMetrics;
+        }
 
         protected override void Update(float t)
         {
@@ -81,6 +86,15 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                else if (World.TryGet(entity, out SceneEmoteRawGltfFallback fallback))
+                {
+                    // The bundle is cached and reference-counted; this consumer is leaving it for the raw file.
+                    if (gltfAssetResult.Succeeded)
+                        gltfAssetResult.Asset?.Dereference();
+
+                    FallBackToRawGltf(entity, emote, bodyShape, fallback, gltfAssetResult.Succeeded ? "bundle has no GameObject" : gltfAssetResult.Exception?.Message ?? "bundle failed to load");
+                    return;
+                }
                 else
                 {
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
@@ -115,6 +129,18 @@ namespace DCL.AvatarRendering.Emotes
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
             }
+        }
+
+        /// <summary>
+        ///     Replaces the failed bundle promise with a raw GLB promise for the same emote and body shape; the emote stays loading.
+        /// </summary>
+        private void FallBackToRawGltf(Entity entity, IEmote emote, BodyShape bodyShape, SceneEmoteRawGltfFallback fallback, string reason)
+        {
+            ReportHub.LogWarning(GetReportData(), $"{fallback.EmotePath}: scene emote asset bundle unavailable ({reason}), loading the raw GLB instead");
+            abgenConversionMetrics.OnFailed(fallback.EmotePath, $"{reason} — loaded as raw GLB");
+
+            World.Destroy(entity);
+            GetSceneEmoteFromLocalSceneIntention.CreateRawGltfPromise(World, fallback.EmotePath, fallback.EmoteHash, fallback.Partition, emote, bodyShape);
         }
 
         private void AssignEmoteResult(IEmote emote, BodyShape bodyShape, AttachmentRegularAsset regularAssetResult)

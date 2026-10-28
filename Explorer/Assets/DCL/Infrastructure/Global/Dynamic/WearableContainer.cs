@@ -158,6 +158,8 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics.EntitiesAnalytics,
                 EmotesEventBus,
                 TrimmedEmoteCatalog,
-                staticContainer.EmotesContainer.EmotePlayer);
+                staticContainer.EmotesContainer.EmotePlayer,
+                bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics);
     }
 }
