@@ -15,7 +15,7 @@ use segment::{
     message::{BatchMessage, User},
     queue::{
         event_queue::{CombinedAnalyticsEventQueue, CombinedAnalyticsEventQueueNewResult, EnqueError},
-        event_send_daemon::AnalyticsEventSendDaemon,
+        event_send_daemon::{AnalyticsEventSendDaemon, SendFailure},
     },
     Client, HttpClient,
 };
@@ -273,8 +273,15 @@ impl SegmentServer {
         async_runtime.spawn(
             AssertUnwindSafe(async move {
                 let mut guard = moved_send_daemon.lock();
-                guard.start(move |message: &str| {
-                    let message = String::from(message);
+                guard.start(move |failure: SendFailure<'_>| {
+                    let message = match failure {
+                        SendFailure::WillRetry(e) => {
+                            format!("Error executing send loop (will retry): {:#?}", e)
+                        }
+                        SendFailure::WillDrop(e) => {
+                            format!("Error executing send loop (will drop): {:#?}", e)
+                        }
+                    };
                     daemon_event_input.try_enqueue_error(message);
                 });
             })
