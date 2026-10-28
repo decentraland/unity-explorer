@@ -307,8 +307,15 @@ namespace Global.Dynamic
                 return;
             }
 
+            // Fetched at most once, and only when a start-up decision below needs it.
+            AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
+                UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));
+
             if (applicationParametersParser.HasPendingDeepLink)
-                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+            {
+                FeatureFlagsConfiguration? flags = await startupFeatureFlags;
+                DeepLinkAllowlist.SetWhitelistedWorlds(flags == null ? Array.Empty<string>() : DeepLinkWorldWhitelistProvider.ReadWorlds(flags));
+            }
 
             applicationParametersParser.InitializeDeepLinks();
 
@@ -377,7 +384,7 @@ namespace Global.Dynamic
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
                 abgenConversionMetrics.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
             else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment
-                     && !await LsdForcedAbFlagProvider.IsEnabledAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct))
+                     && (await startupFeatureFlags)?.IsEnabled(FeatureFlagsStrings.LSD_FORCED_AB) != true)
                 abgenConversionMetrics.OnMilestone($"raw GLTFs — local asset bundles need the {FeatureFlagsStrings.LSD_FORCED_AB} feature flag, which is off or unreachable");
             else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
@@ -783,12 +790,6 @@ namespace Global.Dynamic
             }
 
             DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
-        }
-
-        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
-        {
-            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync(FeatureFlagsDocumentUrl(appArgs), ct);
-            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
         }
 
         /// <summary>The app's feature-flags document, honouring <see cref="AppArgsFlags.FeatureFlags.URL" />.</summary>

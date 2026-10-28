@@ -47,7 +47,7 @@ For example you could be interested in testing some scenes from the [SDK Goerli 
 
 1. Set the Main Scene Loader -> Startup Config -> Initial Realm to "Localhost".
 2. Set the initial position to one of the locally running scene.
-3. Toggle the "Use Remote Asset Bundles" according to your need. If it's off then the original raw GLTFs from the locally running scene will be loaded instead of downloading their asset bundle version (if it exists). Note: edits to a `.glb` file are picked up on `/reload` even though the dev server's content hash is path-based (and so unchanged across content edits) — `ECSReloadScene` drains the asset caches eagerly on every LSD reload to force fresh loads.
+3. Models load as local asset bundles or raw GLTFs as described in [Local asset bundles](#local-asset-bundles); there is no Editor switch for it. Note: edits to a `.glb` file are picked up on `/reload` even though the dev server's content hash is path-based (and so unchanged across content edits) — `ECSReloadScene` drains the asset caches eagerly on every LSD reload to force fresh loads.
 4. Hit PLAY and the editor should connect to the locally running scene.
 
 ## Connecting a custom build to the scene
@@ -113,7 +113,7 @@ Decentraland.exe --realm http://127.0.0.1:8000 --position 0,0 --local-scene true
 
 ## Local asset bundles
 
-By default a local scene is previewed with real asset bundles: the explorer launches an embedded
+With the `alfa-lsd-forced-ab` feature flag on, a local scene is previewed with real asset bundles: the explorer launches an embedded
 [abgen](https://github.com/decentraland/abgen) sidecar (on the first run it downloads a pinned,
 checksum-verified binary — no abgen installation or `ABGEN_*` environment setup is needed), fetches
 the scene's asset-bundle manifest from it (the sidecar converts the scene's GLBs just-in-time) and
@@ -121,18 +121,19 @@ downloads bundles from the same server. Wearables/emotes keep working — the si
 the production registry's records and streams their bundles from the production ab-cdn. See
 [`abgen-sidecar.md`](abgen-sidecar.md) for the architecture.
 
-**Every failure degrades to raw GLTFs, never to a broken scene.** If the binary cannot be
-downloaded, the server does not start (or its port is held by something else), the scene's
+**Every failure degrades the scene to raw GLTFs, never to a broken scene.** If the binary cannot
+be downloaded, the server does not start (or its port is held by something else), the scene's
 manifest cannot be fetched, or the server dies mid-session, the scene loads its raw GLTFs instead
 — whole-scene when the server is unavailable, per file when a single bundle fails to convert or
-load. The scene dev console's AB tab opens itself and says what happened and why (the summary
+load. A server that dies mid-session also leaves wearables, emotes and LODs unavailable until
+relaunch. The scene dev console's AB tab opens itself and says what happened and why (the summary
 starts with `RAW GLTFs — <reason>`, and per-file fallbacks show as `FAILED <file> — … loaded as raw
 GLTF`); the sidebar's AB button stays lit until the tab has been looked at. The `HIGHLIGHT SOURCES`
 button in the tab tints bundle-sourced objects green and raw-GLTF ones red.
 
-This is what local scene development always does: there is no `--local-ab` argument or Editor
-checkbox any more (Creator Hub's `local-ab=true` is still accepted and ignored). The one switch is
-the opt-out, off by default:
+The `alfa-lsd-forced-ab` feature flag is read at startup; off or unreachable means raw GLTFs and
+no sidecar. There is no `--local-ab` argument or Editor checkbox any more (Creator Hub's
+`local-ab=true` is still accepted and ignored). With the flag on, the opt-out is:
 
 ```
 --lsd-raw-gltf

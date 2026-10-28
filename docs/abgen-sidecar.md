@@ -1,10 +1,11 @@
 # Local asset bundles via the abgen sidecar
 
-**Pinned:** abgen v0.21.0 · **On by default** in local scene development — no Editor switch, no
-opt-in flag (Creator Hub's legacy `local-ab=true` is accepted and ignored); `--lsd-raw-gltf` is the
-opt-out and skips the sidecar entirely · **Guarantee:** every
-failure — install, launch, manifest, a single file, the server dying later — degrades to raw GLTFs
-and is reported on the AB tab, never a broken scene.
+**Pinned:** abgen v0.21.0 · **Gated** by the `alfa-lsd-forced-ab` feature flag, read at startup
+(off or unreachable means raw GLTFs and no sidecar); no Editor switch, no opt-in argument (Creator
+Hub's legacy `local-ab=true` is accepted and ignored); `--lsd-raw-gltf` is the opt-out and skips the
+sidecar entirely · **Guarantee:** every scene-model failure — install, launch, manifest, a single
+file, the server dying later — degrades to raw GLTFs and is reported on the AB tab. If the server
+dies mid-session, wearables, emotes and LODs stay unavailable until relaunch.
 
 ## Architecture
 
@@ -109,8 +110,9 @@ The scene must load whatever happens to the sidecar, so every failure has a raw-
   is installed so deferred loading admits it like any new request. The file shows as `FAILED` on the
   AB tab.
 - **Server dies mid-session** and supervision gives up (3 restarts): the dead port makes every
-  bundle request fail fast, the per-file fallback above loads the raw files, and the reason is
-  recorded.
+  bundle request fail fast, the per-file fallback above loads the scene's raw files, and the reason
+  is recorded. Wearables, emotes, LODs and registry lookups still resolve to the dead port and have
+  no fallback; they stay unavailable until relaunch.
 
 The recorded reason is `AbgenConversionMetrics.RawGltfFallbackReason`: the AB tab's summary leads
 with `RAW GLTFs — <reason>`, the tab opens itself, never auto-closes while degraded, and the

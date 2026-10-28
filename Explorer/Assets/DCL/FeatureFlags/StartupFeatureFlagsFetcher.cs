@@ -9,23 +9,22 @@ using Utility.Networking;
 namespace DCL.FeatureFlags
 {
     /// <summary>
-    ///     Best-effort, anonymous, standalone read of the <see cref="FeatureFlagsStrings.LSD_FORCED_AB" /> flag.
-    ///     Local scene development decides whether to launch the abgen sidecar before the full feature-flags system
-    ///     is initialized, so the flag is fetched on its own at that point.
+    ///     Best-effort, anonymous, standalone fetch of the feature-flags document for decisions made early in bootstrap,
+    ///     before the full feature-flags system is initialized (the deep-link world whitelist, local asset bundles).
     ///     <para>
-    ///     Fails closed: any error, non-success response, or timeout reads as disabled (raw GLTFs).
+    ///     Fails closed: any error, non-success response, or timeout yields null.
     ///     </para>
     /// </summary>
-    public static class LsdForcedAbFlagProvider
+    public static class StartupFeatureFlagsFetcher
     {
         // A start-up path can't wait for long: UnityWebRequest.timeout is in seconds.
         private const int FETCH_TIMEOUT_SECONDS = 5;
 
         /// <summary>
         ///     <paramref name="fetchUrl" /> is the full feature-flags document URL
-        ///     (e.g. https://feature-flags.decentraland.org/explorer.json).
+        ///     (e.g. https://feature-flags.decentraland.org/explorer.json). The returned keys are app-name-stripped.
         /// </summary>
-        public static async UniTask<bool> IsEnabledAsync(string fetchUrl, CancellationToken ct)
+        public static async UniTask<FeatureFlagsConfiguration?> FetchAsync(string fetchUrl, CancellationToken ct)
         {
             try
             {
@@ -43,20 +42,20 @@ namespace DCL.FeatureFlags
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    ReportHub.LogWarning(ReportCategory.FEATURE_FLAGS, $"{FeatureFlagsStrings.LSD_FORCED_AB} flag fetch failed ({request.result}): {request.error}");
-                    return false;
+                    ReportHub.LogWarning(ReportCategory.FEATURE_FLAGS, $"Startup feature flags fetch failed ({request.result}): {request.error}");
+                    return null;
                 }
 
                 FeatureFlagsResultDto dto = JsonConvert.DeserializeObject<FeatureFlagsResultDto>(request.downloadHandler.text);
                 dto = HttpFeatureFlagsProvider.StripAppNameFromKeys(FeatureFlagOptions.APP_NAME, dto);
 
-                return new FeatureFlagsConfiguration(dto).IsEnabled(FeatureFlagsStrings.LSD_FORCED_AB);
+                return new FeatureFlagsConfiguration(dto);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.FEATURE_FLAGS, $"{FeatureFlagsStrings.LSD_FORCED_AB} flag fetch errored, loading raw GLTFs: {e.Message}");
-                return false;
+                ReportHub.LogWarning(ReportCategory.FEATURE_FLAGS, $"Startup feature flags fetch errored: {e.Message}");
+                return null;
             }
         }
     }
