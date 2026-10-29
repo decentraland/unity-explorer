@@ -35,20 +35,20 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
         private void HandleComponentRemovalAudio(ref AudioSourceComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestructionAudio(ref AudioSourceComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         private void FinalizeComponentsAudio(ref AudioSourceComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 #endregion
 
@@ -58,20 +58,20 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
         private void HandleComponentRemovalPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestructionPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         private void FinalizeComponentsPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 #endregion
 

@@ -16,7 +16,7 @@ namespace Plugins.NativeAudioAnalysis
 
         private void OnEnable()
         {
-            Buffer.SampleRate = AudioSettings.outputSampleRate;
+            Buffer.EnsureCapacity(LastAudioFrameBuffer.OutputFrameLength());
             Buffer.Reset();
             enableRead = true;
         }

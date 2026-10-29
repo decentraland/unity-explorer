@@ -2,39 +2,77 @@
 
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace Plugins.NativeAudioAnalysis
 {
     /// <summary>
-    ///     Keeps the most recent audio buffer written from the audio thread until the main thread consumes it.
-    ///     Frames written while the previous one is still unconsumed are dropped, so neither side ever blocks.
+    ///     Keeps the most recent audio buffer written from the audio thread until the main thread copies it out.
+    ///     Frames written while the previous one is still pending or being read are dropped, so neither side ever blocks.
     /// </summary>
     public sealed class LastAudioFrameBuffer
     {
         private const int FREE = 0;
         private const int WRITING = 1;
         private const int READY = 2;
+        private const int READING = 3;
 
         private int state = FREE;
-        private float[] buffer = Array.Empty<float>();
+        private float[] samples;
+        private int sampleCount;
         private int channels;
 
-        /// <summary>
-        ///     Rate the published frames are sampled at. Written on the main thread only.
-        /// </summary>
-        public int SampleRate { get; set; }
-
-        /// <summary>
-        ///     Main thread tries to consume the latest audio frame. Output is not owned and must be used in place.
-        /// </summary>
-        public bool TryConsume(out float[]? output, out int outChannels, out int outSampleRate)
+        public LastAudioFrameBuffer(int capacity = 0)
         {
-            outSampleRate = SampleRate;
+            samples = capacity > 0 ? new float[capacity] : Array.Empty<float>();
+        }
 
-            bool result = Interlocked.CompareExchange(ref state, FREE, READY) == READY;
+        /// <summary>
+        ///     Number of samples the engine hands to one DSP callback: the DSP buffer length times the output channel count.
+        ///     Main thread only.
+        /// </summary>
+        public static int OutputFrameLength()
+        {
+            AudioSettings.GetDSPBufferSize(out int bufferLength, out _);
+            return bufferLength * ChannelCount(AudioSettings.speakerMode);
+        }
+
+        /// <summary>
+        ///     Main thread sizes the slot ahead of the first write so the audio thread never allocates.
+        ///     A pending frame is dropped; when the audio thread holds the slot right now, <see cref="Write" /> resizes once on its own.
+        /// </summary>
+        public void EnsureCapacity(int capacity)
+        {
+            if (samples.Length >= capacity)
+                return;
+
+            Reset();
+
+            if (Interlocked.CompareExchange(ref state, WRITING, FREE) != FREE)
+                return;
+
+            samples = new float[capacity];
+            Volatile.Write(ref state, FREE);
+        }
+
+        /// <summary>
+        ///     Main thread copies the latest frame out. The slot stays owned by the reader until the copy is done,
+        ///     so the audio thread cannot overwrite a frame mid-read.
+        /// </summary>
+        public bool TryConsume(Span<float> destination, out int outChannels, out int outSampleCount)
+        {
+            if (Interlocked.CompareExchange(ref state, READING, READY) != READY)
+            {
+                outChannels = 0;
+                outSampleCount = 0;
+                return false;
+            }
+
+            outSampleCount = Math.Min(sampleCount, destination.Length);
+            samples.AsSpan(0, outSampleCount).CopyTo(destination);
             outChannels = channels;
-            output = result ? buffer : null;
-            return result;
+            Volatile.Write(ref state, FREE);
+            return true;
         }
 
         /// <summary>
@@ -45,11 +83,11 @@ namespace Plugins.NativeAudioAnalysis
             if (Interlocked.CompareExchange(ref state, WRITING, FREE) != FREE)
                 return;
 
-            // One-time resize only: the DSP buffer size is stable for the lifetime of the audio configuration.
-            if (buffer.Length != data.Length)
-                buffer = new float[data.Length];
+            if (samples.Length < data.Length)
+                samples = new float[data.Length];
 
-            data.CopyTo(buffer, 0);
+            data.CopyTo(samples, 0);
+            sampleCount = data.Length;
             channels = dataChannels;
             Volatile.Write(ref state, READY);
         }
@@ -62,5 +100,17 @@ namespace Plugins.NativeAudioAnalysis
         {
             Interlocked.CompareExchange(ref state, FREE, READY);
         }
+
+        private static int ChannelCount(AudioSpeakerMode mode) =>
+            mode switch
+            {
+                AudioSpeakerMode.Mono => 1,
+                AudioSpeakerMode.Stereo => 2,
+                AudioSpeakerMode.Quad => 4,
+                AudioSpeakerMode.Surround => 5,
+                AudioSpeakerMode.Mode5point1 => 6,
+                AudioSpeakerMode.Mode7point1 => 8,
+                _ => 2,
+            };
     }
 }

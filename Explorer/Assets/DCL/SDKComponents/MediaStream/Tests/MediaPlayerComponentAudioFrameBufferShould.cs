@@ -1,14 +1,14 @@
 using NUnit.Framework;
-using Plugins.NativeAudioAnalysis;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UUAV;
 using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
     /// <summary>
-    ///     Covers the AudioAnalysis buffer lifecycle on a URL player: the tap is registered on the player's DSP
-    ///     callback and released before the pooled player can be handed to another entity.
+    ///     Covers the AudioAnalysis capture lifecycle on a URL player: capture is enabled on the player's DSP
+    ///     callback and disabled before the pooled player can be handed to another entity.
     /// </summary>
     public class MediaPlayerComponentAudioFrameBufferShould
     {
@@ -16,7 +16,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
         private GameObject host = null!;
         private MediaPlayer mediaPlayer = null!;
+        private UUAVPlayer uuavPlayer = null!;
         private MediaPlayerComponent component;
+        private float[] destination = null!;
 
         [SetUp]
         public void SetUp()
@@ -26,9 +28,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             // EditMode never awakes components: run the facade's Awake by hand so it owns a UUAVPlayer.
             // That player is not awoken either, so its native id stays 0 and no native call is made.
-            mediaPlayer.Awake();
+            mediaPlayer.AwakeForTests();
+            uuavPlayer = host.GetComponent<UUAVPlayer>();
 
             component = new MediaPlayerComponent(MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(mediaPlayer, null!)), isFromContentServer: false);
+            destination = new float[4];
         }
 
         [TearDown]
@@ -42,58 +46,75 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void RegisterTheBufferAsThePlayerTap()
+        public void ConsumeNothingBeforeAttach()
         {
             // Act
-            bool attached = component.TryGetOrAttachAudioFrameBuffer(out LastAudioFrameBuffer? buffer);
+            uuavPlayer.OnAudioFilterReadForTests(new float[4], CHANNELS);
+            bool consumed = component.TryConsumeAudioFrame(destination, out _, out _);
+
+            // Assert
+            Assert.That(consumed, Is.False);
+        }
+
+        [Test]
+        public void EnableCaptureOnThePlayerWhenAttached()
+        {
+            // Act
+            bool attached = component.TryAttachAudioFrameBuffer();
+            uuavPlayer.OnAudioFilterReadForTests(new float[4], CHANNELS);
+            bool consumed = component.TryConsumeAudioFrame(destination, out _, out _);
 
             // Assert
             Assert.That(attached, Is.True);
-            Assert.That(mediaPlayer.AudioFrameTap, Is.Not.Null);
-            Assert.That(buffer!.SampleRate, Is.EqualTo(AudioSettings.outputSampleRate));
+            Assert.That(consumed, Is.True);
         }
 
         [Test]
-        public void FeedTheBufferFromTheTap()
+        public void ConsumeTheCapturedFrame()
         {
-            // Arrange
-            component.TryGetOrAttachAudioFrameBuffer(out LastAudioFrameBuffer? buffer);
+            // Arrange: without a native player the callback silences the buffer; the frame must carry that result.
+            component.TryAttachAudioFrameBuffer();
             float[] dspBuffer = { 0.5f, 0.5f, 0.5f, 0.5f };
 
             // Act
-            mediaPlayer.AudioFrameTap!(dspBuffer, CHANNELS);
-            bool consumed = buffer!.TryConsume(out float[]? output, out int channels, out _);
+            uuavPlayer.OnAudioFilterReadForTests(dspBuffer, CHANNELS);
+            bool consumed = component.TryConsumeAudioFrame(destination, out int channels, out int sampleCount);
 
             // Assert
             Assert.That(consumed, Is.True);
-            Assert.That(output, Is.EqualTo(dspBuffer));
+            Assert.That(destination, Is.EqualTo(new[] { 0f, 0f, 0f, 0f }));
             Assert.That(channels, Is.EqualTo(CHANNELS));
+            Assert.That(sampleCount, Is.EqualTo(dspBuffer.Length));
         }
 
         [Test]
-        public void ReuseTheSameBufferOnRepeatedAttach()
+        public void KeepCapturingOnRepeatedAttach()
         {
             // Arrange
-            component.TryGetOrAttachAudioFrameBuffer(out LastAudioFrameBuffer? first);
+            component.TryAttachAudioFrameBuffer();
 
             // Act
-            component.TryGetOrAttachAudioFrameBuffer(out LastAudioFrameBuffer? second);
+            component.TryAttachAudioFrameBuffer();
+            uuavPlayer.OnAudioFilterReadForTests(new float[4], CHANNELS);
+            bool consumed = component.TryConsumeAudioFrame(destination, out _, out _);
 
             // Assert
-            Assert.That(second, Is.SameAs(first));
+            Assert.That(consumed, Is.True);
         }
 
         [Test]
-        public void ClearThePlayerTapWhenRemoved()
+        public void DisableCaptureOnThePlayerWhenDetached()
         {
             // Arrange
-            component.TryGetOrAttachAudioFrameBuffer(out _);
+            component.TryAttachAudioFrameBuffer();
 
             // Act
-            component.EnsureAudioFrameBufferIsRemoved();
+            component.DetachAudioFrameBuffer();
+            uuavPlayer.OnAudioFilterReadForTests(new float[4], CHANNELS);
+            bool consumed = component.TryConsumeAudioFrame(destination, out _, out _);
 
             // Assert
-            Assert.That(mediaPlayer.AudioFrameTap, Is.Null);
+            Assert.That(consumed, Is.False);
         }
     }
 }

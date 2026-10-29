@@ -103,8 +103,9 @@ namespace UUAV
         private long dspFramesReturned;
         private long dspSilencedCallbacks;
 
-        // set on the main thread, invoked on the audio mixer thread
-        private Action<float[], int>? audioFrameTap;
+        // flipped on the main thread, read on the audio mixer thread
+        private int audioCaptureEnabled;
+        private readonly AudioFrameSnapshot audioCapture = new ();
 
         public string CurrentUrl => url;
 
@@ -134,18 +135,6 @@ namespace UUAV
             targetTexture != null ? targetTexture : runtimeSurface;
 
         public AudioSource AudioSource => audioSource;
-
-        /// <summary>
-        /// Invoked on the audio mixer thread with every buffer this player's
-        /// DSP callback produces, after it is filled or silenced. A sibling
-        /// OnAudioFilterRead component does not observe this player's output
-        /// (see AudioTapBehaviour), so this is the only way to inspect it.
-        /// </summary>
-        public Action<float[], int>? AudioFrameTap
-        {
-            get => audioFrameTap;
-            set => Volatile.Write(ref audioFrameTap, value);
-        }
 
         public void OpenMedia(string mediaUrl)
         {
@@ -187,6 +176,7 @@ namespace UUAV
         {
             Check(NativeMethods.uuav_player_close_media(playerId), "close media");
             ReleaseFrame();
+            SetAudioCaptureEnabled(false);
         }
 
         [ContextMenu(nameof(Play))]
@@ -233,6 +223,42 @@ namespace UUAV
                 NativeMethods.uuav_player_assign_master_clock(playerId, mediaTime),
                 "assign master clock"
             );
+        }
+
+        /// <summary>
+        /// Opt-in copy of every buffer this player's DSP callback produces,
+        /// after it is filled or silenced, for <see cref="TryReadLastAudioFrame"/>.
+        /// A sibling OnAudioFilterRead component does not observe this
+        /// player's output (see AudioTapBehaviour), so this is the only way
+        /// to inspect it. Main thread only; closing the media disables it.
+        /// </summary>
+        public void SetAudioCaptureEnabled(bool enabled)
+        {
+            if (!enabled)
+            {
+                Volatile.Write(ref audioCaptureEnabled, 0);
+                audioCapture.Reset();
+                return;
+            }
+
+            if (Volatile.Read(ref audioCaptureEnabled) == 1)
+            {
+                return;
+            }
+
+            AudioSettings.GetDSPBufferSize(out int bufferLength, out _);
+            int channels = AudioOptions.FromConfig(AudioSettings.GetConfiguration()).Channels;
+            audioCapture.EnsureCapacity(bufferLength * channels);
+            Volatile.Write(ref audioCaptureEnabled, 1);
+        }
+
+        /// <summary>
+        /// Main-thread copy of the latest captured DSP buffer. False when
+        /// capture is disabled or no new buffer arrived since the last read.
+        /// </summary>
+        public bool TryReadLastAudioFrame(Span<float> destination, out int channels, out int sampleCount)
+        {
+            return audioCapture.TryRead(destination, out channels, out sampleCount);
         }
 
         public static UUAVPlayer New()
@@ -355,11 +381,19 @@ namespace UUAV
 
 
         // audio mixer thread
-        internal void OnAudioFilterRead(float[] data, int channels)
+        private void OnAudioFilterRead(float[] data, int channels)
         {
             FillAudio(data, channels);
-            Volatile.Read(ref audioFrameTap)?.Invoke(data, channels);
+
+            if (Volatile.Read(ref audioCaptureEnabled) == 1)
+            {
+                audioCapture.Write(data, channels);
+            }
         }
+
+#if UNITY_INCLUDE_TESTS
+        public void OnAudioFilterReadForTests(float[] data, int channels) => OnAudioFilterRead(data, channels);
+#endif
 
         // audio mixer thread. playerId is immutable, safe to read directly;
         // a stale id after uuav_player_free is a native no-op returning 0

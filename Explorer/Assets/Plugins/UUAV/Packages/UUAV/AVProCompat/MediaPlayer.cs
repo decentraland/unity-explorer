@@ -17,15 +17,6 @@ namespace UUAV.Compat
 
         public AudioSource AudioSource => uuavPlayer.AudioSource;
 
-        /// <summary>
-        /// Audio-thread callback receiving every buffer the player's DSP produces; see <see cref="UUAVPlayer.AudioFrameTap"/>.
-        /// </summary>
-        public Action<float[], int>? AudioFrameTap
-        {
-            get => uuavPlayer.AudioFrameTap;
-            set => uuavPlayer.AudioFrameTap = value;
-        }
-
         public bool MediaOpened =>
             uuavPlayer is not null && uuavPlayer.State is not (UUAVState.Closed or UUAVState.Error or UUAVState.Unknown);
 
@@ -41,8 +32,7 @@ namespace UUAV.Compat
             }
         }
 
-        // internal: EditMode tests run it by hand, since Unity never awakes components there
-        internal void Awake()
+        private void Awake()
         {
             uuavPlayer = gameObject.AddComponent<UUAVPlayer>();
             backend = new UUAVBackend(uuavPlayer);
@@ -52,6 +42,11 @@ namespace UUAV.Compat
         {
             backend.Tick();
         }
+
+#if UNITY_INCLUDE_TESTS
+        // EditMode never awakes components: tests run it by hand so the facade owns a UUAVPlayer.
+        public void AwakeForTests() => Awake();
+#endif
 
         public bool OpenMedia(string path, bool autoPlay)
         {
@@ -68,6 +63,19 @@ namespace UUAV.Compat
         public void CloseMedia()
         {
             uuavPlayer.CloseMedia();
+        }
+
+        /// <summary>
+        /// Opt-in snapshot of the player's DSP output for the main thread; see <see cref="UUAVPlayer.SetAudioCaptureEnabled"/>.
+        /// </summary>
+        public void SetAudioCaptureEnabled(bool enabled)
+        {
+            uuavPlayer.SetAudioCaptureEnabled(enabled);
+        }
+
+        public bool TryReadLastAudioFrame(Span<float> destination, out int channels, out int sampleCount)
+        {
+            return uuavPlayer.TryReadLastAudioFrame(destination, out channels, out sampleCount);
         }
     }
 }

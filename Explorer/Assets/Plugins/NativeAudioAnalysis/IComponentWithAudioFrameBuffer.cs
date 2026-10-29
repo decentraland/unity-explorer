@@ -1,13 +1,24 @@
-using System.Diagnostics.CodeAnalysis;
+using System;
 using UnityEngine;
 
 namespace Plugins.NativeAudioAnalysis
 {
     public interface IComponentWithAudioFrameBuffer
     {
-        bool TryGetOrAttachAudioFrameBuffer([NotNullWhen(true)] out LastAudioFrameBuffer? output);
+        /// <summary>
+        ///     Starts capturing the component's audio output. False when there is no output to capture yet.
+        /// </summary>
+        bool TryAttachAudioFrameBuffer();
 
-        void EnsureAudioFrameBufferIsRemoved();
+        /// <summary>
+        ///     Copies the latest captured frame into <paramref name="destination" />. False when no new frame is pending.
+        /// </summary>
+        bool TryConsumeAudioFrame(Span<float> destination, out int channels, out int sampleCount);
+
+        /// <summary>
+        ///     Stops capturing and releases whatever the attach created.
+        /// </summary>
+        void DetachAudioFrameBuffer();
     }
 
     /// <summary>
@@ -22,34 +33,30 @@ namespace Plugins.NativeAudioAnalysis
         // Is ok to have a default ctor of struct, inits always NULL field
         private ThreadSafeLastAudioFrameReadFilter? lastAudioFrameReadFilter;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(
-            AudioSource audioSource,
-            [NotNullWhen(true)] out LastAudioFrameBuffer? output
-        )
+        public void Attach(AudioSource audioSource)
         {
             if (lastAudioFrameReadFilter != null)
-            {
-                output = lastAudioFrameReadFilter.Buffer;
-                return true;
-            }
+                return;
 
-            if (audioSource != null)
-            {
-                lastAudioFrameReadFilter = audioSource.gameObject.AddComponent<ThreadSafeLastAudioFrameReadFilter>();
-                output = lastAudioFrameReadFilter.Buffer;
-                return true;
-            }
+            lastAudioFrameReadFilter = audioSource.gameObject.AddComponent<ThreadSafeLastAudioFrameReadFilter>();
+        }
 
-            output = null;
+        public bool TryConsume(Span<float> destination, out int channels, out int sampleCount)
+        {
+            if (lastAudioFrameReadFilter != null)
+                return lastAudioFrameReadFilter.Buffer.TryConsume(destination, out channels, out sampleCount);
+
+            channels = 0;
+            sampleCount = 0;
             return false;
         }
 
-        public void EnsureLastAudioFrameReadFilterIsRemoved()
+        public void Detach()
         {
             if (lastAudioFrameReadFilter != null)
             {
                 // Can be pooled
-                Object.Destroy(lastAudioFrameReadFilter);
+                UnityEngine.Object.Destroy(lastAudioFrameReadFilter);
                 lastAudioFrameReadFilter = null;
             }
         }

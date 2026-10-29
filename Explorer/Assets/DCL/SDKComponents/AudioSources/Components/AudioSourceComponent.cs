@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -61,19 +60,20 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
-        public bool TryGetOrAttachAudioFrameBuffer([NotNullWhen(true)] out LastAudioFrameBuffer? output)
+        public bool TryAttachAudioFrameBuffer()
         {
-            if (AudioSource is { } audioSource)
-                return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
+            if (AudioSource is not { } audioSource)
+                return false;
 
-            output = null;
-            return false;
+            lastAudioFrameReadFilter.Attach(audioSource);
+            return true;
         }
 
-        public void EnsureAudioFrameBufferIsRemoved()
-        {
-            lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
-        }
+        public bool TryConsumeAudioFrame(Span<float> destination, out int channels, out int sampleCount) =>
+            lastAudioFrameReadFilter.TryConsume(destination, out channels, out sampleCount);
+
+        public void DetachAudioFrameBuffer() =>
+            lastAudioFrameReadFilter.Detach();
 
         public void Dispose()
         {
@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.AudioSources
                 AudioSource.clip = null;
 
             AudioSource = null;
-            EnsureAudioFrameBufferIsRemoved();
+            DetachAudioFrameBuffer();
         }
     }
 }

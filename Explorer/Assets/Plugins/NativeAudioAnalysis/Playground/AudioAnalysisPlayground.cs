@@ -35,6 +35,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
         private float rotateByBpmSpeed = 10;
 
         private ThreadSafeLastAudioFrameReadFilter lastAudioFrame = null!;
+        private float[] frameScratch = Array.Empty<float>();
 
         private void Start() {
             Assert.AreEqual(bars.Length, NativeMethods.BANDS, "Bar count is not equls to band count");
@@ -47,13 +48,15 @@ namespace Plugins.NativeAudioAnalysis.Playground
 
             lastAudioFrame = GetComponent<ThreadSafeLastAudioFrameReadFilter>();
             Assert.IsNotNull(lastAudioFrame, "ThreadSafeLastAudioFrameReadFilter is not found");
+
+            frameScratch = new float[LastAudioFrameBuffer.OutputFrameLength()];
         }
 
         private void Update() 
         {
-            if (lastAudioFrame.Buffer.TryConsume(out float[]? output, out _, out int outSampleRate))
+            if (lastAudioFrame.Buffer.TryConsume(frameScratch, out _, out int sampleCount))
             {
-                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(output!, outSampleRate, analysisMode, amplitudeGain, bandsGain);
+                lastAnalysis = NativeMethods.AnalyzeAudioBuffer(frameScratch.AsSpan(0, sampleCount), AudioSettings.outputSampleRate, analysisMode, amplitudeGain, bandsGain);
             }
 
             // Bands intensity
