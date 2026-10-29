@@ -41,8 +41,12 @@ namespace DCL.Places
             sdk7Only.onValueChanged.RemoveAllListeners();
         }
 
+        public void SetDropdownInteractable(bool isInteractable) =>
+            sortDropdownButton.interactable = isInteractable;
+
         public void ResetFilters(bool invokeEvents = true)
         {
+            SetDropdownInteractable(true);
             sortContentDeselectable.gameObject.SetActive(true);
 
             // The default sort toggle must match PlacesView.ResetCurrentFilters

@@ -39,9 +39,23 @@ namespace DCL.WebRequests
         {
             bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !LoopbackUrls.IsLoopbackWebUrl(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
-            UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
+            UnityWebRequest webRequest = textureArguments.DecodeOffMainThread && !useKtx
+                ? NonReadableTextureRequest(requestUrl, textureArguments.TextureType)
+                : UnityWebRequest.Get(requestUrl);
+
+            if (textureArguments.DisableRedirects)
+                webRequest.redirectLimit = 0;
 
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
+        }
+
+        private static UnityWebRequest NonReadableTextureRequest(string url, TextureType textureType)
+        {
+            DownloadedTextureParams parameters = DownloadedTextureParams.Default;
+            parameters.readable = false;
+            parameters.mipmapChain = false;
+            parameters.linearColorSpace = textureType == TextureType.NormalMap;
+            return UnityWebRequestTexture.GetTexture(url, parameters);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>

@@ -45,6 +45,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private CommunityResultCardView communityCardPrefab = null!;
         [SerializeField] private CommunityRequestsReceivedGroupView requestsReceivedGroupPrefab = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
+        [SerializeField] private RectTransform[] loadingCards = null!;
 
         [Header("Invites")]
         [SerializeField] private Transform invitesGridContainer = null!;
@@ -77,6 +78,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CommunitiesBrowserStateService? communitiesBrowserStateService;
         private ThumbnailLoader? thumbnailLoader;
         private int currentInvitesAndRequestsCounter;
+        private bool isCompact;
 
         private void Awake()
         {
@@ -210,6 +212,18 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
+
+        public void SetCompactLayout(bool compact)
+        {
+            isCompact = compact;
+            CommunityCardsLayout.Apply(invitesGridContainer.GetComponent<GridLayoutGroup>(), compact);
+            CommunityCardsLayout.Apply(requestsGridContainer.GetComponent<GridLayoutGroup>(), compact);
+
+            foreach (CommunityRequestsReceivedGroupView group in currentRequestsReceivedGroups)
+                group.SetCompactLayout(compact);
+
+            CommunityCardsLayout.LayoutLoadingCards(loadingCards, compact);
+        }
 
         public void SetInvitesAndRequestsAsEmpty(bool isEmpty)
         {
@@ -396,6 +410,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             // Setup card data
             requestsReceivedGroupView.Initialize();
+            requestsReceivedGroupView.SetCompactLayout(isCompact);
             requestsReceivedGroupView.SetCommunityId(requestsReceivedGroup.Key.id);
             requestsReceivedGroupView.SetTitle(requestsReceivedGroup.Key.name);
             requestsReceivedGroupView.SetRequestsReceived(requestsReceivedGroup.Key.requestsReceived);

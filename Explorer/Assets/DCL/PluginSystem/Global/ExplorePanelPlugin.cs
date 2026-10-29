@@ -110,7 +110,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
@@ -154,6 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -199,7 +199,6 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
@@ -258,7 +257,8 @@ namespace DCL.PluginSystem.Global
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
             IPendingTransferService ownedNftFilter,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            LobbyStagePresetSetting lobbyStagePresetSetting
             )
         {
             this.eventBus = eventBus;
@@ -269,7 +269,6 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
@@ -330,6 +329,7 @@ namespace DCL.PluginSystem.Global
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.lobbyStagePresetSetting = lobbyStagePresetSetting;
         }
 
         public void Dispose()
@@ -443,7 +443,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatTeleporter, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, new SpriteCache(webRequestController),
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -498,7 +498,8 @@ namespace DCL.PluginSystem.Global
                 volumeBus,
                 assetsProvisioner,
                 eventBus,
-                settings.PointAtMarkerVisibilitySettings);
+                settings.PointAtMarkerVisibilitySettings,
+                lobbyStagePresetSetting);
 
             await settingsController.InitializeAsync();
 
@@ -527,7 +528,7 @@ namespace DCL.PluginSystem.Global
                 new CameraReelGalleryController(
                     cameraReelView.CameraReelGalleryView,
                     this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage,
+                    new SpriteCache(webRequestController),
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,
@@ -613,7 +614,10 @@ namespace DCL.PluginSystem.Global
                         { ExploreSections.Places, placesController },
                         { ExploreSections.Events, eventsController },
                         { ExploreSections.Settings, settingsController },
-                    });
+                        { ExploreSections.CameraReel, cameraReelController },
+                        { ExploreSections.Communities, communitiesBrowserController },
+                    },
+                    placesController);
 
                 mvcManager.RegisterController(exploreSectionModalController);
             }

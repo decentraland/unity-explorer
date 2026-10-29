@@ -129,11 +129,11 @@
     color: var(--lobby-title-color);
 }
 
-/* Left and top follow the pointer; the translate centres the sprite on it */
+/* 0.6 of the 52px sprite, as the uGUI previews scale their cursor Image; the translate centres it on the pointer */
 .lobby__avatar-drag-cursor {
     position: absolute;
-    width: 52px;
-    height: 52px;
+    width: 31.2px;
+    height: 31.2px;
     translate: -50% -50%;
     background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
 }
