@@ -20,8 +20,7 @@ using UnityEngine.Pool;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     /// <summary>
-    ///     Writes the profile outfit, never the scene's AvatarShape override. The visibility of each wearable is resolved from the profile
-    ///     alone and stays unset until every profile wearable is in <see cref="IWearableStorage" />, then the component is written again.
+    ///     Writes the profile outfit, never the scene's AvatarShape override.
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
@@ -131,7 +130,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         }
 
         /// <summary>
-        ///     Two pointers can share one stored wearable (e.g. two tokens of the same item), so the later one of a category wins by index.
+        ///     Two pointers can share one stored wearable, for example two tokens of the same item, so the later pointer of a category wins by index.
         /// </summary>
         private static bool IsVisible(List<IWearable> byPointer, int index, List<IWearable> visibleWearables)
         {
@@ -171,9 +170,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             }
         }
 
-        /// <summary>
-        ///     The written component lacks the visibility because a profile wearable is not loaded yet.
-        /// </summary>
         private struct WearablesVisibilityPending { }
     }
 }

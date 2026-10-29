@@ -17,10 +17,6 @@ using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.SceneWearables.Systems
 {
-    /// <summary>
-    ///     Replaces scene content <c>*.glb</c> paths in <see cref="PBAvatarShape.Wearables" /> with scene wearable URNs seeded into
-    ///     <see cref="IWearableStorage" />; unresolvable paths and items that are neither a URN nor a path are dropped.
-    /// </summary>
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateBefore(typeof(AvatarShapeHandlerSystem))]
     [LogCategory(ReportCategory.WEARABLE)]

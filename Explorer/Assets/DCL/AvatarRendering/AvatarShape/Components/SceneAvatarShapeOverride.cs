@@ -5,14 +5,10 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
-    /// <summary>
-    ///     The look the current scene puts on a player's avatar instead of the profile one, local to this client.
-    ///     Each unset field and empty <see cref="Wearables" /> keep the profile value.
-    /// </summary>
     public struct SceneAvatarShapeOverride
     {
         /// <summary>
-        ///     Replaces the whole profile wearable set when not empty.
+        ///     Empty keeps the profile wearables. Not empty replaces the whole profile wearable set.
         /// </summary>
         public readonly List<URN> Wearables;
 

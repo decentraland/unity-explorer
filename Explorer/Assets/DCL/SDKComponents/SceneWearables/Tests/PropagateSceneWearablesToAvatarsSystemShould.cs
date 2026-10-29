@@ -47,7 +47,6 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         [SetUp]
         public void SetUp()
         {
-            // Profile.NewRandomProfile validates the generated name against the feature registry.
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             globalWorld = World.Create();
@@ -465,8 +464,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         [Test]
         public void ApplyToRemotePlayerThroughTheBridgeEntity()
         {
-            // Arrange — the scene writes to the CRDT bridge's entity, while the SDKProfile lives on the
-            // multiplayer bridge's separate one; the two share nothing but the CRDT id.
+            // Arrange
             CreateRemoteAvatarShape(CATALYST_WEARABLE, OTHER_SCENE_WEARABLE, SCENE_WEARABLE);
             CreateRemoteBridgeEntity(REMOTE_WALLET);
 
@@ -573,7 +571,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         [Test]
         public void ClearRemoteOverrideWhenPlayerLeavesTheScene()
         {
-            // Arrange — the multiplayer bridge's entity is destroyed, while the scene's own entity keeps its shape.
+            // Arrange
             CreateRemoteAvatarShape(SCENE_WEARABLE);
             Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
             system.Update(0);
@@ -609,7 +607,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         [Test]
         public void ReapplyRemoteOverrideWhenPlayerReturnsToTheScene()
         {
-            // Arrange — the scene's entity outlives the player's absence; only the multiplayer bridge's one is recreated.
+            // Arrange
             PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
             Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
             system.Update(0);
@@ -706,14 +704,13 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         [Test]
         public void RetryUntilTheRemotePlayerProfileArrives()
         {
-            // Arrange — the multiplayer bridge creates the player entity before the profile reaches it.
+            // Arrange
             PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
             Entity bridgeEntity = world.Create(new PlayerSceneCRDTEntity(REMOTE_PLAYER_CRDT_ENTITY));
             system.Update(0);
 
             Assert.IsFalse(globalWorld.Has<SceneAvatarShapeOverride>(globalRemoteEntity));
 
-            // The dirty flag is reset at the end of every frame.
             pbAvatarShape.IsDirty = false;
 
             // Act
@@ -736,7 +733,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             world.Destroy(bridgeEntity);
             system.Update(0);
 
-            // Act — a profile showing up later is not picked up without a new write from the scene.
+            // Act
             CreateRemoteBridgeEntity(REMOTE_WALLET);
             system.Update(0);
 

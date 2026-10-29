@@ -10,9 +10,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    /// <summary>
-    ///     Synthesizes a <see cref="WearableDTO" /> for a scene content GLB named <c>*_&lt;category&gt;.glb</c>.
-    /// </summary>
     public static class SceneWearableDTOFactory
     {
         public const string SCENE_WEARABLE_PREFIX = "urn:decentraland:off-chain:scene-wearable";
@@ -50,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             $"{SCENE_WEARABLE_URN_START}{sceneId}-";
 
         /// <summary>
-        ///     Picks the longest category matching the <c>_&lt;category&gt;.glb</c> suffix, so <c>beard_facial_hair.glb</c> resolves to <c>facial_hair</c>, not <c>hair</c>.
+        ///     Picks the longest matching category, so <c>beard_facial_hair.glb</c> resolves to <c>facial_hair</c>, not <c>hair</c>.
         /// </summary>
         public static bool TryGetCategory(string path, [NotNullWhen(true)] out string? category)
         {

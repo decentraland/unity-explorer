@@ -7,9 +7,6 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    /// <summary>
-    ///     Resolves a player's scene-world entity, the one a scene writes components to, into the player's global-world avatar.
-    /// </summary>
     internal readonly struct ScenePlayerAvatarResolver
     {
         public enum Result

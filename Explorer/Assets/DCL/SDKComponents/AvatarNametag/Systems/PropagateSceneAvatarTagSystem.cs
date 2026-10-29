@@ -179,7 +179,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
                 return globalWorld.IsAlive(target) ? ResolveResult.Resolved : ResolveResult.Unreachable;
             }
 
-            // A shape without a twin is an avatar mid-creation, not an absent one; a player's entity never gets a twin.
+            // A shape without a twin is an avatar mid-creation, not an absent one. A player's entity never gets a twin.
             if (World.Has<PBAvatarShape>(sceneEntity) && !SpecialEntitiesID.IsOtherPlayerEntity(crdtEntity.EntityNumber))
             {
                 target = Entity.Null;

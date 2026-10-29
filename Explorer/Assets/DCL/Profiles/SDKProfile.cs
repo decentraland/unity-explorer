@@ -49,7 +49,7 @@ namespace DCL.Profiles
             public IReadOnlyList<URN> Wearables => wearables;
 
             /// <summary>
-            ///     <see cref="Wearables" /> in the same order, shortened to the pointers the wearable storage uses.
+            ///     <see cref="Wearables" /> in the same order, shortened to the pointers that the wearable storage uses.
             /// </summary>
             public IReadOnlyList<URN> ShortenedWearables => shortenedWearables;
 

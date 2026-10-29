@@ -29,10 +29,6 @@ using ResolveResult = DCL.Multiplayer.SDK.Systems.SceneWorld.ScenePlayerAvatarRe
 
 namespace DCL.SDKComponents.SceneWearables.Systems
 {
-    /// <summary>
-    ///     Copies the <see cref="PBAvatarShape" /> the scene writes on a player's entity, the local player's or a remote player's,
-    ///     into that avatar's <see cref="SceneAvatarShapeOverride" /> while the scene is current.
-    /// </summary>
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(ResolveSceneWearablePathsSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
@@ -232,8 +228,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
         private void ApplyOverride(Entity entity, PBAvatarShape pbAvatarShape, Entity target, Entity playerEntity)
         {
-            // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar
-            // than the one currently wearing this scene entity's override.
+            // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar than the one that wears the override.
             if (World.TryGet(entity, out SceneWearablesApplied applied) && applied.GlobalEntity != target)
                 ClearOverride(applied.GlobalEntity);
 
@@ -365,9 +360,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         {
             public readonly Entity GlobalEntity;
 
-            /// <summary>
-            ///     The remote player's scene entity holding its profile; <see cref="Entity.Null" /> for the local player.
-            /// </summary>
+            // The remote player's scene entity that holds its profile. Entity.Null for the local player.
             public readonly Entity PlayerEntity;
 
             public SceneWearablesApplied(Entity globalEntity, Entity playerEntity)
