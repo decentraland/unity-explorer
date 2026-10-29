@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using NUnit.Framework;
 using Runtime.Wearables;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -215,6 +216,82 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.IsFalse(fakeHands.gameObject.activeSelf);
             Assert.IsFalse(fakeHead.gameObject.activeSelf);
         }
+
+        [Test]
+        public void KeepOnlyLastWearableOfEachCategory()
+        {
+            // Arrange
+            IWearable profileUpperBody = CreateWearable(WearableCategories.Categories.UPPER_BODY, WearableCategories.Categories.LOWER_BODY);
+            IWearable feet = CreateWearable(WearableCategories.Categories.FEET);
+            IWearable sceneUpperBody = CreateWearable(WearableCategories.Categories.UPPER_BODY);
+            var resolution = new HideWearablesResolution(Array.Empty<string>());
+
+            // Act
+            WearableComponentsUtils.ExtractVisibleWearables(TEST_BODY_SHAPE, new List<IWearable> { profileUpperBody, feet, sceneUpperBody }, ref resolution);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { feet, sceneUpperBody }, resolution.VisibleWearables);
+            Assert.IsFalse(resolution.HiddenCategories!.Contains(WearableCategories.Categories.LOWER_BODY));
+
+            resolution.Release();
+        }
+
+        [Test]
+        public void HideByLastWearableOfCategory()
+        {
+            // Arrange
+            IWearable profileUpperBody = CreateWearable(WearableCategories.Categories.UPPER_BODY);
+            IWearable lowerBody = CreateWearable(WearableCategories.Categories.LOWER_BODY);
+            IWearable sceneUpperBody = CreateWearable(WearableCategories.Categories.UPPER_BODY, WearableCategories.Categories.LOWER_BODY);
+            var resolution = new HideWearablesResolution(Array.Empty<string>());
+
+            // Act
+            WearableComponentsUtils.ExtractVisibleWearables(TEST_BODY_SHAPE, new List<IWearable> { profileUpperBody, lowerBody, sceneUpperBody }, ref resolution);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { sceneUpperBody }, resolution.VisibleWearables);
+            Assert.IsTrue(resolution.HiddenCategories!.Contains(WearableCategories.Categories.LOWER_BODY));
+
+            resolution.Release();
+        }
+
+        [Test]
+        public void AlwaysRenderSceneWearables()
+        {
+            // Arrange
+            IWearable helmet = CreateWearable(WearableCategories.Categories.HELMET, WearableCategories.Categories.HAT, WearableCategories.Categories.HAIR);
+            IWearable hair = CreateWearable(WearableCategories.Categories.HAIR);
+            IWearable sceneHat = CreateSceneWearable(WearableCategories.Categories.HAT);
+            var resolution = new HideWearablesResolution(Array.Empty<string>());
+
+            // Act
+            WearableComponentsUtils.ExtractVisibleWearables(TEST_BODY_SHAPE, new List<IWearable> { helmet, hair, sceneHat }, ref resolution);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { helmet, sceneHat }, resolution.VisibleWearables);
+            Assert.IsTrue(resolution.HiddenCategories!.Contains(WearableCategories.Categories.HAIR));
+            Assert.IsFalse(resolution.HiddenCategories.Contains(WearableCategories.Categories.HAT));
+
+            resolution.Release();
+        }
+
+        private static IWearable CreateWearable(string category, params string[] hides) =>
+            CreateWearableWithUrn("urn:decentraland:off-chain:base-avatars:" + category, category, hides);
+
+        private static IWearable CreateSceneWearable(string category) =>
+            CreateWearableWithUrn(SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":bafkreisceneid-" + category, category);
+
+        private static IWearable CreateWearableWithUrn(string urn, string category, params string[] hides) =>
+            new FakeWearable(
+                new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        id = urn,
+                        data = new WearableDTO.WearableMetadataDto.DataDto { category = category },
+                    },
+                },
+                new HashSet<string>(hides));
 
         private static GameObject AddFakeBodyPart(GameObject fakeBodyShape, string name)
         {

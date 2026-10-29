@@ -11,6 +11,8 @@ namespace DCL.Profiles
     /// </summary>
     public class SDKProfile : IDirtyMarker
     {
+        private Profile? source;
+
         public SDKAvatar Avatar { get; } = new ();
 
         public bool IsDirty { get; set; }
@@ -21,8 +23,12 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; private set; }
 
+        public bool IsCopyOf(Profile profile) =>
+            ReferenceEquals(source, profile);
+
         public void OverrideWith(Profile profile)
         {
+            source = profile;
             Avatar.OverrideWith(profile.Avatar);
 
             Name = profile.Name;
@@ -37,6 +43,8 @@ namespace DCL.Profiles
             private readonly URN[] emotes = new URN[Profiles.Avatar.MAX_EQUIPPED_EMOTES];
 
             private readonly List<URN> wearables = new ();
+            private readonly List<URN> shortenedWearables = new ();
+            private readonly HashSet<string> forceRender = new ();
             public BodyShape BodyShape { get; private set; }
 
             public Color EyesColor { get; private set; }
@@ -45,6 +53,13 @@ namespace DCL.Profiles
 
             public IReadOnlyList<URN> Emotes => emotes;
             public IReadOnlyList<URN> Wearables => wearables;
+
+            /// <summary>
+            ///     <see cref="Wearables" /> in the same order, shortened to the pointers that the wearable storage uses.
+            /// </summary>
+            public IReadOnlyList<URN> ShortenedWearables => shortenedWearables;
+
+            public IReadOnlyCollection<string> ForceRender => forceRender;
 
             public void OverrideWith(Avatar avatar)
             {
@@ -56,6 +71,14 @@ namespace DCL.Profiles
 
                 wearables.Clear();
                 wearables.AddRange(avatar.Wearables);
+
+                shortenedWearables.Clear();
+
+                foreach (URN wearable in wearables)
+                    shortenedWearables.Add(wearable.Shorten());
+
+                forceRender.Clear();
+                forceRender.UnionWith(avatar.ForceRender);
 
                 avatar.emotes.CopyTo(emotes, 0);
             }

@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables
 
         private readonly string builderContentURL;
         private readonly IWebRequestController webRequestController;
-        private readonly bool builderCollectionsPreview;
+        private readonly bool rawWearablesEnabled;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWearableStorage wearableStorage;
@@ -56,7 +56,8 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.urlsSource = urlsSource;
             this.builderContentURL = builderContentURL;
-            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
+            this.rawWearablesEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)
+                                       || FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.entitiesAnalytics = entitiesAnalytics;
 
             cacheCleaner.Register(this.wearableStorage);
@@ -77,7 +78,7 @@ namespace DCL.AvatarRendering.Wearables
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
-            if (builderCollectionsPreview)
+            if (rawWearablesEnabled)
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

@@ -248,7 +248,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
-            if (content.file.EndsWith(".glb")) // Wearables cannot be ".gltf"
+            if (content.file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)) // Wearables cannot be ".gltf"
             {
                 // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
                 var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);

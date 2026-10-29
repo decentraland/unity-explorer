@@ -86,11 +86,20 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             List<IWearable> visibleWearables = WEARABLES_POOL.Get()!;
             HashSet<string> combinedHidingList = CATEGORIES_POOL.Get()!;
 
-            ComposeHiddenCategoriesOrdered(bodyShapeId, hideWearablesResolution.ForceRender, wearables, combinedHidingList);
+            for (var i = 0; i < wearables.Count; i++)
+                if (!IsReplacedByLaterWearable(wearables, i))
+                    visibleWearables.Add(wearables[i]);
 
-            foreach (IWearable wearable in wearables)
-                if (!combinedHidingList.Contains(wearable.GetCategory()))
-                    visibleWearables.Add(wearable);
+            ComposeHiddenCategoriesOrdered(bodyShapeId, hideWearablesResolution.ForceRender, visibleWearables, combinedHidingList);
+
+            // Other wearables never hide a scene wearable
+            for (var i = 0; i < visibleWearables.Count; i++)
+                if (SceneWearableDTOFactory.IsSceneWearableUrn(visibleWearables[i].GetUrn()))
+                    combinedHidingList.Remove(visibleWearables[i].GetCategory());
+
+            for (int i = visibleWearables.Count - 1; i >= 0; i--)
+                if (combinedHidingList.Contains(visibleWearables[i].GetCategory()))
+                    visibleWearables.RemoveAt(i);
 
             hideWearablesResolution.SetVisibleWearables(visibleWearables);
             hideWearablesResolution.HiddenCategories = combinedHidingList;
@@ -233,6 +242,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             ExtractVisibleWearables(bodyShape, helperWearableList, ref hideWearablesResolution);
             WEARABLES_POOL.Release(helperWearableList);
+        }
+
+        private static bool IsReplacedByLaterWearable(IReadOnlyList<IWearable> wearables, int index)
+        {
+            string category = wearables[index].GetCategory();
+
+            for (int i = index + 1; i < wearables.Count; i++)
+                if (wearables[i].GetCategory() == category)
+                    return true;
+
+            return false;
         }
     }
 }

@@ -2,16 +2,14 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Profiles;
 using DCL.SDKComponents.AvatarNametag.Systems;
 using ECS.TestSuite;
 using ECS.Unity.AvatarShape.Components;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using Unity.PerformanceTesting;
 using UnityEngine.Profiling;
 
@@ -32,28 +30,24 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         private const int SCENE_LOCAL_ENTITY_BASE = 512;
 
         private World globalWorld = null!;
-        private EntityParticipantTable entityParticipantTable = null!;
+        private Dictionary<CRDTEntity, Entity> entitiesMap = null!;
 
         [SetUp]
         public void Setup()
         {
-            // Profile.NewRandomProfile validates the generated name against the feature registry.
-            EcsTestsUtils.SetUpFeaturesRegistry();
-
             globalWorld = World.Create();
-            entityParticipantTable = new EntityParticipantTable();
+            entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
             // A real provider instead of an NSubstitute mock: the mock allocates on every
             // IsCurrent read, which would fail the allocation-free assertion below.
             var sceneStateProvider = new SceneStateProvider { IsCurrent = true };
 
-            system = new PropagateSceneAvatarTagSystem(world, sceneStateProvider, entityParticipantTable, globalWorld, globalWorld.Create());
+            system = new PropagateSceneAvatarTagSystem(world, sceneStateProvider, entitiesMap, globalWorld);
         }
 
         protected override void OnTearDown()
         {
             globalWorld.Dispose();
-            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         [Test]
@@ -133,7 +127,7 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
 
         [Test]
         [Performance]
-        public void ScanTwoHundredPlayersForTwoHundredPendingTagsPerUpdate()
+        public void ReapplyTwoHundredDirtyPlayerTagsPerUpdate()
         {
             PBAvatarNametag[] tags = SpawnBridgedPlayers(PLAYER_COUNT);
             system.Update(0);
@@ -168,8 +162,8 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         }
 
         /// <summary>
-        ///     Remote players in the bridged shape: the scene writes to one entity, the
-        ///     <see cref="SDKProfile" /> lives on another, forcing the NeedsPlayerScan path.
+        ///     Remote players in the bridged shape: the scene writes to the entity mapped by the CRDT id,
+        ///     the <see cref="PlayerSceneCRDTEntity" /> lives on another one.
         /// </summary>
         private PBAvatarNametag[] SpawnBridgedPlayers(int count)
         {
@@ -180,14 +174,8 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
                 int crdtId = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
 
                 tags[i] = new PBAvatarNametag { Label = "Rank 42", IsDirty = true };
-                world.Create(new CRDTEntity(crdtId), tags[i]);
-
-                var wallet = $"0x{i:x8}";
-                entityParticipantTable.Register(wallet, globalWorld.Create(), RoomSource.Island);
-
-                var sdkProfile = new SDKProfile();
-                sdkProfile.OverrideWith(Profile.NewRandomProfile(wallet));
-                world.Create(new PlayerSceneCRDTEntity(new CRDTEntity(crdtId)), sdkProfile);
+                entitiesMap[crdtId] = world.Create(new CRDTEntity(crdtId), tags[i]);
+                world.Create(new PlayerSceneCRDTEntity(crdtId, globalWorld.Create()));
             }
 
             return tags;

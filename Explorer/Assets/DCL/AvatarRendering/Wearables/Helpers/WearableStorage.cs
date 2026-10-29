@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
@@ -76,6 +77,26 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
                 }
+            }
+        }
+
+        public void ExcludeFromUnloading(URN urn)
+        {
+            lock (lockObject)
+            {
+                if (!cacheKeysDictionary.Remove(urn, out LinkedListNode<(URN key, long lastUsedFrame)> node)) return;
+
+                listedCacheKeys.Remove(node);
+            }
+        }
+
+        public void QualifyForUnloading(string urnPrefix)
+        {
+            lock (lockObject)
+            {
+                foreach (URN urn in wearablesCache.Keys)
+                    if (urn.ToString().StartsWith(urnPrefix, StringComparison.OrdinalIgnoreCase) && !cacheKeysDictionary.ContainsKey(urn))
+                        cacheKeysDictionary[urn] = listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
             }
         }
 
