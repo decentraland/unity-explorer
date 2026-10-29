@@ -12,6 +12,7 @@ using DCL.UI.SystemMenu;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -30,8 +31,6 @@ namespace DCL.UI.Sidebar
         private const string HASH_COLOR = "#727272";
         private const int TOAST_DURATION_MS = 3000;
         private const int TOAST_FADE_MS = 300;
-        private const int ADDRESS_PREFIX_LENGTH = 6;
-        private const int ADDRESS_SUFFIX_LENGTH = 4;
         private const string INVITE_PATH = "invite";
 
         /// <summary>
@@ -137,7 +136,7 @@ namespace DCL.UI.Sidebar
                 view.ProfileNameLabel.text = BuildName(profile);
                 view.ProfileVerifiedMark.SetActive(profile.HasClaimedName);
                 view.ProfileFoundationMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(wallet));
-                view.ProfileWalletAddressLabel.text = ShortenAddress(wallet);
+                view.ProfileWalletAddressLabel.text = Web3Address.Shorten(wallet);
 
                 thumbnail.SetLoading(profile.UserNameColor);
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
@@ -160,11 +159,6 @@ namespace DCL.UI.Sidebar
 
             return $"<color=#{nameColor}>{name}</color><color={HASH_COLOR}>{profile.WalletId}</color>";
         }
-
-        private static string ShortenAddress(string wallet) =>
-            wallet.Length > ADDRESS_PREFIX_LENGTH + ADDRESS_SUFFIX_LENGTH
-                ? string.Concat(wallet[..ADDRESS_PREFIX_LENGTH], "...", wallet[^ADDRESS_SUFFIX_LENGTH..])
-                : wallet;
 
         private void CopyWalletAddress()
         {
