@@ -88,6 +88,9 @@ namespace DCL.Lobby
             base.Dispose();
         }
 
+        protected override void OnAvatarLoaded() =>
+            FitCameraToAvatar();
+
         // The pooled camera can change with every render target, so the stage is pointed at the current one each time
         private void FitStage()
         {
@@ -142,11 +145,18 @@ namespace DCL.Lobby
                 if (previewController != null)
                     await previewController.Value.UpdateAvatarAsync(previewAvatarModel, ct);
 
+                FitCameraToAvatar();
                 PlayEmote(settings.ProfileUpdatedEmoteURN);
                 await PlayFlavourEmotesAsync(ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+        }
+
+        private void FitCameraToAvatar()
+        {
+            if (previewController is { } preview && preview.TryGetAvatarWorldBounds(out Vector3 feet, out Bounds bounds))
+                stage.SetAvatarFraming(feet, bounds.max.y - feet.y);
         }
 
         private async UniTask PlayFlavourEmotesAsync(CancellationToken ct)
