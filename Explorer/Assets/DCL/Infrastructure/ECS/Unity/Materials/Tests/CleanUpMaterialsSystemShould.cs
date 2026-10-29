@@ -54,9 +54,10 @@ namespace ECS.Unity.Materials.Tests
 
             system.Update(0);
 
-            destroyMaterial.Received(1)(in component.Data, material);
-            Assert.That(component.Result, Is.Null);
-            Assert.That(component.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingNotStarted));
+            MaterialComponent released = world.Get<MaterialComponent>(e);
+            destroyMaterial.Received(1)(in released.Data, material);
+            Assert.That(released.Result, Is.Null);
+            Assert.That(released.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingNotStarted));
         }
     }
 }

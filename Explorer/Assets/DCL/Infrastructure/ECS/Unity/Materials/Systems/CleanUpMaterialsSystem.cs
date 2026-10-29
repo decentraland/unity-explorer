@@ -34,9 +34,6 @@ namespace ECS.Unity.Materials.Systems
         private void TryRelease(Entity entity, ref MaterialComponent materialComponent)
         {
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
-
-            // A deferred deletion keeps the entity alive, so the released component must not linger on it
-            World.Remove<MaterialComponent>(entity);
         }
 
 
