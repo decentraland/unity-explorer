@@ -12,6 +12,8 @@ using System.Threading;
 using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.Profiles;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -302,8 +304,11 @@ namespace DCL.Notifications.NewNotification
 
             if (!tipReceivedNotification.SenderProfile.HasValue)
             {
-                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
-                tipReceivedNotification.SenderProfile = profile;
+                // A failed lookup shows the notification without the sender profile.
+                Result<Profile.CompactInfo?> lookup = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet)
+                                                                             .SuppressToResultAsync();
+
+                tipReceivedNotification.SenderProfile = lookup.Success ? lookup.Value : null;
             }
 
             viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();

@@ -219,7 +219,7 @@ namespace Global
             container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller, decentralandUrlsSource);
             container.EmotesContainer = new EmotesContainer(assetsProvisioner);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
@@ -256,12 +256,6 @@ namespace Global
                 if (container.ScenesCache.CurrentScene.Value != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
             });
-
-            container.ScenesCache.CurrentScene.OnUpdate += scene =>
-            {
-                if (scene != null)
-                    UnityDiagnosticsCenter.Instance.SetCurrentScene(scene.Info);
-            };
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

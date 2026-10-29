@@ -158,13 +158,16 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        /// <summary>Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with <paramref name="ct" /> not cancelled.</summary>
+        /// <summary>
+        ///     Reads under a linked token that cancels after <paramref name="timeout" />; a timeout surfaces as <c>Cancelled</c> with
+        ///     <paramref name="ct" /> not cancelled. The read is user-initiated, so it ignores the back-off of an earlier failure.
+        /// </summary>
         internal static async UniTask<ProfileReadResult> FetchProfileWithTimeoutAsync(SelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);
 
-            return await selfProfile.ProfileAsync(timeoutCts.Token);
+            return await selfProfile.ProfileAsync(timeoutCts.Token, ignoreBackOff: true);
         }
 
         private Profile CreateRandomProfile(IWeb3Identity identity)

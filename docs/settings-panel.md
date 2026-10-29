@@ -37,7 +37,7 @@ Additional types of controls will need to be created by following the same struc
 
 ## Settings Sections
 
-The settings panel is organized into 4 main sections:
+The settings panel is organized into these sections (a `General` section also exists but is hidden while it has no groups):
 
 ### 1. Graphics Section
 - Visual quality settings
@@ -66,6 +66,10 @@ The settings panel is organized into 4 main sections:
 - Chat privacy settings
 - Audio modes for different chat types
 - Blocked users management
+
+### 5. Lobby Section
+- Lobby on/off toggle (takes effect after a restart)
+- "Background" group: a preview of the chosen stage look above one thumbnail per look configured in `LobbyPlugin.LobbyPluginSettings.StagePresets`; hovering a thumbnail shows the look's name and previews it, clicking selects it; with nothing hovered the preview shows the selection, and each change cross-fades over the previous image. Every look is loaded at startup by `LobbyStagePresetCatalog` (owned by `DynamicWorldContainer`), which hands each backdrop to `LobbyStagePresetSetting`, so the picker works whether or not the lobby is enabled. The group uses `SettingsGroup_SingleColumn.prefab` through `SettingsGroup.GroupPrefabOverride`, because the shared group prefab lays modules out in fixed-size grid cells.
 
 ## Adding New Settings
 
@@ -132,7 +136,7 @@ SettingsFeatureController controller = Feature switch
 ### Step 4: Configure in Settings Menu
 
 1. Open the `SettingsMenuConfiguration` asset in Unity
-2. Navigate to the appropriate section (Graphics, Sound, Controls, or Chat)
+2. Navigate to the appropriate section (Graphics, Sound, Controls, Chat, or Lobby)
 3. Add a new `SettingsGroup` or use an existing one
 4. Add your module binding to the group's modules list
 5. Configure the module with appropriate title, description, and default values

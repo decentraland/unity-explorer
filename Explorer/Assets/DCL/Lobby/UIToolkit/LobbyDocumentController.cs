@@ -115,6 +115,8 @@ namespace DCL.Lobby
         private readonly List<PlacesData.PlaceInfo> featuredPlaces = new ();
         private readonly List<EventDTO> liveEvents = new ();
         private readonly List<EventDTO> upcomingEvents = new ();
+        private readonly List<string> eventPlaceIds = new ();
+        private readonly Dictionary<string, PlacesData.PlaceInfo> eventPlaces = new ();
         private readonly List<GetUserCommunitiesData.CommunityData> communities = new ();
         private readonly List<CameraReelResponseCompact> photos = new ();
         private readonly LobbyDocumentFriendsPresenter? friends;
@@ -156,6 +158,9 @@ namespace DCL.Lobby
         // One menu serves every Share button; the event it acts on is the one whose button opened it
         private GenericContextMenu? shareMenu;
         private EventDTO sharedEvent;
+
+        // Without its place the details show a world event at the raw parcel, 0,0, so they wait for the places request
+        private UniTask eventPlacesResolved = UniTask.CompletedTask;
 
         private CancellationTokenSource? avatarCts;
         private CancellationTokenSource? placesCts;
@@ -292,6 +297,8 @@ namespace DCL.Lobby
             mvcManager.OnViewClosed -= ShowAgainWhenTheScreenIsFree;
             startParcel.JumpInRequestRaised -= RequestClose;
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            UnsubscribeFromCommunityChanges();
+            UnsubscribeFromReelDeletions();
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
@@ -394,10 +401,10 @@ namespace DCL.Lobby
             goToField.Submitted = OnGoToSubmitted;
 
             // The four-column sections list the same places as the seven-column ones, so their rails share the lists
-            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
-            recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent);
-            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
-            featuredPlaces4By2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended);
+            recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent, PlacesSection.RecentlyVisited);
+            recentPlaces4By2Rail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent, PlacesSection.RecentlyVisited);
+            featuredPlacesRail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended, PlacesSection.Browse);
+            featuredPlaces4By2Rail ??= CreatePlacesRail(featuredPlaces, LobbyCardOrigin.Recommended, PlacesSection.Browse);
             recentPlacesRail.Show(viewInstance.RecentPlaces);
             recentPlaces4By2Rail.Show(viewInstance.RecentPlaces4By2);
             featuredPlacesRail.Show(viewInstance.FeaturedPlaces);
@@ -410,15 +417,15 @@ namespace DCL.Lobby
 
             // The four-column rail lists the same communities as the seven-column one; only a user the feature admits gets
             // the sections, which a verdict still pending here brings up from the fetch
-            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
-            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked };
+            communitiesRail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
+            communities4By2Rail ??= new LobbyCommunitiesRail(viewInstance.CommunityCardTemplate) { CardClicked = OnCommunityClicked, ViewAllClicked = ShowCommunities };
 
             if (communitiesProvider != null && CommunitiesFeatureAccess.Instance.IsUserAllowedCached())
                 ShowCommunitiesSections();
 
             // The four-column rail lists the same photos as the seven-column one
-            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
-            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked };
+            galleryRail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
+            gallery4By2Rail ??= new LobbyGalleryRail(viewInstance.GalleryCardTemplate) { CardClicked = OnPhotoClicked, ViewAllClicked = ShowGallery };
 
             if (cameraReel != null && identityCache.Identity != null)
             {
@@ -446,13 +453,17 @@ namespace DCL.Lobby
             eventCardActions.EventSetAsInterested += OnEventInterestChanged;
             ShowEventsAsync(eventsCts.Token).Forget();
 
-            // Every show fetches again: a community joined or left from a panel over the lobby is reflected on the way back
+            // Every show fetches again: a community joined or left while the lobby was down is reflected on the way back;
+            // one changed from a panel over the lobby refetches through the provider's events
             communitiesCts = communitiesCts.SafeRestart();
             ShowCommunitiesAsync(communitiesCts.Token).Forget();
+            SubscribeToCommunityChanges();
 
-            // Every show fetches again: a photo taken since the lobby was last up is reflected on the way back
+            // Every show fetches again: a photo taken since the lobby was last up is reflected on the way back; one
+            // deleted from a panel over the lobby drops out through the gallery's events
             galleryCts = galleryCts.SafeRestart();
             ShowGalleryAsync(galleryCts.Token).Forget();
+            SubscribeToReelDeletions();
 
             if (inputData.IsStartup)
                 startParcel.JumpInRequestRaised += RequestClose;
@@ -467,6 +478,8 @@ namespace DCL.Lobby
 
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
             eventCardActions.EventSetAsInterested -= OnEventInterestChanged;
+            UnsubscribeFromCommunityChanges();
+            UnsubscribeFromReelDeletions();
             notificationsPanel.UnreadCountChanged -= ShowUnreadCount;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
@@ -786,12 +799,12 @@ namespace DCL.Lobby
         }
 
         // The origin travels with the handlers so a Jump in from the details is attributed to the card's row
-        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbyCardOrigin origin) =>
+        private LobbyPlacesRail CreatePlacesRail(List<PlacesData.PlaceInfo> places, LobbyCardOrigin origin, PlacesSection viewAllSection) =>
             new (viewInstance!.PlaceCardTemplate)
             {
                 CardClicked = index => OnPlaceClicked(places[index], origin),
                 CardJumpInClicked = index => OnPlaceJumpIn(places[index], origin),
-                ViewAllClicked = ShowPlaces,
+                ViewAllClicked = () => ShowExploreSection(ExploreSections.Places, viewAllSection),
             };
 
         // A failed fetch keeps the last successful places, so the rows only hide while none have ever arrived; the four-column
@@ -925,6 +938,49 @@ namespace DCL.Lobby
         private void OnCommunityClicked(int index) =>
             mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communities[index].id, spriteCache)));
 
+        private void SubscribeToCommunityChanges()
+        {
+            if (communitiesProvider == null) return;
+
+            communitiesProvider.CommunityCreated += OnCommunityCreated;
+            communitiesProvider.CommunityDeleted += OnCommunityChanged;
+            communitiesProvider.CommunityUpdated += OnCommunityChanged;
+            communitiesProvider.CommunityUserRemoved += OnCommunityChanged;
+            communitiesProvider.CommunityJoined += OnCommunityMembershipChanged;
+            communitiesProvider.CommunityLeft += OnCommunityMembershipChanged;
+        }
+
+        private void UnsubscribeFromCommunityChanges()
+        {
+            if (communitiesProvider == null) return;
+
+            communitiesProvider.CommunityCreated -= OnCommunityCreated;
+            communitiesProvider.CommunityDeleted -= OnCommunityChanged;
+            communitiesProvider.CommunityUpdated -= OnCommunityChanged;
+            communitiesProvider.CommunityUserRemoved -= OnCommunityChanged;
+            communitiesProvider.CommunityJoined -= OnCommunityMembershipChanged;
+            communitiesProvider.CommunityLeft -= OnCommunityMembershipChanged;
+        }
+
+        private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData _) =>
+            RefetchCommunities();
+
+        private void OnCommunityChanged(string _) =>
+            RefetchCommunities();
+
+        private void OnCommunityMembershipChanged(string _, bool success)
+        {
+            if (success)
+                RefetchCommunities();
+        }
+
+        // Refetched rather than patched: the rails list the server's order and member counts
+        private void RefetchCommunities()
+        {
+            communitiesCts = communitiesCts.SafeRestart();
+            ShowCommunitiesAsync(communitiesCts.Token).Forget();
+        }
+
         // A failed fetch keeps the last photos, so the banner only shows while none have ever arrived; the reel lists
         // the latest first, as the rails do
         private async UniTaskVoid ShowGalleryAsync(CancellationToken ct)
@@ -981,8 +1037,8 @@ namespace DCL.Lobby
 
             if (ct.IsCancellationRequested || !result.Success) return;
 
-            cameraReel.GalleryEventBus.ReelDeleted(photo.id);
             RemovePhoto(photo);
+            cameraReel.GalleryEventBus.ReelDeleted(photo.id);
         }
 
         // Keeps the page the rails are on; a hidden lobby only drops the photo from the list, the next show refetches
@@ -992,6 +1048,32 @@ namespace DCL.Lobby
 
             ShowPhotoCards(galleryRail!, galleryCts.Token, rewind: false);
             ShowPhotoCards(gallery4By2Rail!, galleryCts.Token, rewind: false);
+        }
+
+        private void SubscribeToReelDeletions()
+        {
+            if (cameraReel == null) return;
+
+            cameraReel.GalleryEventBus.ReelDeletedEvent += OnReelDeleted;
+        }
+
+        private void UnsubscribeFromReelDeletions()
+        {
+            if (cameraReel == null) return;
+
+            cameraReel.GalleryEventBus.ReelDeletedEvent -= OnReelDeleted;
+        }
+
+        // A photo deleted from a panel over the lobby, which lists it too
+        private void OnReelDeleted(string reelId)
+        {
+            for (var i = 0; i < photos.Count; i++)
+            {
+                if (photos[i].id != reelId) continue;
+
+                RemovePhoto(photos[i]);
+                return;
+            }
         }
 
         private LobbyUpcomingEventsRail CreateUpcomingEventsRail() =>
@@ -1039,7 +1121,45 @@ namespace DCL.Lobby
 
             for (var i = 0; i < upcomingEvents.Count; i++)
                 ShowUpcomingEventCard(upcomingEventsRail.Cards[i], upcomingEvents[i], ct);
+
+            if (!result.Success) return;
+
+            eventPlacesResolved = ResolveEventPlacesAsync(ct).Preserve();
         }
+
+        private async UniTask ResolveEventPlacesAsync(CancellationToken ct)
+        {
+            eventPlaces.Clear();
+            eventPlaceIds.Clear();
+            CollectEventPlaceIds(liveEvents);
+            CollectEventPlaceIds(upcomingEvents);
+
+            if (eventPlaceIds.Count == 0) return;
+
+            Result<PlacesData.IPlacesAPIResponse> result = await placesAPIService.GetDestinationsByIdsAsync(eventPlaceIds, ct)
+                                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            IReadOnlyList<PlacesData.PlaceInfo> places = result.Value.Data;
+
+            for (var i = 0; i < places.Count; i++)
+                eventPlaces[places[i].id] = places[i];
+        }
+
+        private void CollectEventPlaceIds(List<EventDTO> events)
+        {
+            for (var i = 0; i < events.Count; i++)
+            {
+                string placeId = events[i].place_id;
+
+                if (!string.IsNullOrEmpty(placeId) && !eventPlaceIds.Contains(placeId))
+                    eventPlaceIds.Add(placeId);
+            }
+        }
+
+        private PlacesData.PlaceInfo? EventPlace(string? placeId) =>
+            !string.IsNullOrEmpty(placeId) && eventPlaces.TryGetValue(placeId, out PlacesData.PlaceInfo? place) ? place : null;
 
         private void ShowLiveEventCard(LobbyLiveEventCardElement card, EventDTO @event, CancellationToken ct)
         {
@@ -1143,13 +1263,17 @@ namespace DCL.Lobby
             if (eventsCts == null) return;
 
             EventOpened?.Invoke(@event, origin);
-            ShowEventDetailsAsync(@event, origin, eventsCts.Token).Forget();
+            ShowEventDetailsAsync(@event, @event.place_id, origin, eventsCts.Token).Forget();
         }
 
         // The details toggle interest on their boxed copy, so the listed event is synced from it once they close
-        private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, LobbyCardOrigin origin, CancellationToken ct)
+        private async UniTaskVoid ShowEventDetailsAsync(IEventDTO @event, string? placeId, LobbyCardOrigin origin, CancellationToken ct)
         {
-            try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, placeData: null, jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
+            await eventPlacesResolved;
+
+            if (ct.IsCancellationRequested) return;
+
+            try { await mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(@event, EventPlace(placeId), jumpInHandler: jumped => OnEventJumpIn(jumped, origin)))); }
             catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.EVENTS); return; }
 
@@ -1344,10 +1468,16 @@ namespace DCL.Lobby
         private void ShowEvents() =>
             ShowExploreSection(ExploreSections.Events);
 
-        private void ShowExploreSection(ExploreSections section)
+        private void ShowCommunities() =>
+            ShowExploreSection(ExploreSections.Communities);
+
+        private void ShowGallery() =>
+            ShowExploreSection(ExploreSections.CameraReel);
+
+        private void ShowExploreSection(ExploreSections section, PlacesSection? placesSection = null)
         {
             ExploreSectionOpened?.Invoke(section);
-            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section)));
+            mvcManager.ShowAndForget(ExploreSectionModalController.IssueCommand(new ExploreSectionModalParameter(section, placesSection)));
         }
 
         private void RequestClose()

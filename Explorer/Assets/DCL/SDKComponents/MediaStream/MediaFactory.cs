@@ -39,6 +39,8 @@ namespace DCL.SDKComponents.MediaStream
         // reference the connective room types without an asmdef cycle; MediaFactoryBuilder supplies it.
         private readonly Func<bool> streamingRoomRunning;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
+        private readonly SlideTextureCache slideCache;
+        private readonly Material compositorMaterial;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
@@ -49,15 +51,19 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IUrlResolverService urlResolverService;
+        private readonly IUrlResolverService presentationUrlResolver;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource,
+            SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
             this.streamingRoomRunning = streamingRoomRunning;
             this.placeholderSource = placeholderSource;
+            this.slideCache = slideCache;
+            this.compositorMaterial = compositorMaterial;
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
@@ -67,9 +73,8 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
 
-            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
-                new UrlResolverService(webRequestController),
-                analyticsController);
+            presentationUrlResolver = new UrlResolverService(webRequestController);
+            urlResolverService = new UrlResolverServiceAnalyticsDecorator(presentationUrlResolver, analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -174,9 +179,10 @@ namespace DCL.SDKComponents.MediaStream
 
             // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
             MultiMediaPlayer player = address.Match(
-                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource),
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, presentationUrlResolver),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource))
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
+                    new PresentationUrlPlayer(ctx.mediaPlayerPool, ctx.presentationUrlResolver)))
             );
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Fsm;
+using Utility.Times;
 
 namespace DCL.Profiles.Self
 {
@@ -88,10 +89,11 @@ namespace DCL.Profiles.Self
         }
 
         /// <summary>
-        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call. A read dropped from a
-        ///     full request list is issued again, so only the token or <see cref="Dispose"/> ends it as <c>Cancelled</c>.
+        ///     Waits until the current identity's profile is resolved. A failed read is retried once per call after its back-off window;
+        ///     inside the window it answers <c>FetchFailed</c>, unless <paramref name="ignoreBackOff" /> retries it at once. A read dropped
+        ///     from a full request list is issued again, so only the token or <see cref="Dispose"/> ends it as <c>Cancelled</c>.
         /// </summary>
-        public virtual async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct)
+        public virtual async UniTask<ProfileReadResult> ProfileAsync(CancellationToken ct, bool ignoreBackOff = false)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;
 
@@ -102,7 +104,7 @@ namespace DCL.Profiles.Self
                 lock (requestGate) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 {
                     id = NextRequestId();
-                    inbox.Send(SelfProfileMsg.FromProfileReadRequested(id));
+                    inbox.Send(SelfProfileMsg.FromProfileReadRequested(new ReadRequest(id, UnixTimeMs.Now(), ignoreBackOff)));
                 }
 
                 ProfileReadResult result = await AwaitResultAsync(id, static model => model.ReadResults, ProfileReadResult.FromError(ProfileReadError.Cancelled), ct);
@@ -112,7 +114,7 @@ namespace DCL.Profiles.Self
             }
         }
 
-        /// <param name="localOnly">Publishes the edit locally and reports it as saved without sending it to the catalyst.</param>
+        /// <summary>Deploys the edit; <paramref name="localOnly" /> publishes it locally and reports it as saved without sending it to the catalyst.</summary>
         public virtual UniTask<ProfileDeployResult> DeployProfileAsync(Profile edited, CancellationToken ct, bool localOnly = false)
         {
             IMsgInbox<SelfProfileMsg> inbox = runtime;

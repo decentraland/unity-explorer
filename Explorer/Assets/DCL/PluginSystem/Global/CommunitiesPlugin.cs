@@ -44,7 +44,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -76,7 +75,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
             IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider,
@@ -105,7 +103,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -156,7 +153,6 @@ namespace DCL.PluginSystem.Global
                 viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
                 friendsService,
                 communitiesDataProvider,
                 webRequestController,
