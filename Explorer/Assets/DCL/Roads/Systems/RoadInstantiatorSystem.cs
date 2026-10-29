@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
-using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Settings;
@@ -13,10 +11,11 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SingleScene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -32,9 +31,10 @@ namespace DCL.Roads.Systems
         private readonly IRoadAssetPool roadAssetPool;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IScenesCache scenesCache;
+        private readonly SingleSceneMode singleSceneMode;
 
         internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
+            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache, SingleSceneMode singleSceneMode) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -42,6 +42,7 @@ namespace DCL.Roads.Systems
             this.roadAssetPool = roadAssetPool;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.scenesCache = scenesCache;
+            this.singleSceneMode = singleSceneMode;
         }
 
         protected override void Update(float t)
@@ -59,6 +60,13 @@ namespace DCL.Roads.Systems
             {
                 // Road already instantiated: release any readiness report a later teleport enqueued for this
                 // parcel (only this system resolves it), otherwise the loading screen times out (#8880).
+                SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+                return;
+            }
+
+            if (singleSceneMode.IsActive && !singleSceneMode.IsAnchorScene(sceneDefinitionComponent))
+            {
+                sceneLoadingState.PromiseCreated = true;
                 SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
                 return;
             }

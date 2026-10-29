@@ -1,7 +1,5 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
-using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -11,7 +9,6 @@ namespace DCL.Landscape
     public class SatelliteFloor
     {
         private const int PARCEL_SIZE = ParcelMathHelper.PARCEL_SIZE;
-
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
         private const int SATELLITE_MAP_RESOLUTION = 8;
@@ -19,21 +16,19 @@ namespace DCL.Landscape
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
 
-        private readonly IRealmData realmData;
-
-        private Renderer[] satelliteRenderers;
-
-        private Transform landscapeParentObject;
-        private MaterialPropertyBlock materialPropertyBlock;
-        private LandscapeData landscapeData;
+        private readonly bool singleSceneModeActive;
+        private readonly Renderer[] satelliteRenderers;
+        private readonly Transform landscapeParentObject;
+        private readonly MaterialPropertyBlock materialPropertyBlock;
+        private readonly LandscapeData landscapeData;
 
         private bool initialized;
         private bool currentlyInGenesis;
         private bool debugSettingEnabled;
 
-        public SatelliteFloor(IRealmData realmData, LandscapeData config)
+        public SatelliteFloor(IRealmData realmData, LandscapeData config, bool singleSceneModeActive)
         {
-            this.realmData = realmData;
+            this.singleSceneModeActive = singleSceneModeActive;
 
             landscapeData = config;
 
@@ -97,7 +92,7 @@ namespace DCL.Landscape
 
         private void SwitchVisibility()
         {
-            var newVisibilityState = debugSettingEnabled && currentlyInGenesis;
+            var newVisibilityState = debugSettingEnabled && currentlyInGenesis && !singleSceneModeActive;
 
             if (!initialized)
                 return;

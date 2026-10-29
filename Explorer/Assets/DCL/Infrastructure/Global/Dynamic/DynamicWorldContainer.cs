@@ -241,6 +241,7 @@ namespace Global.Dynamic
                 playerEntity);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
+            realmContainer.TeleportController.Landscape = terrainContainer.Landscape;
 
             // One fetch of the dev server’s entity id, shared by both transports: the gatekeeper scene room
             // keys its room on it and Pulse derives its realm from it, so two instances would double the start-up requests.
@@ -757,7 +758,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 multiplayerContainer.CreatePlugin(staticContainer, assetsProvisioner, debugBuilder, commsContainer, dynamicSettings.MultiplayerDebugSettings, appArgs),
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData, staticContainer.SingleSceneMode),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
                     assetsProvisioner,

@@ -42,7 +42,7 @@ namespace DCL.RealmNavigation
             World globalWorld,
             Entity playerEntity)
         {
-            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue, staticContainer.SingleSceneMode, staticContainer.RealmData);
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 

@@ -2,9 +2,13 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Audio.Jobs;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
+using DCL.Landscape;
+using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle.SingleScene;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -12,10 +16,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
-using DCL.Audio.Jobs;
-using DCL.Landscape;
-using DCL.Landscape.Systems;
-using ECS;
 using Random = UnityEngine.Random;
 
 namespace DCL.Audio.Systems
@@ -44,6 +44,7 @@ namespace DCL.Audio.Systems
         private float audioMutingDistanceThreshold;
         private float oceanListeningDistanceThreshold;
         private ITerrain terrain;
+        private readonly SingleSceneMode singleSceneMode;
 
         private int updateFramesCounter;
 
@@ -52,13 +53,15 @@ namespace DCL.Audio.Systems
             WorldTerrainGenerator worldTerrainGenerator,
             ILandscapeAudioSystemSettings landscapeAudioSystemSettings,
             WorldAudioPlaybackController worldAudioPlaybackController,
-            IRealmData realmData) : base(world)
+            IRealmData realmData,
+            SingleSceneMode singleSceneMode) : base(world)
         {
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
             this.landscapeAudioSystemSettings = landscapeAudioSystemSettings;
             this.worldAudioPlaybackController = worldAudioPlaybackController;
             this.realmData = realmData;
+            this.singleSceneMode = singleSceneMode;
         }
 
         public override void Initialize()
@@ -86,7 +89,9 @@ namespace DCL.Audio.Systems
 
         protected override void Update(float t)
         {
-            ITerrain currentTerrain = realmData.IsGenesis() ? terrainGenerator : worldTerrainGenerator;
+            ITerrain currentTerrain = realmData.IsGenesis() && !singleSceneMode.IsActive
+                ? terrainGenerator : worldTerrainGenerator;
+
             if (currentTerrain != terrain)
             {
                 if (isTerrainViewInitialized)
