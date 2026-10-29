@@ -150,7 +150,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         [None(typeof(DeleteEntityIntention))]
         private void PropagateOverride(Entity entity, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
-            if (!pbAvatarShape.IsDirty || !SpecialEntitiesID.IsPlayerEntity(crdtEntity)) return;
+            if (!pbAvatarShape.IsDirty || !SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity)) return;
 
             TryPropagate(entity, in crdtEntity, pbAvatarShape);
         }
@@ -174,7 +174,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         [None(typeof(DeleteEntityIntention))]
         private void MarkPlayerAvatarShapesDirty(in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
-            if (SpecialEntitiesID.IsPlayerEntity(crdtEntity))
+            if (SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity))
                 pbAvatarShape.IsDirty = true;
         }
 

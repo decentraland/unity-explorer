@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.Components
         public static bool IsOtherPlayerEntity(int entityNumber) =>
             entityNumber is >= OTHER_PLAYER_ENTITIES_FROM and < OTHER_PLAYER_ENTITIES_TO;
 
-        public static bool IsPlayerEntity(CRDTEntity crdtEntity) =>
+        public static bool IsAnyPlayerEntity(CRDTEntity crdtEntity) =>
             crdtEntity.Id == PLAYER_ENTITY || IsOtherPlayerEntity(crdtEntity.EntityNumber);
     }
 }
