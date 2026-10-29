@@ -203,6 +203,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 supportRequestService,
                 smartWearablesTooltipController,
+                smartWearableCache.HasRunningSmartWearables,
                 eventsApiService,
                 sidebarProfileMenuPresenter,
                 cameraToggle,

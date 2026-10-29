@@ -69,6 +69,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isBugReportFeatureEnabled;
         private readonly SupportRequestService supportRequestService;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
+        private readonly IReadonlyReactiveProperty<bool> hasRunningSmartWearables;
         private readonly HttpEventsApiService eventsApiService;
         private readonly SidebarProfileMenuPresenter profileMenuPresenter;
         private readonly InWorldCameraToggle cameraToggle;
@@ -101,6 +102,7 @@ namespace DCL.UI.Sidebar
             ChatEventBus chatEventBus,
             SupportRequestService supportRequestService,
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
+            IReadonlyReactiveProperty<bool> hasRunningSmartWearables,
             HttpEventsApiService eventsApiService,
             SidebarProfileMenuPresenter profileMenuPresenter,
             InWorldCameraToggle cameraToggle,
@@ -111,6 +113,7 @@ namespace DCL.UI.Sidebar
         {
             this.supportRequestService = supportRequestService;
             this.smartWearablesTooltipController = smartWearablesTooltipController;
+            this.hasRunningSmartWearables = hasRunningSmartWearables;
             this.eventsApiService = eventsApiService;
             this.profileMenuPresenter = profileMenuPresenter;
             this.cameraToggle = cameraToggle;
@@ -232,7 +235,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.SetLiveEventsCounter(0);
 
-            smartWearablesSubscription = smartWearablesTooltipController.HasRunningSmartWearables.UseCurrentValueAndSubscribeToUpdate(
+            smartWearablesSubscription = hasRunningSmartWearables.UseCurrentValueAndSubscribeToUpdate(
                 this, static (hasAny, controller) => controller.OnRunningSmartWearablesChanged(hasAny), CancellationToken.None);
         }
 
