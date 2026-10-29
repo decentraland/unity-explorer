@@ -83,9 +83,7 @@ namespace DCL.UI.Sidebar
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; } = null!;
         [field: SerializeField] public SidebarProfileMenuView ProfileMenu { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text ProfileNameLabel { get; private set; } = null!;
-        [field: SerializeField] public GameObject ProfileVerifiedMark { get; private set; } = null!;
-        [field: SerializeField] public GameObject ProfileFoundationMark { get; private set; } = null!;
+        [field: SerializeField] public UserNameElement ProfileUserName { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ProfileWalletAddressLabel { get; private set; } = null!;
         [field: SerializeField] public Button ProfileCopyWalletButton { get; private set; } = null!;
         [field: SerializeField] public Button ProfileInviteFriendsButton { get; private set; } = null!;

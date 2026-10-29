@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
@@ -17,7 +16,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -27,8 +25,6 @@ namespace DCL.UI.Sidebar
     /// </summary>
     public class SidebarProfileMenuPresenter : IDisposable
     {
-        private const string GUEST_NAME = "Guest";
-        private const string HASH_COLOR = "#727272";
         private const int TOAST_DURATION_MS = 3000;
         private const int TOAST_FADE_MS = 300;
         private const string INVITE_PATH = "invite";
@@ -50,6 +46,7 @@ namespace DCL.UI.Sidebar
         private readonly UserLogout userLogout;
         private readonly URLBuilder urlBuilder = new ();
         private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private readonly UserNameElementPresenter userNamePresenter;
 
         private CancellationTokenSource? loadProfileCts;
         private CancellationTokenSource? copyToastCts;
@@ -77,6 +74,7 @@ namespace DCL.UI.Sidebar
             this.mvcManager = mvcManager;
             this.userLogout = userLogout;
 
+            userNamePresenter = new UserNameElementPresenter(view.ProfileUserName);
             view.ProfilePicture.Bind(thumbnail);
 
             view.ProfileCopyWalletButton.onClick.AddListener(CopyWalletAddress);
@@ -89,6 +87,7 @@ namespace DCL.UI.Sidebar
             view.ProfileCopyWalletButton.onClick.RemoveListener(CopyWalletAddress);
             view.ProfileInviteFriendsButton.onClick.RemoveListener(CopyInviteLink);
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            userNamePresenter.Dispose();
 
             loadProfileCts.SafeCancelAndDispose();
             copyToastCts.SafeCancelAndDispose();
@@ -133,9 +132,7 @@ namespace DCL.UI.Sidebar
 
                 string wallet = identityCache.Identity.Address;
 
-                view.ProfileNameLabel.text = BuildName(profile);
-                view.ProfileVerifiedMark.SetActive(profile.HasClaimedName);
-                view.ProfileFoundationMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(wallet));
+                userNamePresenter.Setup(profile);
                 view.ProfileWalletAddressLabel.text = Web3Address.Shorten(wallet);
 
                 thumbnail.SetLoading(profile.UserNameColor);
@@ -143,21 +140,6 @@ namespace DCL.UI.Sidebar
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-        }
-
-        /// <summary>
-        ///     Claimed names are shown in the colour the profile system already calculated. Unclaimed names keep that
-        ///     colour for the name itself and render the wallet suffix in the muted tag colour.
-        /// </summary>
-        private static string BuildName(in Profile.CompactInfo profile)
-        {
-            string name = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
-            string nameColor = ColorUtility.ToHtmlStringRGB(profile.UserNameColor);
-
-            if (profile.HasClaimedName || string.IsNullOrEmpty(profile.WalletId))
-                return $"<color=#{nameColor}>{name}</color>";
-
-            return $"<color=#{nameColor}>{name}</color><color={HASH_COLOR}>{profile.WalletId}</color>";
         }
 
         private void CopyWalletAddress()
