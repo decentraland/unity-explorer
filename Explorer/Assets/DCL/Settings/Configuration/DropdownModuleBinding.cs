@@ -11,6 +11,7 @@ using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -57,6 +58,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
+            SingleSceneMode singleSceneMode,
             IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
             IAssetsProvisioner assetsProvisioner,
