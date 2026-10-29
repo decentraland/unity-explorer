@@ -18,14 +18,13 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     ///     Initialize() seeds PlayerSceneCRDTEntity and SDKProfile onto PersistentEntities.Player before the JS
     ///     runtime starts, so that <see cref="WritePlayerIdentityDataSystem" />, <see cref="WriteSDKAvatarBaseSystem" />,
     ///     and <see cref="WriteAvatarEquippedDataSystem" /> can flush CRDT messages in their own Initialize().
-    ///     Update() keeps the SDKProfile in sync when Profile.IsDirty — unlike
+    ///     Update() keeps the SDKProfile in sync when Profile.IsDirty or the Profile is replaced — unlike
     ///     <see cref="PlayerProfileDataPropagationSystem" /> which only targets the assigned scene
     ///     and which skips the local player entirely (filtered by PlayerComponent).
     ///     It also mirrors <see cref="TalkingComponent" /> into <see cref="SDKTalking" />,
     ///     adding <see cref="SDKTalking" /> only once <see cref="TalkingComponent" /> exists.
     ///     Runs in SyncedPreRenderingSystemGroup before the writer systems so SDKProfile
-    ///     is up-to-date when they flush CRDT. Profile.IsDirty is guaranteed to be set
-    ///     (set in PresentationSystemGroup, reset later in the same PreRenderingSystemGroup).
+    ///     is up-to-date when they flush CRDT.
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(WritePlayerIdentityDataSystem))]
@@ -68,7 +67,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
-            if (profile!.IsDirty)
+            // AvatarLoaderSystem resets IsDirty before this group runs; a replaced profile is a new instance
+            if (profile!.IsDirty || !World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile) || !sdkProfile!.IsCopyOf(profile))
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
             if (!globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))

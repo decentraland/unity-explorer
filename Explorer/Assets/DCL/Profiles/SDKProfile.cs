@@ -11,6 +11,8 @@ namespace DCL.Profiles
     /// </summary>
     public class SDKProfile : IDirtyMarker
     {
+        private Profile? source;
+
         public SDKAvatar Avatar { get; } = new ();
 
         public bool IsDirty { get; set; }
@@ -21,8 +23,12 @@ namespace DCL.Profiles
 
         public bool HasConnectedWeb3 { get; private set; }
 
+        public bool IsCopyOf(Profile profile) =>
+            ReferenceEquals(source, profile);
+
         public void OverrideWith(Profile profile)
         {
+            source = profile;
             Avatar.OverrideWith(profile.Avatar);
 
             Name = profile.Name;
