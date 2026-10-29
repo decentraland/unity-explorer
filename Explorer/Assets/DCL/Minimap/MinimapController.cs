@@ -27,12 +27,14 @@ using DCL.Chat.MessageBus;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.Minimap.Settings;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using LiveKit.Rooms.Participants;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -158,6 +160,11 @@ namespace DCL.Minimap
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
 
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnRoomParticipantUpdated;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnRoomParticipantUpdated;
+            roomHub.IslandRoom().ConnectionStateChanged -= OnRoomConnectionStateChanged;
+            roomHub.SceneRoom().Room().ConnectionStateChanged -= OnRoomConnectionStateChanged;
+
             if (includeBannedUsersFromScene)
             {
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
@@ -241,6 +248,11 @@ namespace DCL.Minimap
 
             RefreshOnlineUsersCount();
 
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnRoomParticipantUpdated;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnRoomParticipantUpdated;
+            roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChanged;
+            roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChanged;
+
             if (includeBannedUsersFromScene)
             {
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
@@ -257,14 +269,39 @@ namespace DCL.Minimap
             viewInstance.SetSkyboxWidgetVisible(show);
         }
 
+        private void OnRoomParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
+        {
+            if (update is not (UpdateFromParticipant.Connected or UpdateFromParticipant.Disconnected)) return;
+
+            RefreshOnlineUsersCountOnMainThread();
+        }
+
+        private void OnRoomConnectionStateChanged(LKConnectionState connectionState) =>
+            RefreshOnlineUsersCountOnMainThread();
+
+        private void RefreshOnlineUsersCountOnMainThread()
+        {
+            // LiveKit raises participant and connection callbacks from its own thread.
+            RefreshOnMainThreadAsync().Forget();
+            return;
+
+            async UniTaskVoid RefreshOnMainThreadAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                RefreshOnlineUsersCount();
+            }
+        }
+
         private void RefreshOnlineUsersCount()
         {
+            if (viewInstance == null) return;
+
             int count = roomHub.ParticipantsCount();
 
             if (count == lastOnlineUsersCount) return;
 
             lastOnlineUsersCount = count;
-            viewInstance!.onlineUsersText.SetText("{0}", count);
+            viewInstance.onlineUsersText.SetText("{0}", count);
         }
 
         private void OnMinimapRendererButtonClicked()
@@ -424,13 +461,11 @@ namespace DCL.Minimap
                 //Once the render target image is ready to be shown, we enable the minimap
                 viewInstance.SetCanvasActive(true);
                 UpdatePlaceDisplayAsync(position);
-                RefreshOnlineUsersCount();
             }
             else
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 UpdatePlaceDisplayAsync(position);
-                RefreshOnlineUsersCount();
             }
         }
 
