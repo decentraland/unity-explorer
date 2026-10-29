@@ -52,7 +52,6 @@ namespace DCL.Places
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
@@ -93,7 +92,6 @@ namespace DCL.Places
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
-            this.worldPermissionsService = worldPermissionsService;
             this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
@@ -301,15 +299,19 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.Browse:
+                    bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
+                    bool onlyFeatured = currentFilters.IsBrowsingFeatured;
+
                     placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.Browse ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.Browse && !onlyFeatured ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              category: isSearching || onlyFeatured ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
                                                               onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY,
-                                                              withLiveEvents: true)
+                                                              withLiveEvents: true,
+                                                              onlyHighlighted: onlyFeatured ? true : null)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.Favorites:
@@ -335,7 +337,7 @@ namespace DCL.Places
                     }
 
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
-                                                              ownerAddress: ownProfile.UserId,
+                                                              ownerAddress: ownProfile.UserId.Value,
                                                               ct: ct,
                                                               withConnectedUsers: true,
                                                               onlySdk7: false,

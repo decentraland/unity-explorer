@@ -129,6 +129,7 @@ namespace DCL.CharacterPreview
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
             containerActive = true;
+            OnContainerActiveChanged(true);
 
             lastScreenSize = new Vector2Int(Screen.width, Screen.height);
             renderTargetSizeDirty = false;
@@ -360,6 +361,7 @@ namespace DCL.CharacterPreview
 
             containerActive = false;
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
+            OnContainerActiveChanged(false);
         }
 
         private void OnCharacterPreviewRestored(CharacterPreviewControllerBase characterPreviewController)
@@ -369,6 +371,7 @@ namespace DCL.CharacterPreview
 
             containerActive = true;
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
+            OnContainerActiveChanged(true);
         }
 
         protected void OnModelUpdated()
@@ -502,5 +505,7 @@ namespace DCL.CharacterPreview
         {
             previewController?.SetLightActive(isActive);
         }
+
+        protected virtual void OnContainerActiveChanged(bool isActive) { }
     }
 }

@@ -4,6 +4,7 @@ use futures::future::FutureExt;
 use std::{
     ffi::CString,
     panic::AssertUnwindSafe,
+    path::Path,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc, Weak,
@@ -14,7 +15,7 @@ use tokio::sync::Mutex;
 use segment::{
     message::{BatchMessage, User},
     queue::{
-        event_queue::{CombinedAnalyticsEventQueue, CombinedAnalyticsEventQueueNewResult, EnqueError},
+        event_queue::{CombinedAnalyticsEventQueue, EnqueError},
         event_send_daemon::AnalyticsEventSendDaemon,
     },
     Client, HttpClient,
@@ -23,7 +24,10 @@ use segment::{
 use std::future::Future;
 use std::marker::Send;
 
-use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
+use crate::{
+    operations, queue_file, FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, OperationHandleId,
+    QueueHealthCode, Response,
+};
 use segment::queue::queued_batcher::QueuedBatcher;
 
 pub struct AppContext {
@@ -59,19 +63,19 @@ impl Default for Server {
 }
 
 impl Server {
+    /// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when the server already runs.
     pub fn initialize(
         &self,
         queue_file_path: String,
         queue_count_limit: u32,
         writer_key: String,
         api_host: String,
-        callback_fn: FfiCallbackFn,
-        error_fn: Option<FfiErrorCallbackFn>,
-    ) -> bool {
+        callbacks: FfiCallbacks,
+    ) -> QueueHealthCode {
         let mut state = self.state.lock();
 
         match *state {
-            ServerState::Ready(_, _, _) => false,
+            ServerState::Ready(_, _, _) => QueueHealthCode::NotInitialized,
             ServerState::Disposed => {
                 let new_runtime = tokio::runtime::Builder::new_multi_thread()
                     .worker_threads(1)
@@ -79,9 +83,9 @@ impl Server {
                     .build()
                     .unwrap();
 
-                let event_bridge = EventBridge::new(callback_fn, error_fn);
+                let event_bridge = EventBridge::new(callbacks);
 
-                let server = SegmentServer::new(
+                let (server, health) = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
@@ -91,7 +95,7 @@ impl Server {
                 );
 
                 *state = ServerState::Ready(Arc::new(server), new_runtime, event_bridge);
-                true
+                health
             }
         }
     }
@@ -155,10 +159,10 @@ pub struct EventBridge {
 }
 
 impl EventBridge {
-    pub fn new(callback_fn: FfiCallbackFn, error_fn: Option<FfiErrorCallbackFn>) -> Self {
+    pub fn new(callbacks: FfiCallbacks) -> Self {
         Self {
-            callback_fn,
-            error_fn,
+            callback_fn: callbacks.callback_fn,
+            error_fn: callbacks.error_fn,
             callback_queue: Arc::new(crossbeam_queue::SegQueue::new()),
             error_queue: Arc::new(crossbeam_queue::SegQueue::new()),
         }
@@ -233,6 +237,7 @@ impl SegmentServer {
         self.next_id.fetch_add(1, Ordering::Relaxed)
     }
 
+    /// Returns the server with how its queue keeps the events of the session.
     fn new(
         queue_file_path: String,
         queue_count_limit: u32,
@@ -240,46 +245,41 @@ impl SegmentServer {
         api_host: String,
         event_input: EventInput,
         async_runtime: &tokio::runtime::Runtime,
-    ) -> Self {
+    ) -> (Self, QueueHealthCode) {
         let error_event_input = event_input.clone();
         let error_fn = Box::new(move |message: &str| {
             let message = String::from(message);
             error_event_input.try_enqueue_error(message);
         });
 
-        let event_queue: CombinedAnalyticsEventQueueNewResult =
-            CombinedAnalyticsEventQueue::new(queue_file_path, Some(queue_count_limit));
-        let event_queue: CombinedAnalyticsEventQueue = match event_queue {
-            CombinedAnalyticsEventQueueNewResult::Persistent(e) => e,
-            CombinedAnalyticsEventQueueNewResult::FallbackToInMemory(e, err) => {
-                let error_message =
-                    format!("Cannot create persistent queue, fallback to in memory queue: {err}");
-                error_fn(&error_message);
-                e
-            }
-        };
+        let (event_queue, health) =
+            match queue_file::open(Path::new(&queue_file_path), queue_count_limit) {
+                Ok(opened) => opened,
+                Err(err) => {
+                    error_fn(&format!(
+                    "Cannot open the queue file, the events of the session stay in memory: {err}"
+                ));
+                    (
+                        queue_file::in_memory(queue_count_limit),
+                        QueueHealthCode::DegradedOther,
+                    )
+                }
+            };
         let event_queue = Arc::new(Mutex::new(event_queue));
 
         let queue_batcher = QueuedBatcher::new(event_queue.clone(), None);
 
         let client = HttpClient::new_with_host(api_host.clone());
-        let send_daemon =
+        let mut send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
-        let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
-
-        let moved_send_daemon = send_daemon.clone();
 
         let daemon_event_input = event_input.clone();
-        async_runtime.spawn(
-            AssertUnwindSafe(async move {
-                let mut guard = moved_send_daemon.lock();
-                guard.start(move |message: &str| {
-                    let message = String::from(message);
-                    daemon_event_input.try_enqueue_error(message);
-                });
-            })
-            .catch_unwind(),
-        );
+        send_daemon.start(async_runtime.handle().clone(), move |message: &str| {
+            let message = String::from(message);
+            daemon_event_input.try_enqueue_error(message);
+        });
+
+        let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
 
         let direct_client = HttpClient::new_with_host(api_host);
 
@@ -294,11 +294,13 @@ impl SegmentServer {
             error_fn,
         };
 
-        Self {
+        let server = Self {
             next_id: AtomicU64::new(1), //0 is invalid,
             daemon: send_daemon,
             context: Arc::new(Mutex::new(context)),
-        }
+        };
+
+        (server, health)
     }
 
     pub async fn instant_track_and_flush(
@@ -367,10 +369,11 @@ impl SegmentServer {
             let code = e
                 .downcast_ref::<EnqueError>()
                 .map_or(Response::Error, response_code_for_enque_error);
-            self.context
-                .lock()
-                .await
-                .report_error_with_code(Some(id), format!("Cannot enqueue: {e}"), code);
+            self.context.lock().await.report_error_with_code(
+                Some(id),
+                format!("Cannot enqueue: {e}"),
+                code,
+            );
         } else {
             self.context.lock().await.report_success(id);
         }

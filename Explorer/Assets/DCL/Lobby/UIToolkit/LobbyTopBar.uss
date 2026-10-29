@@ -1,4 +1,4 @@
-/* Every pill is 42px tall, centred in the 46px band that only the profile widget fills */
+/* Every pill is 42px tall, centred in the 46px band that only the profile widget and the close button fill */
 .lobby__header {
     position: absolute;
     top: 27px;
@@ -170,25 +170,33 @@
     color: var(--dcl-color-snow);
 }
 
-.lobby__top-bar-back-button {
-    height: 42px;
+.lobby__top-bar-close-button {
+    width: 46px;
+    height: 46px;
     margin-left: 10px;
-    padding: 0 16px 0 14px;
-    flex-direction: row;
     align-items: center;
+    justify-content: center;
     border-width: 2px;
-    border-radius: 21px;
+    border-radius: 23px;
     border-color: var(--lobby-white-5);
     background-color: rgba(0, 0, 0, 0.55);
     transition: background-color 0.1s;
 }
 
-.lobby__top-bar-back-button:hover {
+.lobby__top-bar-close-button:hover {
     background-color: rgba(90, 90, 90, 0.55);
 }
 
-.lobby__top-bar-back-button:active {
+.lobby__top-bar-close-button:active {
     background-color: rgba(0, 0, 0, 0.55);
+}
+
+/* The texture is an edge-to-edge cross, drawn at the 12px glyph size of a 24px icon */
+.lobby__close-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/CloseIcnThin.png');
+    background-size: 12px 12px;
 }
 
 .lobby__back-key {
@@ -258,7 +266,7 @@
     right: var(--lobby-margin);
 }
 
-/* Clears the in-world Back pill right of the widget: its width plus its 10px margin */
+/* Clears the in-world close button right of the widget: its 46px diameter plus its 10px margin */
 .lobby__profile-menu--with-back .lobby-profile-menu__panel {
-    right: 193px;
+    right: 106px;
 }

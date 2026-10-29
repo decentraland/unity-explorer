@@ -1158,7 +1158,23 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <StagePresets>k__BackingField:
+        - Name: Halloween 2026
+          Preset:
+            m_AssetGUID: 3d6760cb640ed184fa85b02a099559c7
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+        - Name: Game World
+          Preset:
+            m_AssetGUID: 8432a9b8907c42d49bd4b0f72dfd4a00
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <AvatarSettings>k__BackingField:
+          <IntroEmoteURN>k__BackingField: wave
           <FlavourEmotes>k__BackingField:
           - wave
           - fistpump
@@ -1361,6 +1377,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CompositorMaterial>k__BackingField: {fileID: 2100000, guid: db01dc9188c04ccaa71227b557f49b72, type: 2}
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

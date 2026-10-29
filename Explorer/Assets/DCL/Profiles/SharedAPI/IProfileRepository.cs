@@ -35,6 +35,11 @@ namespace DCL.Profiles
             ///     Compact tiers are not supported on catalysts, so the tier is forced to Full.
             /// </summary>
             ForceFetchFromCatalyst = 4,
+
+            /// <summary>
+            ///     A failed single request is thrown without being reported, on both the catalyst GET and the centralized POST path.
+            /// </summary>
+            CallerReportsFailures = 8,
         }
 
         public const string PROFILE_FRAGMENTATION_OBSOLESCENCE = "Should be moved to the unified POST originated from the client";

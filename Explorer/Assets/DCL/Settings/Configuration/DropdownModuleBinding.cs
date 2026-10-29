@@ -48,7 +48,7 @@ namespace DCL.Settings.Configuration
             PointAtMarkerFeature = 15,
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -62,7 +62,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -110,7 +111,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISettingsModuleEventListener settingsEventListener)
         {
-            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+            if (view.ModuleTitle != null && !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
                 view.ModuleTitle.text = "In-World Chat Bubbles";
 
             return new ChatBubblesVisibilityController(view, chatSettingsAsset, settingsEventListener);
