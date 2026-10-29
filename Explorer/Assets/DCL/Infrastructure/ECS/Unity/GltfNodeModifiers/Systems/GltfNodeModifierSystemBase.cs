@@ -10,6 +10,7 @@ using ECS.Unity.GltfNodeModifiers.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Utility.Arch;
 
 namespace ECS.Unity.GltfNodeModifiers.Systems
 {
@@ -196,13 +197,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void CreateGlobalGltfNode(Entity containerEntity, GltfContainerAsset asset)
         {
-            var gltfNode = new GltfNode(asset.Renderers, containerEntity, string.Empty, false);
-
             // The container keeps its GltfNode across a cleanup, and a duplicate Add corrupts the entity in the Release Arch build (UNITY-EXPLORER-Q2N)
-            if (World.Has<GltfNode>(containerEntity))
-                World.Set(containerEntity, gltfNode);
-            else
-                World.Add(containerEntity, gltfNode);
+            World.AddOrSet(containerEntity, new GltfNode(asset.Renderers, containerEntity, string.Empty, false));
         }
 
         /// <summary>

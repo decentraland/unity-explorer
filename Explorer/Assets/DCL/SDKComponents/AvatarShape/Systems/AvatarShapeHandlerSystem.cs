@@ -269,7 +269,7 @@ namespace ECS.Unity.AvatarShape.Systems
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
             // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with
             // non-synchronicity between global and scene ECS worlds. AvatarCleanUpSystem resets the DeferDeletion.
-            globalWorld.AddOrSet(globalEntity, new DeleteEntityIntention() { DeferDeletion = true });
+            globalWorld.AddOrGet(globalEntity, new DeleteEntityIntention { DeferDeletion = true });
         }
     }
 }

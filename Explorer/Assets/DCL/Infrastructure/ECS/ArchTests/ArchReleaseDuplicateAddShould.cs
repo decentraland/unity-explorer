@@ -77,7 +77,7 @@ namespace ECS.ArchTests
 
             // Act
             world.Remove<Moved>(first);
-            Entity second = world.Create(new Tag(), new Payload { Value = 2 });
+            world.Create(new Tag(), new Payload { Value = 2 });
 
             // Assert
             Assert.That(world.Get<Payload>(first).Value, Is.EqualTo(2), "first should read the slot handed to second");
