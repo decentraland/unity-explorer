@@ -24,7 +24,7 @@ namespace ECS.Unity.Materials.Tests
     {
         private const int VIDEO_PLAYER_CRDT_ENTITY = 512;
 
-        private DestroyMaterial destroyMaterial;
+        private DestroyMaterial destroyMaterial = null!;
 
         private Entity e;
         private Entity texPromise;
