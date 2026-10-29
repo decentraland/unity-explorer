@@ -261,7 +261,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(SCENE_EYES_COLOR, avatarShapeComponent.EyesColor);
             Assert.IsFalse(avatarShapeComponent.ShowOnlyWearables);
             Assert.AreEqual(profile.Name, avatarShapeComponent.Name);
-            Assert.AreEqual(profile.UserId, avatarShapeComponent.ID);
+            Assert.AreEqual(profile.UserId.Value, avatarShapeComponent.ID);
         }
 
         [Test]
