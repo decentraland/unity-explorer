@@ -1,5 +1,4 @@
 using DCL.UI.Controls.Configs;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 

@@ -3,7 +3,6 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
 using NBitcoin;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;

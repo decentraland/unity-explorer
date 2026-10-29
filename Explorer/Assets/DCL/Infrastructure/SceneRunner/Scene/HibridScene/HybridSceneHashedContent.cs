@@ -7,7 +7,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace SceneRunner.Scene
 {

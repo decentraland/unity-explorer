@@ -1,4 +1,3 @@
-using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System;
 

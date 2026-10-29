@@ -14,7 +14,6 @@ using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -25,7 +24,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
-using System.Collections.Generic;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {

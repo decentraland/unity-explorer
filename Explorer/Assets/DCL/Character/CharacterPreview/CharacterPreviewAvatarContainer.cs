@@ -1,8 +1,6 @@
 using Cinemachine;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 

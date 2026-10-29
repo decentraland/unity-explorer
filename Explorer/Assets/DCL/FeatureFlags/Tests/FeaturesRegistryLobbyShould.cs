@@ -116,7 +116,7 @@ namespace DCL.FeatureFlags.Tests
         private static FeaturesRegistry CreateRegistry(bool lobbyFlagEnabled)
         {
             string json = $"{{\"flags\":{{\"{FeatureFlagsStrings.LOBBY}\":{(lobbyFlagEnabled ? "true" : "false")}}},\"variants\":{{}}}}";
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(JsonConvert.DeserializeObject<FeatureFlagsResultDto>(json)!));
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(JsonConvert.DeserializeObject<FeatureFlagsResultDto>(json)));
 
             return new FeaturesRegistry(new ApplicationParametersParser(false), localSceneDevelopment: false);
         }

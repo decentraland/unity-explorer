@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Common
 {

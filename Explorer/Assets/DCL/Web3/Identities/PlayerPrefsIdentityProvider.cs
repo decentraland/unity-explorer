@@ -31,7 +31,7 @@ namespace DCL.Web3.Identities
             {
                 string key = GetIdentityKey();
                 if (!DCLPlayerPrefs.HasKey(key)) return null;
-                string json = DCLPlayerPrefs.GetString(key, string.Empty)!;
+                string json = DCLPlayerPrefs.GetString(key, string.Empty);
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }

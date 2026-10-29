@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -21,7 +20,7 @@ namespace DCL.Navmap
         private CancellationTokenSource? searchPlacesCancellationToken;
         private CancellationTokenSource? collapseExpandCancellationToken;
 
-        private bool isExpanded = false;
+        private bool isExpanded;
 
         public PlacesAndEventsPanelController(
             PlacesAndEventsPanelView view,

@@ -1,5 +1,3 @@
-#nullable enable
-
 using CRDT.Protocol;
 using DCL.Diagnostics;
 using System;

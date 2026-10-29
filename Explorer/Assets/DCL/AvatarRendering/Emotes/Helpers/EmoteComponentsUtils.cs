@@ -2,7 +2,6 @@
 using DCL.AvatarRendering.Loading.Components;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Emotes

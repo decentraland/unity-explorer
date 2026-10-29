@@ -14,7 +14,7 @@ namespace Plugins.NativeAudioAnalysis
         // Thread-safe flags
         // 0 = nothing written OR already consumed
         // 1 = new frame available
-        private int readyFlag = 0;
+        private int readyFlag;
         private float[] buffer = Array.Empty<float>();
         private int channels;
 

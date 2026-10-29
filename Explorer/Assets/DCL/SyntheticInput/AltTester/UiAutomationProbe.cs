@@ -133,7 +133,7 @@ namespace DCL.SyntheticInput.AltTester
 
             return AltOperationRegistry.Start(
                 ready.Simulator.ClickSdkAsync(element, force, clickCancellation.Token)
-                     .Timeout(System.TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC), taskCancellationTokenSource: clickCancellation)
+                     .Timeout(TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC), taskCancellationTokenSource: clickCancellation)
                      .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 

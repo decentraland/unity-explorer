@@ -49,7 +49,7 @@ namespace DCL.Character.CharacterMotion.Tests
 
             Entity entity = world.Create(new PlayerTeleportIntent(sceneDef, eventParcel, Vector3.zero, CancellationToken.None, landOnParcel: true));
 
-            system!.Update(0);
+            system.Update(0);
 
             Vector3 position = world.Get<PlayerTeleportIntent>(entity).Position;
 

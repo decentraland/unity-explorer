@@ -513,7 +513,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
         private void SystemUpdate()
         {
-            system!.Update(1f);
+            system.Update(1f);
             cinemachineBrain.ManualUpdate();
         }
     }

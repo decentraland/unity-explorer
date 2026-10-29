@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.AutoPilot
 {
@@ -51,8 +50,8 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
             if (sampling)
             {
-                DCL.Diagnostics.ReportHub.LogWarning(
-                    DCL.Diagnostics.ReportCategory.ALWAYS,
+                Diagnostics.ReportHub.LogWarning(
+                    Diagnostics.ReportCategory.ALWAYS,
                     $"{nameof(PerfSampler)}.{nameof(Begin)} called while a sampling session is already active. Ignoring.");
                 return;
             }
@@ -112,7 +111,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
             }
             catch (Exception e)
             {
-                DCL.Diagnostics.ReportHub.LogException(e, DCL.Diagnostics.ReportCategory.ALWAYS);
+                Diagnostics.ReportHub.LogException(e, Diagnostics.ReportCategory.ALWAYS);
                 sampling = false;
             }
         }

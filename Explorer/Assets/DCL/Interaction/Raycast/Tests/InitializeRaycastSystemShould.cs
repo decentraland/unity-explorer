@@ -21,7 +21,7 @@ namespace DCL.Interaction.Raycast.Tests
             Entity e = world.Create(new PBRaycast());
             AddTransformToEntity(e);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.TryGet(e, out RaycastComponent raycastComponent), Is.True);
             Assert.That(raycastComponent.Executed, Is.False);
@@ -33,7 +33,7 @@ namespace DCL.Interaction.Raycast.Tests
             Entity e = world.Create(new PBRaycast { Continuous = true, IsDirty = true }, new RaycastComponent { Executed = true });
             AddTransformToEntity(e);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Get<RaycastComponent>(e).Executed, Is.False);
         }

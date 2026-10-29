@@ -3,7 +3,6 @@ using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
-using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.Settings.ModuleControllers
 {

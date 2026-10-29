@@ -1,5 +1,3 @@
-using System;
-
 namespace DCL.Multiplayer.Connections.Typing
 {
     /// <summary>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 

@@ -9,11 +9,9 @@ using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
-using DCL.SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
 {

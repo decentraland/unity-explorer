@@ -14,7 +14,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {

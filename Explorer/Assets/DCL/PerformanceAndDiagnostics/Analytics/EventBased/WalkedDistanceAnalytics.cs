@@ -6,7 +6,6 @@ using DCL.Utility;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased

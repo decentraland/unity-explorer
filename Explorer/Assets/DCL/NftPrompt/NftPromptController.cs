@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.NftInfoAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;

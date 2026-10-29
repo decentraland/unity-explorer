@@ -8,7 +8,6 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;

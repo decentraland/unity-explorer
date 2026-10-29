@@ -2,7 +2,6 @@
 using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using Ipfs;
 using System.Collections.Generic;
 using ECS.Prioritization.Components;
 using Unity.Mathematics;

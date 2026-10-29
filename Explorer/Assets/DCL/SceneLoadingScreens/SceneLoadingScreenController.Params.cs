@@ -1,5 +1,4 @@
 using DCL.Utilities;
-using System.Threading;
 
 namespace DCL.SceneLoadingScreens
 {

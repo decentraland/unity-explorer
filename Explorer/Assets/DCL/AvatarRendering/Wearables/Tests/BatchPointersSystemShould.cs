@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public async Task DispatchTheBatchAsync()
         {
-            system!.Update(0);
+            system.Update(0);
 
             var count = 0;
 
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             await Task.Delay(TimeSpan.FromSeconds(3));
 
-            system!.Update(0);
+            system.Update(0);
 
             // One promise to replace individual promises
 
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void CancelAndDestroyOriginalPromises()
         {
-            system!.Update(0);
+            system.Update(0);
 
             var count = 0;
 
@@ -108,7 +108,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                     intention, PartitionComponent.TOP_PRIORITY), (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
             }
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(cts.All(c => c.IsCancellationRequested), Is.True);
 

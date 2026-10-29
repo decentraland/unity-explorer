@@ -1,5 +1,4 @@
 using DCL.Profiles;
-using DCL.UI.ConfirmationDialog.Opener;
 using System;
 using UnityEngine;
 

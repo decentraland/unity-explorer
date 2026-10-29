@@ -1,4 +1,3 @@
-using DCL.Chat.History;
 using DCL.Chat.ChatServices;
 using System;
 

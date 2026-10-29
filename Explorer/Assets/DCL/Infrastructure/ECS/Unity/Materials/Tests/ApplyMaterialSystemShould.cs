@@ -16,7 +16,6 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.StreamableLoading.Common;
 using ECS.Unity.GltfNodeModifiers.Components;
-using System.Collections.Generic;
 
 namespace ECS.Unity.Materials.Tests
 {

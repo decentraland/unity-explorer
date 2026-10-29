@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Entities;
 using System;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions

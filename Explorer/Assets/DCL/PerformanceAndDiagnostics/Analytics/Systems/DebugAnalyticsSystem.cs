@@ -5,7 +5,6 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS.Abstract;
-using Plugins.RustSegment.SegmentServerWrap;
 
 namespace DCL.Analytics.Systems
 {
