@@ -41,8 +41,8 @@ namespace Global.AppArgs
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
     ///             (<c>creator-hub-bin-path</c>, <c>launch-cdp-monitor-on-start</c> — SEC-005); point the client at
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
-    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>/<c>-user-id</c>,
-    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>, <c>gateway</c>); move the client
+    ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>/<c>-user-id</c>, <c>pulse</c>,
+    ///             <c>gateway</c>); move the client
     ///             onto another chain (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen
     ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
     ///             modes (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>). A whitelisted realm
@@ -146,12 +146,15 @@ namespace Global.AppArgs
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
 
-            // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-            // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
-            // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
-            // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
-            // point asset conversion at the realm the link already targets.
+            // Legacy, ignored by the client (local asset bundles are what local scene development always does),
+            // but still forwarded by Creator Hub into preview deep links. Kept permitted so it is not listed as a
+            // denied parameter in the startup warning; it unlocks nothing.
             AppArgsFlags.LOCAL_AB,
+
+            // Local-scene development only: skips the embedded abgen sidecar and loads the scene's raw GLTFs. A
+            // pure boolean that removes a capability (no bundle server is started), so it adds no
+            // attacker-controllable input; whitelisted-realm-gated only because it is meaningless elsewhere.
+            AppArgsFlags.LSD_RAW_GLTF,
 
             // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like
             // autopilot, suppresses the auth screen — it cannot bypass authentication: when no valid identity is

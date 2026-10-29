@@ -460,6 +460,19 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void DeepLinkKeepsLsdRawGltfForLoopbackRealmOnly()
+        {
+            Dictionary<string, string> loopback = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true&lsd-raw-gltf=true");
+
+            Dictionary<string, string> remote = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&lsd-raw-gltf=true");
+
+            Assert.IsTrue(loopback.ContainsKey(AppArgsFlags.LSD_RAW_GLTF), "lsd-raw-gltf must survive for a loopback (local dev) realm");
+            Assert.IsFalse(remote.ContainsKey(AppArgsFlags.LSD_RAW_GLTF), "lsd-raw-gltf must be dropped for a non-loopback (remote) realm");
+        }
+
+        [Test]
         public void DeepLinkKeepsLocalAbForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
