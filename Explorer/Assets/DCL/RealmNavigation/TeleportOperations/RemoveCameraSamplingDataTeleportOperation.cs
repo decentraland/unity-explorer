@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using System.Threading;
+using Utility.Arch;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {
@@ -20,7 +21,7 @@ namespace DCL.RealmNavigation.TeleportOperations
         protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             // By removing the CameraSamplingData, we stop the ring calculation
-            globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
+            globalWorld.TryRemove<CameraSamplingData>(cameraEntity.Object);
             return UniTask.CompletedTask;
         }
     }

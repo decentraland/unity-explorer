@@ -94,7 +94,7 @@ namespace DCL.RealmNavigation.TeleportOperations
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
-            realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
+            realmController.GlobalWorld.EcsWorld.AddOrGet(cameraEntity.Object, cameraSamplingData);
 
             // Detached: connecting can take seconds and must not delay enqueueing the readiness report below
             if (isWorld)

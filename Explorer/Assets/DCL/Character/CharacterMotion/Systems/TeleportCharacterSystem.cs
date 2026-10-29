@@ -17,6 +17,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -197,7 +198,7 @@ namespace DCL.CharacterMotion.Systems
             teleportBroadcast.BroadcastTeleport(characterController.transform.position);
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
-            World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
+            World.AddOrSet(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
         }
 
         /// <summary>

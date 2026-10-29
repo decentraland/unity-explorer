@@ -7,8 +7,8 @@ using System.Collections.Generic;
 namespace ECS.ArchTests
 {
     /// <summary>
-    ///     Documents how the Release Arch build corrupts an entity when a component it already has is added again (UNITY-EXPLORER-Q2N),
-    ///     which is why every <c>World.Add</c> on a possibly present component is guarded with <c>Has</c>. A failure here means Arch was fixed.
+    ///     Documents how the Release Arch build corrupts an entity when a component it already has is added again, or one it lacks is
+    ///     removed (UNITY-EXPLORER-Q2N), which is why such <c>World.Add</c>/<c>Remove</c> calls are guarded. A failure here means Arch was fixed.
     /// </summary>
     public class ArchReleaseDuplicateAddShould
     {
@@ -67,6 +67,20 @@ namespace ECS.ArchTests
             Assert.That(world.Get<Payload>(neighbour).Value, Is.EqualTo(4), "neighbour should read the slot handed to fourth");
             Assert.That(world.Get<Payload>(third).Value, Is.EqualTo(3));
             Assert.That(world.Get<Payload>(fourth).Value, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void AliasNextEntityCreatedInSameArchetypeAfterRemovingMissingComponent()
+        {
+            // Arrange
+            Entity first = world.Create(new Tag(), new Payload { Value = 1 });
+
+            // Act
+            world.Remove<Moved>(first);
+            Entity second = world.Create(new Tag(), new Payload { Value = 2 });
+
+            // Assert
+            Assert.That(world.Get<Payload>(first).Value, Is.EqualTo(2), "first should read the slot handed to second");
         }
 
         [Test]
