@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 return;
 
             Entity playerEntity = persistentEntities.Player;
-            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)));
+            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), localPlayerEntity));
 
             characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
         }

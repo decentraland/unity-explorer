@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarNametag.Systems;
@@ -12,14 +11,10 @@ namespace DCL.SDKComponents.AvatarNametag
     public class AvatarNametagWorldPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly World globalWorld;
-        private readonly Entity globalPlayerEntity;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
-        public AvatarNametagWorldPlugin(World globalWorld, Entity globalPlayerEntity, IReadOnlyEntityParticipantTable entityParticipantTable)
+        public AvatarNametagWorldPlugin(World globalWorld)
         {
             this.globalWorld = globalWorld;
-            this.globalPlayerEntity = globalPlayerEntity;
-            this.entityParticipantTable = entityParticipantTable;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
@@ -33,7 +28,7 @@ namespace DCL.SDKComponents.AvatarNametag
                 return;
 
             var propagateSystem = PropagateSceneAvatarTagSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider,
-                entityParticipantTable, globalWorld, globalPlayerEntity);
+                sharedDependencies.EntitiesMap, globalWorld);
 
             sceneIsCurrentListeners.Add(propagateSystem);
             finalizeWorldSystems.Add(propagateSystem);

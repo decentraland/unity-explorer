@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.SDK.Tests
             profile = new SDKProfile();
             OverrideProfile(Array.Empty<string>(), HELMET_URN, HAIR_URN);
 
-            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, Entity.Null);
 
             entity = world.Create(playerCRDTEntity);
         }

@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -10,9 +9,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -24,31 +21,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility.Arch;
 using Color3 = Decentraland.Common.Color3;
-using PendingScan = DCL.Multiplayer.SDK.Systems.SceneWorld.ScenePlayerAvatarResolver.PendingScan;
-using ResolveResult = DCL.Multiplayer.SDK.Systems.SceneWorld.ScenePlayerAvatarResolver.Result;
 
 namespace DCL.SDKComponents.SceneWearables.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateAfter(typeof(ResolveSceneWearablePathsSystem))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
-    [ThrottlingEnabled]
     public partial class PropagateSceneWearablesToAvatarsSystem : BaseUnityLoopSystem, ISceneIsCurrentListener, IFinalizeWorldSystem
     {
         private const int MAX_PLAYER_WEARABLES = 32;
 
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly World globalWorld;
-        private readonly ScenePlayerAvatarResolver avatarResolver;
         private readonly string sceneWearableUrnPrefix;
-        private readonly List<PendingScan> pendingScans = new ();
 
         internal PropagateSceneWearablesToAvatarsSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider,
-            IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, Entity globalPlayerEntity) : base(world)
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World globalWorld) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
+            this.entitiesMap = entitiesMap;
             this.globalWorld = globalWorld;
-            avatarResolver = new ScenePlayerAvatarResolver(globalWorld, globalPlayerEntity, entityParticipantTable);
             sceneWearableUrnPrefix = SceneWearableDTOFactory.GetUrnPrefix(sceneData.SceneEntityDefinition.id);
         }
 
@@ -57,10 +50,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             if (isCurrent)
                 MarkPlayerAvatarShapesDirtyQuery(World);
             else
-            {
                 ClearAppliedOverridesQuery(World);
-                StopAllTrackingQuery(World);
-            }
         }
 
         public void FinalizeComponents(in Query query) =>
@@ -73,22 +63,10 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             HandleComponentRemovedQuery(World);
             HandleEntityDestructionQuery(World);
             HandlePlayerLeftQuery(World);
-            StopTrackingOnComponentRemovedQuery(World);
 
-            var newPlayersCount = 0;
-            TagNewPlayersQuery(World, ref newPlayersCount);
-
-            if (newPlayersCount > 0)
-                RearmDetachedOverridesQuery(World);
-
-            pendingScans.Clear();
-            PropagateOverrideQuery(World);
-            RetryPendingOverrideQuery(World);
-
-            if (pendingScans.Count == 0) return;
-
-            MatchPendingPlayersQuery(World);
-            ResolvePendingScans();
+            var dirtyPlayerShapes = 0;
+            CountDirtyPlayerAvatarShapesQuery(World, ref dirtyPlayerShapes);
+            PropagateOverrideQuery(World, dirtyPlayerShapes > 0);
         }
 
         [Query]
@@ -102,73 +80,45 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             DropOverride(entity, in applied);
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void HandlePlayerLeft(Entity entity, in SceneWearablesApplied applied)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandlePlayerLeft(Entity bridgeEntity, in PlayerSceneCRDTEntity player)
         {
-            if (applied.PlayerEntity == Entity.Null) return;
-
-            if (World.IsAlive(applied.PlayerEntity) && !World.Has<DeleteEntityIntention>(applied.PlayerEntity)) return;
+            if (!entitiesMap.TryGetValue(player.CRDTEntity, out Entity entity)
+                || !World.TryGet(entity, out SceneWearablesApplied applied)
+                || applied.BridgeEntity != bridgeEntity)
+                return;
 
             DropOverride(entity, in applied);
-            World.Add(entity, new SceneWearablesDetached());
         }
 
         [Query]
         private void ClearAppliedOverrides(Entity entity, in SceneWearablesApplied applied) =>
             DropOverride(entity, in applied);
 
+        // For a remote player the scene's PBAvatarShape lives on a different entity than PlayerSceneCRDTEntity: the two share only the CRDT id.
         [Query]
-        [Any(typeof(SceneWearablesPending), typeof(SceneWearablesDetached))]
-        [None(typeof(PBAvatarShape))]
-        private void StopTrackingOnComponentRemoved(Entity entity) =>
-            StopTracking(entity);
-
-        [Query]
-        [Any(typeof(SceneWearablesPending), typeof(SceneWearablesDetached))]
-        private void StopAllTracking(Entity entity) =>
-            StopTracking(entity);
-
-        [Query]
-        [All(typeof(PlayerSceneCRDTEntity))]
-        [None(typeof(PlayerSeen), typeof(DeleteEntityIntention))]
-        private void TagNewPlayers([Data] ref int newPlayersCount, Entity entity)
-        {
-            newPlayersCount++;
-            World.Add(entity, new PlayerSeen());
-        }
-
-        [Query]
-        [All(typeof(SceneWearablesDetached))]
         [None(typeof(DeleteEntityIntention))]
-        private void RearmDetachedOverrides(Entity entity, ref PBAvatarShape pbAvatarShape)
+        private void PropagateOverride([Data] bool anyPlayerShapeDirty, Entity bridgeEntity, in PlayerSceneCRDTEntity player)
         {
-            pbAvatarShape.IsDirty = true;
-            World.Remove<SceneWearablesDetached>(entity);
+            if (!player.IsDirty && !anyPlayerShapeDirty) return;
+
+            if (!entitiesMap.TryGetValue(player.CRDTEntity, out Entity entity)
+                || !World.TryGet(entity, out PBAvatarShape? pbAvatarShape)
+                || pbAvatarShape == null)
+                return;
+
+            if ((!player.IsDirty && !pbAvatarShape.IsDirty) || !globalWorld.IsAlive(player.GlobalEntity)) return;
+
+            ApplyOverride(entity, pbAvatarShape, player.GlobalEntity, bridgeEntity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateOverride(Entity entity, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
+        private void CountDirtyPlayerAvatarShapes([Data] ref int count, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
-            if (!pbAvatarShape.IsDirty || !SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity)) return;
-
-            TryPropagate(entity, in crdtEntity, pbAvatarShape);
+            if (pbAvatarShape.IsDirty && SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity))
+                count++;
         }
-
-        [Query]
-        [All(typeof(SceneWearablesPending))]
-        [None(typeof(DeleteEntityIntention))]
-        private void RetryPendingOverride(Entity entity, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
-        {
-            if (pbAvatarShape.IsDirty) return;
-
-            TryPropagate(entity, in crdtEntity, pbAvatarShape);
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void MatchPendingPlayers(Entity entity, in PlayerSceneCRDTEntity playerCrdtEntity) =>
-            ScenePlayerAvatarResolver.MatchPlayer(pendingScans, entity, in playerCrdtEntity);
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -178,61 +128,15 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 pbAvatarShape.IsDirty = true;
         }
 
-        private void TryPropagate(Entity entity, in CRDTEntity crdtEntity, PBAvatarShape pbAvatarShape)
+        private void ApplyOverride(Entity entity, PBAvatarShape pbAvatarShape, Entity target, Entity bridgeEntity)
         {
-            bool isLocalPlayer = crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY;
-            Entity target;
-
-            ResolveResult resolveResult = isLocalPlayer
-                ? avatarResolver.ResolveLocalPlayer(out target)
-                : avatarResolver.ResolveRemotePlayer(World, entity, out target);
-
-            if (resolveResult == ResolveResult.NeedsPlayerScan)
-                pendingScans.Add(new PendingScan(entity, crdtEntity));
-            else
-                HandleResolveResult(resolveResult, entity, pbAvatarShape, target, isLocalPlayer ? Entity.Null : entity);
-        }
-
-        private void ResolvePendingScans()
-        {
-            for (var i = 0; i < pendingScans.Count; i++)
-            {
-                PendingScan scan = pendingScans[i];
-
-                if (!World.IsAlive(scan.SceneEntity) || !World.TryGet(scan.SceneEntity, out PBAvatarShape? pbAvatarShape) || pbAvatarShape == null)
-                    continue;
-
-                ResolveResult resolveResult = avatarResolver.ResolveScannedPlayer(World, in scan, out Entity target);
-                HandleResolveResult(resolveResult, scan.SceneEntity, pbAvatarShape, target, scan.PlayerEntity);
-            }
-        }
-
-        private void HandleResolveResult(ResolveResult resolveResult, Entity entity, PBAvatarShape pbAvatarShape, Entity target, Entity playerEntity)
-        {
-            switch (resolveResult)
-            {
-                case ResolveResult.Resolved:
-                    ApplyOverride(entity, pbAvatarShape, target, playerEntity);
-                    break;
-                case ResolveResult.Pending:
-                    World.AddOrGet(entity, new SceneWearablesPending());
-                    break;
-                default:
-                    World.TryRemove<SceneWearablesPending>(entity);
-                    break;
-            }
-        }
-
-        private void ApplyOverride(Entity entity, PBAvatarShape pbAvatarShape, Entity target, Entity playerEntity)
-        {
-            // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar than the one that wears the override.
+            // Remote-player entity ids are recycled, so the id can land on a different avatar than the one that wears the override.
             if (World.TryGet(entity, out SceneWearablesApplied applied) && applied.GlobalEntity != target)
                 ClearOverride(applied.GlobalEntity);
 
             CopyOverride(target, pbAvatarShape);
 
-            World.AddOrSet(entity, new SceneWearablesApplied(target, playerEntity));
-            World.TryRemove<SceneWearablesPending>(entity);
+            World.AddOrSet(entity, new SceneWearablesApplied(target, bridgeEntity));
         }
 
         private void DropOverride(Entity entity, in SceneWearablesApplied applied)
@@ -241,12 +145,6 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
             World.Remove<SceneWearablesApplied>(entity);
             ClearOverride(target);
-        }
-
-        private void StopTracking(Entity entity)
-        {
-            World.TryRemove<SceneWearablesPending>(entity);
-            World.TryRemove<SceneWearablesDetached>(entity);
         }
 
         private void CopyOverride(Entity target, PBAvatarShape pbAvatarShape)
@@ -357,20 +255,15 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         {
             public readonly Entity GlobalEntity;
 
-            // The remote player's scene entity that holds its profile. Entity.Null for the local player.
-            public readonly Entity PlayerEntity;
+            // A left player's bridge entity outlives the leave until its deletion runs, and may overlap with the bridge entity
+            // of the player's re-entry: only the leave of the bridge entity that applied the override may drop it.
+            public readonly Entity BridgeEntity;
 
-            public SceneWearablesApplied(Entity globalEntity, Entity playerEntity)
+            public SceneWearablesApplied(Entity globalEntity, Entity bridgeEntity)
             {
                 GlobalEntity = globalEntity;
-                PlayerEntity = playerEntity;
+                BridgeEntity = bridgeEntity;
             }
         }
-
-        private struct SceneWearablesPending { }
-
-        private struct SceneWearablesDetached { }
-
-        private struct PlayerSeen { }
     }
 }

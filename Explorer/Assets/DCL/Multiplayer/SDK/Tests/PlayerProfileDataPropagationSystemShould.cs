@@ -80,6 +80,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.That(sceneWorld.Has<Profile>(scenePlayerEntity), Is.False);
             Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out PlayerSceneCRDTEntity playerSceneCRDTEntity));
             Assert.That(playerSceneCRDTEntity.CRDTEntity.Id, Is.EqualTo(SpecialEntitiesID.PLAYER_ENTITY));
+            Assert.That(playerSceneCRDTEntity.GlobalEntity, Is.EqualTo(entity));
 
             Assert.That(sceneEntityProfile!.IsDirty, Is.True);
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);

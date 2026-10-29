@@ -1,7 +1,5 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneWearables.Systems;
 using ECS.LifeCycle;
@@ -13,17 +11,12 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWearableStorage wearableStorage;
         private readonly Arch.Core.World globalWorld;
-        private readonly Entity globalPlayerEntity;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly bool loadFromLocalScene;
 
-        public SceneWearablesPlugin(IWearableStorage wearableStorage, Arch.Core.World globalWorld, Entity globalPlayerEntity,
-            IReadOnlyEntityParticipantTable entityParticipantTable, bool loadFromLocalScene)
+        public SceneWearablesPlugin(IWearableStorage wearableStorage, Arch.Core.World globalWorld, bool loadFromLocalScene)
         {
             this.wearableStorage = wearableStorage;
             this.globalWorld = globalWorld;
-            this.globalPlayerEntity = globalPlayerEntity;
-            this.entityParticipantTable = entityParticipantTable;
             this.loadFromLocalScene = loadFromLocalScene;
         }
 
@@ -35,7 +28,7 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage, loadFromLocalScene));
 
             PropagateSceneWearablesToAvatarsSystem propagateSystem = PropagateSceneWearablesToAvatarsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider,
-                entityParticipantTable, globalWorld, globalPlayerEntity);
+                sharedDependencies.EntitiesMap, globalWorld);
             sceneIsCurrentListeners.Add(propagateSystem);
             finalizeWorldSystems.Add(propagateSystem);
         }

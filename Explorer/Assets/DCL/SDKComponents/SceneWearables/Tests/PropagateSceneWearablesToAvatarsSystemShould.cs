@@ -6,10 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.ECSComponents;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Profiles;
 using DCL.SDKComponents.SceneWearables.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
@@ -30,10 +27,10 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string SCENE_WEARABLE = "urn:decentraland:off-chain:scene-wearable:" + SCENE_ID + "-hathash";
         private const string SCENE_WEARABLE_2 = "urn:decentraland:off-chain:scene-wearable:" + SCENE_ID + "-kilthash";
         private const string OTHER_SCENE_WEARABLE = "urn:decentraland:off-chain:scene-wearable:" + OTHER_SCENE_ID + "-kilthash";
-        private const string REMOTE_WALLET = "0xdeadbeef";
-        private const string SECOND_WALLET = "0xcafebabe";
 
         private static readonly QueryDescription FINALIZE_QUERY = new QueryDescription().WithAll<CRDTEntity>();
+        private static readonly QueryDescription PLAYERS_QUERY = new QueryDescription().WithAll<PlayerSceneCRDTEntity>();
+        private static readonly QueryDescription AVATAR_SHAPES_QUERY = new QueryDescription().WithAll<PBAvatarShape>();
         private static readonly CRDTEntity REMOTE_PLAYER_CRDT_ENTITY = CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1);
 
         private World globalWorld = null!;
@@ -41,32 +38,28 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private Entity globalPlayerEntity;
         private Entity globalRemoteEntity;
         private Entity scenePlayerEntity;
-        private EntityParticipantTable entityParticipantTable = null!;
+        private Dictionary<CRDTEntity, Entity> entitiesMap = null!;
         private ISceneStateProvider sceneStateProvider = null!;
 
         [SetUp]
         public void SetUp()
         {
-            EcsTestsUtils.SetUpFeaturesRegistry();
-
             globalWorld = World.Create();
             globalPlayerEntity = globalWorld.Create(new SceneAvatarShapeOverride(new List<URN>()));
             globalRemoteEntity = globalWorld.Create();
 
-            entityParticipantTable = new EntityParticipantTable();
-            entityParticipantTable.Register(REMOTE_WALLET, globalRemoteEntity, RoomSource.Island);
+            entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            system = new PropagateSceneWearablesToAvatarsSystem(world, SceneDataSub(SCENE_ID), sceneStateProvider, entityParticipantTable, globalWorld, globalPlayerEntity);
+            system = new PropagateSceneWearablesToAvatarsSystem(world, SceneDataSub(SCENE_ID), sceneStateProvider, entitiesMap, globalWorld);
         }
 
         protected override void OnTearDown()
         {
             otherSceneWorld?.Dispose();
             globalWorld.Dispose();
-            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         [Test]
@@ -164,6 +157,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag();
 
             pbAvatarShape.Name = "Scene name";
@@ -187,6 +181,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag();
 
             pbAvatarShape.HairColor = new Color3 { R = 1f };
@@ -239,10 +234,11 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
-        public void IgnoreAvatarShapeOfOtherEntities()
+        public void IgnoreAvatarShapeOfEntitiesNoPlayerSharesTheIdWith()
         {
             // Arrange
-            world.Create(new PBAvatarShape { Wearables = { SCENE_WEARABLE }, IsDirty = true }, new CRDTEntity(512));
+            var crdtEntity = new CRDTEntity(512);
+            entitiesMap[crdtEntity] = world.Create(new PBAvatarShape { Wearables = { SCENE_WEARABLE }, IsDirty = true }, crdtEntity);
 
             // Act
             system.Update(0);
@@ -251,23 +247,6 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             SceneAvatarShapeOverride sceneOverride = GetOverride();
             Assert.IsEmpty(sceneOverride.Wearables);
             Assert.IsFalse(sceneOverride.IsDirty);
-        }
-
-        [TestCase(SpecialEntitiesID.CAMERA_ENTITY)]
-        [TestCase(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM - 1)]
-        [TestCase(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO)]
-        public void IgnoreNonPlayerIdsEvenWithAProfileBehindThem(int crdtId)
-        {
-            // Arrange
-            var pbAvatarShape = new PBAvatarShape { Wearables = { SCENE_WEARABLE }, IsDirty = true };
-            world.Create(pbAvatarShape, new CRDTEntity(crdtId), NewSdkProfile(REMOTE_WALLET));
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(globalWorld.Has<SceneAvatarShapeOverride>(globalRemoteEntity));
-            Assert.IsEmpty(GetOverride().Wearables);
         }
 
         [Test]
@@ -290,6 +269,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(CATALYST_WEARABLE, SCENE_WEARABLE);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag();
 
             pbAvatarShape.Wearables.Add(OTHER_SCENE_WEARABLE);
@@ -310,6 +290,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag();
 
             pbAvatarShape.Wearables.Add(SCENE_WEARABLE_2);
@@ -382,10 +363,10 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void ClearOverrideWhenSceneStopsBeingCurrent()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
+            CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag();
-            pbAvatarShape.IsDirty = false;
 
             // Act
             sceneStateProvider.IsCurrent.Returns(false);
@@ -399,9 +380,9 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void ReapplyOverrideWhenSceneBecomesCurrentAgain()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
+            CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
-            pbAvatarShape.IsDirty = false;
+            EndFrame();
 
             sceneStateProvider.IsCurrent.Returns(false);
             system.OnSceneIsCurrentChanged(false);
@@ -423,9 +404,9 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             sceneStateProvider.IsCurrent.Returns(false);
-            PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
+            CreateScenePlayerAvatarShape(SCENE_WEARABLE);
             system.Update(0);
-            pbAvatarShape.IsDirty = false;
+            EndFrame();
 
             // Act
             sceneStateProvider.IsCurrent.Returns(true);
@@ -465,10 +446,17 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             otherSceneWorld = World.Create();
             ISceneStateProvider otherSceneStateProvider = Substitute.For<ISceneStateProvider>();
             otherSceneStateProvider.IsCurrent.Returns(true);
-            otherSceneWorld.Create(new PBAvatarShape { Wearables = { OTHER_SCENE_WEARABLE }, IsDirty = true }, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+            var otherEntitiesMap = new Dictionary<CRDTEntity, Entity>
+            {
+                [SpecialEntitiesID.PLAYER_ENTITY] = otherSceneWorld.Create(
+                    new PBAvatarShape { Wearables = { OTHER_SCENE_WEARABLE }, IsDirty = true },
+                    new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
+                    new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, globalPlayerEntity)),
+            };
 
             using var otherSceneSystem = new PropagateSceneWearablesToAvatarsSystem(otherSceneWorld, SceneDataSub(OTHER_SCENE_ID), otherSceneStateProvider,
-                entityParticipantTable, globalWorld, globalPlayerEntity);
+                otherEntitiesMap, globalWorld);
 
             otherSceneSystem.Update(0);
             ClearOverrideDirtyFlag();
@@ -498,13 +486,15 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
-        public void ApplyToRemotePlayerThroughTheBridgeEntity()
+        public void ApplyAnAlreadyPresentAvatarShapeWhenTheRemotePlayerArrives()
         {
             // Arrange
             CreateRemoteAvatarShape(CATALYST_WEARABLE, OTHER_SCENE_WEARABLE, SCENE_WEARABLE);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            system.Update(0);
+            EndFrame();
 
             // Act
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
 
             // Assert
@@ -515,13 +505,15 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
-        public void ApplyToRemotePlayerWhoseProfileLivesOnTheSameEntity()
+        public void ApplyAnAvatarShapeTheSceneWritesAfterTheRemotePlayerArrived()
         {
             // Arrange
-            CreateRemoteAvatarShape(SCENE_WEARABLE, out Entity sceneEntity);
-            world.Add(sceneEntity, NewSdkProfile(REMOTE_WALLET));
+            CreateRemoteBridgeEntity(globalRemoteEntity);
+            system.Update(0);
+            EndFrame();
 
             // Act
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
             system.Update(0);
 
             // Assert
@@ -535,7 +527,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(OTHER_SCENE_WEARABLE);
             pbAvatarShape.Name = "Scene name";
             pbAvatarShape.ExpressionTriggerId = "wave";
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
 
             // Act
             system.Update(0);
@@ -550,7 +542,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape();
             pbAvatarShape.BodyShape = BodyShape.FEMALE;
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
 
             // Act
             system.Update(0);
@@ -567,8 +559,9 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
+            EndFrame();
 
             List<URN> urns = GetOverride(globalRemoteEntity).Wearables;
             ClearOverrideDirtyFlag(globalRemoteEntity);
@@ -591,7 +584,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             CreateRemoteAvatarShape(SCENE_WEARABLE, out Entity sceneEntity);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
             ClearOverrideDirtyFlag(globalRemoteEntity);
 
@@ -605,56 +598,41 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
-        public void ClearRemoteOverrideWhenPlayerLeavesTheScene()
+        public void ClearRemoteOverrideButKeepTheAvatarShapeWhenPlayerLeavesTheScene()
         {
             // Arrange
-            CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteAvatarShape(SCENE_WEARABLE, out Entity sceneEntity);
+            Entity bridgeEntity = CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag(globalRemoteEntity);
-
-            world.Destroy(bridgeEntity);
 
             // Act
-            system.Update(0);
-
-            // Assert
-            AssertOverrideCleared(globalRemoteEntity);
-        }
-
-        [Test]
-        public void ClearRemoteOverrideAsSoonAsTheBridgeEntityIsMarkedForDeletion()
-        {
-            // Arrange
-            CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
-            system.Update(0);
-            ClearOverrideDirtyFlag(globalRemoteEntity);
-
             world.Add(bridgeEntity, new DeleteEntityIntention());
-
-            // Act
             system.Update(0);
 
             // Assert
             AssertOverrideCleared(globalRemoteEntity);
+            Assert.IsTrue(world.Has<PBAvatarShape>(sceneEntity));
         }
 
         [Test]
         public void ReapplyRemoteOverrideWhenPlayerReturnsToTheScene()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            Entity bridgeEntity = CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
-            pbAvatarShape.IsDirty = false;
+            EndFrame();
 
-            world.Destroy(bridgeEntity);
+            world.Add(bridgeEntity, new DeleteEntityIntention());
             system.Update(0);
+            world.Destroy(bridgeEntity);
+            EndFrame();
             ClearOverrideDirtyFlag(globalRemoteEntity);
 
             // Act
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
 
             // Assert
@@ -664,22 +642,50 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
+        public void KeepTheReappliedOverrideWhileTheLeftBridgeEntityAwaitsDeletion()
+        {
+            // Arrange
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            Entity leftBridgeEntity = CreateRemoteBridgeEntity(globalRemoteEntity);
+            system.Update(0);
+            EndFrame();
+
+            world.Add(leftBridgeEntity, new DeleteEntityIntention());
+            system.Update(0);
+            EndFrame();
+
+            CreateRemoteBridgeEntity(globalRemoteEntity);
+            system.Update(0);
+            EndFrame();
+            ClearOverrideDirtyFlag(globalRemoteEntity);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneAvatarShapeOverride sceneOverride = GetOverride(globalRemoteEntity);
+            CollectionAssert.AreEqual(new[] { new URN(SCENE_WEARABLE) }, sceneOverride.Wearables);
+            Assert.IsFalse(sceneOverride.IsDirty);
+        }
+
+        [Test]
         public void NotReapplyRemoteOverrideWhenTheIdReturnsWithAnotherVersion()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            Entity bridgeEntity = CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
-            pbAvatarShape.IsDirty = false;
+            EndFrame();
 
-            world.Destroy(bridgeEntity);
+            world.Add(bridgeEntity, new DeleteEntityIntention());
             system.Update(0);
+            world.Destroy(bridgeEntity);
             ClearOverrideDirtyFlag(globalRemoteEntity);
 
             CRDTEntity nextVersion = CRDTEntity.Create(REMOTE_PLAYER_CRDT_ENTITY.EntityNumber, REMOTE_PLAYER_CRDT_ENTITY.EntityVersion + 1);
 
             // Act
-            world.Create(new PlayerSceneCRDTEntity(nextVersion), NewSdkProfile(REMOTE_WALLET));
+            world.Create(new PlayerSceneCRDTEntity(nextVersion, globalRemoteEntity));
             system.Update(0);
 
             // Assert
@@ -692,11 +698,11 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void ClearRemoteOverrideWhenSceneStopsBeingCurrent()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag(globalRemoteEntity);
-            pbAvatarShape.IsDirty = false;
 
             // Act
             sceneStateProvider.IsCurrent.Returns(false);
@@ -711,7 +717,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             CreateRemoteAvatarShape(SCENE_WEARABLE);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
             ClearOverrideDirtyFlag(globalRemoteEntity);
 
@@ -728,49 +734,9 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Arrange
             sceneStateProvider.IsCurrent.Returns(false);
             CreateRemoteAvatarShape(SCENE_WEARABLE);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
 
             // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(globalWorld.Has<SceneAvatarShapeOverride>(globalRemoteEntity));
-        }
-
-        [Test]
-        public void RetryUntilTheRemotePlayerProfileArrives()
-        {
-            // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = world.Create(new PlayerSceneCRDTEntity(REMOTE_PLAYER_CRDT_ENTITY));
-            system.Update(0);
-
-            Assert.IsFalse(globalWorld.Has<SceneAvatarShapeOverride>(globalRemoteEntity));
-
-            pbAvatarShape.IsDirty = false;
-
-            // Act
-            world.Add(bridgeEntity, NewSdkProfile(REMOTE_WALLET));
-            system.Update(0);
-
-            // Assert
-            CollectionAssert.AreEqual(new[] { new URN(SCENE_WEARABLE) }, GetOverride(globalRemoteEntity).Wearables);
-        }
-
-        [Test]
-        public void StopRetryingOnceNoPlayerBacksTheEntity()
-        {
-            // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = world.Create(new PlayerSceneCRDTEntity(REMOTE_PLAYER_CRDT_ENTITY));
-            system.Update(0);
-            pbAvatarShape.IsDirty = false;
-
-            world.Destroy(bridgeEntity);
-            system.Update(0);
-
-            // Act
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
             system.Update(0);
 
             // Assert
@@ -782,17 +748,17 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             Entity secondGlobalEntity = globalWorld.Create();
-            entityParticipantTable.Register(SECOND_WALLET, secondGlobalEntity, RoomSource.Island);
 
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(SCENE_WEARABLE);
-            Entity bridgeEntity = CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            Entity bridgeEntity = CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
+            EndFrame();
             ClearOverrideDirtyFlag(globalRemoteEntity);
 
-            world.Set(bridgeEntity, NewSdkProfile(SECOND_WALLET));
-            pbAvatarShape.IsDirty = true;
+            world.Destroy(bridgeEntity);
 
             // Act
+            CreateRemoteBridgeEntity(secondGlobalEntity);
             system.Update(0);
 
             // Assert
@@ -801,11 +767,23 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
+        public void SkipAnAvatarThatIsGone()
+        {
+            // Arrange
+            CreateRemoteAvatarShape(SCENE_WEARABLE);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
+            globalWorld.Destroy(globalRemoteEntity);
+
+            // Act, Assert
+            Assert.DoesNotThrow(() => system.Update(0));
+        }
+
+        [Test]
         public void SkipClearingAnAvatarThatIsGone()
         {
             // Arrange — the remote player disconnected: its avatar is destroyed and its id handed to a stranger.
             CreateRemoteAvatarShape(SCENE_WEARABLE, out Entity sceneEntity);
-            CreateRemoteBridgeEntity(REMOTE_WALLET);
+            CreateRemoteBridgeEntity(globalRemoteEntity);
             system.Update(0);
 
             globalWorld.Destroy(globalRemoteEntity);
@@ -828,18 +806,19 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             return sceneData;
         }
 
-        private static SDKProfile NewSdkProfile(string userId)
-        {
-            var sdkProfile = new SDKProfile();
-            sdkProfile.OverrideWith(Profile.NewRandomProfile(userId));
-            return sdkProfile;
-        }
-
+        /// <summary>
+        ///     The local player has a single scene entity: the CRDT bridge maps its id to the persistent player entity,
+        ///     which also carries <see cref="PlayerSceneCRDTEntity" />.
+        /// </summary>
         private PBAvatarShape CreateScenePlayerAvatarShape(params string[] wearables)
         {
             var pbAvatarShape = new PBAvatarShape { IsDirty = true };
             pbAvatarShape.Wearables.AddRange(wearables);
-            scenePlayerEntity = world.Create(pbAvatarShape, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+            scenePlayerEntity = world.Create(pbAvatarShape, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
+                new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, globalPlayerEntity));
+
+            entitiesMap[SpecialEntitiesID.PLAYER_ENTITY] = scenePlayerEntity;
             return pbAvatarShape;
         }
 
@@ -849,16 +828,32 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private void CreateRemoteAvatarShape(string wearable, out Entity sceneEntity) =>
             CreateRemoteAvatarShape(new[] { wearable }, out sceneEntity);
 
+        /// <summary>
+        ///     The scene's entity for a remote player's CRDT id, as the CRDT bridge creates and maps it.
+        /// </summary>
         private PBAvatarShape CreateRemoteAvatarShape(string[] wearables, out Entity sceneEntity)
         {
             var pbAvatarShape = new PBAvatarShape { IsDirty = true };
             pbAvatarShape.Wearables.AddRange(wearables);
             sceneEntity = world.Create(pbAvatarShape, REMOTE_PLAYER_CRDT_ENTITY);
+            entitiesMap[REMOTE_PLAYER_CRDT_ENTITY] = sceneEntity;
             return pbAvatarShape;
         }
 
-        private Entity CreateRemoteBridgeEntity(string userId) =>
-            world.Create(new PlayerSceneCRDTEntity(REMOTE_PLAYER_CRDT_ENTITY), NewSdkProfile(userId));
+        /// <summary>
+        ///     The multiplayer bridge's separate entity for a remote player inside the scene, not mapped by the CRDT bridge.
+        /// </summary>
+        private Entity CreateRemoteBridgeEntity(Entity globalEntity) =>
+            world.Create(new PlayerSceneCRDTEntity(REMOTE_PLAYER_CRDT_ENTITY, globalEntity));
+
+        /// <summary>
+        ///     Resets the dirty flags the way the end-of-frame clean-up systems do.
+        /// </summary>
+        private void EndFrame()
+        {
+            world.Query(in PLAYERS_QUERY, (ref PlayerSceneCRDTEntity player) => player.IsDirty = false);
+            world.Query(in AVATAR_SHAPES_QUERY, (ref PBAvatarShape pbAvatarShape) => pbAvatarShape.IsDirty = false);
+        }
 
         private SceneAvatarShapeOverride GetOverride() =>
             GetOverride(globalPlayerEntity);

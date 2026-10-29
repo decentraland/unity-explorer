@@ -65,6 +65,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.Has<PlayerSceneCRDTEntity>(persistentPlayerEntity));
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
+            Assert.AreEqual(localPlayerEntity, crdtEntity.GlobalEntity);
 
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile? sdkProfile));
             Assert.AreEqual(FAKE_USER_ID, sdkProfile!.UserId);

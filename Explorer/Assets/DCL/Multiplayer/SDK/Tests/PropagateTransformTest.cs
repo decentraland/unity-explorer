@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
 
-            var playerSceneCRDTEntity = new PlayerSceneCRDTEntity(crdtEntity);
+            var playerSceneCRDTEntity = new PlayerSceneCRDTEntity(crdtEntity, Entity.Null);
 
             Transform fakeCharaTransform = new GameObject("fake character").transform;
             fakeCharaTransform.position = Vector3.one * 6;
