@@ -21,9 +21,6 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask<Texture2D> GetScreenshotImageAsync(string url, bool compressed = false, CancellationToken ct = default) =>
             compressed ? await GetImageAsync(url, ct) : await GetUncompressedImageAsync(url, ct);
 
-        public async UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
-            await GetImageAsync(url, ct);
-
         private async UniTask<Texture2D> GetImageAsync(string url, CancellationToken ct = default)
         {
             var texture = await webRequestController.GetTextureAsync(

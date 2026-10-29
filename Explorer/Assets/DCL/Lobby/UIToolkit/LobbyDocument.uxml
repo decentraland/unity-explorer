@@ -56,11 +56,9 @@
                 <ui:Label name="UnreadBadge" text="0" class="lobby__notifications-badge" picking-mode="Ignore" style="display: none;" />
             </ui:Button>
             <ui:VisualElement name="ProfileSlot" class="lobby__top-bar-slot" picking-mode="Ignore" />
-            <!-- Leaves the lobby like Escape does, whose name it shows; hidden at startup, when there is no world to go back to -->
-            <ui:Button name="Back" class="lobby__top-bar-back-button">
-                <ui:VisualElement name="Icon" class="lobby__back-icon" picking-mode="Ignore" />
-                <ui:Label name="Text" text="Back" class="lobby__back-text" picking-mode="Ignore" />
-                <ui:Label name="Key" text="[Esc]" class="lobby__back-key" picking-mode="Ignore" />
+            <!-- Leaves the lobby like Escape does; hidden at startup, when there is no world to go back to -->
+            <ui:Button name="Back" class="lobby__top-bar-close-button">
+                <ui:VisualElement name="Icon" class="lobby__close-icon" picking-mode="Ignore" />
             </ui:Button>
         </ui:VisualElement>
         <!-- The grids the widget sections are moved onto at runtime (see LobbyWidgetHost); the top ones stop short of the avatar -->
@@ -164,6 +162,10 @@
             <ui:VisualElement name="Communities" class="lobby__widget lobby__communities" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="3" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
@@ -182,6 +184,10 @@
             <ui:VisualElement name="Communities4x2" class="lobby__widget lobby__widget--narrow lobby__communities" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="My Communities" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="2" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--communities" picking-mode="Ignore" style="display: none;">
@@ -201,6 +207,10 @@
             <ui:VisualElement name="Gallery" class="lobby__widget lobby__gallery" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="3" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">
@@ -215,6 +225,10 @@
             <ui:VisualElement name="Gallery4x2" class="lobby__widget lobby__widget--narrow lobby__gallery" style="display: none;">
                 <ui:VisualElement name="Header" class="lobby__section-header lobby__section-header--places" picking-mode="Ignore">
                     <ui:Label name="Title" text="Gallery" class="lobby__section-title" picking-mode="Ignore" />
+                    <ui:Button name="ViewAll" class="lobby__view-all">
+                        <ui:Label text="VIEW ALL" class="lobby__view-all-label" picking-mode="Ignore" />
+                        <ui:VisualElement name="Icon" class="lobby__view-all-icon" picking-mode="Ignore" />
+                    </ui:Button>
                 </ui:VisualElement>
                 <DCL.UIToolkit.Elements.SkeletonLoadingElement name="Loading" bone-count="2" class="lobby-skeleton" picking-mode="Ignore" style="display: none;" />
                 <ui:VisualElement name="Empty" class="lobby-empty-banner lobby-empty-banner--gallery" picking-mode="Ignore" style="display: none;">

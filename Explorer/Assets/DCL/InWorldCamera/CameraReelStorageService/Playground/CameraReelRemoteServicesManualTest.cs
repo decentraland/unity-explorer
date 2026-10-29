@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
 
             CameraReelResponse screenshot = Result.images.First();
             ImageTexture = await screenshotsStorage.GetScreenshotImageAsync(screenshot.url);
-            ThumbnailTexture = await screenshotsStorage.GetScreenshotThumbnailAsync(screenshot.thumbnailUrl);
+            ThumbnailTexture = await screenshotsStorage.GetScreenshotImageAsync(screenshot.thumbnailUrl, compressed: true);
         }
 
         [ContextMenu("DELETE IMAGE")]

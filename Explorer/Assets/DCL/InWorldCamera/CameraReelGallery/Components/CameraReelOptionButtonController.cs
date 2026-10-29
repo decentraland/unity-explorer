@@ -51,6 +51,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public bool IsContextMenuOpen() => isContextMenuOpen;
 
+        public bool IsShownUnder(Transform parent) =>
+            view.gameObject.activeSelf && view.transform.parent == parent;
+
         public void TryShow(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
         {
             if (!enableContextMenuButton) return;

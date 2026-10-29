@@ -22,7 +22,8 @@ namespace DCL.PlacesAPIService
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
             bool? withLiveEvents = null,
-            bool? onlyPlaces = null);
+            bool? onlyPlaces = null,
+            bool? onlyHighlighted = null);
 
         /// <summary>
         ///     Every destination the Places menu tags as Featured, in the order the server ranks them.

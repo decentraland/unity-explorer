@@ -69,7 +69,6 @@ namespace DCL.Communities.CommunitiesCard
 
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -113,7 +112,6 @@ namespace DCL.Communities.CommunitiesCard
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             IFriendsService? friendsService,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
@@ -139,7 +137,6 @@ namespace DCL.Communities.CommunitiesCard
             this.mvcManager = mvcManager;
             this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
@@ -366,7 +363,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.NotificationsToggleChanged += OnNotificationsToggleChanged;
             viewInstance.CopyCommunityLinkRequested += OnCopyCommunityLinkRequested;
 
-            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
+            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, new SpriteCache(webRequestController),
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;

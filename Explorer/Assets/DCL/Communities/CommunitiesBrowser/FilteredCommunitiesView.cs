@@ -27,12 +27,12 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
         [SerializeField] private TMP_Text resultsCountText = null!;
-        [SerializeField] private GameObject resultsSection = null!;
         [SerializeField] private LoopGridView resultLoopGrid = null!;
         [SerializeField] private GameObject resultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
+        [SerializeField] private RectTransform[] loadingCards = null!;
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
@@ -79,6 +79,13 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void SetCompactLayout(bool compact)
+        {
+            resultLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, CommunityCardsLayout.Columns(compact));
+            resultLoopGrid.SetItemSize(new Vector2(CommunityCardsLayout.CardWidth(compact), resultLoopGrid.ItemSize.y));
+            CommunityCardsLayout.LayoutLoadingCards(loadingCards, compact);
         }
 
         public void ClearResultsItems()
@@ -164,6 +171,12 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityData communityData = browserStateService!.GetCommunityDataById(currentFilteredIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+
+            // The grid places the items at its item size but leaves them the prefab's width.
+            RectTransform itemRect = gridItem.CachedRectTransform;
+
+            if (!Mathf.Approximately(itemRect.sizeDelta.x, loopGridView.ItemSize.x))
+                itemRect.sizeDelta = new Vector2(loopGridView.ItemSize.x, itemRect.sizeDelta.y);
 
             bool isMember = communityData.role != CommunityMemberRole.none;
 
