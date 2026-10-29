@@ -98,6 +98,7 @@ namespace DCL.FeatureFlags
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
         public const string ABGEN_PIPELINE = "alfa-abgen-pipeline";
         public const string ABGEN_LODS = "alfa-abgen-lods";
+        public const string LSD_FORCED_AB = "alfa-lsd-forced-ab";
         public const string BUG_REPORT = "alfa-bug-report";
         public const string IN_GAME_SHOP = "alfa-in-game-shop";
 
