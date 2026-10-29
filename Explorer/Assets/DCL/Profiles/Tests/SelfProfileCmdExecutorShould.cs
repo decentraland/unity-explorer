@@ -222,7 +222,6 @@ namespace DCL.Profiles.Tests
             {
                 // Arrange
                 AnyGet().Returns(call => UniTask.Never<ProfileTier?>(call.Arg<CancellationToken>()));
-                LogAssert.Expect(LogType.Exception, new Regex(nameof(TimeoutException)));
 
                 // Act
                 executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
@@ -235,6 +234,7 @@ namespace DCL.Profiles.Tests
                 // Assert
                 Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True, "a stalled request must settle, or the model stays Fetching");
                 Assert.That(msg.Failure.Exception, Is.TypeOf<TimeoutException>());
+                LogAssert.NoUnexpectedReceived();
             });
 
         [Test]
