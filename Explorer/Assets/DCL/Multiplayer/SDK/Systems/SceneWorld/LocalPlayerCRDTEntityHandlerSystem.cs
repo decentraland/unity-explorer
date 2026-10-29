@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
-            // AvatarLoaderSystem resets IsDirty before this group runs; a replaced profile is a new instance
+            // IsDirty may already be cleared when this runs, so a replaced Profile instance is detected by reference
             if (profile!.IsDirty || !World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile) || !sdkProfile!.IsCopyOf(profile))
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 

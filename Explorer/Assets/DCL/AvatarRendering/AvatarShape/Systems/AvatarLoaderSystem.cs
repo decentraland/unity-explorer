@@ -6,7 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -15,6 +15,8 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.ColorComponent;
 using System;
 using System.Collections.Generic;
@@ -46,6 +48,8 @@ namespace DCL.AvatarRendering.AvatarShape
             CreateAvatarShapeFromSDKComponentQuery(World);
             CreateMainPlayerAvatarShapeFromProfileQuery(World);
             CreateAvatarShapeFromProfileQuery(World);
+
+            ConsumeProfileWearableDTOsQuery(World);
         }
 
         [Query]
@@ -212,17 +216,33 @@ namespace DCL.AvatarRendering.AvatarShape
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
+        [Query]
+        private void ConsumeProfileWearableDTOs(Entity entity, ref WearablePromise promise)
+        {
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<WearablesResolution> result)) return;
+
+            if (result.Succeeded)
+                result.Asset.Dispose();
+
+            promise.LoadingIntention.Dispose();
+            World.Destroy(entity);
+        }
+
         private WearablePromise CreateWearablePromise(Profile profile, in SceneAvatarShapeOverride? sceneOverride, BodyShape bodyShape, PartitionComponent partition)
         {
             List<URN>? sceneWearables = sceneOverride?.Wearables;
 
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
-            GetWearablesByPointersIntention intention = sceneWearables is { Count: > 0 }
-                ? WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, sceneWearables, Array.Empty<string>())
-                : WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender);
+            if (sceneWearables is not { Count: > 0 })
+                return WearablePromise.Create(World,
+                    WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender), partition);
 
-            return WearablePromise.Create(World, intention, partition);
+            // Keeps the DTOs of the replaced profile wearables loaded
+            World.Create(WearablePromise.Create(World,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender, dtoOnly: true), partition));
+
+            return WearablePromise.Create(World, WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, sceneWearables, Array.Empty<string>()), partition);
         }
 
         private SceneAvatarShapeOverride? ConsumeSceneAvatarShapeOverride(Entity entity)

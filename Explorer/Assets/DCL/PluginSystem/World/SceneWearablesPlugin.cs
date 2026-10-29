@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.World
             if (sharedDependencies.SceneData.IsPortableExperience())
                 return;
 
-            ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage, loadFromLocalScene);
+            finalizeWorldSystems.Add(ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage, loadFromLocalScene));
 
             PropagateSceneWearablesToAvatarsSystem propagateSystem = PropagateSceneWearablesToAvatarsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider,
                 entityParticipantTable, globalWorld, globalPlayerEntity);

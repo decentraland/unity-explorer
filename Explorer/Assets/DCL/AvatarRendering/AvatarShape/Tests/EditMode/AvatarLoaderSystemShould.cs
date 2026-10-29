@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.ECSComponents;
@@ -9,6 +10,7 @@ using DCL.Profiles;
 using Decentraland.Common;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.ColorComponent;
 using NSubstitute;
@@ -18,6 +20,8 @@ using UnityEngine;
 using Entity = Arch.Core.Entity;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
+    DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using QueryDescription = Arch.Core.QueryDescription;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
@@ -42,6 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private static readonly Color SCENE_HAIR_COLOR = new (1f, 0f, 0f);
         private static readonly Color SCENE_EYES_COLOR = new (0f, 1f, 0f);
         private static readonly QueryDescription EMOTE_PROMISES_QUERY = new QueryDescription().WithAll<EmotePromise>();
+        private static readonly QueryDescription WEARABLE_PROMISES_QUERY = new QueryDescription().WithAll<WearablePromise>();
 
         private PBAvatarShape pbAvatarShape;
         private List<URN> fakePointers;
@@ -398,6 +403,75 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public void RequestProfileWearableDTOsWhenSceneWearablesReplaceThem()
+        {
+            // Arrange
+            var sceneOverride = new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }) { BodyShape = BodyShape.FEMALE, IsDirty = true };
+            world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneOverride);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            List<WearablePromise> promises = GetStandaloneWearablePromises();
+            Assert.AreEqual(1, promises.Count);
+            Assert.IsTrue(promises[0].LoadingIntention.DtoOnly);
+            CollectionAssert.AreEqual(new[] { new URN(BODY_SHAPE_MALE), PROFILE_WEARABLE }, promises[0].LoadingIntention.Pointers);
+        }
+
+        [Test]
+        public void RequestNewProfileWearableDTOsWhenRemoteProfileChangesUnderSceneWearables()
+        {
+            // Arrange
+            Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }));
+            system.Update(0);
+
+            Profile changedProfile = new ProfileBuilder().WithUserId(FAKE_ID).WithBodyShape(BodyShape.MALE).WithWearables(new[] { CATALOG_WEARABLE }).Build();
+            changedProfile.IsDirty = true;
+            world.Set(entity, changedProfile);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            List<WearablePromise> promises = GetStandaloneWearablePromises();
+            Assert.AreEqual(2, promises.Count);
+            Assert.IsTrue(promises.Exists(promise => promise.LoadingIntention.Pointers.Contains(CATALOG_WEARABLE)));
+        }
+
+        [Test]
+        public void NotRequestProfileWearableDTOsWithoutSceneWearables()
+        {
+            // Arrange
+            var sceneOverride = new SceneAvatarShapeOverride(new List<URN>()) { BodyShape = BodyShape.FEMALE, IsDirty = true };
+            world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, sceneOverride);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.IsEmpty(GetStandaloneWearablePromises());
+        }
+
+        [Test]
+        public void ReleaseResolvedProfileWearableDTOsPromise()
+        {
+            // Arrange
+            world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }));
+            system.Update(0);
+
+            WearablePromise promise = GetStandaloneWearablePromises()[0];
+            world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(WearableComponentsUtils.WEARABLES_POOL.Get()!)));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.IsEmpty(GetStandaloneWearablePromises());
+            Assert.IsFalse(world.IsAlive(promise.Entity));
+        }
+
+        [Test]
         public void LoadMainPlayerEmotesForTheSceneBodyShape()
         {
             // Arrange
@@ -477,6 +551,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             });
 
             return count;
+        }
+
+        private List<WearablePromise> GetStandaloneWearablePromises()
+        {
+            var promises = new List<WearablePromise>();
+            world.Query(in WEARABLE_PROMISES_QUERY, (ref WearablePromise promise) => promises.Add(promise));
+            return promises;
         }
 
         private static Profile CreateProfile() =>

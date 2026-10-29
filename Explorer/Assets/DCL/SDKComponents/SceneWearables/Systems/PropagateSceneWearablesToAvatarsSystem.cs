@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.SceneWearables.Systems
     [ThrottlingEnabled]
     public partial class PropagateSceneWearablesToAvatarsSystem : BaseUnityLoopSystem, ISceneIsCurrentListener, IFinalizeWorldSystem
     {
+        private const int MAX_PLAYER_WEARABLES = 32;
+
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly World globalWorld;
         private readonly ScenePlayerAvatarResolver avatarResolver;
@@ -148,7 +150,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         [None(typeof(DeleteEntityIntention))]
         private void PropagateOverride(Entity entity, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
-            if (!pbAvatarShape.IsDirty || !IsPlayerEntity(in crdtEntity)) return;
+            if (!pbAvatarShape.IsDirty || !SpecialEntitiesID.IsPlayerEntity(crdtEntity)) return;
 
             TryPropagate(entity, in crdtEntity, pbAvatarShape);
         }
@@ -172,7 +174,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         [None(typeof(DeleteEntityIntention))]
         private void MarkPlayerAvatarShapesDirty(in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
-            if (IsPlayerEntity(in crdtEntity))
+            if (SpecialEntitiesID.IsPlayerEntity(crdtEntity))
                 pbAvatarShape.IsDirty = true;
         }
 
@@ -185,21 +187,10 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 ? avatarResolver.ResolveLocalPlayer(out target)
                 : avatarResolver.ResolveRemotePlayer(World, entity, out target);
 
-            switch (resolveResult)
-            {
-                case ResolveResult.Resolved:
-                    ApplyOverride(entity, pbAvatarShape, target, isLocalPlayer ? Entity.Null : entity);
-                    break;
-                case ResolveResult.Pending:
-                    World.AddOrGet(entity, new SceneWearablesPending());
-                    break;
-                case ResolveResult.Unreachable:
-                    World.TryRemove<SceneWearablesPending>(entity);
-                    break;
-                case ResolveResult.NeedsPlayerScan:
-                    pendingScans.Add(new PendingScan(entity, crdtEntity));
-                    break;
-            }
+            if (resolveResult == ResolveResult.NeedsPlayerScan)
+                pendingScans.Add(new PendingScan(entity, crdtEntity));
+            else
+                HandleResolveResult(resolveResult, entity, pbAvatarShape, target, isLocalPlayer ? Entity.Null : entity);
         }
 
         private void ResolvePendingScans()
@@ -211,18 +202,24 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 if (!World.IsAlive(scan.SceneEntity) || !World.TryGet(scan.SceneEntity, out PBAvatarShape? pbAvatarShape) || pbAvatarShape == null)
                     continue;
 
-                switch (avatarResolver.ResolveScannedPlayer(World, in scan, out Entity target))
-                {
-                    case ResolveResult.Resolved:
-                        ApplyOverride(scan.SceneEntity, pbAvatarShape, target, scan.PlayerEntity);
-                        break;
-                    case ResolveResult.Pending:
-                        World.AddOrGet(scan.SceneEntity, new SceneWearablesPending());
-                        break;
-                    default:
-                        World.TryRemove<SceneWearablesPending>(scan.SceneEntity);
-                        break;
-                }
+                ResolveResult resolveResult = avatarResolver.ResolveScannedPlayer(World, in scan, out Entity target);
+                HandleResolveResult(resolveResult, scan.SceneEntity, pbAvatarShape, target, scan.PlayerEntity);
+            }
+        }
+
+        private void HandleResolveResult(ResolveResult resolveResult, Entity entity, PBAvatarShape pbAvatarShape, Entity target, Entity playerEntity)
+        {
+            switch (resolveResult)
+            {
+                case ResolveResult.Resolved:
+                    ApplyOverride(entity, pbAvatarShape, target, playerEntity);
+                    break;
+                case ResolveResult.Pending:
+                    World.AddOrGet(entity, new SceneWearablesPending());
+                    break;
+                default:
+                    World.TryRemove<SceneWearablesPending>(entity);
+                    break;
             }
         }
 
@@ -263,7 +260,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
             ref SceneAvatarShapeOverride sceneOverride = ref globalWorld.Get<SceneAvatarShapeOverride>(target);
 
-            if (TryCopyOverride(pbAvatarShape, ref sceneOverride))
+            if (SyncOverride(pbAvatarShape, ref sceneOverride))
                 sceneOverride.IsDirty = true;
         }
 
@@ -279,7 +276,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             sceneOverride.IsDirty = true;
         }
 
-        private bool TryCopyOverride(PBAvatarShape pbAvatarShape, ref SceneAvatarShapeOverride sceneOverride)
+        private bool SyncOverride(PBAvatarShape pbAvatarShape, ref SceneAvatarShapeOverride sceneOverride)
         {
             BodyShape? bodyShape = pbAvatarShape.HasBodyShape ? (BodyShape)pbAvatarShape : (BodyShape?)null;
             Color? skinColor = ToColor(pbAvatarShape.SkinColor);
@@ -287,7 +284,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             Color? eyesColor = ToColor(pbAvatarShape.EyeColor);
             bool? showOnlyWearables = pbAvatarShape.HasShowOnlyWearables ? pbAvatarShape.ShowOnlyWearables : null;
 
-            bool changed = TryCopyWearables(pbAvatarShape.Wearables, sceneOverride.Wearables);
+            bool changed = SyncWearables(pbAvatarShape.Wearables, sceneOverride.Wearables);
             changed |= !Nullable.Equals(sceneOverride.BodyShape, bodyShape);
             changed |= sceneOverride.SkinColor != skinColor;
             changed |= sceneOverride.HairColor != hairColor;
@@ -303,12 +300,15 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             return changed;
         }
 
-        private bool TryCopyWearables(RepeatedField<string> wearables, List<URN> target)
+        private bool SyncWearables(RepeatedField<string> wearables, List<URN> target)
         {
             var allowedCount = 0;
             var changed = false;
 
-            for (var i = 0; i < wearables.Count; i++)
+            if (wearables.Count > MAX_PLAYER_WEARABLES)
+                ReportHub.LogWarning(GetReportData(), $"AvatarShape on a player lists {wearables.Count} wearables, only the first {MAX_PLAYER_WEARABLES} apply");
+
+            for (var i = 0; i < wearables.Count && allowedCount < MAX_PLAYER_WEARABLES; i++)
             {
                 string wearable = wearables[i];
 
@@ -325,7 +325,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
             target.Clear();
 
-            for (var i = 0; i < wearables.Count; i++)
+            for (var i = 0; i < wearables.Count && target.Count < MAX_PLAYER_WEARABLES; i++)
                 if (IsAllowedWearable(wearables[i]))
                     target.Add(new URN(wearables[i]));
 
@@ -352,9 +352,6 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
         private static Color? ToColor(Color3? color) =>
             color == null ? null : new Color(color.R, color.G, color.B);
-
-        private static bool IsPlayerEntity(in CRDTEntity crdtEntity) =>
-            crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY || SpecialEntitiesID.IsOtherPlayerEntity(crdtEntity.EntityNumber);
 
         private struct SceneWearablesApplied
         {

@@ -70,7 +70,7 @@ namespace ECS.Unity.AvatarShape.Systems
         private void LoadAvatarShape(Entity entity, in CRDTEntity crdtEntity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
             // A player's entity is a real avatar, not an NPC
-            if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY || SpecialEntitiesID.IsOtherPlayerEntity(crdtEntity.EntityNumber)) return;
+            if (SpecialEntitiesID.IsPlayerEntity(crdtEntity)) return;
 
             // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent
             // may lead to unexpected consequences, since that one is disposed by the scene, while the avatar lives in the global world

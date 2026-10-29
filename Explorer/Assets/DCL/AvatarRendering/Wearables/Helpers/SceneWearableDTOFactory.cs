@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         };
 
         public static bool IsSceneWearablePath(string pointer) =>
-            pointer.EndsWith(GLB_EXTENSION, StringComparison.Ordinal);
+            pointer.EndsWith(GLB_EXTENSION, StringComparison.OrdinalIgnoreCase);
 
         public static bool IsSceneWearableUrn(string pointer) =>
             pointer.StartsWith(SCENE_WEARABLE_URN_START, StringComparison.OrdinalIgnoreCase);
@@ -73,20 +73,21 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return category != null;
         }
 
-        public static bool TryCreate(ISceneData sceneData, string path, bool local, out URN urn, [NotNullWhen(true)] out WearableDTO? dto)
+        public static bool TryGetUrn(ISceneData sceneData, string path, bool local, out URN urn,
+            [NotNullWhen(true)] out string? category, [NotNullWhen(true)] out string? hash)
         {
             urn = default;
-            dto = null;
+            hash = null;
 
             var reportData = new ReportData(ReportCategory.WEARABLE, sceneShortInfo: sceneData.SceneShortInfo);
 
-            if (!TryGetCategory(path, out string? category))
+            if (!TryGetCategory(path, out category))
             {
                 ReportHub.LogWarning(reportData, $"Scene wearable '{path}' skipped: the file name must end with '_<category>.glb' using a supported category");
                 return false;
             }
 
-            if (!sceneData.SceneContent.TryGetHash(path, out string hash))
+            if (!sceneData.SceneContent.TryGetHash(path, out hash))
             {
                 ReportHub.LogWarning(reportData, $"Scene wearable '{path}' skipped: the file is not part of the scene content");
                 return false;
@@ -107,8 +108,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
 
             urn = new URN($"{GetUrnPrefix(definition.id)}{hash}");
+            return true;
+        }
 
-            dto = local ? new LocalSceneWearableDTO(sceneData.SceneContent.ContentBaseUrl.Value) : new WearableDTO();
+        public static WearableDTO Create(ISceneData sceneData, string path, URN urn, string category, string hash, bool local)
+        {
+            SceneEntityDefinition definition = sceneData.SceneEntityDefinition;
+
+            WearableDTO dto = local ? new LocalSceneWearableDTO(sceneData.SceneContent.ContentBaseUrl.Value) : new WearableDTO();
             dto.id = definition.id;
             dto.type = WEARABLE_ENTITY_TYPE;
             dto.version = ENTITY_VERSION;
@@ -144,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 },
             };
 
-            return true;
+            return dto;
         }
 
         private static ContentDefinition[] CollectFolderContent(ContentDefinition[] sceneContent, string mainPath, string mainHash)

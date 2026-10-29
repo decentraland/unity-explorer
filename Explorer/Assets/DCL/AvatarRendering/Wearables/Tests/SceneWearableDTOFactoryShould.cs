@@ -73,6 +73,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [TestCase("assets/crown_top_head.glb", "top_head")]
         [TestCase("assets/gloves_hands_wear.glb", "hands_wear")]
         [TestCase("Assets/Cap_HAT.glb", "hat")]
+        [TestCase("Assets/Cap_HAT.GLB", "hat")]
         public void ResolveCategoryFromLongestSuffix(string path, string expectedCategory)
         {
             // Act
@@ -90,7 +91,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [TestCase("assets/x_body_shape.glb")]
         [TestCase("assets/x_hat.png")]
         [TestCase("assets/x_hat/model.glb")]
-        [TestCase("Assets/Cap_HAT.GLB")]
         public void RejectUnsupportedCategory(string path)
         {
             // Act
@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void NotCreateWhenCategoryIsUnknown()
         {
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, "assets/models/tree.glb", false, out _, out WearableDTO? dto);
+            bool created = TryCreate("assets/models/tree.glb", false, out _, out WearableDTO? dto);
 
             // Assert
             Assert.IsFalse(created);
@@ -116,7 +116,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void NotCreateWhenFileIsMissing()
         {
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, "assets/wearables/missing_hat.glb", false, out _, out WearableDTO? dto);
+            bool created = TryCreate("assets/wearables/missing_hat.glb", false, out _, out WearableDTO? dto);
 
             // Assert
             Assert.IsFalse(created);
@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             definition.assetBundleManifestVersion = null;
 
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, HAT_PATH, false, out _, out WearableDTO? dto);
+            bool created = TryCreate(HAT_PATH, false, out _, out WearableDTO? dto);
 
             // Assert
             Assert.IsFalse(created);
@@ -144,7 +144,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             definition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
 
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, HAT_PATH, false, out _, out WearableDTO? dto);
+            bool created = TryCreate(HAT_PATH, false, out _, out WearableDTO? dto);
 
             // Assert
             Assert.IsFalse(created);
@@ -155,7 +155,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void CreateDeployedSceneWearable()
         {
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, HAT_PATH, false, out URN urn, out WearableDTO? dto);
+            bool created = TryCreate(HAT_PATH, false, out URN urn, out WearableDTO? dto);
 
             // Assert
             Assert.IsTrue(created);
@@ -191,7 +191,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             definition.assetBundleManifestVersion = null;
 
             // Act
-            bool created = SceneWearableDTOFactory.TryCreate(sceneData, HAT_PATH, true, out URN urn, out WearableDTO? dto);
+            bool created = TryCreate(HAT_PATH, true, out URN urn, out WearableDTO? dto);
 
             // Assert
             Assert.IsTrue(created);
@@ -203,7 +203,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ResolveAsRegularUnisexWearable()
         {
             // Arrange
-            SceneWearableDTOFactory.TryCreate(sceneData, HAT_PATH, false, out URN urn, out WearableDTO? dto);
+            TryCreate(HAT_PATH, false, out URN urn, out WearableDTO? dto);
 
             // Act
             IWearable wearable = new Wearable(new StreamableLoadingResult<WearableDTO>(dto!));
@@ -219,6 +219,15 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual("base", attachment.GetRarity());
             Assert.AreEqual("cap_hat.glb", attachment.GetName());
             Assert.DoesNotThrow(() => attachment.GetThumbnail());
+        }
+
+        private bool TryCreate(string path, bool local, out URN urn, out WearableDTO? dto)
+        {
+            dto = SceneWearableDTOFactory.TryGetUrn(sceneData, path, local, out urn, out string? category, out string? hash)
+                ? SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, local)
+                : null;
+
+            return dto != null;
         }
     }
 }

@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -6,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Ipfs;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.SceneWearables.Systems;
 using ECS.TestSuite;
 using NSubstitute;
@@ -20,10 +22,13 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string SCENE_ID = "bafkreisceneid";
         private const string HAT_PATH = "assets/wearables/cap_hat.glb";
         private const string HAT_HASH = "bafkreihathash";
+        private const string UPPERCASE_HAT_PATH = "assets/wearables/Crown_HAT.GLB";
+        private const string UPPERCASE_HAT_HASH = "bafkreicrownhash";
         private const string CATALYST_WEARABLE = "urn:decentraland:off-chain:base-avatars:eyes_00";
         private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH;
 
         private WearableStorage wearableStorage = null!;
+        private IPerformanceBudget unloadBudget = null!;
 
         [SetUp]
         public void SetUp()
@@ -37,6 +42,13 @@ namespace DCL.SDKComponents.SceneWearables.Tests
                              return true;
                          });
 
+            sceneContent.TryGetHash(UPPERCASE_HAT_PATH, out Arg.Any<string>())
+                        .Returns(x =>
+                         {
+                             x[1] = UPPERCASE_HAT_HASH;
+                             return true;
+                         });
+
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneShortInfo.Returns(new SceneShortInfo(Vector2Int.zero, SCENE_ID));
             sceneData.SceneContent.Returns(sceneContent);
@@ -47,6 +59,8 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             });
 
             wearableStorage = new WearableStorage();
+            unloadBudget = Substitute.For<IPerformanceBudget>();
+            unloadBudget.TrySpendBudget().Returns(true);
             system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, false);
         }
 
@@ -164,6 +178,66 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out IWearable wearable));
             Assert.AreNotSame(notLoaded, wearable);
             Assert.IsTrue(wearable.Model.Succeeded);
+        }
+
+        [Test]
+        public void ResolveUppercaseExtension()
+        {
+            // Arrange
+            var pbAvatarShape = new PBAvatarShape { Wearables = { UPPERCASE_HAT_PATH }, IsDirty = true };
+            world.Create(pbAvatarShape);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + UPPERCASE_HAT_HASH }, pbAvatarShape.Wearables);
+        }
+
+        [Test]
+        public void KeepSeededWearableWhileSceneIsLoaded()
+        {
+            // Arrange
+            world.Create(new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true });
+            system.Update(0);
+
+            // Act
+            wearableStorage.Unload(unloadBudget);
+
+            // Assert
+            Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
+        }
+
+        [Test]
+        public void QualifySeededWearablesForUnloadingOnFinalize()
+        {
+            // Arrange
+            world.Create(new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true });
+            system.Update(0);
+
+            // Act
+            system.FinalizeComponents(world.Query(QueryDescription.Null));
+            wearableStorage.Unload(unloadBudget);
+
+            // Assert
+            Assert.IsFalse(wearableStorage.TryGetElement(EXPECTED_URN, out _));
+        }
+
+        [Test]
+        public void KeepWearableSeededAgainAfterFinalize()
+        {
+            // Arrange
+            world.Create(new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true });
+            system.Update(0);
+            system.FinalizeComponents(world.Query(QueryDescription.Null));
+            world.Create(new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true });
+            system.Update(0);
+
+            // Act
+            wearableStorage.Unload(unloadBudget);
+
+            // Assert
+            Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
         }
     }
 }

@@ -1,10 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -89,8 +87,7 @@ namespace DCL.Character.Plugin
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform),
                 new PlayerMovementNetworkComponent(characterObject.Value.Controller)
-              , new InputModifierComponent()
-              , new SceneAvatarShapeOverride(new List<URN>()));
+              , new InputModifierComponent());
         }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings

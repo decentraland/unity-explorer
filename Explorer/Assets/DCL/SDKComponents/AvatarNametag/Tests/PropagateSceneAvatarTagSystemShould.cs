@@ -146,6 +146,22 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         }
 
         [Test]
+        public void ResolveRemotePlayerThatAlsoHasAnAvatarShape()
+        {
+            // Arrange
+            Entity sceneEntity = CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                new PBAvatarNametag { Label = "Bronze", IsDirty = true });
+
+            world.Add(sceneEntity, NewSdkProfile(REMOTE_WALLET), new PBAvatarShape());
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
+        }
+
+        [Test]
         public void ResolveARemotePlayerWhoseProfileLivesOnTheBridgeEntity()
         {
             // Arrange — the scene writes to the CRDT bridge's entity, while the SDKProfile lives on the

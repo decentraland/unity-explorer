@@ -203,6 +203,42 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
+        public void ApplyOnlyTheFirstWearablesBeyondTheLimit()
+        {
+            // Arrange
+            var wearables = new string[40];
+
+            for (var i = 0; i < wearables.Length; i++)
+                wearables[i] = $"urn:decentraland:off-chain:base-avatars:item_{i}";
+
+            CreateScenePlayerAvatarShape(wearables);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            List<URN> applied = GetOverride().Wearables;
+            Assert.AreEqual(32, applied.Count);
+            Assert.AreEqual(new URN(wearables[31]), applied[31]);
+        }
+
+        [Test]
+        public void AddOverrideToLocalPlayerOnFirstUse()
+        {
+            // Arrange
+            globalWorld.Remove<SceneAvatarShapeOverride>(globalPlayerEntity);
+            CreateScenePlayerAvatarShape(SCENE_WEARABLE);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneAvatarShapeOverride sceneOverride = GetOverride();
+            CollectionAssert.AreEqual(new[] { new URN(SCENE_WEARABLE) }, sceneOverride.Wearables);
+            Assert.IsTrue(sceneOverride.IsDirty);
+        }
+
+        [Test]
         public void IgnoreAvatarShapeOfOtherEntities()
         {
             // Arrange
