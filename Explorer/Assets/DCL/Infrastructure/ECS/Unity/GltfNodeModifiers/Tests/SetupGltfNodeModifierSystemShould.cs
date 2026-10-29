@@ -1,5 +1,6 @@
 using DCL.ECSComponents;
 using Decentraland.Common;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -801,6 +802,98 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(gltfNode.Renderers.Count, Is.EqualTo(1));
             Assert.That(gltfNode.Renderers[0], Is.EqualTo(expectedRenderer));
             Assert.That(gltfNode.Path, Is.EqualTo(expectedPath));
+        }
+
+        /// <summary>
+        ///     UNITY-EXPLORER-Q2N: the cleanup leaves GltfNode on the container, and the Release Arch build corrupts entities on a duplicate Add.
+        /// </summary>
+        [Test]
+        public void KeepContainersIsolated_WhenGlobalModifierIsSetUpAgainAfterCleanup()
+        {
+            // Arrange
+            (GameObject firstGo, MeshRenderer firstRenderer) = BuildLamppostWithoutWrapper();
+            (GameObject secondGo, MeshRenderer secondRenderer) = BuildLamppostWithoutWrapper();
+            (GameObject thirdGo, MeshRenderer thirdRenderer) = BuildLamppostWithoutWrapper();
+            Entity first = SetupGlobal(CreateContainerComponent(firstGo, firstRenderer));
+            Entity second = SetupGlobal(CreateContainerComponent(secondGo, secondRenderer));
+            Entity third = SetupGlobal(CreateContainerComponent(thirdGo, thirdRenderer));
+
+            // Three models swap their src in the same frame
+            var cleanup = new CleanupGltfNodeModifierSystem(world, new EntityEventBuffer<GltfContainerComponent>(1));
+            world.Remove<PBGltfNodeModifiers>(first);
+            world.Remove<PBGltfNodeModifiers>(second);
+            world.Remove<PBGltfNodeModifiers>(third);
+            cleanup.Update(0);
+            cleanup.Dispose();
+
+            Assert.That(world.Has<GltfNode>(first), Is.True, "precondition: cleanup keeps GltfNode on the container");
+
+            world.Add(first, CreateGlobalModifier());
+            world.Add(second, CreateGlobalModifier());
+            world.Add(third, CreateGlobalModifier());
+
+            // Only the first two have reloaded when the modifiers are set up again
+            world.Get<GltfContainerComponent>(third).State = LoadingState.Loading;
+
+            // Act
+            system.Update(0);
+            (GameObject fourthGo, MeshRenderer fourthRenderer) = BuildLamppostWithoutWrapper();
+            Entity fourth = SetupGlobal(CreateContainerComponent(fourthGo, fourthRenderer));
+
+            // Assert
+            AssertGlobalNodeOwnedBy(first, firstRenderer);
+            AssertGlobalNodeOwnedBy(second, secondRenderer);
+            AssertGlobalNodeOwnedBy(fourth, fourthRenderer);
+            AssertEachContainerIteratedOnce(first, second, third, fourth);
+        }
+
+        private void AssertEachContainerIteratedOnce(params Entity[] containers)
+        {
+            var seen = new List<Entity>();
+            var query = new Arch.Core.QueryDescription().WithAll<GltfContainerComponent>();
+            world.Query(in query, entity => seen.Add(entity));
+
+            foreach (Entity container in containers)
+            {
+                var count = 0;
+
+                foreach (Entity seenEntity in seen)
+                    if (seenEntity == container)
+                        count++;
+
+                Assert.That(count, Is.EqualTo(1), $"{container} is iterated {count} times by a GltfContainerComponent query");
+            }
+        }
+
+        private Entity SetupGlobal(GltfContainerComponent gltfContainer)
+        {
+            Entity entity = world.Create(CreateGlobalModifier(), gltfContainer, PartitionComponent.TOP_PRIORITY);
+            system.Update(0);
+            return entity;
+        }
+
+        private static PBGltfNodeModifiers CreateGlobalModifier() =>
+            new()
+            {
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = string.Empty,
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
+
+        private void AssertGlobalNodeOwnedBy(Entity entity, Renderer expectedRenderer)
+        {
+            GltfNode gltfNode = world.Get<GltfNode>(entity);
+            Assert.That(gltfNode.ContainerEntity, Is.EqualTo(entity), $"{entity} reads another container's GltfNode ({gltfNode.ContainerEntity})");
+            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(1));
+            Assert.That(gltfNode.Renderers[0], Is.SameAs(expectedRenderer));
+
+            Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
+            Assert.That(nodeModifiers.GltfNodeEntities.ContainsKey(entity), Is.True, $"{entity} reads another container's GltfNodeModifiers");
         }
 
         private static PBMaterial CreatePbrMaterial(Color color) =>

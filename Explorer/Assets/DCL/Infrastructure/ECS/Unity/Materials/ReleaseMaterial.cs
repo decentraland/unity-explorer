@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Cache;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
@@ -30,9 +31,17 @@ namespace ECS.Unity.Materials
             switch (materialComponent.Status)
             {
                 // Dereference the loaded material
-                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result:
+                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result is { } material:
                     ReleaseTextures(ref materialComponent, false);
-                    destroyMaterial(in materialComponent.Data, materialComponent.Result);
+
+                    if (material)
+                        destroyMaterial(in materialComponent.Data, material);
+                    else
+                        ReportHub.LogWarning(ReportCategory.MATERIALS, $"Entity {entity} held an already destroyed material, another entity released the same instance");
+
+                    // Detach so a component that outlives its release cannot hand the pooled material to a second owner
+                    materialComponent.Result = null;
+                    materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
                     break;
 
                 // Abort the loading process of the textures

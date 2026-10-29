@@ -196,7 +196,13 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void CreateGlobalGltfNode(Entity containerEntity, GltfContainerAsset asset)
         {
-            World.Add(containerEntity, new GltfNode(asset.Renderers, containerEntity, string.Empty, false));
+            var gltfNode = new GltfNode(asset.Renderers, containerEntity, string.Empty, false);
+
+            // The container keeps its GltfNode across a cleanup, and a duplicate Add corrupts the entity in the Release Arch build (UNITY-EXPLORER-Q2N)
+            if (World.Has<GltfNode>(containerEntity))
+                World.Set(containerEntity, gltfNode);
+            else
+                World.Add(containerEntity, gltfNode);
         }
 
         /// <summary>
