@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using LiveKit.Audio;
 using RichTypes;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {

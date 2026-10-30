@@ -5,7 +5,6 @@ using ECS.StreamableLoading.Common.Components;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using AssertionException = UnityEngine.Assertions.AssertionException;
 
 namespace ECS.StreamableLoading.Tests
 {

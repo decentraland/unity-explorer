@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;

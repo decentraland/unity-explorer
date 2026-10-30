@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Transform;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -11,7 +10,6 @@ using ECS.Groups;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarShape.Systems
 {

@@ -1,7 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.Reporting

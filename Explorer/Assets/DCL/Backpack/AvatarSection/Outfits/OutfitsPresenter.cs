@@ -5,7 +5,6 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;

@@ -41,7 +41,7 @@ namespace DCL.Character.CharacterMotion.Tests
             Entity player = CreatePointingPlayer(
                 new PlayerTeleportIntent(null, Vector2Int.zero, Vector3.zero, CancellationToken.None));
 
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             Assert.That(world.Get<HandPointAtComponent>(player).IsPointing, Is.False);
         }
@@ -52,7 +52,7 @@ namespace DCL.Character.CharacterMotion.Tests
             Entity player = CreatePointingPlayer();
 
             currentScene.Value = null;
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             Assert.That(world.Get<HandPointAtComponent>(player).IsPointing, Is.False);
         }
@@ -63,7 +63,7 @@ namespace DCL.Character.CharacterMotion.Tests
             Entity player = CreatePointingPlayer();
 
             currentScene.Value = Substitute.For<ISceneFacade>();
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             Assert.That(world.Get<HandPointAtComponent>(player).IsPointing, Is.True);
         }
@@ -73,7 +73,7 @@ namespace DCL.Character.CharacterMotion.Tests
         {
             Entity player = CreatePointingPlayer();
 
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             Assert.That(world.Get<HandPointAtComponent>(player).IsPointing, Is.True);
         }

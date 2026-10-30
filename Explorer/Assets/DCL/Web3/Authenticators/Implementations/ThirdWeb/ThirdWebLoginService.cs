@@ -210,7 +210,7 @@ namespace DCL.Web3.Authenticators
         }
 
         private UniTask<InAppWallet> CreateGuestWalletAsync(CancellationToken ct) =>
-            InAppWallet.Create(client, authProvider: Thirdweb.AuthProvider.Guest, storageDirectoryPath: storageDirectoryPath)
+            InAppWallet.Create(client, authProvider: AuthProvider.Guest, storageDirectoryPath: storageDirectoryPath)
                        .AsUniTask()
                        .AttachExternalCancellation(ct);
 

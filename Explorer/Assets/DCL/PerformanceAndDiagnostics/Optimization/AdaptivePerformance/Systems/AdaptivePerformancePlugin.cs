@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.PluginSystem.Global;
 using DCL.Profiling;
 using DCL.RealmNavigation;

@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utility.Types;
 using DCL.Web3;
 using MVC;
 using System.Threading;

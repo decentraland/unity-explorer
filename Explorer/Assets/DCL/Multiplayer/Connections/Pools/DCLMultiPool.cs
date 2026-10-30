@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Pools
 
             if (!pools.TryGetValue(type, out var pool)) { pool = pools[type] = new ThreadSafeObjectPool<object>(() => new T()); }
 
-            return pool!;
+            return pool;
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using DCL.Chat;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;

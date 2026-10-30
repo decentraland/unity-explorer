@@ -14,7 +14,7 @@ using Random = UnityEngine.Random;
 namespace DCL.Lobby
 {
     /// <summary>
-    ///     Preview of the player's own avatar shown in the lobby on the 3D stage; it idles and plays a flavour emote every now and then.
+    ///     Preview of the player's own avatar shown in the lobby on the 3D stage; it greets once loaded, idles, follows the pointer with its head and plays a flavour emote every now and then.
     /// </summary>
     public class LobbyCharacterPreviewController : CharacterPreviewControllerBase
     {
@@ -50,9 +50,10 @@ namespace DCL.Lobby
             stage.gameObject.SetActive(true);
 
             ApplyAvatar(avatar, position);
+            previewController!.Value.EnableHeadIK();
 
             emotesCts = emotesCts.SafeRestart();
-            PlayFlavourEmotesAsync(emotesCts.Token).Forget();
+            GreetAndPlayFlavourEmotesAsync(emotesCts.Token).Forget();
         }
 
         /// <summary>
@@ -87,6 +88,10 @@ namespace DCL.Lobby
             base.Dispose();
         }
 
+        // The stage stays on while the container is off, and its directional light would reach the preview on top
+        protected override void OnContainerActiveChanged(bool isActive) =>
+            stage.SetKeyLightActive(isActive);
+
         // The pooled camera can change with every render target, so the stage is pointed at the current one each time
         private void FitStage()
         {
@@ -117,6 +122,20 @@ namespace DCL.Lobby
             appliedAvatar = avatar;
 
             base.Initialize(avatar, position);
+        }
+
+        private async UniTaskVoid GreetAndPlayFlavourEmotesAsync(CancellationToken ct)
+        {
+            try
+            {
+                while (!(previewController is { } preview && preview.IsAvatarLoaded()))
+                    await UniTask.Yield(ct);
+
+                await PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, ct);
+                await PlayFlavourEmotesAsync(ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         // Nothing opaque sits behind the full-screen image, so the current look stays on until the new one is instantiated instead of showing the world through
@@ -159,6 +178,7 @@ namespace DCL.Lobby
     [Serializable]
     public class LobbyAvatarSettings
     {
+        [field: SerializeField] public string IntroEmoteURN { get; private set; } = "wave";
         [field: SerializeField] public string[] FlavourEmotes { get; private set; } = { "wave", "fistpump", "dab" };
         [field: SerializeField, Min(0f)] public float MinSecondsBetweenFlavourEmotes { get; private set; } = 8f;
         [field: SerializeField, Min(0f)] public float MaxSecondsBetweenFlavourEmotes { get; private set; } = 20f;

@@ -4,10 +4,8 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
-using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
@@ -58,8 +56,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override SectionFetchData<PlaceData> currentSectionFetchData => placesFetchData;
 
-        private CommunityData? communityData = null;
-        private bool userCanModify = false;
+        private CommunityData? communityData;
+        private bool userCanModify;
         private CancellationTokenSource placeCardOperationsCts = new ();
 
         public PlacesSectionController(PlacesSectionView view,

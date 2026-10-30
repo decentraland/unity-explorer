@@ -361,5 +361,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string LOADING_TIMES = "synthetic_loading_times";
         }
+
+        public static class LocalSceneDevelopment
+        {
+            // 'result' is success or failed.
+            public const string AB_CONVERSION = "lsd_ab_conversion";
+        }
     }
 }

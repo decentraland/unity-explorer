@@ -241,7 +241,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             if (hasMaterialOverride)
                 AddOrUpdateMaterial(nodeEntity, modifier.Material, partitionComponent);
 
-            nodeModifiers.GltfNodeEntities!.Add(nodeEntity, modifier.Path);
+            nodeModifiers.GltfNodeEntities.Add(nodeEntity, modifier.Path);
         }
     }
 }

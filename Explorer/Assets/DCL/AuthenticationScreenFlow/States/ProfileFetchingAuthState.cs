@@ -19,8 +19,6 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
-        private static readonly TimeSpan PROFILE_FETCH_TIMEOUT = TimeSpan.FromSeconds(15);
-
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
@@ -111,7 +109,7 @@ namespace DCL.AuthenticationScreenFlow
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    ProfileReadResult read = await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct);
+                    ProfileReadResult read = await FetchProfileWithTimeoutAsync(selfProfile, SelfProfile.LOGIN_READ_TIMEOUT, ct);
 
                     if (read.IsOk(out Profile? profile))
                     {
@@ -144,7 +142,7 @@ namespace DCL.AuthenticationScreenFlow
                     {
                         profileFetchException = error switch
                                                 {
-                                                    ProfileReadError.Cancelled => new TimeoutException($"Profile fetch timed out after {PROFILE_FETCH_TIMEOUT.TotalSeconds:F0}s"),
+                                                    ProfileReadError.Cancelled => new TimeoutException($"Profile fetch timed out after {SelfProfile.LOGIN_READ_TIMEOUT.TotalSeconds:F0}s"),
                                                     ProfileReadError.FetchFailed => new ProfileFetchFailedException(),
                                                     _ => new InvalidOperationException($"Own profile read failed: {error}"),
                                                 };

@@ -1,4 +1,3 @@
-using DCL.AssetsProvision;
 using DCL.UI;
 using System;
 using UnityEngine;

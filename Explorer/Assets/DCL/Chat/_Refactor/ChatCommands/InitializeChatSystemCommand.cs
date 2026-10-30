@@ -7,7 +7,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Prefs;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Collections.Generic;

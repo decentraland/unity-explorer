@@ -59,7 +59,6 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
-                new AvatarHighlightComponent(),
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
                 new HeadIKComponent());
@@ -84,7 +83,7 @@ namespace DCL.CharacterPreview
 
             StopEmotes();
 
-            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase? avatarBase) && avatarBase != null)
                 avatarBase.HeadIKRig.weight = 0;
 
             characterPreviewAvatarContainer.DeInitialize();
@@ -134,7 +133,7 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
+            if (world.TryGet(avatarEntity, out AvatarBase? avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
             {
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
@@ -198,7 +197,7 @@ namespace DCL.CharacterPreview
         {
             // Activation rebinds the Animator, which captures the current pose as its defaults: the Armature must hold its
             // prefab transform at that moment rather than the frame an interrupted emote froze on.
-            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+            if (isActive && globalWorld.TryGet(characterPreviewEntity, out AvatarBase? avatarBase) && avatarBase != null)
                 avatarBase.ResetArmatureTransform();
 
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);

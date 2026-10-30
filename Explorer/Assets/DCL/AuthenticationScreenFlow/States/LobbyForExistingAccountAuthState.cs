@@ -114,8 +114,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnJumpIntoWorld()
         {
-            view!.JumpIntoWorldButton.interactable = false;
-            view!.DiffAccountButton.interactable = false;
+            view.JumpIntoWorldButton.interactable = false;
+            view.DiffAccountButton.interactable = false;
 
             AnimateAndAwaitAsync(loginCt).Forget();
             return;

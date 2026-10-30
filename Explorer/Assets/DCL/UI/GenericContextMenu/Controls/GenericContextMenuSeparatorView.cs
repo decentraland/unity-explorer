@@ -11,7 +11,7 @@ namespace DCL.UI.Controls
 
         public void Configure(SeparatorContextMenuControlSettings settings)
         {
-            LayoutElementComponent.preferredHeight = settings!.height;
+            LayoutElementComponent.preferredHeight = settings.height;
             LayoutElementComponent.minHeight = settings.height;
             HorizontalLayoutComponent.padding.left = settings.leftPadding;
             HorizontalLayoutComponent.padding.right = settings.rightPadding;

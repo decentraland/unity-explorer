@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Backpack.Gifting.Views;

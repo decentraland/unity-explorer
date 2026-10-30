@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace Utility.Multithreading
+﻿namespace Utility.Multithreading
 {
     public sealed class InterlockedFlag
     {

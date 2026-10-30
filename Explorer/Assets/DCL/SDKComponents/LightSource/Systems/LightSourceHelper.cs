@@ -1,5 +1,4 @@
-﻿using CrdtEcsBridge.Components.Conversion;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;

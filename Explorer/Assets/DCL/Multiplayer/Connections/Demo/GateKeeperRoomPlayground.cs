@@ -17,7 +17,6 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using LiveKit.Internal.FFIClients;

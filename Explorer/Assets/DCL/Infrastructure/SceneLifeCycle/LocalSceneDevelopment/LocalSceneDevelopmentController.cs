@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;

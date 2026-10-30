@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Loading.Components
         }
 
         public static RepoolableList<T> NewList() =>
-            POOL.Get()!;
+            POOL.Get();
 
         public static RepoolableList<T> NewListWithContentOf(params T[] collection) =>
             NewListWithContentOf(collection as IEnumerable<T>);

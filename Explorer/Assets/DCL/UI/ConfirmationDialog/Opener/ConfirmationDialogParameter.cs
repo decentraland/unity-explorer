@@ -1,4 +1,3 @@
-#nullable enable
 using DCL.Profiles;
 using System;
 using UnityEngine;

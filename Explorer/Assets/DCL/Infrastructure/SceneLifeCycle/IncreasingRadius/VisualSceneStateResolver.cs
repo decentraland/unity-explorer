@@ -1,5 +1,4 @@
 ﻿using DCL.SceneRunner.Scene;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;

@@ -2,7 +2,6 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape.NoiseGeneration

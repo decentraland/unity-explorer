@@ -8,6 +8,7 @@ using DCL.UI.DebugMenu.LogHistory;
 using DCL.UI.DebugMenu.MessageBus;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -24,19 +25,22 @@ namespace DCL.PluginSystem.Global
         private DebugMenuController? debugMenuController;
         private readonly DebugUtilities.IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
         public DebugMenuPlugin(
             DiagnosticsContainer diagnostics,
             IInputBlock inputBlock,
             IAssetsProvisioner assetsProvisioner,
             DebugUtilities.IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache
+            IScenesCache scenesCache,
+            AbgenConversionMetrics abgenConversionMetrics
         )
         {
             this.inputBlock = inputBlock;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
+            this.abgenConversionMetrics = abgenConversionMetrics;
 
             logEntriesBus = new DebugMenuConsoleLogEntryBus();
             diagnostics.AddDebugConsoleHandler(logEntriesBus);
@@ -48,7 +52,7 @@ namespace DCL.PluginSystem.Global
                                         .GetComponent<DebugMenuController>()
                                         .EnsureNotNull(nameof(debugMenuController));
 
-            debugMenuController.Initialize(inputBlock, debugContainerBuilder, scenesCache);
+            debugMenuController.Initialize(inputBlock, debugContainerBuilder, scenesCache, abgenConversionMetrics);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

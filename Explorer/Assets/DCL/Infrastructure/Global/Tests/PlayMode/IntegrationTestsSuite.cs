@@ -32,9 +32,11 @@ using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.InputModifier.Components;
+using DCL.SkyBox.Components;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
@@ -86,6 +88,9 @@ namespace Global.Tests.PlayMode
                 new InputModifierComponent(),
                 new CharacterRigidTransform());
 
+            // Stands in for the skybox entity that SkyboxPlugin tags in the real global world
+            world.Create(new SceneSkyboxOverrides());
+
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
             AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, settingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
@@ -103,8 +108,8 @@ namespace Global.Tests.PlayMode
                 identityCache,
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
-                useRemoteAssetBundles: false,
                 useLocalAssetBundles: false,
+                new AbgenConversionMetrics(),
                 world,
                 playerEntity,
                 new SystemMemoryCap(),

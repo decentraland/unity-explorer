@@ -1,4 +1,3 @@
-using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;

@@ -132,7 +132,7 @@ namespace DCL.Tests.Editor
         public void BrowseFeaturedOnlyWithoutSearch(string? categoryId, string searchText, bool expected)
         {
             // Arrange
-            var filters = new DCL.Places.PlacesFilters { CategoryId = categoryId, SearchText = searchText };
+            var filters = new Places.PlacesFilters { CategoryId = categoryId, SearchText = searchText };
 
             // Act
             bool isBrowsingFeatured = filters.IsBrowsingFeatured;

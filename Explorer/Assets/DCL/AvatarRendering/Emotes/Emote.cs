@@ -5,7 +5,6 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
-using System;
 
 namespace DCL.AvatarRendering.Emotes
 {

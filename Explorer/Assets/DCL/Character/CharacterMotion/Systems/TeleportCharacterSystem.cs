@@ -9,7 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Utilities;
-using ECS;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;

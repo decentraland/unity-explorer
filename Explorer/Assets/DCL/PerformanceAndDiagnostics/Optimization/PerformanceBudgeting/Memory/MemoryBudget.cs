@@ -1,7 +1,5 @@
 ﻿using DCL.Profiling;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
 
 namespace DCL.Optimization.PerformanceBudgeting
