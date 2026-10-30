@@ -21,11 +21,10 @@ namespace DCL.UI.Controls.Configs
             int horizontalLayoutSpacing = 10,
             bool horizontalLayoutReverseArrangement = false,
             Color iconColor = default)
-            : base(toggleText, toggleAction, null, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement)
+            : base(toggleText, toggleAction, null, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement, iconColor)
         {
             this.toggleGroup = toggleGroup;
             this.icon = icon;
-            this.iconColor = iconColor == default ? Color.white : iconColor;
         }
     }
 }
