@@ -23,6 +23,12 @@ The current capabilities are:
 
 Instead of using `Debug.LogXXX` call `ReportHub`: it provides a similar API with extra capabilities. Everything that is reported via a default `Debug.Log` will have default additional data (e.g. `[UNSPECIFIED]` category)
 
+### Sentry event gates
+
+Every event reaches Sentry through `SentryReportHandler.BeforeSend`, whether it was captured via `ReportHub` or directly by the SDK's own integrations (native messages, unhandled exceptions). The gate drops what the client cannot act on and keeps it as a warning breadcrumb of the next real report: un-actionable native messages, scene-script errors, disk-full IO, dropped websockets, and networking failures in local scene development.
+
+Networking failures (`UnityWebRequestException`, `WebException`, `SocketException`, `HttpRequestException`, alone or wrapped) are also dropped **while the machine is offline**, since the SDK's offline cache would otherwise deliver every "Cannot resolve destination host" of an outage once the connection is back. Connectivity comes from `InternetConnectivityMonitor` (`Utility.Networking`): a TCP connect to the base domain that consumers never trigger themselves, since reading `IsOnline` (or awaiting `IsOnlineAsync`) starts a new probe once the previous result is a few seconds old, and concurrent readers share the probe in flight. It exists because no OS-level signal works on desktop (`Application.internetReachability` always reports LAN, and the Mono BCL stubs `NetworkInterface.GetIsNetworkAvailable` to `true`). Because `BeforeSend` is synchronous, networking exceptions reported through `ReportHub` are held until the probe answers and only then captured or demoted; events captured directly by the SDK use the last confirmed state.
+
 ### Integration with systems
 
 `BaseUnityLoopSystem` provides default capabilities to differentiate between categories:

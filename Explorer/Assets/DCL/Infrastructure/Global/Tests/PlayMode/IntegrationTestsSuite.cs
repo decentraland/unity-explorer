@@ -39,6 +39,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Utility.Networking;
 using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
@@ -71,7 +72,7 @@ namespace Global.Tests.PlayMode
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
 
-            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false, sessionId: null);
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false, sessionId: null, new InternetConnectivityMonitor("127.0.0.1"));
 
             var world = World.Create();
             var cameraEntity = world.Create();
