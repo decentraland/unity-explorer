@@ -181,6 +181,54 @@ namespace DCL.Diagnostics.Tests
             Assert.AreEqual(ReportCategory.ECS, sent!.Tags["category"]);
         }
 
+        [TestCase("[UUAV] init: failed to start uuav helper: helper did not say Hello: peer closed the channel (helper exit code 0xc0000135)",
+            "helper did not say Hello: peer closed the channel", "exit code 0xc0000135")]
+        [TestCase("[UUAV] init: failed to start uuav helper: helper did not say Hello: timed out waiting for message (helper still running, killed)",
+            "helper did not say Hello: timed out waiting for message", "still running, killed")]
+        [TestCase("[UUAV] init: failed to start uuav helper: helper did not say Hello: peer closed the channel (helper signal: 9 (SIGKILL))",
+            "helper did not say Hello: peer closed the channel", "signal: 9 (SIGKILL)")]
+        public void SetFingerprintForUuavHandshakeFailureByHelperExitStatus(string message, string cause, string status)
+        {
+            var @event = new SentryEvent { Message = message };
+
+            SentryReportHandler.BeforeSend(@event);
+
+            CollectionAssert.AreEqual(new[] { "uuav-helper-start", cause, status }, @event.Fingerprint);
+        }
+
+        [Test]
+        public void SetFingerprintForUuavSpawnFailureWithoutHelperPath()
+        {
+            var @event = new SentryEvent
+            {
+                Message = "[UUAV] init: failed to start uuav helper: failed to spawn /Users/jane.doe/Library/Application Support/Decentraland.app/Contents/PlugIns/uuav-helper: Permission denied (os error 13)",
+            };
+
+            SentryReportHandler.BeforeSend(@event);
+
+            CollectionAssert.AreEqual(new[] { "uuav-helper-start", "spawn", "Permission denied (os error 13)" }, @event.Fingerprint);
+        }
+
+        [Test]
+        public void SetFingerprintForUuavHandshakeFailureWithoutHelperExitStatus()
+        {
+            var @event = new SentryEvent { Message = "[UUAV] init: failed to start uuav helper: helper did not say Hello: peer closed the channel" };
+
+            SentryReportHandler.BeforeSend(@event);
+
+            CollectionAssert.AreEqual(new[] { "uuav-helper-start", "helper did not say Hello: peer closed the channel" }, @event.Fingerprint);
+        }
+
+        [Test]
+        public void NotSetFingerprintForOtherUuavInitFailures()
+        {
+            var @event = new SentryEvent { Message = "[UUAV] init: D3D11CreateDevice failed" };
+
+            SentryReportHandler.BeforeSend(@event);
+
+            CollectionAssert.IsEmpty(@event.Fingerprint);
+        }
+
         [Test]
         public void SetFingerprintForJavaScriptExceptionWithSceneAndMultilineMessage()
         {
