@@ -196,9 +196,22 @@ jobs:
           PROJECT_ID: ${{ secrets.AVATAR_PREVIEW_RENDERER_UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/avatar-preview-renderer/build.py --cancel
 
+  render-server:
+    name: Render Server
+    needs: prepare
+    uses: ./.github/workflows/avatar-preview-render-server.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      commit_sha: ${{ needs.prepare.outputs.commit_sha }}
+      release: true
+    secrets: inherit
+
   release:
     name: Tag and GitHub Release
-    needs: [prepare, build]
+    needs: [prepare, build, render-server]
+    # The WebGL zip is what wearable-preview consumes, so a failed render server build ships the
+    # release without its package rather than holding the release back.
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -208,6 +221,20 @@ jobs:
         with:
           name: avatar-preview-renderer
           path: build
+
+      - name: Download render server package
+        if: ${{ needs.render-server.result == 'success' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: avatar-preview-render-server
+          path: .
+
+      - name: Warn about a missing render server package
+        if: ${{ needs.render-server.result != 'success' }}
+        run: |
+          echo "::warning title=Render server not released::The render server build ${{ needs.render-server.result }}; this release ships without its package."
+          echo "> [!WARNING]" >> $GITHUB_STEP_SUMMARY
+          echo "> The render server build ${{ needs.render-server.result }}; this release ships without \`avatar-preview-render-server-v${{ needs.prepare.outputs.version }}-linux-x86_64.tar.gz\`." >> $GITHUB_STEP_SUMMARY
 
       - name: Zip build output
         run: |
@@ -230,6 +257,9 @@ jobs:
             Built from `${{ needs.prepare.outputs.commit_sha }}` (dev).
           draft: false
           prerelease: false
-          files: avatar-preview-renderer-v${{ needs.prepare.outputs.version }}.zip
+          # The render server package is absent when its build failed; unmatched files are skipped.
+          files: |
+            avatar-preview-renderer-v${{ needs.prepare.outputs.version }}.zip
+            avatar-preview-render-server-v${{ needs.prepare.outputs.version }}-linux-x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

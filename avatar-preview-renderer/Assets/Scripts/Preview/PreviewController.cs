@@ -11,7 +11,7 @@ using Utils;
 
 namespace Preview
 {
-    public class PreviewController : MonoBehaviour
+    public partial class PreviewController : MonoBehaviour
     {
         [SerializeField] private Camera mainCamera;
         [SerializeField] private PreviewCameraController previewCameraController;
