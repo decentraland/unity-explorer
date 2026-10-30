@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsDirty;
         public bool IsVisible;
         public bool HiddenByModifierArea;
+        public bool NameTagHiddenByModifierArea;
         public bool IsPreview;
         public int InstantiationVersion;
 
@@ -55,6 +56,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             EyesColor = eyesColor;
             IsVisible = true;
             HiddenByModifierArea = false;
+            NameTagHiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
             InstantiationVersion = -1;

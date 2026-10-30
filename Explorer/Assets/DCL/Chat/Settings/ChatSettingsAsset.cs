@@ -7,10 +7,10 @@ namespace DCL.Settings.Settings
     //[CreateAssetMenu(fileName = "ChatSettings", menuName = "DCL/Settings/Chat Settings")]
     public class ChatSettingsAsset : ScriptableObject
     {
-        [FormerlySerializedAs("chatSettings")] public ChatAudioSettings chatAudioSettings = ChatAudioSettings.ALL;
-        public ChatPrivacySettings chatPrivacySettings = ChatPrivacySettings.ALL;
-        public ChatBubbleVisibilitySettings chatBubblesVisibilitySettings = ChatBubbleVisibilitySettings.ALL;
-        public ChatPreferredTranslationSettings chatPreferredTranslationSettings = ChatPreferredTranslationSettings.EN;
+        [FormerlySerializedAs("chatSettings")] public ChatAudioSettings chatAudioSettings = ChatAudioSettings.All;
+        public ChatPrivacySettings chatPrivacySettings = ChatPrivacySettings.All;
+        public ChatBubbleVisibilitySettings chatBubblesVisibilitySettings = ChatBubbleVisibilitySettings.All;
+        public ChatPreferredTranslationSettings chatPreferredTranslationSettings = ChatPreferredTranslationSettings.En;
         public bool chatReactionsEnabled = true;
 
         public string CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP
@@ -56,35 +56,35 @@ namespace DCL.Settings.Settings
 
     public enum ChatAudioSettings
     {
-        ALL = 0,
-        MENTIONS_ONLY = 1,
-        NONE = 2,
+        All = 0,
+        MentionsOnly = 1,
+        None = 2,
     }
 
     public enum ChatPrivacySettings
     {
-        ONLY_FRIENDS = 0,
-        ALL = 1,
+        OnlyFriends = 0,
+        All = 1,
     }
 
     public enum ChatBubbleVisibilitySettings
     {
-        NONE = 0,
-        NEARBY_ONLY = 1,
-        ALL
+        None = 0,
+        NearbyOnly = 1,
+        All
     }
 
     public enum ChatPreferredTranslationSettings
     {
-        EN = 0,
-        ES = 1,
-        FR = 2,
-        DE = 3,
-        RU = 4,
-        PT = 5,
-        IT = 6,
-        ZH = 7,
-        JA = 8,
-        KO = 9
+        En = 0,
+        Es = 1,
+        Fr = 2,
+        De = 3,
+        Ru = 4,
+        Pt = 5,
+        It = 6,
+        Zh = 7,
+        Ja = 8,
+        Ko = 9
     }
 }

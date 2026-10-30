@@ -29,8 +29,6 @@ namespace DCL.RealmNavigation
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
-        public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
-
         public IWorldPermissionsService WorldPermissionsService { get; private init; } = null!;
 
         public IWorldInfoHub WorldInfoHub { get; private init; } = null!;
@@ -51,10 +49,11 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
-            IPlacesAPIService placesAPIService,
+            IPlacesAPIService placesApiService,
             IWeb3IdentityCache identityCache,
             ICommunityMembershipChecker communityMembershipChecker,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            StartParcel startParcel)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
@@ -75,13 +74,13 @@ namespace DCL.RealmNavigation
                     new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                    new ClearWorldsCacheTeleportOperation(placesAPIService),
+                    new ClearWorldsCacheTeleportOperation(placesApiService),
                     new ChangeRealmTeleportOperation(realmContainer.RealmController),
                     new AnalyticsFlushTeleportOperation(analytics),
                     new LoadLandscapeTeleportOperation(landscape),
                     new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                    new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
+                    new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData, roomHub),
                     new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 },
                 ReportCategory.SCENE_LOADING,
@@ -115,8 +114,9 @@ namespace DCL.RealmNavigation
                     analytics,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
-                    worldAccessGate),
-                WorldAccessGate = worldAccessGate,
+                    worldAccessGate,
+                    staticContainer.ScenesCache,
+                    startParcel),
                 WorldPermissionsService = worldPermissionsService,
                 WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder

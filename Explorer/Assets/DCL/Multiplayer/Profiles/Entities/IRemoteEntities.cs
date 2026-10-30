@@ -32,6 +32,9 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         public static void Remove(IRemoteEntities remoteEntities, IRemoteAnnouncements announcements, IRemoveIntentions removeIntentions, World world)
         {
+            if (removeIntentions.NewBunchAvailable() == false)
+                return;
+
             using OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch();
             IReadOnlyCollection<RemoveIntention> collection = bunch.Collection();
             remoteEntities.Remove(collection, world);

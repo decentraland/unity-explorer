@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.urlsSource = urlsSource;
             this.builderContentURL = builderContentURL;
-            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
+            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
             this.entitiesAnalytics = entitiesAnalytics;
 
             cacheCleaner.Register(this.wearableStorage);

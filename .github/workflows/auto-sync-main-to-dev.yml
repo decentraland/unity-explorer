@@ -22,9 +22,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          OPEN_PRS=$(gh pr list --base dev --head chore/sync --state open --json number --jq 'length')
+          if [ "$OPEN_PRS" -ne 0 ]; then
+            echo "Sync PR already exists — branch was updated, the open PR now points at the new commits."
+            exit 0
+          fi
           gh pr create \
             --base dev \
             --head chore/sync \
             --title "chore: sync main to dev" \
-            --body ":crown: *An automated PR*" \
-            --label auto-pr \
+            --body $':crown: *An automated PR*\n\n> [!IMPORTANT]\n> This PR must be merged **by an admin, as a merge commit** ("Merge pull request", bypassing the linear-history rule) — **never squash or rebase it**.\n> Squashing rewrites the synced commits, which makes `main` and `dev` diverge silently and surfaces later as release-merge conflicts.\n> The `enforce-approvals` required check stays red until an admin approves this PR.\n\nThis manual procedure has kept `main` and `dev` in sync for years when followed — see #9566 for the mechanical enforcement plan (ruleset + bot bypass) we will apply if a squash slips through again.' \
+            --label auto-pr

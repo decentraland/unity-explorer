@@ -1,6 +1,4 @@
 using System;
-using System.Threading;
-using UnityEngine.Assertions;
 
 namespace Utility.Networking
 {
@@ -103,11 +101,13 @@ namespace Utility.Networking
         private System.Net.WebSockets.WebSocketException inner;
 
         public WebSocketException()
+            : base("WebSocket error")
         {
             this.inner = new System.Net.WebSockets.WebSocketException();
         }
 
         public WebSocketException(System.Net.WebSockets.WebSocketException inner)
+            : base(inner.Message, inner)
         {
             this.inner = inner;
         }

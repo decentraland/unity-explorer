@@ -2,7 +2,7 @@ using Arch.Core;
 using ECS.SceneLifeCycle.Systems;
 using NUnit.Framework;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class SceneByteProgressTrackerShould

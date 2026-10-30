@@ -6,10 +6,10 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
-using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -27,8 +27,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
-        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
 
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
@@ -65,6 +63,7 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
+            RemoveDeadMediaPlayersQuery(World);
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
@@ -75,6 +74,17 @@ namespace DCL.SDKComponents.MediaStream
         public void OnSceneIsCurrentChanged(bool enteredScene)
         {
             ToggleCurrentStreamsStateQuery(World, enteredScene);
+        }
+
+        // Drops players whose MediaPlayer object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // later query dereferences the stale ref; recreated from the SDK component next frame.
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void RemoveDeadMediaPlayers(Entity entity, ref MediaPlayerComponent mediaPlayer)
+        {
+            if (mediaPlayer.MediaPlayer.IsValid) return;
+
+            RemoveAndForceReInitialization(ref mediaPlayer, entity);
         }
 
         [Query]
@@ -105,7 +115,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureAudioIsPlaying();
+                        livekitPlayer.EnsureAudioIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -125,7 +135,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
-                ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+                ConsumePromise(ref component, sdkComponent is { HasPlaying: true, Playing: true });
                 component.UpdateState();
 
                 // Keep last: may trigger an archetype move that invalidates component's ref.
@@ -144,7 +154,6 @@ namespace DCL.SDKComponents.MediaStream
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
             if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
-            if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
@@ -164,7 +173,7 @@ namespace DCL.SDKComponents.MediaStream
                     // Covers cases like leaving and re-entering the scene
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
-                        livekitPlayer?.EnsureVideoIsPlaying();
+                        livekitPlayer.EnsureVideoIsPlaying();
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -185,7 +194,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
                 if (ConsumePromise(ref component, false))
-                    component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+                    component.MediaPlayer.SetPlaybackProperties(sdkComponent, component.IsLiveStream);
 
                 component.UpdateState();
 
@@ -215,24 +224,21 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
             if (!playerComponent.IsPlaying)
-            {
-                if (playerComponent.State is VideoState.VsError or VideoState.VsNone)
+                switch (playerComponent.State)
                 {
-                    RenderBlackTexture(ref assignedTexture);
-                    return;
+                    case VideoState.VsError or VideoState.VsNone:
+                        RenderBlackTexture(ref assignedTexture);
+                        return;
+                    case VideoState.VsPaused:
+                        return;
                 }
 
-                if (playerComponent.State == VideoState.VsPaused)
-                    return;
-            }
-
-            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer))
+            // No active LiveKit stream — render black. A muted camera does NOT reach this branch: the
+            // track stays open (IsVideoOpened is true) and LastTexture returns the placeholder instead.
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer) && livekitPlayer is { IsVideoOpened: false })
             {
-                if (!livekitPlayer.IsVideoOpened)
-                {
-                    RenderBlackTexture(ref assignedTexture);
-                    return;
-                }
+                RenderBlackTexture(ref assignedTexture);
+                return;
             }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
@@ -245,9 +251,9 @@ namespace DCL.SDKComponents.MediaStream
             int targetHeight = avText.height;
 
             // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
-            if (livekitPlayer != null && (avText.width > MAX_LIVEKIT_VIDEO_WIDTH || avText.height > MAX_LIVEKIT_VIDEO_HEIGHT))
+            if (livekitPlayer != null && Mathf.Max(avText.width, avText.height) > LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE)
             {
-                float scale = Mathf.Min((float)MAX_LIVEKIT_VIDEO_WIDTH / avText.width, (float)MAX_LIVEKIT_VIDEO_HEIGHT / avText.height);
+                float scale = (float)LiveKitMediaExtensions.MAX_LIVEKIT_TEXTURE_SIZE / Mathf.Max(avText.width, avText.height);
                 targetWidth = Mathf.RoundToInt(avText.width * scale);
                 targetHeight = Mathf.RoundToInt(avText.height * scale);
             }
@@ -255,7 +261,7 @@ namespace DCL.SDKComponents.MediaStream
             if (assignedTexture.Texture.width != targetWidth || assignedTexture.Texture.height != targetHeight)
                 assignedTexture.Resize(targetWidth, targetHeight);
 
-            bool needsFlip = playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1));
+            bool needsFlip = playerComponent.MediaPlayer.TextureScale.Equals(new Vector2(1, -1));
             bool dimensionsCapped = targetWidth != avText.width || targetHeight != avText.height;
 
             if (needsFlip)
@@ -268,13 +274,9 @@ namespace DCL.SDKComponents.MediaStream
                     Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
             }
             else if (dimensionsCapped)
-            {
                 Graphics.Blit(avText, assignedTexture.Texture);
-            }
             else
-            {
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
-            }
 
             return;
 
@@ -292,11 +294,10 @@ namespace DCL.SDKComponents.MediaStream
             // Livekit streams rely on the livekit room being active for the current scene only.
             // Non-livekit streams are also stopped when PlayCurrentSceneStreamOnly is on so they can be
             // recreated fresh by CreateMediaPlayerSystem when the player re-enters the scene.
-            if (isLivekit || videoPrioritizationSettings.PlayCurrentSceneStreamOnly)
-            {
-                mediaPlayerComponent.Dispose();
-                World.Remove<MediaPlayerComponent>(entity);
-            }
+            if (!isLivekit && !videoPrioritizationSettings.PlayCurrentSceneStreamOnly) return;
+
+            mediaPlayerComponent.Dispose();
+            World.Remove<MediaPlayerComponent>(entity);
         }
 
         private bool TryReInitializeOnExpiredYouTubeUrl(in Entity entity, ref MediaPlayerComponent component)
@@ -385,7 +386,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
                 string selfUrl = urlMediaAddress.Url;
-                string otherUrl = other!.Url;
+                string otherUrl = other.Url;
 
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
@@ -421,10 +422,9 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
-            // On macOS, enforce minimum gap between HLS stream opens to prevent
-            // AVFoundation crashes when opening multiple streams simultaneously.
-            // If too soon since last open, defer the opening.
-            // On windows deferr to avoid frame drops when opening multiple streams simultaneously, as the media player can consume a lot of resources while opening a stream.
+            // Enforce a minimum gap between stream opens. Inherited from AVPro, where it avoided AVFoundation
+            // crashes on simultaneous opens; with UUAV the open is async IPC to the helper, so profile whether
+            // the gap still pays for delaying the Nth stream by N × MIN_OPEN_MEDIA_INTERVAL_SECONDS.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
             float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 
@@ -435,20 +435,25 @@ namespace DCL.SDKComponents.MediaStream
             {
 
                 // Transfer YouTube resolution metadata from the promise to the component
-                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
-                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
+                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.ResolvedUrlExpiresAt;
+                component.IsLiveStream = component.OpenMediaPromise.IsLiveStream;
 
                 // Use the resolved media address (which may be a direct URL after YouTube resolution)
-                MediaAddress resolvedAddress = component.OpenMediaPromise.mediaAddress;
+                MediaAddress resolvedAddress = component.OpenMediaPromise.ResolvedAddress;
 
                 lastOpenMediaTime = currentTime;
 
-                ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+                // Resolved URLs can run very long (googlevideo manifests exceed a KB);
+                // logging them whole floods the console and Sentry breadcrumbs.
+                string resolvedForLog = resolvedAddress.ToString();
 
-                Profiler.BeginSample(component.MediaPlayer.HasControl
-                    ? "MediaPlayer.OpenMedia"
-                    : "MediaPlayer.InitialiseAndOpenMedia");
+                if (resolvedForLog.Length > 160)
+                    resolvedForLog = $"{resolvedForLog[..160]}… ({resolvedForLog.Length} chars)";
+
+                ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+
+                Profiler.BeginSample("MediaPlayer.OpenMedia");
 
                 try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
@@ -468,15 +473,14 @@ namespace DCL.SDKComponents.MediaStream
 
         private void FadeVolume(ref MediaPlayerComponent component, float volume, float dt)
         {
-            if (component.State != VideoState.VsError)
-            {
-                float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
+            if (component.State == VideoState.VsError) return;
 
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
+            float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
 
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
-            }
+            if (!sceneStateProvider.IsCurrent)
+                targetVolume = 0f;
+
+            component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
         }
     }
 }

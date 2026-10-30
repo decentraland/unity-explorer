@@ -1,10 +1,9 @@
-﻿
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using Global.Dynamic;
 using UnityEngine.Playables;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     /// <summary>
     /// A playable / clip for the Unity timeline that performs some animations on an AvatarBase.
@@ -12,7 +11,7 @@ namespace DCL.AvatarAnimation
     /// </summary>
     public class BaseAvatarPlayableBehaviour : PlayableBehaviour
     {
-        static readonly private QueryDescription ALL_AVATARS_QUERY_DESCRIPTION = new QueryDescription().WithAll<AvatarBase>();
+        private static readonly QueryDescription ALL_AVATARS_QUERY_DESCRIPTION = new QueryDescription().WithAll<AvatarBase>();
 
         /// <summary>
         /// Gets the Entity corresponding to the AvatarBase assigned to the track. It may be Entity.Null.

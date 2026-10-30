@@ -20,6 +20,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.passportController.BadgeSelected += OnBadgeSelected;
             this.passportController.JumpToFriendClicked += JumpToFriendClicked;
             this.passportController.NameClaimRequested += OnNameClaimRequested;
+            this.passportController.CreditsBuyFellBackToWeb += OnCreditsBuyFellBackToWeb;
         }
 
         public void Dispose()
@@ -29,6 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             passportController.BadgeSelected -= OnBadgeSelected;
             passportController.JumpToFriendClicked -= JumpToFriendClicked;
             passportController.NameClaimRequested -= OnNameClaimRequested;
+            passportController.CreditsBuyFellBackToWeb -= OnCreditsBuyFellBackToWeb;
         }
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
@@ -36,6 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 {"receiver_id", targetAddress},
                 {"friend_position", parcel.ToString()},
+                {"source", "passport"},
             });
 
         private void OnBadgeSelected(string id, bool isOwnPassport)
@@ -66,5 +69,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnNameClaimRequested() =>
             analytics.Track(AnalyticsEvents.Profile.NAME_CLAIM_REQUESTED);
+
+        private void OnCreditsBuyFellBackToWeb(string reason, string itemUrn, string source)
+        {
+            // Instant: the external browser opens right after this and the app may lose focus.
+            analytics.Track(AnalyticsEvents.MarketplaceCredits.CREDITS_BUY_FALLBACK_WEB, new JObject
+            {
+                { "reason", reason },
+                { "item_urn", itemUrn },
+                { "source", source },
+                { AnalyticsEvents.MarketplaceCredits.PLATFORM_KEY, AnalyticsEvents.MarketplaceCredits.PLATFORM_VALUE },
+            }, isInstant: true);
+        }
     }
 }

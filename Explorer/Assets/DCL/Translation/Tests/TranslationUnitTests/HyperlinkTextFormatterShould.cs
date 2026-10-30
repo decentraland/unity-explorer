@@ -15,18 +15,6 @@ namespace DCL.Translation
         public const string PROFILE = "profile";
     }
 
-    public static class GenesisCityData
-    {
-        private const int MIN_COORD = -150;
-        private const int MAX_COORD = 150;
-
-        public static bool IsInsideBounds(int x, int y)
-        {
-            return x >= MIN_COORD && x <= MAX_COORD && y >= MIN_COORD && y <= MAX_COORD;
-        }
-    }
-
-
     [TestFixture]
     public class HyperlinkTextFormatterShould
     {
@@ -147,13 +135,13 @@ namespace DCL.Translation
             // Assert
             Assert.AreEqual(3, matchesResult.Count);
 
-            Assert.AreEqual(TextFormatMatchType.SCENE, matchesResult[0].Item1);
+            Assert.AreEqual(TextFormatMatchType.Scene, matchesResult[0].Item1);
             Assert.AreEqual("10,20", matchesResult[0].Item2.Value);
 
-            Assert.AreEqual(TextFormatMatchType.URL, matchesResult[1].Item1);
+            Assert.AreEqual(TextFormatMatchType.Url, matchesResult[1].Item1);
             Assert.AreEqual("https://decentraland.org", matchesResult[1].Item2.Value);
 
-            Assert.AreEqual(TextFormatMatchType.WORLD, matchesResult[2].Item1);
+            Assert.AreEqual(TextFormatMatchType.World, matchesResult[2].Item1);
             Assert.AreEqual("myworld.dcl.eth", matchesResult[2].Item2.Value);
         }
     }

@@ -1,0 +1,237 @@
+/* The live event card of the uGUI lobby: hovering lifts the title, fades the host out and brings the jump-in button in under it */
+:root {
+    --live-event-card-hover-duration: 0.3s;
+}
+
+/* It casts a shadow past its edges, so the card does not clip and the body rounds the layers instead */
+.lobby-live-event-card {
+    width: 326px;
+    height: 199px;
+}
+
+/* The 24px shadow sprite (see LobbyDocument.uss) hangs 6px past the sides and 10px under the card; tinted like the card, as the thumbnail covers it only once loaded */
+.lobby-live-event-card__shadow {
+    position: absolute;
+    left: -6px;
+    top: 0;
+    right: -6px;
+    bottom: -10px;
+    background-image: var(--lobby-card-shadow-image);
+    -unity-slice-left: 60;
+    -unity-slice-top: 45;
+    -unity-slice-right: 60;
+    -unity-slice-bottom: 68;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-card-color);
+}
+
+.lobby-live-event-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-width: 1px;
+    border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+.lobby-live-event-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: scale var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__thumbnail {
+    scale: 1.05;
+}
+
+/* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the texts, sliced so the fade
+   keeps its shape while the strip stretches with the hovered footer, putting the jump-in button on the flat part */
+.lobby-live-event-card__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+    transition: height var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__gradient {
+    height: 124px;
+}
+
+.lobby-live-event-card__badges {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    height: 26px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-live-event-card__live {
+    height: 26px;
+    margin-right: 6px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 8px 0 6px;
+    border-radius: 8px;
+    background-color: rgb(255, 0, 0);
+}
+
+.lobby-live-event-card__live-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/ExplorePanel/LiveIcn.png');
+}
+
+.lobby-live-event-card__live-text {
+    font-size: 12px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+/* Spaces the friends row that follows it in the badges strip */
+.lobby-live-event-card__attendees {
+    height: 26px;
+    margin-right: 6px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 6px;
+    border-radius: 8px;
+    background-color: var(--dcl-color-shadow);
+    display: none;
+}
+
+.lobby-live-event-card--with-attendees .lobby-live-event-card__attendees {
+    display: flex;
+}
+
+.lobby-live-event-card__attendees-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-live-event-card__attendees-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-live-event-card__attendees-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+/* Rises by the height of the jump-in button while hovered */
+.lobby-live-event-card__title {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 42px;
+    height: 30px;
+    font-size: 18px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: lower-left;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: bottom var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__title {
+    bottom: 66px;
+}
+
+.lobby-live-event-card__host {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    height: 22px;
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-subtitle-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity var(--live-event-card-hover-duration) ease-out;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__host {
+    opacity: 0;
+}
+
+/* Spans the card like the hero card's button. Only reachable while hovered, so its invisible state never takes a click meant for the card; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss) */
+.lobby-live-event-card__jump-in {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 10px;
+    height: 46px;
+    padding: 0 0 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    opacity: 0;
+    transition: opacity var(--live-event-card-hover-duration) ease-out, -unity-background-image-tint-color 0.1s;
+}
+
+.lobby-live-event-card:hover .lobby-live-event-card__jump-in {
+    opacity: 1;
+}
+
+.lobby-live-event-card__jump-in:hover {
+    -unity-background-image-tint-color: var(--lobby-jump-in-hover-color);
+}
+
+.lobby-live-event-card__jump-in:active {
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
+}
+
+.lobby-live-event-card__jump-in-text {
+    margin-right: 8px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-live-event-card__jump-in-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
+}

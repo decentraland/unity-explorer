@@ -7,29 +7,31 @@ namespace DCL.VoiceChat.Nearby
 {
     public enum NearbyVoiceChatState
     {
-        DISABLED,
-        IDLE, // default state where user is connected to nearby chat and can hear its participants
-        OPEN_MIC,
-        SUPPRESSED, // when you have another more priority voice chat - Private or Community
+        Disabled,
+        Idle, // default state where user is connected to nearby chat and can hear its participants
+        OpenMic,
+        Suppressed, // when you have another more priority voice chat - Private or Community
     }
 
     public enum SuppressionReason
     {
         /// <summary>Initial world loading is in progress.</summary>
-        LOADING,
+        Loading,
         /// <summary>Higher-priority Community or Private call is active.</summary>
-        CALL,
+        Call,
         /// <summary>Current scene disables Nearby voice chat via feature toggles.</summary>
-        SCENE,
+        Scene,
         /// <summary>Local player is banned from the current scene.</summary>
-        SCENE_BAN,
+        SceneBan,
+        /// <summary>The session belongs to a guest, who cannot take part in Nearby voice.</summary>
+        Guest,
     }
 
     public enum NearbyVoiceActivation
     {
-        PUSH_TO_TALK,   // Hold [T]
-        BUTTON,         // Widget speak button click
-        FOCUS_RESUMED,  // Auto-resume after application regained focus
+        PushToTalk,   // Hold [T]
+        Button,         // Widget speak button click
+        FocusResumed,  // Auto-resume after application regained focus
     }
 
     public class NearbyVoiceChatStateModel : IDisposable
@@ -51,7 +53,6 @@ namespace DCL.VoiceChat.Nearby
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
-        ///     Updated from <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>.
         ///     Written on the LiveKit event thread, read on the Unity main thread — volatile ensures visibility.
         /// </summary>
         private volatile bool isLocalSpeaking;
@@ -62,7 +63,7 @@ namespace DCL.VoiceChat.Nearby
             set => isLocalSpeaking = value;
         }
 
-        public bool IsListeningDisabled => state.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED;
+        public bool IsListeningDisabled => state.Value is NearbyVoiceChatState.Suppressed or NearbyVoiceChatState.Disabled;
 
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
@@ -78,29 +79,29 @@ namespace DCL.VoiceChat.Nearby
 
         public void Enable()
         {
-            if (state.Value == NearbyVoiceChatState.DISABLED)
-                SetState(NearbyVoiceChatState.IDLE);
+            if (state.Value == NearbyVoiceChatState.Disabled)
+                SetState(NearbyVoiceChatState.Idle);
         }
 
         public void Disable()
         {
-            SetState(NearbyVoiceChatState.DISABLED);
+            SetState(NearbyVoiceChatState.Disabled);
         }
 
         // Speaking
-        public void StartSpeaking(NearbyVoiceActivation activation = NearbyVoiceActivation.BUTTON)
+        public void StartSpeaking(NearbyVoiceActivation activation = NearbyVoiceActivation.Button)
         {
-            if (state.Value == NearbyVoiceChatState.IDLE)
+            if (state.Value == NearbyVoiceChatState.Idle)
             {
                 CurrentActivation = activation;
-                SetState(NearbyVoiceChatState.OPEN_MIC);
+                SetState(NearbyVoiceChatState.OpenMic);
             }
         }
 
         public void StopSpeaking()
         {
-            if (state.Value == NearbyVoiceChatState.OPEN_MIC)
-                SetState(NearbyVoiceChatState.IDLE);
+            if (state.Value == NearbyVoiceChatState.OpenMic)
+                SetState(NearbyVoiceChatState.Idle);
         }
 
         // Suppression
@@ -111,13 +112,13 @@ namespace DCL.VoiceChat.Nearby
 
             activeSuppression.Value = reason;
 
-            if (state.Value != NearbyVoiceChatState.SUPPRESSED)
+            if (state.Value != NearbyVoiceChatState.Suppressed)
             {
-                if (state.Value == NearbyVoiceChatState.OPEN_MIC)
+                if (state.Value == NearbyVoiceChatState.OpenMic)
                     StopSpeaking();
 
                 preBlockedState = state.Value;
-                SetState(NearbyVoiceChatState.SUPPRESSED);
+                SetState(NearbyVoiceChatState.Suppressed);
             }
         }
 
@@ -129,9 +130,12 @@ namespace DCL.VoiceChat.Nearby
             if (TryResetToRemainedSuppression(activeSuppression))
                 return;
 
-            if (state.Value == NearbyVoiceChatState.SUPPRESSED)
+            if (state.Value == NearbyVoiceChatState.Suppressed)
                 SetState(preBlockedState);
         }
+
+        public bool IsSuppressedBy(SuppressionReason reason) =>
+            suppressionReasons.Contains(reason);
 
         private bool TryResetToRemainedSuppression(ReactiveProperty<SuppressionReason?> active)
         {

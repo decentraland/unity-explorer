@@ -1,4 +1,5 @@
 ﻿using DCL.Profiles;
+using DCL.Web3;
 using System;
 using System.Threading;
 
@@ -8,7 +9,7 @@ namespace DCL.UI.ProfileElements
     {
         public readonly UserWalletAddressElement Element;
 
-        private string currentProfileId;
+        private string? currentProfileId;
 
         public UserWalletAddressElementPresenter(UserWalletAddressElement element)
         {
@@ -27,14 +28,13 @@ namespace DCL.UI.ProfileElements
 
         public void Setup(Profile.CompactInfo profile)
         {
-            currentProfileId = profile.UserId;
-            Element.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
+            Setup(profile.UserId.Value);
         }
 
         public void Setup(string profileId)
         {
             currentProfileId = profileId;
-            Element.UserWalletAddressText.text = $"{profileId[..5]}...{profileId[^5..]}";
+            Element.UserWalletAddressText.text = Web3Address.Shorten(profileId);
         }
 
         public void Dispose()

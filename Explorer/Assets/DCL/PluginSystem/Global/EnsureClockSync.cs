@@ -33,10 +33,16 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            Result response = Result.RESTART;
+            Result response = Result.Restart;
 
-            while (response == Result.RESTART)
+            while (response == Result.Restart)
             {
+                await TryProbeServerTimeAsync(ct);
+
+                if (!IsDesync()) return;
+
+                // The monotonic anchor stops while the OS sleeps, so a pre-sleep sample trails server time after wake without the user's clock being wrong.
+                realmClock.Invalidate();
                 await TryProbeServerTimeAsync(ct);
 
                 if (!IsDesync()) return;
@@ -75,8 +81,8 @@ namespace DCL.PluginSystem.Global
 
         public enum Result
         {
-            CONTINUE,
-            RESTART,
+            Continue,
+            Restart,
         }
     }
 }

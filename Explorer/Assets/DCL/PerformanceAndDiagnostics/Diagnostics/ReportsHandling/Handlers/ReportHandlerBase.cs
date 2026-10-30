@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -79,7 +78,7 @@ namespace DCL.Diagnostics
             // Don't call DebounceInternal as exceptions can't be compared
 
             return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
-                   && debouncer!.Debounce(new ReportMessageFingerprint(new ExceptionFingerprint(message, reportData.Debounce.CallStackHint)));
+                   && debouncer.Debounce(new ReportMessageFingerprint(new ExceptionFingerprint(message, reportData.Debounce.CallStackHint)));
         }
 
         private bool Debounce(in object message, in ReportData reportData, LogType logType)
@@ -90,7 +89,7 @@ namespace DCL.Diagnostics
                 return false;
 
             return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
-                   && debouncer!.Debounce(new ReportMessageFingerprint(stringMessage));
+                   && debouncer.Debounce(new ReportMessageFingerprint(stringMessage));
         }
 
         [HideInCallstack]

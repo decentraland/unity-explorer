@@ -10,9 +10,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Ipfs;
-using DCL.SceneRunner.Scene;
-using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Profiles.Bunches;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -42,7 +39,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             playerGameObject.transform.position = Vector3.zero;
 
             playerEntity = world.Create(new CharacterTransform(playerGameObject.transform));
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, false);
 
             // camera entity for camera global actions
             world.Create(new CameraComponent());
@@ -198,13 +195,13 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var intent = world.Get<CharacterEmoteIntent>(playerEntity);
             Assert.AreEqual(emoteUrn, intent.EmoteId);
             Assert.IsTrue(intent.Spatial);
-            Assert.AreEqual(TriggerSource.SCENE, intent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Scene, intent.TriggerSource);
         }
 
         [Test]
         public void CreatePromiseForLocalSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData { SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "localSceneTest") };
@@ -225,7 +222,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void NotCreatePromiseForLocalSceneSceneEmoteInvalidSrc()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false, false); // local development, no remote ABs
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false); // local development
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData();
@@ -248,7 +245,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForRealmSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = true });
 
             var sceneId = "remoteSceneId";
@@ -270,7 +267,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void ShouldNotTriggerSceneEmoteIfAvatarNotVisible()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = false });
 
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };

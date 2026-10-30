@@ -13,10 +13,10 @@ namespace DCL.EventsApi
         private const string DATES_PARAM = "dates";
         private const string DESCRIPTION_PARAM = "details";
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly URLBuilder urlBuilder = new ();
 
-        public GoogleUserCalendar(IWebBrowser webBrowser)
+        public GoogleUserCalendar(UnityAppWebBrowser webBrowser)
         {
             this.webBrowser = webBrowser;
         }
@@ -31,7 +31,7 @@ namespace DCL.EventsApi
                       .AppendParameter(new URLParameter(DATES_PARAM, $"{startAt:yyyyMMddTHHmmssZ}/{endAt:yyyyMMddTHHmmssZ}"))
                       .AppendParameter(new URLParameter(DESCRIPTION_PARAM, description));
 
-            webBrowser.OpenUrl(urlBuilder.Build());
+            webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
     }
 }

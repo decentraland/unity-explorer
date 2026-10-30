@@ -25,16 +25,17 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CitkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYmlsbGJvYXJkLnByb3Rv",
-            "EhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiaQoLUEJCaWxsYm9hcmQS",
-            "RwoOYmlsbGJvYXJkX21vZGUYASABKA4yKi5kZWNlbnRyYWxhbmQuc2RrLmNv",
-            "bXBvbmVudHMuQmlsbGJvYXJkTW9kZUgAiAEBQhEKD19iaWxsYm9hcmRfbW9k",
-            "ZSpGCg1CaWxsYm9hcmRNb2RlEgsKB0JNX05PTkUQABIICgRCTV9YEAESCAoE",
-            "Qk1fWRACEggKBEJNX1oQBBIKCgZCTV9BTEwQB0IUqgIRRENMLkVDU0NvbXBv",
-            "bmVudHNiBnByb3RvMw=="));
+            "EhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMilwEKC1BCQmlsbGJvYXJk",
+            "EkcKDmJpbGxib2FyZF9tb2RlGAEgASgOMiouZGVjZW50cmFsYW5kLnNkay5j",
+            "b21wb25lbnRzLkJpbGxib2FyZE1vZGVIAIgBARIaCg10YXJnZXRfZW50aXR5",
+            "GAIgASgNSAGIAQFCEQoPX2JpbGxib2FyZF9tb2RlQhAKDl90YXJnZXRfZW50",
+            "aXR5KkYKDUJpbGxib2FyZE1vZGUSCwoHQk1fTk9ORRAAEggKBEJNX1gQARII",
+            "CgRCTV9ZEAISCAoEQk1fWhAEEgoKBkJNX0FMTBAHQhSqAhFEQ0wuRUNTQ29t",
+            "cG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.BillboardMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBBillboard), global::DCL.ECSComponents.PBBillboard.Parser, new[]{ "BillboardMode" }, new[]{ "BillboardMode" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBBillboard), global::DCL.ECSComponents.PBBillboard.Parser, new[]{ "BillboardMode", "TargetEntity" }, new[]{ "BillboardMode", "TargetEntity" }, null, null, null)
           }));
     }
     #endregion
@@ -60,11 +61,16 @@ namespace DCL.ECSComponents {
 
   #region Messages
   /// <summary>
-  /// The Billboard component makes an Entity automatically reorient its rotation to face the camera. 
-  /// As the name indicates, it’s used to display in-game billboards and frequently combined with 
+  /// The Billboard component makes an Entity automatically reorient its rotation to face a target.
+  /// By default (when target_entity is unset), the billboard faces the main camera. When target_entity
+  /// is set, the billboard faces that entity instead. Setting target_entity to the camera reserved
+  /// entity (2) is equivalent to leaving the field unset. If the referenced target entity doesn’t exist
+  /// or is deleted, the billboard reorientation is disabled until the target exists again.
+  ///
+  /// As the name indicates, it’s used to display in-game billboards and frequently combined with
   /// the TextShape component.
   ///
-  /// Billboard only affects the Entity's rotation. Its scale and position are still determined by its
+  /// Billboard only affects the Entity’s rotation. Its scale and position are still determined by its
   /// Transform.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
@@ -105,6 +111,7 @@ namespace DCL.ECSComponents {
     public PBBillboard(PBBillboard other) : this() {
       _hasBits0 = other._hasBits0;
       billboardMode_ = other.billboardMode_;
+      targetEntity_ = other.targetEntity_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -144,6 +151,36 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "target_entity" field.</summary>
+    public const int TargetEntityFieldNumber = 2;
+    private readonly static uint TargetEntityDefaultValue = 0;
+
+    private uint targetEntity_;
+    /// <summary>
+    /// entity to face instead of the camera; if the referenced entity doesn’t exist, the billboard behavior is disabled until it does
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint TargetEntity {
+      get { if ((_hasBits0 & 2) != 0) { return targetEntity_; } else { return TargetEntityDefaultValue; } }
+      set {
+        _hasBits0 |= 2;
+        targetEntity_ = value;
+      }
+    }
+    /// <summary>Gets whether the "target_entity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTargetEntity {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "target_entity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTargetEntity() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -160,6 +197,7 @@ namespace DCL.ECSComponents {
         return true;
       }
       if (BillboardMode != other.BillboardMode) return false;
+      if (TargetEntity != other.TargetEntity) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -168,6 +206,7 @@ namespace DCL.ECSComponents {
     public override int GetHashCode() {
       int hash = 1;
       if (HasBillboardMode) hash ^= BillboardMode.GetHashCode();
+      if (HasTargetEntity) hash ^= TargetEntity.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -190,6 +229,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteEnum((int) BillboardMode);
       }
+      if (HasTargetEntity) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(TargetEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -204,6 +247,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(8);
         output.WriteEnum((int) BillboardMode);
       }
+      if (HasTargetEntity) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(TargetEntity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -216,6 +263,9 @@ namespace DCL.ECSComponents {
       int size = 0;
       if (HasBillboardMode) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) BillboardMode);
+      }
+      if (HasTargetEntity) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TargetEntity);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -231,6 +281,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasBillboardMode) {
         BillboardMode = other.BillboardMode;
+      }
+      if (other.HasTargetEntity) {
+        TargetEntity = other.TargetEntity;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -255,6 +308,10 @@ namespace DCL.ECSComponents {
             BillboardMode = (global::DCL.ECSComponents.BillboardMode) input.ReadEnum();
             break;
           }
+          case 16: {
+            TargetEntity = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -276,6 +333,10 @@ namespace DCL.ECSComponents {
             break;
           case 8: {
             BillboardMode = (global::DCL.ECSComponents.BillboardMode) input.ReadEnum();
+            break;
+          }
+          case 16: {
+            TargetEntity = input.ReadUInt32();
             break;
           }
         }

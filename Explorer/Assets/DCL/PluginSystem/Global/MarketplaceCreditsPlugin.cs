@@ -25,10 +25,10 @@ namespace DCL.PluginSystem.Global
     {
         private readonly MainUIView mainUIView;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
@@ -42,9 +42,9 @@ namespace DCL.PluginSystem.Global
         public MarketplaceCreditsPlugin(
             MainUIView mainUIView,
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
@@ -52,7 +52,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -67,7 +68,7 @@ namespace DCL.PluginSystem.Global
             this.textFormatter = textFormatter;
             this.imageControllerProvider = imageControllerProvider;
 
-            marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -86,15 +87,12 @@ namespace DCL.PluginSystem.Global
                     panelView.gameObject.SetActive(false);
                     return panelView;
                 },
-                mainUIView.SidebarView.marketplaceCreditsButton,
                 webBrowser,
                 inputBlock,
                 marketplaceCreditsAPIClient,
                 selfProfile,
                 webRequestController,
                 mvcManager,
-                mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
-                mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,
                 web3IdentityCache,
                 loadingStatus,

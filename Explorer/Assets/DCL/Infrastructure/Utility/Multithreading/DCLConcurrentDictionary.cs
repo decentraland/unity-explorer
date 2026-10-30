@@ -34,7 +34,7 @@ namespace Utility.Multithreading
             Inner = new ();
         }
 
-        public DCLConcurrentDictionary(System.Collections.Generic.IEqualityComparer<TKey>? comparer)
+        public DCLConcurrentDictionary(IEqualityComparer<TKey>? comparer)
         {
             Inner = new (comparer);
         }

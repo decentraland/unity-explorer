@@ -14,8 +14,10 @@ using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -33,7 +35,6 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error getting places. Please try again.";
-        private const string GET_WORLDS_ERROR_MESSAGE = "There was an error getting worlds. Please try again.";
         private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
@@ -43,17 +44,17 @@ namespace DCL.Communities.CommunityCreation
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
         private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
-        private const int WARNING_MESSAGE_DELAY_MS = 3000;
         private const string CONTENT_POLICY_LINK_ID = "CONTENT_POLICY_LINK_ID";
         private const string CODE_AND_ETHICS_LINK_ID = "CODE_AND_ETHICS_LINK_ID";
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -64,14 +65,14 @@ namespace DCL.Communities.CommunityCreation
 
         private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
-        private string originalCommunityNameForEdition;
-        private string originalCommunityDescriptionForEdition;
+        private string? originalCommunityNameForEdition;
+        private string? originalCommunityDescriptionForEdition;
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
         private CommunityVisibility? originalCommunityVisibilityForEdition;
 
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private class CommunityPlace
         {
@@ -98,13 +99,14 @@ namespace DCL.Communities.CommunityCreation
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IMVCManager mvcManager,
-            IProfileRepository profileRepository) : base(viewFactory)
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache identityCache) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -113,6 +115,7 @@ namespace DCL.Communities.CommunityCreation
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -201,18 +204,26 @@ namespace DCL.Communities.CommunityCreation
             if (id != WORLD_LINK_ID)
                 return;
 
-            webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
+            webBrowser.OpenUrlMainThreadOnly($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
             viewInstance!.PlayOnLinkClickAudio();
         }
 
-        private void GoToGetNameLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+        private void GoToGetNameLink()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
+        }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.VoiceChat);
 
         private void OnCancelAction() =>
             closeTaskCompletionSource.TrySetResult();
@@ -265,9 +276,7 @@ namespace DCL.Communities.CommunityCreation
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new ();
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-
-            if (ownProfile != null)
+            if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
             {
                 // Lands owned or managed by the user
                 var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)
@@ -380,7 +389,7 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
             originalCommunityVisibilityForEdition = getCommunityResult.Value.data.visibility;
 
-            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader!);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCommunityPrivacy(getCommunityResult.Value.data.privacy, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
@@ -615,10 +624,10 @@ namespace DCL.Communities.CommunityCreation
             switch (id)
             {
                 case CONTENT_POLICY_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.ContentPolicy);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.ContentPolicy);
                     break;
                 case CODE_AND_ETHICS_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.CodeOfEthics);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.CodeOfEthics);
                     break;
             }
 

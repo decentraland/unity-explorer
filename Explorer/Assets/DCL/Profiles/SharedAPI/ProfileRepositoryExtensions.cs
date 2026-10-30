@@ -17,7 +17,7 @@ namespace DCL.Profiles
         /// </returns>
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, URLDomain? fromCatalyst, CancellationToken ct,
             bool getFromCacheIfPossible = true,
-            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT,
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.Default,
             IPartitionComponent? partition = null) =>
             profileRepository.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible, batchBehaviour, ProfileTier.Kind.Full, partition)
                              .ContinueWith(static pt => pt.ToProfile());
@@ -27,7 +27,7 @@ namespace DCL.Profiles
         /// </summary>
         public static UniTask<Profile.CompactInfo?> GetCompactAsync(this IProfileRepository profileRepository, string id, CancellationToken ct,
             IPartitionComponent? partition = null,
-            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.Default) =>
             profileRepository.GetAsync(id, 0, null, ct, true, batchBehaviour, ProfileTier.Kind.Compact, partition: partition)
                              .ContinueWith(static pt => pt.ToCompact());
 
@@ -46,7 +46,7 @@ namespace DCL.Profiles
 
             async UniTask WaitForProfileAsync(string id)
             {
-                Result<ProfileTier?> profile = await profileRepository.GetAsync(id, 0, fromCatalyst, ct, true, IProfileRepository.FetchBehaviour.DEFAULT, ProfileTier.Kind.Full)
+                Result<ProfileTier?> profile = await profileRepository.GetAsync(id, 0, fromCatalyst, ct, true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Full)
                                                                       .SuppressToResultAsync();
 
                 if (profile is { Success: true, Value: not null })
@@ -98,11 +98,11 @@ namespace DCL.Profiles
         /// <summary>
         ///     Suppresses inner exceptions to 'Null' return value
         /// </summary>
-        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
+        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.Default) =>
             profileRepository.GetAsync(id, 0, null, ct, batchBehaviour: batchBehaviour).SuppressAnyExceptionWithFallback(null);
 
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, CancellationToken ct, bool getFromCacheIfPossible = true,
-            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.Default) =>
             profileRepository.GetAsync(id, version, null, ct, getFromCacheIfPossible, batchBehaviour);
     }
 }

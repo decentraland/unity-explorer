@@ -2,6 +2,7 @@
 using Cinemachine;
 using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.Input;
@@ -13,7 +14,7 @@ using NUnit.Framework;
 using UnityEngine;
 using ControlCinemachineVirtualCameraSystem = DCL.Character.CharacterCamera.Systems.ControlCinemachineVirtualCameraSystem;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     public class CinemachineVirtualCameraSystemShould : UnitySystemTestBase<ControlCinemachineVirtualCameraSystem>
     {
@@ -74,7 +75,7 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
             system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
-            world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
+            world.Create(new InputMapComponent(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
 
             inputMap = world.CacheInputMap();
 
@@ -92,7 +93,7 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void InitInputMapComponent()
         {
-            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
+            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
         }
 
@@ -177,6 +178,24 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
+        public void SwitchStateFromFreeToThirdPerson()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.Free;
+            world.Set(entity, component);
+
+            system.Update(1);
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
+
+            world.Set(entity, new CameraInput { SwitchState = true });
+            system.Update(1);
+
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+            Assert.That(inputMap.GetInputMapComponent(world).Active.HasFlag(InputMapComponent.Kind.Player), Is.True);
+        }
+
+        [Test]
         public void IgnoreCameraModeInputIfDisabled()
         {
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
@@ -232,10 +251,10 @@ namespace DCL.CharacterCamera.Tests
         public void SwitchFromSDKCameraToThirdPerson()
         {
             CameraComponent component = world.Get<CameraComponent>(entity);
-            component.Mode = CameraMode.SDKCamera;
+            component.Mode = CameraMode.SdkCamera;
             world.Set(entity, component);
 
-            Assert.That(component.Mode, Is.EqualTo(CameraMode.SDKCamera));
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.SdkCamera));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
             component.Mode = CameraMode.ThirdPerson;
@@ -385,7 +404,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Add(entity, new DCL.InWorldCamera.InWorldCameraComponent());
+            world.Add(entity, new InWorldCamera.InWorldCameraComponent());
             world.Set(entity, new CameraInput { ZoomIn = true });
 
             system.Update(1);
@@ -396,7 +415,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Remove<DCL.InWorldCamera.InWorldCameraComponent>(entity);
+            world.Remove<InWorldCamera.InWorldCameraComponent>(entity);
 
             system.Update(1);
 

@@ -43,7 +43,10 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Graphics Memory Size: {0} MB\n", SystemInfo.graphicsMemorySize);
             stringBuilder.AppendFormat("Graphics Device Version: {0}\n", SystemInfo.graphicsDeviceVersion);
             stringBuilder.AppendFormat("Max Texture Size: {0}\n", SystemInfo.maxTextureSize);
-            stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n\n", SystemInfo.supportsRayTracing);
+            stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n", SystemInfo.supportsRayTracing);
+            stringBuilder.AppendFormat("Supports Multisampled Backbuffer: {0}\n", UnityEngine.SystemInfo.supportsMultisampledBackBuffer);
+            stringBuilder.AppendFormat("Screen MSAA Samples: {0}\n", UnityEngine.Screen.msaaSamples);
+            stringBuilder.AppendFormat("QualitySettings AntiAliasing: {0}\n\n", UnityEngine.QualitySettings.antiAliasing);
             AppendFooter(stringBuilder);
 
             // Unity & Application

@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;
@@ -21,9 +22,9 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController;
         private readonly MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController;
         private readonly MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
 
         private CreditsProgramProgressResponse currentCreditsProgramProgress;
@@ -38,9 +39,9 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsGoalsOfTheWeekSubController marketplaceCreditsGoalsOfTheWeekSubController,
             MarketplaceCreditsWeekGoalsCompletedSubController marketplaceCreditsWeekGoalsCompletedSubController,
             MarketplaceCreditsProgramEndedSubController marketplaceCreditsProgramEndedSubController,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock)
         {
             this.subView = subView;
@@ -90,23 +91,27 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTask LoadProgramRegistrationInfoAsync(CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
+
             try
             {
                 subView.SetAsLoading(true);
 
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile != null)
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+                if (read.IsOk(out Profile? ownProfile))
                 {
                     currentCreditsProgramProgress = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                     RedirectToSection();
                 }
+                else if (!read.IsCancelled)
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
 
                 subView.SetAsLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error loading the Credits Program. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -133,7 +138,6 @@ namespace DCL.MarketplaceCredits.Sections
                     currentCreditsProgramProgress.user.email = email;
                     currentCreditsProgramProgress.user.isEmailConfirmed = false;
                     RedirectToSection(ignoreHasUserStartedProgramFlag: true);
-                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
                 }
                 else if (result.Error!.Value.State == EmailSubscriptionError.HandledError)
                 {
@@ -201,7 +205,7 @@ namespace DCL.MarketplaceCredits.Sections
             if (currentCreditsProgramProgress.IsProgramEnded())
             {
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.ProgramEnded);
                 totalCreditsWidgetView.gameObject.SetActive(
                     currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
@@ -225,7 +229,7 @@ namespace DCL.MarketplaceCredits.Sections
             if (!currentCreditsProgramProgress.IsUserEmailVerified())
             {
                 marketplaceCreditsVerifyEmailSubController.Setup(currentCreditsProgramProgress.user.email);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VERIFY_EMAIL);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VerifyEmail);
                 return;
             }
 
@@ -233,17 +237,17 @@ namespace DCL.MarketplaceCredits.Sections
             if (currentCreditsProgramProgress.AreWeekGoalsCompleted())
             {
                 marketplaceCreditsWeekGoalsCompletedSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WeekGoalsCompleted);
             }
             else
             {
                 marketplaceCreditsGoalsOfTheWeekSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GoalsOfTheWeek);
             }
         }
 
         private void OpenLearnMoreLink() =>
-            webBrowser.OpenUrl(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrlMainThreadOnly(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
 
 
     }

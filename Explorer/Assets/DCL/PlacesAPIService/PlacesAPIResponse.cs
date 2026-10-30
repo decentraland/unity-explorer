@@ -12,7 +12,6 @@ namespace DCL.PlacesAPIService
 {
     public static class PlacesData
     {
-        public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(Vector2Int.zero), defaultCapacity: 10, maxSize: 1000);
         internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
 
         // Preallocate the list so it will be reused every time it's parsed into
@@ -25,6 +24,7 @@ namespace DCL.PlacesAPIService
         {
             private const string EMPTY_PLACE_ID = "fake_id";
 
+            // ReSharper disable InconsistentNaming
             public string id;
             public string title;
             public string description;
@@ -52,9 +52,9 @@ namespace DCL.PlacesAPIService
             public int dislikes;
             public string[] categories;
             public bool highlighted;
-            public string highlighted_image;
+            public string? highlighted_image;
             public bool featured;
-            public string featured_image;
+            public string? featured_image;
             public bool user_favorite;
             public bool user_like;
             public bool user_dislike;
@@ -65,9 +65,14 @@ namespace DCL.PlacesAPIService
             public bool live;
             public string[]? connected_addresses;
 
-            [SerializeField] private string[] positions;
+            [SerializeField] private string[]? positions;
+
+            // ReSharper restore InconsistentNaming
 
             public bool IsEmptyPlace => id == EMPTY_PLACE_ID;
+
+            [JsonIgnore]
+            public bool IsWorld => !string.IsNullOrEmpty(world_name);
 
             public PlaceInfo(Vector2Int position)
             {
@@ -119,7 +124,7 @@ namespace DCL.PlacesAPIService
             }
 
             [JsonIgnore]
-            public float? like_rate_as_float
+            public float? LikeRateAsFloat
             {
                 get
                 {
@@ -149,15 +154,21 @@ namespace DCL.PlacesAPIService
 
             public void OnAfterDeserialize()
             {
+                if (connected_addresses is { Length: 0 })
+                    connected_addresses = null;
+
+                // A missing array means the place has no parcels
                 if (positions == null)
-                    return;
-
-                Positions = new Vector2Int[positions.Length];
-
-                for (var i = 0; i < positions.Length; i++)
+                    Positions = Array.Empty<Vector2Int>();
+                else
                 {
-                    string[] split = positions[i].Split(',');
-                    Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
+                    Positions = new Vector2Int[positions.Length];
+
+                    for (var i = 0; i < positions.Length; i++)
+                    {
+                        string[] split = positions[i].Split(',');
+                        Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
+                    }
                 }
 
                 if (string.IsNullOrEmpty(base_position))
@@ -170,12 +181,14 @@ namespace DCL.PlacesAPIService
             [Serializable]
             public class Realm
             {
+                // ReSharper disable InconsistentNaming
                 public string serverName;
                 public string layer;
                 public string url;
                 public int usersCount;
                 public int maxUsers;
                 public Vector2Int[] userParcels;
+                // ReSharper restore InconsistentNaming
             }
         }
 
@@ -183,9 +196,11 @@ namespace DCL.PlacesAPIService
         [Serializable]
         public class PlacesAPIResponse : PaginatedResponse, IPlacesAPIResponse
         {
+            // ReSharper disable InconsistentNaming
             public bool ok;
             public int total;
             public List<PlaceInfo> data;
+            // ReSharper restore InconsistentNaming
 
             int IPlacesAPIResponse.Total => total;
             IReadOnlyList<PlaceInfo> IPlacesAPIResponse.Data => data;
@@ -210,8 +225,10 @@ namespace DCL.PlacesAPIService
         [Serializable]
         public class PlacesAPIGetParcelResponse
         {
+            // ReSharper disable InconsistentNaming
             public bool ok;
             public PlaceInfo data;
+            // ReSharper restore InconsistentNaming
         }
 
     }
@@ -219,7 +236,9 @@ namespace DCL.PlacesAPIService
     [Serializable]
     public class OptimizedPlaceInMapResponse
     {
+        // ReSharper disable InconsistentNaming
         public Vector2Int base_position;
         public string name;
+        // ReSharper restore InconsistentNaming
     }
 }

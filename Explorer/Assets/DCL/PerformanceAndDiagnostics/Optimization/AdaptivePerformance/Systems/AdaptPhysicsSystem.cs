@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Diagnostics;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using ECS.Abstract;
@@ -30,7 +29,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             UpdatePhysicsProfiling();
 
-            if (settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
+            if (settings.Mode == PhysSimulationMode.Adaptive && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
                                                              && UnityEngine.Time.unscaledTime - lastTimeChanged > settings.changeCooldown
                                                              && profiler.MainThreadFrameTimes.SamplesAmount > settings.minFrameTimeAmount)
             {

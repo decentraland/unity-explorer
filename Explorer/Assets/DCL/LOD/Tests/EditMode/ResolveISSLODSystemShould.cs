@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Utility;
+using Utility.Primitives;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.LOD.Tests
@@ -38,10 +40,12 @@ namespace DCL.LOD.Tests
     {
         private const string SCENE_ID = "FAKE_ISS_SCENE";
 
-        private static GltfContainerTestResources sharedResources;
+        private static GltfContainerTestResources? sharedResources;
         private static StreamableLoadingResult<AssetBundleData> sharedAB;
 
-        private TrackingGltfCache cache;
+        private readonly List<Material> createdMaterials = new ();
+
+        private TrackingGltfCache cache = null!;
         private SceneDefinitionComponent sceneDefinition;
 
         [SetUp]
@@ -68,6 +72,14 @@ namespace DCL.LOD.Tests
             };
 
             sceneDefinition = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+        }
+
+        protected override void OnTearDown()
+        {
+            foreach (Material material in createdMaterials)
+                UnityEngine.Object.DestroyImmediate(material);
+
+            createdMaterials.Clear();
         }
 
         [OneTimeTearDown]
@@ -124,7 +136,7 @@ namespace DCL.LOD.Tests
             StreamableLoadingResult<AssetBundleData> abResult = await EnsureSharedAB();
 
             // Mimic the loader: each delivered result holds one reference.
-            abResult.Asset.AddReference();
+            abResult.Asset!.AddReference();
             int refsBefore = abResult.Asset.referenceCount;
 
             var descriptor = ISSDescriptor.CreateUninitialized();
@@ -152,7 +164,7 @@ namespace DCL.LOD.Tests
         {
             StreamableLoadingResult<AssetBundleData> abResult = await EnsureSharedAB();
 
-            abResult.Asset.AddReference();
+            abResult.Asset!.AddReference();
             int refsBefore = abResult.Asset.referenceCount;
 
             var descriptor = ISSDescriptor.CreateUninitialized();
@@ -292,10 +304,39 @@ namespace DCL.LOD.Tests
         {
             var lodInfo = SceneLODInfo.Create();
             lodInfo.id = SCENE_ID;
-            lodInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
+            lodInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Processing;
 
             world.Create(lodInfo, sceneDefinition, descriptor);
             return lodInfo.InitialSceneStateLOD;
+        }
+
+        [Test]
+        public void ClipAssetsToTheSceneVolumeLikeTheRuntimeDoes()
+        {
+            const string HASH = "CLIPPED";
+
+            GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
+            Material material = renderer.sharedMaterial;
+            cache.Stash(HASH, asset);
+
+            var descriptor = ISSDescriptor.CreateUninitialized();
+            descriptor.MarkResolved(new[] { NewDescriptorEntry(HASH) });
+
+            InitialSceneStateLOD lod = CreateLODEntity(descriptor);
+
+            system.Update(0);
+
+            ParcelMathHelper.SceneCircumscribedPlanes planes = sceneDefinition.SceneGeometry.CircumscribedPlanes;
+            Vector4 verticalClipping = material.GetVector(Shader.PropertyToID("_VerticalClipping"));
+
+            Assert.That(material.GetVector(Shader.PropertyToID("_PlaneClipping")),
+                Is.EqualTo(new Vector4(planes.MinX, planes.MaxX, planes.MinZ, planes.MaxZ)),
+                "LOD_0 materials must clip to the scene's circumscribed planes");
+
+            Assert.That(verticalClipping.y, Is.EqualTo(sceneDefinition.SceneGeometry.Height),
+                "LOD_0 materials must clip to the scene height");
+
+            lod.Dispose(world);
         }
 
         private Entity FindHelperEntity()
@@ -329,10 +370,19 @@ namespace DCL.LOD.Tests
         private static GltfContainerAsset MakeFakeGltf(string label) =>
             GltfContainerAsset.Create(new GameObject($"fake_{label}"), IStreamableRefCountData.Null.INSTANCE);
 
-        private static GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
+        /// <summary>
+        ///     Gives the renderer a material, like a converted LOD renderer carries. A bare
+        ///     <see cref="MeshRenderer" /> exposes a single empty material slot instead.
+        /// </summary>
+        private GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
         {
             var go = new GameObject($"fake_{label}");
             renderer = go.AddComponent<MeshRenderer>();
+
+            Material material = DefaultMaterial.New();
+            createdMaterials.Add(material);
+            renderer.sharedMaterial = material;
+
             GltfContainerAsset asset = GltfContainerAsset.Create(go, IStreamableRefCountData.Null.INSTANCE);
             asset.Renderers.Add(renderer);
             return asset;
@@ -395,6 +445,8 @@ namespace DCL.LOD.Tests
             }
 
             public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
+
+            public void Remove(in string key) { }
 
             public void SetAssetLoadCache(AssetPreLoadCache assetPreLoadCache) { }
         }

@@ -94,6 +94,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
                 Renderers[i].forceRenderingOff = !newState;
         }
 
+        public void SetRenderersActive(bool active)
+        {
+            foreach (var renderer in Renderers)
+                renderer.enabled = active;
+        }
+
         public void ToggleAnimationState(bool newState)
         {
             foreach (Animation animation in Animations)

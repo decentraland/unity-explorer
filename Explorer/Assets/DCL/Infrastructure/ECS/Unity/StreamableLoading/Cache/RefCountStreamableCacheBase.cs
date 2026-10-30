@@ -79,5 +79,23 @@ namespace ECS.StreamableLoading.Cache
 
             inCacheCount.Value = cache.Count;
         }
+
+        public void Remove(in TLoadingIntention key)
+        {
+            if (!cache.TryGetValue(key, out TAssetData asset) || !asset.CanBeDisposed())
+                return;
+
+            asset.Dispose();
+            cache.Remove(key);
+
+            for (int i = listedCache.Count - 1; i >= 0; i--)
+                if (IntentionsComparer<TLoadingIntention>.INSTANCE.Equals(listedCache[i].intention, key))
+                {
+                    listedCache.RemoveAt(i);
+                    break;
+                }
+
+            inCacheCount.Value = cache.Count;
+        }
     }
 }

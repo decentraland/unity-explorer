@@ -12,13 +12,13 @@ namespace ECS.Unity.AssetLoad.Cache
     public class AssetPreLoadCache : IDisposable
     {
         /// <summary>
-        ///     The never-handed-out template plus its live clones, so every copy can be released on teardown.
+        ///     The never-handed-out template. Clones handed out by <see cref="TryGetGltfInstance" /> are owned
+        ///     by their containers; this cache must never dispose them.
         /// </summary>
         private sealed class GltfTemplate
         {
             public readonly GltfContainerAsset Template;
             public readonly string Hash;
-            public readonly List<GltfContainerAsset> Copies = new ();
 
             public GltfTemplate(GltfContainerAsset template, string hash)
             {
@@ -29,6 +29,7 @@ namespace ECS.Unity.AssetLoad.Cache
 
         private readonly IGltfContainerAssetsCache gltfCache;
         private readonly Dictionary<string, object> cache = new ();
+        private readonly Dictionary<string, VideoTemplateData> videoCache = new ();
 
         public AssetPreLoadCache(IGltfContainerAssetsCache gltfCache)
         {
@@ -46,7 +47,6 @@ namespace ECS.Unity.AssetLoad.Cache
             if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate
                 && Utils.TryDuplicateGltfAssetFromTemplate(gltfTemplate.Template, gltfTemplate.Hash, out GltfContainerAsset? duplicate))
             {
-                gltfTemplate.Copies.Add(duplicate!);
                 instance = duplicate;
                 return true;
             }
@@ -55,13 +55,11 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public void ReleaseGltfInstance(string key, GltfContainerAsset instance)
-        {
-            if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate)
-                gltfTemplate.Copies.Remove(instance);
+        public bool TryAddVideo(string key, in VideoTemplateData data) =>
+            videoCache.TryAdd(key, data);
 
-            instance.Dispose();
-        }
+        public bool TryGetVideoTemplate(string key, out VideoTemplateData data) =>
+            videoCache.TryGetValue(key, out data);
 
         public bool TryAdd<T>(string key, T asset)
         {
@@ -70,7 +68,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 switch (asset)
                 {
                     // AudioClipData and TextureData are reference counted, so we need to acquire a reference when adding them to the cache so that they are not disposed while cached and not being used.
-                    // GltfContainerAsset and MediaPlayerComponent are handled differently as they are not ref counted
+                    // GltfContainerAsset is handled differently as it is not ref counted
                     case AudioClipData audioClipData:
                         audioClipData.AcquireRef();
                         break;
@@ -105,10 +103,8 @@ namespace ECS.Unity.AssetLoad.Cache
             foreach(var kvp in cache)
                 switch (kvp.Value)
                 {
+                    // Checked-out clones are owned by their containers; disposing them here would destroy live Roots.
                     case GltfTemplate gltfTemplate:
-                        foreach (GltfContainerAsset copy in gltfTemplate.Copies)
-                            copy.Dispose();
-
                         gltfCache.Dereference(kvp.Key, gltfTemplate.Template, handleAssetLoad: false);
                         break;
                     case AudioClipData audioClipData:
@@ -117,12 +113,10 @@ namespace ECS.Unity.AssetLoad.Cache
                     case TextureData textureData:
                         textureData.Dereference();
                         break;
-                    case MediaPlayerComponent mediaPlayerComponent:
-                        mediaPlayerComponent.Dispose();
-                        break;
                 }
 
             cache.Clear();
+            videoCache.Clear();
         }
     }
 }

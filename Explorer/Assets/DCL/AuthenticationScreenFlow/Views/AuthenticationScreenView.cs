@@ -17,6 +17,9 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("SCREENS")]
         [field: SerializeField]
+        public GuestOrSignUpAuthView GuestOrSignUpAuthView { get; private set; } = null!;
+
+        [field: SerializeField]
         public LoginSelectionAuthView LoginSelectionAuthView { get; private set; } = null!;
 
         [field: SerializeField]
@@ -33,6 +36,8 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public LobbyForNewAccountAuthView LobbyForNewAccountAuthView { get; private set; } = null!;
 
+        [field: SerializeField] public SelectAvatarForNewAccountAuthView SelectAvatarForNewAccountAuthView { get; private set; } = null!;
+
         [field: Header("BUTTONS")]
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
@@ -42,5 +47,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public MuteButtonView MuteButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button? BugReportButton { get; private set; } = null!;
     }
 }

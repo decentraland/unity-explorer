@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
@@ -51,12 +52,14 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CountParticles(ref ParticleSystemComponent component)
         {
             totalParticles += component.ParticleSystemInstance.particleCount;
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyBudget([Data] float multiplier, ref ParticleSystemComponent component, in PBParticleSystem pbParticleSystem)
         {
             var emission = component.ParticleSystemInstance.emission;

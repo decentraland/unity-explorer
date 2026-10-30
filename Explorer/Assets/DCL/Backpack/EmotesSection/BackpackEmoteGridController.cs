@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
@@ -47,7 +48,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
         private readonly IPendingTransferService ownedNftFilter;
 
@@ -71,7 +72,7 @@ namespace DCL.Backpack.EmotesSection
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IPendingTransferService ownedNftFilter)
         {
@@ -334,9 +335,7 @@ namespace DCL.Backpack.EmotesSection
         // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base emotes have no
         // registry and are never pending.
         private bool IsFullyPending(URN itemUrn) =>
-            emoteStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
-            && registry.Count > 0
-            && !ownedNftFilter.HasAvailableInstance(registry);
+            ownedNftFilter.IsFullyPending(emoteStorage, itemUrn);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
@@ -459,6 +458,6 @@ namespace DCL.Backpack.EmotesSection
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
     }
 }

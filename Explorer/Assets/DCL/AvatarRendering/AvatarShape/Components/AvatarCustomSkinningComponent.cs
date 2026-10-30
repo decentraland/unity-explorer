@@ -20,8 +20,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public struct Buffers
         {
-            // since it's impossible to guarantee initialization of structure in C# the case requires to provide an additional check
-            private ComputeSkinningBufferContainer computeSkinningBufferContainer;
+            // A struct cannot guarantee initialization, so the container stays null until AssignBuffer runs
+            private ComputeSkinningBufferContainer? computeSkinningBufferContainer;
             private readonly ComputeBuffer bones; 
             internal readonly int kernel;
 
@@ -32,10 +32,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 this.kernel = kernel;
             }
 
-            public bool TryGetBones(out ComputeBuffer bones)
+            public readonly bool TryGetBones(out ComputeBuffer bonesBuffer)
             {
-                bones = this.bones;
-                return bones != null;
+                bonesBuffer = bones;
+                return bonesBuffer != null;
             }
 
             public void AssignBuffer(ComputeSkinningBufferContainer container)
@@ -43,9 +43,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 computeSkinningBufferContainer = container;
             }
 
-            public void DisposeBuffers()
+            public readonly void DisposeBuffers()
             {
-                computeSkinningBufferContainer.Dispose();
+                computeSkinningBufferContainer?.Dispose();
                 bones.Dispose();
             }
         }
@@ -75,6 +75,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
+        /// <summary>
+        ///     One-shot flag: forces the next skin dispatch to run regardless of visibility or frustum state. Self-clears after consumption.
+        /// </summary>
+        public bool ForceSkinNextFrame;
+
         public readonly int VertCount;
         public readonly int BoneCount;
 
@@ -85,7 +90,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private bool disposed;
 
         /// <summary>
-        ///
+        ///     Union of the bind-pose bounds of every mesh the avatar was assembled from, wearables included,
+        ///     expressed in the space of the avatar's own transform. Recomputed on every re-instantiation.
         /// </summary>
         public Bounds LocalBounds { get; private set; }
 
@@ -98,15 +104,40 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.computeShaderInstance = computeShaderInstance;
             this.LocalBounds = localBounds;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+            ForceSkinNextFrame = false;
 
             disposed = false;
+        }
+
+#if UNITY_INCLUDE_TESTS
+        public static AvatarCustomSkinningComponent NewWithLocalBounds(Bounds localBounds) =>
+            new () { LocalBounds = localBounds };
+#endif
+
+        /// <summary>
+        ///     Places <see cref="LocalBounds" /> in the world through the avatar's transform, re-axis-aligning the
+        ///     rotated box. The renderers cannot answer this: compute-shader skinning replaced their local bounds
+        ///     with a fixed cube, and the skinned vertices only ever exist in the GPU buffer.
+        ///     This is the managed reference form of the transform; BoneMatrixCalculationJob carries the Burst one.
+        /// </summary>
+        public readonly Bounds ToWorldBounds(Transform avatarTransform)
+        {
+            Matrix4x4 matrix = avatarTransform.localToWorldMatrix;
+            Vector3 extents = LocalBounds.extents;
+
+            var worldExtents = new Vector3(
+                (Mathf.Abs(matrix.m00) * extents.x) + (Mathf.Abs(matrix.m01) * extents.y) + (Mathf.Abs(matrix.m02) * extents.z),
+                (Mathf.Abs(matrix.m10) * extents.x) + (Mathf.Abs(matrix.m11) * extents.y) + (Mathf.Abs(matrix.m12) * extents.z),
+                (Mathf.Abs(matrix.m20) * extents.x) + (Mathf.Abs(matrix.m21) * extents.y) + (Mathf.Abs(matrix.m22) * extents.z));
+
+            return new Bounds(matrix.MultiplyPoint3x4(LocalBounds.center), worldExtents * 2f);
         }
 
         /// <summary>
         /// Changes the Fading Position parameter of all the materials of the meshes that form the avatar, including facial features.
         /// This parameter is used for computing the transparency of the avatar regarding the distance of the camera to it.
         /// </summary>
-        /// <param name="position">The reference position used for computing the distance from the avatar to the camera.</param>
+        /// <param name="distance">The distance from the camera to the avatar, written to the fading distance material parameter.</param>
         public readonly void SetFadingDistance(float distance)
         {
             for (int i = 0; i < materials.Count; ++i)
@@ -117,6 +148,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
+            // Dispose released the bones buffer and returned the compute shader to its pool: writing the bones into
+            // the released buffer throws from the native side, and the pooled shader may already drive another avatar.
+            if (disposed)
+            {
+                return Result.ErrorResult("ComputeSkinning error: the skinning component is disposed");
+            }
+
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
                 return Result.ErrorResult("Attempt to process an invalid avatar");
@@ -135,6 +173,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
         {
             VertsOutRegion = region;
+            ForceSkinNextFrame = true;
 
             computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
 

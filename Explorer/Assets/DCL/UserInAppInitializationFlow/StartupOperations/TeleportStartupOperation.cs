@@ -1,12 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
 using DCL.Utility.Types;
-using ECS;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
 using System.Threading;
@@ -28,9 +27,10 @@ namespace DCL.UserInAppInitializationFlow
             CameraSamplingData cameraSamplingData,
             StartParcel startParcel,
             IAppArgs appArgs,
+            IRoomHub roomHub,
             bool editorPositionOverrideActive = false,
             string reportCategory = ReportCategory.SCENE_LOADING)
-            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, reportCategory)
+            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, roomHub, reportCategory)
         {
             this.startParcel = startParcel;
             this.appArgs = appArgs;
@@ -39,26 +39,36 @@ namespace DCL.UserInAppInitializationFlow
 
         public override async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            // In the editor, when previewing a local scene, ignore the editor start position override
-            // so the scene's own spawn point is used. Builds launched via Creator Hub are not affected.
-            bool editorOverride = editorPositionOverrideActive
-                                  && !(realmController.RealmData.IsLocalSceneDevelopment && Application.isEditor);
+            string? spawnPointName = startParcel.SpawnPointName;
+            Vector2Int destination = await ResolveDestinationAsync(ct);
 
-            // --position flag or effective editor override → use default start parcel
-            bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
+            // A manifest or local-scene destination is not the parcel the request was made for
+            bool landOnParcel = startParcel.LandOnParcel && destination == startParcel.Peek();
+
+            // Consumed on every path: a consumed start parcel is the mark that the startup teleport happened
+            startParcel.ConsumeByTeleportOperation();
+
+            return await InternalExecuteAsync(args, destination, ct, landOnParcel: landOnParcel, spawnPointName: spawnPointName);
+        }
+
+        private async UniTask<Vector2Int> ResolveDestinationAsync(CancellationToken ct)
+        {
+            // A picked realm's manifest spawn wins over the launch --position and the Editor override; the launch value stays the last fallback
+            bool useDefault = startParcel.IsParcelAssigned
+                              || (startParcel.Realm == null && (appArgs.HasFlag(AppArgsFlags.POSITION) || editorPositionOverrideActive));
 
             if (useDefault)
-                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                return startParcel.Peek();
 
             // World manifest spawn coordinate takes next priority
             if (realmController.RealmData.WorldManifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+                return new Vector2Int(spawn.x, spawn.y);
 
             // Local scene development: use the scene's base parcel as spawn point
             return realmController.RealmData.IsLocalSceneDevelopment
                    && await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct) is { Value: { Count: > 0 } } sceneDefinitions
-                ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct)
-                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                ? sceneDefinitions.Value[0].metadata.scene.DecodedBase
+                : startParcel.Peek();
         }
     }
 }

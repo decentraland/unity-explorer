@@ -6,6 +6,7 @@ using DCL.FeatureFlags;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading;
@@ -42,16 +43,20 @@ namespace DCL.PluginSystem.World
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
+        private readonly URLDomain lodAssetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
+        private readonly ILaunchMode launchMode;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
+            URLDomain assetBundleURL, URLDomain lodAssetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
         {
+            this.lodAssetBundleURL = lodAssetBundleURL;
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
+            this.launchMode = launchMode;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
@@ -62,9 +67,9 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL);
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment);
 
-            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress);
@@ -73,11 +78,11 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // Asset Bundles
-            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
+            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, lodAssetBundleURL);
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
-            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache, byteWeightedProgress);

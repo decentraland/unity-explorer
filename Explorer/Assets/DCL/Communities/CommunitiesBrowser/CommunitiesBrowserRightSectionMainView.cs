@@ -39,11 +39,11 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             switch (activeView)
             {
-                case CommunitiesViews.FILTERED_COMMUNITIES:
+                case CommunitiesViews.FilteredCommunities:
                     streamingCommunitiesView.HideStreamingSection();
                     filteredCommunitiesView.SetResultsBackButtonVisible(true);
                     break;
-                case CommunitiesViews.BROWSE_ALL_COMMUNITIES:
+                case CommunitiesViews.BrowseAllCommunities:
                     filteredCommunitiesView.SetResultsBackButtonVisible(false);
                     break;
             }

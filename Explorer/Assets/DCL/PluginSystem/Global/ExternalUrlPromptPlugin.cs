@@ -15,14 +15,14 @@ namespace DCL.PluginSystem.Global
     public class ExternalUrlPromptPlugin : IDCLGlobalPlugin<ExternalUrlPromptPlugin.ExternalUrlPromptSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
         private ExternalUrlPromptController? externalUrlPromptController;
 
         public ExternalUrlPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             ICursor cursor)
         {

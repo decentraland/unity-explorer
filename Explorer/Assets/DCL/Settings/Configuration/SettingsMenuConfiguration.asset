@@ -121,6 +121,24 @@ MonoBehaviour:
       - rid: 1708279571579404289
       - rid: 2659808844961546333
       - rid: 4223195832360370271
+  <LobbySectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: 
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 7000000000000000002
+    - <GroupTitle>k__BackingField: Background
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <GroupPrefabOverride>k__BackingField:
+        m_AssetGUID: 2e214c9790df4c01b964b55f0feb6fab
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_SubObjectGUID: 
+        m_EditorAssetChanged: 0
+      <Modules>k__BackingField:
+      - rid: 7000000000000000003
   references:
     version: 2
     RefIds:
@@ -832,6 +850,24 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
         <Feature>k__BackingField: 16
+    - rid: 7000000000000000002
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Enable Lobby (Requires Restart)
+          <Description>k__BackingField: Starts the client in the lobby instead of
+            jumping straight into the world. Close and reopen the client for the
+            change to take effect.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 17
     - rid: 7533463652475600993
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -849,3 +885,18 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 12
+    - rid: 7000000000000000003
+      type: {class: LobbyStagePresetModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 7a9ad3746de349f4895c7ed85ad130d9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: 
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+        <Feature>k__BackingField: 0

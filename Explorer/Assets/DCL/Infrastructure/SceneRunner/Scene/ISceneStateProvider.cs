@@ -13,6 +13,11 @@ namespace SceneRunner.Scene
 
         uint TickNumber { get; set; }
 
+        /// <summary>
+        ///     Tick at which the most recent non-hover pointer (down/up) result was written for this scene.
+        /// </summary>
+        uint LastUserInputTick { get; set; }
+
         ref readonly SceneEngineStartInfo EngineStartInfo { get; }
 
         void Start(SceneEngineStartInfo startInfo);

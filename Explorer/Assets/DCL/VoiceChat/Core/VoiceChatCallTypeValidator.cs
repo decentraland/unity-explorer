@@ -9,7 +9,7 @@ namespace DCL.VoiceChat
 
         public static bool IsNoActiveCall(VoiceChatType currentType, [CallerMemberName] string? callerName = null)
         {
-            if (currentType != VoiceChatType.NONE)
+            if (currentType != VoiceChatType.None)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cannot {callerName} when already in a call");
                 return false;
@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
 
         public static bool IsPrivateCall(VoiceChatType currentType, [CallerMemberName] string? callerName = null)
         {
-            if (currentType != VoiceChatType.PRIVATE)
+            if (currentType != VoiceChatType.Private)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cannot {callerName} when not in PRIVATE call");
                 return false;
@@ -29,7 +29,7 @@ namespace DCL.VoiceChat
 
         public static bool IsCommunityCall(VoiceChatType currentType, [CallerMemberName] string? callerName = null)
         {
-            if (currentType != VoiceChatType.COMMUNITY)
+            if (currentType != VoiceChatType.Community)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cannot {callerName} when not in COMMUNITY call");
                 return false;

@@ -29,7 +29,7 @@ namespace DCL.RealmNavigation
             [LoadingStage.Completed] = 1f
         };
 
-        private static readonly HashSet<LoadingStage> NonLoadingScreenStages = new()
+        private static readonly HashSet<LoadingStage> NON_LOADING_SCREEN_STAGES = new()
         {
             LoadingStage.Completed,
             LoadingStage.Init,
@@ -59,6 +59,7 @@ namespace DCL.RealmNavigation
         public float SetCurrentStage(LoadingStage stage)
         {
             ReportHub.LogProductionInfo($"Current loading stage: {stage}");
+            CurrentLoadingStage.Set(stage.ToString());
             CurrentStageMut.Value = stage;
             return PROGRESS[stage];
         }
@@ -69,6 +70,6 @@ namespace DCL.RealmNavigation
         }
 
         public bool IsLoadingScreenOn() =>
-            !NonLoadingScreenStages.Contains(CurrentStage.Value);
+            !NON_LOADING_SCREEN_STAGES.Contains(CurrentStage.Value);
     }
 }

@@ -3,7 +3,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using REnum;
 using System;
-using System.Runtime.CompilerServices;
 
 namespace DCL.Profiles
 {
@@ -12,7 +11,7 @@ namespace DCL.Profiles
     [REnumField(typeof(Profile), "Full")]
     public readonly partial struct ProfileTier : IDisposable
     {
-        public string UserId => Match(c => c.UserId, f => f.UserId);
+        public UserId UserId => Match(c => c.UserId, f => f.UserId);
         public string DisplayName => Match(c => c.DisplayName, f => f.DisplayName);
         public URLAddress FaceSnapshotUrl => Match(c => c.FaceSnapshotUrl, f => f.Compact.FaceSnapshotUrl);
 
@@ -44,7 +43,7 @@ namespace DCL.Profiles
     {
         public static Profile? ToProfile(this ProfileTier? tier) =>
             tier == null ? null :
-            tier.Value.IsFull(out Profile? fullProfile) ? fullProfile! : throw new ArgumentException($"Profile Tier is {tier.Value.GetKind()}, expected: {ProfileTier.Kind.Full}");
+            tier.Value.IsFull(out Profile? fullProfile) ? fullProfile : throw new ArgumentException($"Profile Tier is {tier.Value.GetKind()}, expected: {ProfileTier.Kind.Full}");
 
         public static Profile.CompactInfo? ToCompact(this ProfileTier? tier) =>
             tier;

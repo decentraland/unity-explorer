@@ -38,7 +38,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
             int elementsMissingThreshold
-        ) : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+        ) : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.Online, FriendPanelStatus.Offline, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
@@ -76,7 +76,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             int previousTotalCount = offlineFriends.Count + onlineFriends.Count;
 
-            if (onlineStatus == OnlineStatus.OFFLINE)
+            if (onlineStatus == OnlineStatus.Offline)
             {
                 offlineFriends.Add(friendProfile);
                 FriendsSorter.SortFriendList(offlineFriends);
@@ -96,7 +96,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             offlineFriends.Remove(friendProfile);
 
             if (!onlineFriends.Contains(friendProfile))
-                AddNewFriendProfile(friendProfile, OnlineStatus.ONLINE);
+                AddNewFriendProfile(friendProfile, OnlineStatus.Online);
 
             RefreshLoopList();
         }
@@ -106,7 +106,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             offlineFriends.Remove(friendProfile);
 
             if (!onlineFriends.Contains(friendProfile))
-                AddNewFriendProfile(friendProfile, OnlineStatus.AWAY);
+                AddNewFriendProfile(friendProfile, OnlineStatus.Away);
 
             RefreshLoopList();
         }
@@ -116,7 +116,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             onlineFriends.Remove(friendProfile);
 
             if (!offlineFriends.Contains(friendProfile))
-                AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
+                AddNewFriendProfile(friendProfile, OnlineStatus.Offline);
 
             RefreshLoopList();
         }

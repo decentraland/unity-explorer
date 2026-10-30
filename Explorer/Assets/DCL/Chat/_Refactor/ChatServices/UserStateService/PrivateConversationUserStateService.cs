@@ -1,14 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Utility;
 using DCL.LiveKit.Public;
 using LiveKit.Rooms;
@@ -16,7 +14,6 @@ using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using LiveKit.Proto;
 using System.Linq;
 using UnityEngine;
 using Utility;
@@ -31,12 +28,12 @@ namespace DCL.Chat.ChatServices
     {
         public enum ChatUserState
         {
-            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
-            BLOCKED_BY_OWN_USER, //Own user blocked the other user
-            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
-            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
-            DISCONNECTED, //The other user is either offline or has blocked the own user.
-            OTHER_CLIENT, //The other user is connected with a client that doesn't support DMs
+            Connected, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BlockedByOwnUser, //Own user blocked the other user
+            PrivateMessagesBlockedByOwnUser, //Own user has privacy settings set to ONLY FRIENDS
+            PrivateMessagesBlocked, //The other user has its privacy settings set to ONLY FRIENDS
+            Disconnected, //The other user is either offline or has blocked the own user.
+            OtherClient, //The other user is connected with a client that doesn't support DMs
         }
 
         public readonly struct UserState
@@ -117,6 +114,10 @@ namespace DCL.Chat.ChatServices
             {
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
 
+                // The chat room is never connected in local scene development (see CommsContainer); waiting would just burn the timeout.
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment))
+                    return;
+
                 await UniTask.WaitUntil(() =>
                     chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
@@ -163,7 +164,7 @@ namespace DCL.Chat.ChatServices
 
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
         {
-            rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.ALL, cts.Token).Forget();
+            rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.All, cts.Token).Forget();
 
             // Simply notify that the ChatUserState should be updated
             // It will be retrieved via "GetChatUserStateAsync"
@@ -175,33 +176,36 @@ namespace DCL.Chat.ChatServices
         {
             string lowerUserId = userId.ToLower();
 
-            FriendshipStatus friendshipStatus = await friendsService!.GetFriendshipStatusAsync(userId, ct);
+            // friendsService is null when the Friends feature is disabled (e.g. local scene development)
+            FriendshipStatus friendshipStatus = friendsService != null
+                ? await friendsService.GetFriendshipStatusAsync(userId, ct)
+                : FriendshipStatus.None;
             bool isUserConnected = UserIsConsideredAsOnline(userId);
 
             //If it's a friend we just return its connection status
-            if (friendshipStatus == FriendshipStatus.FRIEND)
-                return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
+            if (friendshipStatus == FriendshipStatus.Friend)
+                return new UserState(isUserConnected, isUserConnected ? ChatUserState.Connected : ChatUserState.Disconnected);
 
             //If the user is blocked by us, we show that first
-            if (friendshipStatus == FriendshipStatus.BLOCKED)
-                return new UserState(isUserConnected, ChatUserState.BLOCKED_BY_OWN_USER);
+            if (friendshipStatus == FriendshipStatus.Blocked)
+                return new UserState(isUserConnected, ChatUserState.BlockedByOwnUser);
 
             // If we are being blocked by them, show them as offline
-            if (friendshipStatus == FriendshipStatus.BLOCKED_BY)
-                return new UserState(false, ChatUserState.DISCONNECTED);
+            if (friendshipStatus == FriendshipStatus.BlockedBy)
+                return new UserState(false, ChatUserState.Disconnected);
 
             // This is done because other clients don't connect to chat livekit room, so they are not found in the participant list.
             // If we are able to find them through either island or scene room, it means we cannot chat with them
             if (!isUserConnected && (roomHub.TryGetUser(userId, out _, out _) || roomHub.TryGetUser(lowerUserId, out _, out _)))
-                return new UserState(isUserConnected, ChatUserState.OTHER_CLIENT);
+                return new UserState(isUserConnected, ChatUserState.OtherClient);
 
             // If the user is not reachable by any means, they are simply offline
             if (!isUserConnected)
-                return new UserState(false, ChatUserState.DISCONNECTED);
+                return new UserState(false, ChatUserState.Disconnected);
 
             //If the user is connected we need to check our settings and then theirs.
-            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
-                return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.OnlyFriends)
+                return new UserState(isUserConnected, ChatUserState.PrivateMessagesBlockedByOwnUser);
 
             // User should be online, but check if they disconnected while processing this data + ensure we have metadata
             LKParticipant? participant = chatRoom.Participants.RemoteParticipant(userId)
@@ -213,10 +217,10 @@ namespace DCL.Chat.ChatServices
                 ParticipantPrivacyMetadata userMetadata = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
 
                 if (userMetadata.private_messages_privacy != PRIVACY_SETTING_ALL)
-                    return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
+                    return new UserState(isUserConnected, ChatUserState.PrivateMessagesBlocked);
             }
 
-            return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
+            return new UserState(isUserConnected, isUserConnected ? ChatUserState.Connected : ChatUserState.Disconnected);
         }
 
         private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
@@ -285,7 +289,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
 
         private void OnYouBlockedByUser(string userId)
         {
@@ -295,7 +299,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
 
         /// <summary>
         /// Determines if a given user should be considered "online"
@@ -364,6 +368,8 @@ namespace DCL.Chat.ChatServices
         {
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         public struct ParticipantPrivacyMetadata
         {

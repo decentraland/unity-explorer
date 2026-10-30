@@ -15,6 +15,6 @@ namespace DCL.UI.SuggestionPanel
             EmojiCode;
 
         public InputSuggestionType GetInputSuggestionType() =>
-            InputSuggestionType.EMOJIS;
+            InputSuggestionType.Emojis;
     }
 }

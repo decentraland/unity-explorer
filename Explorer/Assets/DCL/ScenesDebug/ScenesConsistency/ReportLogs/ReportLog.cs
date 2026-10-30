@@ -22,7 +22,7 @@ namespace DCL.ScenesDebug.ScenesConsistency.ReportLogs
             writer.WriteLine($"{DateTime.Now:HH:mm:ss} Logging for scenes: ");
 
             foreach (SceneEntity sceneEntity in entities)
-                writer.WriteLine(sceneEntity.ToString()!);
+                writer.WriteLine(sceneEntity.ToString());
 
             writer.WriteLine($"{DateTime.Now:HH:mm:ss} Result of logs: ");
 

@@ -1,15 +1,12 @@
 using Arch.Core;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
-using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -18,7 +15,6 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -219,14 +215,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
             else
             {
+                AssetBundleManifestVersion abManifest = wearable.DTO.AssetBundleManifestVersionOrFailed;
+
                 // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
-                        hash + PlatformUtils.GetCurrentPlatform(),
+                        abManifest.GetCdnRequestHash(hash),
+                        abManifest,
                         expectedObjectType,
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        assetBundleManifestVersion: wearable.DTO.assetBundleManifestVersion,
                         parentEntityID: wearable.DTO.id,
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);

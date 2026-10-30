@@ -34,7 +34,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
-using Utility.UIToolkit;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -75,7 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
-        private Transform? poolParent = null;
+        private Transform? poolParent;
 
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
         private TextureArrayContainer textureArrayContainer;
@@ -173,7 +172,7 @@ namespace DCL.PluginSystem.Global
             AvatarLoaderSystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_HIGHLIGHT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarHighlight))
                 AvatarHighlightSystem.InjectToWorld(ref builder, highlightData);
 
             cacheCleaner.Register(avatarPoolRegistry);
@@ -182,7 +181,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
+            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarGhosts);
 
             if (includeGhosts)
                 AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);

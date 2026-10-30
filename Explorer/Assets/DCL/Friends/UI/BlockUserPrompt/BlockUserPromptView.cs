@@ -23,13 +23,13 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
         internal void SetTitle(BlockUserPromptParams.UserBlockAction blockAction, string userName)
         {
-            string format = blockAction == BlockUserPromptParams.UserBlockAction.BLOCK ? TITLE_BLOCK_FORMAT : TITLE_UNBLOCK_FORMAT;
+            string format = blockAction == BlockUserPromptParams.UserBlockAction.Block ? TITLE_BLOCK_FORMAT : TITLE_UNBLOCK_FORMAT;
             TitleText.text = string.Format(format, userName);
         }
 
         internal void ConfigureButtons(BlockUserPromptParams.UserBlockAction blockAction)
         {
-            bool isBlock = blockAction == BlockUserPromptParams.UserBlockAction.BLOCK;
+            bool isBlock = blockAction == BlockUserPromptParams.UserBlockAction.Block;
             BlockButton.gameObject.SetActive(isBlock);
             BlockImage.gameObject.SetActive(isBlock);
             BlockText.gameObject.SetActive(isBlock);

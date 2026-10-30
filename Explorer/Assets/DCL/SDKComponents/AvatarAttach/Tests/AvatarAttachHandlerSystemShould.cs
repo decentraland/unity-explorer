@@ -585,9 +585,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 attachTransforms[i] = AddTransformToEntity(attachEntities[i]);
 
                 // Use different anchor points for each attachment
-                var anchorPoint = (AvatarAnchorPointType)(i % 3 == 0
+                var anchorPoint = i % 3 == 0
                     ? AvatarAnchorPointType.AaptPosition
-                    : (i % 3 == 1 ? AvatarAnchorPointType.AaptLeftHand : AvatarAnchorPointType.AaptRightHand));
+                    : i % 3 == 1 ? AvatarAnchorPointType.AaptLeftHand : AvatarAnchorPointType.AaptRightHand;
 
                 var pbAvatarAttachComponent = new PBAvatarAttach
                 {
@@ -685,7 +685,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             );
 
             // Set up the EntityParticipantTable mock to return the target entity
-            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.GATEKEEPER);
+            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.Gatekeeper);
             entityParticipantTable.TryGet(targetAvatarId, out _).Returns(x => {
                 x[1] = entry;
                 return true;

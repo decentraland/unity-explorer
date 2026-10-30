@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 073b5878cbef2364cb928faafba64ca5, type: 3}
+  m_Script: {fileID: 11500000, guid: 8775a984e9d6279448cd0893c1c48334, type: 3}
   m_Name: AltTesterEditorSettings
   m_EditorClassIdentifier: AltTester.AltTesterUnitySDK.Editor::AltTester.AltTesterUnitySDK.Editor.AltEditorConfiguration
   appendToName: 0

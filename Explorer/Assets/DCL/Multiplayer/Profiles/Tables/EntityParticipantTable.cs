@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Profiles.Tables
             IReadOnlyEntityParticipantTable.Entry entry = walletIdToEntity[walletId];
             entry = entry.WithoutRoomSource(fromRoom);
 
-            if (entry.ConnectedTo == RoomSource.NONE)
+            if (entry.ConnectedTo == RoomSource.None)
             {
                 walletIdToEntity.Remove(walletId);
                 entityToWalletId.Remove(entry.Entity);

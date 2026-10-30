@@ -5,7 +5,8 @@ using DCL.Utilities;
 namespace ECS
 {
     /// <summary>
-    ///     Readonly interface to fetch realm data
+    ///     Interface to fetch realm data. Read-only except for secret scoping via
+    ///     <see cref="SetPendingWorldCommsSecret" /> / <see cref="ClearPendingWorldCommsSecret" />.
     /// </summary>
     public interface IRealmData
     {
@@ -27,7 +28,11 @@ namespace ECS
         string Protocol { get; }
         string Hostname { get; }
         bool IsLocalSceneDevelopment { get; }
-        string WorldCommsSecret { get; set; }
+
+        /// <summary>
+        ///     Access secret for the currently configured private world; empty unless the realm it was validated for is configured.
+        /// </summary>
+        string WorldCommsSecret { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -48,6 +53,16 @@ namespace ECS
         /// </summary>
         float? SkyboxFixedHour { get; }
 
+        /// <summary>
+        ///     Stores a world access secret scoped to the exact realm URL it was validated against.
+        ///     It becomes <see cref="WorldCommsSecret" /> only when that same URL is configured, never for a different realm.
+        /// </summary>
+        void SetPendingWorldCommsSecret(URLDomain validatedRealm, string secret);
+
+        /// <summary>
+        ///     Discards a pending secret that was never (or no longer needs to be) applied.
+        /// </summary>
+        void ClearPendingWorldCommsSecret();
 
         class Fake : IRealmData
         {
@@ -87,6 +102,10 @@ namespace ECS
                 Hostname = hostname;
                 WorldManifest = WorldManifest.Empty;
             }
+
+            public void SetPendingWorldCommsSecret(URLDomain validatedRealm, string secret) { }
+
+            public void ClearPendingWorldCommsSecret() { }
         }
     }
 }

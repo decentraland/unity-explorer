@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using CodeLess.Attributes;
+﻿using CodeLess.Attributes;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using DCL.Multiplayer.Connections.RoomHubs;

@@ -27,16 +27,21 @@ namespace Decentraland.Common {
             "CiFkZWNlbnRyYWxhbmQvY29tbW9uL29wdGlvbnMucHJvdG8SE2RlY2VudHJh",
             "bGFuZC5jb21tb24aIGdvb2dsZS9wcm90b2J1Zi9kZXNjcmlwdG9yLnByb3Rv",
             "Ij8KFVF1YW50aXplZEZsb2F0T3B0aW9ucxILCgNtaW4YASABKAISCwoDbWF4",
-            "GAIgASgCEgwKBGJpdHMYAyABKA0iIAoQQml0UGFja2VkT3B0aW9ucxIMCgRi",
-            "aXRzGAEgASgNOl4KCXF1YW50aXplZBIdLmdvb2dsZS5wcm90b2J1Zi5GaWVs",
-            "ZE9wdGlvbnMY0YYDIAEoCzIqLmRlY2VudHJhbGFuZC5jb21tb24uUXVhbnRp",
-            "emVkRmxvYXRPcHRpb25zOloKCmJpdF9wYWNrZWQSHS5nb29nbGUucHJvdG9i",
-            "dWYuRmllbGRPcHRpb25zGNKGAyABKAsyJS5kZWNlbnRyYWxhbmQuY29tbW9u",
-            "LkJpdFBhY2tlZE9wdGlvbnNiBnByb3RvMw=="));
+            "GAIgASgCEgwKBGJpdHMYAyABKA0iRAoaUXVhbnRpemVkUG93ZXJGbG9hdE9w",
+            "dGlvbnMSCwoDbWF4GAEgASgCEgsKA3BvdxgCIAEoAhIMCgRiaXRzGAMgASgN",
+            "IiAKEEJpdFBhY2tlZE9wdGlvbnMSDAoEYml0cxgBIAEoDTpeCglxdWFudGl6",
+            "ZWQSHS5nb29nbGUucHJvdG9idWYuRmllbGRPcHRpb25zGNGGAyABKAsyKi5k",
+            "ZWNlbnRyYWxhbmQuY29tbW9uLlF1YW50aXplZEZsb2F0T3B0aW9uczpaCgpi",
+            "aXRfcGFja2VkEh0uZ29vZ2xlLnByb3RvYnVmLkZpZWxkT3B0aW9ucxjShgMg",
+            "ASgLMiUuZGVjZW50cmFsYW5kLmNvbW1vbi5CaXRQYWNrZWRPcHRpb25zOmkK",
+            "D3F1YW50aXplZF9wb3dlchIdLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE9wdGlv",
+            "bnMY04YDIAEoCzIvLmRlY2VudHJhbGFuZC5jb21tb24uUXVhbnRpemVkUG93",
+            "ZXJGbG9hdE9wdGlvbnNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.Reflection.DescriptorReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, new pb::Extension[] { OptionsExtensions.Quantized, OptionsExtensions.BitPacked }, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(null, new pb::Extension[] { OptionsExtensions.Quantized, OptionsExtensions.BitPacked, OptionsExtensions.QuantizedPower }, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.QuantizedFloatOptions), global::Decentraland.Common.QuantizedFloatOptions.Parser, new[]{ "Min", "Max", "Bits" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.QuantizedPowerFloatOptions), global::Decentraland.Common.QuantizedPowerFloatOptions.Parser, new[]{ "Max", "Pow", "Bits" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.BitPackedOptions), global::Decentraland.Common.BitPackedOptions.Parser, new[]{ "Bits" }, null, null, null, null)
           }));
     }
@@ -57,6 +62,13 @@ namespace Decentraland.Common {
     /// </summary>
     public static readonly pb::Extension<global::Google.Protobuf.Reflection.FieldOptions, global::Decentraland.Common.BitPackedOptions> BitPacked =
       new pb::Extension<global::Google.Protobuf.Reflection.FieldOptions, global::Decentraland.Common.BitPackedOptions>(50002, pb::FieldCodec.ForMessage(400018, global::Decentraland.Common.BitPackedOptions.Parser));
+    /// <summary>
+    /// Apply to uint32 fields to enable power-law quantized float encoding (sign + magnitude curve).
+    /// A field carries either `quantized` or `quantized_power`, not both.
+    /// Example: uint32 velocity_x = 9 [(decentraland.common.quantized_power) = { max: 50.0, pow: 2.0, bits: 8 }];
+    /// </summary>
+    public static readonly pb::Extension<global::Google.Protobuf.Reflection.FieldOptions, global::Decentraland.Common.QuantizedPowerFloatOptions> QuantizedPower =
+      new pb::Extension<global::Google.Protobuf.Reflection.FieldOptions, global::Decentraland.Common.QuantizedPowerFloatOptions>(50003, pb::FieldCodec.ForMessage(400026, global::Decentraland.Common.QuantizedPowerFloatOptions.Parser));
   }
 
   #region Messages
@@ -339,6 +351,290 @@ namespace Decentraland.Common {
   }
 
   /// <summary>
+  /// Options for quantizing a signed float with a power-law curve, stored as a uint32 field.
+  /// The value is split into an (bits-1)-bit linear unorm magnitude `u in [0, 1]` plus a sign,
+  /// and reconstructed as `value = sign * max * u^pow`. Because `u = 0` maps to exactly `0`, zero is
+  /// representable (unlike the linear quantizer, whose codes straddle zero), and `pow > 1` concentrates
+  /// resolution near zero — useful for fields like velocity that need fine detail at low magnitudes and
+  /// only coarse detail near the extremes. The range is symmetric ([-max, max]); there is no `min`.
+  /// The encoded layout puts the magnitude in the high bits and the sign in the LSB
+  /// (`(magnitude &lt;&lt; 1) | sign`), so the varint cost tracks magnitude, not direction: a small `|value|`
+  /// of either sign stays in one varint byte. Zero canonicalizes to `0`, so proto3 omits a stopped field.
+  /// The generator emits a float {Name}Quantized accessor, same as the linear option.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class QuantizedPowerFloatOptions : pb::IMessage<QuantizedPowerFloatOptions>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<QuantizedPowerFloatOptions> _parser = new pb::MessageParser<QuantizedPowerFloatOptions>(() => new QuantizedPowerFloatOptions());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<QuantizedPowerFloatOptions> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Common.OptionsReflection.Descriptor.MessageTypes[1]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public QuantizedPowerFloatOptions() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public QuantizedPowerFloatOptions(QuantizedPowerFloatOptions other) : this() {
+      max_ = other.max_;
+      pow_ = other.pow_;
+      bits_ = other.bits_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public QuantizedPowerFloatOptions Clone() {
+      return new QuantizedPowerFloatOptions(this);
+    }
+
+    /// <summary>Field number for the "max" field.</summary>
+    public const int MaxFieldNumber = 1;
+    private float max_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Max {
+      get { return max_; }
+      set {
+        max_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "pow" field.</summary>
+    public const int PowFieldNumber = 2;
+    private float pow_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Pow {
+      get { return pow_; }
+      set {
+        pow_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "bits" field.</summary>
+    public const int BitsFieldNumber = 3;
+    private uint bits_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Bits {
+      get { return bits_; }
+      set {
+        bits_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as QuantizedPowerFloatOptions);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(QuantizedPowerFloatOptions other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Max, other.Max)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Pow, other.Pow)) return false;
+      if (Bits != other.Bits) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Max != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Max);
+      if (Pow != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Pow);
+      if (Bits != 0) hash ^= Bits.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Max != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Max);
+      }
+      if (Pow != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Pow);
+      }
+      if (Bits != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Bits);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Max != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Max);
+      }
+      if (Pow != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(Pow);
+      }
+      if (Bits != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Bits);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Max != 0F) {
+        size += 1 + 4;
+      }
+      if (Pow != 0F) {
+        size += 1 + 4;
+      }
+      if (Bits != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Bits);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(QuantizedPowerFloatOptions other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Max != 0F) {
+        Max = other.Max;
+      }
+      if (other.Pow != 0F) {
+        Pow = other.Pow;
+      }
+      if (other.Bits != 0) {
+        Bits = other.Bits;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 13: {
+            Max = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            Pow = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            Bits = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 13: {
+            Max = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            Pow = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            Bits = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
   /// Options for bit-packing an integer field into fewer than 32 bits.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
@@ -356,7 +652,7 @@ namespace Decentraland.Common {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Common.OptionsReflection.Descriptor.MessageTypes[1]; }
+      get { return global::Decentraland.Common.OptionsReflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

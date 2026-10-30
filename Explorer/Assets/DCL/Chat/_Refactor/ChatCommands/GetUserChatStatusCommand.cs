@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatCommands
             if (ct.IsCancellationRequested || !result.Success)
             {
                 eventBus.RaiseUserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, false);
-                return new PrivateConversationUserStateService.UserState(false, PrivateConversationUserStateService.ChatUserState.DISCONNECTED);
+                return new PrivateConversationUserStateService.UserState(false, PrivateConversationUserStateService.ChatUserState.Disconnected);
             }
 
             bool isOnline = result.Value.Result.IsConsideredOnline;

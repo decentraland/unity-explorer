@@ -23,7 +23,7 @@ namespace DCL.Events
         public void Configure(GetUserCommunitiesData.CommunityData communityInfo, ThumbnailLoader thumbnailLoader)
         {
             loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.ThumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
             communityText.text = communityInfo.name;
         }
 

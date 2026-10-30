@@ -3,7 +3,6 @@ using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.Navmap
@@ -41,7 +40,7 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Search);
             searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
             searchBarController.SetInputText((string.IsNullOrEmpty(@params.text) ? @params.category : @params.text) ?? string.Empty);
@@ -109,12 +108,12 @@ namespace DCL.Navmap
 
                 if (@params.filter == NavmapSearchPlaceFilter.All)
                 {
+                    // Note: onlyPlaces is intentionally omitted so the destinations endpoint returns both Genesis City places and Worlds.
                     using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchDestinationsAsync(@params.page, @params.pageSize, ct,
                         searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
                         category: @params.category is "All" or "Favorites" ? string.Empty : @params.category,
-                        onlySdk7: true,
-                        onlyPlaces: true);
+                        onlySdk7: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }
@@ -124,8 +123,7 @@ namespace DCL.Navmap
                         ct,
                         pageNumber: @params.page, pageSize: @params.pageSize,
                         sortByBy: sort, sortDirection: sortDirection,
-                        onlySdk7: true,
-                        onlyPlaces: true);
+                        onlySdk7: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }

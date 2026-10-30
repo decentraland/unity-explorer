@@ -245,10 +245,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         private static string ColorFor(NearbyVoiceChatState state) =>
             state switch
             {
-                NearbyVoiceChatState.OPEN_MIC => "green",
-                NearbyVoiceChatState.IDLE => "white",
-                NearbyVoiceChatState.SUPPRESSED => "yellow",
-                NearbyVoiceChatState.DISABLED => "#888888",
+                NearbyVoiceChatState.OpenMic => "green",
+                NearbyVoiceChatState.Idle => "white",
+                NearbyVoiceChatState.Suppressed => "yellow",
+                NearbyVoiceChatState.Disabled => "#888888",
                 _ => "white",
             };
 

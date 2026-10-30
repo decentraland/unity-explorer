@@ -14,7 +14,6 @@ using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using Global.Versioning;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -26,7 +25,7 @@ namespace Global.Dynamic
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             RealmData realmData,
             Entity playerEntity,
@@ -38,7 +37,7 @@ namespace Global.Dynamic
         UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             AudioClipConfig backgroundMusic,
@@ -50,10 +49,10 @@ namespace Global.Dynamic
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
+            PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
+        public UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
 
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
@@ -64,7 +63,7 @@ namespace Global.Dynamic
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
-        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache);
 
         void InitializeFeaturesRegistry();
     }

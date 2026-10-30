@@ -68,7 +68,7 @@ namespace DCL.Chat.ChatStates
             scope.Dispose();
         }
         private void PropagateStateChange(ChatState currentState) =>
-            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState);
+            eventBus.RaiseChatStateChangedEvent(currentState);
 
         public void OnViewShow()
         {
@@ -132,10 +132,14 @@ namespace DCL.Chat.ChatStates
 
         public void SetToggleState()
         {
-            if (IsMinimized)
-                fsm.Enter<FocusedChatState>();
-            else
+            if (IsHidden)
+                return;
+
+            // Branch on focus: some transitions land in states that are neither focused nor minimized.
+            if (IsFocused)
                 fsm.Enter<MinimizedChatState>();
+            else
+                fsm.Enter<FocusedChatState>();
         }
 
         public void PopState()

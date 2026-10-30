@@ -17,7 +17,7 @@ Pulse is a direct peer transport built on ENet (reliable-UDP), distinct from Liv
 
 Pulse was introduced as a parallel pipe rather than a LiveKit replacement so:
 
-1. Roll-out can be gated behind `FeatureId.PULSE` and flipped on per-user or per-environment without rebuilding.
+1. Roll-out can be gated behind `FeatureId.Pulse` and flipped on per-user or per-environment without rebuilding.
 2. Messages sent over both transports are transparently de-duplicated by downstream consumers (see [multiplayer.md → Core Interfaces](multiplayer.md#core-interfaces) — the proxy implementations union inputs from both transports).
 3. LiveKit remains the source of truth for chat, voice, and scene-room semantics; Pulse handles player-state traffic that benefits from a tighter, more direct path.
 
@@ -27,41 +27,161 @@ See [multiplayer.md → Transport Selection & Wiring](multiplayer.md#transport-s
 
 ## Feature flag and program arg
 
-Pulse is toggled by a single logical flag, evaluated by `FeaturesRegistry` as either a launch arg **or** a remote feature flag:
+Pulse is toggled by a single logical flag, evaluated by `FeaturesRegistry` as a remote feature flag with an optional launch-arg override:
 
 | Source | Symbol | Where |
 |---|---|---|
-| Program arg | `--pulse` | `AppArgsFlags.PULSE_MULTIPLAYER = "pulse"` |
+| Program arg (override) | `--pulse true` / `--pulse false` | `AppArgsFlags.PULSE_MULTIPLAYER = "pulse"` |
 | Remote flag | `"pulse"` | `FeatureFlagsStrings.PULSE = "pulse"` |
-| Registry key | `FeatureId.PULSE` | Final boolean exposed to code |
+| Registry key | `FeatureId.Pulse` | Final boolean exposed to code |
 
 From `DCL/FeatureFlags/FeaturesRegistry.cs`:
 
 ```csharp
-[FeatureId.PULSE] = appArgs.HasFlag(AppArgsFlags.PULSE_MULTIPLAYER)
-                 || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE),
+// Local scene development resolves no remote feature flags, so Pulse is deterministically on there; --pulse false opts back into LiveKit-only.
+[FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, localSceneDevelopment || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false),
 ```
 
-`OR` semantics: passing `--pulse` at launch enables it regardless of the remote flag, useful for local development and integration testing.
+Override semantics: when `--pulse` is **specified** its value wins over the remote flag (`--pulse true` force-enables, `--pulse false` force-disables — useful for local development, integration testing, and ops kill-switching); when it is **not specified**, Pulse is driven by the remote feature flag.
+
+**Local scene development is the exception**: it resolves no remote feature flags (the feature-flag host is the local dev server), so the flag can never be *on* there and Pulse defaults on instead. `--pulse false` is the way back to the LiveKit-only behaviour local scene development had before. See [Realm — `PulseRealm`](#realm--pulserealm) for how concurrent dev processes stay isolated from one another.
 
 ### Where the flag is consumed
 
-- **`PulseContainer`** — reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE)` in its constructor and stores it as `FeatureEnabled`. During `InitializeInternalAsync`:
-  - `pulseMultiplayerService` is either a real `PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource)` or `new IPulseMultiplayerService.Dummy()`.
+The flag is read **once** in `MultiplayerContainer.CreateAsync`, which seeds a single shared `PulseActivation` (`Connections/Pulse/PulseActivation.cs`) — the session-wide source of truth for "is Pulse the active transport". Consumers read `PulseActivation.IsActive` rather than the flag:
+
+- **`PulseContainer`** — receives the `PulseActivation`. During `InitializeInternalAsync`, from `pulseActivation.IsActive`:
+  - `pulseMultiplayerService` is either a real `PulseMultiplayerService(transport, messagePipe, urlsSource)` or `new IPulseMultiplayerService.Dummy()`.
   - `pulseProfilePropagationBus` is either a real `PulseProfilePropagationBus(...)` or `new IProfilePropagation.Dummy()`.
-  - The `PulseMultiplayerBus`, `PulseIncomingProfileAnnouncements`, `PulseRemoveIntentions`, and `ENetTransport` are **always** constructed; the flag only swaps the Service and ProfilePropagation paths. The bus and incoming collectors simply never receive traffic when the service is a dummy.
-- **`LiveKitMultiplayerContainer`** — reads the same flag and passes `backwardCompatibilityMode = true` to `LiveKitMessagesBroadcaster`. This adjusts how LiveKit serializes certain control messages so Pulse-enabled peers interoperate with LiveKit-only peers without double-delivery or format drift.
+  - The `PulseMultiplayerBus`, `PulseIncomingProfileAnnouncements`, `PulseRemoveIntentions`, and `ENetTransport` are **always** constructed; activation only swaps the Service and ProfilePropagation paths. The bus and incoming collectors simply never receive traffic when the service is a dummy (or the real service is disconnected).
+- **`LiveKitMessagesBroadcaster`** — holds the `PulseActivation` and reads `IsActive` **live** on every send (movement, emotes, and profiles all route through it). When Pulse is active it sends only to the peers that announced over LiveKit (the rest receive over Pulse); when Pulse is absent it broadcasts to every peer in the rooms.
+
+> `PulseActivation.IsActive` starts equal to `FeatureId.Pulse`. It flips to `false` exactly once — when the start-up connection is unreachable, or when the realm cannot be resolved (see [Start-up fallback](#start-up-fallback)). It never flips at runtime.
 
 ### Disabling behavior
 
-When the flag is off:
+When Pulse is inactive (`FeatureId.Pulse` off, `--pulse false`, or after a start-up fallback):
 
-- All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against `pulseMultiplayerService.Dummy`.
+- All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against a `Dummy` (or disconnected) service.
 - Incoming proxies' `Fill(...)` / `Bunch()` calls include empty Pulse lists.
-- `IProfilePropagation.Dummy` makes the main self-profile-propagation call a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`).
-- `LiveKitMessagesBroadcaster.backwardCompatibilityMode = false` — LiveKit runs in its original serialization mode.
+- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `PropagateSelfProfileSystem` also gates on `IsActive`.
+- `LiveKitMessagesBroadcaster` broadcasts to all peers (its original serialization mode).
 
 The effective runtime cost of Pulse when disabled is a few dummy virtual calls per frame.
+
+### Start-up fallback
+
+`StartPulseMultiplayerStartupOperation` connects to Pulse during login, passing a bounded attempt count (`5`) to `IPulseMultiplayerService.ConnectAsync(ct, maxAttempts)`:
+
+- Before connecting it awaits `PulseRealm.EnsureResolvedAsync(ct)`. If the realm is still empty afterwards — in local scene development, that means the dev server is unreachable — it calls `PulseActivation.Deactivate()` and returns success without connecting. An empty realm violates the server contract, so connecting anyway would join a session nothing can be filtered into.
+- If the connection keeps failing transiently across all 5 attempts (timing out, or dropped mid-handshake for a retriable reason such as `GRACEFUL` or `SERVER_FULL`), or fails terminally on any attempt (rejected handshake, `BANNED`, or another non-retriable disconnect reason), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
+- If Pulse is already inactive (disabled / `--pulse false`), the operation is a no-op.
+
+Runtime reconnection failures (after a successful initial connect) do **not** fall back — the `StartRouting` / `HandleDisconnect` reconnection loop keeps retrying without flipping `PulseActivation`. A terminal handshake failure during a runtime reconnect (rejection, ban) stops the loop instead of retrying forever.
+
+---
+
+## Realm — `PulseRealm`
+
+Pulse has no rooms. The server partitions visibility by **exact realm-string match**, so the realm a
+peer announces is the only thing separating two sessions that share a Pulse instance. Every realm read
+and write in `PulseMultiplayerBus` — peer lookup (`GetWalletInRealm`), the stale-peer purge
+(`CollectWalletsNotInRealm` / `RemoveWhereNotInRealm`), the `PlayerJoined` / `TeleportPerformed`
+filters, `BroadcastTeleport`, and the handshake's `PlayerInitialState.Realm` — goes through
+`Connections/Pulse/PulseRealm.cs`:
+
+```csharp
+public class PulseRealm
+{
+    public string Value { get; }
+
+    public PulseRealm(IRealmData realmData, ILocalSceneEntityIdSource? localSceneEntityIdSource = null);
+
+    public UniTask EnsureResolvedAsync(CancellationToken ct);
+}
+```
+
+There is no interface and no second implementation — the optional constructor argument *is* the mode:
+
+| `localSceneEntityIdSource` | `Value` | `EnsureResolvedAsync` |
+|---|---|---|
+| `null` (the normal case) | `IRealmData.RealmName`, read **live** | no-op |
+| supplied (local scene development) | the derived local-development key, resolved once | fetches the dev server's entity id |
+
+The normal case reads live rather than caching because a realm change — teleporting between Genesis
+and a world — has to be visible to the very next message the bus sends or filters. It is a pure
+passthrough: outside local scene development this class changes nothing.
+
+`Value` is empty while a local-development realm is unresolved, and callers must not connect in that
+state: an empty realm violates the server contract and every incoming message would be filtered out.
+
+### The local-development realm key
+
+Local scene development has no realm of its own — every dev process would otherwise land in the same
+one and see each other's avatars. Each process instead derives a key from the preview entity id its
+dev server serves:
+
+```
+previewSceneId = "b64-" + base64(absoluteProjectRoot + "-" + machineId)   // minted by sdk-commands
+realmKey       = "lsd:" + previewSceneId
+```
+
+and, when that would exceed Pulse's `MaxRealmLength` of **255**, it collapses deterministically:
+
+```
+realmKey = "lsd:sha256:" + SHA256Hex(previewSceneId)
+```
+
+The hash is taken over `previewSceneId` **including** its `b64-` prefix, hex-encoded **lowercase**.
+The overflow form is always 75 characters, so it always fits. Hashed rather than truncated on
+purpose — see below.
+
+Because the hostname is part of `previewSceneId`, this yields per-folder **and** per-machine
+isolation: two developers who check the same project out to the same path still get different realms.
+All processes of one dev session share the key, and LAN clients pointed at the same dev server read
+the same served id, so they share it too.
+
+> **Nothing is exchanged.** Every party — this client, `sdk-commands`, bevy-explorer — derives the
+> key independently. That is what makes isolation work without a paired endpoint or handshake, and it
+> is also the failure mode: two implementations that derive even slightly different strings do not
+> error, their peers simply never see each other. This is the same class of bug as the LiveKit
+> `preview-${sceneId}` vs `LocalPreview:{sceneId}` room-name mismatch.
+>
+> The contract is written down once in js-sdk-toolchain's
+> [`docs/lsd-identity-and-pulse-realm.md`](https://github.com/decentraland/js-sdk-toolchain/blob/main/docs/lsd-identity-and-pulse-realm.md);
+> `PulseRealmShould` pins the exact strings, including the worked examples
+> published there. Keep both in sync.
+
+**Stability.** The key derives from the *entity id only*, never from a content hash. js-sdk-toolchain
+[#1529](https://github.com/decentraland/js-sdk-toolchain/pull/1529) versions per-file preview hashes
+by mtime but deliberately leaves the project directory's own entity id path-only, so the realm
+survives content edits, hot reloads and dev-server restarts. A content-shaped input would
+re-partition comms on every file save.
+
+### Where it is resolved
+
+`StartPulseMultiplayerStartupOperation` awaits `EnsureResolvedAsync` **before** `ConnectAsync`,
+because the realm goes out in the very first message — the handshake's `PlayerInitialState.Realm`.
+The fetch is the same two-step the gatekeeper scene room already does (`GET scene.json` → base parcel
+→ `POST content/entities/active` → `result[0].id`), extracted into
+`Connections/GateKeeper/Meta/LocalSceneEntityIdSource.cs` so there is one definition of "the local
+scene's entity id" rather than two that can drift.
+
+It never throws: an unresolvable realm leaves `Value` empty, the start-up operation deactivates Pulse
+and log-in continues on LiveKit alone.
+
+### Caveats
+
+- **Genesis bounds.** Pulse's `FieldValidator` rejects parcel indices outside Genesis City and
+  disconnects the peer, so a local scene outside those bounds would join a realm and then silently
+  fail to sync. `PulseRealm` logs a warning naming the parcel and the bounds when
+  it sees one. (`sdk-commands` already refuses to *start* such a scene, so this only fires for dev
+  servers it did not launch.)
+- **Endpoint.** Local scene development connects to the same org Pulse endpoint as any other session;
+  there is no `--pulse-url` override.
+- **Privacy.** The non-overflow key is reversible base64 of an absolute path and a hostname. The same
+  information already goes to the gatekeeper today, so this is not a new exposure — but it now travels
+  as a comms realm. The hashed form is the switch if that ever becomes a requirement.
 
 ---
 
@@ -226,6 +346,36 @@ A plain `ScriptableObject` / serializable config with three fields:
 | `BufferSize` | 4 096 | Size of the fixed send/receive byte buffers. Must exceed the largest expected Protobuf payload. |
 
 Serialized into `PulseContainer.Settings` so the options can be tuned per build without code changes.
+
+---
+
+## ENet native libraries — build provenance
+
+The native ENet libraries that back the managed `ENet.cs` P/Invoke wrapper (shipped by the `com.decentraland.pulse.transport` package) live in the repo at `Explorer/Assets/Plugins/ENet/runtimes/`. The bindings expect the native symbol library to resolve to the name `enet` (Windows) / `libenet` (macOS, Linux) — see the `[DllImport]` declarations in that package's `Runtime/ENet.cs`.
+
+Keep this section in sync whenever any binary under `runtimes/` is rebuilt or swapped, so the exact source and flags behind each slice stay auditable.
+
+**Upstream source:** https://github.com/SoftwareGuy/ENet-CSharp
+
+### Building the macOS libraries
+
+All commands run from the **upstream repository root**.
+
+> **Note (CMake 4.x):** Homebrew's CMake 4.x removed support for the `cmake_minimum_required(VERSION 3.1)` this project declares. Pass `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` to configure anyway (shown below). It does not affect the output.
+
+**Universal binary (arm64 + x86_64 in one file) — via CMake:**
+
+```bash
+cmake -S . -B build-mac \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build build-mac --config Release
+```
+
+### Windows & Linux libraries
+
+The Windows (`runtimes/win-x64/native/enet.dll`) and Linux (`runtimes/linux-x64/native/libenet.so`) binaries were not built locally — they were taken directly from the upstream prebuilt release: https://github.com/SoftwareGuy/ENet-CSharp/releases/tag/autobuild-14c4dc5
 
 ---
 
@@ -436,7 +586,7 @@ for (var attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++)
 }
 ```
 
-Only `TimeoutException` is caught and retried. Other failures propagate immediately.
+Only `TimeoutException` and *retriable* `PulseHandshakeDisconnectedException`s (transport dropped before a `HandshakeResponse` for a transient reason) are caught and retried, with exponential backoff. A non-retriable handshake failure (rejection, `BANNED`, eviction, protocol violations — see `PulseHandshakeDisconnectedException.IsRetriable`) returns `false` immediately without burning the remaining attempts. Other failures propagate.
 
 **Authentication handshake** — `ConnectInternalAsync`:
 1. `transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT = 7777, ct)` — ENet handshake.
@@ -448,7 +598,7 @@ Only `TimeoutException` is caught and retried. Other failures propagate immediat
    handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
    Send(handshakePacket);
    ```
-5. Await the handshake response. On failure, `Disconnect()` and throw `PulseException(error)`.
+5. Await the handshake response. On an explicit failure response, `Disconnect()` and throw `PulseHandshakeDisconnectedException(error)`. If the transport disconnects before any response arrives, the routing loop faults the pending completion with the same exception (instead of starting its own reconnection). `ConnectWithRetriesAsync` then retries with backoff for transient reasons, or gives up immediately for terminal ones.
 
 `BuildAuthChain()` signs `connect:/:{timestamp}:{}` with the cached Web3 identity, builds the canonical `x-identity-auth-chain-0/1/...` + `x-identity-timestamp` + `x-identity-metadata` dictionary, and JSON-serializes it. Same auth-chain shape used across the platform, just delivered inside a Protobuf `ByteString` instead of HTTP headers.
 
@@ -486,9 +636,11 @@ Important details:
 
 **Disconnect handler contract** — `RegisterDisconnectHandler(Func<DisconnectReason, bool>)` — the boolean return decides whether to reconnect. This lets `DUPLICATE_SESSION` stop the loop (another client took over, don't fight it) while transient disconnects ask for a `RECONNECTION_DELAY_MS = 10s` cooldown followed by a fresh `ConnectAsync`. `PulseMultiplayerBus` wires the handler.
 
-### `PulseException`
+### `PulseHandshakeDisconnectedException`
 
-Trivial — `public class PulseException : Exception { public PulseException(string m) : base(m) {} }`. Thrown by `ConnectInternalAsync` when the handshake fails, with the server-supplied error message (or `"Handshake failed"` if the server didn't include one). No other code path throws it today.
+The single "handshake did not complete" exception, thrown in two places: by the routing loop (faulting the pending handshake completion with the `DisconnectReason`) when the transport disconnects before a `HandshakeResponse` arrives, and by `PulseMultiplayerBus.HandshakeAsync` when the server explicitly rejects the handshake (with the server-supplied error message, or `"Handshake failed"` if none).
+
+Its `IsRetriable` flag drives `ConnectWithRetriesAsync`: transient reasons (`NONE`, `GRACEFUL`, `AUTH_TIMEOUT`, `AUTH_FAILED`, `SERVER_FULL`, `PRE_AUTH_IP_LIMIT_EXHAUSTED`, `PRE_AUTH_BUDGET_EXHAUSTED`) are retried with backoff; everything else — explicit rejections, `BANNED`, `DUPLICATE_SESSION`, replay/validation/corruption reasons, and any future unknown reason — is terminal and fails the connect attempt immediately.
 
 ---
 
@@ -515,52 +667,21 @@ The struct exists purely to keep the app layer from assuming "peer identifier ==
 
 ### `PeerIdCache`
 
-`Connections/Pulse/PeerIdCache.cs` — a thread-safe bidirectional map `uint ↔ Web3Address`:
+[`PeerIdCache`](../Explorer/Assets/DCL/Multiplayer/Connections/Pulse/PeerIdCache.cs) retains each announced peer's wallet and realm until that peer leaves. One peer per wallet is selected for movement, profile and emote routing. Reads, membership changes and selection share a lock.
 
-```csharp
-public class PeerIdCache
-{
-    private readonly object sync = new();
-    private readonly Dictionary<uint, Web3Address> peersByWallet = new();
-    private readonly Dictionary<Web3Address, uint> walletsByPeerId = new();
+The newest **new-peer** announcement selects the peer for a wallet. Reannouncing or teleporting an already-known shadow peer preserves selection. Announcement order does not prove session ownership, so either session can temporarily drive the avatar during overlap.
 
-    public void Set(Web3Address wallet, uint peerId) { lock (sync) { peersByWallet[peerId] = wallet; walletsByPeerId[wallet] = peerId; } }
-    public void Remove(uint peerId) { lock (sync) { if (peersByWallet.Remove(peerId, out var wallet)) walletsByPeerId.Remove(wallet); } }
-    public bool TryGetWallet(uint peerId, out Web3Address wallet) { lock (sync) return peersByWallet.TryGetValue(peerId, out wallet); }
-    public bool TryGetPeerId(Web3Address wallet, out uint peerId) { lock (sync) return walletsByPeerId.TryGetValue(wallet, out peerId); }
+Keep the avatar while any peer for its wallet remains in the current realm. When the selected peer leaves, select the newest eligible survivor and restore its cached pose and emote. Teleports and realm cleanup follow the same membership rule; disconnect removes each wallet once. A join that selects the peer in the current realm cancels any still-queued removal for that wallet.
 
-    public void RemoveAll(Action<string> onWalletRemoved)
-    {
-        lock (sync)
-        {
-            foreach (string wallet in peersByWallet.Values) onWalletRemoved(wallet);
-            peersByWallet.Clear();
-            walletsByPeerId.Clear();
-        }
-    }
-}
-```
-
-All mutation and reads are serialized on a single `lock`. The cache is populated from `PlayerJoined` messages (in `PulseMultiplayerBus.PlayerState.cs` → `HandlePlayerJoined`) and evicted from `PlayerLeft` or full-disconnect events.
+Shadow state updates refresh the cache without driving the avatar. Promotion also requests the survivor's current pose through the existing resync path to cover missed updates. Changing peers resets the local movement timeline: a stationary survivor's timestamp can precede the departing peer's last movement and would otherwise be discarded as stale.
 
 > **Note:** The field names `peersByWallet` / `walletsByPeerId` are **inverted** relative to the actual key types (`peersByWallet` is keyed by `uint` peer-id, not by wallet). Be careful reading call sites — trust the types, not the names.
 
 ### `RemoveAll` and disconnect fan-out
 
-`RemoveAll(onWalletRemoved)` is the critical path when the transport disconnects. Called from `PulseMultiplayerBus.RemoveAllPeers`:
+On disconnect, `PulseMultiplayerBus.RemoveAllPeers` calls `RemoveAll` to enqueue one Pulse removal per wallet, then clears movement baselines, pending resyncs, cached emotes and queued intentions. Clearing retry generations also invalidates batches already collected by the main thread.
 
-```csharp
-private void RemoveAllPeers()
-{
-    peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
-
-    lastMovementMessages.Clear();
-    pendingResyncs.Clear();
-    emotingSubjects.Clear();
-}
-```
-
-Under a single `lock`, every known peer is enqueued as a `RemoveIntention(wallet, RoomSource.PULSE)` and the internal dictionaries are cleared. The callback runs inside the lock — which means `removeIntentions.Enqueue` must not take a lock that could deadlock against `sync`. In practice it writes into a thread-safe collection with a separate lock, so this is safe.
+Cache callbacks run inside its lock. Keep lock ordering one-way: code holding an emote or removal-queue lock must not acquire the cache lock.
 
 ### `SELF_MIRROR_WALLET_ID` — self-mirror sentinel
 
@@ -584,7 +705,7 @@ This is a debug/testing affordance: it lets a developer run Pulse end-to-end on 
 
 The only caller is `HandlePlayerJoined` in `PulseMultiplayerBus.PlayerState.cs` — once the wallet is resolved at join time, the rest of the bus treats the mirrored peer as any other remote player.
 
-> **Warning:** If the real local wallet is *also* present on the server under its own user id, the client will see two entries for the same wallet from two different peer-ids — `EntityParticipantTable` expects wallet uniqueness, so this would conflict. The sentinel is only meant for isolated dev environments.
+Use the sentinel in isolated development environments. If the same wallet is also announced as a regular peer, the normal overlap-selection rules apply.
 
 ---
 
@@ -598,10 +719,10 @@ The only caller is `HandlePlayerJoined` in `PulseMultiplayerBus.PlayerState.cs` 
 | `.PlayerState.cs` | Movement send, handlers for `PlayerJoined` / `PlayerLeft` / `PlayerStateFull` / `PlayerStateDelta`, the resync state machine, proto ↔ `NetworkMovementMessage` marshalling. |
 | `.Teleports.cs` | `BroadcastTeleport` and `HandleTeleport`. |
 | `.Profiles.cs` | `HandleProfileAnnouncement`. |
-| `.Emotes.cs` | `IEmotesMessageBus` surface (`Send`, `SendStop`, intention bunches, retry), `HandleEmoteStarted` / `HandleEmoteStopped`, `emotingSubjects` set. |
+| `.Emotes.cs` | `IEmotesMessageBus` surface (`Send`, `SendStop`, intention bunches, retry), emote handlers and per-peer emote cache. |
 | `.Disconnects.cs` | `HandleDisconnect` — reconnect-or-bail decision. |
 
-Shared state lives on the main partial: `lastMovementMessages` (per-peer sequence + last known `NetworkMovementMessage`), `pendingResyncs`, `emotingSubjects`, `emoteIntentions` / `emoteStopIntentions` with a `MutexSync`. All of this runs on a single thread at a time (the routing loop), so the non-emote state uses plain `Dictionary`/`HashSet` without locks.
+The routing loop updates per-peer movement baselines, pending resyncs and `peerEmotes`. Emote intention queues and retry generations share `emoteSync`, since main-thread consumers collect batches and return deferred intentions.
 
 ### `.cs` — subscription wiring
 
@@ -619,14 +740,7 @@ pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped,   
 pulseService.RegisterDisconnectHandler(HandleDisconnect);
 ```
 
-`RemoveAllPeers` — used by `HandleDisconnect` and, if needed, by any caller that wants to purge known peers:
-
-```csharp
-peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
-lastMovementMessages.Clear();
-pendingResyncs.Clear();
-emotingSubjects.Clear();
-```
+`HandleDisconnect` calls `RemoveAllPeers` for the shared teardown described above.
 
 ### `.PlayerState.cs` — movement send and receive
 
@@ -647,11 +761,11 @@ public void Send(NetworkMovementMessage message)
 
 > **Note:** There's a `// TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1` — the intent is to collapse queued duplicate movement messages at the pipe level so the worker thread only ships the newest one per flush. Not implemented today.
 
-**Receive: `HandlePlayerJoined`** — caches the wallet↔subject-id pairing, enqueues an initial profile announcement, builds a `NetworkMovementMessage` from the joined `PlayerState`, stores it in `lastMovementMessages[subjectId] = (sequence, message)`, and ships it to the inbox.
+**Receive: `HandlePlayerJoined`** — registers the peer and caches its initial pose. Selected peers enqueue the profile and pose; known shadows keep their cached state without taking over routing.
 
-**Receive: `HandlePlayerLeft`** — reverses: removes peer from all local maps, enqueues a `RemoveIntention`, drops any `emotingSubjects` entry.
+**Receive: `HandlePlayerLeft`** — removes the registration and its cached state. It restores a selected survivor or enqueues avatar removal when no registration remains in the current realm.
 
-**Receive: `HandlePlayerStateFull`** — updates `lastMovementMessages` (and clears any pending resync for the subject) and forwards the message to the inbox. `PlayerStateFull` carries a complete snapshot and resets the sequence tracking.
+**Receive: `HandlePlayerStateFull`** — updates the cached sequence and pose, completing eligible recovery. Only the selected peer forwards movement to the inbox.
 
 **Receive: `HandlePlayerStateDelta`** — the heart of the sequence-based resync logic:
 
@@ -670,7 +784,7 @@ Interleaving is deliberate: `STATE_DELTA` travels on `UNRELIABLE_SEQUENCED` (cha
 
 `MergeIntoNetworkMovementMessage(last, delta)` applies the `Has…` flags from the delta: every quantized field is optional in the proto, so the bus copies just the fields that changed, keeping the rest from `last`. Movement blend and velocity get their derived bookkeeping (`velocitySqrMagnitude`, `movementKind` inferred from blend value) recomputed.
 
-`TryUpdateLastMovementAndCompleteResync(serverTick, subjectId, sequence, movement, allowOverrides)` centralizes the "update `lastMovementMessages` if the sequence is newer, and clear any pending resync" pattern — called from `PlayerStateFull`, `EmoteStarted`, `EmoteStopped`, and the teleport handler.
+`TryUpdateLastMovementAndCompleteResync` updates the per-peer movement baseline and completes packet-loss recovery. Promotion recovery remains pending until a full state or a consecutive delta can reset the selected peer's timeline. Shadow peers cache consecutive updates but wait until promotion to request missing state.
 
 ### `.Teleports.cs` — teleport broadcast and reception
 
@@ -686,7 +800,7 @@ teleport.Realm = realmName;
 pulseService.Send(outgoing);
 ```
 
-**Receive** — `HandleTeleport` builds a `NetworkMovementMessage` with `isInstant: true` (so the receiving [`RemotePlayersMovementSystem`](multiplayer.md#receive-pipeline) snaps rather than interpolates), updates the per-peer baseline, and ships to the inbox.
+**Receive** — `HandleTeleport` updates the per-peer baseline with `isInstant: true`. Only the selected peer's pose reaches the inbox, where [`RemotePlayersMovementSystem`](multiplayer.md#receive-pipeline) snaps rather than interpolates.
 
 ### `.Profiles.cs` — profile version announcements
 
@@ -695,7 +809,7 @@ A one-method partial. When the server says "peer *X* now has profile version *V*
 ### `.Emotes.cs` — emote send/receive and `IEmotesMessageBus` surface
 
 **State**:
-- `emotingSubjects: HashSet<uint>` — peers currently mid-emote (main thread access only).
+- `peerEmotes` — each peer's latest emote sequence, URN, mask and active flag, retained until its registration is purged. The payload is copied out of the pooled incoming message.
 - `emoteIntentions: HashSet<RemoteEmoteIntention>` + `emoteStopIntentions: HashSet<RemoteEmoteStopIntention>` — per-frame outbound batches consumed by the emote proxy; both guarded by a shared `MutexSync` (see [multiplayer.md → Deduplication & Concurrency Primitives](multiplayer.md#deduplication--concurrency-primitives) for `OwnedBunch` / `MutexSync`).
 
 **`IEmotesMessageBus.Send(urn, loopCyclePassed, mask, durationMs, playerState)`** — skips when `loopCyclePassed` is true (the local emote already finished a loop cycle, the server doesn't need to know again), builds a reliable `EmoteStart` with the emote urn, optional duration, and optional embedded `PlayerStateInput` so the server can fold a movement state update into the emote.
@@ -704,20 +818,13 @@ A one-method partial. When the server says "peer *X* now has profile version *V*
 
 **`OnPlayerRemoved(walletId)`** — no-op on Pulse (LiveKit clears a scheduler here; Pulse doesn't have one). The method exists to satisfy the interface.
 
-**`SaveForRetry`** / `EnqueueEmoteIntention` — add an intention into the corresponding set under the `MutexSync` scope. These are the re-drop points used when a consumer couldn't apply an intention and wants to try again next frame.
+**`SaveForRetry`** returns an intention to its originating bus. Pulse accepts it under `emoteSync` only if its local generation still matches the wallet's current emote. Selection changes, later emote events and cleanup invalidate older retries, including intentions already collected by the main thread. Source and generation are local metadata; payload equality still deduplicates equivalent transport messages.
 
-**`HandleEmoteStarted`** — marks `emotingSubjects.Add(subjectId)`, builds a `NetworkMovementMessage` with `isInstant: true` from the emote's embedded `PlayerState`, updates the sequence baseline with `allowOverrides = true` (because an emote-started may arrive with the same sequence as a teleport or delta — it's authoritative in that case), fixes up any stored "isEmoting=false" state from a racing delta, and enqueues a `RemoteEmoteIntention` into the bunch:
+**`HandleEmoteStarted` / `HandleEmoteStopped`** update the peer's cached emote and movement state. Pulse advances the snapshot sequence for each accepted [emote start](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Peers/Simulation/PeerSnapshotPublisher.cs#L49) and [stop](https://github.com/decentraland/Pulse/blob/da6a51559289ddb950b52247d7983f5ac1f3efaa/src/DCLPulse/Messaging/EmoteStopHandler.cs#L36), including stationary peers. A start can share a movement snapshot's sequence, but a new start cannot reuse its preceding stop's sequence; a stop therefore wins over a replayed start at the same sequence. A reliable start can override an equal-sequence movement snapshot; `emoteStateMismatchCount` records correction of a racing delta's inactive flag. A stop clears that flag even when its embedded pose is older than the cached pose.
 
-```csharp
-double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp, AvatarEmoteMask.AemFullBody));
-```
+Only selected peers emit avatar intentions. On selection changes, `RestorePeerEmote` replaces queued intentions for the wallet with the survivor's current emote or an explicit stop. Retaining the URN and mask matters: movement resync does not replay an emote start already delivered by Pulse.
 
-The `EmoteStateMismatchCount` counter increments whenever the fix-up path had to run — useful for observing how often the unreliable `STATE_DELTA` races the reliable `EmoteStarted`.
-
-**`HandleEmoteStopped`** — removes from `emotingSubjects`, enqueues a `RemoteEmoteStopIntention` with the server-tick timestamp, and — if the message carries an updated `PlayerState` — runs the same `TryUpdateLastMovementAndCompleteResync` routine. If no state is embedded, it patches `lastMovementMessages[subjectId].isEmoting = false` in place so the next delta arrives with the correct baseline.
-
-**`IsPeerEmoting(Web3Address wallet)`** — internal helper used by the debug system; cheap `peerIdCache.TryGetPeerId` + `emotingSubjects.Contains`.
+**`IsPeerEmoting(Web3Address wallet)`** reports the selected peer's cached active flag to the debug system.
 
 ### `.Disconnects.cs` — reconnect-or-bail
 
@@ -778,20 +885,41 @@ Key facts:
 
 ### Where it's called from
 
-`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` is the main (and currently only regular) caller:
+`DCL/UserInAppInitializationFlow/StartupOperations/StartPulseMultiplayerStartupOperation.cs` announces the first version at connect:
 
 ```csharp
 protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
 {
-    await service.ConnectAsync(ct);
-    Profile? profile = await selfProfile.ProfileAsync(ct);
-    profilePropagation.Propagate(profile!);
+    if (!pulseActivation.IsActive) return;                        // disabled / --pulse false
+
+    if (!await service.ConnectAsync(ct, maxAttempts: 5))          // unreachable after 5 attempts
+    {
+        pulseActivation.Deactivate();                            // full fallback to LiveKit-only
+        return;
+    }
+
+    ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+    if (read.IsCancelled)
+        throw new OperationCanceledException(ct);
+
+    if (!read.IsOk(out _))
+        throw new InvalidOperationException($"Own profile could not be resolved ({read}), nothing to propagate to Pulse");
+
+    // Only the version the catalyst confirmed is propagated, never a pending edit's.
+    Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+
+    if (!confirmed.Has)
+        return;
+
+    await UniTask.SwitchToMainThread();
+    profilePropagation.PropagateIfNewVersion(confirmed.Value);
 }
 ```
 
-On startup, connect to Pulse, fetch the host's profile, and announce its version. This is a **one-shot** at connect — there's no debounce mechanism like `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously. (LiveKit's broadcast runs on every profile change; Pulse only fires at connect time today.)
+On startup, connect to Pulse, read the host's profile, and announce the version the catalyst confirmed; while the first deploy is still in flight nothing is confirmed yet and the announcement is left to `PropagateSelfProfileSystem`. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). `SelfProfile.ProfileAsync` never throws: the read resolves to `Ok(profile)` or to a `ProfileReadError`, and by this point the avatar start-up operation has already resolved the profile, so a non-`Ok` read only means the identity was lost mid-flow.
 
-`MultiplayerContainer` does also subscribe to `ISelfProfile.ProfilePropagated` and invoke `ProfilePropagation.Propagate(profile)` for later updates — so subsequent profile changes do reach Pulse. But there's no timer-based throttle wrapping that call, so the cadence is whatever `ISelfProfile` chooses to fire at.
+Later versions reach Pulse through `PropagateSelfProfileSystem` (`Movement/Systems/PropagateSelfProfileSystem.cs`): every frame while `PulseActivation.IsActive` it reads `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` and calls `PropagateIfNewVersion`. The confirmed profile is the one the catalyst holds: while an edit is deploying it stays at the previous version, so peers are never told about a version they cannot fetch yet, and a failed deploy needs no retraction. `PulseProfilePropagationBus` sends only when the user or the version differs from the last announcement (and records nothing while unauthenticated), so the per-frame poll costs one comparison and no throttle is needed.
 
 ---
 
@@ -885,15 +1013,15 @@ Ordered construction of the internal stack:
 
 ```csharp
 transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
-pulseMultiplayerService = FeatureEnabled
-    ? new PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource)
+pulseMultiplayerService = pulseActivation.IsActive
+    ? new PulseMultiplayerService(transport, messagePipe, urlsSource)
     : new IPulseMultiplayerService.Dummy();
 
-pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache,
-    movementInbox, parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache);
+pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox,
+    parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings, selfProfile, realmData);
 pulseMultiplayerBus.SubscribeToIncomingMessages();
 
-pulseProfilePropagationBus = FeatureEnabled
+pulseProfilePropagationBus = pulseActivation.IsActive
     ? new PulseProfilePropagationBus(pulseMultiplayerService)
     : new IProfilePropagation.Dummy();
 ```
@@ -938,7 +1066,7 @@ Note: `pulseMultiplayerService.Dispose()` disposes the underlying `ENetTransport
 | Movement encoding | `NetworkMessageEncoder` bit-packing (160 bits per frame) when `UseCompression` is on | `PlayerStateInput` proto with quantized fields + delta encoding (`PlayerStateDeltaTier0`) |
 | Identity | Per-room participants keyed by wallet (`LKParticipant.Identity`) | Server-assigned `PeerId uint` mapped to wallets via `PeerIdCache` |
 | Movement loss handling | Periodic full-state via send system's adaptive rate | Sequence-baselined deltas with on-demand `ResyncRequest` when a gap is detected |
-| Profile announcement trigger | `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously | One-shot at connect from `StartPulseMultiplayerStartupOperation` |
+| Profile announcement trigger | `MultiplayerProfilesSystem` calls `IProfileBroadcast.NotifyRemotes()` each update, throttled by `DebounceLiveKitProfileBroadcast`; the broadcast reads `SelfProfile.ProfileAsync` | `StartPulseMultiplayerStartupOperation` at connect, then `PropagateSelfProfileSystem` polling `SelfProfile.CurrentProfileSnapshot.ConfirmedProfile` with version dedupe in the bus |
 | Profile wire payload | Version only (`AnnounceProfileVersion`) | Version only (`ProfileVersionAnnouncement`) |
 | Disconnect semantics | `IConnectiveRoom` state machine with per-room reconnection; `DuplicateIdentity` stops the loop | Single-connection; reconnect only on `NONE` (timeout) or `GRACEFUL` disconnect reasons |
 | Voice chat | `VoiceChatActivatableConnectiveRoom` (on-demand room) | ❌ Not supported — no voice track plumbing on Pulse |
@@ -955,5 +1083,5 @@ In short: **Pulse focuses on low-latency player-state traffic** (movement, emote
 
 - **[Multiplayer](multiplayer.md)** — transport-neutral hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation.
 - **[Network Synchronization](livekit-networking.md)** — LiveKit transport, rooms, voice chat, message pipes.
-- **[Feature Flags](feature-flags.md)** — how `FeaturesRegistry` and `FeatureId.PULSE` are resolved.
+- **[Feature Flags](feature-flags.md)** — how `FeaturesRegistry` and `FeatureId.Pulse` are resolved.
 - **[App Arguments](app-arguments.md)** — `--pulse` and other launch flags.

@@ -4,8 +4,6 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Components;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace ECS.Unity.Visibility.Systems
 {
@@ -22,10 +20,7 @@ namespace ECS.Unity.Visibility.Systems
             // we have several states that are notified with events
             if (component.State != LoadingState.Finished) return;
 
-            List<Renderer> renderers = component.Promise.Result!.Value.Asset!.Renderers;
-
-            for (var i = 0; i < renderers.Count; i++)
-                renderers[i].enabled = visible;
+            component.Promise.Result!.Value.Asset!.SetRenderersActive(visible);
         }
     }
 }

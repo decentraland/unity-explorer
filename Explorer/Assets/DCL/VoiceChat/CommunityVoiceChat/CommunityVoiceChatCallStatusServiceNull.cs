@@ -7,7 +7,7 @@ namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatCallStatusServiceNull : ICommunityVoiceChatCallStatusService
     {
-        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.Disconnected);
         public IReadonlyReactiveProperty<string> CallId { get; } = new ReactiveProperty<string>(string.Empty);
         public string ConnectionUrl { get; } = string.Empty;
 

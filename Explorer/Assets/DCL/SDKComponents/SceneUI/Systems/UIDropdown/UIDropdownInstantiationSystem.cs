@@ -11,6 +11,8 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
@@ -35,12 +37,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly StyleFontDefinition[] styleFontDefinitions;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
 
-        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions) : base(world)
+        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
             dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.styleFontDefinitions = styleFontDefinitions;
+            this.sceneData = sceneData;
+            this.scenePartition = scenePartition;
         }
 
         protected override void Update(float t)
@@ -49,13 +55,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             InstantiateUIDropdownQuery(World);
             UpdateUIDropdownQuery(World);
+            ApplyLoadedFontQuery(World);
 
             TriggerDropdownResultsQuery(World);
         }
 
         [Query]
         [All(typeof(PBUiDropdown))]
-        [None(typeof(UIDropdownComponent))]
+        [None(typeof(UIDropdownComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIDropdown(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newDropdown = dropdownsPool.Get();
@@ -71,13 +78,21 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIDropdown(ref UIDropdownComponent uiDropdownComponent, ref PBUiDropdown sdkModel)
+        private void UpdateUIDropdown(ref UIDropdownComponent uiDropdownComponent, in PBUiDropdown sdkModel)
         {
             if (!sdkModel.IsDirty) return;
 
-            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
+            uiDropdownComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition);
+
+            UiElementUtils.SetupUiDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
+
+        [Query]
+        [All(typeof(PBUiDropdown))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent) =>
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiDropdownComponent.FontRequest, uiDropdownComponent.DropdownField);
 
         [Query]
         [All(typeof(UIDropdownComponent))]

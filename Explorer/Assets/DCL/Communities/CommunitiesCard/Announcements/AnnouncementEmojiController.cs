@@ -116,7 +116,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                         // Fixes https://github.com/decentraland/unity-explorer/issues/6965
                         // This operation needs to be awaited otherwise a race condition occurs
                         // between the suggested elements generated and the submitted element processed once the panel is activated
-                        lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary, ct);
+                        lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.Emojis, emojiSuggestionsDictionary, ct);
                     }
 
                     suggestionPanelController.SetPanelVisibility(lastMatch.Success);

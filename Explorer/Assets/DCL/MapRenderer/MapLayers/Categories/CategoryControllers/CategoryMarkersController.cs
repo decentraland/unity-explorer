@@ -118,6 +118,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
             clusterController.SetClusterIcon(categoryImage);
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
+                if (placeInfo.IsWorld)
+                    continue;
+
                 if (markers.ContainsKey(placeInfo.base_position_processed))
                     continue;
 

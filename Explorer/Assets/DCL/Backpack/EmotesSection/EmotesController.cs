@@ -1,5 +1,4 @@
 using DCL.Backpack.EmotesSection;
-using DCL.Character.CharacterMotion.Components;
 using UnityEngine;
 using DCL.UI;
 using System;

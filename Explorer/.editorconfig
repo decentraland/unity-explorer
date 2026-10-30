@@ -61,7 +61,6 @@ dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.symbols = inte
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.style = i_prefix_pascal_case_style
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.severity = warning
 
-
 #### CAPITALS_SNAKE_CASE ####
 dotnet_naming_style.capital_snake_case_style.capitalization = all_upper
 
@@ -176,7 +175,9 @@ dotnet_style_predefined_type_for_member_access = true:warning # 🟢
 # Modifier preferences
 
 #csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async # 🟢 IDE0036
-dotnet_style_require_accessibility_modifiers = always:warning # 🟢 IDE0040
+#dotnet_style_require_accessibility_modifiers = always:warning # 🟢 IDE0040
+# Do NOT force access modifiers globally
+dotnet_style_require_accessibility_modifiers = never:warning
 dotnet_style_readonly_field = true:warning # IDE0044
 csharp_prefer_static_local_function = true:warning # IDE0062
 
@@ -391,6 +392,11 @@ resharper_can_use_global_alias = true
 # Modifiers
 resharper_default_private_modifier = explicit
 resharper_default_internal_modifier = explicit
+# Remove required modifiers in interfaces
+resharper_require_accessibility_modifiers_for_interface_members = none
+resharper_default_public_modifier = implicit
+resharper_highlight_redundant_interface_member_modifiers = warning
+resharper_arrange_type_member_modifiers_highlighting = warning
 #resharper_modifiers_order =
 
 # Arguments
@@ -808,4 +814,14 @@ resharper_space_after_operator_keyword = true
 # resharper_web_config_type_not_resolved_highlighting = warning
 # resharper_web_config_wrong_module_highlighting = warning
 # resharper_wrong_indent_size_highlighting = hint
+
+# Keep this movement snapshot's existing public field convention across transport and plugin callers.
+[NetworkMovementMessage.cs]
+dotnet_naming_style.movement_snapshot_camel_case.capitalization = camel_case
+dotnet_naming_symbols.movement_snapshot_fields.applicable_kinds = field
+dotnet_naming_symbols.movement_snapshot_fields.applicable_accessibilities = public
+dotnet_naming_symbols.movement_snapshot_fields.resharper_required_modifiers = instance
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.symbols = movement_snapshot_fields
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.style = movement_snapshot_camel_case
+dotnet_naming_rule.movement_snapshot_fields_should_be_camel_case.severity = warning
 

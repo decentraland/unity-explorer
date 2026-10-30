@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Simulation.World;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Tests

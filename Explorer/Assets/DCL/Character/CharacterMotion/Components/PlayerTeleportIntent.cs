@@ -36,6 +36,12 @@ namespace DCL.CharacterMotion.Components
         public bool LandOnParcel;
 
         /// <summary>
+        ///     When set, land at the scene's spawn point with this name (case-insensitive) instead of
+        ///     the default/closest one; an unmatched name falls back to the default selection.
+        /// </summary>
+        public readonly string? SpawnPointName;
+
+        /// <summary>
         ///     Strictly it's the same report added to "SceneReadinessReportQueue" <br />
         ///     Teleport operation will wait for this report to be resolved before finishing the teleport operation <br />
         ///     Otherwise the teleport operation will be executed immediately
@@ -44,7 +50,7 @@ namespace DCL.CharacterMotion.Components
 
         public bool TimedOut => UnityEngine.Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false, bool landOnParcel = false)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false, bool landOnParcel = false, string? spawnPointName = null)
         {
             Parcel = parcel;
             CancellationToken = cancellationToken;
@@ -54,6 +60,7 @@ namespace DCL.CharacterMotion.Components
             IsPositionSet = isPositionSet;
             Position = position;
             LandOnParcel = landOnParcel;
+            SpawnPointName = spawnPointName;
         }
     }
 }

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utility.Types;
 using System;
 using System.Threading;
@@ -41,14 +40,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             return result;
         }
 
-        public UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
+        public UniTaskVoid StartListeningForConnectionStringAsync(Action<string, string> onNewIslandAssignment, CancellationToken token)
         {
             log($"{PREFIX} StartListeningForConnectionStringAsync start");
 
-            return origin.StartListeningForConnectionStringAsync(newString =>
+            return origin.StartListeningForConnectionStringAsync((islandId, connectionString) =>
                 {
-                    log($"{PREFIX} StartListeningForConnectionStringAsync received string {newString}");
-                    onNewConnectionString(newString);
+                    log($"{PREFIX} StartListeningForConnectionStringAsync received island {islandId} with string {connectionString}");
+                    onNewIslandAssignment(islandId, connectionString);
                 },
                 token
             );

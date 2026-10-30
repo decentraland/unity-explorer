@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -15,10 +16,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
     public class AvatarScreenshotService : IAvatarScreenshotService
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly string baseOutfitsDirectory;
 
-        public AvatarScreenshotService(ISelfProfile selfProfile)
+        public AvatarScreenshotService(SelfProfile selfProfile)
         {
             this.selfProfile = selfProfile;
             baseOutfitsDirectory = Path.Combine(Application.persistentDataPath, "outfits");
@@ -27,7 +28,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         }
 
         /// <summary>
-        ///     Captures the current avatar preview, downscales it, encodes a PNG into memory,
+        ///     Captures the current avatar preview, downscales it into a square sized by the preview height, encodes a PNG into memory,
         ///     and returns both the thumbnail texture and the PNG bytes. Does NOT write to disk —
         ///     callers persist via <see cref="PersistPngAsync"/> only after a successful backend save.
         ///     Restores platform visibility in the finally block so the avatar doesn't stay hidden
@@ -35,7 +36,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         /// </summary>
         public async UniTask<CapturedScreenshot?> CaptureAsync(CharacterPreviewControllerBase controller, CancellationToken ct)
         {
-            RenderTexture? downscaledSRGB = null;
+            RenderTexture? downscaledFrame = null;
+            RenderTexture? squareFrame = null;
             Texture2D? thumbnailTex = null;
 
             try
@@ -62,13 +64,26 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                     mipCount = 1, useMipMap = false
                 };
 
-                downscaledSRGB = RenderTexture.GetTemporary(desc);
+                downscaledFrame = RenderTexture.GetTemporary(desc);
+                Graphics.Blit(source, downscaledFrame);
 
-                Graphics.Blit(source, downscaledSRGB);
-                thumbnailTex = MakeThumbnailFromRT(downscaledSRGB);
+                // The preview camera has a fixed vertical FOV, so the height alone carries the framing
+                ThumbnailFraming framing = SquareFraming(w, h);
+                desc.width = framing.Side;
+                desc.height = framing.Side;
+                squareFrame = RenderTexture.GetTemporary(desc);
+
+                // Temporary targets hold stale content and the padding columns must come out transparent
+                RenderTexture? previousActive = RenderTexture.active;
+                RenderTexture.active = squareFrame;
+                GL.Clear(false, true, Color.clear);
+                RenderTexture.active = previousActive;
+
+                Graphics.CopyTexture(downscaledFrame, 0, 0, framing.SourceX, 0, framing.CopyWidth, h, squareFrame, 0, 0, framing.DestinationX, 0);
+                thumbnailTex = MakeThumbnailFromRenderTexture(squareFrame);
 
                 var req = await AsyncGPUReadback
-                    .Request(downscaledSRGB)
+                    .Request(squareFrame)
                     .WithCancellation(ct);
 
                 if (req.hasError)
@@ -81,12 +96,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 var srgbNative = req.GetData<byte>();
                 byte[] pngBytes;
                 using (var pngNative = ImageConversion.EncodeNativeArrayToPNG(
-                           srgbNative, downscaledSRGB.graphicsFormat, (uint)w, (uint)h))
+                           srgbNative, squareFrame.graphicsFormat, (uint)framing.Side, (uint)framing.Side))
                 {
                     pngBytes = pngNative.ToArray();
                 }
 
-                return new CapturedScreenshot(thumbnailTex!, pngBytes);
+                return new CapturedScreenshot(thumbnailTex, pngBytes);
             }
             catch (OperationCanceledException)
             {
@@ -101,7 +116,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             }
             finally
             {
-                if (downscaledSRGB != null) RenderTexture.ReleaseTemporary(downscaledSRGB);
+                if (downscaledFrame != null) RenderTexture.ReleaseTemporary(downscaledFrame);
+                if (squareFrame != null) RenderTexture.ReleaseTemporary(squareFrame);
                 await UniTask.SwitchToMainThread();
                 controller.SetPlatformVisible(true);
             }
@@ -109,7 +125,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 
         public async UniTask PersistPngAsync(int slotIndex, byte[] pngBytes, CancellationToken ct)
         {
-            if (pngBytes == null || pngBytes.Length == 0) return;
+            if (pngBytes.Length == 0) return;
 
             string? userId = await GetCurrentUserIdAsync(ct);
             if (string.IsNullOrEmpty(userId))
@@ -133,7 +149,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             }
         }
 
-        public async UniTask<Texture2D> LoadScreenshotAsync(int slotIndex, CancellationToken ct)
+        public async UniTask<Texture2D?> LoadScreenshotAsync(int slotIndex, CancellationToken ct)
         {
             string? userId = await GetCurrentUserIdAsync(ct);
             if (string.IsNullOrEmpty(userId))
@@ -192,6 +208,14 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             }
         }
 
+        internal static ThumbnailFraming SquareFraming(int width, int height)
+        {
+            int copyWidth = Mathf.Min(width, height);
+            int sourceX = Mathf.Max(0, (width - height) / 2);
+            int destinationX = Mathf.Max(0, (height - width) / 2);
+            return new ThumbnailFraming(height, sourceX, copyWidth, destinationX);
+        }
+
         private string GetFilePathForSlot(string userId, int slotIndex)
         {
             string userDirectory = Path.Combine(baseOutfitsDirectory, userId);
@@ -200,8 +224,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 
         private async UniTask<string?> GetCurrentUserIdAsync(CancellationToken ct)
         {
-            var profile = await selfProfile.ProfileAsync(ct);
-            return profile?.UserId;
+            // TODO (Nick) same here, maybe the async call is redundant and the snapshow from the SelfProfile may work well
+            return (await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile) ? profile.UserId : null;
         }
 
         private GraphicsFormat GetOutputGraphicsFormat()
@@ -226,11 +250,27 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             return SystemInfo.GetCompatibleFormat(GraphicsFormat.R8G8B8A8_UNorm, GraphicsFormatUsage.Render);
         }
 
-        private Texture2D MakeThumbnailFromRT(RenderTexture src)
+        private Texture2D MakeThumbnailFromRenderTexture(RenderTexture src)
         {
             var tex = new Texture2D(src.width, src.height, src.graphicsFormat, TextureCreationFlags.None);
             Graphics.CopyTexture(src, tex);
             return tex;
+        }
+
+        internal readonly struct ThumbnailFraming
+        {
+            public readonly int Side;
+            public readonly int SourceX;
+            public readonly int CopyWidth;
+            public readonly int DestinationX;
+
+            public ThumbnailFraming(int side, int sourceX, int copyWidth, int destinationX)
+            {
+                Side = side;
+                SourceX = sourceX;
+                CopyWidth = copyWidth;
+                DestinationX = destinationX;
+            }
         }
     }
 }

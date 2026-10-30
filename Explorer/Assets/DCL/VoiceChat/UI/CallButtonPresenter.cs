@@ -2,9 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
+using DCL.Profiles;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Threading;
 using Utility;
@@ -15,11 +19,11 @@ namespace DCL.VoiceChat
     {
         public enum OtherUserCallStatus
         {
-            USER_OFFLINE,
-            USER_REJECTS_CALLS,
-            USER_AVAILABLE,
-            OWN_USER_IN_CALL,
-            OWN_USER_REJECTS_CALLS,
+            UserOffline,
+            UserRejectsCalls,
+            UserAvailable,
+            OwnUserInCall,
+            OwnUserRejectsCalls,
         }
 
         private const string USER_OFFLINE_TOOLTIP_TEXT = "[{0}] is offline.";
@@ -39,7 +43,9 @@ namespace DCL.VoiceChat
 
         private readonly CallButtonView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
-        private readonly ChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IMVCManager mvcManager;
+        private readonly IProfileCache profileCache;
 
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
@@ -52,15 +58,20 @@ namespace DCL.VoiceChat
             CallButtonView view,
             IPrivateCallOrchestrator privateCallOrchestrator,
             ChatEventBus chatEventBus,
-            IReadonlyReactiveProperty<ChatChannel> currentChannel)
+            IReadonlyReactiveProperty<ChatChannel> currentChannel,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager,
+            IProfileCache profileCache)
         {
             this.view = view;
             this.privateCallOrchestrator = privateCallOrchestrator;
-            this.chatEventBus = chatEventBus;
+            this.identityCache = identityCache;
+            this.mvcManager = mvcManager;
+            this.profileCache = profileCache;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
                 statusSubscription = privateCallOrchestrator.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
@@ -83,7 +94,7 @@ namespace DCL.VoiceChat
 
         private void Reset()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
 
             if (!PlayerLoopHelper.IsMainThread)
                 ResetAsync().Forget();
@@ -103,16 +114,26 @@ namespace DCL.VoiceChat
 
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId, string userName)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
 
             currentUserName = userName;
             currentUserId = userId;
             otherUserStatus = status;
+
+            // A guest cannot receive a call, so there is nothing to start
+            view.CallButton.interactable = !profileCache.IsGuest(userId);
+
             Reset();
         }
 
         private void OnCallButtonClicked()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
             cts = cts.SafeRestart();
             HandleCallButtonClickAsync(cts.Token).Forget();
         }
@@ -131,7 +152,7 @@ namespace DCL.VoiceChat
             isClickedOnce = true;
 
             // Check if we're in a community call first
-            if (privateCallOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+            if (privateCallOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.Community)
             {
                 await ShowTooltipWithAutoCloseAsync(COMMUNITY_CALL_ACTIVE_TOOLTIP_TEXT, ct);
                 return;
@@ -139,9 +160,9 @@ namespace DCL.VoiceChat
 
             // Check if we're already in a call
             if (privateCallOrchestrator.CurrentCallStatus.Value is
-                VoiceChatStatus.VOICE_CHAT_IN_CALL or
-                VoiceChatStatus.VOICE_CHAT_STARTED_CALL or
-                VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+                VoiceChatStatus.VoiceChatInCall or
+                VoiceChatStatus.VoiceChatStartedCall or
+                VoiceChatStatus.VoiceChatStartingCall)
             {
                 await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;
@@ -149,22 +170,22 @@ namespace DCL.VoiceChat
 
             switch (otherUserStatus)
             {
-                case OtherUserCallStatus.USER_OFFLINE:
+                case OtherUserCallStatus.UserOffline:
                     await ShowTooltipWithAutoCloseAsync(USER_OFFLINE_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.USER_AVAILABLE:
+                case OtherUserCallStatus.UserAvailable:
                     // For available users, immediately start call without showing tooltip
                     view.TooltipParent.gameObject.SetActive(false);
                     isClickedOnce = false;
-                    privateCallOrchestrator.StartCall(new Web3Address(currentUserId), VoiceChatType.PRIVATE);
+                    privateCallOrchestrator.StartCall(new Web3Address(currentUserId), VoiceChatType.Private);
                     break;
-                case OtherUserCallStatus.OWN_USER_IN_CALL:
+                case OtherUserCallStatus.OwnUserInCall:
                     await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.USER_REJECTS_CALLS:
+                case OtherUserCallStatus.UserRejectsCalls:
                     await ShowTooltipWithAutoCloseAsync(USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
+                case OtherUserCallStatus.OwnUserRejectsCalls:
                     await ShowTooltipWithAutoCloseAsync(OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
             }
@@ -191,13 +212,13 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
-            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY)
+            if (newStatus == VoiceChatStatus.VoiceChatBusy)
                 ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
         }
 
         public void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
 
             statusSubscription?.Dispose();
             orchestratorTypeSubscription?.Dispose();

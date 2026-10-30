@@ -12,6 +12,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
@@ -88,6 +89,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             // Called on the thread where the Scene Runtime is running (background thread)
 
+            CrdtTrafficProbe traffic = metrics.Traffic;
+            bool capturing = traffic.IsCapturing;
+
+            // The probe's own classification work stays outside the timed regions
+            long incomingTicks = 0;
+            long stageStart = capturing ? Stopwatch.GetTimestamp() : 0;
+
             // Deserialize messages from the byte array
             List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
@@ -98,6 +106,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             deserializeBatchSampler.End();
 
+            if (capturing)
+            {
+                incomingTicks += Stopwatch.GetTimestamp() - stageStart;
+                traffic.RecordBatch();
+            }
+
             metrics.MessagesFromScene.Add(messages.Count);
 
             worldSyncBufferSampler.Begin();
@@ -105,44 +119,75 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // as we no longer wait for a buffer to apply the thread should be frozen
             IWorldSyncCommandBuffer worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
 
-            // Reconcile CRDT state
-            for (var i = 0; i < messages.Count; i++)
+            try
             {
-                CRDTMessage message = messages[i];
-
-                // Skip Creator Hub components leaked from main.composite (inspector::*,
-                // specific asset-packs:: tooling metadata, composite::root) and phantom
-                // Creator Hub tags (custom components with empty data, e.g. cube-id).
-                if (message.Type is CRDTMessageType.PUT_COMPONENT
-                        or CRDTMessageType.DELETE_COMPONENT
-                        or CRDTMessageType.APPEND_COMPONENT
-                    && CreatorHubComponentFilter.ShouldFilter(in message))
+                // Reconcile CRDT state
+                for (var i = 0; i < messages.Count; i++)
                 {
-                    message.Data.Dispose();
-                    continue;
+                    CRDTMessage message = messages[i];
+                    int payloadLength = capturing ? message.Data.Memory.Length : 0;
+
+                    // Skip Creator Hub components leaked from main.composite (inspector::*,
+                    // specific asset-packs:: tooling metadata, composite::root) and phantom
+                    // Creator Hub tags (custom components with empty data, e.g. cube-id).
+                    if (message.Type is CRDTMessageType.PUT_COMPONENT
+                            or CRDTMessageType.DELETE_COMPONENT
+                            or CRDTMessageType.APPEND_COMPONENT
+                        && CreatorHubComponentFilter.ShouldFilter(in message))
+                    {
+                        if (capturing)
+                            traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, CrdtTrafficOutcome.FilteredCreatorHub, payloadLength);
+
+                        message.Data.Dispose();
+                        continue;
+                    }
+
+                    // Must be read before ProcessMessage replaces or disposes the stored payload
+                    bool identicalData = capturing && crdtProtocol.IsIdenticalToLwwState(in message);
+
+                    if (capturing)
+                        stageStart = Stopwatch.GetTimestamp();
+
+                    crdtProcessMessagesSampler.Begin();
+
+                    CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
+
+                    crdtProcessMessagesSampler.End();
+
+                    // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
+
+                    // Prepare the message to be synced with the ECS World
+                    worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+
+                    if (capturing)
+                    {
+                        incomingTicks += Stopwatch.GetTimestamp() - stageStart;
+                        traffic.Record(CrdtTrafficDirection.FromScene, message.EntityId.Id, message.ComponentId, ClassifyOutcome(reconciliationResult.State, identicalData), payloadLength);
+                    }
                 }
 
-                crdtProcessMessagesSampler.Begin();
+                if (capturing)
+                    stageStart = Stopwatch.GetTimestamp();
 
-                CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
+                // Deserialize messages
+                worldSyncBuffer.FinalizeAndDeserialize();
 
-                crdtProcessMessagesSampler.End();
-
-                // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
-
-                // Prepare the message to be synced with the ECS World
-                worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+                if (capturing)
+                    traffic.AddIncomingTime(incomingTicks + Stopwatch.GetTimestamp() - stageStart);
             }
-
-            // Deserialize messages
-            worldSyncBuffer.FinalizeAndDeserialize();
+            catch
+            {
+                // The buffer holds the single rent slot: release it on failure before the exception propagates
+                crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+                throw;
+            }
 
             worldSyncBufferSampler.End();
 
-            ApplySyncCommandBuffer(worldSyncBuffer);
+            ApplySyncCommandBuffer(worldSyncBuffer, capturing);
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
+            return returnData ? SerializeOutgoingCRDTMessages(capturing) : PoolableByteArray.EMPTY;
         }
 
         public PoolableByteArray CrdtGetState()
@@ -194,11 +239,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
 
-        private PoolableByteArray SerializeOutgoingCRDTMessages()
+        private PoolableByteArray SerializeOutgoingCRDTMessages(bool capturing)
         {
             try
             {
                 outgoingMessagesSampler.Begin();
+
+                long outgoingStart = capturing ? Stopwatch.GetTimestamp() : 0;
 
                 PoolableByteArray serializationBufferPoolable;
 
@@ -209,10 +256,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
+                    if (capturing)
+                    {
+                        long recordStart = Stopwatch.GetTimestamp();
+                        RecordOutgoingTraffic(outgoingMessagesSyncBlock.Messages);
+
+                        // Shift the start past the classification so it is not counted as outgoing work
+                        outgoingStart += Stopwatch.GetTimestamp() - recordStart;
+                    }
+
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
 
                     metrics.MessagesToScene.Add(outgoingMessagesSyncBlock.Messages.Count);
                 }
+
+                if (capturing)
+                    metrics.Traffic.AddOutgoingTime(Stopwatch.GetTimestamp() - outgoingStart);
 
                 outgoingMessagesSampler.End();
                 return serializationBufferPoolable;
@@ -232,6 +291,35 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             for (var i = 0; i < outgoingMessages.Count; i++) { SyncCRDTMessage(outgoingMessages[i]); }
         }
+
+        /// <summary>
+        ///     Must run before <see cref="SyncOutgoingCRDTMessages" /> enforces the messages into the local state,
+        ///     otherwise every message compares identical to itself.
+        /// </summary>
+        private void RecordOutgoingTraffic(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
+        {
+            for (var i = 0; i < outgoingMessages.Count; i++)
+            {
+                CRDTMessage message = outgoingMessages[i].message;
+
+                CrdtTrafficOutcome outcome = crdtProtocol.IsIdenticalToLwwState(in message)
+                    ? CrdtTrafficOutcome.RedundantIdenticalData
+                    : CrdtTrafficOutcome.Applied;
+
+                metrics.Traffic.Record(CrdtTrafficDirection.ToScene, message.EntityId.Id, message.ComponentId, outcome, message.Data.Memory.Length);
+            }
+        }
+
+        private static CrdtTrafficOutcome ClassifyOutcome(CRDTStateReconciliationResult state, bool identicalData) =>
+            state switch
+            {
+                CRDTStateReconciliationResult.StateUpdatedTimestamp => identicalData ? CrdtTrafficOutcome.RedundantIdenticalData : CrdtTrafficOutcome.Applied,
+                CRDTStateReconciliationResult.NoChanges => CrdtTrafficOutcome.NoOpSameState,
+                CRDTStateReconciliationResult.StateOutdatedTimestamp => CrdtTrafficOutcome.NoOpOutdated,
+                CRDTStateReconciliationResult.StateOutdatedData => CrdtTrafficOutcome.NoOpOutdated,
+                CRDTStateReconciliationResult.EntityWasDeleted => CrdtTrafficOutcome.NoOpEntityDeleted,
+                _ => CrdtTrafficOutcome.Applied,
+            };
 
         private void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
@@ -253,23 +341,40 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
 
-        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool capturing)
         {
+            // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
+            // abort only on a throw before delegation (e.g. mutex acquisition)
+            var delegated = false;
+
             try
             {
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
 
+                // Timed after the lock is acquired: waiting for the main thread is not bridge work
+                long applyStart = capturing ? Stopwatch.GetTimestamp() : 0;
+
                 applyBufferSampler.Begin();
 
                 // Apply changes to the ECS World on the main thread
+                delegated = true;
                 crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
                 applyBufferSampler.End();
+
+                if (capturing)
+                    metrics.Traffic.AddApplyTime(Stopwatch.GetTimestamp() - applyStart);
 
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
                 systemGroupsUpdateGate.Open();
             }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+            catch (Exception e)
+            {
+                if (!delegated)
+                    crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

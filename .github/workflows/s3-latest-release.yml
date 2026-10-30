@@ -8,9 +8,14 @@ on:
 
 jobs:
   check-latest-release:
+    # Avatar Preview Renderer releases live in this repo too but never own latest.json.
+    if: ${{ !startsWith(github.event.release.tag_name, 'avatar-preview-renderer/') }}
     runs-on: ubuntu-latest
     container:
       image: amazon/aws-cli:latest
+    outputs:
+      is_latest_release: ${{ steps.check_latest.outputs.is_latest_release }}
+      latest_release: ${{ steps.check_latest.outputs.latest_release }}
     steps:
       - name: Install jq
         run: |
@@ -35,6 +40,7 @@ jobs:
           fi
 
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
+          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
 
       - name: Run actions if release is the latest
         if: steps.check_latest.outputs.is_latest_release == 'true'
@@ -51,3 +57,65 @@ jobs:
             "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
+
+  # Keeps the delta series of the two newest releases and removes older ones; only on
+  # `published`. A separate job: the aws-cli container has no git for checkout.
+  # See docs/delta-updates.md.
+  prune-delta-patches:
+    needs: check-latest-release
+    if: needs.check-latest-release.outputs.is_latest_release == 'true' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the delta tool
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/delta
+            .github/actions/delta-tool
+
+      - uses: ./.github/actions/delta-tool
+
+      - name: Prune old delta patches
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          GH_TOKEN: ${{ github.token }}
+          LATEST_RELEASE: ${{ needs.check-latest-release.outputs.latest_release }}
+          DELTA_KEEP_SERIES: 2
+          DELTA_PRUNE_WINDOW: 5
+        run: |
+          set -euo pipefail
+          "$DELTA" list-prunable "$DELTA_KEEP_SERIES" "$DELTA_PRUNE_WINDOW" --live "$LATEST_RELEASE" > prune.txt
+          while IFS= read -r tag; do
+            echo "Removing delta patches into $tag"
+            aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$tag/delta/"
+          done < prune.txt
+
+  # The prune never ranks pre-releases, so their delta patches are removed on publish.
+  drop-prerelease-delta-patches:
+    if: >-
+      github.event.action == 'published' && github.event.release.prerelease &&
+      startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Remove the pre-release's delta patches
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: aws s3 rm --recursive --only-show-errors "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/$TAG/delta/"

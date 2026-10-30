@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -11,7 +10,6 @@ using LiveKit.Rooms.Participants;
 
 #if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Streaming.Audio;
-using LiveKit.Rooms.TrackPublications;
 #endif
 
 using LiveKit.Rooms.Tracks;
@@ -93,7 +91,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         ///     Disconnects from the current room and connects to the <see cref="NullRoom" />
         /// </summary>
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
-            SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
+            SwapRoomsAsync(RoomSelection.New, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
         /// <summary>
         ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
@@ -115,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             switch (roomSelection)
             {
-                case RoomSelection.NEW:
+                case RoomSelection.New:
                     // Disconnect the previous room, but make its callbacks pass through
                     try { await previous.DisconnectAsync(ct); }
                     finally
@@ -135,7 +133,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                     }
 
                     break;
-                case RoomSelection.PREVIOUS:
+                case RoomSelection.Previous:
                     // drop the new room
                     await newRoom.DisconnectAsync(ct);
 

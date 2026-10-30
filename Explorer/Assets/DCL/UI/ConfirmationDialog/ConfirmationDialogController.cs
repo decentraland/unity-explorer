@@ -9,7 +9,7 @@ namespace DCL.UI.ConfirmationDialog
     public class ConfirmationDialogController : ControllerBase<ConfirmationDialogView, ConfirmationDialogParameter>
     {
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public ConfirmationDialogController(ViewFactoryMethod viewFactory,
             ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -40,7 +40,7 @@ namespace DCL.UI.ConfirmationDialog
         {
             int index = await UniTask.WhenAny(viewInstance!.GetCloseTasks(ct));
 
-            inputData.ResultCallback?.Invoke(index > 1 ? ConfirmationResult.CONFIRM : ConfirmationResult.CANCEL);
+            inputData.ResultCallback?.Invoke(index > 1 ? ConfirmationResult.Confirm : ConfirmationResult.Cancel);
         }
     }
 }

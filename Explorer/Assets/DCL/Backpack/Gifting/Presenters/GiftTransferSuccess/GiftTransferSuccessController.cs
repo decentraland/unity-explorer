@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
@@ -13,7 +12,7 @@ namespace DCL.Backpack.Gifting.Presenters
     public sealed class GiftTransferSuccessController
         : ControllerBase<GiftTransferSuccessView, GiftTransferSuccessParams>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
         private CancellationTokenSource? lifeCts;
 
@@ -27,7 +26,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.GiftSentText.text = string.Format(
-                    GiftingTextIds.GiftSentTextFormat,
+                    GiftingTextIds.GIFT_SENT_TEXT_FORMAT,
                     inputData.UserNameColorHex,
                     inputData.RecipientName
                 );

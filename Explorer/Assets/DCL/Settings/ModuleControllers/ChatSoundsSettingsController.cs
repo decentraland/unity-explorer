@@ -31,16 +31,16 @@ namespace DCL.Settings.ModuleControllers
         {
             switch (index)
             {
-                case (int)ChatAudioSettings.NONE:
-                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.NONE;
+                case (int)ChatAudioSettings.None:
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.None;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(0f));
                     break;
-                case (int)ChatAudioSettings.MENTIONS_ONLY:
-                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.MENTIONS_ONLY;
+                case (int)ChatAudioSettings.MentionsOnly:
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.MentionsOnly;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
                     break;
-                case (int)ChatAudioSettings.ALL:
-                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.ALL;
+                case (int)ChatAudioSettings.All:
+                    chatSettingsAsset.chatAudioSettings = ChatAudioSettings.All;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
                     break;
                 default:

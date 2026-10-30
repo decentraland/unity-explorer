@@ -1,10 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility.Types;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
-using ECS;
 using Google.Protobuf;
 using Newtonsoft.Json;
 using Pulse.Transport;
@@ -16,8 +17,8 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly ISelfProfile selfProfile;
-        private readonly IRealmData realmData;
+        private readonly SelfProfile selfProfile;
+        private readonly PulseRealm pulseRealm;
 
         private readonly Dictionary<string, string> authChainBuffer = new ();
 
@@ -25,25 +26,36 @@ namespace DCL.Multiplayer.Movement
         ///     Runs the post-transport-connect handshake exchange. Registers a one-shot response
         ///     handler, sends a <c>HandshakeRequest</c> (with auth chain + optional
         ///     <c>PlayerInitialState</c> on reconnect), and awaits the matching
-        ///     <c>HandshakeResponse</c>. Throws <see cref="PulseException" /> on failure — the
-        ///     service then propagates it out of <c>ConnectAsync</c>.
+        ///     <c>HandshakeResponse</c>. Throws <see cref="PulseHandshakeDisconnectedException" /> on a
+        ///     rejected handshake — a terminal (non-retriable) failure for the service's retry loop.
+        ///     The awaited completion is faulted by the service with the same exception when the
+        ///     transport disconnects before the response arrives.
         /// </summary>
         private async UniTask HandshakeAsync(UniTaskCompletionSource<(bool success, string? error)> handshakeReceived, CancellationToken ct)
         {
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
-            handshakePacket.Message.Handshake.ProfileVersion = (await selfProfile.ProfileAsync(ct))?.Version ?? 0;
+            ProfileReadResult profileRead = await selfProfile.ProfileAsync(ct);
+
+            if (profileRead.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            // The read settles the profile; only the version the catalyst confirmed is announced, never a pending edit's.
+            Option<Profile> confirmed = selfProfile.CurrentProfileSnapshot.ConfirmedProfile;
+            handshakePacket.Message.Handshake.ProfileVersion = confirmed.Has ? confirmed.Value.Version : 0;
 
             WriteInitialState(handshakePacket.Message.Handshake);
 
             pulseService.Send(handshakePacket);
 
-            (bool success, string? error) = await handshakeReceived.Task;
+            // AttachExternalCancellation: the completion is settled by the message routing loop,
+            // which dies silently on cancellation — without it this await would hang forever.
+            (bool success, string? error) = await handshakeReceived.Task.AttachExternalCancellation(ct);
 
             if (!success)
             {
                 await pulseService.DisconnectAsync();
-                throw new PulseException(error ?? "Handshake failed");
+                throw new PulseHandshakeDisconnectedException(error ?? "Handshake failed");
             }
         }
 

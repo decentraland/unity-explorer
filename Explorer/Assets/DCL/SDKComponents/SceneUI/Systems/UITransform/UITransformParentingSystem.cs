@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -33,6 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             OrphanChildrenOfDeletedEntityQuery(World);
             DoUITransformParentingQuery(World);
+            RetryUnresolvedParentingQuery(World);
         }
 
         [Query]
@@ -43,24 +45,28 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             // Remove deleted entity from the parent list
             RemoveFromParent(uiTransformComponentToBeDeleted, sdkEntity);
 
-            var head = uiTransformComponentToBeDeleted.RelationData.head;
-            if (head == null) return;
+            // The chain is only valid right after a rebuild, and RemoveChild resets the released node, so its fields are read first
+            uiTransformComponentToBeDeleted.RelationData.RebuildLinkedList();
 
-            for (var current = head; current != null; current = current.Next)
+            for (UITransformRelationLinkedData.Node? current = uiTransformComponentToBeDeleted.RelationData.head; current != null;)
             {
-                if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
+                CRDTEntity childId = current.EntityId;
+                UITransformRelationLinkedData.Node? next = current.Next;
+
+                if (entitiesMap.TryGetValue(childId, out Entity childEntity))
                 {
                     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
 
-                    if (!exists)
+                    if (exists)
                     {
-                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
-                        continue;
+                        uiTransformComponentToBeDeleted.RelationData.RemoveChild(childId, ref uiTransform.RelationData);
+                        SetNewChild(ref uiTransform, childId, sceneRoot);
                     }
-
-                    uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
-                    SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
+                    else
+                        ReportHub.LogError(GetReportData(), $"Trying to unparent a {nameof(UITransformComponent)}'s child but no component has been found on entity {childId}");
                 }
+
+                current = next;
             }
         }
 
@@ -81,6 +87,19 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
                 SetNewChild(ref uiTransformComponent, sdkEntity, parentReference);
             }
+            else
+                ReportHub.LogWarning(GetReportData(), $"Trying to parent entity {sdkEntity} to a parent {sdkModel.Parent} that is not resolvable yet, parenting will be retried");
+        }
+
+        [Query]
+        [None(typeof(SceneRootComponent), typeof(DeleteEntityIntention))]
+        private void RetryUnresolvedParenting(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        {
+            if (uiTransformComponent.RelationData.parent != Entity.Null)
+                return;
+
+            if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity))
+                SetNewChild(ref uiTransformComponent, sdkEntity, newParentEntity);
         }
 
         private void SetNewChild(ref UITransformComponent childComponent, CRDTEntity childEntity, Entity parentEntity)
@@ -106,6 +125,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             parentComponent.RelationData.AddChild(parentEntity, childEntity, ref childComponent.RelationData);
             parentComponent.ContentContainer.Add(childComponent.Transform);
+            childComponent.Transform.style.visibility = StyleKeyword.Null;
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, CRDTEntity child)

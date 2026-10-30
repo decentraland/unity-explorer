@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -28,7 +27,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             this.sceneRoom = sceneRoom;
             messagePipe = messagePipesHub.ScenePipe();
-            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
+            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.OriginThread);
         }
 
         private void InvokeSubscriber(ReceivedMessage<Scene> message)

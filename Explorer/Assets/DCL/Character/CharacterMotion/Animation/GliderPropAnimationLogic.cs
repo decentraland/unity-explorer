@@ -8,7 +8,7 @@ namespace DCL.CharacterMotion.Animation
     {
         public static void Execute(Animator animator, in CharacterAnimationComponent animationComponent, GlideStateValue glideState)
         {
-            bool isGliding = glideState is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
+            bool isGliding = glideState is GlideStateValue.OpeningProp or GlideStateValue.Gliding;
 
             animator.SetFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             animator.SetBool(AnimationHashes.GLIDING, isGliding);

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -19,11 +20,8 @@ using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using DCL.Web3.Identities;
-using ECS;
 using Global;
 using Global.AppArgs;
 using Global.Dynamic;
@@ -84,10 +82,10 @@ namespace DCL.Multiplayer.Movement
             }
         }
 
-        private class EmoteMessageBusProxy : IEmotesMessageBus
+        internal class EmoteMessageBusProxy : IEmotesMessageBus
         {
-            private readonly PulseMultiplayerBus pulseMultiplayerBus;
-            private readonly LiveKitEmotesMessageBus liveKitEmotesMessageBus;
+            private readonly IEmotesMessageBus pulseMultiplayerBus;
+            private readonly IEmotesMessageBus liveKitEmotesMessageBus;
 
             // Not used
             private readonly MutexSync mutexSync = new ();
@@ -95,7 +93,7 @@ namespace DCL.Multiplayer.Movement
             private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
             private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
 
-            public EmoteMessageBusProxy(PulseMultiplayerBus pulseMultiplayerBus, LiveKitEmotesMessageBus liveKitEmotesMessageBus)
+            public EmoteMessageBusProxy(IEmotesMessageBus pulseMultiplayerBus, IEmotesMessageBus liveKitEmotesMessageBus)
             {
                 this.pulseMultiplayerBus = pulseMultiplayerBus;
                 this.liveKitEmotesMessageBus = liveKitEmotesMessageBus;
@@ -141,17 +139,11 @@ namespace DCL.Multiplayer.Movement
                 liveKitEmotesMessageBus.OnPlayerRemoved(walletId);
             }
 
-            public void SaveForRetry(RemoteEmoteIntention intention)
-            {
-                pulseMultiplayerBus.SaveForRetry(intention);
-                liveKitEmotesMessageBus.SaveForRetry(intention);
-            }
+            public void SaveForRetry(RemoteEmoteIntention intention) =>
+                intention.Source.SaveForRetry(intention);
 
-            public void SaveForRetry(RemoteEmoteStopIntention intention)
-            {
-                pulseMultiplayerBus.SaveForRetry(intention);
-                liveKitEmotesMessageBus.SaveForRetry(intention);
-            }
+            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
+                intention.Source.SaveForRetry(intention);
         }
 
         private class RemoveIntentionsProxy : IRemoveIntentions
@@ -168,6 +160,9 @@ namespace DCL.Multiplayer.Movement
                 this.liveKitRemoveIntentions = liveKitRemoveIntentions;
             }
 
+            public bool NewBunchAvailable() =>
+                pulseRemoveIntentions.NewBunchAvailable() || liveKitRemoveIntentions.NewBunchAvailable();
+
             public OwnedBunch<RemoveIntention> Bunch()
             {
                 using OwnedBunch<RemoveIntention> pulse = pulseRemoveIntentions.Bunch();
@@ -182,12 +177,13 @@ namespace DCL.Multiplayer.Movement
 
         private readonly PulseContainer pulseContainer;
         private readonly LiveKitMultiplayerContainer liveKitContainer;
-        private readonly ISelfProfile selfProfile;
-
+        public readonly SelfProfile SelfProfile;
         public readonly IMovementMessageBus MovementMessageBus;
         public readonly IRemoteAnnouncements RemoteAnnouncements;
         public readonly IEmotesMessageBus EmotesMessageBus;
         public readonly IRemoveIntentions RemoveIntentions;
+        public readonly PulseActivation PulseActivation;
+        public readonly PulseRealm PulseRealm;
 
         public IProfileBroadcast ProfileBroadcast => liveKitContainer.ProfileBroadcast;
         public IProfilePropagation ProfilePropagation => pulseContainer.pulseProfilePropagationBus!;
@@ -197,24 +193,24 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, SelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
-            this.selfProfile = selfProfile;
+            SelfProfile = selfProfile;
+            PulseActivation = pulseActivation;
+            PulseRealm = pulseRealm;
 
             // Create Proxies to expose them to consumers
             MovementMessageBus = new MovementMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.MovementMessageBus);
             RemoteAnnouncements = new RemoteAnnouncementsProxy(pulseContainer.IncomingProfiles, liveKitContainer.RemoteAnnouncements);
             EmotesMessageBus = new EmoteMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.EmotesMessageBus);
             RemoveIntentions = new RemoveIntentionsProxy(pulseContainer.RemoveIntentions, liveKitContainer.RemoveIntentions);
-
-            selfProfile.ProfilePropagated += OnSelfProfilePropagated;
         }
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
             IPluginSettingsContainer pluginSettingsContainer,
-            IRealmData realmData,
+            PulseRealm pulseRealm,
             IWeb3IdentityCache identityCache,
             MovementInbox movementInbox,
             LandscapeData landscapeData,
@@ -223,13 +219,18 @@ namespace DCL.Multiplayer.Movement
             IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings multiplayerDebugSettings,
             IUserBlockingCache userBlockingCache,
-            ISelfProfile selfProfile,
-            CancellationToken ct) =>
-            new (
-                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, ct),
-                new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings),
-                selfProfile
-            );
+            SelfProfile selfProfile,
+            CancellationToken ct)
+        {
+            // Single session-wide source of truth for whether Pulse is the active transport.
+            // Shared with the Pulse container, the LiveKit broadcaster, and the start-up operation that may deactivate it on fallback.
+            var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.Pulse));
+
+            PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, pulseRealm, pulseActivation, ct);
+            var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation);
+
+            return new MultiplayerContainer(pulseContainer, liveKitContainer, selfProfile, pulseActivation, pulseRealm);
+        }
 
         public MultiplayerMovementPlugin CreatePlugin(
             StaticContainer staticContainer,
@@ -255,12 +256,8 @@ namespace DCL.Multiplayer.Movement
                 commsContainer.RemoteMetadata,
                 ParcelEncoder);
 
-        private void OnSelfProfilePropagated(Profile profile) =>
-            ProfilePropagation.Propagate(profile);
-
         public void Dispose()
         {
-            selfProfile.ProfilePropagated -= OnSelfProfilePropagated;
             pulseContainer.Dispose();
             liveKitContainer.Dispose();
         }

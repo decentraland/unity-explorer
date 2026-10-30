@@ -1,235 +1,225 @@
 name: Dependency Security Review
 
 on:
-  pull_request:
-    types: [opened, synchronize, ready_for_review]
-    paths:
-      - 'Explorer/Packages/manifest.json'
-      - 'Explorer/Packages/packages-lock.json'
-      - 'Explorer/Assets/Plugins/**'
-      - '**/*.dll'
-      - '**/*.so'
-      - '**/*.dylib'
-      - '**/*.bundle'
-      - '**/*.aar'
-      - '**/*.jar'
-      - '.github/workflows/**'
-      - '.github/prompts/**'
+  # Metadata only: runs trusted default-branch code, including for fork PRs.
+  # Never add a PR checkout, local action, package install or LLM to this job.
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions: {}
 
 concurrency:
-  group: dependency-security-review-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: true
+  group: dependency-security-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
-  detect-and-review:
-    if: github.event.pull_request.draft == false
+  request-security-review:
+    if: github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      # Keep the write scopes used by the working default-branch label workflow.
+      # In `issues=write; pull_requests=write`, the semicolon separates alternatives,
+      # not cumulative requirements. Compare commits also needs contents: read.
       contents: read
-      pull-requests: write
       issues: write
-      statuses: write
+      pull-requests: write
+      statuses: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-
-      - name: Detect security-relevant changes
+      - name: Classify changes and maintain label
         id: detect
-        env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          BASE_SHA=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
-
-          DEPENDENCY_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
-            'Explorer/Packages/manifest.json' \
-            'Explorer/Packages/packages-lock.json' \
-            'Explorer/Assets/Plugins/' \
-            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
-
-          WORKFLOW_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
-            '.github/workflows/' \
-            '.github/prompts/' || true)
-
-          if [ -z "$DEPENDENCY_CHANGES" ] && [ -z "$WORKFLOW_CHANGES" ]; then
-            echo "No security-relevant changes detected."
-            echo "has-changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "has-changes=true" >> "$GITHUB_OUTPUT"
-
-          DELIM="EOF_$(uuidgen)"
-
-          # New binaries (dependency review focus)
-          NEW_BINARIES=$(git diff --name-only --diff-filter=A "$BASE_SHA" -- \
-            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
-          {
-            echo "new-binaries<<$DELIM"
-            echo "$NEW_BINARIES"
-            echo "$DELIM"
-          } >> "$GITHUB_OUTPUT"
-
-          # Workflow / prompt files (workflow security focus)
-          {
-            echo "workflow-changes<<$DELIM"
-            echo "$WORKFLOW_CHANGES"
-            echo "$DELIM"
-          } >> "$GITHUB_OUTPUT"
-
-          if [ -n "$DEPENDENCY_CHANGES" ]; then
-            echo "Dependency changes detected:"
-            echo "$DEPENDENCY_CHANGES"
-          fi
-          if [ -n "$NEW_BINARIES" ]; then
-            echo ""
-            echo "⚠️ New binary files added:"
-            echo "$NEW_BINARIES"
-          fi
-          if [ -n "$WORKFLOW_CHANGES" ]; then
-            echo ""
-            echo "Workflow / prompt changes detected:"
-            echo "$WORKFLOW_CHANGES"
-          fi
-
-      - name: Add label
-        if: steps.detect.outputs.has-changes == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ github.event.pull_request.number }},
-              labels: ['new-dependency']
-            });
-
-      - name: Set status to pending
-        if: steps.detect.outputs.has-changes == 'true'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'pending',
-              context: 'Dependency Security Review',
-              description: 'Reviewing external dependency changes...'
-            });
-
-      - name: Load review prompt
-        if: steps.detect.outputs.has-changes == 'true'
-        id: prompt
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          DELIM="PROMPT_EOF_$(uuidgen)"
-          {
-            echo "instructions<<$DELIM"
-            gh api "repos/${{ github.repository }}/contents/.github/prompts/dependency-security-review.md?ref=$BASE_SHA" \
-              --jq '.content' | base64 -d
-            echo
-            echo "$DELIM"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Claude Dependency Review
-        if: steps.detect.outputs.has-changes == 'true'
-        id: claude
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          track_progress: true
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-
-            This PR touches dependency files, workflow files, prompt files, or some combination. Perform a security-focused review using the instructions below. Run the dependency-review section if dependency files changed and the workflow-review section if workflow / prompt files changed (both can apply on a single PR).
-
-            New binary files added in this PR (pre-computed from the diff — may not appear in `gh pr diff` output for large binaries):
-            ${{ steps.detect.outputs.new-binaries || 'None' }}
-
-            Workflow / prompt files changed in this PR:
-            ${{ steps.detect.outputs.workflow-changes || 'None' }}
-
-            ${{ steps.prompt.outputs.instructions }}
-          claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-            --max-turns 40
-
-      - name: Set final status
-        if: always()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const hasChanges = '${{ steps.detect.outputs.has-changes }}' === 'true';
-            const detectFailed = '${{ steps.detect.outcome }}' === 'failure';
-
-            // No dependency changes and detect didn't crash — nothing to report
-            if (!hasChanges && !detectFailed) return;
-
-            let state, description;
-
-            if (detectFailed) {
-              state = 'failure';
-              description = 'Dependency detection step failed — check workflow logs';
-            } else {
-              const comments = await github.paginate(github.rest.issues.listComments, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: ${{ github.event.pull_request.number }},
-              });
-
-              const claudeComments = comments.filter(c =>
-                c.user?.login === 'claude[bot]' && c.body?.includes('DEPENDENCY_REVIEW:')
-              );
-              const claudeComment = claudeComments[claudeComments.length - 1];
-
-              for (const c of claudeComments.slice(0, -1)) {
-                await github.graphql(
-                  `mutation($id: ID!) {
-                    minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
-                      minimizedComment { isMinimized }
-                    }
-                  }`,
-                  { id: c.node_id }
-                ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
-              }
-
-              const output = claudeComment?.body ?? '';
-              const errored = '${{ steps.claude.outcome }}' === 'failure';
-              const isBlock = output.includes('DEPENDENCY_REVIEW: BLOCK');
-              const needsAttention = output.includes('DEPENDENCY_REVIEW: NEEDS_ATTENTION');
-
-              if (errored && !output) {
-                state = 'failure';
-                description = 'Dependency review failed — credit balance too low or API error';
-              } else if (errored) {
-                state = 'failure';
-                description = 'Dependency review encountered an error';
-              } else if (isBlock) {
-                state = 'failure';
-                description = 'HIGH RISK dependencies found — must be addressed before merge';
-              } else if (needsAttention) {
-                state = 'pending';
-                description = 'MEDIUM RISK dependencies — human review required';
-              } else {
-                state = 'success';
-                description = 'No high-risk dependency changes found';
-              }
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (pr.state !== 'open' || pr.head.sha !== context.payload.pull_request.head.sha ||
+                pr.base.sha !== context.payload.pull_request.base.sha) {
+              core.notice('Superseded event; leaving classification to the current run.');
+              return;
             }
-
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state,
-              context: 'Dependency Security Review',
-              description
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number, per_page: 100
             });
+            // GitHub caps this endpoint at 3,000 files. Never treat truncation as no changes.
+            if (files.length !== pr.changed_files) throw new Error('Incomplete changed-file inventory');
+            const classifiedHead = pr.head.sha;
+            const classifiedBase = pr.base.sha;
+            const classifiedFileCount = pr.changed_files;
+            const relevant = (path) =>
+              /(^|\/)(Packages\/(manifest|packages-lock)\.json|package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.(toml|lock)|packages\.config|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock)$/.test(path) ||
+              /^(Explorer|avatar-preview-renderer)\/Packages\/[^/]+\//.test(path) ||
+              /(^|\/)(Assets\/Plugins|Editor|scripts|\.github|\.claude|\.agents|\.codex|unity-shared-dependencies)\//.test(path) ||
+              /\.(dll|so(\.[0-9.]+)?|dylib|bundle|aar|jar|a|lib|exe|wasm|jslib|asmdef|asmref)(\.meta)?$/i.test(path) ||
+              /\.bundle\//i.test(path) ||
+              /(^|\/)(AGENTS\.md|CLAUDE\.md|SKILL\.md|CODEOWNERS|\.gitmodules|\.npmrc|Dockerfile[^/]*|Build[^/]*\.cs)$/.test(path);
+            const hasChanges = files.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
+            const { data: current } = await github.rest.pulls.get({ owner, repo, pull_number });
+            if (current.state !== 'open' || current.head.sha !== classifiedHead ||
+                current.base.sha !== classifiedBase || current.changed_files !== classifiedFileCount) {
+              core.notice('PR changed during classification; leaving label maintenance to the current run.');
+              return;
+            }
+            const hasLabel = current.labels.some(label => label.name === 'new-dependency');
+            // Exclude only same-repository GitHub Actions releases and labelled syncs.
+            const fromAutomation = current.user.login === 'github-actions[bot]' &&
+              current.head.repo?.full_name === `${owner}/${repo}`;
+            const excluded = fromAutomation &&
+              ((current.base.ref === 'main' && current.head.ref.startsWith('release/')) ||
+               (current.base.ref === 'dev' && current.head.ref === 'chore/sync' &&
+                current.labels.some(label => label.name === 'auto-pr')));
+            if (!hasChanges || excluded) {
+              if (hasLabel) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: pull_number, name: 'new-dependency'
+                  });
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                }
+              }
+              core.setOutput('request', 'false');
+              return;
+            }
+            if (!hasLabel) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: pull_number, labels: ['new-dependency']
+              });
+            }
+            if (current.draft) {
+              core.setOutput('request', 'false');
+              return;
+            }
+            if (!hasLabel || (context.payload.action === 'edited' && context.payload.changes?.base)) {
+              core.setOutput('request', 'true');
+              return;
+            }
+            // `hasChanges` describes the PR's cumulative diff, so on its own it would
+            // buy a full review on every later push once a single automation file had
+            // been touched. Only a passing detailed review can suppress a request.
+            let reviews;
+            try {
+              reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner, repo, pull_number, per_page: 100
+              });
+            } catch (error) {
+              core.warning(`Could not read prior reviews: ${error.message}`);
+              core.setOutput('request', 'true');
+              return;
+            }
+            // Agent Server's detailed verdict and run marker must be standalone,
+            // outside quoted text and fenced examples (src/security-review.ts).
+            const detailedVerdict = (review) => {
+              const lines = [];
+              let fence;
+              for (const line of (review.body || '').split(/\r?\n/)) {
+                const match = line.match(/^\s*(`{3,}|~{3,})/);
+                if (match) {
+                  if (!fence) fence = match[1];
+                  else if (match[1][0] === fence[0] && match[1].length >= fence.length) fence = undefined;
+                } else if (!fence && !/^\s*>/.test(line)) {
+                  lines.push(line);
+                }
+              }
+              const verdicts = lines.filter(line => /^\s*DEPENDENCY_REVIEW:/.test(line));
+              const markers = lines.filter(line => /^<!-- jarvis-security-review:/.test(line));
+              if (verdicts.length !== 1 || markers.length !== 1 ||
+                  !/^<!-- jarvis-security-review:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} -->$/.test(markers[0])) return;
+              return /^DEPENDENCY_REVIEW: (PASS|NEEDS_ATTENTION|BLOCK)$/.exec(verdicts[0])?.[1];
+            };
+            const latestDetailed = reviews
+              .filter(review => review.user?.login?.toLowerCase() === 'decentraland-bot' && review.commit_id &&
+                ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state))
+              .map(review => ({ head: review.commit_id, submitted: review.submitted_at, verdict: detailedVerdict(review) }))
+              .filter(review => review.verdict).pop();
+            if (!latestDetailed || latestDetailed.verdict !== 'PASS') {
+              core.setOutput('request', 'true');
+              return;
+            }
+            const reviewedHead = latestDetailed.head;
+            // Use the latest status, including failures; never fall back to an older success.
+            let securityStatus;
+            try {
+              const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, {
+                owner, repo, ref: reviewedHead, per_page: 100
+              });
+              securityStatus = statuses.find(status => status.context?.toLowerCase() === 'dependency security review');
+            } catch (error) {
+              core.warning(`Could not read security status for ${reviewedHead}: ${error.message}`);
+            }
+            // Earlier or same-second successes cannot establish acceptance of this review.
+            if (securityStatus?.state !== 'success' ||
+                securityStatus.creator?.login?.toLowerCase() !== 'decentraland-bot' ||
+                securityStatus.description !== 'Jarvis security review passed for this commit' ||
+                !(Date.parse(securityStatus.created_at) > Date.parse(latestDetailed.submitted))) {
+              core.setOutput('request', 'true');
+              return;
+            }
+            if (reviewedHead === classifiedHead) {
+              core.notice('This head has already been reviewed.');
+              core.setOutput('request', 'false');
+              return;
+            }
+            // Anything unreadable or truncated fails open: a repeated review costs
+            // money, a missed one costs coverage.
+            let since;
+            try {
+              const { data } = await github.rest.repos.compareCommitsWithBasehead({
+                owner, repo, basehead: `${reviewedHead}...${classifiedHead}`
+              });
+              if (data.status !== 'ahead' || !Array.isArray(data.files)) {
+                core.notice('Review history is not an ancestor comparison with a complete file list.');
+                core.setOutput('request', 'true');
+                return;
+              }
+              since = data.files;
+            } catch (error) {
+              core.warning(`Could not diff ${reviewedHead}...${classifiedHead}: ${error.message}`);
+              core.setOutput('request', 'true');
+              return;
+            }
+            // The compare endpoint caps `files` at 300 and does not flag the cut.
+            const changedSince = since.length >= 300 ||
+              since.some(f => relevant(f.filename) || (f.previous_filename && relevant(f.previous_filename)));
+            if (!changedSince) core.notice('No security-relevant change since the last reviewed head.');
+            core.setOutput('request', changedSince.toString());
+
+      - name: Request Jarvis through the existing reviewer webhook
+        if: steps.detect.outputs.request == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          # A PAT is required: GITHUB_TOKEN-created review requests do not trigger
+          # the downstream automation. Jarvis also checks this actor's repo access.
+          github-token: ${{ secrets.ORG_ACCESS_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            const fromAutomation = pr.user.login === 'github-actions[bot]' &&
+              pr.head.repo?.full_name === `${owner}/${repo}`;
+            if (pr.state !== 'open' || pr.draft || pr.head.sha !== context.payload.pull_request.head.sha ||
+                pr.base.sha !== context.payload.pull_request.base.sha ||
+                (fromAutomation && ((pr.base.ref === 'main' && pr.head.ref.startsWith('release/')) ||
+                 (pr.base.ref === 'dev' && pr.head.ref === 'chore/sync' &&
+                  pr.labels.some(label => label.name === 'auto-pr')))) ||
+                !pr.labels.some(label => label.name === 'new-dependency')) return;
+            // External authors cannot auto-start a credential-bearing agent.
+            // A collaborator requests decentraland-bot manually after inspecting the PR.
+            let allowed = false;
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner, repo, username: pr.user.login
+              });
+              allowed = ['admin', 'write', 'maintain'].includes(data.permission);
+            } catch (error) {
+              core.warning(`Author access could not be verified: ${error.message}`);
+            }
+            if (!allowed) {
+              core.notice('Maintainer must request decentraland-bot; security status remains pending.');
+              return;
+            }
+            // Security changes are reviewed on every head that moved one, even when
+            // ordinary follow-up reviews are on demand; the classifier decides that.
+            // Existing pending requests share that review; a stale run remains
+            // non-green and needs a re-request.
+            await github.rest.pulls.requestReviewers({ owner, repo, pull_number, reviewers: ['decentraland-bot'] });

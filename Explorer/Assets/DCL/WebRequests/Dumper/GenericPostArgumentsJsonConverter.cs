@@ -11,9 +11,9 @@ namespace DCL.WebRequests.Dumper
     {
         public enum Kind
         {
-            RAW = 0,
-            WWW_FORM = 1,
-            MULTI_FORM = 2,
+            Raw = 0,
+            WwwForm = 1,
+            MultiForm = 2,
         }
 
         public override bool CanRead => true;
@@ -26,7 +26,7 @@ namespace DCL.WebRequests.Dumper
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("kind");
-                writer.WriteValue((int)Kind.MULTI_FORM);
+                writer.WriteValue((int)Kind.MultiForm);
                 writer.WriteStartArray();
 
                 foreach (IMultipartFormSection? section in value.MultipartFormSections)
@@ -46,7 +46,7 @@ namespace DCL.WebRequests.Dumper
             {
                 writer.WriteStartObject();
                 writer.WritePropertyName("kind");
-                writer.WriteValue((int)Kind.WWW_FORM);
+                writer.WriteValue((int)Kind.WwwForm);
 
                 // TODO support
 
@@ -58,7 +58,7 @@ namespace DCL.WebRequests.Dumper
             writer.WriteStartObject();
 
             writer.WritePropertyName("kind");
-            writer.WriteValue((int)Kind.RAW);
+            writer.WriteValue((int)Kind.Raw);
             writer.WritePropertyName("postData");
 
             if (value.UploadHandler != null)
@@ -82,7 +82,7 @@ namespace DCL.WebRequests.Dumper
 
             switch (kind)
             {
-                case Kind.RAW:
+                case Kind.Raw:
                     reader.Read(); // Read property name "postData"
                     string postData = reader.ReadAsString() ?? string.Empty;
                     reader.Read(); // Read property name "contentType"
@@ -90,12 +90,12 @@ namespace DCL.WebRequests.Dumper
                     reader.Read(); // End object
                     return GenericPostArguments.Create(postData, contentType);
 
-                case Kind.WWW_FORM:
+                case Kind.WwwForm:
                     // TODO: implement WWWForm deserialization when WriteJson is completed
                     reader.Read(); // End object
                     throw new NotImplementedException("WWWForm deserialization is not yet supported");
 
-                case Kind.MULTI_FORM:
+                case Kind.MultiForm:
                     reader.Read(); // Start array
                     var sections = new List<IMultipartFormSection>();
 

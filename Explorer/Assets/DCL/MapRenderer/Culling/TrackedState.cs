@@ -10,7 +10,7 @@ namespace DCL.MapRenderer.Culling
             public override IMapPositionProvider Obj => obj;
 
             private readonly IMapCullingListener<T> listener;
-            private bool? lastCalledWasVisible = null;
+            private bool? lastCalledWasVisible;
 
             public TrackedState(T obj, IMapCullingListener<T> listener)
             {
@@ -58,7 +58,7 @@ namespace DCL.MapRenderer.Culling
             public void SetCameraFlag(int index, bool value)
             {
                 if (value)
-                    dirtyCamerasFlag |= (1 << index);
+                    dirtyCamerasFlag |= 1 << index;
                 else
                     dirtyCamerasFlag &= ~(1 << index);
             }
@@ -74,7 +74,7 @@ namespace DCL.MapRenderer.Culling
             public void SetVisibleFlag(int index, bool value)
             {
                 if (value)
-                    visibleFlag |= (1 << index);
+                    visibleFlag |= 1 << index;
                 else
                     visibleFlag &= ~(1 << index);
             }

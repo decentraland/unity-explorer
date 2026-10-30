@@ -1,4 +1,3 @@
-#nullable enable
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS;

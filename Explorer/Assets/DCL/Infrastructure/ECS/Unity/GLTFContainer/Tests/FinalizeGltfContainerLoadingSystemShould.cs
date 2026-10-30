@@ -8,6 +8,7 @@ using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -25,6 +26,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -34,8 +36,8 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private readonly GltfContainerTestResources resources = new ();
 
-        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
-        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
+        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem = null!;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer = null!;
 
         //Required since all tests invoke TearDown, but not all used resources; therefore it could trigger a negative ref count
         private bool usedResources;
@@ -56,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false, new AbgenConversionMetrics());
         }
 
         [TearDown]
@@ -69,8 +71,9 @@ namespace ECS.Unity.GLTFContainer.Tests
 
                 usedResources = false;
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                // ignored
             }
         }
 
@@ -105,6 +108,34 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        public void FinalizeWithErrorWhenAssetRootDestroyed()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            var asset = GltfContainerAsset.Create(new GameObject("root"), Substitute.For<IStreamableRefCountData>());
+            UnityEngine.Object.DestroyImmediate(asset.Root);
+
+            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
+
+            component.State = LoadingState.Loading;
+
+            Entity e = world.Create(component, new CRDTEntity(100), new TransformComponent(), new PBGltfContainer());
+            world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            // Without the destroyed-Root guard this throws EcsSystemException (NRE at Root.transform)
+            system.Update(0);
+
+            component = world.Get<GltfContainerComponent>(e);
+            Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
+            Assert.That(component.RootGameObject, Is.Null);
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
+
+            // A second update on the consumed promise must be a no-op, not an "already consumed" throw
+            Assert.DoesNotThrow(() => system.Update(0));
+        }
+
+        [Test]
         public async Task FinalizeWithSuccess()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
@@ -132,6 +163,32 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        public async Task ReEnableRenderersDisabledByPreviousScene()
+        {
+            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY))
+                {
+                    State = LoadingState.Loading,
+                };
+
+            await InstantiateAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, component.Promise.Entity);
+
+            GltfContainerAsset asset = world.Get<StreamableLoadingResult<GltfContainerAsset>>(component.Promise.Entity).Asset!;
+
+            asset.SetRenderersActive(false);
+
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH });
+            AddTransformToEntity(e);
+
+            system.Update(0);
+
+            Assert.That(world.Get<GltfContainerComponent>(e).State, Is.EqualTo(LoadingState.Finished));
+            Assert.That(asset.Renderers, Is.Not.Empty);
+            Assert.That(asset.Renderers.All(r => r.enabled), Is.True);
+        }
+
+        [Test]
         public async Task InstantiateVisibleMeshesColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
@@ -148,7 +205,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
+            GltfContainerAsset promiseAsset = component.Promise.Result!.Value.Asset!;
 
             Assert.That(promiseAsset.DecodedVisibleSDKColliders.Count, Is.EqualTo(196));
             Assert.That(promiseAsset.DecodedVisibleSDKColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
@@ -159,9 +216,10 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER_NAME, GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
-
-            component.State = LoadingState.Loading;
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER_NAME, GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY))
+                {
+                    State = LoadingState.Loading,
+                };
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, component.Promise.Entity);
 
@@ -172,7 +230,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             component = world.Get<GltfContainerComponent>(e);
 
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
+            GltfContainerAsset promiseAsset = component.Promise.Result!.Value.Asset!;
 
             // 1 Collider
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.IsActiveByEntity), Is.True);

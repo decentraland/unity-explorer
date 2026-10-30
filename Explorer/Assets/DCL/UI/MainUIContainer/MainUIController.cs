@@ -27,11 +27,11 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar = false;
+        private bool autoHideSidebar;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MainUIController(
             ViewFactoryMethod viewFactory,
@@ -45,7 +45,7 @@ namespace DCL.UI.MainUI
         protected override void OnViewInstantiated()
         {
             viewInstance.SidebarView.BlockStatusChanged += OnSidebarBlockStatusChanged;
-            viewInstance.SidebarView.AutohideStatusChanged += OnSidebarAutohideStatusChanged;
+            viewInstance.SidebarView.SidebarConfigPanelView.AutoHideToggle.onValueChanged.AddListener(OnSidebarAutohideStatusChanged);
             viewInstance!.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();

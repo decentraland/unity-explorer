@@ -27,7 +27,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             GameObject unusedEquippedWearablePoolObjectParent,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -82,7 +82,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private EquippedWearableController CreateEquippedWearable(
             EquippedWearableView equippedWearablePrefab,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
             NftTypeIconSO rarityBackgrounds,

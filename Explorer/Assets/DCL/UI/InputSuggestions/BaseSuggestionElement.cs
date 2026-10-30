@@ -52,7 +52,7 @@ namespace DCL.UI.SuggestionPanel
         }
 
         public virtual InputSuggestionType GetSuggestionType() =>
-            InputSuggestionType.NONE;
+            InputSuggestionType.None;
     }
 
     public abstract class BaseInputSuggestionElement<T> : BaseInputSuggestionElement
@@ -107,8 +107,8 @@ namespace DCL.UI.SuggestionPanel
 
     public enum InputSuggestionType
     {
-        NONE,
-        EMOJIS,
-        PROFILE,
+        None,
+        Emojis,
+        Profile,
     }
 }

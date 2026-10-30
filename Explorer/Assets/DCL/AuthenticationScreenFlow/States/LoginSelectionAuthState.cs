@@ -1,4 +1,5 @@
 using DCL.Browser;
+using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
@@ -12,7 +13,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>, IPayloadedState<int>
+    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>, IPayloadedState<int>, IPayloadedState<string>
     {
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -22,13 +23,18 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
+        private readonly bool otherLoginMethodsEnabled;
+        private readonly bool isEpicBuild;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider, IWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser,
+            bool enableEmailOTP,
+            bool otherLoginMethodsEnabled,
+            bool isEpicBuild) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -39,9 +45,12 @@ namespace DCL.AuthenticationScreenFlow
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
+            this.otherLoginMethodsEnabled = otherLoginMethodsEnabled;
+            this.isEpicBuild = isEpicBuild;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
+            view.BackButton.onClick.AddListener(GoBack);
         }
 
         public new void Enter()
@@ -51,6 +60,8 @@ namespace DCL.AuthenticationScreenFlow
 
             view.SetLoadingSpinnerVisibility(false);
             view.SetEmailInputFieldSpinnerActive(false);
+
+            view.BackButton.gameObject.SetActive(FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin));
 
             if (view.gameObject.activeSelf)
             {
@@ -77,13 +88,16 @@ namespace DCL.AuthenticationScreenFlow
 
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
+
+                if (isEpicBuild)
+                    view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
             }
         }
 
         public override void Exit()
         {
             view.RestrictedUserContainer.SetActive(false);
-            view!.ErrorPopupRoot.SetActive(false);
+            view.ErrorPopupRoot.SetActive(false);
 
             view.LoginMetamaskButton.onClick.RemoveAllListeners();
             view.LoginGoogleButton.onClick.RemoveAllListeners();
@@ -107,6 +121,8 @@ namespace DCL.AuthenticationScreenFlow
 
             // ThirdWeb
             view.EmailInputField.Submitted -= OTPLogin;
+
+            view.OtherLoginOptionsDisclaimerLink.OnLinkClicked -= webBrowser.OpenUrlMainThreadOnly;
             base.Exit();
         }
 
@@ -114,14 +130,14 @@ namespace DCL.AuthenticationScreenFlow
         {
             switch (errorType)
             {
-                case ErrorType.NONE: break;
-                case ErrorType.CONNECTION_ERROR:
+                case ErrorType.None: break;
+                case ErrorType.ConnectionError:
                     view.ErrorPopupRoot.SetActive(true);
                     break;
-                case ErrorType.RESTRICTED_USER:
+                case ErrorType.RestrictedUser:
                     view.RestrictedUserContainer.SetActive(true);
                     break;
-                case ErrorType.INVALID_EMAIL:
+                case ErrorType.InvalidEmail:
                     view.SetEmailInputFieldErrorState(true);
                     Enter();
                     return;
@@ -136,9 +152,19 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
-            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP);
+            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled,
+                otherLoginOptionsDisclaimer: isEpicBuild);
             Enter();
         }
+
+        public void Enter(string email)
+        {
+            Enter(UIAnimationHashes.SLIDE);
+            view.EmailInputField.SetText(email);
+        }
+
+        private void GoBack() =>
+            controller.ReturnToOrigin(UIAnimationHashes.SLIDE);
 
         // dApp endpoint is case insensitive
 
@@ -168,19 +194,15 @@ namespace DCL.AuthenticationScreenFlow
 
         private void Login(LoginMethod method)
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.Dapp;
-
             controller.CurrentLoginMethod = method;
             currentState.Value = AuthStatus.LoginRequested;
 
             view.SetLoadingSpinnerVisibility(true);
-            machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
+            machine.Enter<IdentityVerificationDappDeepLinkAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
         private void OTPLogin()
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
-
             controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
             view.SetEmailInputFieldSpinnerActive(true);
@@ -202,14 +224,14 @@ namespace DCL.AuthenticationScreenFlow
             view.ErrorPopupRoot.SetActive(false);
 
         private void RequestAlphaAccess() =>
-            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
+            webBrowser.OpenUrlMainThreadOnly(REQUEST_BETA_ACCESS_LINK);
     }
 
     public enum ErrorType
     {
-        NONE = 0,
-        CONNECTION_ERROR = 1,
-        RESTRICTED_USER = 2,
-        INVALID_EMAIL = 3,
+        None = 0,
+        ConnectionError = 1,
+        RestrictedUser = 2,
+        InvalidEmail = 3,
     }
 }

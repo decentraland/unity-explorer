@@ -19,11 +19,13 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using Utility;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -34,7 +36,7 @@ using UnityEngine;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserController : ISection, IDisposable
+    public class CommunitiesBrowserController : IHostableSection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
         private const int DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS = 2000;
@@ -49,12 +51,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
 
         private readonly CommunitiesBrowserView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly SelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
@@ -63,7 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
@@ -84,8 +87,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
-        private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MAIN_SECTION;
-        private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+        private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MainSection;
+        private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.InvitesAndRequestsSection;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -95,17 +102,19 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
-            IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            UnityAppWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3IdentityCache web3IdentityCache)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
             this.inputBlock = inputBlock;
@@ -257,13 +266,30 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            view.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         private void ViewAllMyCommunitiesResults()
         {
             ClearSearchBar();
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
             mainRightSectionPresenter.ViewAllMyCommunitiesResults();
         }
 
@@ -281,7 +307,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadJoinRequestsAndAllCommunities()
         {
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
             loadResultsCts = loadResultsCts.SafeRestart();
 
             mainRightSectionPresenter.SetAsLoading();
@@ -298,7 +324,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadInvitesAndRequestsResults()
         {
             ClearSearchBar();
-            SetActiveSection(CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.InvitesAndRequestsSection);
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadInvitesAndRequestsAsync(loadResultsCts.Token).Forget();
             return;
@@ -466,10 +492,10 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void DisableShortcutsInput(string text) =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreInput(string text) =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void SearchBarValueChanged(string searchText)
         {
@@ -492,7 +518,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (currentSearchText == searchText)
                 return;
 
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
 
             if (string.IsNullOrEmpty(searchText))
                 mainRightSectionPresenter.LoadAllCommunities();
@@ -508,12 +534,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
             switch (activeSection)
             {
-                case CommunitiesRightSideSections.MAIN_SECTION:
+                case CommunitiesRightSideSections.MainSection:
                     view.SetResultsSectionActive(true);
                     view.InvitesAndRequestsView.SetSectionActive(false);
                     manageRequestReceivedCts?.SafeCancelAndDispose();
                     break;
-                case CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION:
+                case CommunitiesRightSideSections.InvitesAndRequestsSection:
                     view.SetResultsSectionActive(false);
                     view.InvitesAndRequestsView.SetSectionActive(true);
                     break;
@@ -539,25 +565,34 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinCommunity(CommunitiesBrowserEvents.CommunityJoinedClickedEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             joinCommunityCts = joinCommunityCts.SafeRestart();
             commandsLibrary.JoinCommunityCommand.Execute(evt.CommunityId, joinCommunityCts.Token);
         }
 
         private void RequestToJoinCommunity(CommunitiesBrowserEvents.RequestedToJoinCommunityEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             requestToJoinCommunityCts = requestToJoinCommunityCts.SafeRestart();
             RequestToJoinCommunityAsync(requestToJoinCommunityCts.Token).Forget();
             return;
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                if (ownProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
-                Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct)
-                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -648,6 +683,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void CreateCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
             commandsLibrary.CreateCommunityCommand.Execute(openCommunityCreationCts.Token);
         }
@@ -669,7 +710,7 @@ namespace DCL.Communities.CommunitiesBrowser
             browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, true, success);
         }
 
-        private void OnCommunityRequestedToJoin(string communityId, string requestId, bool success)
+        private void OnCommunityRequestedToJoin(string communityId, string? requestId, bool success)
         {
             var alreadyExistsInvitation = false;
 
@@ -694,7 +735,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadInvitesAndRequestsResults();
 
             if (success)
-                browserStateService.AddJoinRequest(new GetUserInviteRequestData.UserInviteRequestData { communityId = communityId, id = requestId });
+                browserStateService.AddJoinRequest(new GetUserInviteRequestData.UserInviteRequestData { communityId = communityId, id = requestId! });
         }
 
         private void OnCommunityInviteRequestCancelled(string communityId, bool success)
@@ -777,7 +818,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityLeft(string communityId, bool success)
         {
-            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, false, success);
+            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, success, isJoined: false);
         }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
@@ -890,7 +931,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCallUser(ICommunityMemberData profile)
         {
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             orchestrator.StartPrivateCallWithUserId(profile.Address);
         }
 
@@ -899,7 +947,7 @@ namespace DCL.Communities.CommunitiesBrowser
             try
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(
-                    new BlockUserPromptParams(new Web3Address(profile.Address), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), CancellationToken.None);
+                    new BlockUserPromptParams(new Web3Address(profile.Address), profile.Name, BlockUserPromptParams.UserBlockAction.Block)), CancellationToken.None);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -955,13 +1003,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
     public enum CommunitiesRightSideSections
     {
-        MAIN_SECTION,
-        INVITES_AND_REQUESTS_SECTION,
+        MainSection,
+        InvitesAndRequestsSection,
     }
 
     public enum CommunitiesViews
     {
-        BROWSE_ALL_COMMUNITIES,
-        FILTERED_COMMUNITIES,
+        BrowseAllCommunities,
+        FilteredCommunities,
     }
 }

@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
             ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingLod)
             {
                 var state = sceneFacade.SceneStateProvider.State.Value();
 
@@ -86,7 +86,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void CleanScenePromiseWhenLOD(in Entity entity,
             ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingLod)
             {
                 //TODO: Wait until LOD is Ready
                 //Dispose scene

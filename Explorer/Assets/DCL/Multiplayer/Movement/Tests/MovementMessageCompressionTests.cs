@@ -82,10 +82,10 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.That(decompressedMessage.animState.SlideBlendValue, Is.EqualTo(0f));
         }
 
-        [TestCase(MovementKind.JOG, false, false, false, 0, false, false, false)]
-        [TestCase(MovementKind.RUN, true, true, true, 1, true, true, true)]
-        [TestCase(MovementKind.WALK, true, false, true, 0, true, false, false)]
-        [TestCase(MovementKind.IDLE, false, true, true, 0, false, true, true)]
+        [TestCase(MovementKind.Jog, false, false, false, 0, false, false, false)]
+        [TestCase(MovementKind.Run, true, true, true, 1, true, true, true)]
+        [TestCase(MovementKind.Walk, true, false, true, 0, true, false, false)]
+        [TestCase(MovementKind.Idle, false, true, true, 0, false, true, true)]
         public void ShouldCorrectlyEncodeAndDecodeAnimations(MovementKind movementKind, bool isSliding, bool isStunned, bool isGrounded, int jumpCount,
             bool isLongJump, bool isLongFall, bool isFalling)
         {

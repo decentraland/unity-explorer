@@ -22,11 +22,13 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IEmote>? SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>>? ForceRenderEvent;
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
+        public event Action<bool>? ActivateEvent;
         public event Action? DeactivateEvent;
         public event Action? UnEquipAllEvent;
         public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
+        public event Action? AvatarChangedEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
         public event Action<BackpackEquipOutfitCommand, IReadOnlyCollection<IWearable>>? EquipOutfitEvent;
         public event Action? EquipOutfitCompletedEvent;
@@ -60,6 +62,12 @@ namespace DCL.Backpack.BackpackBus
         public void SendPublishProfile() =>
             PublishProfileEvent?.Invoke();
 
+        /// <summary>
+        ///     A publish went through with an avatar that differs from the one the profile had.
+        /// </summary>
+        public void SendAvatarChanged() =>
+            AvatarChangedEvent?.Invoke();
+
         public void SendUnEquipEmote(int slot, IEmote? emote) =>
             UnEquipEmoteEvent?.Invoke(slot, emote);
 
@@ -74,6 +82,10 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
             ChangedBackpackSectionEvent?.Invoke(backpackSections);
+
+        /// <param name="isInExplorePanel">False when another host borrowed the view out of the explore panel.</param>
+        public void SendBackpackActivateEvent(bool isInExplorePanel) =>
+            ActivateEvent?.Invoke(isInExplorePanel);
 
         public void SendBackpackDeactivateEvent() =>
             DeactivateEvent?.Invoke();

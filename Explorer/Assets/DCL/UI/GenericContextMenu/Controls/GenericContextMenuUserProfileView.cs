@@ -5,6 +5,7 @@ using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -25,36 +26,36 @@ namespace DCL.UI.Controls
 
         private enum CopyUserInfoSection
         {
-            NAME,
-            ADDRESS,
+            Name,
+            Address,
         }
 
-        [field: SerializeField] public TMP_Text UserName { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
-        [field: SerializeField] public TMP_Text UserAddress { get; private set; }
-        [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
-        [field: SerializeField] public GameObject OfficialBadge { get; private set; }
-        [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
-        [field: SerializeField] public Button CopyNameButton { get; private set; }
-        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
-        [field: SerializeField] public Button CopyAddressButton { get; private set; }
-        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
-        [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
-        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] public GameObject FriendsButtonsContainer { get; private set; }
+        [field: SerializeField] public TMP_Text UserName { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserNameTag { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserAddress { get; private set; } = null!;
+        [field: SerializeField] public Image ClaimedNameBadge { get; private set; } = null!;
+        [field: SerializeField] public GameObject OfficialBadge { get; private set; } = null!;
+        [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; } = null!;
+        [field: SerializeField] public Button CopyNameButton { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; } = null!;
+        [field: SerializeField] public Button CopyAddressButton { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; } = null!;
+        [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; } = null!;
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
+        [field: SerializeField] public GameObject FriendsButtonsContainer { get; private set; } = null!;
 
         [field: Header("Friendship Button")]
-        [field: SerializeField] public Button AddFriendButton { get; private set; }
-        [field: SerializeField] public Button AcceptFriendButton { get; private set; }
-        [field: SerializeField] public Button RemoveFriendButton { get; private set; }
-        [field: SerializeField] public Button CancelFriendButton { get; private set; }
+        [field: SerializeField] public Button AddFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button AcceptFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button RemoveFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button CancelFriendButton { get; private set; } = null!;
 
         [field: Header("Components cache")]
-        [field: SerializeField] private RectTransform userNameRectTransform;
-        [field: SerializeField] private RectTransform faceFrameRectTransform;
-        [field: SerializeField] private RectTransform userAddressRectTransform;
-        [field: SerializeField] private RectTransform buttonContainerRectTransform;
-        [field: SerializeField] private Sprite defaultEmptyThumbnail;
+        [field: SerializeField] private RectTransform userNameRectTransform = null!;
+        [field: SerializeField] private RectTransform faceFrameRectTransform = null!;
+        [field: SerializeField] private RectTransform userAddressRectTransform = null!;
+        [field: SerializeField] private RectTransform buttonContainerRectTransform = null!;
+        [field: SerializeField] private Sprite defaultEmptyThumbnail = null!;
 
         private CancellationTokenSource copyAnimationCts = new ();
         private CancellationTokenSource? loadThumbnailCts;
@@ -108,8 +109,8 @@ namespace DCL.UI.Controls
 
             copyAnimationCts = copyAnimationCts.SafeRestart();
 
-            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.NAME));
-            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.ADDRESS));
+            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.Name));
+            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.Address));
         }
 
         private void LoadProfilePicture(Profile.CompactInfo userData)
@@ -126,12 +127,12 @@ namespace DCL.UI.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.Name : settings.userData.UserId);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.Name ? settings.userData.Name : settings.userData.UserId);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
             {
-                WarningNotificationView toast = section == CopyUserInfoSection.NAME ? CopyNameToast : CopyAddressToast;
+                WarningNotificationView toast = section == CopyUserInfoSection.Name ? CopyNameToast : CopyAddressToast;
                 toast.Show(ct);
                 await UniTask.Delay(COPY_ANIMATION_DURATION, cancellationToken: ct);
                 toast.Hide(ct: ct);
@@ -151,7 +152,7 @@ namespace DCL.UI.Controls
             else
             {
                 userAddressRectTransform.gameObject.SetActive(true);
-                UserAddress.text = $"{userData.UserId[..5]}...{userData.UserId[^5..]}";
+                UserAddress.text = Web3Address.Shorten(userData.UserId.Value);
             }
 
             UserNameTag.gameObject.SetActive(!userData.HasClaimedName);
@@ -184,7 +185,7 @@ namespace DCL.UI.Controls
 
         private void ConfigureFriendshipButton(UserProfileContextMenuControlSettings settings)
         {
-            if (settings.friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED)
+            if (settings.friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.Disabled)
             {
                 FriendsButtonsContainer.gameObject.SetActive(false);
                 return;
@@ -197,12 +198,12 @@ namespace DCL.UI.Controls
             CancelFriendButton.gameObject.SetActive(false);
             AcceptFriendButton.gameObject.SetActive(false);
 
-            Button buttonToActivate = settings.friendshipStatus switch
+            Button? buttonToActivate = settings.friendshipStatus switch
                                       {
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND => RemoveFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT => CancelFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED => AcceptFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.None => AddFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.Friend => RemoveFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent => CancelFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived => AcceptFriendButton,
                                           _ => null,
                                       };
 

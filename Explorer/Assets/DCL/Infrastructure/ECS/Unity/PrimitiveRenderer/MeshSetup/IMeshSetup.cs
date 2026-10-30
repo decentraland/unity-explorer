@@ -1,19 +1,26 @@
 using DCL.ECSComponents;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using System;
-using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.MeshSetup
 {
-    public interface IMeshSetup<T> : ISetupMesh where T: IPrimitiveMesh
+    public interface IMeshSetup<in T> : ISetupMesh where T: IPrimitiveMesh
     {
         Type ISetupMesh.MeshType => typeof(T);
+
+        void ISetupMesh.Execute(PBMeshRenderer pbRenderer, IPrimitiveMesh primitiveMesh) =>
+            Execute(pbRenderer, (T)primitiveMesh);
+
+        void Execute(PBMeshRenderer pbRenderer, T primitiveMesh);
     }
 
     public interface ISetupMesh
     {
         Type MeshType { get; }
 
-        void Execute(PBMeshRenderer pbRenderer, Mesh mesh);
+        /// <summary>
+        ///     May replace <see cref="IPrimitiveMesh.Mesh" />, so read it only after this call
+        /// </summary>
+        void Execute(PBMeshRenderer pbRenderer, IPrimitiveMesh primitiveMesh);
     }
 }

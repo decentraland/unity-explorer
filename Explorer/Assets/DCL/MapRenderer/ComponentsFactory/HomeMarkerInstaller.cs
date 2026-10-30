@@ -6,6 +6,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
+using DCL.Web3.Identities;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -13,50 +14,53 @@ using Utility;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
-	internal struct HomeMarkerInstaller
-	{
-		public async UniTask<IMapLayerController> InstallAsync(
-			Dictionary<MapLayer, IMapLayerController> writer,
-			List<IZoomScalingLayer> zoomScalingWriter,
-			MapRendererConfiguration configuration,
-			ICoordsUtils coordsUtils,
-			IMapCullingController cullingController,
-			INavmapBus navmapBus,
-			IPlacesAPIService placesAPIService,
-			IMapRendererSettings mapSettings,
-			IAssetsProvisioner assetsProvisioner,
-			HomePlaceEventBus homePlaceEventBus,
-			IEventBus analyticsEventBus,
-			CancellationToken cancellationToken)
-		{
-			HomeMarkerObject prefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.HomeMarker, ct: cancellationToken)).Value;
+    internal struct HomeMarkerInstaller
+    {
+        public async UniTask<IMapLayerController> InstallAsync(
+            Dictionary<MapLayer, IMapLayerController> writer,
+            List<IZoomScalingLayer> zoomScalingWriter,
+            MapRendererConfiguration configuration,
+            ICoordsUtils coordsUtils,
+            IMapCullingController cullingController,
+            INavmapBus navmapBus,
+            IPlacesAPIService placesAPIService,
+            IMapRendererSettings mapSettings,
+            IAssetsProvisioner assetsProvisioner,
+            HomePlaceEventBus homePlaceEventBus,
+            IEventBus analyticsEventBus,
+            IWeb3IdentityCache identityCache,
+            CancellationToken cancellationToken)
+        {
+            HomeMarkerObject prefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.HomeMarker, ct: cancellationToken)).Value;
 
-			var homeMarkerController = new HomeMarkerController(
-				CreateMarker,
-				configuration.HomeMarkerRoot,
-				coordsUtils,
-				cullingController,
-				navmapBus,
-				placesAPIService,
-				analyticsEventBus
-			);
-			homePlaceEventBus.Controller = homeMarkerController;
+            var homeMarkerController = new HomeMarkerController(
+                CreateMarker,
+                configuration.HomeMarkerRoot,
+                coordsUtils,
+                cullingController,
+                navmapBus,
+                placesAPIService,
+                analyticsEventBus,
+                identityCache
+            );
 
-			homeMarkerController.Initialize();
+            homePlaceEventBus.SetController(homeMarkerController);
 
-			writer.Add(MapLayer.HomeMarker, homeMarkerController);
-			zoomScalingWriter.Add(homeMarkerController);
-			
-			return homeMarkerController;
+            homeMarkerController.Initialize();
 
-			IHomeMarker CreateMarker(Transform parent)
-			{
-				HomeMarkerObject markerObject = Object.Instantiate(prefab, parent);
-				coordsUtils.SetObjectScale(markerObject);
-				markerObject.SetSortingOrder(MapRendererDrawOrder.HOME_MARKER);
+            writer.Add(MapLayer.HomeMarker, homeMarkerController);
+            zoomScalingWriter.Add(homeMarkerController);
 
-				return new HomeMarker(markerObject);
-			}
-		}
-	}
+            return homeMarkerController;
+
+            IHomeMarker CreateMarker(Transform parent)
+            {
+                HomeMarkerObject markerObject = Object.Instantiate(prefab, parent);
+                coordsUtils.SetObjectScale(markerObject);
+                markerObject.SetSortingOrder(MapRendererDrawOrder.HOME_MARKER);
+
+                return new HomeMarker(markerObject);
+            }
+        }
+    }
 }

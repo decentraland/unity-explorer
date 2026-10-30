@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using LiveKit.Audio;
 using RichTypes;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -144,7 +143,7 @@ namespace DCL.VoiceChat
         private void NotifyMicrophoneStateChange(bool isEnabled)
         {
             if (orchestrator != null &&
-                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VoiceChatInCall &&
                 orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value)
             {
                 string localParticipantId = orchestrator.ParticipantsStateService.LocalParticipantId;

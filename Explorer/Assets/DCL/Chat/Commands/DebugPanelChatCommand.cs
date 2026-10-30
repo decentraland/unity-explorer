@@ -51,7 +51,7 @@ namespace DCL.Chat.Commands
                 return UniTask.FromResult(result);
             }
 
-            if (debugContainerBuilder.Widgets.TryGetValue(param!, out DebugWidget? widget))
+            if (debugContainerBuilder.Widgets.TryGetValue(param, out DebugWidget? widget))
             {
                 widget.visible = !widget.visible;
 

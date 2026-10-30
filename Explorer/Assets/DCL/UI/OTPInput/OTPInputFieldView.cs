@@ -48,7 +48,7 @@ namespace DCL.UI.OTPInput
             hiddenInput.onFocusSelectAll = false;
 
             foreach (OTPSlotView slot in slots)
-                slot.SetState(OTPSlotView.SlotState.UNSELECTED);
+                slot.SetState(OTPSlotView.SlotState.Unselected);
 
             caretImage.gameObject.SetActive(false);
         }
@@ -68,7 +68,7 @@ namespace DCL.UI.OTPInput
 
                 // set slot selected with caret disabled
                 if (!prevIsFocused && textLength >= slots.Length)
-                    slots[textLength - 1].SetState(OTPSlotView.SlotState.SELECTED);
+                    slots[textLength - 1].SetState(OTPSlotView.SlotState.Selected);
             }
 
             prevIsFocused = hiddenInput.isFocused;
@@ -110,14 +110,14 @@ namespace DCL.UI.OTPInput
         {
             caretImage.gameObject.SetActive(false);
             foreach (OTPSlotView slot in slots)
-                slot.SetState(OTPSlotView.SlotState.UNSELECTED);
+                slot.SetState(OTPSlotView.SlotState.Unselected);
         }
 
         private void UpdateSlotsWithText(string text)
         {
             for (var i = 0; i < slots.Length; i++)
             {
-                slots[i].SetState(OTPSlotView.SlotState.UNSELECTED);
+                slots[i].SetState(OTPSlotView.SlotState.Unselected);
                 slots[i].Text = i < text.Length ? text[i].ToString() : string.Empty;
             }
 
@@ -132,7 +132,7 @@ namespace DCL.UI.OTPInput
             else
             {
                 OTPSlotView activeSlot = slots[text.Length];
-                activeSlot.SetState(OTPSlotView.SlotState.SELECTED);
+                activeSlot.SetState(OTPSlotView.SlotState.Selected);
                 caretImage.rectTransform.position = activeSlot.Center;
             }
 
@@ -186,7 +186,7 @@ namespace DCL.UI.OTPInput
             hiddenInput.interactable = false;
 
             foreach (OTPSlotView slot in slots)
-                slot.SetState(OTPSlotView.SlotState.SUCCESS);
+                slot.SetState(OTPSlotView.SlotState.Success);
 
             resultText.gameObject.SetActive(true);
             resultText.text = "Success";
@@ -200,7 +200,7 @@ namespace DCL.UI.OTPInput
             hiddenInput.interactable = false;
 
             foreach (OTPSlotView slot in slots)
-                slot.SetState(OTPSlotView.SlotState.ERROR);
+                slot.SetState(OTPSlotView.SlotState.Error);
 
             ShakeAnimation();
 

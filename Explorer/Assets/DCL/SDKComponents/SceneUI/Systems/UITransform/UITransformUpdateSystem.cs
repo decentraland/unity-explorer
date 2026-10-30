@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -24,12 +25,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Entity sceneRoot;
+        private readonly bool isPortableExperience;
+        private readonly IReadonlyReactiveProperty<bool> currentSceneUiOnly;
 
-        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot, bool isPortableExperience, IReadonlyReactiveProperty<bool> currentSceneUiOnly) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
             this.sceneRoot = sceneRoot;
+            this.isPortableExperience = isPortableExperience;
+            this.currentSceneUiOnly = currentSceneUiOnly;
         }
 
         protected override void Update(float _)
@@ -37,13 +42,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             UpdateUITransformQuery(World);
 
             // For newly created and modified entities
-            CheckUITransformOutOfSceneQuery(World, sceneStateProvider.IsCurrent);
+            CheckUITransformOutOfSceneQuery(World, ShouldBeOnCanvas(sceneStateProvider.IsCurrent));
         }
 
         [Query]
         private void UpdateUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
-            if (!sdkModel.IsDirty)
+            // The dirty flag is reset at the end of the frame even when this system didn't run for that tick, so it cannot gate the first application.
+            if (!sdkModel.IsDirty && uiTransformComponent.StylesApplied)
                 return;
 
             bool zIndexChanged = false;
@@ -51,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             // Treat zIndex=0 as "not set" — the SDK always sends zIndex:0 in its defaults
             // even when the user didn't specify one, making it indistinguishable from "absent".
             // In CSS semantics, z-index:0 is the default stacking order (same as not setting it).
-            int? newZIndex = sdkModel.HasZIndex && sdkModel.ZIndex != 0 ? sdkModel.ZIndex : (int?)null;
+            int? newZIndex = sdkModel.HasZIndex && sdkModel.ZIndex != 0 ? sdkModel.ZIndex : null;
 
             if (uiTransformComponent.ZIndex != newZIndex)
             {
@@ -61,6 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             UiElementUtils.SetupTransformVisualElement(uiTransformComponent.Transform, ref sdkModel);
             UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
+            uiTransformComponent.StylesApplied = true;
 
             // If zIndex changed, mark the parent layout as dirty.
             // This is needed to trigger UITransformSortingSystem.ApplySorting
@@ -75,14 +82,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(SceneRootComponent))]
-        private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
+        private void CheckUITransformOutOfScene([Data] bool shouldBeOnCanvas, ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
             if (uiTransformComponent.RelationData.parent != sceneRoot)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas
-            switch (isCurrent)
+            switch (shouldBeOnCanvas)
             {
                 case false when !uiTransformComponent.IsHidden:
                     canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
@@ -91,6 +98,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 case true when uiTransformComponent.IsHidden:
                     canvas.rootVisualElement.Add(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = false;
+
+                    // Add appends at the end, so the root has to be re-sorted to restore the rightOf/zIndex order
+                    World.Get<UITransformComponent>(sceneRoot).RelationData.layoutIsDirty = true;
                     break;
             }
         }
@@ -99,7 +109,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             if(sceneStateProvider.State.Value() == SceneState.Disposed) return;
 
-            CheckUITransformOutOfSceneQuery(World, value);
+            CheckUITransformOutOfSceneQuery(World, ShouldBeOnCanvas(value));
         }
+
+        // Portable experiences are always current, so the current-scene-only flag is what takes their UI off
+        private bool ShouldBeOnCanvas(bool isCurrent) =>
+            isCurrent && !(isPortableExperience && currentSceneUiOnly.Value);
     }
 }

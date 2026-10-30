@@ -2,7 +2,6 @@
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using Random = System.Random;
 
 namespace DCL.Landscape.Config
 {
@@ -59,8 +58,8 @@ namespace DCL.Landscape.Config
 
     public enum NoiseType
     {
-        PERLIN,
-        SIMPLEX,
-        CELLULAR,
+        Perlin,
+        Simplex,
+        Cellular,
     }
 }

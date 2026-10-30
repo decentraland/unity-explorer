@@ -161,7 +161,7 @@ namespace DCL.UI.SuggestionPanel
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);
 
-            if (suggestionType == InputSuggestionType.NONE) return;
+            if (suggestionType == InputSuggestionType.None) return;
 
             int maxVisibleSuggestions = suggestionDataPerType[suggestionType].MaxSuggestionAmount;
 
@@ -186,7 +186,7 @@ namespace DCL.UI.SuggestionPanel
 
             //if the suggestion type is different, we release all items from the pool,
             //otherwise, we only release the elements that are over the found suggestion amount.
-            if (currentSuggestionType != InputSuggestionType.NONE)
+            if (currentSuggestionType != InputSuggestionType.None)
             {
                 if (currentSuggestionType != suggestionType)
                 {

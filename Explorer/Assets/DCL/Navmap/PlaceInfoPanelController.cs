@@ -1,8 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.EventsApi;
@@ -17,6 +16,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle;
 using MVC;
 using System;
@@ -34,23 +34,24 @@ namespace DCL.Navmap
     {
         private readonly PlaceInfoPanelView view;
         private readonly ImageControllerProvider imageControllerProvider;
-        private readonly IPlacesAPIService placesAPIService;
+        private readonly IPlacesAPIService placesApiService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
-        private readonly GalleryEventBus galleryEventBus;
+        private readonly GalleryEventBus? galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly ImageController? thumbnailImage;
+        private readonly Sprite? thumbnailPlaceholder;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
-        private readonly MultiStateButtonController homeButton;
+        private readonly MultiStateButtonController? homeButton;
         private readonly List<EventElementView> eventElements = new ();
-        private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly CameraReelGalleryController? cameraReelGalleryController;
         private readonly IDonationsService donationsService;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
@@ -59,36 +60,38 @@ namespace DCL.Navmap
         private CancellationTokenSource? attendEventCancellationToken;
         private CancellationTokenSource? openEventDetailsCancellationToken;
         private CancellationTokenSource? showPlaceGalleryCancellationToken;
+        private CancellationTokenSource? jumpInCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
         private Section? currentSection;
         private Vector2Int? originParcel;
+        private bool landOnOriginParcel;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
             ImageControllerProvider imageControllerProvider,
-            IPlacesAPIService placesAPIService,
+            IPlacesAPIService placesApiService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
-            IChatMessagesBus chatMessagesBus,
+            ChatTeleporter chatTeleporter,
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
-            ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
+            ISpriteCache? reelThumbnailCache = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
             bool? reelUseSignedRequest = null,
-            GalleryEventBus galleryEventBus = null)
+            GalleryEventBus? galleryEventBus = null)
         {
             this.view = view;
             this.imageControllerProvider = imageControllerProvider;
-            this.placesAPIService = placesAPIService;
+            this.placesApiService = placesApiService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
-            this.chatMessagesBus = chatMessagesBus;
+            this.chatTeleporter = chatTeleporter;
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
@@ -98,6 +101,9 @@ namespace DCL.Navmap
             this.homePlaceEventBus = homePlaceEventBus;
             this.donationsService = donationsService;
 
+            // The prefab authors the placeholder thumbnail on the image itself; capture it before the first request
+            // overwrites it, so a place carrying no thumbnail url still shows something.
+            thumbnailPlaceholder = view.Thumbnail.ImageSprite;
             thumbnailImage = imageControllerProvider.Create(view.Thumbnail);
 
             if (view.CameraReelGalleryView != null)
@@ -105,10 +111,10 @@ namespace DCL.Navmap
                 this.cameraReelGalleryController = new CameraReelGalleryController(
                     view.CameraReelGalleryView,
                     cameraReelStorageService!,
-                    cameraReelScreenshotsStorage!,
+                    reelThumbnailCache!,
                     reelGalleryConfigParams!.Value,
                     reelUseSignedRequest!.Value,
-                    galleryEventBus);
+                    galleryEventBus!);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
                 this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
@@ -118,17 +124,17 @@ namespace DCL.Navmap
 
             view.EventsTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.EVENTS))
+                if (Toggle(Section.Events))
                     FetchAndShowEventsOfThePlace();
             });
 
             view.PhotosTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.PHOTOS))
+                if (Toggle(Section.Photos))
                     FetchPhotos();
             });
 
-            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
+            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.Overview));
 
             dislikeButton = new MultiStateButtonController(view.DislikeButton, true);
             dislikeButton.OnButtonClicked += OnDislikeButtonClick;
@@ -158,8 +164,13 @@ namespace DCL.Navmap
         public void Dispose()
         {
             thumbnailImage?.Dispose();
-            cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
-            cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+            jumpInCancellationToken.SafeCancelAndDispose();
+
+            if (cameraReelGalleryController != null)
+            {
+                cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
+                cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+            }
         }
 
         public void Show()
@@ -173,61 +184,67 @@ namespace DCL.Navmap
         }
 
         private void DonateToSceneCreator() =>
-            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address, place!.base_position_processed)));
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address!, place.base_position_processed)));
 
-        public void Set(PlacesData.PlaceInfo place)
+        public void Set(PlacesData.PlaceInfo placeInfo)
         {
-            this.place = place;
+            this.place = placeInfo;
 
-            if (VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int result))
+            if (VectorUtilities.TryParseVector2Int(placeInfo.base_position, out Vector2Int result))
                 currentBaseParcel = result;
             else
                 currentBaseParcel = null;
 
-            thumbnailImage.RequestImage(place.image);
-            view.PlaceNameLabel.text = place.title;
-            view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
-            view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
-            view.PlayerCountLabel.text = place.user_count.ToString();
-            view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
+            thumbnailImage?.RequestImage(placeInfo.image, defaultSprite: thumbnailPlaceholder);
+            view.PlaceNameLabel.text = placeInfo.title;
+            view.CreatorNameLabel.text = $"created by <b>{placeInfo.contact_name}</b>";
+            view.LikeRateLabel.text = $"{(placeInfo.LikeRateAsFloat ?? 0) * 100:F0}%";
+            view.PlayerCountLabel.text = placeInfo.user_count.ToString();
+            view.DescriptionLabel.text = string.IsNullOrEmpty(placeInfo.description) ? "No description" : placeInfo.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            view.CoordinatesLabel.text = place.base_position;
-            view.ParcelCountLabel.text = place.Positions.Length.ToString();
-            view.StartNavigationButton.gameObject.SetActive(true);
+
+            bool isWorld = placeInfo.IsWorld;
+
+            view.CoordinatesLabel.text = isWorld ? placeInfo.world_name : placeInfo.base_position;
+            view.ParcelCountLabel.text = placeInfo.Positions.Length.ToString();
+
+            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
+            view.StartNavigationButton.gameObject.SetActive(!isWorld);
             view.StopNavigationButton.gameObject.SetActive(false);
-            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
+            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(placeInfo.creator_address));
 
-            likeButton.SetButtonState(place.user_like);
-            dislikeButton.SetButtonState(place.user_dislike);
+            likeButton.SetButtonState(placeInfo.user_like);
+            dislikeButton.SetButtonState(placeInfo.user_dislike);
 
-            if(place.IsEmptyPlace)
+            if(placeInfo.IsEmptyPlace)
                 view.FavoriteButton.SetButtonState(false, false);
             else
-                view.FavoriteButton.SetButtonState(place.user_favorite);
+                view.FavoriteButton.SetButtonState(placeInfo.user_favorite);
 
-            if (view.HomeButton != null)
+            if (homeButton != null)
             {
-                bool isHome = homePlaceEventBus.IsHome(place);
+                bool isHome = homePlaceEventBus.IsHome(placeInfo);
                 homeButton.SetButtonState(isHome);
             }
 
-            SetCategories(place);
+            SetCategories(placeInfo);
 
             ClearEventElements();
         }
 
-        public void SetOriginParcel(Vector2Int? originParcel)
+        public void SetOriginParcel(Vector2Int? parcel, bool landOnParcel = false)
         {
-            this.originParcel = originParcel;
+            this.originParcel = parcel;
+            landOnOriginParcel = landOnParcel && parcel.HasValue;
 
-            if (originParcel == null) return;
+            if (parcel == null) return;
             if (place == null) return;
             if (!TeleportUtils.IsRoad(place.title)) return;
 
-            view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
+            view.CoordinatesLabel.text = $"{parcel.Value.x},{parcel.Value.y}";
 
-            if(!homeButton.IsButtonOn)
-                homeButton.SetButtonState(!homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
+            if (homeButton != null && !homeButton.IsButtonOn)
+                homeButton.SetButtonState(!homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == parcel.Value);
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -249,31 +266,31 @@ namespace DCL.Navmap
             if (currentSection == section)
                 return false;
 
-            if (section != Section.PHOTOS)
+            if (section != Section.Photos)
             {
                 showPlaceGalleryCancellationToken?.SafeCancelAndDispose();
                 view.SetPhotoTabText(-1);
             }
 
-            view.EventsTabContainer.SetActive(section == Section.EVENTS);
-            view.EventsTabSelected.SetActive(section == Section.EVENTS);
-            view.OverviewTabContainer.SetActive(section == Section.OVERVIEW);
-            view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
-            view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
-            view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+            view.EventsTabContainer.SetActive(section == Section.Events);
+            view.EventsTabSelected.SetActive(section == Section.Events);
+            view.OverviewTabContainer.SetActive(section == Section.Overview);
+            view.OverviewTabSelected.SetActive(section == Section.Overview);
+            view.PhotosTabContainer.SetActive(section == Section.Photos);
+            view.PhotosTabSelected.SetActive(section == Section.Photos);
 
             currentSection = section;
             return true;
         }
 
-        private void SetCategories(PlacesData.PlaceInfo place)
+        private void SetCategories(PlacesData.PlaceInfo placeInfo)
         {
             foreach (PlaceInfoPanelView.AppearsOnCategory appearsOnCategory in view.AppearsOnCategories)
                 appearsOnCategory.container.SetActive(false);
 
             var anyCategoryIsShown = false;
 
-            foreach (string category in place.categories)
+            foreach (string category in placeInfo.categories)
             foreach (PlaceInfoPanelView.AppearsOnCategory appearsOnCategory in view.AppearsOnCategories)
                 if (appearsOnCategory.category.Equals(category, StringComparison.OrdinalIgnoreCase))
                 {
@@ -293,7 +310,7 @@ namespace DCL.Navmap
             async UniTaskVoid SetAsFavoriteAsync(CancellationToken ct)
             {
                 view.FavoriteButton.SetButtonState(isFavorite);
-                await placesAPIService.SetPlaceFavoriteAsync(place!.id, isFavorite, ct);
+                await placesApiService.SetPlaceFavoriteAsync(place!.id, isFavorite, ct);
             }
         }
 
@@ -304,7 +321,7 @@ namespace DCL.Navmap
 
             if (isHome)
             {
-                if (!string.IsNullOrEmpty(place.world_name))
+                if (place.IsWorld)
                 {
                     homePlaceEventBus.SetAsHome(place.world_name);
                 }
@@ -353,17 +370,23 @@ namespace DCL.Navmap
 
         private void JumpIn()
         {
-            if (destination == currentBaseParcel)
+            if (place == null) return;
+
+            Vector2Int? destinationParcel = (landOnOriginParcel || TeleportUtils.IsRoad(place.title)) && originParcel != null ? originParcel : currentBaseParcel;
+
+            // A place with nowhere to go is not reported as a jump-in.
+            if (!place.IsWorld && destinationParcel == null) return;
+
+            if (destination.HasValue && destination == currentBaseParcel)
                 mapPathEventBus.ArrivedToDestination();
 
-            navmapBus.JumpIn(place!);
+            navmapBus.JumpIn(place);
+            jumpInCancellationToken = jumpInCancellationToken.SafeRestart();
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
-
-            chatMessagesBus
-               .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
-                    $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
-                    ChatMessageOrigin.JUMP_IN);
+            if (place.IsWorld)
+                chatTeleporter.TeleportToRealmAsync(place.world_name, jumpInCancellationToken.Token).SuppressToResultAsync(ReportCategory.PLACES).Forget();
+            else
+                chatTeleporter.TeleportToParcelAsync(destinationParcel!.Value, local: false, jumpInCancellationToken.Token, landOnParcel: landOnOriginParcel).SuppressToResultAsync(ReportCategory.PLACES).Forget();
         }
 
         private void Share()
@@ -373,7 +396,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void OnLikeButtonClick(bool isEnabled)
         {
@@ -383,7 +406,7 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlaceAsync(isEnabled ? true : null, place!.id, ct);
+                await placesApiService.RatePlaceAsync(isEnabled ? true : null, place!.id, ct);
                 likeButton.SetButtonState(isEnabled);
                 dislikeButton.SetButtonState(false);
             }
@@ -397,7 +420,7 @@ namespace DCL.Navmap
 
             async UniTaskVoid RateAsync(CancellationToken ct)
             {
-                await placesAPIService.RatePlaceAsync(isEnabled ? false : null, place!.id, ct);
+                await placesApiService.RatePlaceAsync(isEnabled ? false : null, place!.id, ct);
                 likeButton.SetButtonState(false);
                 dislikeButton.SetButtonState(isEnabled);
             }
@@ -432,10 +455,19 @@ namespace DCL.Navmap
 
                     if (DateTime.TryParse(@event.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
                     {
-                        schedule = @event.live
-                            ? $"Event started {(DateTime.UtcNow - startAt).TotalMinutes} min ago"
-                            // TODO: we might need to convert to local, currently R:RFC1123 Fri, 18 Apr 2008 20:30:00 GMT
-                            : startAt.ToString("R");
+                        if (@event.live)
+                        {
+                            TimeSpan elapsed = DateTime.UtcNow - startAt;
+
+                            if (elapsed.TotalDays >= 1)
+                                schedule = $"Event started {(int)elapsed.TotalDays} day ago";
+                            else if (elapsed.TotalHours >= 1)
+                                schedule = $"Event started {(int)elapsed.TotalHours} hour ago";
+                            else
+                                schedule = $"Event started {(int)elapsed.TotalMinutes} min ago";
+                        }
+                        else
+                            schedule = startAt.ToString("R");
                     }
 
                     element.InterestedButton!.OnButtonClicked += interested =>
@@ -444,7 +476,7 @@ namespace DCL.Navmap
                         SetAsInterestedAsync(interested, @event, element, attendEventCancellationToken.Token).Forget();
                     };
                     element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
-                    element.ShareButton.onClick.AddListener(() => Share(@event, element));
+                    element.ShareButton.onClick.AddListener(() => ShareEvent(@event, element));
                     element.Thumbnail?.RequestImage(@event.image, true);
                     element.LiveContainer.SetActive(@event.live);
                     element.EventNameLabel.text = @event.name;
@@ -477,7 +509,7 @@ namespace DCL.Navmap
                 }
             }
 
-            void Share(EventDTO @event, EventElementView element)
+            void ShareEvent(EventDTO @event, EventElementView element)
             {
                 shareContextMenu.Set(@event);
                 shareContextMenu.Show(element.SharePivot);
@@ -509,23 +541,23 @@ namespace DCL.Navmap
         private void FetchPhotos()
         {
             showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
-            cameraReelGalleryController?.ShowPlaceGalleryAsync(place?.id, showPlaceGalleryCancellationToken!.Token).Forget();
+            cameraReelGalleryController?.ShowPlaceGalleryAsync(place!.id, showPlaceGalleryCancellationToken!.Token).Forget();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
             Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
                 true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention,
-                reelListRefreshIntention, galleryEventBus)));
+                reelListRefreshIntention, galleryEventBus!)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);
 
         public enum Section
         {
-            OVERVIEW,
-            PHOTOS,
-            EVENTS,
+            Overview,
+            Photos,
+            Events,
         }
     }
 }

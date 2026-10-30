@@ -36,8 +36,8 @@ namespace DCL.UI
 
     public enum OnlineStatus
     {
-        ONLINE,
-        AWAY,
-        OFFLINE
+        Online,
+        Away,
+        Offline
     }
 }

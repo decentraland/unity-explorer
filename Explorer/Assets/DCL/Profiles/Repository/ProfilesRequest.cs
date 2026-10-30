@@ -38,6 +38,11 @@ namespace DCL.Profiles
 
             Profile? profile = null;
 
+            // GET is idempotent, so transient failures are retried by the web request itself (#9878);
+            // the outer re-issue loop stays one-shot unless retryUntilResolved
+            RetryPolicy requestRetryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.DEFAULT;
+            RetryPolicy repeatPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
+
             while (repeatValues.shouldRepeat)
             {
                 attemptNumber++;
@@ -45,17 +50,15 @@ namespace DCL.Profiles
                 if (repeatValues.delay > TimeSpan.Zero)
                     await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
 
-                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
-
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, requestRetryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
                     serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
 
                 repeatValues = profile == null || profile.Version < version
-                    ? WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, null)
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, repeatPolicy, true, null)
                     : (false, TimeSpan.Zero);
             }
 
@@ -63,7 +66,8 @@ namespace DCL.Profiles
         }
 
         /// <summary>
-        ///     Post for a single profile
+        ///     Post for a single profile. Returns <c>null</c> when the POST succeeds without the profile; throws the last failure once the
+        ///     retries are spent, without reporting it.
         /// </summary>
         public static async UniTask<ProfileTier?> PostSingleAsync(IWebRequestController webRequestController, URLAddress url, string id, int version, RetryPolicy retryPolicy,
             CancellationToken ct)
@@ -86,7 +90,16 @@ namespace DCL.Profiles
 
                 tempProfiles.Clear();
 
-                await PostAsync(webRequestController, url, tempIds, tempProfiles, ct);
+                try { await SendPostAsync(webRequestController, url, tempIds, tempProfiles, ct); }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    repeatValues = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, e as UnityWebRequestException);
+
+                    if (!repeatValues.shouldRepeat)
+                        throw;
+
+                    continue;
+                }
 
                 // If batch contains incomplete data or an old version and still can be repeated, repeat the request with that data only
                 Profile? candidate = tempProfiles.FirstOrDefault();
@@ -100,7 +113,10 @@ namespace DCL.Profiles
             return profile;
         }
 
-        public static async UniTask<Result<IList<T>>> PostAsync<T>(IWebRequestController webRequestController, URLAddress url, IReadOnlyCollection<string> ids, IList<T> batch, CancellationToken ct)
+        public static async UniTask<Result<IList<T>>> PostAsync<T>(IWebRequestController webRequestController, URLAddress url, IReadOnlyCollection<string> ids, IList<T> batch, CancellationToken ct) =>
+            await SendPostAsync(webRequestController, url, ids, batch, ct).SuppressToResultAsync(ReportCategory.PROFILE);
+
+        private static UniTask<IList<T>> SendPostAsync<T>(IWebRequestController webRequestController, URLAddress url, IReadOnlyCollection<string> ids, IList<T> batch, CancellationToken ct)
         {
             var uploadHandler = new BufferedStringUploadHandler(CalculateExactSize(ids.Count));
 
@@ -120,13 +136,12 @@ namespace DCL.Profiles
 
             uploadHandler.WriteString("]}");
 
-            return await webRequestController.PostAsync(
-                                                  url,
-                                                  GenericPostArguments.CreateStringUploadHandler(uploadHandler, GenericPostArguments.JSON),
-                                                  ct,
-                                                  ReportCategory.PROFILE)
-                                             .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS)
-                                             .SuppressToResultAsync(ReportCategory.PROFILE);
+            return webRequestController.PostAsync(
+                                            url,
+                                            GenericPostArguments.CreateStringUploadHandler(uploadHandler, GenericPostArguments.JSON),
+                                            ct,
+                                            ReportCategory.PROFILE)
+                                       .OverwriteFromNewtonsoftJsonAsync(batch, WRThreadFlags.SwitchToThreadPool, serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
         }
 
         /// <summary>

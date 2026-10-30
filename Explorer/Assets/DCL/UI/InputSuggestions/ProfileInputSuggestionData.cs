@@ -18,6 +18,6 @@ namespace DCL.UI.SuggestionPanel
             ProfileData.UserId;
 
         public InputSuggestionType GetInputSuggestionType() =>
-            InputSuggestionType.PROFILE;
+            InputSuggestionType.Profile;
     }
 }

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using MVC;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -66,7 +65,7 @@ namespace DCL.UI.SuggestionPanel
         private async UniTask SearchAndSetSuggestionsAsync<T>(string value, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap, CancellationToken ct) where T : IInputSuggestionElementData
         {
             var resultList = new List<T>();
-            string searchValue = suggestionType == InputSuggestionType.EMOJIS ? value.Replace(":", "") : value;
+            string searchValue = suggestionType == InputSuggestionType.Emojis ? value.Replace(":", "") : value;
             await DictionaryUtils.GetKeysContainingTextAsync(suggestionDataMap, searchValue, resultList, ct);
 
             suggestionPanel.SetSuggestionValues(suggestionType, resultList);

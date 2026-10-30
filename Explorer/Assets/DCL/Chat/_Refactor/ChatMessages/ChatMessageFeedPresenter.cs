@@ -63,6 +63,8 @@ namespace DCL.Chat.ChatMessages
         // especially if the state machine grows further
         private bool isFocused;
 
+        private bool reactionRefreshScheduled;
+
         private bool separatorIsVisible => separatorFixedIndexFromBottom > -1;
 
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
@@ -204,12 +206,12 @@ namespace DCL.Chat.ChatMessages
             // It is possible that the current channel is not yet set (initialization is in progress)
             if (currentChannelService.CurrentChannel == null) return;
 
-            messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
+            messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel.Messages.Count;
         }
 
         private void TryAddNewMessagesSeparatorAfterPendingMessages()
         {
-            ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+            ChatChannel currentChannel = currentChannelService.CurrentChannel;
             int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
             if (unreadMessagesCount > 0)
@@ -292,7 +294,7 @@ namespace DCL.Chat.ChatMessages
             if (needsSeparator)
             {
                 if (messageCountWhenSeparatorViewed.HasValue)
-                    markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
+                    markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel, messageCountWhenSeparatorViewed.Value);
 
                 TryAddNewMessagesSeparatorAfterPendingMessages();
             }
@@ -310,7 +312,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (hasSeparator) return;
 
-            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel);
             view.ShowLastMessage();
         }
 
@@ -324,7 +326,7 @@ namespace DCL.Chat.ChatMessages
         {
             var request = new UserProfileMenuRequest
             {
-                WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero,
+                WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TopRight, Offset = Vector2.zero,
             };
 
             contextMenuService.ShowUserProfileMenuAsync(request).Forget();
@@ -340,7 +342,7 @@ namespace DCL.Chat.ChatMessages
                 chatConfig.ContextMenuOffset,
                 chatConfig.VerticalPadding,
                 chatConfig.ElementsSpacing,
-                anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
+                anchorPoint: ContextMenuOpenDirection.TopLeft);
 
             string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
             contextMenu.AddControl(new ButtonContextMenuControlSettings(
@@ -465,7 +467,7 @@ namespace DCL.Chat.ChatMessages
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
 
-                    ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+                    ChatChannel currentChannel = currentChannelService.CurrentChannel;
                     int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
                     if (unreadCount > 0)
@@ -483,7 +485,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel == null) return;
 
-            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel);
             scrollToBottomPresenter.OnScrolledToBottom();
         }
 
@@ -570,7 +572,29 @@ namespace DCL.Chat.ChatMessages
 
             viewModel.Reactions = currentChannelService.CurrentChannel.GetReactions(messageId);
             reactionInteraction.HideTooltip();
-            view.ReconstructScrollView(false);
+            ScheduleReactionRefresh();
+        }
+
+        // Reactions arrive one event per add/remove, so a burst would trigger a full
+        // scroll-view reconstruction per event — quadratic work. All reaction changes
+        // within a frame coalesce into a single rebuild on the next frame.
+        private void ScheduleReactionRefresh()
+        {
+            if (reactionRefreshScheduled) return;
+
+            reactionRefreshScheduled = true;
+            RefreshNextFrameAsync(loadChannelCts.Token).Forget();
+
+            async UniTaskVoid RefreshNextFrameAsync(CancellationToken ct)
+            {
+                bool cancelled = await UniTask.NextFrame(ct).SuppressCancellationThrow();
+                reactionRefreshScheduled = false;
+
+                if (cancelled) return;
+
+                try { view.ReconstructScrollView(false); }
+                catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
+            }
         }
 
         private void OnRequestScrollAction()

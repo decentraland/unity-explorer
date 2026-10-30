@@ -3,10 +3,10 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
-using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
+using ECS.TestSuite;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -23,6 +23,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private UpdateEmoteInputSystem system;
         private TestEmoteWheelShortcutHandler testShortcutHandler;
         private GameObject testGameObject;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
@@ -70,7 +78,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
         private Profile CreateProfileWithEmotes(params string[] emoteUrns)
         {
-            var profile = Profile.Create();
+            var profile = Profile.NewRandomProfile();
             var avatar = new Avatar();
 
             for (int i = 0; i < emoteUrns.Length && i < Avatar.MAX_EQUIPPED_EMOTES; i++)
@@ -95,7 +103,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
             var intent = world.Get<CharacterEmoteIntent>(entity);
             Assert.AreEqual("urn:decentraland:off-chain:base-avatars:wave", intent.EmoteId.ToString());
-            Assert.AreEqual(TriggerSource.SELF, intent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Self, intent.TriggerSource);
             Assert.IsTrue(intent.Spatial);
             Assert.IsFalse(world.Has<TriggerEmoteBySlotIntent>(entity), "TriggerEmoteBySlotIntent should be removed after processing");
         }
@@ -232,7 +240,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             // Assert - handler is notified with WheelSlot when trigger came from wheel intent (not Shortcut)
             Assert.AreEqual(1, testShortcutHandler.NotifyCalls.Count, "Handler should be notified once");
-            Assert.AreEqual(EmoteTriggerSource.WHEEL_SLOT, testShortcutHandler.NotifyCalls[0]);
+            Assert.AreEqual(EmoteTriggerSource.WheelSlot, testShortcutHandler.NotifyCalls[0]);
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity), "Emote should still be triggered");
         }
 

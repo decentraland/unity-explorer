@@ -1,4 +1,3 @@
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -9,9 +8,9 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PlacesAPIService;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -45,7 +44,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             IAnalyticsController analyticsController,
             bool localSceneDevelopment,
             bool enableAnalytics)
@@ -64,7 +63,7 @@ namespace DCL.PluginSystem.Global
             socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, EventBus);
 
             DonationsService = CreateDonationsService(scenesCache, ethereumApi, webRequestController, realmData, placesAPIService,
-                environment, dclUrlSource, localSceneDevelopment, analyticsController, enableAnalytics);
+                ethereumNetwork, dclUrlSource, localSceneDevelopment, analyticsController, enableAnalytics);
         }
 
         private static IDonationsService CreateDonationsService(
@@ -73,17 +72,17 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             IDecentralandUrlsSource urlsSource,
             bool localSceneDevelopment,
             IAnalyticsController analyticsController,
             bool enableAnalytics)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.Donations))
                 return new DonationsServiceDisabled();
 
             IDonationsService core = new DonationsService(scenesCache, ethereumApi, webRequestController, realmData,
-                placesAPIService, environment, urlsSource, localSceneDevelopment);
+                placesAPIService, ethereumNetwork, urlsSource, localSceneDevelopment);
 
             return enableAnalytics ? new DonationsServiceAnalyticsDecorator(core, analyticsController) : core;
         }

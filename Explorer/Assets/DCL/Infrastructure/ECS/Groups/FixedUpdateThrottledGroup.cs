@@ -1,5 +1,4 @@
 ﻿using Arch.SystemGroups;
-using UnityEngine;
 
 namespace ECS.Groups
 {

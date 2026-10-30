@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.Pools;
 using DCL.RealmNavigation;
 using DCL.Utility;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
@@ -45,7 +46,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), DecentralandEnvironment.Zone);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), EthereumNetwork.Sepolia);
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 loonCharacterObject,

@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.Chat;
 using DCL.FeatureFlags;
 using DCL.VoiceChat;
 using System;
@@ -23,7 +24,7 @@ namespace DCL.Communities.CommunitiesCard
 
             currentCommunityId = string.Empty;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
             {
                 view.StartStreamButton.onClick.AddListener(StartStream);
                 view.JoinStreamButton.onClick.AddListener(JoinStream);
@@ -60,13 +61,13 @@ namespace DCL.Communities.CommunitiesCard
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             ClosePanel?.Invoke();
-            voiceChatOrchestrator.StartCall(currentCommunityId, VoiceChatType.COMMUNITY);
+            voiceChatOrchestrator.StartCall(currentCommunityId, VoiceChatType.Community);
             SetPanelStatus(true, true, currentCommunityId);
         }
 
         public void Reset()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             view.VoiceChatPanel.SetActive(false);
@@ -74,12 +75,13 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetPanelStatus(bool isStreamRunning, bool isModOrAdmin, string communityId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             currentCommunityId = communityId;
 
-            view.VoiceChatPanel.SetActive(isStreamRunning || isModOrAdmin);
+            // The call controls live in the chat area
+            view.VoiceChatPanel.SetActive(ChatOpener.Instance.IsUserInWorld && (isStreamRunning || isModOrAdmin));
             view.ModeratorControlPanel.SetActive(!isStreamRunning && isModOrAdmin);
             view.LiveStreamPanel.SetActive(isStreamRunning);
 
@@ -88,7 +90,7 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetListenersCount(int listenersCount)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             stringBuilder.Clear();
@@ -101,7 +103,7 @@ namespace DCL.Communities.CommunitiesCard
 
         public void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             voiceChatOrchestrator.CurrentCommunityId.OnUpdate -= UpdateJoinLeaveButtonState;

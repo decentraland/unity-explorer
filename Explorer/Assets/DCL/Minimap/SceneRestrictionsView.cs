@@ -1,10 +1,5 @@
-using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DG.Tweening;
 using System;
-using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Minimap
 {
@@ -12,19 +7,17 @@ namespace DCL.Minimap
     {
         RectTransform SceneRestrictionsIcon { get; set; }
         GameObject RestrictionTextPrefab { get; set; }
+        CanvasGroup ToastCanvasGroup { get; set; }
         GameObject ToastTextParent { get; set; }
+        float FadeTime { get; set; }
+        RectTransform ToastRectTransform { get; set; }
 
-        void HideRestrictionToast();
-
-        UniTaskVoid CycleToastAsync();
+        event Action? OnPointerEnterEvent;
+        event Action? OnPointerExitEvent;
     }
 
     public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
     {
-        private CancellationTokenSource cts;
-        private float toastDeadline;
-        private bool isCycling;
-
         [field: SerializeField]
         public RectTransform SceneRestrictionsIcon { get; set; }
 
@@ -40,65 +33,20 @@ namespace DCL.Minimap
         [field: SerializeField]
         public float FadeTime { get; set; } = 0.3f;
 
-        [field: SerializeField]
-        public float CycleDurationTime { get; set; } = 3f;
+        public RectTransform ToastRectTransform { get; set; }
 
-        public void OnPointerEnter() => ShowRestrictionToast();
-        public void OnPointerExit() => HideRestrictionToast();
+        public event Action? OnPointerEnterEvent;
+        public event Action? OnPointerExitEvent;
 
-        private void ShowRestrictionToast()
-        {
-            ToastCanvasGroup.DOKill();
-            ToastCanvasGroup.gameObject.SetActive(true);
-            ToastCanvasGroup.DOFade(1f, FadeTime);
-        }
-
-        public void HideRestrictionToast()
-        {
-            ToastCanvasGroup.DOKill();
-            cts.Cancel();
-            ToastCanvasGroup.DOFade(0f, FadeTime).OnComplete(() => ToastCanvasGroup.gameObject.SetActive(false));
-        }
-
-        public async UniTaskVoid CycleToastAsync()
-        {
-            // Every caller pushes the hide time forward, so the toast stays visible as long as restrictions keep arriving.
-            toastDeadline = UnityEngine.Time.realtimeSinceStartup + CycleDurationTime;
-
-            if (isCycling) return;
-
-            isCycling = true;
-            cts = cts.SafeRestartLinked(this.GetCancellationTokenOnDestroy());
-
-            try
-            {
-                ShowRestrictionToast();
-
-                while (UnityEngine.Time.realtimeSinceStartup < toastDeadline)
-                {
-                    await UniTask.Delay(TimeSpan.FromSeconds(toastDeadline - UnityEngine.Time.realtimeSinceStartup), cancellationToken: cts.Token).SuppressCancellationThrow();
-
-                    if (cts.IsCancellationRequested)
-                        break;
-                }
-            }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
-            finally
-            {
-                isCycling = false;
-            }
-
-            if (!cts.IsCancellationRequested)
-                HideRestrictionToast();
-        }
+        public void OnPointerEnter() => OnPointerEnterEvent?.Invoke();
+        public void OnPointerExit() => OnPointerExitEvent?.Invoke();
 
         private void Awake()
         {
-            cts = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
-
             ToastCanvasGroup.alpha = 0;
             ToastCanvasGroup.gameObject.SetActive(false);
             SceneRestrictionsIcon.gameObject.SetActive(false);
+            ToastRectTransform = ToastCanvasGroup.GetComponent<RectTransform>();
         }
     }
 }

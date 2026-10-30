@@ -132,7 +132,7 @@ namespace DCL.UI
         private async void OnInviteToCommunitySubmenuScrollViewItemClickedAsync(int itemIndex)
         {
             invitationActionCts = invitationActionCts.SafeRestart();
-            Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token);
 
             if (result.Success)
                 NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(INVITE_SENT_TEXT));

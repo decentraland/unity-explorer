@@ -27,11 +27,11 @@ namespace DCL.Settings.ModuleControllers
         {
             switch (index)
             {
-                case (int)ChatPrivacySettings.ALL:
-                    chatSettingsAsset.OnPrivacySet(ChatPrivacySettings.ALL);
+                case (int)ChatPrivacySettings.All:
+                    chatSettingsAsset.OnPrivacySet(ChatPrivacySettings.All);
                     break;
-                case (int)ChatPrivacySettings.ONLY_FRIENDS:
-                    chatSettingsAsset.OnPrivacySet(ChatPrivacySettings.ONLY_FRIENDS);
+                case (int)ChatPrivacySettings.OnlyFriends:
+                    chatSettingsAsset.OnPrivacySet(ChatPrivacySettings.OnlyFriends);
                     break;
                 default:
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatPrivacySettingsController: {index}");

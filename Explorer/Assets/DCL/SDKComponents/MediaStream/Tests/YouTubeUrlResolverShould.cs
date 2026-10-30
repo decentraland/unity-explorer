@@ -1,4 +1,3 @@
-#if AV_PRO_PRESENT
 using Cysharp.Threading.Tasks;
 using DCL.SDKComponents.MediaStream.YouTube;
 using NSubstitute;
@@ -11,9 +10,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class YouTubeUrlResolverShould
     {
-        private IYouTubeVideoClient client;
+        private IYouTubeVideoClient client = null!;
         private float fakeTime;
-        private YouTubeUrlResolver resolver;
+        private YouTubeUrlResolver resolver = null!;
 
         [SetUp]
         public void SetUp()
@@ -147,16 +146,16 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenUrlHintsLive_SkipsVideoInfoCheckAndReturnsHlsUrl()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
-            const string hlsUrl = "https://manifest.googlevideo.com/hls/manifest.m3u8";
+            const string URL = "https://www.youtube.com/live/abc123def456";
+            const string HLS_URL = "https://manifest.googlevideo.com/hls/manifest.m3u8";
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
-                  .Returns(UniTask.FromResult(hlsUrl));
+                  .Returns(UniTask.FromResult(HLS_URL));
 
-            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Value.DirectUrl, Is.EqualTo(hlsUrl));
+            Assert.That(result!.Value.DirectUrl, Is.EqualTo(HLS_URL));
             Assert.That(result.Value.IsLiveStream, Is.True);
 
             // Live URL hint skips the IsLiveStreamAsync check entirely
@@ -166,12 +165,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenHlsUrlIsEmpty_ReturnsNull()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
+            const string URL = "https://www.youtube.com/live/abc123def456";
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(string.Empty));
 
-            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             Assert.That(result, Is.Null);
         }
@@ -179,19 +178,19 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenVodIsLive_ReturnsHlsUrl()
         {
-            const string url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-            const string hlsUrl = "https://manifest.googlevideo.com/hls/manifest.m3u8";
+            const string URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            const string HLS_URL = "https://manifest.googlevideo.com/hls/manifest.m3u8";
 
             client.IsLiveStreamAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(true));
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
-                  .Returns(UniTask.FromResult(hlsUrl));
+                  .Returns(UniTask.FromResult(HLS_URL));
 
-            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Value.DirectUrl, Is.EqualTo(hlsUrl));
+            Assert.That(result!.Value.DirectUrl, Is.EqualTo(HLS_URL));
             Assert.That(result.Value.IsLiveStream, Is.True);
         }
 
@@ -202,13 +201,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenCalledTwiceWithSameUrl_CallsClientOnlyOnce()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
+            const string URL = "https://www.youtube.com/live/abc123def456";
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult("https://manifest.googlevideo.com/hls/manifest.m3u8"));
 
-            await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
-            await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
+            await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             await client.Received(1).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
@@ -216,17 +215,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenCacheExpired_ReResolvesUrl()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
+            const string URL = "https://www.youtube.com/live/abc123def456";
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult("https://manifest.googlevideo.com/hls/manifest.m3u8"));
 
-            await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             // Advance time past TTL
             fakeTime += YouTubeUrlResolver.CACHE_TTL_SECONDS + 1f;
 
-            await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             await client.Received(2).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
@@ -234,21 +233,21 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenCacheStillValid_ReturnsCachedResult()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
-            const string hlsUrl = "https://manifest.googlevideo.com/hls/manifest.m3u8";
+            const string URL = "https://www.youtube.com/live/abc123def456";
+            const string HLS_URL = "https://manifest.googlevideo.com/hls/manifest.m3u8";
 
             client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
-                  .Returns(UniTask.FromResult(hlsUrl));
+                  .Returns(UniTask.FromResult(HLS_URL));
 
-            await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             // Advance time but stay within TTL
             fakeTime += YouTubeUrlResolver.CACHE_TTL_SECONDS - 60f;
 
-            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
+            ResolvedYouTubeUrl? result = await resolver.ResolveAsync(URL, CancellationToken.None).AsTask();
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Value.DirectUrl, Is.EqualTo(hlsUrl));
+            Assert.That(result!.Value.DirectUrl, Is.EqualTo(HLS_URL));
             await client.Received(1).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
 
@@ -266,4 +265,3 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
-#endif

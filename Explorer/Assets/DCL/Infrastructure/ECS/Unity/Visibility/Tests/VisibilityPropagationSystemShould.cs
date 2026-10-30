@@ -55,7 +55,7 @@ namespace ECS.Unity.Visibility.Tests
         /// </summary>
         private void RunSystemUpdate()
         {
-            system!.Update(0f);
+            system.Update(0f);
 
             // Reset dirty flags like ResetDirtyFlagSystem would do
             var query = new QueryDescription().WithAll<PBVisibilityComponent>();

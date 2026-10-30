@@ -22,17 +22,21 @@ namespace DCL.Chat.ChatCommands
                                                .SuppressCancellationThrow()
                                                .SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
+            // result.Value is default on cancellation or failure and must not be decoded as a user state
+            if (ct.IsCancellationRequested || !result.Success)
+                return CallButtonPresenter.OtherUserCallStatus.UserOffline;
+
             switch (result.Value.Result.ChatUserState)
             {
-                case PrivateConversationUserStateService.ChatUserState.CONNECTED:
-                    return CallButtonPresenter.OtherUserCallStatus.USER_AVAILABLE;
-                case PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                    return CallButtonPresenter.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
-                case PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                    return CallButtonPresenter.OtherUserCallStatus.USER_REJECTS_CALLS;
-                case PrivateConversationUserStateService.ChatUserState.BLOCKED_BY_OWN_USER:
-                case PrivateConversationUserStateService.ChatUserState.DISCONNECTED:
-                default: return CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE;
+                case PrivateConversationUserStateService.ChatUserState.Connected:
+                    return CallButtonPresenter.OtherUserCallStatus.UserAvailable;
+                case PrivateConversationUserStateService.ChatUserState.PrivateMessagesBlockedByOwnUser:
+                    return CallButtonPresenter.OtherUserCallStatus.OwnUserRejectsCalls;
+                case PrivateConversationUserStateService.ChatUserState.PrivateMessagesBlocked:
+                    return CallButtonPresenter.OtherUserCallStatus.UserRejectsCalls;
+                case PrivateConversationUserStateService.ChatUserState.BlockedByOwnUser:
+                case PrivateConversationUserStateService.ChatUserState.Disconnected:
+                default: return CallButtonPresenter.OtherUserCallStatus.UserOffline;
             }
         }
     }

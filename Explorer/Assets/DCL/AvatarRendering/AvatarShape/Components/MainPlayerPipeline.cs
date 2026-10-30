@@ -24,6 +24,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private NativeArray<float4x4> avatarMatrix;
         private NativeArray<bool> updateFlag;
 
+        // The main player is never culled, so these carry no meaning here. They exist because the shared job
+        // structs declare the containers, and Unity requires every one of them to be valid at schedule time.
+        private NativeArray<float4x4> avatarLocalToWorld;
+        private NativeArray<float3x2> localBounds;
+        private NativeArray<float3x2> worldBounds;
+
+        private NativeArray<int> perAvatarBoneCount;
+
         public BoneMatrixCalculationJob Job;
 
         internal MainPlayerPipeline(int bonesArrayLength)
@@ -34,7 +42,20 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             bonesCombined = new NativeArray<float4x4>(bonesArrayLength, Allocator.Persistent);
             avatarMatrix = new NativeArray<float4x4>(1, Allocator.Persistent);
             updateFlag = new NativeArray<bool>(1, Allocator.Persistent);
+            avatarLocalToWorld = new NativeArray<float4x4>(1, Allocator.Persistent);
+            localBounds = new NativeArray<float3x2>(1, Allocator.Persistent);
+            worldBounds = new NativeArray<float3x2>(1, Allocator.Persistent);
+            perAvatarBoneCount = new NativeArray<int>(1, Allocator.Persistent) { [0] = bonesArrayLength };
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesArrayLength, bonesCombined);
+        }
+
+        /// <summary>
+        ///     Refreshes the matrix count for the main player from the authoritative
+        ///     AvatarCustomSkinningComponent.BoneCount. Called every frame before ScheduleAndComplete.
+        /// </summary>
+        public void SetBoneCount(int boneCount)
+        {
+            perAvatarBoneCount[0] = boneCount;
         }
 
         public void Register(Transform rootTransform, BoneArray bones, Transform dummyTransform)
@@ -69,13 +90,21 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             var boneGather = new BoneGatherJob { BonesCombined = bonesCombined };
             var boneGatherHandle = boneGather.Schedule(bonesTA);
 
-            var rootGather = new AvatarRootGatherJob { MatrixFromAllAvatars = avatarMatrix };
+            var rootGather = new AvatarRootGatherJob
+            {
+                MatrixFromAllAvatars = avatarMatrix,
+                LocalToWorldFromAllAvatars = avatarLocalToWorld,
+            };
             var rootGatherHandle = rootGather.Schedule(rootTA);
 
             var gatherHandle = JobHandle.CombineDependencies(boneGatherHandle, rootGatherHandle);
 
             Job.AvatarTransform = avatarMatrix;
             Job.UpdateAvatar = updateFlag;
+            Job.PerAvatarBoneCount = perAvatarBoneCount;
+            Job.AvatarLocalToWorld = avatarLocalToWorld;
+            Job.LocalBounds = localBounds;
+            Job.WorldBounds = worldBounds;
             var calcHandle = Job.Schedule(1, 1, gatherHandle);
             calcHandle.Complete(); // Fast — 1 avatar, 62 bones. Unlocks main player transforms.
         }
@@ -85,6 +114,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             bonesCombined.Dispose();
             avatarMatrix.Dispose();
             updateFlag.Dispose();
+            perAvatarBoneCount.Dispose();
+            avatarLocalToWorld.Dispose();
+            localBounds.Dispose();
+            worldBounds.Dispose();
             Job.Dispose();
 
             if (bonesTA.isCreated) bonesTA.Dispose();

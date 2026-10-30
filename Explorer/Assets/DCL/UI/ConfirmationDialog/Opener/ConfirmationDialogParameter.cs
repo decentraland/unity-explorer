@@ -1,4 +1,3 @@
-#nullable enable
 using DCL.Profiles;
 using System;
 using UnityEngine;
@@ -45,7 +44,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
 
     public enum ConfirmationResult
     {
-        CONFIRM,
-        CANCEL,
+        Confirm,
+        Cancel,
     }
 }

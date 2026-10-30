@@ -6,7 +6,6 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
@@ -23,6 +22,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.SkyBox;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -45,7 +45,6 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
@@ -121,7 +120,9 @@ namespace SceneRunner.Tests
                 string.Empty);
         }
 
-        [OneTimeTearDown]
+        // Not [OneTimeTearDown]: NUnit awaits an async one-time teardown by blocking the main thread,
+        // which deadlocks DisposeAsync whenever it has to yield for an in-flight scene tick.
+        [TearDown]
         public async Task TearDown()
         {
             foreach (ISceneFacade sceneFacade in sceneFacades)
@@ -257,6 +258,62 @@ namespace SceneRunner.Tests
         }
 
         [Test]
+        public async Task FreezeUpdateLoopOnZeroTargetFps()
+        {
+            // Arrange
+            const int DURATION = 500;
+
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, new SceneStateProvider()));
+            sceneFacades.Add(sceneFacade);
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
+
+            await UniTask.SwitchToThreadPool();
+
+            // Provide basic Thread Pool synchronization context
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            // Act
+            await sceneFacade.StartUpdateLoopAsync(0, cancellationTokenSource.Token);
+
+            // Assert: the first tick runs, then the loop idles instead of sleeping for an overflowed interval
+            await runtime.Received(1).StartScene();
+            await runtime.Received(1).UpdateScene(Arg.Any<float>());
+        }
+
+        [Test]
+        public async Task ResumeUpdateLoopWhenTargetFpsIsRestored()
+        {
+            // Arrange
+            const int FROZEN_DURATION = 200;
+            const int DURATION = 800;
+
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, new SceneStateProvider()));
+            sceneFacades.Add(sceneFacade);
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
+
+            await UniTask.SwitchToThreadPool();
+
+            // Provide basic Thread Pool synchronization context
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            // Act
+            UniTask updateLoop = sceneFacade.StartUpdateLoopAsync(0, cancellationTokenSource.Token);
+            await Task.Delay(FROZEN_DURATION);
+            sceneFacade.SetTargetFps(60);
+            await updateLoop;
+
+            // Assert: ticks resumed after the frozen period (the frozen period contributes exactly one tick)
+            int updateCalls = runtime.ReceivedCalls().Count(call => call.GetMethodInfo().Name == nameof(ISceneRuntime.UpdateScene));
+            Assert.Greater(updateCalls, 1);
+        }
+
+        [Test]
         public async Task DisposeEverythingOnce()
         {
             const int DURATION = 1000;
@@ -282,6 +339,7 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.EngineAPI));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RestrictedActionsAPI));
 
             await UniTask.SwitchToThreadPool();
 
@@ -349,11 +407,10 @@ namespace SceneRunner.Tests
             {
                 sceneFacade.deps.Runtime.Dispose();
 
-                // World facade is not mockable
-                // sceneFacade.deps.SyncDeps.ECSWorldFacade.Dispose();
+                // The synchronizer goes before the world it writes to; the world facade itself is not mockable
+                sceneFacade.deps.SyncDeps.CRDTWorldSynchronizer.Dispose();
                 sceneFacade.deps.SyncDeps.CRDTProtocol.Dispose();
                 sceneFacade.deps.SyncDeps.OutgoingCRDTMessagesProvider.Dispose();
-                sceneFacade.deps.SyncDeps.CRDTWorldSynchronizer.Dispose();
                 sceneFacade.deps.SyncDeps.PoolsProvider.Dispose();
                 sceneFacade.deps.SyncDeps.CRDTMemoryAllocator.Dispose();
 
@@ -365,7 +422,9 @@ namespace SceneRunner.Tests
 
         public class TestDeps : SceneInstanceDependencies.WithRuntimeAndJsAPIBase
         {
-            public TestDeps(IECSWorldFactory worldFactory) : base(
+            public TestDeps(IECSWorldFactory worldFactory) : this(worldFactory, CreateSceneStateProvider()) { }
+
+            public TestDeps(IECSWorldFactory worldFactory, ISceneStateProvider sceneStateProvider) : base(
                 Substitute.For<IEngineApi>(),
                 Substitute.For<IRestrictedActionsAPI>(),
                 Substitute.For<IRuntime>(),
@@ -379,7 +438,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTMemoryAllocator>(),
                     Substitute.For<IOutgoingCRDTMessagesProvider>(),
                     Substitute.For<IEntityCollidersSceneCache>(),
-                    CreateSceneStateProvider(),
+                    sceneStateProvider,
                     Substitute.For<ISceneExceptionsHandler>(),
                     worldFactory.CreateWorld(new ECSWorldFactoryArgs()),
                     Substitute.For<ICRDTWorldSynchronizer>(),
@@ -388,7 +447,6 @@ namespace SceneRunner.Tests
                     Substitute.For<ISceneData>(),
                     new MultiThreadSync(new SceneShortInfo()),
                     Substitute.For<ICRDTDeserializer>(),
-                    Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
                     new ECSWorldInstanceSharedDependencies()

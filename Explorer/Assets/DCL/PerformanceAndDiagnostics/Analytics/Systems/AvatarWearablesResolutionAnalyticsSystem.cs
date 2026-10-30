@@ -3,12 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS.Abstract;
-using Newtonsoft.Json.Linq;
-using System;
 
 namespace DCL.Analytics.Systems
 {

@@ -1,8 +1,5 @@
 ﻿using Arch.Core;
 using DCL.SDKComponents.AudioSources;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;

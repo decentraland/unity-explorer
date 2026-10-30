@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using NSubstitute;
 using NUnit.Framework;
@@ -8,7 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class SceneReadinessReportQueueShould

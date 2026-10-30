@@ -1,6 +1,8 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Utility;
+using DCL.Utility.Types;
 using ECS;
 using System;
 
@@ -10,6 +12,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
     {
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; }
         public IRealmData RealmData { get; }
+        public string HardwareFingerprint { get; }
 
         public bool IsCommsOffline => RealmData.CommsAdapter.Contains("offline:offline");
 
@@ -21,10 +24,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             IDecentralandUrlsSource decentralandUrlsSource,
             ISceneRoomMetaDataSource play,
             ISceneRoomMetaDataSource localSceneDevelopment,
-            IRealmData realmData
+            IRealmData realmData,
+            Option<HardwareFingerprintProvider> hardwareFingerprintProvider
         )
         {
             RealmData = realmData;
+            HardwareFingerprint = hardwareFingerprintProvider.Has ? hardwareFingerprintProvider.Value.Fingerprint : string.Empty;
             SceneRoomMetaDataSource = launchMode.CurrentMode switch
                                       {
                                           LaunchMode.Play => play,

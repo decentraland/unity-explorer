@@ -1,7 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿using DCL.Ipfs;
 using System;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace SceneRunner.Scene
 {
@@ -13,6 +11,9 @@ namespace SceneRunner.Scene
         public string[] files;
         public int exitCode;
         public string date;
+
+        /// <summary>Present once the LOD lane has published content-addressed LOD names.</summary>
+        public SceneAbLodsDto? lods;
 
         public string Version => version;
         public string Date => date;

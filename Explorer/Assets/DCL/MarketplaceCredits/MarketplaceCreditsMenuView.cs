@@ -11,11 +11,11 @@ namespace DCL.MarketplaceCredits
 {
     public enum MarketplaceCreditsSection
     {
-        WELCOME,
-        VERIFY_EMAIL,
-        GOALS_OF_THE_WEEK,
-        WEEK_GOALS_COMPLETED,
-        PROGRAM_ENDED,
+        Welcome,
+        VerifyEmail,
+        GoalsOfTheWeek,
+        WeekGoalsCompleted,
+        ProgramEnded,
     }
 
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement, IView, IPointerClickHandler

@@ -42,7 +42,7 @@ namespace CRDT.CRDTTests.Protocol
                     parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction
                     {
                         fileName = filePath,
-                        instructionType = ParsedCRDTTestFile.InstructionType.FINAL_STATE,
+                        instructionType = ParsedCRDTTestFile.InstructionType.FinalState,
                         instructionValue = line,
                         lineNumber = lineNumber,
                         testSpect = testSpecName,
@@ -56,7 +56,7 @@ namespace CRDT.CRDTTests.Protocol
                     parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction
                     {
                         fileName = filePath,
-                        instructionType = ParsedCRDTTestFile.InstructionType.MESSAGE,
+                        instructionType = ParsedCRDTTestFile.InstructionType.Message,
                         instructionValue = line,
                         lineNumber = lineNumber,
                         testSpect = testSpecName,

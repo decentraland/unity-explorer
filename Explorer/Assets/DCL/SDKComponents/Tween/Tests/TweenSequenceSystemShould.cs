@@ -2,14 +2,12 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Systems;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using ECS.Unity.Materials.Components;
-using ECS.Unity.Materials;
 using System.Threading.Tasks;
 using Entity = Arch.Core.Entity;
 using SDKTransform = CrdtEcsBridge.Components.Transform.SDKTransform;
@@ -719,7 +717,7 @@ namespace DCL.SDKComponents.Tween.Tests
             {
                 await Task.Delay(updateInterval);
                 currentInterval += updateInterval;
-                system!.Update(updateInterval);
+                system.Update(updateInterval);
 
                 var pbTween = world.TryGetRef<PBTween>(testEntity, out bool tweenExists);
                 pbTween.IsDirty = false;

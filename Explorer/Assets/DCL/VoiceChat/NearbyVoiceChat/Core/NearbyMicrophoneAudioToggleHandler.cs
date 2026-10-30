@@ -5,8 +5,8 @@ using System;
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Plays start/stop speaking SFX on user-driven <see cref="NearbyVoiceChatState.IDLE"/> ↔
-    ///     <see cref="NearbyVoiceChatState.OPEN_MIC"/> transitions only.
+    ///     Plays start/stop speaking SFX on user-driven <see cref="NearbyVoiceChatState.Idle"/> ↔
+    ///     <see cref="NearbyVoiceChatState.OpenMic"/> transitions only.
     ///     A Suppress() force-stop also produces an OPEN_MIC → IDLE tick, so the off-cue is gated on
     ///     <see cref="NearbyVoiceChatStateModel.ActiveSuppression"/> being null (Suppress sets the reason
     ///     before calling StopSpeaking, making it observable here). Resume always returns to IDLE
@@ -47,13 +47,13 @@ namespace DCL.VoiceChat.Nearby
             NearbyVoiceChatState prev = previousState;
             previousState = newState;
 
-            bool isUserStart = prev == NearbyVoiceChatState.IDLE && newState == NearbyVoiceChatState.OPEN_MIC;
-            bool isUserStop = prev == NearbyVoiceChatState.OPEN_MIC && newState == NearbyVoiceChatState.IDLE
+            bool isUserStart = prev == NearbyVoiceChatState.Idle && newState == NearbyVoiceChatState.OpenMic;
+            bool isUserStop = prev == NearbyVoiceChatState.OpenMic && newState == NearbyVoiceChatState.Idle
                                                                    && stateModel.ActiveSuppression.Value == null;
 
             if (!isUserStart && !isUserStop) return;
 
-            float volumeScale = stateModel.CurrentActivation == NearbyVoiceActivation.PUSH_TO_TALK
+            float volumeScale = stateModel.CurrentActivation == NearbyVoiceActivation.PushToTalk
                 ? configuration.NearbyPushToTalkVolumeScale
                 : DEFAULT_VOLUME_SCALE;
 

@@ -5,7 +5,6 @@ using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
 using DCL.Input.Systems;
-using DCL.InWorldCamera;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems
@@ -70,7 +69,7 @@ namespace DCL.CharacterCamera.Systems
                 if (currentDelta.sqrMagnitude > CURSOR_DIRTY_THRESHOLD)
                     cursorComponent.PositionIsDirty = true;
 
-                cameraInput.Delta = cursorComponent.CursorState != CursorState.Free && cursorComponent.CursorState != CursorState.LockedWithUI ? currentDelta : Vector2.zero;
+                cameraInput.Delta = cursorComponent.CursorState != CursorState.Free && cursorComponent.CursorState != CursorState.LockedWithUi ? currentDelta : Vector2.zero;
             }
 
             if (!freeCameraActions.enabled)

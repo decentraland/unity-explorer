@@ -37,28 +37,36 @@ namespace DCL.Navmap
         public GameObject LiveContainer { get; private set; }
 
         private ImageController? imageController;
+        private Sprite? placeholderImage;
 
         public Vector2Int coords;
+
+        public bool IsHoverEnabled = true;
 
         public event Action<bool, Vector2Int> OnMouseHover;
 
         public void ConfigurePlaceImageController(ImageControllerProvider imageControllerProvider)
         {
+            // The prefab authors the placeholder thumbnail on the image itself; capture it before the first request
+            // overwrites it, so a place carrying no thumbnail url still shows something.
+            placeholderImage = placeImage.ImageSprite;
             imageController = imageControllerProvider.Create(placeImage);
         }
 
         public void SetPlaceImage(string imageUrl) =>
-            imageController?.RequestImage(imageUrl, true);
+            imageController?.RequestImage(imageUrl, true, defaultSprite: placeholderImage);
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            OnMouseHover?.Invoke(true, coords);
+            if (IsHoverEnabled)
+                OnMouseHover?.Invoke(true, coords);
             arrowImage.gameObject.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            OnMouseHover?.Invoke(false, coords);
+            if (IsHoverEnabled)
+                OnMouseHover?.Invoke(false, coords);
             arrowImage.gameObject.SetActive(false);
         }
 

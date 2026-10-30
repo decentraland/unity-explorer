@@ -4,7 +4,6 @@ namespace DCL.Browser.DecentralandUrls
     {
         Org = 0,
         Zone = 1,
-        Today = 2,
         Localhost = 3,
         Custom = 4,
     }

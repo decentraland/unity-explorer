@@ -1,5 +1,4 @@
-﻿using DCL.Communities.CommunitiesCard;
-using DCL.Communities.CommunitiesCard.Members;
+﻿using DCL.Communities.CommunitiesCard.Members;
 using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
@@ -21,6 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunityRequestsReceivedGroupView : MonoBehaviour
     {
         private const int REQUESTS_RECEIVED_MEMBER_CARDS_POOL_DEFAULT_CAPACITY = 5;
+
         private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new (0.0f, -26.0f);
 
         public event Action<string>? CommunityButtonClicked;
@@ -74,7 +74,7 @@ namespace DCL.Communities.CommunitiesBrowser
                          .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor)));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportOptionSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor));
         }
 
@@ -91,6 +91,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityId(string id) =>
             CommunityId = id;
+
+        public void SetCompactLayout(bool compact) =>
+            CommunityCardsLayout.Apply(requestReceivedMembersGridContainer.GetComponent<GridLayoutGroup>(), compact);
 
         public void SetTitle(string title) =>
             communityTitle.text = title;
@@ -133,7 +136,7 @@ namespace DCL.Communities.CommunitiesBrowser
             MemberListItemView requestReceivedMemberView = requestsReceivedMembersPool!.Get();
 
             // Setup card data
-            requestReceivedMemberView.Configure(memberProfile, MembersListView.MemberListSections.REQUESTS, false, profileRepositoryWrapper!);
+            requestReceivedMemberView.Configure(memberProfile, MembersListView.MemberListSections.Requests, false, profileRepositoryWrapper!);
 
             // Setup card events
             requestReceivedMemberView.SubscribeToInteractions(member => OpenProfilePassportRequested?.Invoke(member),
@@ -150,7 +153,7 @@ namespace DCL.Communities.CommunitiesBrowser
             lastClickedProfileCtx = profile;
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
-            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.Friend ? status : UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
             elementView.CanUnHover = false;
 
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;

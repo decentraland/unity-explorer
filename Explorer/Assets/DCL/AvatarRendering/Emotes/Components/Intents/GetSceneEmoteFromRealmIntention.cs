@@ -3,14 +3,12 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Ipfs;
-using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -37,7 +35,7 @@ namespace DCL.AvatarRendering.Emotes
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
-            AssetSource permittedSources = AssetSource.ALL,
+            AssetSource permittedSources = AssetSource.All,
             int timeout = StreamableLoadingDefaults.TIMEOUT
         ) : this()
         {
@@ -59,11 +57,12 @@ namespace DCL.AvatarRendering.Emotes
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
+            // Scene emotes are scene content — resolve to the digest-bearing name so URL and cache identity match the scene's ABs.
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
-                    this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    SceneAssetBundleManifestVersion.GetCdnRequestHash(this.EmoteHash),
+                    SceneAssetBundleManifestVersion,
                     typeof(GameObject),
-                    assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,

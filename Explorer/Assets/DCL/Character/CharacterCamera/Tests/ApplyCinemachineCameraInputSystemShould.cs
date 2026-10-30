@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
@@ -10,7 +11,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     public class ApplyCinemachineCameraInputSystemShould : InputTestFixture
     {
@@ -261,7 +262,7 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             Vector3 lookAtTarget = new Vector3(10, 0, 10);
             Vector3 playerPosition = Vector3.zero;
-            world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.SDKCamera });
+            world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.SdkCamera });
             world.Add(entity, new CameraLookAtIntent(lookAtTarget, playerPosition));
 
             // Act

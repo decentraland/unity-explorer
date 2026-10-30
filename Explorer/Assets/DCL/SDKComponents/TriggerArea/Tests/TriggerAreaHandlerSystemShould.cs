@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             Assert.IsTrue(world.Has<TriggerAreaComponent>(entity));
             Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
-            Assert.AreEqual(SDKEntityTriggerAreaMeshType.SPHERE, triggerAreaComponent.MeshType);
+            Assert.AreEqual(SDKEntityTriggerAreaMeshType.Sphere, triggerAreaComponent.MeshType);
             Assert.AreEqual(ColliderLayer.ClCustom3, triggerAreaComponent.LayerMask);
         }
 
@@ -386,7 +386,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             system.Update(0);
 
             // Run TryAssignArea: monoBehaviour.TargetTransform should be the main player transform.
-            var pool = Substitute.For<DCL.Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
+            var pool = Substitute.For<Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
             var area = CreateAndAttachAreaMonoBehaviour(entity);
             pool.Get().Returns(area);
 
@@ -419,7 +419,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             world.Add(entity, pbTriggerArea);
             system.Update(0);
 
-            var pool = Substitute.For<DCL.Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
+            var pool = Substitute.For<Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
             var area = CreateAndAttachAreaMonoBehaviour(entity);
             pool.Get().Returns(area);
 
@@ -453,7 +453,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             world.Add(entity, pbTriggerArea);
             system.Update(0);
 
-            var pool = Substitute.For<DCL.Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
+            var pool = Substitute.For<Optimization.Pools.IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>>();
             var area = CreateAndAttachAreaMonoBehaviour(entity);
             pool.Get().Returns(area);
 

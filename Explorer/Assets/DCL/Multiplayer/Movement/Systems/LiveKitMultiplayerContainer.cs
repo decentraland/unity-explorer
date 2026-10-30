@@ -1,6 +1,6 @@
-﻿using DCL.FeatureFlags;
-using DCL.Friends.UserBlocking;
+﻿using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement.Settings;
@@ -8,7 +8,6 @@ using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using System;
 
 namespace DCL.Multiplayer.Movement
@@ -25,12 +24,12 @@ namespace DCL.Multiplayer.Movement
             IRoomHub roomHub,
             IMessagePipesHub messagePipesHub,
             MovementInbox movementInbox,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IUserBlockingCache userBlockingCache,
-            MultiplayerDebugSettings multiplayerDebugSettings)
+            MultiplayerDebugSettings multiplayerDebugSettings,
+            PulseActivation pulseActivation)
         {
-            bool backwardCompatibilityMode = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);
-            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, backwardCompatibilityMode);
+            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, pulseActivation);
 
             RemoteAnnouncements = new LiveKitRemoteAnnouncements(messagePipesHub, broadcaster);
             ProfileBroadcast = new DebounceLiveKitProfileBroadcast(new LiveKitProfileBroadcast(selfProfile, broadcaster));

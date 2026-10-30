@@ -32,8 +32,8 @@ namespace ECS.StreamableLoading.Common.Components
         public CommonLoadingArguments(URLAddress url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
-            AssetSource permittedSources = AssetSource.WEB,
-            AssetSource currentSource = AssetSource.WEB,
+            AssetSource permittedSources = AssetSource.Web,
+            AssetSource currentSource = AssetSource.Web,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             URL = url;
@@ -51,9 +51,9 @@ namespace ECS.StreamableLoading.Common.Components
         public CommonLoadingArguments(string url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
-            AssetSource permittedSources = AssetSource.WEB,
-            AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null) :
+            AssetSource permittedSources = AssetSource.Web,
+            AssetSource currentSource = AssetSource.Web,
+            CancellationTokenSource? cancellationTokenSource = null) :
             this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase

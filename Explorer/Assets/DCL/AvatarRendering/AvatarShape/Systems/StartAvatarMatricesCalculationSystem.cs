@@ -29,6 +29,9 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             RegisterMainPlayerQuery(World);
             RegisterRemoteAvatarsQuery(World);
+
+            RefreshPerAvatarJobInputsQuery(World);
+
             avatarTransformMatrixBatchJob.ScheduleBoneMatrixCalculation();
         }
 
@@ -53,6 +56,14 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
 
             avatarTransformMatrixBatchJob.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void RefreshPerAvatarJobInputs(ref AvatarTransformMatrixComponent transformMatrixComponent, in AvatarCustomSkinningComponent skinningComponent)
+        {
+            avatarTransformMatrixBatchJob.SetBoneCount(ref transformMatrixComponent, skinningComponent.BoneCount);
+            avatarTransformMatrixBatchJob.SetLocalBounds(ref transformMatrixComponent, skinningComponent.LocalBounds);
         }
     }
 }

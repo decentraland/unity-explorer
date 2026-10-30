@@ -8,8 +8,15 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 {
     public static class HoverFeedbackUtils
     {
-        public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, in GlobalColliderSceneEntityInfo previousSceneEntityInfo)
+        /// <summary>
+        ///     Issues the hover leave for the entity hovered until now. The leave is not re-qualified by distance:
+        ///     the ray of this frame points elsewhere, so a tight maxDistance would keep the hover open forever.
+        /// </summary>
+        public static void TryIssueLeaveHoverEventForPreviousEntity(in GlobalColliderSceneEntityInfo previousSceneEntityInfo, bool previousHoverEnterIssued)
         {
+            if (!previousHoverEnterIssued)
+                return;
+
             World world = previousSceneEntityInfo.EcsExecutor.World;
 
             // Entity died or PointerEvents component was removed, nothing to do
@@ -17,20 +24,13 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                 !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents? pbPointerEvents))
                 return;
 
-            TryAppendHoverInput(ref pbPointerEvents!, in raycastResultForSceneEntities, PointerEventType.PetHoverLeave);
+            AppendHoverInput(ref pbPointerEvents!, PointerEventType.PetHoverLeave);
         }
 
-        private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PointerEventType type)
+        private static void AppendHoverInput(ref PBPointerEvents pbPointerEvents, PointerEventType type)
         {
             for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
-            {
-                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
-                PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
-
-                if (!InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)) continue;
-
-                pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(type, pointerEvent, i);
-            }
+                pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(type, pbPointerEvents.PointerEvents[i], i);
         }
 
         /// <summary>

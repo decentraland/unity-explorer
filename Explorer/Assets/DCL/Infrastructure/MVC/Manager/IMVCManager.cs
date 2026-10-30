@@ -31,6 +31,20 @@ namespace MVC
         ///     Closes all POPUPS, FULLSCREEN and OVERLAY views currently open, leaving only PERSISTENT ones.
         /// </summary>
         void CloseAllNonPersistentViews(CancellationToken ct = default);
+
+        /// <summary>
+        ///     True while a POPUP or FULLSCREEN view is covering the persistent HUD.
+        ///     Transient OVERLAY toasts (e.g. notifications) don't count.
+        /// </summary>
+        bool IsAnyModalViewShowing();
+
+        /// <summary>
+        ///     True while the controller registered for this view is anything but hidden — showing, focused,
+        ///     blurred, or in the middle of hiding. This is the same condition under which
+        ///     <see cref="ShowAsync{TView,TInputData}" /> returns without doing anything, so a caller can tell
+        ///     in advance that its show command would be swallowed. False if no such controller is registered.
+        /// </summary>
+        bool IsShowing<TView, TInputData>() where TView: IView;
     }
 
     public static class ManagerExtensions

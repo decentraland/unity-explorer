@@ -29,14 +29,14 @@ namespace DCL.Events
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public EventCardActionsController(
             HttpEventsApiService eventsApiService,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IDecentralandUrlsSource decentralandUrlsSource)
@@ -63,7 +63,7 @@ namespace DCL.Events
             }
 
             eventData.Attending = !eventData.Attending;
-            eventData.Total_attendees += eventData.Attending ? 1 : -1;
+            eventData.TotalAttendees += eventData.Attending ? 1 : -1;
 
             eventCardView?.UpdateInterestedButtonState(eventData.Attending);
             eventCardView?.UpdateVisuals();
@@ -74,13 +74,13 @@ namespace DCL.Events
 
         public void AddEventToCalendar(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventAddToCalendarLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
         public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
@@ -90,7 +90,6 @@ namespace DCL.Events
                 realmNavigator.TryChangeRealmAsync(
                     URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
                     ct,
-                    default,
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else
@@ -104,7 +103,7 @@ namespace DCL.Events
 
         public void ShareEvent(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventShareLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             EventShared?.Invoke(eventData);
         }
 

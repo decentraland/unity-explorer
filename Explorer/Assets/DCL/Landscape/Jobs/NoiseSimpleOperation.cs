@@ -24,13 +24,13 @@ namespace DCL.Landscape.Jobs
 
             switch (operation)
             {
-                case NoiseJobOperation.SET:
+                case NoiseJobOperation.Set:
                     originalValue = value; break;
-                case NoiseJobOperation.ADD:
+                case NoiseJobOperation.Add:
                     originalValue += value; break;
-                case NoiseJobOperation.MULTIPLY:
+                case NoiseJobOperation.Multiply:
                     originalValue *= value; break;
-                case NoiseJobOperation.SUBTRACT:
+                case NoiseJobOperation.Subtract:
                     originalValue -= value; break;
             }
 

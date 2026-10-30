@@ -15,18 +15,20 @@ namespace DCL.Audio
     public class WorldAudioPlaybackController : MonoBehaviour, IDisposable
     {
         [SerializeField]
-        private WorldAudioSettings audioSettings;
+        private WorldAudioSettings audioSettings = null!;
         [SerializeField]
-        private AudioSource audioSourcePrefab;
+        private AudioSource audioSourcePrefab = null!;
 
         private readonly Dictionary<WorldAudioClipType, Dictionary<int, List<WorldPlaybackAudioData>>> audioDatasPerIndexDictionary = new ();
-        private GameObjectPool<AudioSource> audioSourcePool;
-        private CancellationTokenSource mainCancellationTokenSource;
+
+        // Dedicated to be initialized at the Initialize method
+        private GameObjectPool<AudioSource> audioSourcePool = null!;
+        private CancellationTokenSource mainCancellationTokenSource = null!;
 
         public void Dispose()
         {
             audioDatasPerIndexDictionary.Clear();
-            audioSourcePool?.Dispose();
+            audioSourcePool.Dispose();
             mainCancellationTokenSource.SafeCancelAndDispose();
         }
 
@@ -58,7 +60,11 @@ namespace DCL.Audio
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
             AudioClip clip = audioClipConfig.AudioClips[clipIndex];
             audioData.AudioSource.clip = clip;
-            audioData.AudioSource.time = Random.Range(0, clip.length);
+
+            // The int overload is max-exclusive, so the result is always a valid sample index —
+            // the float Random.Range(0, clip.length) is max-inclusive and seeking to the exact
+            // clip end is an invalid FMOD position.
+            audioData.AudioSource.timeSamples = Random.Range(0, clip.samples);
             audioData.AudioSource.volume = audioClipConfig.RelativeVolume;
             audioData.AudioSource.Play();
 

@@ -1,10 +1,9 @@
-﻿
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     [DisplayName("Emote triggering clip")]
     public class TriggerEmotePlayableAsset : PlayableAsset, ITimelineClipAsset

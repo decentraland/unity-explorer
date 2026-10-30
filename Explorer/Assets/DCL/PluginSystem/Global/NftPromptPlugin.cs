@@ -5,7 +5,6 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.NftInfoAPIService;
 using DCL.NftPrompt;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -17,7 +16,7 @@ namespace DCL.PluginSystem.Global
     public class NftPromptPlugin : IDCLGlobalPlugin<NftPromptPlugin.NftPromptSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -26,7 +25,7 @@ namespace DCL.PluginSystem.Global
 
         public NftPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftMarketAPIClient nftInfoAPIClient,
             ImageControllerProvider imageControllerProvider,

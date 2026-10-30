@@ -31,9 +31,9 @@ namespace DCL.Navmap
         public event Action? OnClearPlacesFromMap;
         public event Action<Vector2, float>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
-        public event Action<Vector2Int, Vector2> OnLongHover;
-        public event Action OnClearFilter;
-        public event Action<Vector2Int, bool, bool> OnSelectPlaceFromResultsPanel;
+        public event Action<Vector2Int, Vector2>? OnLongHover;
+        public event Action? OnClearFilter;
+        public event Action<Vector2Int, bool, bool>? OnSelectPlaceFromResultsPanel;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -47,15 +47,17 @@ namespace DCL.Navmap
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct,
-            bool isFromSearchResults = false, Vector2Int? originalParcel = null)
+            bool isFromSearchResults = false, Vector2Int? originalParcel = null, bool landOnOriginalParcel = false)
         {
             INavmapCommand<AdditionalParams> command = showPlaceInfoFactory.Invoke(place);
 
             if (!isFromSearchResults)
                 ClearPlacesFromMap();
 
-            MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
-            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel), ct);
+            if (!place.IsWorld)
+                MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
+
+            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel, landOnOriginalParcel), ct);
 
             AddCommand(command);
         }

@@ -5,7 +5,6 @@ using DCL.SocialService;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using DCL.WebRequests;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
 using Utility;
@@ -35,6 +34,7 @@ namespace DCL.VoiceChat.Services
         private readonly IWeb3IdentityCache identityCache;
         private readonly string activeCommunityVoiceChatsUrl;
         private CancellationTokenSource subscriptionCts = new ();
+        private CancellationTokenSource fetchActiveChatsCts = new ();
 
         public event Action<CommunityVoiceChatUpdate>? CommunityVoiceChatUpdateReceived;
         public event Action<ActiveCommunityVoiceChatsResponse>? ActiveCommunityVoiceChatsFetched;
@@ -52,44 +52,28 @@ namespace DCL.VoiceChat.Services
             activeCommunityVoiceChatsUrl = urlsSource.Url(DecentralandUrl.ActiveCommunityVoiceChats);
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
+            socialServiceEventBus.RPCClientReconnected += OnTransportConnected;
             socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+            identityCache.OnIdentityChanged += OnIdentityChanged;
+            identityCache.OnIdentityCleared += OnIdentityChanged;
         }
 
         public override void Dispose()
         {
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
+            socialServiceEventBus.RPCClientReconnected -= OnTransportConnected;
             socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityChanged;
             subscriptionCts.SafeCancelAndDispose();
+            fetchActiveChatsCts.SafeCancelAndDispose();
             base.Dispose();
-        }
-
-        private void OnTransportConnected()
-        {
-            if (identityCache.Identity == null) return;
-
-            subscriptionCts = subscriptionCts.SafeRestart();
-            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
-            FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
-        }
-
-        private void OnTransportClosed()
-        {
-            subscriptionCts = subscriptionCts.SafeRestart();
-        }
-
-        private void OnTransportReconnected()
-        {
-            if (identityCache.Identity == null) return;
-
-            subscriptionCts = subscriptionCts.SafeRestart();
-            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
-            FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
         }
 
         public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new StartCommunityVoiceChatPayload
@@ -107,6 +91,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new JoinCommunityVoiceChatPayload
@@ -150,6 +136,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, bool isRequestingToSpeak, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new RequestToSpeakInCommunityVoiceChatPayload
@@ -259,18 +247,15 @@ namespace DCL.VoiceChat.Services
 
         public UniTask SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<CommunityVoiceChatUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
-                    socialServiceRPC.Module().CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
-
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
 
                 try
                 {
-                    await foreach (CommunityVoiceChatUpdate? response in stream)
+                    await foreach (CommunityVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                     {
                         try
                         {
@@ -312,6 +297,38 @@ namespace DCL.VoiceChat.Services
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
+        }
+
+        private void ThrowIfGuest()
+        {
+            if (identityCache.IsGuest())
+                throw new InvalidOperationException("Voice chat is not available for guest accounts.");
+        }
+
+        private void TrySubscribe()
+        {
+            if (identityCache.Identity == null || identityCache.IsGuest()) return;
+
+            SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
+            FetchActiveCommunityVoiceChatsAsync(fetchActiveChatsCts.Token).Forget();
+        }
+
+        private void OnTransportConnected() =>
+            TrySubscribe();
+
+        private void OnIdentityChanged()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
+            TrySubscribe();
+        }
+
+        private void OnTransportClosed()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            fetchActiveChatsCts = fetchActiveChatsCts.SafeRestart();
         }
     }
 }

@@ -1,16 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
 using Arch.Core;
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Settings;
 using DCL.Roads.Systems;
-using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;

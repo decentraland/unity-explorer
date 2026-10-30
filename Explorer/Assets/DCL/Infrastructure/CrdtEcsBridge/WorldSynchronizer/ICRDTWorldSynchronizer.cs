@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {
@@ -23,5 +22,11 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// </summary>
         /// <param name="syncCommandBuffer"></param>
         void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
+
+        /// <summary>
+        ///     Disposes a rented command buffer that will never be applied and frees the single rent slot.
+        ///     Every rented buffer must reach exactly one of <see cref="ApplySyncCommandBuffer" /> or this method. Can be called from the background thread
+        /// </summary>
+        void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
     }
 }

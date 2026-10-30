@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {

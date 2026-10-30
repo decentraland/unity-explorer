@@ -25,7 +25,7 @@ namespace ECS.SceneLifeCycle.Debug
 
         private AbortSceneLoadingDebugSystem(World world, DebugWidgetBuilder debugWidgetBuilder) : base(world)
         {
-            debugWidgetBuilder.AddControl(new DebugDropdownDef(abortKind = new EnumElementBinding<SceneAbortKind>(SceneAbortKind.NONE), "Type"),
+            debugWidgetBuilder.AddControl(new DebugDropdownDef(abortKind = new EnumElementBinding<SceneAbortKind>(SceneAbortKind.None), "Type"),
                 null,
                 debugHintDef: new DebugHintDef("Abort Scene Loading"));
 
@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Debug
 
         protected override void Update(float t)
         {
-            if (abortKind.Value == SceneAbortKind.NONE)
+            if (abortKind.Value == SceneAbortKind.None)
                 return;
 
             TryAbortLoadingQuery(World);
@@ -48,7 +48,7 @@ namespace ECS.SceneLifeCycle.Debug
 
             Exception exceptionToReport = abortKind.Value switch
                                           {
-                                              SceneAbortKind.CANCEL => new OperationCanceledException(),
+                                              SceneAbortKind.Cancel => new OperationCanceledException(),
                                               _ => new Exception($"Loading of Scene {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase} has been manually interrupted"),
                                           };
 

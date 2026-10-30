@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -10,7 +9,6 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine.TestTools;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Tests
 {

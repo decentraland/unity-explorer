@@ -1,14 +1,10 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
-using DCL.Profiles;
-using DCL.UserInAppInitializationFlow;
+using DCL.Utilities.Extensions;
 using DCL.Utility;
-using DCL.Web3;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
@@ -21,37 +17,25 @@ namespace DCL.UI.SystemMenu
         public event Action? OnClosed;
 
         private readonly SystemMenuView view;
-        private readonly IWebBrowser webBrowser;
-        private readonly IWeb3Authenticator web3Authenticator;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly UserLogout logout;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileCache profileCache;
-        private readonly Entity playerEntity;
-        private readonly World world;
         private readonly IPassportBridge passportBridge;
 
         private CancellationTokenSource? logoutCts;
 
         public SystemSectionPresenter(
             SystemMenuView view,
-            World world,
-            Entity playerEntity,
-            IWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfileCache profileCache,
+            UserLogout logout,
+            UnityAppWebBrowser webBrowser,
             IWeb3IdentityCache web3IdentityCache,
             IPassportBridge passportBridge)
         {
             this.view = view;
+            this.logout = logout;
             this.webBrowser = webBrowser;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
-            this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
             this.passportBridge = passportBridge;
-            this.playerEntity = playerEntity;
-            this.world = world;
 
             SubscribeToEvents();
         }
@@ -97,41 +81,15 @@ namespace DCL.UI.SystemMenu
         }
 
         private void ShowTermsOfService() =>
-            webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.TermsOfUse);
 
         private void ShowPrivacyPolicy() =>
-            webBrowser.OpenUrl(DecentralandUrl.PrivacyPolicy);
-
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.PrivacyPolicy);
 
         private void Logout()
         {
             logoutCts = logoutCts.SafeRestart();
-            LogoutAsync(logoutCts.Token).Forget();
-            return;
-
-            async UniTaskVoid LogoutAsync(CancellationToken ct)
-            {
-                if (web3IdentityCache.Identity == null)
-                {
-                    ReportHub.LogError(ReportCategory.UI, "Cannot logout. Identity is null.");
-                    return;
-                }
-
-                Web3Address address = web3IdentityCache.Identity!.Address;
-                await web3Authenticator.LogoutAsync(ct);
-                profileCache.Remove(address);
-
-                await userInAppInitializationFlow.ExecuteAsync(
-                    new UserInAppInitializationFlowParameters(
-                        showAuthentication: true,
-                        showLoading: true,
-                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
-                        world: world,
-                        playerEntity: playerEntity
-                    ),
-                    ct
-                );
-            }
+            logout.LogoutAsync(logoutCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
         }
     }
 }

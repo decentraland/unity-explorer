@@ -6,7 +6,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
@@ -34,7 +33,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
-        private readonly Transform? remoteEntitiesParent = null;
+        private readonly Transform? remoteEntitiesParent;
 
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
@@ -84,7 +83,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
+            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.Gatekeeper | RoomSource.Island, world);
         }
 
         public void TryRemove(string walletId, RoomSource roomSource, World world)
