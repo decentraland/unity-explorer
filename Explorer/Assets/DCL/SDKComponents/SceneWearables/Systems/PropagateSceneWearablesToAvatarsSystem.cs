@@ -64,9 +64,9 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             HandleEntityDestructionQuery(World);
             HandlePlayerLeftQuery(World);
 
-            var dirtyPlayerShapes = 0;
-            CountDirtyPlayerAvatarShapesQuery(World, ref dirtyPlayerShapes);
-            PropagateOverrideQuery(World, dirtyPlayerShapes > 0);
+            var anyPlayerShapeDirty = false;
+            FindDirtyPlayerAvatarShapeQuery(World, ref anyPlayerShapeDirty);
+            PropagateOverrideQuery(World, anyPlayerShapeDirty);
         }
 
         [Query]
@@ -114,10 +114,10 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CountDirtyPlayerAvatarShapes([Data] ref int count, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
+        private void FindDirtyPlayerAvatarShape([Data] ref bool found, in CRDTEntity crdtEntity, in PBAvatarShape pbAvatarShape)
         {
             if (pbAvatarShape.IsDirty && SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity))
-                count++;
+                found = true;
         }
 
         [Query]
@@ -134,6 +134,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             if (World.TryGet(entity, out SceneWearablesApplied applied) && applied.GlobalEntity != target)
                 ClearOverride(applied.GlobalEntity);
 
+            WarnForeignSceneWearables(pbAvatarShape.Wearables);
             CopyOverride(target, pbAvatarShape);
 
             World.AddOrSet(entity, new SceneWearablesApplied(target, bridgeEntity));
@@ -203,22 +204,23 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             var allowedCount = 0;
             var changed = false;
 
-            if (wearables.Count > MAX_PLAYER_WEARABLES)
-                ReportHub.LogWarning(GetReportData(), $"AvatarShape on a player lists {wearables.Count} wearables, only the first {MAX_PLAYER_WEARABLES} apply");
-
-            for (var i = 0; i < wearables.Count && allowedCount < MAX_PLAYER_WEARABLES; i++)
+            for (var i = 0; i < wearables.Count; i++)
             {
                 string wearable = wearables[i];
 
                 if (!IsAllowedWearable(wearable)) continue;
 
-                if (allowedCount >= target.Count || !string.Equals(target[allowedCount].ToString(), wearable, StringComparison.OrdinalIgnoreCase))
+                if (allowedCount < MAX_PLAYER_WEARABLES
+                    && (allowedCount >= target.Count || !string.Equals(target[allowedCount].ToString(), wearable, StringComparison.OrdinalIgnoreCase)))
                     changed = true;
 
                 allowedCount++;
             }
 
-            if (!changed && allowedCount == target.Count)
+            if (allowedCount > MAX_PLAYER_WEARABLES)
+                ReportHub.LogWarning(GetReportData(), $"AvatarShape on a player has {allowedCount} applicable wearables, only the first {MAX_PLAYER_WEARABLES} apply");
+
+            if (!changed && Math.Min(allowedCount, MAX_PLAYER_WEARABLES) == target.Count)
                 return false;
 
             target.Clear();
@@ -243,6 +245,13 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                     return true;
 
             return false;
+        }
+
+        private void WarnForeignSceneWearables(RepeatedField<string> wearables)
+        {
+            for (var i = 0; i < wearables.Count; i++)
+                if (!IsAllowedWearable(wearables[i]))
+                    ReportHub.LogWarning(GetReportData(), $"Scene wearable '{wearables[i]}' skipped: it belongs to another scene");
         }
 
         private bool IsAllowedWearable(string pointer) =>

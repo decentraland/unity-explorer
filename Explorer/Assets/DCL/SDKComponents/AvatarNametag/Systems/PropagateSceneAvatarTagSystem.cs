@@ -68,9 +68,9 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             HandleEntityDestructionQuery(World);
             HandlePlayerLeftQuery(World);
 
-            var dirtyPlayerNametags = 0;
-            CountDirtyPlayerNametagsQuery(World, ref dirtyPlayerNametags);
-            PropagatePlayerNametagQuery(World, dirtyPlayerNametags > 0);
+            var anyPlayerNametagDirty = false;
+            FindDirtyPlayerNametagQuery(World, ref anyPlayerNametagDirty);
+            PropagatePlayerNametagQuery(World, anyPlayerNametagDirty);
             PropagateSceneAvatarNametagQuery(World);
         }
 
@@ -127,10 +127,10 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CountDirtyPlayerNametags([Data] ref int count, in CRDTEntity crdtEntity, in PBAvatarNametag pbNametag)
+        private void FindDirtyPlayerNametag([Data] ref bool found, in CRDTEntity crdtEntity, in PBAvatarNametag pbNametag)
         {
             if (pbNametag.IsDirty && SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity))
-                count++;
+                found = true;
         }
 
         [Query]

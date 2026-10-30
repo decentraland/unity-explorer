@@ -28,6 +28,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
+        private const float MAX_PENDING_SECONDS = 60f;
+
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IWearableStorage wearableStorage;
 
@@ -45,7 +47,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
-            RetryWearablesVisibilityQuery(World);
+            RetryWearablesVisibilityQuery(World, t);
             UpdateAvatarEquippedDataQuery(World, false);
         }
 
@@ -60,13 +62,22 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         }
 
         [Query]
-        [All(typeof(WearablesVisibilityPending))]
         [None(typeof(DeleteEntityIntention))]
-        private void RetryWearablesVisibility(Entity entity, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
+        private void RetryWearablesVisibility([Data] float dt, Entity entity, ref WearablesVisibilityPending pending, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
         {
             // A changed profile is written by UpdateAvatarEquippedData later in this frame
             if (profile.IsDirty || TryWrite(crdtEntity.CRDTEntity, profile, false))
+            {
                 World.Remove<WearablesVisibilityPending>(entity);
+                return;
+            }
+
+            pending.ElapsedSeconds += dt;
+
+            if (pending.ElapsedSeconds < MAX_PENDING_SECONDS) return;
+
+            ReportHub.LogWarning(GetReportData(), $"Wearable visibility of player entity {crdtEntity.CRDTEntity.Id} is still unresolved after {MAX_PENDING_SECONDS}s, left unset");
+            World.Remove<WearablesVisibilityPending>(entity);
         }
 
         [Query]
@@ -170,6 +181,9 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             }
         }
 
-        private struct WearablesVisibilityPending { }
+        private struct WearablesVisibilityPending
+        {
+            public float ElapsedSeconds;
+        }
     }
 }

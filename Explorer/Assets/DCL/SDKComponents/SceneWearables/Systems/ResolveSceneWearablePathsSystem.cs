@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
                 if (!SceneWearableDTOFactory.IsSceneWearablePath(wearable))
                 {
-                    if (!wearable.StartsWith("urn", StringComparison.Ordinal))
+                    if (!wearable.StartsWith("urn", StringComparison.OrdinalIgnoreCase))
                     {
                         ReportHub.LogWarning(GetReportData(), $"AvatarShape wearable '{wearable}' skipped: it is neither a URN nor a '.glb' path");
                         wearables.RemoveAt(i);
