@@ -2,6 +2,7 @@ using Cinemachine;
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 namespace DCL.CharacterPreview
@@ -21,8 +22,9 @@ namespace DCL.CharacterPreview
 
         private float fovTransitionStartTime;
         private float fovTransitionStartValue;
-        private bool isFOVTransitioning;
+        private bool isFovTransitioning;
         private Light? previewLight;
+        private bool fogBeforePreviewRender;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; } = null!;
@@ -65,7 +67,7 @@ namespace DCL.CharacterPreview
             TargetFOV = freeLookCamera.m_Lens.FieldOfView;
             fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
-            isFOVTransitioning = false;
+            isFovTransitioning = false;
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
 
@@ -84,15 +86,15 @@ namespace DCL.CharacterPreview
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            StartFOVTransition(preset.cameraFieldOfView);
+            StartFovTransition(preset.cameraFieldOfView);
         }
 
-        public void StartFOVTransition(float targetFOV)
+        public void StartFovTransition(float targetFov)
         {
-            TargetFOV = targetFOV;
+            TargetFOV = targetFov;
             fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
-            isFOVTransitioning = true;
+            isFovTransitioning = true;
         }
 
         public void SetPreviewPlatformActive(bool isActive) =>
@@ -115,10 +117,41 @@ namespace DCL.CharacterPreview
             cameraData.renderPostProcessing = isEnabled;
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
+        private void OnEnable()
+        {
+            RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+            RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
+        }
+
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
+        private void OnDisable()
+        {
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+        }
+
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Update()
         {
             UpdateRotation();
-            UpdateFOV();
+            UpdateFov();
+        }
+
+        // The preview camera renders in the main scene, so the scene fog would tint the avatar by its distance to the camera
+        private void OnBeginCameraRendering(ScriptableRenderContext context, Camera renderingCamera)
+        {
+            if (renderingCamera != camera) return;
+
+            fogBeforePreviewRender = RenderSettings.fog;
+            RenderSettings.fog = false;
+        }
+
+        private void OnEndCameraRendering(ScriptableRenderContext context, Camera renderingCamera)
+        {
+            if (renderingCamera != camera) return;
+
+            RenderSettings.fog = fogBeforePreviewRender;
         }
 
         private void UpdateRotation()
@@ -161,42 +194,42 @@ namespace DCL.CharacterPreview
             }
         }
 
-        private void UpdateFOV()
+        private void UpdateFov()
         {
-            float currentFOV = freeLookCamera.m_Lens.FieldOfView;
+            float currentFov = freeLookCamera.m_Lens.FieldOfView;
 
             // Early return if already at target
-            if (Mathf.Abs(currentFOV - TargetFOV) <= FOW_LOWER_THRES)
+            if (Mathf.Abs(currentFov - TargetFOV) <= FOW_LOWER_THRES)
             {
-                isFOVTransitioning = false;
+                isFovTransitioning = false;
                 return;
             }
 
-            float newFOV;
+            float newFov;
 
-            if (isFOVTransitioning)
+            if (isFovTransitioning)
             {
                 // Smooth transition for category changes
                 float elapsedTime = UnityEngine.Time.time - fovTransitionStartTime;
                 float normalizedTime = Mathf.Clamp01(elapsedTime / FOV_SMOOTH_TIME);
 
                 float easedTime = Mathf.SmoothStep(0f, 1f, normalizedTime);
-                newFOV = Mathf.Lerp(fovTransitionStartValue, TargetFOV, easedTime);
+                newFov = Mathf.Lerp(fovTransitionStartValue, TargetFOV, easedTime);
 
                 if (normalizedTime >= 1f)
                 {
-                    isFOVTransitioning = false;
-                    newFOV = TargetFOV;
+                    isFovTransitioning = false;
+                    newFov = TargetFOV;
                 }
             }
             else
             {
                 // Smooth interpolation for scroll input
                 float t = 1f - Mathf.Exp(-FOV_SPEED_COEFF * UnityEngine.Time.deltaTime);
-                newFOV = Mathf.Lerp(currentFOV, TargetFOV, t);
+                newFov = Mathf.Lerp(currentFov, TargetFOV, t);
             }
 
-            freeLookCamera.m_Lens.FieldOfView = newFOV;
+            freeLookCamera.m_Lens.FieldOfView = newFov;
         }
 
         public void ResetAvatarMovement()
@@ -211,7 +244,7 @@ namespace DCL.CharacterPreview
             TargetFOV = freeLookCamera.m_Lens.FieldOfView;
             fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
-            isFOVTransitioning = false;
+            isFovTransitioning = false;
         }
     }
 
