@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Backpack.Gifting.Views
 {
@@ -16,6 +17,9 @@ namespace DCL.Backpack.Gifting.Views
         public readonly string instanceUrn;
         public readonly string userNameColorHex;
 
+        // Gift-time transfer-in timestamp of the gifted copy; the pending-prune baseline.
+        public readonly DateTime transferredAt;
+
         public GiftTransferParams(string recipientAddress,
             string recipientName,
             Sprite? userThumbnail,
@@ -26,7 +30,8 @@ namespace DCL.Backpack.Gifting.Views
             string itemType,
             string tokenId,
             string instanceUrn,
-            string userNameColorHex)
+            string userNameColorHex,
+            DateTime transferredAt)
         {
             this.recipientAddress = recipientAddress;
             this.recipientName = recipientName;
@@ -39,6 +44,7 @@ namespace DCL.Backpack.Gifting.Views
             this.tokenId = tokenId;
             this.instanceUrn = instanceUrn;
             this.userNameColorHex = userNameColorHex;
+            this.transferredAt = transferredAt;
         }
     }
 }

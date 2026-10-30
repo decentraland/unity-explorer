@@ -35,12 +35,12 @@ namespace DCL.Profiles
             if (profiles.ContainsKey(key) == false)
                 profiles[key] = NewRandomProfile();
 
-            return UniTask.FromResult<ProfileTier?>(profiles[key])!;
+            return UniTask.FromResult<ProfileTier?>(profiles[key]);
         }
 
         private static Profile NewRandomProfile() =>
             new (
-                Guid.NewGuid().ToString(),
+                UserId.NewRandom(),
                 Guid.NewGuid().ToString(),
                 new Avatar(
                     new BodyShape(),

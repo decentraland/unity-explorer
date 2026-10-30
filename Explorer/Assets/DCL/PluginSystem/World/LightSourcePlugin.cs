@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(
             ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in PersistentEntities persistentEntities,
+            in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(LightSourcePluginSettings settings, CancellationToken ct)
         {
-            Light lightSourcePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings!.LightSourcePrefab, ct)).Value.GetComponent<Light>();
+            Light lightSourcePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourcePrefab, ct)).Value.GetComponent<Light>();
             lightSourceSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, ct)).Value;
 
             await CreateLightSourcePoolAsync(lightSourcePrefab, ct);

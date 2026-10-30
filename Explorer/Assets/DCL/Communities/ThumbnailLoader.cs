@@ -17,7 +17,8 @@ namespace DCL.Communities
         }
 
         /// <summary>
-        /// Loads a thumbnail from a direct URL (for backwards compatibility and non-community images)
+        /// Loads a thumbnail from a direct URL (for backwards compatibility and non-community images).
+        /// A sprite already cached is shown at once, without the loading look and the fade-in.
         /// </summary>
         public async UniTaskVoid LoadCommunityThumbnailFromUrlAsync(
             string? thumbnailUrl,
@@ -26,6 +27,16 @@ namespace DCL.Communities
             CancellationToken ct,
             bool useKtx)
         {
+            Sprite? cached = string.IsNullOrEmpty(thumbnailUrl) ? null : Cache!.GetCachedSprite(thumbnailUrl);
+
+            if (cached != null)
+            {
+                thumbnailView.IsLoading = false;
+                thumbnailView.SetImage(cached, true);
+                thumbnailView.ImageColor = Color.white;
+                return;
+            }
+
             thumbnailView.ImageColor = Color.clear;
             thumbnailView.SetImage(defaultThumbnail!, true);
             thumbnailView.IsLoading = true;

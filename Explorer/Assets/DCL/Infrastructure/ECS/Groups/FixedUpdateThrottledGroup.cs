@@ -1,5 +1,4 @@
 ﻿using Arch.SystemGroups;
-using UnityEngine;
 
 namespace ECS.Groups
 {
@@ -24,10 +23,10 @@ namespace ECS.Groups
 
         public override void BeforeUpdate(in float t, bool throttle)
         {
-            if (Time.fixedTime > processedFixedTime)
+            if (UnityEngine.Time.fixedTime > processedFixedTime)
             {
                 allowed = true;
-                processedFixedTime = Time.fixedTime;
+                processedFixedTime = UnityEngine.Time.fixedTime;
             }
             else
                 allowed = false;

@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public GetEmotesByPointersIntention(List<URN> pointers,
             BodyShape bodyShape,
-            AssetSource permittedSources = AssetSource.ALL,
+            AssetSource permittedSources = AssetSource.All,
             int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
         {
             this.pointers = pointers;

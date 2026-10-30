@@ -2,14 +2,15 @@
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace SceneRuntime.Tests
 {
     public class V8Tests
     {
-        private V8EngineFactory engineFactory;
-        private V8ScriptEngine engine;
+        private V8EngineFactory engineFactory = null!;
+        private V8ScriptEngine engine = null!;
 
         [SetUp]
         public void SetUp()
@@ -55,6 +56,38 @@ namespace SceneRuntime.Tests
             for (byte i = 0; i < 10; ++i) { data[i] = i; }
 
             sceneScriptObject!.InvokeAsFunction(data);
+        }
+
+        [Test]
+        public void DisableReflectionOnCreatedEngine()
+        {
+            // Assert — the factory keeps AllowReflection disabled on the scene engine.
+            Assert.IsFalse(engine.AllowReflection);
+        }
+
+        [Test]
+        public void BlockReflectionFromSceneScript()
+        {
+            // Arrange
+            engine.AddHostObject("host", new SampleHostObject());
+
+            // Act — ordinary host member access must still work.
+            object? value = engine.Evaluate("host.Value");
+
+            // Assert
+            Assert.AreEqual(42, value);
+
+            // Act — reflection members are not available to scene scripts.
+            Exception reflectionException = Assert.Catch(() => engine.Evaluate("host.GetType()"));
+
+            // Assert
+            Assert.That(reflectionException.ToString(), Does.Contain("reflection").IgnoreCase);
+        }
+
+        public class SampleHostObject
+        {
+            // ReSharper disable once UnusedMember.Local
+            public int Value => 42;
         }
     }
 }

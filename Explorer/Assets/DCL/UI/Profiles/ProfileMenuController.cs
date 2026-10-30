@@ -1,13 +1,9 @@
-﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.UI.SystemMenu;
-using DCL.UserInAppInitializationFlow;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -18,12 +14,8 @@ namespace DCL.UI.Profiles
     public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
         private readonly IWeb3IdentityCache identityCache;
-        private readonly World world;
-        private readonly Entity playerEntity;
-        private readonly IWebBrowser webBrowser;
-        private readonly IWeb3Authenticator web3Authenticator;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly IProfileCache profileCache;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly UserLogout logout;
         private readonly IPassportBridge passportBridge;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private ProfileSectionPresenter? profileSectionPresenter;
@@ -34,23 +26,15 @@ namespace DCL.UI.Profiles
         public ProfileMenuController(
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
-            World world,
-            Entity playerEntity,
-            IWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfileCache profileCache,
+            UnityAppWebBrowser webBrowser,
+            UserLogout logout,
             IPassportBridge passportBridge,
             ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
-            this.world = world;
-            this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
-            this.web3Authenticator = web3Authenticator;
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
-            this.profileCache = profileCache;
+            this.logout = logout;
             this.passportBridge = passportBridge;
             this.profileDataProvider = profileDataProvider;
         }
@@ -60,11 +44,11 @@ namespace DCL.UI.Profiles
             base.OnViewInstantiated();
 
             profileSectionPresenter = new ProfileSectionPresenter(viewInstance!.ProfileMenu, identityCache, profileDataProvider);
-            systemSectionPresenter = new SystemSectionPresenter(viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
+            systemSectionPresenter = new SystemSectionPresenter(viewInstance!.SystemMenuView, logout, webBrowser, identityCache, passportBridge);
             systemSectionPresenter.OnClosed += OnClose;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewShow()
         {

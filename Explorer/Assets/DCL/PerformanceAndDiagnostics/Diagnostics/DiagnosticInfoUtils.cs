@@ -2,6 +2,7 @@
 using Sentry;
 using Sentry.Unity;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine.Device;
@@ -42,7 +43,10 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Graphics Memory Size: {0} MB\n", SystemInfo.graphicsMemorySize);
             stringBuilder.AppendFormat("Graphics Device Version: {0}\n", SystemInfo.graphicsDeviceVersion);
             stringBuilder.AppendFormat("Max Texture Size: {0}\n", SystemInfo.maxTextureSize);
-            stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n\n", SystemInfo.supportsRayTracing);
+            stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n", SystemInfo.supportsRayTracing);
+            stringBuilder.AppendFormat("Supports Multisampled Backbuffer: {0}\n", UnityEngine.SystemInfo.supportsMultisampledBackBuffer);
+            stringBuilder.AppendFormat("Screen MSAA Samples: {0}\n", UnityEngine.Screen.msaaSamples);
+            stringBuilder.AppendFormat("QualitySettings AntiAliasing: {0}\n\n", UnityEngine.QualitySettings.antiAliasing);
             AppendFooter(stringBuilder);
 
             // Unity & Application
@@ -60,6 +64,16 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Window Mode: {0}\n", Screen.fullScreenMode.ToString());
             AppendFooter(stringBuilder);
 
+            AppendHeader(stringBuilder, "SENTRY");
+            stringBuilder.AppendFormat("Enabled: {0}\n", SentrySdk.IsEnabled);
+            SentryUnityOptions? sentryOptions = ScriptableSentryUnityOptions.LoadSentryUnityOptions();
+            if (sentryOptions != null)
+            {
+                stringBuilder.AppendFormat("Environment: {0}\n", sentryOptions.Environment ?? "<unset>");
+                stringBuilder.AppendFormat("Release: {0}\n", sentryOptions.Release ?? "<unset>");
+                stringBuilder.AppendFormat("DSN: {0}\n", string.IsNullOrEmpty(sentryOptions.Dsn) ? "<unset>" : "<set>");
+            }
+            AppendFooter(stringBuilder);
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
         }
@@ -73,6 +87,26 @@ namespace DCL.Diagnostics
             {
                 stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Probe(decentralandUrl));
             }
+            AppendFooter(stringBuilder);
+
+            ReportHub.LogProductionInfo(stringBuilder.ToString());
+        }
+
+        public static void LogFeatureFlags(IEnumerable<string> enabledFlags)
+        {
+            var stringBuilder = new StringBuilder();
+            AppendHeader(stringBuilder, "ENABLED FEATURE FLAGS");
+
+            var count = 0;
+            foreach (string flag in enabledFlags)
+            {
+                stringBuilder.AppendFormat("{0} ", flag);
+                count++;
+            }
+
+            if (count == 0)
+                stringBuilder.AppendLine("<none>");
+
             AppendFooter(stringBuilder);
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());

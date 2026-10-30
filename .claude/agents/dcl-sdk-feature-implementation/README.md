@@ -22,13 +22,13 @@ All 4 repos must be cloned as siblings. Each repo should already be on the corre
 
 ```
 parent-dir/
-├── protocol/           ← must be on `experimental` or a branch derived from it
-├── js-sdk-toolchain/   ← must be on `experimental` or a branch derived from it
+├── protocol/           ← must be on `main` or a branch derived from it
+├── js-sdk-toolchain/   ← must be on `main` or a branch derived from it
 ├── unity-explorer/     ← current working directory (this repo)
 └── sdk7-test-scenes/   ← any branch is fine; will use local SDK path links
 ```
 
-> **Why `experimental`?** Unity-explorer always requires a protocol that is `experimental` or branches from it — using `main` alone will cause missing component files that break compilation. The SDK toolchain follows the same convention for experimental components.
+> **Why `main`?** Unity-explorer consumes `@dcl/protocol@next`, which is published from the protocol `main` branch — a branch that does not derive from `main` will cause missing component files that break compilation. The SDK toolchain follows the same convention.
 
 ---
 
@@ -56,7 +56,7 @@ Fields:
 - `optional bool enabled = 2;` // default true
 - `oneof shape { PointShape point = 10; SphereShape sphere = 11; }`
 
-Component ID: 1401 (experimental range — verify with `make check-component-id`)
+Component ID: 1201 (`12xx` main range — take the next free ID from `make list-components-ids`)
 
 ### PBYourComponentResult (GOVS — Explorer writes, scene reads)
 Result component that reports events back to the scene.
@@ -65,7 +65,7 @@ Fields:
 - `uint32 timestamp = 1;`
 - `YourEventType event_type = 2;`
 
-Component ID: 1402 (experimental range)
+Component ID: 1202 (main range)
 
 ## Behavior
 - Describe how the Explorer should interpret and apply each component at runtime
@@ -109,10 +109,7 @@ The architect will:
 Read the plan carefully before approving. This is the cheapest moment to catch mistakes — corrections at this stage cost nothing, corrections after agents have written code across 4 repos are expensive.
 
 Things to check:
-- Are component IDs in the right range?
-  - `12xx` — main branch components
-  - `14xx` — experimental branch components (most common for new work)
-  - `16xx` — Protocol Squad experimental components
+- Are component IDs in the `12xx` range and free on `main` (`make check-component-id ID=<id>`)? Older docs mention `14xx`/`16xx` experimental ranges; they were never used and are retired.
 - Do field types reuse existing common types (`Vector3`, `Color4`, `FloatRange`, etc.) instead of redefining them?
 - Is the LWW vs GOVS classification correct for each component?
 - Does the plan cover the full component lifecycle: instantiation, update, component removal, entity destruction, world disposal?
@@ -126,7 +123,7 @@ Iterate with the architect in plain conversation until the plan looks right, the
 The architect spawns specialist sub-agents in the correct order:
 
 ```
-[Sequential]  dcl-protocol-specialist    — proto file(s), branch verified from experimental,
+[Sequential]  dcl-protocol-specialist    — proto file(s), branch verified from main,
               |                            make test must pass before handing off
               ↓
 [Parallel]    dcl-sdk-specialist          — TypeScript SDK (make build + make test)

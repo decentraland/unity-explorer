@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.BadgesAPIService;
 using DCL.UI;
 using UnityEngine;

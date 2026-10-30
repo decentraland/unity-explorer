@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ExplorePanel;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
@@ -53,14 +54,15 @@ namespace DCL.Places
         [SerializeField] private Animator headerAnimator = null!;
 
         private CancellationTokenSource? searchCancellationCts;
+        private bool isCompact;
 
         private void Awake()
         {
             // Tabs subscriptions
-            browseSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.BROWSE));
-            favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.FAVORITES));
-            recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RECENTLY_VISITED));
-            myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
+            browseSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.Browse));
+            favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.Favorites));
+            recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RecentlyVisited));
+            myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MyPlaces));
 
             // Filters subscriptions
             filtersDropdown.SortByBestRatedSelected += OnSortByBestRatedSelected;
@@ -123,6 +125,19 @@ namespace DCL.Places
             headerAnimator.Update(0);
         }
 
+        public void SetCompactLayout(bool compact)
+        {
+            placesResultsView.SetCompactLayout(compact);
+
+            if (isCompact == compact) return;
+
+            isCompact = compact;
+
+            // The search bar and the filters dropdown share one right-anchored strip.
+            var filtersStrip = (RectTransform)searchBar.transform.parent;
+            filtersStrip.anchoredPosition += new Vector2(compact ? -ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH : ExploreSectionModalView.CLOSE_BUTTON_SLOT_WIDTH, 0f);
+        }
+
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
             if (currentFilters.Section == section && !force)
@@ -144,16 +159,16 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.BROWSE:
+                case PlacesSection.Browse:
                     browseSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.FAVORITES:
+                case PlacesSection.Favorites:
                     favoritesSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.RECENTLY_VISITED:
+                case PlacesSection.RecentlyVisited:
                     recentlyVisitedSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.MY_PLACES:
+                case PlacesSection.MyPlaces:
                     myPlacesSectionTab.SetSelected(true);
                     break;
             }
@@ -169,6 +184,9 @@ namespace DCL.Places
 
         public void SetFiltersVisible(bool isVisible) =>
             filtersDropdown.gameObject.SetActive(isVisible);
+
+        public void SetFiltersInteractable(bool isInteractable) =>
+            filtersDropdown.SetDropdownInteractable(isInteractable);
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
@@ -196,7 +214,7 @@ namespace DCL.Places
         {
             currentFilters.Section = null;
             currentFilters.CategoryId = null;
-            currentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
+            currentFilters.SortBy = IPlacesAPIService.SortBy.MOST_ACTIVE;
             currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
             currentFilters.SearchText = string.Empty;
         }

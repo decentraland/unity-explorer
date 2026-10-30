@@ -1,11 +1,8 @@
-using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
-using System;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,93 +11,121 @@ namespace DCL.Minimap
 {
     public class MinimapView : ViewBase, IView
     {
-        [field: SerializeField]
-        internal RawImage mapRendererTargetImage { get; private set; }
+        private const float INFO_SECTION_HEIGHT = 77f;
+        private const float INFO_SECTION_EXPANDED_HEIGHT = 117f;
+        private const float SKYBOX_SECTION_HEIGHT = 28f;
+        private const float SKYBOX_SECTION_EXPANDED_HEIGHT = 60f;
 
         [field: SerializeField]
-        internal HoverableButton minimapRendererButton { get; private set; }
+        internal RawImage mapRendererTargetImage { get; private set; } = null!;
 
         [field: SerializeField]
-        internal Button sideMenuButton { get; private set; }
+        internal HoverableButton minimapRendererButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal CanvasGroup SideMenuCanvasGroup { get; private set; }
-
-        [field: SerializeField]
-        internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; }
+        internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; } = null!;
 
         [field: SerializeField]
         internal int mapRendererVisibleParcels { get; private set; }
 
         [field: SerializeField]
-        internal Button expandMinimapButton { get; private set; }
+        internal Button expandMinimapButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal Button collapseMinimapButton { get; private set; }
+        internal Button collapseMinimapButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal TMP_Text placeNameText { get; private set; }
+        internal TMP_Text placeNameText { get; private set; } = null!;
 
         [field: SerializeField]
-        internal TMP_Text placeCoordinatesText { get; private set; }
+        internal TMP_Text placeCoordinatesText { get; private set; } = null!;
 
         [field: SerializeField]
-        internal RectTransform sdk6Label { get; private set; }
+        internal RectTransform sdk6Label { get; private set; } = null!;
 
         [field: SerializeField]
-        internal RectTransform minimapContainer { get; private set; }
+        internal RectTransform minimapContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        internal SideMenuView sideMenuView { get; private set; }
+        internal GameObject mapRoot { get; private set; } = null!;
 
         [field: SerializeField]
-        internal SceneRestrictionsView sceneRestrictionsView { get; private set; }
+        internal SceneRestrictionsView sceneRestrictionsView { get; private set; } = null!;
 
         [field: SerializeField]
-        internal Animator minimapAnimator { get; private set; }
+        internal ButtonView minimapContextualButtonView { get; private set; } = null!;
 
         [field: SerializeField]
-        internal ButtonView minimapContextualButtonView { get; private set; }
+        internal ToggleButtonWithDisabledState favoriteButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal ToggleButtonWithDisabledState favoriteButton { get; private set; }
+        internal Button donateButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal Button donateButton { get; private set; }
+        internal MinimapPinMarkerObject destinationPinMarker { get; private set; } = null!;
 
         [field: SerializeField]
-        internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
+        internal GameObject ownPlayerBannedMark { get; private set; } = null!;
 
         [field: SerializeField]
-        internal RuntimeAnimatorController worldsAnimatorController { get; private set; }
+        internal GameObject ownPlayerBannedTooltip { get; private set; } = null!;
+
+        [SerializeField] internal Button contextMenuButton = null!;
+
+        [field: Header("Sections")]
+        [field: SerializeField]
+        internal RectTransform infoSection { get; private set; } = null!;
 
         [field: SerializeField]
-        internal List<GameObject> objectsToActivateForGenesis { get; private set; }
+        internal GameObject worldsSection { get; private set; } = null!;
 
         [field: SerializeField]
-        internal List<GameObject> objectsToActivateForWorlds { get; private set; }
+        internal RectTransform skyboxConfigSection { get; private set; } = null!;
 
         [field: SerializeField]
-        internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
+        internal GameObject skyboxWidget { get; private set; } = null!;
 
         [field: SerializeField]
-        internal GameObject ownPlayerBannedMark { get; private set; }
+        internal SimpleHoverableButton skyboxButton { get; private set; } = null!;
 
         [field: SerializeField]
-        internal GameObject ownPlayerBannedTooltip { get; private set; }
+        internal TMP_Text onlineUsersText { get; private set; } = null!;
 
-        [SerializeField] internal Button contextMenuButton;
+        [field: SerializeField]
+        internal Toggle timeProgressionToggle { get; private set; } = null!;
 
-        private void Start()
+        [field: SerializeField]
+        internal Slider timeSlider { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal TMP_Text timeText { get; private set; } = null!;
+
+        [field: SerializeField]
+        internal CanvasGroup skyboxCanvasGroup { get; private set; } = null!;
+
+        internal void SetWorldsSectionVisible(bool isVisible)
         {
-            minimapRendererButton.OnButtonHover += OnHoverMap;
-            minimapRendererButton.OnButtonUnhover += OnUnHoverMap;
+            worldsSection.SetActive(isVisible);
+            SetHeight(infoSection, isVisible ? INFO_SECTION_EXPANDED_HEIGHT : INFO_SECTION_HEIGHT);
         }
 
-        private void OnHoverMap() =>
-            minimapAnimator.SetTrigger(UIAnimationHashes.HOVER);
+        internal void SetMapResizingAllowed(bool isAllowed)
+        {
+            expandMinimapButton.interactable = isAllowed;
+            collapseMinimapButton.interactable = isAllowed;
+        }
 
-        private void OnUnHoverMap() =>
-            minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+        internal void SetSkyboxWidgetVisible(bool isVisible)
+        {
+            skyboxWidget.SetActive(isVisible);
+            SetHeight(skyboxConfigSection, isVisible ? SKYBOX_SECTION_EXPANDED_HEIGHT : SKYBOX_SECTION_HEIGHT);
+        }
+
+        private static void SetHeight(RectTransform target, float height)
+        {
+            Vector2 size = target.sizeDelta;
+            size.y = height;
+            target.sizeDelta = size;
+        }
     }
 }

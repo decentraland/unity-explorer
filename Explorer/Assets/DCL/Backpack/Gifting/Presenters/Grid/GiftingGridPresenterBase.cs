@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -30,8 +28,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         protected readonly IAvatarEquippedStatusProvider equippedStatusProvider;
         protected readonly IPendingTransferService pendingTransferService;
-        protected readonly IWearableStorage wearableStorage;
-        protected readonly IEmoteStorage emoteStorage;
 
         // State
         protected readonly Dictionary<string, TViewModel> viewModelsByUrn = new();
@@ -64,9 +60,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IAvatarEquippedStatusProvider equippedStatusProvider,
-            IPendingTransferService pendingTransferService,
-            IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage)
+            IPendingTransferService pendingTransferService)
         {
             this.view = view;
             this.adapter = adapter;
@@ -74,8 +68,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.equippedStatusProvider = equippedStatusProvider;
             this.pendingTransferService = pendingTransferService;
-            this.wearableStorage = wearableStorage;
-            this.emoteStorage = emoteStorage;
 
             adapter.SetDataProvider(this);
         }
@@ -84,7 +76,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         {
             lifeCts = new CancellationTokenSource();
             thumbnailLoadedSubscription = eventBus.Subscribe<GiftingEvents.ThumbnailLoadedEvent>(OnThumbnailLoaded);
-            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful); 
+            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful);
             adapter.OnNearEndOfScroll += OnNearEndOfScroll;
             adapter.OnItemSelected += OnItemSelected;
 
@@ -153,7 +145,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             // It is linked to 'lifeCts' so it cancels if the view closes,
             // but can also be canceled independently if a new search starts.
             fetchCts = fetchCts.SafeRestartLinked(ct);
-            
+
             var localCt = fetchCts.Token;
 
             try
@@ -163,9 +155,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 (var items, int total) =
                     await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
 
-                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry,
-                    emoteStorage.AllOwnedNftRegistry);
-                
+                pendingTransferService.Prune(GiftableKind);
+
                 totalCount = total;
 
                 foreach (var item in items)
@@ -185,7 +176,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     viewModelUrnOrder.Add(urn);
                     viewModelsByUrn[urn] = CreateViewModel(item, displayAmount, isEquipped, isGiftable);
                 }
-                
+
                 UpdateEmptyState(currentPage == 1 && viewModelUrnOrder.Count == 0);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, localCt);
@@ -225,7 +216,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
-            
+
             viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
 
             loadThumbnailCommand
@@ -314,6 +305,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Abstract Requirements
+        protected abstract GiftableType GiftableKind { get; }
         protected abstract UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
         protected abstract TViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable);
         protected abstract int GetItemAmount(GiftableAvatarAttachment item);

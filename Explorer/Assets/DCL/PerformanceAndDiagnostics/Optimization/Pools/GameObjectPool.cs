@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
 
@@ -31,14 +30,21 @@ namespace DCL.Optimization.Pools
 
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
-            gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
+
+            gameObjectPool = new ExtendedObjectPool<T>(
+                creationHandler ?? HandleCreation,
+                actionOnGet: HandleGet,
+                actionOnRelease: HandleRelease,
+                actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                defaultCapacity: maxSize / 4,
+                maxSize: maxSize);
         }
 
         public void Dispose() =>
             Clear();
 
         public PooledObject<T> Get(out T v) =>
-            gameObjectPool.Get(out v);
+            new (v = Get(), this);
 
         public void Release(T element)
         {
@@ -54,8 +60,19 @@ namespace DCL.Optimization.Pools
             gameObjectPool.Release(element);
         }
 
-        public T Get() =>
-            gameObjectPool.Get();
+        public T Get()
+        {
+            T component = gameObjectPool.Get();
+
+            while (component == null && !UnityObjectUtils.IsQuitting)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"{typeof(T).Name} has been destroyed while in the pool.");
+                component = gameObjectPool.Get();
+            }
+
+            return component!;
+        }
 
         public void Clear() =>
             gameObjectPool.Clear();
@@ -78,6 +95,9 @@ namespace DCL.Optimization.Pools
                 return;
             }
 
+            if (component == null)
+                return;
+
             component.gameObject.SetActive(true);
             onGet?.Invoke(component);
         }
@@ -93,7 +113,12 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(ParentContainer, false);
+            Transform transform = component.transform;
+            transform.SetParent(ParentContainer, false);
+
+            // Released instances don't carry the previous owner's local transform
+            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            transform.localScale = Vector3.one;
         }
     }
 }

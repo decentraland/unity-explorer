@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.Utility;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -24,12 +24,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly GltfLoadCache gltfLoadCache;
         private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, GltfLoadCache gltfLoadCache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.gltfLoadCache = gltfLoadCache;
             this.sceneData = sceneData;
             this.options = options;
         }
@@ -44,24 +46,40 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Builder preview bypasses the cache so creators always see the latest collection state.
-            // LSD reuse is safe within a session and is invalidated on `/reload` by ECSReloadScene's
-            // eager cache drain — required because the LSD dev server's hash is path-based, not content-based.
             bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.CacheKey, out GltfContainerAsset? asset))
             {
-                // Construct the result immediately
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-                return;
+                // In LSD a raw-GLTF asset is only reusable while the external files its import fetched
+                // (textures, buffers) still resolve to the URLs it was imported from; a hot reload can
+                // republish one of them under a new content hash while the GLTF's own hash — the cache
+                // key — stays the same. Both layers are evicted (mirroring CacheCleaner.EvictGltfModel):
+                // the popped instance and its pool because they were built from the stale import, and the
+                // import itself so it re-runs and the fresh result can occupy the freed cache key.
+                if (options.LocalSceneDevelopment && IsStaleRawGltf(asset!))
+                {
+                    asset!.Dispose(); // TryGet guarantees non-null on true return
+                    cache.Remove(intention.CacheKey);
+                    gltfLoadCache.RemoveByHash(intention.Hash);
+                }
+                else
+                {
+                    // Construct the result immediately
+                    World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+                    return;
+                }
             }
 
             bool loadRawGltf = options.PreviewingBuilderCollection;
 
             if (options.LocalSceneDevelopment)
             {
-                if (options.UseRemoteAssetBundles)
-                    loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                if (options.UseLocalAssetBundles)
+
+                    // Whole-scene degrade: when the manifest could not be fetched from the local
+                    // asset-bundle server every AB request would dead-end, so load raw GLTFs instead.
+                    loadRawGltf |= sceneData.SceneEntityDefinition.assetBundleManifestVersion is not { assetBundleManifestRequestFailed: false };
                 else
                     loadRawGltf = true;
             }
@@ -70,21 +88,23 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
             {
-                var abIntention = GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name);
-                // Pre-populate so PrepareAssetBundleLoadingParametersSystem doesn't have to look it up by the
-                // platform-suffixed hash (the digest map is keyed by bare hashes).
-                //This will go away when the urls include the depsDigest
-                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest
-                    && manifest.TryGetDepsDigest(intention.Hash, out string digest))
-                    abIntention.DepsDigest = digest;
-                World.Add(entity, abIntention);
+                AssetBundleManifestVersion abManifest = sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed;
+
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject),
+                    abManifest.GetCdnRequestHash(intention.Hash),
+                    intention.Name,
+                    abManifest,
+                    sceneData.SceneEntityDefinition.id ?? string.Empty));
             }
         }
+
+        private bool IsStaleRawGltf(GltfContainerAsset asset) =>
+            asset.AssetData is GLTFData gltfData && !GltfExternalDependency.AreUpToDate(gltfData.ExternalDependencies, sceneData.SceneContent);
 
         public struct Options
         {
             public bool LocalSceneDevelopment;
-            public bool UseRemoteAssetBundles;
+            public bool UseLocalAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

@@ -1,7 +1,3 @@
-using DG.Tweening;
-using System.Text.RegularExpressions;
-using UnityEngine;
-
 namespace DCL.Nametags
 {
     public static class NametagViewConstants

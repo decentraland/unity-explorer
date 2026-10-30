@@ -2,11 +2,9 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
@@ -35,6 +33,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -100,28 +99,29 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            IAppArgs appArgs,
+            IAppArgs args,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
                 realmData,
-                bootstrapContainer.AssetsProvisioner,
+                bootstrapContainer.AssetsProvisioner!,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
-                bootstrapContainer.IdentityCache,
-                bootstrapContainer.CompositeWeb3Provider,
+                bootstrapContainer.IdentityCache!,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
-                bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics,
                 world,
                 playerEntity,
                 memoryCap,
@@ -130,19 +130,19 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 ct,
-                appArgs
+                args
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            IAppArgs appArgs,
+            IAppArgs args,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             CancellationToken ct)
@@ -150,13 +150,13 @@ namespace Global.Dynamic
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
-                appArgs,
-                bootstrapContainer.AssetsProvisioner,
+                args,
+                bootstrapContainer.AssetsProvisioner!,
                 staticContainer,
-                scenePluginSettingsContainer,
+                pluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.CompositeWeb3Provider!,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 splashScreen,
                 worldInfoTool
             );
@@ -170,19 +170,18 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName, realmLaunchSettings.startParcelSource, realmLaunchSettings.landOnStartParcel),
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
                 },
                 backgroundMusic,
                 world,
                 playerEntity,
-                appArgs,
+                args,
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
@@ -192,13 +191,13 @@ namespace Global.Dynamic
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
+            PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -209,9 +208,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Reset();
@@ -223,10 +222,6 @@ namespace Global.Dynamic
         public void InitializeFeaturesRegistry()
         {
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
-
-            // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
-            // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.AB_DEPS_DIGEST_CACHE_KEY);
         }
 
         public GlobalWorld CreateGlobalWorld(
@@ -250,7 +245,7 @@ namespace Global.Dynamic
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
@@ -260,7 +255,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
                 bootstrapContainer.Environment,
-                dynamicWorldContainer.SystemClipboard
+                dynamicWorldContainer.SystemClipboard,
+                dynamicWorldContainer.WorldPlugins
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
@@ -287,33 +283,12 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
-            if (realmLaunchSettings.initialRealm is InitialRealm.World)
-            {
-                bool isAuthorized = await dynamicWorldContainer.RealmController
-                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
-
-                if (!isAuthorized)
-                {
-                    ReportHub.LogWarning(ReportCategory.REALM,
-                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
-
-                    dynamicWorldContainer.ChatHistory.AddMessage(
-                        ChatChannel.NEARBY_CHANNEL_ID,
-                        ChatChannel.ChatChannelType.NEARBY,
-                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
-
-                    await dynamicWorldContainer.RealmController
-                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
-                    return;
-                }
-            }
-
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache);
+            realmLaunchSettings.CheckStartParcelOverride(appArgs, featureFlagsConfigurationCache, identityCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 

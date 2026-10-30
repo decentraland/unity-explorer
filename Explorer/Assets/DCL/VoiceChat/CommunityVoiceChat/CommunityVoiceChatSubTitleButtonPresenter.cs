@@ -4,7 +4,10 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
+using DCL.Web3.Identities;
+using MVC;
 using System;
 using System.Threading;
 using Utility;
@@ -20,6 +23,8 @@ namespace DCL.VoiceChat
         private readonly JoinCommunityLiveStreamChatSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IMVCManager mvcManager;
         private readonly bool disabled;
 
         private CancellationTokenSource communityCts = new ();
@@ -31,14 +36,18 @@ namespace DCL.VoiceChat
             JoinCommunityLiveStreamChatSubTitleButtonView view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
-            CommunitiesDataProvider communityDataProvider)
+            CommunitiesDataProvider communityDataProvider,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
+            this.identityCache = identityCache;
+            this.mvcManager = mvcManager;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
                 statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
@@ -66,6 +75,12 @@ namespace DCL.VoiceChat
 
         private void OnJoinStreamButtonClicked()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
             string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
             communityCallOrchestrator.JoinCommunityVoiceChat(communityId, true);
         }
@@ -147,12 +162,12 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatGenericError or VoiceChatStatus.VoiceChatEndingCall:
                     OnCurrentChannelChanged(currentChannel.Value);
                     break;
 
                 // When we join a call, if it is for THIS community, we need to hide the button. If it's another community's call, we keep it.
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or  VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                case VoiceChatStatus.VoiceChatStartingCall or  VoiceChatStatus.VoiceChatInCall when
                     communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)):
                     view.gameObject.SetActive(false);
                     break;

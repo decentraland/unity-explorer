@@ -1,22 +1,22 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -25,35 +25,36 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
-        private readonly ObjectProxy<IRoomHub> roomHubProxy;
         private readonly CacheCleaner cacheCleaner;
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
 
         private readonly MediaVolume mediaVolume;
+        private readonly SlideTextureCache slideCache;
 
-        public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+        public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget,
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
-            this.roomHubProxy = roomHubProxy;
             this.cacheCleaner = cacheCleaner;
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
 
             mediaVolume = new MediaVolume(volumeBus);
+            slideCache = new SlideTextureCache(webRequestController, decentralandUrlsSource);
+            cacheCleaner.Register(slideCache);
         }
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
 
-        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData) =>
-            new (frameBudget, exposedCameraData, mediaFactoryBuilder);
+        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData, IDebugContainerBuilder debugBuilder) =>
+            new (frameBudget, exposedCameraData, mediaFactoryBuilder, debugBuilder);
 
-        protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(Settings containerSettings, CancellationToken ct)
         {
-            MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value;
+            MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(containerSettings.MediaPlayerPrefab, ct: ct)).Value;
 
             var videoTexturesPool = new ExtendedObjectPool<RenderTexture>(
                 () => new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32),
@@ -70,11 +71,15 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController);
+            mediaFactoryBuilder = new MediaFactoryBuilder(webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController, slideCache,
+                containerSettings.CompositorMaterial);
         }
 
-        public override void Dispose() =>
+        public override void Dispose()
+        {
             mediaVolume.Dispose();
+            slideCache.Dispose();
+        }
 
         [Serializable]
         public class MediaPlayerReference : ComponentReference<MediaPlayer>
@@ -86,7 +91,10 @@ namespace DCL.SDKComponents.MediaStream
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public MediaPlayerReference MediaPlayerPrefab { get; private set; }
+            public MediaPlayerReference MediaPlayerPrefab { get; private set; } = null!;
+
+            [field: SerializeField]
+            public Material CompositorMaterial { get; private set; } = null!;
         }
     }
 }

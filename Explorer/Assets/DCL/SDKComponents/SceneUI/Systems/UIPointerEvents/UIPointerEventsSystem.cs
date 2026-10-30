@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             TriggerPointerEventsQuery(World);
 
             HandleEntityDestructionQuery(World);
-            HandleUIPointerEventsRemovalQuery(World);
+            HandleUiPointerEventsRemovalQuery(World);
         }
 
         [Query]
@@ -67,17 +67,20 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         [Query]
         [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
-        private void HandleUIPointerEventsRemoval(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
-            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
+        private void HandleUiPointerEventsRemoval(ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, in sdkModel);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
-            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
+        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, in sdkModel);
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
-            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
+            if (eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave))
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
+            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {
                     result.Hit = data.sdkHit;
@@ -88,7 +91,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel)
+        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel)
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();

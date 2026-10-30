@@ -66,8 +66,6 @@ MonoBehaviour:
       Severity: 4
     - Category: BACKPACK
       Severity: 4
-    - Category: BADGES
-      Severity: 4
     - Category: CAMERA_REEL
       Severity: 4
     - Category: CHARACTER_TRIGGER_AREA
@@ -268,8 +266,6 @@ MonoBehaviour:
       Severity: 1
     - Category: BACKPACK
       Severity: 1
-    - Category: BADGES
-      Severity: 1
     - Category: CAMERA_REEL
       Severity: 1
     - Category: CHARACTER_TRIGGER_AREA
@@ -448,6 +444,34 @@ MonoBehaviour:
       Severity: 1
     - Category: ALWAYS
       Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 2
+    - Category: MCP
+      Severity: 4
+    - Category: MCP
+      Severity: 1
+    - Category: MCP
+      Severity: 3
+    - Category: MCP
+      Severity: 2
+    - Category: MCP
+      Severity: 0
+    - Category: AUTHENTICATION
+      Severity: 3
+    - Category: AUTHENTICATION
+      Severity: 2
+    - Category: AUTHENTICATION
+      Severity: 0
+    - Category: CREDITS_PURCHASE
+      Severity: 1
+    - Category: CREDITS_PURCHASE
+      Severity: 4
+    - Category: SDK_FONTS
+      Severity: 4
+    - Category: SDK_FONTS
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -879,6 +903,10 @@ MonoBehaviour:
     - Category: VOICE_CHAT
       Severity: 1
     - Category: WEARABLE
+      Severity: 1
+    - Category: SDK_FONTS
+      Severity: 4
+    - Category: SDK_FONTS
       Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1

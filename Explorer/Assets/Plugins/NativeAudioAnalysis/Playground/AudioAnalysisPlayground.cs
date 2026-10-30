@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Plugins.NativeAudioAnalysis;
 
 namespace Plugins.NativeAudioAnalysis.Playground
 {
@@ -15,7 +14,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
         private float bandsGain = 0.05f;
         [Space]
         [SerializeField] private AudioAnalysis medianAnalysis = default(AudioAnalysis);
-        [SerializeField] private AudioAnalysis lastAnalysis = default(AudioAnalysis);
+        [SerializeField] private AudioAnalysis lastAnalysis;
         [Space]
         [SerializeField]
         private GameObject[] bars = Array.Empty<GameObject>(); // Length is supposed to be equal to BANDS

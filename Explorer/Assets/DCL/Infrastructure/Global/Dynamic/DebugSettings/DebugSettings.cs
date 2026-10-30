@@ -1,19 +1,10 @@
-﻿using DCL.LiveKit.Public;
-using LiveKit.Proto;
+﻿using DCL.Browser.DecentralandUrls;
+using DCL.LiveKit.Public;
 using System;
 using UnityEngine;
 
 namespace Global.Dynamic.DebugSettings
 {
-    public enum GatekeeperMode
-    {
-        Org = 0,
-        Zone = 1,
-        Today = 2,
-        Localhost = 3,
-        Custom = 4,
-    }
-
     [Serializable]
     public class DebugSettings
     {
@@ -38,6 +29,8 @@ namespace Global.Dynamic.DebugSettings
         internal string[]? portableExperiencesEnsToLoad;
         [SerializeField]
         internal string[]? emotesToAddToUserProfile;
+        [SerializeField] [Tooltip("Wearable URNs rendered on your avatar without owning them. Never deployed to the catalyst")]
+        internal string[]? wearablesToAddToUserProfile;
         [Space]
         [SerializeField]
         private bool overrideConnectionQuality;
@@ -51,7 +44,7 @@ namespace Global.Dynamic.DebugSettings
         private string customGatekeeperUrl = string.Empty;
         [Space]
         [SerializeField]
-        private string[] appParameters;
+        private string[] appParameters = Array.Empty<string>();
 
         public static DebugSettings Release() =>
             new ()
@@ -68,6 +61,7 @@ namespace Global.Dynamic.DebugSettings
                 connectionQuality = LKConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
+                wearablesToAddToUserProfile = null,
                 gatekeeperMode = GatekeeperMode.Org,
                 customGatekeeperUrl = string.Empty,
                 appParameters = Array.Empty<string>(),
@@ -75,6 +69,7 @@ namespace Global.Dynamic.DebugSettings
 
         // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected release flow too.
         public string[]? EmotesToAddToUserProfile => Application.isEditor ? this.emotesToAddToUserProfile : RELEASE_SETTINGS.emotesToAddToUserProfile;
+        public string[]? WearablesToAddToUserProfile => Application.isEditor ? this.wearablesToAddToUserProfile : RELEASE_SETTINGS.wearablesToAddToUserProfile;
         public string[]? PortableExperiencesEnsToLoad => Application.isEditor ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
         public bool EnableRemotePortableExperiences => Application.isEditor ? this.enableRemotePortableExperiences : RELEASE_SETTINGS.enableRemotePortableExperiences;
         public bool ShowSplash => Application.isEditor ? this.showSplash : RELEASE_SETTINGS.showSplash;

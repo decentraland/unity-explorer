@@ -141,7 +141,7 @@ namespace DCL.CharacterMotion.Systems
 
         private void EnableProp(Entity entity, in GliderProp gliderProp, GlideStateValue glideState)
         {
-            if (glideState == GlideStateValue.PROP_CLOSED) return;
+            if (glideState == GlideStateValue.PropClosed) return;
 
             gliderProp.View.gameObject.SetActive(true);
             World.Add<GliderPropEnabled>(entity);
@@ -149,7 +149,7 @@ namespace DCL.CharacterMotion.Systems
 
         private void DisableProp(Entity entity, in GliderProp gliderProp, GlideStateValue glideState)
         {
-            if (glideState != GlideStateValue.PROP_CLOSED) return;
+            if (glideState != GlideStateValue.PropClosed) return;
 
             gliderProp.View.PrepareForNextActivation();
             gliderProp.View.gameObject.SetActive(false);
@@ -187,12 +187,12 @@ namespace DCL.CharacterMotion.Systems
         {
             switch (glideState.Value)
             {
-                case GlideStateValue.OPENING_PROP when gliderProp.View.OpenAnimationCompleted:
-                    glideState.Value = GlideStateValue.GLIDING;
+                case GlideStateValue.OpeningProp when gliderProp.View.OpenAnimationCompleted:
+                    glideState.Value = GlideStateValue.Gliding;
                     break;
 
-                case GlideStateValue.CLOSING_PROP when gliderProp.View.CloseAnimationCompleted:
-                    glideState.Value = GlideStateValue.PROP_CLOSED;
+                case GlideStateValue.ClosingProp when gliderProp.View.CloseAnimationCompleted:
+                    glideState.Value = GlideStateValue.PropClosed;
                     glideState.CooldownStartedTick = tick;
                     break;
             }
@@ -217,7 +217,7 @@ namespace DCL.CharacterMotion.Systems
         {
             float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
             Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
-            gliderProp.View.TrailEnabled = glideState.Value == GlideStateValue.GLIDING && velocity.sqrMagnitude > thresholdSq;
+            gliderProp.View.TrailEnabled = glideState.Value == GlideStateValue.Gliding && velocity.sqrMagnitude > thresholdSq;
         }
 
         [Query]
@@ -240,7 +240,7 @@ namespace DCL.CharacterMotion.Systems
 
         private void UpdateEngineState(in GlideStateValue glideState, in GliderProp gliderProp, in Vector3 velocity, float dt)
         {
-            if (glideState != GlideStateValue.GLIDING)
+            if (glideState != GlideStateValue.Gliding)
             {
                 gliderProp.View.UpdateEngineState(false, 0, dt);
                 return;

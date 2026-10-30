@@ -8,16 +8,17 @@ using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Time;
 using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS;
-using Global.AppArgs;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
 
@@ -41,12 +42,12 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
             var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), EthereumNetwork.Mainnet);
             var totalBudget = 15;
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
 
-            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), new RealmData());
+            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(new LocalSceneEntityIdSource(webRequests), identityCache).WithLog();
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData(), Option<HardwareFingerprintProvider>.None);
 
             new GateKeeperSceneRoom(
                     webRequests,

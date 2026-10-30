@@ -9,8 +9,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class EventsAnalytics : IDisposable
     {
+        private const string EXPLORE_SOURCE = "explore";
+        private const string LOBBY_SOURCE = "lobby";
+
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;
+
+        // The source follows the host: away from its explore slot the calendar counts as the lobby's.
+        private string source => explorePanelController.EventsController.IsAtHome ? EXPLORE_SOURCE : LOBBY_SOURCE;
 
         public EventsAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)
         {
@@ -51,7 +57,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnSectionOpen(EventsSection section, DateTime fromDate)
         {
-            if (section != EventsSection.EVENTS_BY_DAY)
+            if (section != EventsSection.EventsByDay)
                 return;
 
             analytics.Track(AnalyticsEvents.Events.EVENTS_BY_DAY_OPENED, new JObject { { "date", fromDate.ToString("yyyy-MM-dd") } });
@@ -60,8 +66,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnCreateEventButtonClicked(bool fromHeaderButton) =>
             analytics.Track(AnalyticsEvents.Events.EVENT_CREATION_OPENED, new JObject { { "from_header_button", fromHeaderButton } });
 
-        private void OnEventCardClicked(EventDTO eventInfo) =>
-            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, GetEventJObject(eventInfo));
+        private void OnEventCardClicked(EventDTO eventInfo)
+        {
+            JObject payload = GetEventJObject(eventInfo);
+            payload.Add("source", source);
+
+            analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, payload);
+        }
 
         private void OnEventSetAsInterested(IEventDTO eventInfo) =>
             analytics.Track(AnalyticsEvents.Events.EVENT_SET_AS_INTERESTED, GetEventJObject(eventInfo));

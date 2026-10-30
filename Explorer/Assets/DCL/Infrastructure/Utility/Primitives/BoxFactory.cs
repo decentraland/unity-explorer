@@ -61,7 +61,7 @@ namespace Utility.Primitives
             vertices[vIndex++] = start;
             vertices[vIndex++] = start + (Vector3.right * size);
             vertices[vIndex++] = start + (Vector3.right * size) + (Vector3.down * size);
-            vertices[vIndex++] = start + (Vector3.down * size);
+            vertices[vIndex] = start + (Vector3.down * size);
 
             //uv
             var uvIndex = 0;
@@ -97,7 +97,7 @@ namespace Utility.Primitives
             defaultUVs[uvIndex++] = new Vector2(0f, 1f);
             defaultUVs[uvIndex++] = new Vector2(1f, 1f);
             defaultUVs[uvIndex++] = new Vector2(1f, 0f);
-            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex] = new Vector2(0f, 0f);
 
             //uv2
             vIndex = 0;
@@ -133,7 +133,7 @@ namespace Utility.Primitives
             uvs2[vIndex++] = new Vector2(0f, 1f);
             uvs2[vIndex++] = new Vector2(1f, 1f);
             uvs2[vIndex++] = new Vector2(1f, 0f);
-            uvs2[vIndex++] = new Vector2(0f, 0f);
+            uvs2[vIndex] = new Vector2(0f, 0f);
 
             //normal
             vIndex = 0;
@@ -169,7 +169,7 @@ namespace Utility.Primitives
             normals[vIndex++] = Vector3.back;
             normals[vIndex++] = Vector3.back;
             normals[vIndex++] = Vector3.back;
-            normals[vIndex++] = Vector3.back;
+            normals[vIndex] = Vector3.back;
 
             var cnt = 0;
 
@@ -216,7 +216,7 @@ namespace Utility.Primitives
             tris[cnt++] = 20 + 2;
             tris[cnt++] = 20 + 0;
             tris[cnt++] = 20 + 2;
-            tris[cnt++] = 20 + 3;
+            tris[cnt] = 20 + 3;
 
             mesh.SetVertices(vertices, 0, VERTICES_NUM);
             mesh.SetNormals(normals, 0, VERTICES_NUM);
@@ -232,10 +232,7 @@ namespace Utility.Primitives
 
         public static void UpdateMesh(ref Mesh mesh, RepeatedField<float> boxUVs = null)
         {
-            if (boxUVs is { Count: > 0 })
-                mesh.SetUVs(0, PrimitivesUtility.FloatArrayToV2List(boxUVs, mesh.uv), 0, VERTICES_NUM);
-            else
-                mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
+            PrimitivesUtility.ApplyUVs(mesh, boxUVs, defaultUVs, VERTICES_NUM);
         }
     }
 }

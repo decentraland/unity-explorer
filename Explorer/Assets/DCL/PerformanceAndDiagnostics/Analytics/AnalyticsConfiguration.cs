@@ -1,14 +1,15 @@
 ﻿using DCL.Diagnostics;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public enum AnalyticsMode
     {
-        DEBUG_LOG,
-        SEGMENT,
-        DISABLED,
+        DebugLog,
+        Segment,
+        Disabled,
     }
 
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
@@ -31,22 +32,26 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int flushInterval = 30;
 
         [SerializeField] [HideInInspector]
-        private string segmentWriteKey;
+        private string segmentWriteKey = string.Empty;
+
+        [SerializeField]
+        [Tooltip("Segment Tracking API host the native client posts to. Must carry no /v1 suffix - the client appends the endpoint path itself.")]
+        private string segmentApiHost = string.Empty;
 
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
         [field: SerializeField]
-        public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
+        public AnalyticsMode Mode { get; private set; } = AnalyticsMode.Segment;
 
-        private Configuration segmentConfiguration;
+        private Configuration? segmentConfiguration;
 
         public int FlushSize => flushSize;
 
         public int FlushInterval => flushInterval;
 
-        public bool TryGetSegmentConfiguration(out Configuration configuration)
+        public bool TryGetSegmentConfiguration([NotNullWhen(true)] out Configuration? configuration)
         {
             if (segmentConfiguration != null)
             {
@@ -54,7 +59,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 return true;
             }
 
-            if (string.IsNullOrEmpty(segmentWriteKey) && !TryGetWriteKeyLocally())
+            if (string.IsNullOrEmpty(segmentApiHost)
+                || (string.IsNullOrEmpty(segmentWriteKey) && !TryGetWriteKeyLocally()))
             {
                 configuration = null;
                 return false;
@@ -68,7 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (useLocalEnvVariableFallback)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
-                segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
+                segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY) ?? string.Empty;
 
                 if (!string.IsNullOrEmpty(segmentWriteKey))
                     return true;
@@ -78,9 +84,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return false;
         }
 
-        private bool TryCreateSegmentConfiguration(out Configuration configuration)
+        private bool TryCreateSegmentConfiguration([NotNullWhen(true)] out Configuration? configuration)
         {
-            try { segmentConfiguration = new Configuration(segmentWriteKey, flushSize, flushInterval); }
+            try { segmentConfiguration = new Configuration(segmentWriteKey, segmentApiHost, flushSize, flushInterval); }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key (incorrect key?). Exception {e.Message}.");
@@ -101,17 +107,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         public string WriteKey { get; }
 
+        public string ApiHost { get; }
+
         public int FlushAt { get; }
 
         public int FlushInterval { get; }
 
         public Configuration(
             string writeKey,
+            string apiHost,
             int flushAt = 20,
             int flushInterval = 30
         )
         {
             WriteKey = writeKey;
+            ApiHost = apiHost;
             FlushAt = flushAt;
             FlushInterval = flushInterval;
         }

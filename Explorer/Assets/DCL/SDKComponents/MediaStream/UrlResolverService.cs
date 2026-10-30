@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -9,6 +10,8 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class UrlResolverService : IUrlResolverService
     {
+        private const string VIMEO_EXTERNAL_PREFIX = "https://player.vimeo.com/external/";
+
         private readonly IWebRequestController webRequestController;
         private readonly IYouTubeUrlResolver youTubeResolver;
 
@@ -58,7 +61,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedMediaUrl> ResolveGoogleDriveAsync(string url, CancellationToken ct)
         {
-            string directUrl = url.ResolveGoogleDriveDirectUrl();
+            string? directUrl = url.ResolveGoogleDriveDirectUrl();
 
             if (directUrl == null)
             {
@@ -77,13 +80,15 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedMediaUrl> ResolveDirectUrlAsync(string url, ReportData reportData, CancellationToken ct)
         {
-            bool isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5, true);
+            int queryStart = url.IndexOf('?');
+            bool hasSignedQuery = queryStart >= 0 && url.StartsWith(VIMEO_EXTERNAL_PREFIX, StringComparison.Ordinal);
+            bool isReachable = !hasSignedQuery && await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5, true);
 
             // Fallback: some servers don't handle HEAD requests correctly
             if (!isReachable)
                 isReachable = await IsGetReachableAsync(url, ct);
 
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{(queryStart < 0 ? url : url[..queryStart])}> isReachable = <{isReachable}>");
 
             return new ResolvedMediaUrl(url, isReachable);
         }
@@ -94,7 +99,13 @@ namespace DCL.SDKComponents.MediaStream
 
             try
             {
-                request.SendWebRequest();
+                // Throws synchronously for cleartext http when the player disallows insecure connections
+                try { request.SendWebRequest(); }
+                catch (InvalidOperationException e)
+                {
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Resource <{url}> is not reachable: {e.Message}");
+                    return false;
+                }
 
                 while (request.downloadedBytes == 0)
                 {

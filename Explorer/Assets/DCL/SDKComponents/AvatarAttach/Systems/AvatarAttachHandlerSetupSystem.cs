@@ -3,14 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
-using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -29,24 +27,24 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly World globalWorld;
-        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
         public AvatarAttachHandlerSetupSystem(
             World world,
             World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             ISceneStateProvider sceneStateProvider,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy) : base(world)
+            IReadOnlyEntityParticipantTable entityParticipantTable) : base(world)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
-            this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.entityParticipantTable = entityParticipantTable;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBaseProxy.Configured || !entityParticipantTableProxy.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             SetupAvatarAttachQuery(World);
         }
@@ -65,7 +63,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             }
             else
             {
-                LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId, entityParticipantTableProxy.Object);
+                LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId, entityParticipantTable);
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.AVATAR_ATTACH, $"Failed to find avatar with ID {pbAvatarAttach.AvatarId} for entity {entity}");

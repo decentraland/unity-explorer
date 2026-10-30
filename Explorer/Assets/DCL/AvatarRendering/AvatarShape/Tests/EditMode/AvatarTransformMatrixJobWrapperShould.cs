@@ -3,85 +3,88 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using NUnit.Framework;
 using UnityEngine;
 
-[Ignore("This produces 200mb worth of logs - @Nick revert this after your change")]
-public class AvatarTransformMatrixJobWrapperShould
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
-    private AvatarTransformMatrixJobWrapper jobWrapper;
-
-    [SetUp]
-    public void SetUp()
+    [Ignore("This produces 200mb worth of logs - @Nick revert this after your change")]
+    public class AvatarTransformMatrixJobWrapperShould
     {
-        jobWrapper = new AvatarTransformMatrixJobWrapper();
-    }
+        private AvatarTransformMatrixJobWrapper jobWrapper;
 
-    [TearDown]
-    public void TearDown()
-    {
-        jobWrapper.Dispose();
-    }
+        [SetUp]
+        public void SetUp()
+        {
+            jobWrapper = new AvatarTransformMatrixJobWrapper();
+        }
 
-    [Test]
-    public void AddNewAvatarIncrementsAvatarIndex()
-    {
-        var avatarBase = new GameObject().AddComponent<AvatarBase>();
-        var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
-        transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int initialIndex);
+        [TearDown]
+        public void TearDown()
+        {
+            jobWrapper.Dispose();
+        }
 
-        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
-
-        transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int afterIndex);
-        Assert.AreNotEqual(initialIndex, afterIndex);
-    }
-
-    [Test]
-    public void ResizeArraysDoublesCapacity()
-    {
-        // Add avatars until we exceed the initial capacity and force a resize
-        for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
+        [Test]
+        public void AddNewAvatarIncrementsAvatarIndex()
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
             var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
+            transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int initialIndex);
+
             jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+
+            transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int afterIndex);
+            Assert.AreNotEqual(initialIndex, afterIndex);
         }
 
-        // After resizing, the internal array size should be doubled
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.CurrentAvatarAmountSupported);
-    }
+        [Test]
+        public void ResizeArraysDoublesCapacity()
+        {
+            // Add avatars until we exceed the initial capacity and force a resize
+            for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
+            {
+                var avatarBase = new GameObject().AddComponent<AvatarBase>();
+                var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
+                jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+            }
 
-    [Test]
-    public void ReleasedIndexesAreReused()
-    {
-        var avatarBase = new GameObject().AddComponent<AvatarBase>();
-        var transformMatrixComponent1 = AvatarTransformMatrixComponent.NewDefault();
-        var transformMatrixComponent2 = AvatarTransformMatrixComponent.NewDefault();
+            // After resizing, the internal array size should be doubled
+            Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.CurrentAvatarAmountSupported);
+        }
 
-        // Add the first avatar
-        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent1);
-        transformMatrixComponent1.IndexInGlobalJobArray.TryGetValue(out int firstIndex);
-
-        // Release the first avatar
-        jobWrapper.ReleaseAvatar(ref transformMatrixComponent1);
-
-        // Add a second avatar and check if it reuses the released index
-        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent2);
-        transformMatrixComponent2.IndexInGlobalJobArray.TryGetValue(out int secondIndex);
-
-        Assert.AreEqual(firstIndex, secondIndex);
-    }
-
-    [Test]
-    public void MatrixAndBoolArraysResize()
-    {
-        // Fill the wrapper to trigger a resize
-        for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
+        [Test]
+        public void ReleasedIndexesAreReused()
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
-            var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
-            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+            var transformMatrixComponent1 = AvatarTransformMatrixComponent.NewDefault();
+            var transformMatrixComponent2 = AvatarTransformMatrixComponent.NewDefault();
+
+            // Add the first avatar
+            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent1);
+            transformMatrixComponent1.IndexInGlobalJobArray.TryGetValue(out int firstIndex);
+
+            // Release the first avatar
+            jobWrapper.ReleaseAvatar(ref transformMatrixComponent1);
+
+            // Add a second avatar and check if it reuses the released index
+            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent2);
+            transformMatrixComponent2.IndexInGlobalJobArray.TryGetValue(out int secondIndex);
+
+            Assert.AreEqual(firstIndex, secondIndex);
         }
 
-        // The matrices and bools should have been resized to double their initial size
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.MatrixFromAllAvatarsLength);
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.UpdateAvatarLength);
+        [Test]
+        public void MatrixAndBoolArraysResize()
+        {
+            // Fill the wrapper to trigger a resize
+            for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
+            {
+                var avatarBase = new GameObject().AddComponent<AvatarBase>();
+                var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
+                jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+            }
+
+            // The matrices and bools should have been resized to double their initial size
+            Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.MatrixFromAllAvatarsLength);
+            Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.UpdateAvatarLength);
+        }
     }
 }

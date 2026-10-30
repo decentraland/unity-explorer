@@ -52,16 +52,14 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!capBudget.TrySpendBudget())
                 return;
 
-            if (component.State == LoadingState.Loading
-                && !component.Promise.IsConsumed
-                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
-            {
-                if (result.Succeeded)
-                    // Must match the key used by GltfContainerAssetsCache.TryGet (and looked up via assetLoadCache.TryGet there)
-                    assetPreLoadCache.TryAdd(component.CacheKey, result.Asset);
+            if (component is not { State: LoadingState.Loading, Promise: { IsConsumed: false } }
+                || !component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result)) return;
 
-                MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
-            }
+            if (result.Succeeded)
+                // Hash is stored alongside the key because the AB clone needs the bare hash, not the composed CacheKey.
+                assetPreLoadCache.TryAddGltf(component.CacheKey, component.Hash, result.Asset!);
+
+            MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
         }
 
         [Query]
@@ -108,13 +106,15 @@ namespace ECS.Unity.AssetLoad.Systems
                 || !capBudget.TrySpendBudget())
                 return;
 
-            if (!mediaPlayerComponent.HasFailed)
-                assetPreLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
+            // Cache only the resolved metadata, not the player, so consumers never share one instance.
+            if (mediaPlayerComponent is { HasFailed: false, OpenMediaPromise: { } promise })
+                assetPreLoadCache.TryAddVideo(mediaPlayerComponent.MediaAddress.ToString(),
+                    promise.ToTemplateData());
 
             MarkForUpdate(mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, ref assetPreLoadLoadingStateComponent);
         }
 
-        private void MarkForUpdate(LoadingState loadingState, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
+        private static void MarkForUpdate(LoadingState loadingState, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
         {
             loadingStateComponent.LoadingState = loadingState;
             loadingStateComponent.IsDirty = true;

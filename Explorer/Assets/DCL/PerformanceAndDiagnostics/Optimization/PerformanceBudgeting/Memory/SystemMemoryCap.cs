@@ -5,8 +5,8 @@ namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryCapMode
     {
-        REAL_MEMORY,
-        SIMULATED_MEMORY,
+        RealMemory,
+        SimulatedMemory,
     }
 
     public class SystemMemoryCap : ISystemMemoryCap
@@ -15,14 +15,14 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public SystemMemoryCap()
         {
-            mode = MemoryCapMode.REAL_MEMORY;
+            mode = MemoryCapMode.RealMemory;
             //Default value will be later set in `MemoryLimitSettingController`. We start with the max value
             MemoryCap = -1;
         }
 
         public SystemMemoryCap(int simulatedMemory)
         {
-            mode = MemoryCapMode.SIMULATED_MEMORY;
+            mode = MemoryCapMode.SimulatedMemory;
             MemoryCapInMB = simulatedMemory;
         }
 
@@ -33,7 +33,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             set
             {
                 //Memory cannot be changed if we are simulating it
-                if (mode == MemoryCapMode.SIMULATED_MEMORY)
+                if (mode == MemoryCapMode.SimulatedMemory)
                     return;
 
                 //-1 means set to max

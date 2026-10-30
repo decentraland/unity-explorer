@@ -1,12 +1,11 @@
-﻿
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using Global.Dynamic;
-using UnityEngine.Playables;
 using UnityEngine;
+using UnityEngine.Playables;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     /// <summary>
     /// A playable / clip for the Unity timeline that makes an avatar move and / or rotate. When the clip is not playing, the avatar does not move.
@@ -16,7 +15,7 @@ namespace DCL.AvatarAnimation
     public class MoveAvatarPlayableBehaviour : BaseAvatarPlayableBehaviour
     {
         public float Forward = 0.0f;
-        public MovementKind MovementAnimation = MovementKind.IDLE;
+        public MovementKind MovementAnimation = MovementKind.Idle;
         public float Rotation = 0.0f;
 
         private Transform cachedCharacterControllerTransform;
@@ -44,7 +43,7 @@ namespace DCL.AvatarAnimation
 
             if (hasInputcomponent)
             {
-                movement.Kind = MovementKind.IDLE;
+                movement.Kind = MovementKind.Idle;
                 movement.Axes = Vector2.zero;
             }
         }

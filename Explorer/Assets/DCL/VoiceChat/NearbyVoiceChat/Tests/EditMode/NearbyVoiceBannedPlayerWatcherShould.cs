@@ -2,16 +2,17 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.VoiceChat.Nearby;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents <see cref="NearbyVoiceBannedPlayerWatcher"/>:
     /// when the gatekeeper returns a forbidden-access response for the current scene,
-    /// the watcher suppresses Nearby voice chat with <see cref="SuppressionReason.SCENE_BAN"/>
+    /// the watcher suppresses Nearby voice chat with <see cref="SuppressionReason.SceneBan"/>
     /// and pushes a NEARBY_VOICE_CHAT_BLOCKED:APPLIED restriction. Any subsequent successful
     /// scene-room connect or clean disconnect releases the suppression.
     /// </summary>
@@ -31,7 +32,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             roomHub.SceneRoom().Returns(sceneRoom);
 
             restrictionBus = Substitute.For<ISceneRestrictionBusController>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             watcher = new NearbyVoiceBannedPlayerWatcher(roomHub, restrictionBus, stateModel);
         }
 
@@ -47,10 +48,10 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
-            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SCENE_BAN));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SceneBan));
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.APPLIED));
+                r.Type == SceneRestrictions.NearbyVoiceChatBlocked && r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]
@@ -61,10 +62,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             sceneRoom.CurrentSceneRoomConnected += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
             Assert.That(stateModel.ActiveSuppression.Value, Is.Null);
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.REMOVED));
+                r.Type == SceneRestrictions.NearbyVoiceChatBlocked && r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
@@ -75,9 +76,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             sceneRoom.CurrentSceneRoomDisconnected += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Action == SceneRestrictionsAction.REMOVED));
+                r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
@@ -91,7 +92,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
             restrictionBus.DidNotReceive().PushSceneRestriction(Arg.Any<SceneRestriction>());
         }
 
@@ -100,7 +101,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             sceneRoom.CurrentSceneRoomConnected += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
             restrictionBus.DidNotReceive().PushSceneRestriction(Arg.Any<SceneRestriction>());
         }
 
@@ -115,10 +116,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
-            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SCENE_BAN));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SceneBan));
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.APPLIED));
+                r.Type == SceneRestrictions.NearbyVoiceChatBlocked && r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]
@@ -132,10 +133,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
-            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SCENE_BAN));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SceneBan));
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.APPLIED));
+                r.Type == SceneRestrictions.NearbyVoiceChatBlocked && r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]
@@ -147,9 +148,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             watcher.Dispose();
             watcher = null!;
 
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
             restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
-                r.Action == SceneRestrictionsAction.REMOVED));
+                r.Action == SceneRestrictionsAction.Removed));
         }
     }
 }

@@ -57,7 +57,7 @@ namespace DCL.VoiceChat
 
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
-            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_BUSY)
+            if (status is VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatGenericError or VoiceChatStatus.VoiceChatEndingCall or VoiceChatStatus.VoiceChatBusy)
                 OnCurrentChannelChanged(currentChannel.Value);
         }
 
@@ -76,7 +76,7 @@ namespace DCL.VoiceChat
 
         private void OnCallButtonClicked()
         {
-            orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY);
+            orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.Community);
         }
 
         private void OnCurrentCommunityActiveCallStatusChanged(bool hasActiveCall)

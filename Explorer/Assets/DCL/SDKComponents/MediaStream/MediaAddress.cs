@@ -1,5 +1,4 @@
 using REnum;
-using System;
 
 namespace DCL.SDKComponents.MediaStream
 {

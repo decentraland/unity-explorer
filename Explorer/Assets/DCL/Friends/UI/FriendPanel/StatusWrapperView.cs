@@ -8,10 +8,10 @@ namespace DCL.Friends.UI.FriendPanel
 {
     public enum FriendPanelStatus
     {
-        ONLINE,
-        OFFLINE,
-        RECEIVED,
-        SENT,
+        Online,
+        Offline,
+        Received,
+        Sent,
     }
 
     public class StatusWrapperView : MonoBehaviour
@@ -38,10 +38,10 @@ namespace DCL.Friends.UI.FriendPanel
             panelStatus = status;
             string statusText = status switch
             {
-                FriendPanelStatus.ONLINE => "ONLINE",
-                FriendPanelStatus.OFFLINE => "OFFLINE",
-                FriendPanelStatus.RECEIVED => "RECEIVED",
-                FriendPanelStatus.SENT => "SENT",
+                FriendPanelStatus.Online => "ONLINE",
+                FriendPanelStatus.Offline => "OFFLINE",
+                FriendPanelStatus.Received => "RECEIVED",
+                FriendPanelStatus.Sent => "SENT",
                 _ => "Unknown"
             };
 

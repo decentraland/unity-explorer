@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.PlayModeTests
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarBaseLegacyAnimationPlayModeShould
     {
@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape.PlayModeTests
 
             FieldInfo overrideField = typeof(AvatarBase).GetField("overrideController", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(overrideField, "AvatarBase.overrideController field not found — has it been renamed?");
-            overrideField!.SetValue(avatarBase, new AnimatorOverrideController(runtimeController));
+            overrideField.SetValue(avatarBase, new AnimatorOverrideController(runtimeController));
         }
 
         [TearDown]

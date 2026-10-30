@@ -13,7 +13,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
@@ -25,18 +25,20 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
         private const float HEAD_IK_EPSILON = 1; // 1 deg
 
-        private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly LiveKitMovementMessageBus messageBus;
+        private readonly IMovementMessageBus movementMessageBus;
         private readonly MultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, MultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings) : base(world)
+        internal PlayerMovementNetSendSystem(World world, LiveKitMovementMessageBus messageBus, IMovementMessageBus movementMessageBus,
+            MultiplayerMovementSettings settings, MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
+            this.movementMessageBus = movementMessageBus;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -70,14 +72,14 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
             }
 
-            float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
+            var timeDiff = (float)(UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
+            bool isConsideredTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity) || World.Has<PlayerTeleportIntent>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isConsideredTeleported);
                 return;
             }
 
@@ -91,7 +93,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!anythingChanged && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isConsideredTeleported);
             }
 
             return;
@@ -137,7 +139,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
-            float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
+            var speed = (float)(dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp));
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
@@ -186,11 +188,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = input.Kind,
             };
 
-            messageBus.Send(playerMovement.LastSentMessage);
+            movementMessageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending
-                && input.Kind != MovementKind.RUN // simulate package lost when Running
+                && input.Kind != MovementKind.Run // simulate package lost when Running
                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
                                debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))

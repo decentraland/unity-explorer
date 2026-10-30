@@ -398,6 +398,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3604137211807971006, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3606705200151762116 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3376167426973228733, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4228669688390808703 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2772064026238959110, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -450,6 +455,8 @@ MonoBehaviour:
   incompatibleWithBodyShapeContainer: {fileID: 3374162131891453127}
   incompatibleWithBodyShapeHoverContainer: {fileID: 4228669688390808703}
   <SmartWearableBadgeContainer>k__BackingField: {fileID: 0}
+  <ThumbnailPendingColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.39215687}
+  <PendingBadge>k__BackingField: {fileID: 3606705200151762116}
   <EquipWearableAudio>k__BackingField: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
   <UnEquipWearableAudio>k__BackingField: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
   <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}

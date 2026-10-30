@@ -19,7 +19,7 @@ namespace ECS.Unity.SceneBoundsChecker
 
         /// <summary>
         ///     When enabled, forces backface culling on all scene materials.
-        ///     Set this from FeaturesRegistry.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING).
+        ///     Set this from FeaturesRegistry.IsEnabled(FeatureId.ForceBackfaceCulling).
         /// </summary>
         public static bool forceBackfaceCullingEnabled { get; set; }
 

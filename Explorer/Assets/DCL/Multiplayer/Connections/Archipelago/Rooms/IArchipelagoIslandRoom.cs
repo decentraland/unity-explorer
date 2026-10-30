@@ -19,7 +19,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress,
             IWebRequestController webRequestController,
-            IRealmData realmData
+            IRealmData realmData,
+            bool allowInsecureLocalHttp
         ) =>
             new ForkGlobalRealmRoom(
                 currentAdapterAddress,
@@ -35,6 +36,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                     currentAdapterAddress,
                     identityCache,
                     realmData
-                )).AsActivatable();
+                ),
+                allowInsecureLocalHttp
+            ).AsActivatable();
     }
 }

@@ -179,7 +179,7 @@ namespace DCL.Navmap
             isScaling = true;
             float scaleDuration = view.scaleDuration;
 
-            for (float timer = 0; timer < scaleDuration; timer += Time.deltaTime)
+            for (float timer = 0; timer < scaleDuration; timer += UnityEngine.Time.deltaTime)
             {
                 if (ct.IsCancellationRequested)
                     break;

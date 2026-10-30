@@ -8,8 +8,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
-using DCL.Multiplayer.Emotes;
 using DCL.UI;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -40,12 +40,12 @@ namespace DCL.PluginSystem.Global
 
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
-        private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly IReactiveProperty<bool> currentSceneUiOnly;
         private CrosshairCanvas crosshairCanvas = null!;
         private WarningNotificationView showUIToast = null!;
 
@@ -53,16 +53,16 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
-            MultiplayerEmotesMessageBus messageBus,
             EmoteWheelShortcutHandler emoteWheelShortcutHandler,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IReactiveProperty<bool> currentSceneUiOnly)
         {
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
-            this.messageBus = messageBus;
             this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
             this.mvcManager = mvcManager;
+            this.currentSceneUiOnly = currentSceneUiOnly;
 
             DCLInput.Instance.Enable();
         }
@@ -83,16 +83,16 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            builder.World.Create(new InputMapComponent(InputMapComponent.Kind.NONE));
+            builder.World.Create(new InputMapComponent(InputMapComponent.Kind.None));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, DCLInput.Instance.Player.Jump);
             UpdateInputMovementSystem.InjectToWorld(ref builder);
             UpdateCameraInputSystem.InjectToWorld(ref builder);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, emoteWheelShortcutHandler);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, emoteWheelShortcutHandler);
             UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast, currentSceneUiOnly);
         }
 
         public void Dispose()

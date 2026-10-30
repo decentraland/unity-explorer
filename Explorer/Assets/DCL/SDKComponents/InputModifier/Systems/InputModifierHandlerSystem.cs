@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        private SceneRestrictionsAction lastBusMessageAction = SceneRestrictionsAction.REMOVED;
+        private SceneRestrictionsAction lastBusMessageAction = SceneRestrictionsAction.Removed;
 
         public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void SendBusMessage(in InputModifierComponent inputModifier)
         {
-            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+            SceneRestrictionsAction currentAction = inputModifier.EverythingEnabled ? SceneRestrictionsAction.Removed : SceneRestrictionsAction.Applied;
 
             if (currentAction == lastBusMessageAction) return;
 
@@ -107,13 +107,17 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (value)
                 ApplyModifiersQuery(World, true);
-            else
+
+            // Only reset the shared global modifier if this scene was the one actively asserting it.
+            else if (lastBusMessageAction == SceneRestrictionsAction.Applied)
                 ResetModifiers();
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ResetModifiers();
+            // Only reset the shared global modifier if this scene was the one actively asserting it.
+            if (lastBusMessageAction == SceneRestrictionsAction.Applied)
+                ResetModifiers();
         }
     }
 }

@@ -15,7 +15,6 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -60,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
 
         private UserBlockingCache? userBlockingCache;
+        private readonly FriendsServicesContainer friendsServices;
         private readonly RPCFriendsService rpcFriendsService;
 
         private readonly FriendsPanelController friendsPanelController;
@@ -71,6 +71,8 @@ namespace DCL.PluginSystem.Global
 
         private readonly UniTask[] subscriptions = new UniTask[3];
 
+        private bool subscriptionsRunning;
+
         public FriendsContainer(
             MainUIView mainUIView,
             IMVCManager mvcManager,
@@ -79,22 +81,17 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool useAnalytics,
-            IAnalyticsController? analyticsController,
             ISocialServiceEventBus socialServiceEventBus,
-            IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
-            ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
-            ObjectProxy<FriendsCache> friendsCacheProxy,
+            FriendsServicesContainer friendsServices,
             IUserBlockingCache injectedUserBlockingCache,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
@@ -104,23 +101,22 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.injectedUserBlockingCache = injectedUserBlockingCache;
             this.profileRepositoryWrapper = profileDataProvider;
             this.dclInput = DCLInput.Instance;
 
-            friendsCache = new FriendsCache();
-
-            rpcFriendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, socialServicesRPC);
-            friendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(rpcFriendsService, analyticsController!) : rpcFriendsService;
+            this.friendsServices = friendsServices;
+            friendsCache = friendsServices.FriendsCache;
+            rpcFriendsService = friendsServices.RpcFriendsService;
+            friendsService = friendsServices.FriendsService;
+            friendsConnectivityStatusTracker = friendsServices.ConnectivityStatusTracker;
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
-            this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
-            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
-
-            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
+            this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus);
+            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -155,10 +151,6 @@ namespace DCL.PluginSystem.Global
                 friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
-
-            friendServiceProxy.SetObject(friendsService);
-            friendsConnectivityStatusTrackerProxy.SetObject(friendsConnectivityStatusTracker);
-            friendsCacheProxy.SetObject(friendsCache);
         }
 
         public void Dispose()
@@ -170,8 +162,7 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
-            friendsCache.Clear();
-            friendsService.Dispose();
+            friendsServices.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -183,7 +174,7 @@ namespace DCL.PluginSystem.Global
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, friendsService, profileRepository,
-                inputBlock, profileRepositoryWrapper);
+                inputBlock);
 
             mvcManager.RegisterController(friendRequestController);
 
@@ -203,6 +194,10 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.RPCClientReconnected += OnRPCClientReconnected;
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
+
+            // A session already signed in raises no identity change, and the startup lobby needs the connectivity stream before the world loads
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby) && web3IdentityCache.Identity is { IsExpired: false })
+                LaunchSubscriptionsIfNeeded();
 
             dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformed;
 
@@ -239,9 +234,7 @@ namespace DCL.PluginSystem.Global
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
-            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-
-            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token);
+            LaunchSubscriptionsIfNeeded();
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -264,8 +257,11 @@ namespace DCL.PluginSystem.Global
                                 .SuppressToResultAsync(ReportCategory.FRIENDS);
         }
 
-        private void OnTransportClosed() =>
+        private void OnTransportClosed()
+        {
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
+            subscriptionsRunning = false;
+        }
 
         private void SyncBlockingStatus()
         {
@@ -286,17 +282,29 @@ namespace DCL.PluginSystem.Global
 
         private void OnRPCClientReconnected()
         {
+            // Reset before re-subscribing: statuses cached for the previous identity would otherwise
+            // suppress the connectivity snapshot the new subscription delivers
+            friendsConnectivityStatusTracker.Reset();
+            friendsPanelController.Reset();
+
+            // The connection is a new one, so the streams of the previous one are gone whether or not the transport reported closing.
+            // Subscriptions stay open until the next disconnect, so they must not gate the prewarm
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCts.Token).Forget();
-            return;
+            subscriptionsRunning = false;
+            LaunchSubscriptionsIfNeeded();
+            PreWarmFriendsCacheAsync(friendServiceSubscriptionCts.Token).Forget();
+        }
 
-            async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
-            {
-                await LaunchSubscriptionsAsync(ct);
-                await PreWarmFriendsCacheAsync(ct);
+        /// <summary>
+        ///     A cancelled stream is never closed server-side, so relaunching it on a live connection is rejected as a duplicate.
+        /// </summary>
+        private void LaunchSubscriptionsIfNeeded()
+        {
+            if (subscriptionsRunning && !friendServiceSubscriptionCts.IsCancellationRequested) return;
 
-                friendsPanelController.Reset();
-            }
+            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
+            subscriptionsRunning = true;
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).SuppressToResultAsync(ReportCategory.FRIENDS).Forget();
         }
 
         private async UniTask LaunchSubscriptionsAsync(CancellationToken ct)

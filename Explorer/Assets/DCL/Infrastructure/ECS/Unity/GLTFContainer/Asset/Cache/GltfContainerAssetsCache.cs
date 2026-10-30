@@ -63,10 +63,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public bool TryGet(in string key, out GltfContainerAsset? asset)
         {
-            // First check if the asset is being handled by the AssetLoadCache
-            if (assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset cachedAsset))
+            // Serve a clone so two live GltfContainers don't fight over one shared preloaded Root.
+            if (assetLoadCache != null && assetLoadCache.TryGetGltfInstance(key, out GltfContainerAsset? instance))
             {
-                asset = cachedAsset;
+                asset = instance;
                 return true;
             }
 
@@ -90,10 +90,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// </summary>
         public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true)
         {
-            // If the asset is being handled by the AssetLoadCache, we don't need to add it to this cache
-            if (handleAssetLoad && assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset _))
+            // A stale promise result can still reference an asset whose Root was already destroyed
+            // (e.g. drained by Unload). Comparing against Unity's overloaded null catches that destroyed
+            // GameObject; re-pooling it would crash DereferenceFinalOperation and hand a dead instance back out.
+            if (asset.Root == null)
+                return;
+
+            if (handleAssetLoad && assetLoadCache != null && assetLoadCache.ContainsGltf(key))
             {
-                DereferenceFinalOperation(asset, putInBridge);
+                // The template is still cached: destroy the released clone rather than pooling a duplicate
+                asset.Dispose();
                 return;
             }
 
@@ -144,6 +150,22 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             }
 
             ProfilingCounters.GltfInCacheAmount.Value -= unloadedAmount;
+        }
+
+        public void Remove(in string key)
+        {
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets))
+            {
+                foreach (GltfContainerAsset asset in assets)
+                    asset.Dispose();
+
+                ProfilingCounters.GltfInCacheAmount.Value -= assets.Count;
+                assets.Clear();
+                cache.Remove(key);
+                unloadQueue.TryRemove(key);
+            }
+
+            IrrecoverableFailures.Remove(key);
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>

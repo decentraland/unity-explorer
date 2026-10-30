@@ -65,7 +65,7 @@ namespace DCL.WebRequests.Dumper
             foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
             {
                 var recorder = new RequestMetricRecorder(ctor());
-                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.INDICES[type]] = recorder;
+                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.Indices[type]] = recorder;
                 AddFlatMetric(recorder);
             }
         }
@@ -98,7 +98,7 @@ namespace DCL.WebRequests.Dumper
                 flat.OnRequestEnded(request, duration);
 
             if (dumpEnvelopes.Remove(request.UnityWebRequest, out WebRequestDump.Envelope? dumpEnvelope))
-                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.SUCCESS, DateTime.Now);
+                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.Success, DateTime.Now);
         }
 
         public void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest { }
@@ -106,13 +106,13 @@ namespace DCL.WebRequests.Dumper
         public void OnException<T>(T request, Exception exception, TimeSpan duration) where T: ITypedWebRequest
         {
             if (dumpEnvelopes.Remove(request.UnityWebRequest, out WebRequestDump.Envelope? dumpEnvelope))
-                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.FAILURE, DateTime.Now);
+                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.Failure, DateTime.Now);
         }
 
         public void OnException<T>(T request, UnityWebRequestException exception, TimeSpan duration) where T: ITypedWebRequest
         {
             if (dumpEnvelopes.Remove(request.UnityWebRequest, out WebRequestDump.Envelope? dumpEnvelope))
-                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.FAILURE, DateTime.Now);
+                dumpEnvelope.Conclude(WebRequestDump.Envelope.StatusKind.Failure, DateTime.Now);
         }
     }
 }

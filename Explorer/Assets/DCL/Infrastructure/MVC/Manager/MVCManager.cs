@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,11 @@ namespace MVC
         public void Dispose()
         {
             foreach (IController controllersValue in controllers.Values)
-                controllersValue.Dispose();
+            {
+                // One failing Dispose must not abort disposal of the remaining controllers and the windows stack
+                try { controllersValue.Dispose(); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.MVC); }
+            }
 
             destructionCancellationTokenSource.SafeCancelAndDispose();
             windowsStackManager.Dispose();
@@ -68,6 +73,16 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
+        public bool IsAnyModalViewShowing()
+        {
+            var info = windowsStackManager.GetNonPersistentControllersInfo();
+            return info.PopupControllers.Count > 0 || info.FullscreenController != null;
+        }
+
+        public bool IsShowing<TView, TInputData>() where TView: IView =>
+            controllers.TryGetValue(typeof(IController<TView, TInputData>), out IController controller)
+            && controller.State != ControllerState.ViewHidden;
+
         public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();
@@ -92,9 +107,20 @@ namespace MVC
             IController controller = controllers[typeof(IController<TView, TInputData>)];
 
             if (controller.State != ControllerState.ViewHidden)
-                return;
+            {
+                if (windowsStackManager.CurrentFullscreenController == controller
+                    && controller.State == ControllerState.ViewFocused
+                    && controller is IReshowController<TInputData> reshowable)
+                {
+                    CloseAllPopups(windowsStackManager.GetNonPersistentControllersInfo().PopupControllers);
+                    popupCloser.HideAsync(CancellationToken.None).Forget();
+                    reshowable.OnReshowWhileVisible(command.InputData);
+                }
 
-            ct = ct.Equals(default(CancellationToken))
+                return;
+            }
+
+            ct = ct.Equals(CancellationToken.None)
                 ? destructionToken
                 : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken).Token;
 
@@ -104,26 +130,29 @@ namespace MVC
 
                 switch (controller.Layer)
                 {
-                    case CanvasOrdering.SortingLayer.POPUP:
+                    case CanvasOrdering.SortingLayer.Popup:
                         await ShowPopupAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.FULLSCREEN:
+                    case CanvasOrdering.SortingLayer.Fullscreen:
                         await ShowFullScreenAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.PERSISTENT:
+                    case CanvasOrdering.SortingLayer.Persistent:
                         await ShowPersistentAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.OVERLAY:
+                    case CanvasOrdering.SortingLayer.Overlay:
                         await ShowOverlayAsync(command, controller, ct);
                         break;
                 }
-
-                OnViewClosed?.Invoke(controller);
             }
             catch (OperationCanceledException)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
                 ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
+            }
+            finally
+            {
+                // Raised here so that every OnViewShowed is followed by exactly one OnViewClosed
+                OnViewClosed?.Invoke(controller);
             }
         }
 
@@ -134,8 +163,7 @@ namespace MVC
             OverlayPushInfo overlayPushInfo = windowsStackManager.PushOverlay(controller);
 
             // Hide all popups in the stack and clear it
-            if (overlayPushInfo.PopupControllers != null)
-                CloseAllPopups(overlayPushInfo.PopupControllers);
+            CloseAllPopups(overlayPushInfo.PopupControllers);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
@@ -144,9 +172,17 @@ namespace MVC
             // Hide the popup closer
             await popupCloser.HideAsync(ct);
 
-            await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-            await controller.HideViewAsync(ct);
+            try
+            {
+                await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct),
+                    windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
+            }
+            finally
+            {
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
+                if (controller.State != ControllerState.ViewHidden)
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
+            }
         }
 
         private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
@@ -199,17 +235,12 @@ namespace MVC
                 await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
                     fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct),
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-                await controller.HideViewAsync(ct);
             }
             finally
             {
-                // If the lifecycle was aborted by cancellation before HideViewAsync completed,
-                // force a clean tear-down so State returns to ViewHidden. Otherwise, the view
-                // stays active and interactive while the controller is stuck at ViewFocused,
-                // making it unreachable on subsequent opens and breaking its close intents.
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
                 if (controller.State != ControllerState.ViewHidden)
-                    await controller.HideViewAsync(CancellationToken.None).SuppressCancellationThrow();
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
 
                 windowsStackManager.PopFullscreen(controller);
             }
@@ -231,12 +262,13 @@ namespace MVC
                     WaitForPopupCloserClickAsync(controller, ct),
                     pushPopupPush.OnClose?.Task ?? UniTask.Never(ct),
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-                // "Close" command has been received
-                await controller.HideViewAsync(ct);
             }
             finally
             {
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
+                if (controller.State != ControllerState.ViewHidden)
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
+
                 // Pop the stack
                 PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller, windowsStackManager.GetControllerClosure(controller)?.Task.Status != UniTaskStatus.Succeeded);
 
@@ -245,17 +277,16 @@ namespace MVC
                     popupCloser.SetDrawOrder(popupPopInfo.PopupCloserOrdering);
                     popupPopInfo.NewTopMostController.Focus();
                 }
-                else { await popupCloser.HideAsync(ct); }
+                else
+                    await popupCloser.HideAsync(CancellationToken.None);
             }
         }
 
         private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
             do
-            {
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
                     UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused, cancellationToken: ct));
-            }
             while (currentController != windowsStackManager.TopMostPopup.controller);
         }
     }

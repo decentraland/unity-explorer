@@ -5,7 +5,7 @@
         FirstPerson = 0,
         ThirdPerson = 1,
         DroneView = 2,
-        SDKCamera = 3,
+        SdkCamera = 3,
 
         /// <summary>
         ///     Free-fly, does not follow character, intercepts controls designated for character movement

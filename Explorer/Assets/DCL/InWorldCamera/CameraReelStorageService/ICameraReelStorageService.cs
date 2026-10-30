@@ -25,6 +25,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         UniTask<CameraReelStorageStatus> DeleteScreenshotAsync(string uuid, CancellationToken ct = default);
 
+        /// <exception cref="ScreenshotLimitReachedException">Thrown when the user's storage has no free space.</exception>
         UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, string source, CancellationToken ct = default);
         UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct = default);
 

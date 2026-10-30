@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using DCL.Profiles;
 using UnityEngine;
 

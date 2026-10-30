@@ -2,13 +2,13 @@ using UnityEngine;
 
 namespace DCL.UI.Buttons
 {
-    public class SimpleHoverableButton: HoverableButton
+    public class SimpleHoverableButton: HoverableButton, ISelectableButton
     {
-        [SerializeField] private GameObject _hoveredObject = null!;
-        [SerializeField] private GameObject _unhoveredObject;
-        [SerializeField] private GameObject _selectedObject;
+        [SerializeField] private GameObject hoveredObject = null!;
+        [SerializeField] private GameObject unhoveredObject = null!;
+        [SerializeField] private GameObject selectedObject = null!;
 
-        private bool selected;
+        public bool IsSelected { get; private set; }
 
         private void Start()
         {
@@ -16,29 +16,35 @@ namespace DCL.UI.Buttons
             OnButtonUnhover += OnUnhover;
         }
 
+        public void Select() =>
+            SetSelected(true);
+
+        public void Deselect() =>
+            SetSelected(false);
+
         public void SetSelected(bool selected)
         {
-            this.selected = selected;
-            Button.interactable = !selected;
+            IsSelected = selected;
 
-            _selectedObject.SetActive(selected);
-            _unhoveredObject.SetActive(!selected);
+            selectedObject.SetActive(selected);
+            unhoveredObject.SetActive(!selected);
+            hoveredObject.SetActive(false);
         }
 
         private void OnUnhover()
         {
-            if (selected) return;
+            if (IsSelected) return;
 
-            _hoveredObject.SetActive(false);
-            _unhoveredObject.SetActive(true);
+            hoveredObject.SetActive(false);
+            unhoveredObject.SetActive(true);
         }
 
         private void OnHover()
         {
-            if (selected) return;
+            if (IsSelected) return;
 
-            _hoveredObject.SetActive(true);
-            _unhoveredObject.SetActive(false);
+            hoveredObject.SetActive(true);
+            unhoveredObject.SetActive(false);
         }
     }
 }

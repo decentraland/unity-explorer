@@ -1,7 +1,6 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
 using ECS.StreamableLoading;
-using System;
 using Unity.Profiling;
 
 namespace DCL.Profiles

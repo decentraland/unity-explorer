@@ -1,14 +1,12 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MediaStream;
 using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -37,7 +35,7 @@ namespace DCL.PluginSystem.World
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ForceBackfaceCulling);
 
             this.mediaFactory = mediaFactory;
         }
@@ -67,9 +65,9 @@ namespace DCL.PluginSystem.World
             return UniTask.CompletedTask;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies));
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear. Consider revising it when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);

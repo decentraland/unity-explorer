@@ -2,7 +2,6 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,8 +10,8 @@ namespace DCL.SDKEntityTriggerArea.Components
 {
     public enum SDKEntityTriggerAreaMeshType
     {
-        BOX,
-        SPHERE
+        Box,
+        Sphere
     }
 
     public struct SDKEntityTriggerAreaComponent : IDirtyMarker
@@ -20,9 +19,10 @@ namespace DCL.SDKEntityTriggerArea.Components
         private static readonly IReadOnlyCollection<Collider> EMPTY_COLLECTION = Array.Empty<Collider>();
         public SDKEntityTriggerArea? monoBehaviour { get; private set; }
 
-        private readonly bool targetOnlyMainPlayer;
+        private bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
         private uint incrementalTick;
+        private Vector3 compensatedParentScale;
 
         public Vector3 AreaSize { get; private set; }
         public SDKEntityTriggerAreaMeshType MeshType { get; private set; }
@@ -46,7 +46,7 @@ namespace DCL.SDKEntityTriggerArea.Components
             Vector3 areaSize,
             bool targetOnlyMainPlayer = false,
             SDKEntityTriggerArea? monoBehaviour = null,
-            SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.BOX,
+            SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.Box,
             ColliderLayer layerMask = ColliderLayer.ClPlayer)
         {
             AreaSize = areaSize;
@@ -59,41 +59,67 @@ namespace DCL.SDKEntityTriggerArea.Components
 
             IsDirty = true;
             incrementalTick = 0;
+            compensatedParentScale = Vector3.zero;
         }
 
         public void TryAssignArea(IComponentPool<SDKEntityTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
             bool useTransformScaleAsAreaSize = AreaSize == Vector3.zero;
 
-            if (!hasMonoBehaviour)
+            SDKEntityTriggerArea? area = monoBehaviour;
+
+            if (area == null)
             {
-                SetMonoBehaviour(pool.Get());
+                area = pool.Get();
+                SetMonoBehaviour(area);
 
-                if (targetOnlyMainPlayer)
-                    monoBehaviour!.TargetTransform = mainPlayerTransform;
-
-                Transform triggerAreaTransform = monoBehaviour!.transform;
-                triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: !useTransformScaleAsAreaSize);
-                triggerAreaTransform.localPosition = Vector3.zero;
-                triggerAreaTransform.localRotation = Quaternion.identity;
+                Transform triggerAreaTransform = area.transform;
+                triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: false);
+                triggerAreaTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             }
+
+            if (useTransformScaleAsAreaSize)
+                area.transform.localScale = Vector3.one;
+            else
+                CompensateParentScale(area.transform, transformComponent.Transform.lossyScale);
+
+            // Re-applied on every assignment so a mask update rebinds or clears the filter.
+            area.SetTargetTransform(targetOnlyMainPlayer ? mainPlayerTransform : null);
 
             switch (MeshType)
             {
-                case SDKEntityTriggerAreaMeshType.BOX:
-                    monoBehaviour!.SphereCollider.enabled = false;
-                    monoBehaviour.BoxCollider.enabled = true;
-                    monoBehaviour.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
+                case SDKEntityTriggerAreaMeshType.Box:
+                    area.SphereCollider.enabled = false;
+                    area.BoxCollider.enabled = true;
+                    area.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
                     break;
-                case SDKEntityTriggerAreaMeshType.SPHERE:
-                    monoBehaviour!.BoxCollider.enabled = false;
-                    monoBehaviour.SphereCollider.enabled = true;
-                    monoBehaviour.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
+                case SDKEntityTriggerAreaMeshType.Sphere:
+                    area.BoxCollider.enabled = false;
+                    area.SphereCollider.enabled = true;
+                    area.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
                     break;
             }
 
-            // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
-            monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
+            // Route purely-avatar masks (CL_PLAYER and/or CL_MAIN_PLAYER, no other bits) to
+            // SDK_AVATAR_TRIGGER_AREA. Any mixed mask falls back to SDK_ENTITY_TRIGGER_AREA so
+            // the trigger box's matrix cells also reach the non-avatar layers the mask targets.
+            area.gameObject.layer = PhysicsLayers.IsAvatarOnlyMask(LayerMask)
+                ? PhysicsLayers.SDK_AVATAR_TRIGGER_AREA
+                : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
+        }
+
+        /// <summary>
+        ///     Keeps an explicit area size independent of entity and parent scale changes made after the area was assigned
+        /// </summary>
+        public void TryUpdateParentScaleCompensation(Transform parent)
+        {
+            if (!hasMonoBehaviour || AreaSize == Vector3.zero) return;
+
+            Vector3 parentScale = parent.lossyScale;
+
+            if (parentScale == compensatedParentScale) return;
+
+            CompensateParentScale(monoBehaviour!.transform, parentScale);
         }
 
         public void UpdateAreaSize(Vector3 size)
@@ -101,6 +127,19 @@ namespace DCL.SDKEntityTriggerArea.Components
             AreaSize = size;
             IsDirty = true;
         }
+
+        public void UpdateMaskAndMeshType(ColliderLayer layerMask, SDKEntityTriggerAreaMeshType meshType)
+        {
+            LayerMask = layerMask;
+            MeshType = meshType;
+
+            // Same fast-path predicate as the initial setup.
+            targetOnlyMainPlayer = layerMask == ColliderLayer.ClMainPlayer;
+            IsDirty = true;
+        }
+
+        public readonly bool IsEnterPending(Collider entityCollider) =>
+            monoBehaviour?.IsEnterPending(entityCollider) ?? false;
 
         public void TryRelease(IComponentPool<SDKEntityTriggerArea> pool)
         {
@@ -135,5 +174,15 @@ namespace DCL.SDKEntityTriggerArea.Components
             monoBehaviour = newMonoBehaviour;
             hasMonoBehaviour = newMonoBehaviour != null;
         }
+
+        private void CompensateParentScale(Transform areaTransform, Vector3 parentScale)
+        {
+            compensatedParentScale = parentScale;
+            areaTransform.localScale = new Vector3(InverseScale(parentScale.x), InverseScale(parentScale.y), InverseScale(parentScale.z));
+        }
+
+        // A zero parent axis collapses the area along it, like the parent itself
+        private static float InverseScale(float scale) =>
+            Mathf.Approximately(scale, 0f) ? 0f : 1f / scale;
     }
 }

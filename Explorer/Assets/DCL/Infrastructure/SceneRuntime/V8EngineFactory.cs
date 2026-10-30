@@ -17,7 +17,7 @@ namespace SceneRuntime
             // IL2CPP does not support dynamic bindings!
             engine.DisableDynamicBinding = true;
             engine.UseReflectionBindFallback = true;
-            engine.AllowReflection = true;
+            engine.AllowReflection = false;
 
             return engine;
         }

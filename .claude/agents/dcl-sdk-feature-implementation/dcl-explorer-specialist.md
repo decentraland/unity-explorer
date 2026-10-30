@@ -46,6 +46,8 @@ After installing a new protocol package, always re-run `npm run build-protocol` 
 
 ## Protocol Generation
 
+> **Prerequisite:** Node toolchain only. `build-protocol` runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), a dependency-free Node script bundled in `@dcl/protocol` — no Python or extra packages required.
+
 To generate C# code from protocol definitions:
 ```bash
 cd scripts
@@ -56,14 +58,14 @@ npm run build-protocol
 **Protocol package installation:**
 ```bash
 cd scripts
-# Always use @experimental to support all experimental features:
-npm install @dcl/protocol@experimental
+# Always use @next (published from the protocol `main` branch):
+npm install @dcl/protocol@next
 # Or use a PR test package for cross-repo testing:
 npm install "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch/<branch>/dcl-protocol-1.0.0-<hash>.tgz"
 npm run build-protocol
 ```
 
-**IMPORTANT:** unity-explorer must always use `@dcl/protocol@experimental` — otherwise the project won't compile due to missing component files.
+**IMPORTANT:** unity-explorer must always use `@dcl/protocol@next` — otherwise the project won't compile due to missing component files.
 
 ## SDK Component Implementation Checklist
 

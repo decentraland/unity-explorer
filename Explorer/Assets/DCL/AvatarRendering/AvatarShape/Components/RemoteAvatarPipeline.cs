@@ -16,8 +16,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// <summary>
     ///     Batched pipeline for all remote avatars. Supports dynamic resizing and index recycling.
     ///     Completion is deferred to a later system for maximum parallelism.
-    ///     Flat backing arrays are pre-filled with dummyTransform so TAA slots can be updated
-    ///     in-place via indexed access, avoiding full rebuilds on every Register/Release.
+    ///     Flat backing arrays are pre-filled with dummyTransform. Register updates the avatar's TAA
+    ///     slots in-place; Release does NOT touch the TAA (released avatars are pooled, so their
+    ///     transforms stay valid and the calculation job skips the slot) — see Release for details.
     /// </summary>
     internal class RemoteAvatarPipeline : IDisposable
     {
@@ -26,8 +27,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private readonly Stack<GlobalJobArrayIndex> releasedIndexes;
 
         private QuickArray<float4x4> matrixFromAllAvatars;
+        private QuickArray<float4x4> localToWorldFromAllAvatars;
+        private QuickArray<float3x2> localBounds;
+        private QuickArray<float3x2> worldBounds;
         private QuickArray<bool> updateAvatar;
         private QuickArray<float4x4> bonesCombined;
+
+        private QuickArray<int> perAvatarBoneCount;
 
         private Transform[] flatBones;
         private Transform[] flatRoots;
@@ -42,6 +48,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private int taaSlotCount;
 
         public BoneMatrixCalculationJob Job;
+
+        /// <summary>
+        ///     Avatar bounds in world space, written by the calculation job. Only valid after Complete.
+        /// </summary>
+        public NativeArray<float3x2> WorldBounds => worldBounds.InnerNativeArray();
 
 #if UNITY_INCLUDE_TESTS
         public int MatrixFromAllAvatarsLength => matrixFromAllAvatars.Length;
@@ -58,7 +69,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesPerAvatarLength, bonesCombined.InnerNativeArray());
 
             matrixFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
+            localToWorldFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
+            localBounds = new QuickArray<float3x2>(initialCapacity);
+            worldBounds = new QuickArray<float3x2>(initialCapacity);
             updateAvatar = new QuickArray<bool>(initialCapacity);
+
+            perAvatarBoneCount = new QuickArray<int>(initialCapacity);
+            FillWithStride(perAvatarBoneCount, 0, initialCapacity, bonesArrayLength);
 
             flatBones = new Transform[initialCapacity * bonesArrayLength];
             flatRoots = new Transform[initialCapacity];
@@ -129,7 +146,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             updateAvatar[validIndex] = false;
 
-            // Reset flat backing arrays to dummyTransform
+            // Reset the flat backing arrays to dummyTransform (cheap managed writes) so a later
+            // RebuildTransformAccessArrays (on resize) produces a clean TAA with no released slots.
             int offset = validIndex * bonesArrayLength;
 
             for (int b = 0; b < bonesArrayLength; b++)
@@ -137,17 +155,42 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             flatRoots[validIndex] = dummyTransform;
 
-            // Update TAA in-place — no rebuild needed
-            if (bonesTransformAccessArray.isCreated && validIndex < taaSlotCount)
-            {
-                for (int b = 0; b < bonesArrayLength; b++)
-                    bonesTransformAccessArray[offset + b] = dummyTransform;
-
-                rootsTransformAccessArray[validIndex] = dummyTransform;
-            }
+            // The TAA is intentionally NOT reset here — that per-bone managed<->native loop was the
+            // bulk-unload spike. Released avatars are returned to a GameObject pool (deactivated, NOT
+            // destroyed), so the slot keeps referencing valid transforms: the gather jobs read them
+            // harmlessly and BoneMatrixCalculationJob skips the slot (updateAvatar = false, set above).
+            // Reuse overwrites the slot in Register; a resize rebuilds the TAA from the flat arrays
+            // (already dummied above). Invariant this relies on: a released avatar's transforms are not
+            // destroyed while its slot is still live in the TAA (guaranteed by pooling; the TAA is
+            // disposed at teardown).
 
             releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
             avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
+        }
+
+        /// <summary>
+        ///     Refreshes the per-avatar matrix count for a live slot from the authoritative
+        ///     AvatarCustomSkinningComponent.BoneCount. Called every frame (before Schedule) so a
+        ///     wearable re-equip that changes the bone count is reflected without needing a re-register.
+        /// </summary>
+        public void SetBoneCount(int validIndex, int boneCount)
+        {
+            if (validIndex < 0 || validIndex >= perAvatarBoneCount.Length)
+                return;
+
+            perAvatarBoneCount[validIndex] = boneCount;
+        }
+
+        /// <summary>
+        ///     Refreshes the avatar-space bounds for a live slot. Pushed every frame alongside the bone count, so
+        ///     the value is current whether the avatar kept its slot or was re-registered into a recycled one.
+        /// </summary>
+        public void SetLocalBounds(int validIndex, float3x2 bounds)
+        {
+            if (validIndex < 0 || validIndex >= localBounds.Length)
+                return;
+
+            localBounds[validIndex] = bounds;
         }
 
         public void Schedule(int batchCount)
@@ -164,13 +207,21 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             var boneGatherJob = new BoneGatherJob { BonesCombined = bonesCombined.InnerNativeArray() };
             var boneGatherHandle = boneGatherJob.Schedule(bonesTransformAccessArray);
 
-            var rootGatherJob = new AvatarRootGatherJob { MatrixFromAllAvatars = matrixFromAllAvatars.InnerNativeArray() };
+            var rootGatherJob = new AvatarRootGatherJob
+            {
+                MatrixFromAllAvatars = matrixFromAllAvatars.InnerNativeArray(),
+                LocalToWorldFromAllAvatars = localToWorldFromAllAvatars.InnerNativeArray(),
+            };
             var rootGatherHandle = rootGatherJob.Schedule(rootsTransformAccessArray);
 
             var combinedGatherHandle = JobHandle.CombineDependencies(boneGatherHandle, rootGatherHandle);
 
             Job.AvatarTransform = matrixFromAllAvatars.InnerNativeArray();
             Job.UpdateAvatar = updateAvatar.InnerNativeArray();
+            Job.PerAvatarBoneCount = perAvatarBoneCount.InnerNativeArray();
+            Job.AvatarLocalToWorld = localToWorldFromAllAvatars.InnerNativeArray();
+            Job.LocalBounds = localBounds.InnerNativeArray();
+            Job.WorldBounds = worldBounds.InnerNativeArray();
             handle = Job.Schedule(avatarIndex, batchCount, combinedGatherHandle);
         }
 
@@ -199,7 +250,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             bonesCombined.ReAlloc(newCapacity * bonesArrayLength);
             matrixFromAllAvatars.ReAlloc(newCapacity);
+            localToWorldFromAllAvatars.ReAlloc(newCapacity);
+            localBounds.ReAlloc(newCapacity, NativeArrayOptions.ClearMemory);
+            worldBounds.ReAlloc(newCapacity, NativeArrayOptions.ClearMemory);
             updateAvatar.ReAlloc(newCapacity);
+
+            int oldCapacity = currentAvatarAmountSupported;
+            perAvatarBoneCount.ReAlloc(newCapacity);
+            FillWithStride(perAvatarBoneCount, oldCapacity, newCapacity - oldCapacity, bonesArrayLength);
 
             int oldBonesLength = flatBones.Length;
             int oldRootsLength = flatRoots.Length;
@@ -223,15 +281,53 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 array[i] = dummy;
         }
 
+        private static void FillWithStride(QuickArray<int> array, int startIndex, int count, int value)
+        {
+            for (int i = startIndex; i < startIndex + count; i++)
+                array[i] = value;
+        }
+
         public void Dispose()
         {
-            bonesCombined.Dispose();
-            matrixFromAllAvatars.Dispose();
-            updateAvatar.Dispose();
-            Job.Dispose();
+            // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
+            if (Utility.ExitUtils.IsAboutToQuit)
+            {
+                return;
+            }
 
-            if (bonesTransformAccessArray.isCreated) bonesTransformAccessArray.Dispose();
-            if (rootsTransformAccessArray.isCreated) rootsTransformAccessArray.Dispose();
+            var stopwatch = Utility.ShutdownStopwatch.StartNew(nameof(RemoteAvatarPipeline));
+
+            bonesCombined.Dispose();
+            stopwatch.LogStep("bonesCombined.Dispose");
+
+            matrixFromAllAvatars.Dispose();
+            stopwatch.LogStep("matrixFromAllAvatars.Dispose");
+
+            localToWorldFromAllAvatars.Dispose();
+            localBounds.Dispose();
+            worldBounds.Dispose();
+            stopwatch.LogStep("avatarBounds.Dispose");
+
+            updateAvatar.Dispose();
+            stopwatch.LogStep("updateAvatar.Dispose");
+
+            perAvatarBoneCount.Dispose();
+            stopwatch.LogStep("perAvatarBoneCount.Dispose");
+
+            Job.Dispose();
+            stopwatch.LogStep("job.Dispose");
+
+            if (bonesTransformAccessArray.isCreated)
+            {
+                bonesTransformAccessArray.Dispose();
+                stopwatch.LogStep("bonesTransformAccessArray.Dispose");
+            }
+
+            if (rootsTransformAccessArray.isCreated)
+            {
+                rootsTransformAccessArray.Dispose();
+                stopwatch.LogStep("rootsTransformAccessArray.Dispose");
+            }
         }
 
         /// <summary>

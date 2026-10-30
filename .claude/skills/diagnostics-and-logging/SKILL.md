@@ -97,7 +97,7 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 
 ```json
 {
-    "override": true,
+    "isOverride": true,
     "debugLogMatrix": [
         { "category": "VOICE_CHAT", "severity": "Warning" }
     ],
@@ -107,8 +107,10 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 }
 ```
 
-- `"override": true` — Only use file values (replaces entire matrix)
-- `"override": false` — Merge with existing matrix values
+Keys must match `CategorySeverityMatrixDto` field names — `JsonUtility` ignores unknown ones. `{ "allOverride": true }` enables every category at every severity in the log file only, and takes precedence over `isOverride`/`debugLogMatrix`. A log captured under `allOverride` contains resolved media stream URLs with signed `sig`/`expire` query params — do not attach it to a public issue.
+
+- `"isOverride": true` — Only use file values (replaces entire matrix)
+- `"isOverride": false` — Merge with existing matrix values
 
 ### Use Cases
 
@@ -122,6 +124,16 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 - **Enable manually:** Run `unity-build` workflow with Sentry enabled
 - **Environment:** Configured per build pipeline stage
 - Sentry handler respects the CategorySeverityMatrix — only sends entries where Sentry column is enabled
+
+### Filtering Un-actionable Sentry Events
+
+Some reports are the expected outcome of a condition the client cannot act on: a websocket the remote end dropped (every consumer already retries), a cleartext `http://` URL the player refuses (always scene-authored), Unity's own "Platform does not support compute shaders" on below-spec GPUs (the minimum-specs guard already detects it), or failing requests to a creator's preview server in local scene development. "Not a client defect" is not a reason to leave them in Sentry: the fix is to stop reporting them.
+
+- **Filter at the gateway, not at the call site.** Many of these events are captured by the Sentry Unity SDK's own integrations and never pass through `ReportHub` or the caller's `catch`, so a per-call-site fix only covers one path and the same message returns from the next one. `SentryReportHandler.BeforeSend` is the one place every event passes through: add the case there, and it demotes the event to a breadcrumb (`Demote`) so it still shows up in the trail of the next real report.
+- **Match narrowly.** Match by exception type, message prefix or HRESULT, plus a flag such as `isLocalSceneDevelopment` when the event is noise only in one mode. Never by category or a broad base type alone. Wrapped exceptions are already handled: `IsIgnoredException` recurses into `InnerException` and drops an `AggregateException` only when every inner exception is ignored.
+- **Name the issues.** Each constant or `case` carries a one-line comment with the reason and the issue numbers it closes, like the existing entries.
+- **Pin it with tests** in `SentryReportHandlerShould`: one test that drops the event, and one that keeps a near miss (same type, different message) reported.
+- **Do not filter real defects.** Native crashes and engine-internal exceptions with no managed frames can still be real bugs. They stay reported until a root cause shows they are environmental.
 
 ## Code Example — Exception Handling with Logging
 

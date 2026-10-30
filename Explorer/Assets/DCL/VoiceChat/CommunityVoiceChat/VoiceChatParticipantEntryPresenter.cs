@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
@@ -22,12 +24,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IObjectPool<VoiceChatParticipantEntryView> playerEntriesPool;
         private readonly VoiceChatParticipantState currentParticipantState;
         private readonly VoiceChatParticipantState localParticipantState;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Transform listenersParent;
         private readonly Transform speakersParent;
         private readonly Transform requestToSpeakParent;
         private readonly EventSubscriptionScope subscriptionsScope = new ();
 
         private readonly CancellationTokenSource cts = new ();
+
+        // Name fetched from the profile repository when the room metadata carries none.
+        private string? resolvedName;
+        private bool requestToSpeakNotificationPending;
 
         public VoiceChatParticipantEntryPresenter(
             VoiceChatParticipantEntryView view,
@@ -45,17 +52,27 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.listenersParent = listenersParent;
             this.speakersParent = speakersParent;
             this.requestToSpeakParent = requestToSpeakParent;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.localParticipantState = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
             view.gameObject.SetActive(true);
             view.CleanupEntry();
 
-            Color nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name);
-            view.SetupParticipantProfile(currentParticipantState.Name, nameColor, profileRepositoryWrapper, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
+            Option<Profile.CompactInfo> profile = currentParticipantState.Profile;
+
+            if (profile.Has)
+            {
+                Color nameColor = NameColorHelper.GetNameColor(profile.Value.Name);
+                view.SetupParticipantProfile(profile.Value.Name, nameColor, profileRepositoryWrapper, profile.Value.FaceSnapshotUrl, profile.Value.UserId.Value, cts.Token);
+
+                if (string.IsNullOrEmpty(profile.Value.Name))
+                    ResolveMissingNameAsync(profile.Value.UserId.Value, cts.Token).Forget();
+            }
 
             // We only show context menu button on top of the local participant if the local participant is a moderator.
             var showContextMenuButton = true;
+            Option<string> localName = localParticipantState.Name;
 
-            if (currentParticipantState.Name == localParticipantState.Name)
+            if (profile.Has && localName.Has && profile.Value.Name == localName.Value)
                 showContextMenuButton = VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
 
             view.SetContextMenuButtonVisibility(showContextMenuButton);
@@ -73,9 +90,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnOpenPassport()
         {
-            if (string.IsNullOrEmpty(currentParticipantState.WalletId)) return;
+            Option<string> walletId = currentParticipantState.WalletId;
 
-            OpenPassportAsync(currentParticipantState.WalletId, CancellationToken.None).Forget();
+            if (!walletId.Has) return;
+
+            OpenPassportAsync(walletId.Value, CancellationToken.None).Forget();
             return;
 
             async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
@@ -93,12 +112,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnDenySpeaker()
         {
-            DenySpeaker?.Invoke(currentParticipantState.WalletId);
+            Option<string> walletId = currentParticipantState.WalletId;
+
+            if (walletId.Has)
+                DenySpeaker?.Invoke(walletId.Value);
         }
 
         private void OnApproveSpeaker()
         {
-            ApproveSpeaker?.Invoke(currentParticipantState.WalletId);
+            Option<string> walletId = currentParticipantState.WalletId;
+
+            if (walletId.Has)
+                ApproveSpeaker?.Invoke(walletId.Value);
         }
 
         private void OnOpenOpenContextMenu(Vector2 position)
@@ -137,8 +162,54 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             bool showApproveDenySection = isRequestingToSpeak && VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
             view.ParticipantRequestingToSpeakChanged(showApproveDenySection);
 
-            if (isRequestingToSpeak)
-                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name);
+            if (!isRequestingToSpeak)
+            {
+                requestToSpeakNotificationPending = false;
+                return;
+            }
+
+            string? participantName = GetDisplayName();
+
+            if (participantName == null)
+                requestToSpeakNotificationPending = true;
+            else
+                UserIsRequestingToSpeak?.Invoke(participantName);
+        }
+
+        /// <summary>Returns the metadata name, then the fetched one; null while neither is known.</summary>
+        private string? GetDisplayName()
+        {
+            Option<string> participantName = currentParticipantState.Name;
+
+            if (participantName.Has && !string.IsNullOrEmpty(participantName.Value))
+                return participantName.Value;
+
+            return string.IsNullOrEmpty(resolvedName) ? null : resolvedName;
+        }
+
+        private async UniTaskVoid ResolveMissingNameAsync(string walletId, CancellationToken ct)
+        {
+            Profile.CompactInfo? profile;
+
+            try { profile = await profileRepositoryWrapper.GetProfileAsync(walletId, ct); }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.COMMUNITY_VOICE_CHAT);
+                return;
+            }
+
+            if (ct.IsCancellationRequested || profile == null || string.IsNullOrEmpty(profile.Value.Name))
+                return;
+
+            string name = profile.Value.Name;
+            resolvedName = name;
+            view.SetParticipantName(name, NameColorHelper.GetNameColor(name));
+
+            if (!requestToSpeakNotificationPending) return;
+
+            requestToSpeakNotificationPending = false;
+            UserIsRequestingToSpeak?.Invoke(name);
         }
 
         private void ParticipantIsMutedChanged(bool isMuted)

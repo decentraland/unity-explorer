@@ -75,14 +75,14 @@ namespace DCL.Chat.ChatInput
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary, ct);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.Emojis, emojiSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
 
                 //If we don't find any emoji pattern only then we look for username patterns
 
                 UpdateProfileNameMap();
-                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary, ct);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.Profile, profileSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
             }

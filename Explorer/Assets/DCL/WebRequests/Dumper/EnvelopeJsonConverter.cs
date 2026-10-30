@@ -66,7 +66,7 @@ namespace DCL.WebRequests.Dumper
             WebRequestHeadersInfo? headersInfo = null;
             DateTime startTime = DateTime.MinValue;
             DateTime endTime = DateTime.MinValue;
-            WebRequestDump.Envelope.StatusKind statusKind = WebRequestDump.Envelope.StatusKind.NOT_CONCLUDED;
+            WebRequestDump.Envelope.StatusKind statusKind = WebRequestDump.Envelope.StatusKind.NotConcluded;
 
             // First pass: read argsType to know how to deserialize args
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)

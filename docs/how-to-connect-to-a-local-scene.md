@@ -47,7 +47,7 @@ For example you could be interested in testing some scenes from the [SDK Goerli 
 
 1. Set the Main Scene Loader -> Startup Config -> Initial Realm to "Localhost".
 2. Set the initial position to one of the locally running scene.
-3. Toggle the "Use Remote Asset Bundles" according to your need. If it's off then the original raw GLTFs from the locally running scene will be loaded instead of downloading their asset bundle version (if it exists). Note: edits to a `.glb` file are picked up on `/reload` even though the dev server's content hash is path-based (and so unchanged across content edits) — `ECSReloadScene` drains the asset caches eagerly on every LSD reload to force fresh loads.
+3. Models load as local asset bundles or raw GLTFs as described in [Local asset bundles](#local-asset-bundles); there is no Editor switch for it. Note: edits to a `.glb` file are picked up on `/reload` even though the dev server's content hash is path-based (and so unchanged across content edits) — `ECSReloadScene` drains the asset caches eagerly on every LSD reload to force fresh loads.
 4. Hit PLAY and the editor should connect to the locally running scene.
 
 ## Connecting a custom build to the scene
@@ -67,6 +67,87 @@ Run the build from a console/terminal specifying the needed parameters, for exam
 ```
 open Decentraland.app --args --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --skip-version-check true
 ```
+
+## Multiplayer in a local scene
+
+Local scene development runs **two transports at once**, and both are on by default:
+
+| Traffic | Transport |
+|---|---|
+| Player state — movement, emotes, teleports, profile-version announcements | **Pulse** (`pulse-server.decentraland.org`) |
+| Scene Messages — the SDK `MessageBus`, and client↔client CRDT sync | **LiveKit**, via the local gatekeeper scene room |
+
+So two Explorers pointed at the same `npm run start` server see each other move *and* exchange scene
+messages. Nothing was removed to make this work — the gatekeeper room is still there.
+
+**Concurrent dev processes stay isolated.** Pulse has no rooms; it partitions by an exact realm
+string, and each local session derives one from the preview entity id its dev server serves
+(`lsd:b64-…`). Two scenes running out of two different project folders — or the same folder on two
+machines — land in different realms and never see each other. Nothing is exchanged to arrange this:
+every party derives the same key from the same id. The full contract, including the hashed form used
+when the key would exceed 255 characters, is in [Pulse → Realm](pulse.md#realm--pulserealm).
+
+Because the id is path-based, the realm survives content edits, `/reload`, and restarting the dev
+server. Editing your scene does not reshuffle who you can see.
+
+### Things worth knowing
+
+- **The scene must sit inside Genesis City bounds** (`-150,-150` to `163,158`). Pulse rejects parcel
+  indices outside them and disconnects the peer, so player state would silently stop syncing. The
+  client logs a warning naming the parcel if it detects this. (`sdk-commands` refuses to start such a
+  scene in the first place.)
+- **Pulse needs to reach the internet.** If it is unreachable — or the local dev server is — the
+  client logs a warning, falls back to LiveKit only, and carries on. Local scene development keeps
+  working exactly as it did before Pulse.
+- **`--pulse false` opts out**, restoring the LiveKit-only behaviour:
+
+```
+Decentraland.exe --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --pulse false
+```
+
+- **Authoritative-server previews are on Pulse too.** bevy-headless gained a Pulse transport in
+  server mode ([bevy-explorer #1137](https://github.com/decentraland/bevy-explorer/pull/1137) — the
+  `@next` engine; `@latest` predates it), so an authoritative-server scene joins the same derived
+  realm as its clients. Older engines have no Pulse in server mode
+  (decentraland/sdk-multiplayer-server#132) and stay on LiveKit.
+
+## Local asset bundles
+
+With the `alfa-lsd-forced-ab` feature flag on, a local scene is previewed with real asset bundles: the explorer launches an embedded
+[abgen](https://github.com/decentraland/abgen) sidecar (on the first run it downloads a pinned,
+checksum-verified binary — no abgen installation or `ABGEN_*` environment setup is needed), fetches
+the scene's asset-bundle manifest from it (the sidecar converts the scene's GLBs just-in-time) and
+downloads bundles from the same server. Wearables/emotes keep working — the sidecar answers with
+the production registry's records and streams their bundles from the production ab-cdn. See
+[`abgen-sidecar.md`](abgen-sidecar.md) for the architecture.
+
+**Every failure degrades the scene to raw GLTFs, never to a broken scene.** If the binary cannot
+be downloaded, the server does not start (or its port is held by something else), the scene's
+manifest cannot be fetched, or the server dies mid-session, the scene loads its raw GLTFs instead
+— whole-scene when the server is unavailable, per file when a single bundle fails to convert or
+load. A server that dies mid-session also leaves wearables, emotes and LODs unavailable until
+relaunch. The scene dev console's AB tab opens itself and says what happened and why (the summary
+starts with `RAW GLTFs — <reason>`, and per-file fallbacks show as `FAILED <file> — … loaded as raw
+GLTF`); the sidebar's AB button stays lit until the tab has been looked at. The `HIGHLIGHT SOURCES`
+button in the tab tints bundle-sourced objects green and raw-GLTF ones red.
+
+The `alfa-lsd-forced-ab` feature flag is read at startup; off or unreachable means raw GLTFs and
+no sidecar. There is no `--local-ab` argument or Editor checkbox any more (Creator Hub's
+`local-ab=true` is still accepted and ignored). With the flag on, the opt-out is:
+
+```
+--lsd-raw-gltf
+```
+
+It skips the sidecar entirely and loads the scene's raw GLTFs, the pre-asset-bundle behaviour. To
+inspect the *fallback* path instead (sidecar wanted but failing), hold its port before launching
+(`python3 -m http.server 5147 --bind 127.0.0.1`).
+
+In the Unity Editor (Initial Realm = Localhost) the same applies: the client launches its embedded
+sidecar on abgen's default loopback port (5147) and wires the URL override itself.
+
+For abgen development itself, drop a binary at `StreamingAssets/abgen` (`abgen.exe` on Windows):
+it is used whenever no pinned install exists.
 
 ## Modifying the scene
 

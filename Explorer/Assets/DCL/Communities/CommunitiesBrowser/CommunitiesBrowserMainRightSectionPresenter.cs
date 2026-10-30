@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnViewAllStreamingCommunities()
         {
             browserEventBus.RaiseClearSearchBarEvent();
-            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.FilteredCommunities);
             filteredCommunitiesPresenter.LoadAllStreamingCommunities();
         }
 
@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void LoadSearchResults(string searchText)
         {
-            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.FilteredCommunities);
             filteredCommunitiesPresenter.LoadSearchResults(searchText);
         }
 
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void LoadAllCommunities()
         {
             browserEventBus.RaiseClearSearchBarEvent();
-            view.SetActiveView(CommunitiesViews.BROWSE_ALL_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.BrowseAllCommunities);
 
             LoadAllCommunitiesAsync().Forget();
         }
@@ -86,7 +86,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetAsLoading()
         {
             browserEventBus.RaiseClearSearchBarEvent();
-            view.SetActiveView(CommunitiesViews.BROWSE_ALL_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.BrowseAllCommunities);
             loadCts = loadCts.SafeRestart();
             streamingCommunitiesPresenter.SetAsLoading(true);
             filteredCommunitiesPresenter.SetAsLoading(true);
@@ -109,7 +109,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ViewAllMyCommunitiesResults()
         {
-            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.FilteredCommunities);
             filteredCommunitiesPresenter.LoadAllMyCommunities();
         }
     }

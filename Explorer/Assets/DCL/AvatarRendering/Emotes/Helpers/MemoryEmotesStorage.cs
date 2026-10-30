@@ -1,10 +1,8 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
@@ -79,11 +77,15 @@ namespace DCL.AvatarRendering.Emotes
         {
             lock (lockObject)
             {
-                for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+                for (LinkedListNode<(URN key, long lastUsedFrame)>? node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 {
                     URN urn = node.Value.key;
 
                     if (!emotes.TryGetValue(urn, out IEmote emote))
+                        continue;
+
+                    // Evicting mid-load orphans the pending promise and strands any play intent waiting on it (#9485).
+                    if (emote.IsLoading)
                         continue;
 
                     if (!TryUnloadAllWearableAssets(emote)) continue;
@@ -139,8 +141,9 @@ namespace DCL.AvatarRendering.Emotes
 
         private static void DisposeThumbnail(IEmote wearable)
         {
-            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
-                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+            // A reference was acquired only if the result succeeded; failed/cancelled results carry a default SpriteData
+            if (wearable.ThumbnailAssetResult is { Succeeded: true } thumbnail)
+                thumbnail.Asset.RemoveReference();
         }
 
         private static void DisposeAudioClips(IEmote emote)

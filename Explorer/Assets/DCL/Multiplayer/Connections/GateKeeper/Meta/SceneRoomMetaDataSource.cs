@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -23,44 +24,21 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IExposedTransform characterTransform;
         private readonly World world;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly IWeb3IdentityCache identityCache;
 
         private readonly bool forceSceneIsolation;
 
-        private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
-
         public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.SingleScene;
 
-        public bool MetadataIsDirty
-        {
-            get
-            {
-                if (!realmData.Configured)
-                    return false;
-
-                CanBeDirty<Vector3> characterPosition = characterTransform.Position;
-
-                bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;
-
-                if (!positionIsDirty)
-                    return false;
-
-                Vector2Int parcel = characterPosition.ToParcel();
-
-                if (parcel == previousParcel)
-                    return false;
-
-                previousParcel = parcel;
-                return true;
-            }
-        }
-
-        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation, IDecentralandUrlsSource urlsSource)
+        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation, IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache identityCache)
         {
             this.realmData = realmData;
             this.characterTransform = characterTransform;
             this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
             this.urlsSource = urlsSource;
+            this.identityCache = identityCache;
         }
 
         public MetaData.Input GetMetadataInput() =>
@@ -75,7 +53,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             // Places API is relevant for Genesis City only
             if (realmData.SingleScene)
-                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input, identityCache.IsGuest()));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
@@ -104,10 +82,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 SceneEntityDefinition? sceneDefinition = entityDefinitionList[0];
                 string? id = sceneDefinition.id;
                 Vector2Int baseParcel = sceneDefinition.metadata.scene.DecodedBase;
-                return Result<MetaData>.SuccessResult(new MetaData(id, baseParcel, input));
+                return Result<MetaData>.SuccessResult(new MetaData(id, baseParcel, input, identityCache.IsGuest()));
             }
 
-            return Result<MetaData>.SuccessResult(new MetaData(null, Vector2Int.zero, input));
+            return Result<MetaData>.SuccessResult(new MetaData(null, Vector2Int.zero, input, identityCache.IsGuest()));
         }
     }
 }

@@ -84,7 +84,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, string source, CancellationToken ct = default)
         {
-            if (!StorageStatus.HasFreeSpace) return StorageStatus;
+            if (!StorageStatus.HasFreeSpace)
+                throw new ScreenshotLimitReachedException();
 
             CameraReelUploadResponse response = await imagesMetadataDatabase.UploadScreenshotAsync(image.EncodeToJPG(), metadata, ct);
 
@@ -95,8 +96,5 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public UniTask<Texture2D> GetScreenshotImageAsync(string url, bool compressed, CancellationToken ct = default) =>
             screenshotsStorage.GetScreenshotImageAsync(url, compressed, ct);
-
-        public UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
-            screenshotsStorage.GetScreenshotThumbnailAsync(url, ct);
     }
 }

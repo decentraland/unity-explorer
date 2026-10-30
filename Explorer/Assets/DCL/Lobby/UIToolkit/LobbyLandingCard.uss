@@ -1,0 +1,212 @@
+:root {
+    --landing-card-hover-duration: 0.3s;
+}
+
+/* 442x248 with 16px corners: the thumbnail fills the body under a gradient strip holding the place name and the
+   full-width jump-in button; hovering brightens the picture and outlines the card with the gradient */
+.lobby-landing-card {
+    width: 442px;
+    height: 248px;
+}
+
+/* The gradient ring (LobbyGradientOutlineElement, 2px thick, its radius the card's plus the 6px) hangs 6px past the
+   body on every side, leaving a 4px gap between it and the card, and shows only while hovered */
+.lobby-landing-card__outline {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    opacity: 0;
+    transition: opacity var(--lobby-outline-duration) ease-out;
+}
+
+.lobby-landing-card:hover .lobby-landing-card__outline {
+    opacity: 1;
+}
+
+.lobby-landing-card--static:hover .lobby-landing-card__outline {
+    opacity: 0;
+}
+
+.lobby-landing-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-width: 1px;
+    border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+.lobby-landing-card--static .lobby-landing-card__body {
+    background-color: rgba(16, 16, 20, 0.45);
+}
+
+/* The picture rests a shade darker than it is, so hovering has somewhere to brighten it to */
+.lobby-landing-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(230, 230, 230);
+    transition: scale var(--landing-card-hover-duration) ease-out, -unity-background-image-tint-color var(--landing-card-hover-duration) ease-out;
+}
+
+/* Hovering zooms the picture in a little and brightens it; a static card keeps still */
+.lobby-landing-card:hover .lobby-landing-card__thumbnail {
+    scale: 1.05;
+    -unity-background-image-tint-color: white;
+}
+
+.lobby-landing-card--static:hover .lobby-landing-card__thumbnail {
+    scale: 1;
+    -unity-background-image-tint-color: rgb(230, 230, 230);
+}
+
+/* The sprite of the place cards (see LobbyPlaceCard.uss): a 52px fade into a flat strip under the name and the button */
+.lobby-landing-card__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 140px;
+    background-image: url('/Assets/DCL/Lobby/Textures/CardBottomGradient.png');
+    -unity-slice-top: 52;
+    -unity-slice-bottom: 44;
+}
+
+/* The counter's margin spaces the friends row that follows it */
+.lobby-landing-card__badges {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    height: 26px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-landing-card__online {
+    height: 26px;
+    margin-right: 6px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 6px;
+    border-radius: 8px;
+    background-color: var(--dcl-color-shadow);
+    display: none;
+}
+
+.lobby-landing-card--with-online .lobby-landing-card__online {
+    display: flex;
+}
+
+.lobby-landing-card__online-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: rgb(48, 205, 0);
+}
+
+.lobby-landing-card__online-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/PlayersIcn.png');
+}
+
+.lobby-landing-card__online-count {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    color: var(--dcl-color-snow);
+}
+
+/* The home icon and the place name, 16px over the button; the 1px border of the body is inside its box, so 21px in */
+.lobby-landing-card__footer {
+    position: absolute;
+    left: 21px;
+    right: 21px;
+    bottom: 84px;
+    height: 24px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby-landing-card__home-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    background-image: url('/Assets/DCL/Lobby/Textures/HomeIcon.png');
+}
+
+.lobby-landing-card__title {
+    flex-shrink: 1;
+    height: 24px;
+    font-size: 20px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Spans the card 22px in; the box runs 6px under the visible button for the shadow of its sprite (see LobbyDocument.uss)
+   and the label is padded off that strip */
+.lobby-landing-card__jump-in {
+    position: absolute;
+    left: 21px;
+    right: 21px;
+    bottom: 16px;
+    height: 52px;
+    padding: 0 0 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    background-image: var(--lobby-button-shadow-image);
+    -unity-slice-left: 26;
+    -unity-slice-top: 24;
+    -unity-slice-right: 25;
+    -unity-slice-bottom: 36;
+    -unity-slice-scale: 0.5px;
+    -unity-background-image-tint-color: var(--lobby-jump-in-color);
+    transition: -unity-background-image-tint-color 0.1s;
+}
+
+.lobby-landing-card__jump-in:hover {
+    -unity-background-image-tint-color: var(--lobby-jump-in-hover-color);
+}
+
+.lobby-landing-card__jump-in:active {
+    -unity-background-image-tint-color: var(--lobby-jump-in-pressed-color);
+}
+
+.lobby-landing-card__jump-in:disabled {
+    opacity: 0.5;
+}
+
+.lobby-landing-card__jump-in-text {
+    margin-right: 8px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--dcl-color-snow);
+}
+
+.lobby-landing-card__jump-in-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/Assets/Textures/Common/JumpInOutline.png');
+}

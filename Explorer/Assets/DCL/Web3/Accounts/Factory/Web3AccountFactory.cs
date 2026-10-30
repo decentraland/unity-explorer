@@ -1,6 +1,5 @@
 using DCL.Web3.Abstract;
 using Nethereum.Signer;
-using Plugins.RustEthereum.SignServerWrap;
 
 namespace DCL.Web3.Accounts.Factory
 {

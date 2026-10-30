@@ -2,10 +2,8 @@
 using DCL.LOD;
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;

@@ -24,8 +24,6 @@ namespace DCL.Events
 
         private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error loading live events. Please try again.";
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
-        private const int MAX_DAYS = 5;
-        private const int DAYS_WITH_BANNER = 4;
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -99,7 +97,7 @@ namespace DCL.Events
 
         private void OnSectionOpened(EventsSection section, DateTime fromDate)
         {
-            if (section != EventsSection.CALENDAR)
+            if (section != EventsSection.Calendar)
                 return;
 
             loadEventsCts = loadEventsCts.SafeRestart();
@@ -110,7 +108,7 @@ namespace DCL.Events
             UnloadEvents();
 
         private void OnGoToTodayClicked() =>
-            eventsController.OpenSection(EventsSection.CALENDAR);
+            eventsController.OpenSection(EventsSection.Calendar);
 
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
         {
@@ -119,7 +117,7 @@ namespace DCL.Events
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>
-            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
+            eventsController.OpenSection(EventsSection.EventsByDay, date);
 
         private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
         {
@@ -168,7 +166,7 @@ namespace DCL.Events
         private async UniTask OnSectionOpenedAsync(DateTime fromDate, CancellationToken ct)
         {
             view.SetHighlightedCarousel(null);
-            view.SetupDaysSelector(fromDate, MAX_DAYS, triggerEvent: false, deactivateArrows: true);
+            view.SetupDaysSelector(fromDate, view.MaxDays, triggerEvent: false, deactivateArrows: true);
             view.SetAsLoading(true);
 
             eventsController.CurrentCalendarFromDate = fromDate;
@@ -178,7 +176,7 @@ namespace DCL.Events
             if (ct.IsCancellationRequested)
                 return;
 
-            int daysToLoad = highlightedEventsCache is { Count: > 0 } ? DAYS_WITH_BANNER : MAX_DAYS;
+            int daysToLoad = DaysToShow(showBanner: highlightedEventsCache is { Count: > 0 });
 
             await UniTask.WhenAll(
                 LoadEventsAsync(fromDate, daysToLoad, ct),
@@ -245,16 +243,17 @@ namespace DCL.Events
             bool showBanner = highlightedEventsCache is { Count: > 0 };
             view.SetHighlightedCarousel(highlightedEventsCache);
 
+            int daysToShow = DaysToShow(showBanner);
+
+            // The banner takes the column of the last day, which may still hold the events loaded before it arrived.
             if (showBanner)
-            {
-                view.ClearEventsForDay(DAYS_WITH_BANNER);
-                view.SetupDaysSelector(fromDate, DAYS_WITH_BANNER, triggerEvent: false);
-            }
-            else
-            {
-                view.SetupDaysSelector(fromDate, MAX_DAYS, triggerEvent: false);
-            }
+                view.ClearEventsForDay(daysToShow);
+
+            view.SetupDaysSelector(fromDate, daysToShow, triggerEvent: false);
         }
+
+        private int DaysToShow(bool showBanner) =>
+            showBanner ? view.MaxDays - 1 : view.MaxDays;
 
         private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)
         {

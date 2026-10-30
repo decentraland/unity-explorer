@@ -51,9 +51,31 @@ namespace DCL.Character.CharacterMotion.Systems
                 teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
             }
             else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) { teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation(); }
+            else if (teleportIntent.LandOnParcel)
+            {
+                // Land at the requested parcel itself rather than the scene's spawn point
+                // (e.g. jumping into an event located at a specific parcel of a multi-parcel scene).
+                // Aim at the parcel center: its base corner lies on the parcel boundary, where settling
+                // tips the avatar into the neighbouring parcel. The exact landing XZ is refined later by
+                // TeleportCharacterSystem, which probes the parcel for its actual walkable floor.
+                Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel)
+                                              + new Vector3(ParcelMathHelper.HALF_PARCEL_SIZE, 0f, ParcelMathHelper.HALF_PARCEL_SIZE);
+
+                // Keep the landing inside the scene's parcels; if it falls outside, ValidateTeleportPosition
+                // clamps it to the requested parcel's base position.
+                ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef);
+
+                // Anchor the height on the scene's spawn point as a best guess: the exact parcel floor
+                // isn't knowable yet (the scene's colliders load later), so TeleportCharacterSystem
+                // snaps the avatar onto the floor once the scene is ready.
+                (Vector3 spawnTarget, _) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel, teleportIntent.SpawnPointName);
+                targetWorldPosition.y = spawnTarget.y;
+
+                teleportIntent.Position = targetWorldPosition;
+            }
             else
             {
-                (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
+                (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel, teleportIntent.SpawnPointName);
 
                 var originalTargetPosition = targetWorldPosition;
 

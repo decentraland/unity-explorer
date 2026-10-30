@@ -8,7 +8,6 @@ using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
@@ -45,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+        private MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
             RoomSource roomId)
         {
             this.dataPipe = dataPipe;
@@ -76,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             try
             {
-                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
+                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
             }
@@ -106,7 +105,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
                 var r = receiver.Value;
 
-                if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
+                if (r.strict is IMessagePipe.ThreadStrict.MainThreadOnly)
                     await UniTask.SwitchToMainThread();
 
                 foreach (Action<(Packet, LKParticipant, string)>? action in r.list)

@@ -24,13 +24,13 @@ namespace DCL.SkyBox
 
         // The logic of this behavior is mostly processed at SkyboxTimeHandlerSystem
         public bool Applies() =>
-            skyboxSettings.CurrentSDKControlledScene != null
-            && scenes.CurrentScene.Value?.Info.BaseParcel == skyboxSettings.CurrentSDKControlledScene;
+            scenes.CurrentScene.Value is { } currentScene
+            && skyboxSettings.IsSDKControlledBy(currentScene.Info);
 
         public void Enter()
         {
             transition.Enter();
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Applied));
         }
 
         public void Update(float dt)
@@ -41,7 +41,7 @@ namespace DCL.SkyBox
         public void Exit()
         {
             transition.Exit();
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Removed));
         }
     }
 }

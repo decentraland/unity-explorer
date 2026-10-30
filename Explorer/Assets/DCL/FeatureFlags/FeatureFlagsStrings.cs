@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.FeatureFlags
 {
     [Serializable]
@@ -13,6 +14,7 @@ namespace DCL.FeatureFlags
         public const string MAP_PINS = "alfa-map-pins";
         public const string CUSTOM_MAP_PINS_ICONS = "alfa-map-pins-custom-icons";
         public const string USER_ALLOW_LIST = "user-allow-list";
+        public const string DEEPLINK_WHITELISTED_WORLDS = "deeplink-whitelisted-worlds";
         public const string CSV_VARIANT = "csv-variant";
         public const string STRING_VARIANT = "string-variant";
         public const string WALLET_VARIANT = "wallet";
@@ -36,16 +38,25 @@ namespace DCL.FeatureFlags
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
         public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
+        public const string PULSE = "pulse";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
+        public const string USER_CREDITS = "alfa-user-credits";
+        public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
+        public const string CREDITS_TOPUP = "alfa-credits-topup";
+        public const string CREDITS_WALLETS = "alfa-credits-wallets";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
         public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
+        public const string GUEST_LOGIN = "alfa-guest-login";
+        public const string LOBBY = "alfa-lobby";
+        public const string EPHEMERAL_GUEST_ACCOUNT = "alfa-ephemeral-guest-account";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
         public const string TEMPORAL_LOADING_SCREEN_TIPS = "alfa-temporal-loading-screen-tip";
+        public const string AUDIENCE_LOADING_SCREEN_TIPS = "alfa-audience-loading-screen-tips";
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
@@ -65,6 +76,7 @@ namespace DCL.FeatureFlags
         public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
+        public const string SKYBOX_LOOK_PRESET = "alfa-skybox-look-preset";
         public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
         public const string CHECK_DISK_SPACE = "alfa-check-disk-space";
         public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
@@ -74,9 +86,21 @@ namespace DCL.FeatureFlags
         public const string REPORT_USER = "alfa-report-user";
         public const string POINT_AT = "alfa-point-at";
         public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
+        public const string NEARBY_VOICE_CHAT_TIP = "alfa-nearby-voice-chat-tip";
+        public const string NEARBY_VOICE_CHAT_TIP_CONFIG_VARIANT = "config";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
-        public const string AB_DEPS_DIGEST_CACHE_KEY = "alfa-ab-deps-digest-cache-key";
+        public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
+        public const string NEW_LODS = "new-lods";
+        public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
+        public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
+        public const string OPTIMIZED_ASSETS = "optimized-assets";
+        public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+        public const string ABGEN_PIPELINE = "alfa-abgen-pipeline";
+        public const string ABGEN_LODS = "alfa-abgen-lods";
+        public const string LSD_FORCED_AB = "alfa-lsd-forced-ab";
+        public const string BUG_REPORT = "alfa-bug-report";
+        public const string IN_GAME_SHOP = "alfa-in-game-shop";
 
         public static class Endpoints
         {
@@ -86,6 +110,7 @@ namespace DCL.FeatureFlags
 
     public enum FeatureFlag
     {
+
         None = 0,
         MultiplayerCompressionWin,
         MultiplayerCompressionMac,
@@ -164,7 +189,9 @@ namespace DCL.FeatureFlags
                 FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
                 FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
                 FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+#pragma warning disable CS0618 // the mapping must stay complete while the obsolete flag is still declared
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+#pragma warning restore CS0618
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
                 FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,

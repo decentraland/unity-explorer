@@ -4,18 +4,18 @@ using DCL.Diagnostics;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
-using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
 using MVC;
+using SceneRunner.Debugging.Hub;
 using System;
 
 namespace DCL.RealmNavigation
@@ -29,6 +29,10 @@ namespace DCL.RealmNavigation
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
+        public IWorldPermissionsService WorldPermissionsService { get; private init; } = null!;
+
+        public IWorldInfoHub WorldInfoHub { get; private init; } = null!;
+
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
         public RealmNavigationDebugPlugin CreatePlugin() =>
@@ -40,33 +44,43 @@ namespace DCL.RealmNavigation
             LODContainer lodContainer,
             RealmContainer realmContainer,
             RemoteEntities remoteEntities,
-            RemoteAnnouncements remoteAnnouncements,
-            RemoteProfiles remoteProfiles,
             World globalWorld,
             IRoomHub roomHub,
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
-            IPlacesAPIService placesAPIService,
-            IWorldAccessGate worldAccessGate)
+            IPlacesAPIService placesApiService,
+            IWeb3IdentityCache identityCache,
+            ICommunityMembershipChecker communityMembershipChecker,
+            IMVCManager mvcManager,
+            StartParcel startParcel)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
             IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
+            var worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource, identityCache, communityMembershipChecker);
+
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
+
+            var worldInfoHub = new LocationBasedWorldInfoHub(
+                new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
+                staticContainer.CharacterContainer.CharacterObject);
+
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
                 {
                     new RestartLoadingStatus(),
-                    new RemoveRemoteEntitiesTeleportOperation(remoteEntities, remoteAnnouncements, remoteProfiles, globalWorld),
+                    new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                    new ClearWorldsCacheTeleportOperation(placesAPIService),
+                    new ClearWorldsCacheTeleportOperation(placesApiService),
                     new ChangeRealmTeleportOperation(realmContainer.RealmController),
                     new AnalyticsFlushTeleportOperation(analytics),
                     new LoadLandscapeTeleportOperation(landscape),
                     new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                    new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
+                    new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData, roomHub),
                     new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 },
                 ReportCategory.SCENE_LOADING,
@@ -100,7 +114,11 @@ namespace DCL.RealmNavigation
                     analytics,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
-                    worldAccessGate),
+                    worldAccessGate,
+                    staticContainer.ScenesCache,
+                    startParcel),
+                WorldPermissionsService = worldPermissionsService,
+                WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder
             };
         }

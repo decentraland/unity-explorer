@@ -1,7 +1,7 @@
 ﻿using DCL.Backpack.Gifting.Utils;
 using NUnit.Framework;
 
-namespace DCL.Backpack.Gifting.Tests
+namespace DCL.Backpack.Gifting.Tests.UnitTests
 {
     [TestFixture]
     public class GiftingUrnParsingHelperShould

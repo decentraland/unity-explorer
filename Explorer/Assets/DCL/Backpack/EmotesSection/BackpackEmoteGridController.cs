@@ -4,9 +4,13 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -44,8 +48,9 @@ namespace DCL.Backpack.EmotesSection
         private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -67,8 +72,9 @@ namespace DCL.Backpack.EmotesSection
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
-            IEmoteStorage emoteStorage)
+            UnityAppWebBrowser webBrowser,
+            IEmoteStorage emoteStorage,
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -83,6 +89,7 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
+            this.ownedNftFilter = ownedNftFilter;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
@@ -165,6 +172,10 @@ namespace DCL.Backpack.EmotesSection
                         ct,
                         customOwnedEmotes
                     );
+
+                    // The fetch repopulated the registry — a reliable point to prune pending emote gifts that
+                    // left the wallet (or came back).
+                    ownedNftFilter.Prune(GiftableType.Emote);
 
                     int totalAmount = result.totalAmount;
                     IReadOnlyList<ITrimmedEmote> emotes;
@@ -311,6 +322,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsPending = IsFullyPending(emotes[i].GetUrn());
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
@@ -319,6 +331,11 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base emotes have no
+        // registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            ownedNftFilter.IsFullyPending(emoteStorage, itemUrn);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
@@ -360,12 +377,27 @@ namespace DCL.Backpack.EmotesSection
 
         private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
         }
 
         private void ClearPoolElements()
@@ -426,6 +458,6 @@ namespace DCL.Backpack.EmotesSection
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
     }
 }

@@ -3,7 +3,6 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
 using NBitcoin;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -91,6 +90,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
+                if (placeInfo.IsWorld)
+                    continue;
+
                 if (markers.ContainsKey(placeInfo.base_position_processed))
                     continue;
 

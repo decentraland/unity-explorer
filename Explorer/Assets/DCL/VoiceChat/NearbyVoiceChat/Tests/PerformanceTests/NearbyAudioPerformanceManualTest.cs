@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Manual performance testbed for nearby spatial audio with real panning.

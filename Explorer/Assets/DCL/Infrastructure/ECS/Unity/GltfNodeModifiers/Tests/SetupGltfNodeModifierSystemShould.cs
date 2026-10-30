@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         private Material originalRootMaterial;
         private Material originalChildMaterial;
         private Material testMaterial;
+        private readonly List<GameObject> extraRoots = new ();
 
         [SetUp]
         public void SetUp()
@@ -67,6 +69,12 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             if (testMaterial != null)
                 Object.DestroyImmediate(testMaterial);
+
+            foreach (GameObject extraRoot in extraRoots)
+                if (extraRoot != null)
+                    Object.DestroyImmediate(extraRoot);
+
+            extraRoots.Clear();
         }
 
         private GltfContainerComponent CreateGltfContainer()
@@ -633,6 +641,166 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Assert
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(0)); // No entities should be created for invalid path
+        }
+
+        [Test]
+        public void ResolveShortPath_WhenSceneWrapperPresent()
+        {
+            // Mirrors Pride_LampostBig.glb: multiple root nodes force glTFast to insert a "Scene" wrapper,
+            // so GetChild(0) is the wrapper and the lamp sits one level deeper than in the single-root variant.
+            (GameObject container, MeshRenderer lamp) = BuildLamppostWithWrapper();
+            GltfContainerComponent gltfContainer = CreateContainerComponent(container, lamp);
+
+            // The path authored for the un-wrapped model must keep working.
+            Entity entity = SetupWithPath(gltfContainer, "LampostBig_Lamp");
+
+            AssertResolvedTo(entity, lamp, "LampostBig_Lamp");
+        }
+
+        [Test]
+        public void ResolveExactLongPath_WhenSceneWrapperPresent()
+        {
+            (GameObject container, MeshRenderer lamp) = BuildLamppostWithWrapper();
+            GltfContainerComponent gltfContainer = CreateContainerComponent(container, lamp);
+
+            // The full path (as Explorer reports it for the wrapped model) resolves via the exact match.
+            Entity entity = SetupWithPath(gltfContainer, "LampostBig/LampostBig_Lamp");
+
+            AssertResolvedTo(entity, lamp, "LampostBig/LampostBig_Lamp");
+        }
+
+        [Test]
+        public void ResolveWrapperPrefixedPath_WhenNoSceneWrapper()
+        {
+            // Mirrors LampostBig.glb: single root node, no wrapper, GetChild(0) is "LampostBig" itself.
+            (GameObject container, MeshRenderer lamp) = BuildLamppostWithoutWrapper();
+            GltfContainerComponent gltfContainer = CreateContainerComponent(container, lamp);
+
+            // A path copied from the wrapped variant must still resolve by dropping the leading root segment.
+            Entity entity = SetupWithPath(gltfContainer, "LampostBig/LampostBig_Lamp");
+
+            AssertResolvedTo(entity, lamp, "LampostBig/LampostBig_Lamp");
+        }
+
+        [Test]
+        public void ResolveAmbiguousShortPath_PicksFirstInHierarchyOrderAndWarns()
+        {
+            // Two root nodes each contain a "Lamp" child (legal in glTF: names are unique only among siblings).
+            var container = new GameObject("container");
+            extraRoots.Add(container);
+
+            var wrapper = new GameObject("Scene");
+            wrapper.transform.SetParent(container.transform);
+
+            MeshRenderer first = AddNode(wrapper.transform, "LampostBig", "Lamp");
+            MeshRenderer second = AddNode(wrapper.transform, "LampostSmall", "Lamp");
+
+            GltfContainerComponent gltfContainer = CreateContainerComponent(container, first, second);
+
+            LogAssert.Expect(LogType.Warning,
+                "GLTF Node path 'Lamp' is ambiguous: 2 renderers matched it under different root nodes. Using the first one in hierarchy order.");
+
+            Entity entity = SetupWithPath(gltfContainer, "Lamp");
+
+            // First in sibling order wins, deterministically.
+            AssertResolvedTo(entity, first, "Lamp");
+        }
+
+        /// <summary>
+        ///     container → "Scene" (wrapper) → "LampostBig" → "LampostBig_Lamp" (+ a sibling root node).
+        /// </summary>
+        private (GameObject container, MeshRenderer lamp) BuildLamppostWithWrapper()
+        {
+            var container = new GameObject("container");
+            extraRoots.Add(container);
+
+            var wrapper = new GameObject("Scene");
+            wrapper.transform.SetParent(container.transform);
+
+            MeshRenderer lamp = AddNode(wrapper.transform, "LampostBig", "LampostBig_Lamp");
+
+            // Extra root-level node: this is what tips glTFast into creating the wrapper.
+            var prop = new GameObject("Plane.016");
+            prop.transform.SetParent(wrapper.transform);
+
+            return (container, lamp);
+        }
+
+        /// <summary>
+        ///     container → "LampostBig" → "LampostBig_Lamp".
+        /// </summary>
+        private (GameObject container, MeshRenderer lamp) BuildLamppostWithoutWrapper()
+        {
+            var container = new GameObject("container");
+            extraRoots.Add(container);
+
+            MeshRenderer lamp = AddNode(container.transform, "LampostBig", "LampostBig_Lamp");
+            return (container, lamp);
+        }
+
+        private static MeshRenderer AddNode(Transform parent, string rootNodeName, string leafName)
+        {
+            var rootNode = new GameObject(rootNodeName);
+            rootNode.transform.SetParent(parent);
+
+            var leaf = new GameObject(leafName);
+            leaf.transform.SetParent(rootNode.transform);
+
+            return leaf.AddComponent<MeshRenderer>();
+        }
+
+        private GltfContainerComponent CreateContainerComponent(GameObject container, params Renderer[] renderers)
+        {
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                world,
+                new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()),
+                PartitionComponent.TOP_PRIORITY);
+
+            var asset = GltfContainerAsset.Create(container, null);
+
+            foreach (Renderer renderer in renderers)
+                asset.Renderers.Add(renderer);
+
+            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+            promise.TryConsume(world, out _);
+
+            return new GltfContainerComponent
+            {
+                Promise = promise,
+                State = LoadingState.Finished,
+                RootGameObject = container,
+            };
+        }
+
+        private Entity SetupWithPath(GltfContainerComponent gltfContainer, string path)
+        {
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = path,
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
+
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
+            system.Update(0);
+            return entity;
+        }
+
+        private void AssertResolvedTo(Entity entity, Renderer expectedRenderer, string expectedPath)
+        {
+            Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
+            Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
+
+            Entity nodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
+            GltfNode gltfNode = world.Get<GltfNode>(nodeEntity);
+            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(1));
+            Assert.That(gltfNode.Renderers[0], Is.EqualTo(expectedRenderer));
+            Assert.That(gltfNode.Path, Is.EqualTo(expectedPath));
         }
 
         private static PBMaterial CreatePbrMaterial(Color color) =>

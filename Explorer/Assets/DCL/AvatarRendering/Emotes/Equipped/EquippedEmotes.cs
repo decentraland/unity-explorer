@@ -1,5 +1,3 @@
-using DCL.AvatarRendering.Loading.Components;
-
 namespace DCL.AvatarRendering.Emotes.Equipped
 {
     public class EquippedEmotes : IEquippedEmotes

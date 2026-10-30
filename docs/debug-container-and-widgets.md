@@ -332,7 +332,7 @@ new MyPlugin(..., container.DebugContainerBuilder),
 
 ## Assembly References
 
-The debug utilities live in the `DebugUtilities` assembly (`GUID:4725c02394ab4ce19f889e4e8001f989`). The `DCL.Plugins` assembly already references it, so any system included via `.asmref` pointing to `DCL.Plugins` can use `DCL.DebugUtilities` and `DCL.DebugUtilities.UIBindings` namespaces without additional asmdef changes.
+The debug utilities compile into the `Utility` assembly (the `DebugUtilities` folder folds in with the rest of `PerformanceAndDiagnostics`). The `DCL.Plugins` assembly already references `Utility`, so any system included via `.asmref` pointing to `DCL.Plugins` can use the `DCL.DebugUtilities` and `DCL.DebugUtilities.UIBindings` namespaces without additional asmdef changes.
 
 ---
 

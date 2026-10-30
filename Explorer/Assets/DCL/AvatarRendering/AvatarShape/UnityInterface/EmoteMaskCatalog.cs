@@ -2,6 +2,7 @@ using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using AvatarMask = UnityEngine.AvatarMask;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {

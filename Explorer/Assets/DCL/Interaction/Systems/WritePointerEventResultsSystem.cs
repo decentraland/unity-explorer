@@ -113,11 +113,15 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             RaycastHit raycastHit = raycastHitPool.Get();
             raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
             AppendMessage(sdkEntity, raycastHit, button, eventType);
+
             return eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
+            if (IsUserGesture(button, eventType))
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {
@@ -128,5 +132,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     result.TickNumber = data.sceneStateProvider.TickNumber;
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
         }
+
+        /// <summary>
+        ///     Only a press or release of an activation button counts: hover, proximity, movement, jump, walk, modifier and any-key input do not express intent
+        /// </summary>
+        private static bool IsUserGesture(InputAction button, PointerEventType eventType) =>
+            eventType is PointerEventType.PetDown or PointerEventType.PetUp
+            && button is InputAction.IaPointer or InputAction.IaPrimary or InputAction.IaSecondary
+                or InputAction.IaAction3 or InputAction.IaAction4 or InputAction.IaAction5 or InputAction.IaAction6;
     }
 }

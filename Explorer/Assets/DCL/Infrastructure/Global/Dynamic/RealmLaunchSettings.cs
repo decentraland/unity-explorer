@@ -1,16 +1,17 @@
+using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Prefs;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utility;
+using DCL.Web3.Identities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -32,16 +33,14 @@ namespace Global.Dynamic
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
-        [SerializeField] internal bool useRemoteAssetsBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
-        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
-
         private bool isLocalSceneDevelopmentRealm;
+        internal string? spawnPointName;
+        internal StartParcelSource startParcelSource;
+        internal bool landOnStartParcel;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -69,53 +68,28 @@ namespace Global.Dynamic
                    };
         }
 
-        public HybridSceneParams CreateHybridSceneParams()
-        {
-            if (initialRealm == InitialRealm.Localhost || isLocalSceneDevelopmentRealm)
-            {
-                return new HybridSceneParams
-                {
-                    EnableHybridScene = useRemoteAssetsBundles,
-                    HybridSceneContentServer = remoteHybridSceneContentServer,
-                    World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
-                        ? remoteHibridWorld
-                        : "",
-                };
-            }
-
-            return new HybridSceneParams();
-        }
-
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
-                ParseRealmAppParameter(applicationParameters, realm);
+                ParseRealmAppParameter(applicationParameters, realm!);
 
-            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
-                ParsePositionAppParameter(parcelToTeleportOverride);
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? parcelToTeleportOverride))
+                ParsePositionAppParameter(parcelToTeleportOverride!);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.SPAWN_POINT, out string? spawnPointOverride) && !string.IsNullOrEmpty(spawnPointOverride))
+                spawnPointName = spawnPointOverride;
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
         {
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
-                                           && ParseLocalSceneParameter(localSceneParamValue)
-                                           && IsRealmAValidUrl(realmParamValue);
+            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localSceneParamValue)
+                                           && ParseLocalSceneParameter(localSceneParamValue!)
+                                           && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
-            {
-                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles);
-
-                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
-                    ParseLSDRemoteABServer(serverValue);
-
-                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_WORLD, out string? worldValue))
-                {
-                    remoteHibridWorld = worldValue!;
-                    remoteHybridSceneContentServer = HybridSceneContentServer.World;
-                }
-            }
+                SetLocalSceneDevelopmentRealm(realmParamValue);
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
             else
@@ -134,18 +108,11 @@ namespace Global.Dynamic
             initialRealm = InitialRealm.World;
         }
 
-        private void SetLocalSceneDevelopmentRealm(string targetRealm, bool useRemoteAB)
+        private void SetLocalSceneDevelopmentRealm(string targetRealm)
         {
             customRealm = targetRealm;
             initialRealm = InitialRealm.Custom;
-            useRemoteAssetsBundles = useRemoteAB;
             isLocalSceneDevelopmentRealm = true;
-        }
-
-        private void ParseLSDRemoteABServer(string serverValue)
-        {
-            if (Enum.TryParse<HybridSceneContentServer>(serverValue, true, out var server))
-                remoteHybridSceneContentServer = server;
         }
 
         private void ParsePositionAppParameter(string targetPositionParam)
@@ -171,19 +138,22 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
 
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-
-        public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        // The saved home honoured here belongs to the account known this early in the startup: the restored session, or the last one the map served
+        public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
+            {
+                startParcelSource = StartParcelSource.LaunchArgument;
                 return;
+            }
 
             // Priority 2: Editor position override (for development convenience)
             if (HasEditorPositionOverride())
+            {
+                startParcelSource = StartParcelSource.EditorOverride;
                 return;
+            }
 
             string? parcelToTeleportOverride = "0,0";
             bool hasDefaultSpawnFlag = featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL)
@@ -191,18 +161,26 @@ namespace Global.Dynamic
                                            FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
                                        && parcelToTeleportOverride != null;
 
-            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerController.HasSerializedHome() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0";
+            // skipped when an explicit realm is requested, so a deep link cannot be overridden by the saved home)
+            string? homeAccount = HomeMarkerController.ResolveStartupAccount(identityCache);
+
+            if (HomeMarkerController.HasSerializedHome(homeAccount) && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                if (HomeMarkerController.HasSerializedWorldName())
+                if (HomeMarkerController.DeserializeWorldName(homeAccount) is { } homeWorldName)
                 {
-                    SetWorldRealm(HomeMarkerController.DeserializeWorldName()!);
+                    SetWorldRealm(homeWorldName);
+                    startParcelSource = StartParcelSource.Home;
                     return;
                 }
 
-                if (HomeMarkerController.HasSerializedPosition())
+                if (HomeMarkerController.Deserialize(homeAccount) is { } homeParcel)
                 {
-                    targetScene = HomeMarkerController.Deserialize()!.Value;
+                    targetScene = homeParcel;
+                    startParcelSource = StartParcelSource.Home;
+
+                    // A home is the exact parcel the user stood on, not a place
+                    landOnStartParcel = true;
                     return;
                 }
             }
@@ -211,7 +189,10 @@ namespace Global.Dynamic
             // Note: If you don't want the feature flag for localhost, remove it from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             if (hasDefaultSpawnFlag)
+            {
                 ParsePositionAppParameter(parcelToTeleportOverride!);
+                startParcelSource = StartParcelSource.FeatureFlag;
+            }
         }
 
         /// <summary>
@@ -231,5 +212,7 @@ namespace Global.Dynamic
         /// <param name="appArgs">The application arguments to check.</param>
         /// <returns>True if the POSITION flag is present in the arguments.</returns>
         private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
+
+        private static bool HasAppArgRealm(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.REALM);
     }
 }

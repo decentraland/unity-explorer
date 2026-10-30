@@ -1,6 +1,10 @@
 using DCL.Input;
 using DCL.DebugUtilities;
+using DCL.Profiling;
 using DCL.UI.DebugMenu.LogHistory;
+using ECS.SceneLifeCycle;
+using ECS.StreamableLoading.AssetBundles;
+using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,21 +16,53 @@ namespace DCL.UI.DebugMenu
     public class DebugMenuController : MonoBehaviour
     {
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
+        private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
+        private const string USS_SIDEBAR_COLLAPSE_COLLAPSED = "sidebar__header--collapsed";
+        private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
+        private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
+
+        private const float PANEL_SIDEBAR_GAP = 8f;
+
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
-        private ConsolePanelView consolePanelView;
+        private ConsolePanelView consolePanelView = null!;
+        private AbConversionPanelView? abConversionPanelView;
+        private MetricsPanelView metricsPanelView = null!;
 
-        private DebugPanelView visiblePanel;
+        private DebugPanelView? visiblePanel;
 
-        private IInputBlock inputBlock;
+        private IInputBlock? inputBlock;
 
-        private Button consoleButton;
-        private Button debugPanelButton;
+        private Button consoleButton = null!;
+        private Button abConversionButton = null!;
+        private Button metricsButton = null!;
+        private Button debugPanelButton = null!;
+        private Button collapseButton = null!;
+        private VisualElement sidebar = null!;
+        private VisualElement sidebarButtons = null!;
+        private VisualElement consolePanelRoot = null!;
+        private VisualElement abConversionPanelRoot = null!;
+        private VisualElement metricsPanelRoot = null!;
+        private bool sidebarCollapsed;
+        private float expandedSidebarWidth;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
 
         private IDebugContainerBuilder? debugContainerBuilder;
+        private IScenesCache? scenesCache;
+        private AbgenConversionMetrics? abgenConversionMetrics;
+
+        private ISceneFacade? metricsScene;
+        private SceneContentCaps metricsCaps;
+        private int seenFailedConversions;
+        private bool seenWarmUpFailure;
+        private bool seenRawGltfFallback;
+        private bool abPanelAutoOpened;
+        private bool abPanelCloseHintShown;
+        private float abPanelAutoCloseAt = -1f;
+        private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
+        private long lastMetricsCollectionCount = -1;
 
         private void OnEnable()
         {
@@ -36,13 +72,39 @@ namespace DCL.UI.DebugMenu
 
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
+            abConversionButton = root.Q<Button>("AbConversionButton");
+            metricsButton = root.Q<Button>("MetricsButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
+            collapseButton = root.Q<Button>("CollapseButton");
+            sidebar = root.Q("Sidebar");
+            sidebarButtons = root.Q("SidebarButtons");
+            consolePanelRoot = root.Q("ConsolePanel");
+            abConversionPanelRoot = root.Q("AbConversionPanel");
+            metricsPanelRoot = root.Q("MetricsPanel");
 
             consoleButton.clicked += OnConsoleButtonClicked;
+            abConversionButton.clicked += OnAbConversionButtonClicked;
+            metricsButton.clicked += OnMetricsButtonClicked;
+            collapseButton.clicked += OnCollapseButtonClicked;
+
+            // Panels open to the left of the sidebar; keep them clear of its live width.
+            sidebar.RegisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
+
+            // Re-apply the persisted collapsed state after a live reload rebuilds the tree.
+            ApplySidebarCollapsed();
 
             // Views
-            consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
-            consolePanelView.SetInputBlock(inputBlock);
+            consolePanelView = new ConsolePanelView(consolePanelRoot, consoleButton, OnConsoleButtonClicked, logsHistory);
+
+            // Null until Initialize runs; the view receives it in SetInputBlock then
+            if (inputBlock != null)
+                consolePanelView.SetInputBlock(inputBlock);
+
+            // Null until Initialize runs; the AB panel is created there, and re-created here on a live reload
+            if (abgenConversionMetrics != null)
+                abConversionPanelView = new AbConversionPanelView(abConversionPanelRoot, abConversionButton, OnAbConversionButtonClicked, abgenConversionMetrics);
+
+            metricsPanelView = new MetricsPanelView(metricsPanelRoot, metricsButton, OnMetricsButtonClicked);
 
             // Shortcuts
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
@@ -56,13 +118,24 @@ namespace DCL.UI.DebugMenu
                         consolePanelView.Toggle();
                         visiblePanel = consolePanelView;
                         break;
+                    case AbConversionPanelView when abConversionPanelView != null:
+                        abConversionPanelView.Toggle();
+                        visiblePanel = abConversionPanelView;
+                        break;
+                    case MetricsPanelView:
+                        metricsPanelView.Toggle();
+                        visiblePanel = metricsPanelView;
+                        break;
                 }
         }
 
-        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder)
+        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder, IScenesCache newScenesCache, AbgenConversionMetrics newAbgenConversionMetrics)
         {
             SetInputBlock(newInputBlock);
             SetDebugContainerBuilder(newBuilder);
+            scenesCache = newScenesCache;
+            abgenConversionMetrics = newAbgenConversionMetrics;
+            abConversionPanelView = new AbConversionPanelView(abConversionPanelRoot, abConversionButton, OnAbConversionButtonClicked, newAbgenConversionMetrics);
         }
 
         private void SetDebugContainerBuilder(IDebugContainerBuilder builder)
@@ -88,7 +161,18 @@ namespace DCL.UI.DebugMenu
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
+            consoleButton.clicked -= OnConsoleButtonClicked;
+            abConversionButton.clicked -= OnAbConversionButtonClicked;
+            metricsButton.clicked -= OnMetricsButtonClicked;
+            collapseButton.clicked -= OnCollapseButtonClicked;
+            sidebar.UnregisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+
+            if (metricsScene != null)
+            {
+                metricsScene.RuntimeMetrics.ContentStats.RequestedByMetricsPanel = false;
+                metricsScene = null;
+            }
         }
 
         private void Update()
@@ -101,11 +185,166 @@ namespace DCL.UI.DebugMenu
                 HideDebugPanelOwnToggle();
             }
 
+            // Drain before the shouldRefreshConsole check so logs pushed from other threads render this same frame
+            logsHistory.DrainPendingLogs();
+
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;
                 consolePanelView.Refresh();
             }
+
+            if (abConversionPanelView != null && abgenConversionMetrics != null)
+                UpdateAbConversionPanel(abConversionPanelView, abgenConversionMetrics);
+
+            UpdateMetricsPanel();
+            UpdateDebugPanelButtonState();
+        }
+
+        private void UpdateAbConversionPanel(AbConversionPanelView panelView, AbgenConversionMetrics metrics)
+        {
+            // Long-running abgen work (binary download, cold conversion) asks to be brought on screen.
+            if (metrics.TryConsumePanelOpenRequest() && !panelView.Visible)
+            {
+                TogglePanel(panelView);
+                abPanelAutoOpened = true;
+                abPanelAutoCloseAt = -1f;
+
+                if (!abPanelCloseHintShown)
+                {
+                    metrics.OnMilestone("you can now close this tab with its X button or the AB button in the sidebar");
+                    abPanelCloseHintShown = true;
+                }
+            }
+
+            // Cheap when nothing changed: a version check against the conversion metrics.
+            panelView.Refresh();
+
+            UpdateAbConversionAttention(panelView, metrics);
+        }
+
+        /// <summary>
+        ///     A panel this controller opened on its own also closes on its own: once the warm-up ends
+        ///     Ready with zero failed conversions, it lingers briefly (so the READY row is seen) and
+        ///     closes. A failure — warm-up, any per-file one, or the session's degrade to raw GLTFs — keeps
+        ///     it open, and a manual toggle hands the panel back to the user (see <see cref="OnAbConversionButtonClicked" />).
+        /// </summary>
+        private void UpdateAbPanelAutoClose(AbConversionPanelView panelView, AbgenConversionMetrics.WarmUpStage warmUpStage, int failedConversions, bool rawGltfFallback)
+        {
+            if (!abPanelAutoOpened) return;
+
+            if (!panelView.Visible)
+            {
+                abPanelAutoOpened = false;
+                return;
+            }
+
+            if (warmUpStage != AbgenConversionMetrics.WarmUpStage.Ready || failedConversions > 0 || rawGltfFallback)
+            {
+                abPanelAutoCloseAt = -1f;
+                return;
+            }
+
+            if (abPanelAutoCloseAt < 0f)
+                abPanelAutoCloseAt = UnityEngine.Time.unscaledTime + AB_PANEL_AUTO_CLOSE_LINGER_SECONDS;
+            else if (UnityEngine.Time.unscaledTime >= abPanelAutoCloseAt)
+            {
+                TogglePanel(panelView);
+                abPanelAutoOpened = false;
+            }
+        }
+
+        /// <summary>
+        ///     Flashes the AB sidebar button while any abgen conversion is running (sidecar whole-scene
+        ///     warm-up) and holds it lit after a failure until the panel is opened.
+        ///     The class toggle pulses smoothly because sidebar__button transitions background-color.
+        /// </summary>
+        private void UpdateAbConversionAttention(AbConversionPanelView panelView, AbgenConversionMetrics metrics)
+        {
+            AbgenConversionMetrics.WarmUpStage warmUpStage = metrics.WarmUp;
+            int failedConversions = metrics.Failed;
+            bool warmUpFailed = warmUpStage == AbgenConversionMetrics.WarmUpStage.Failed;
+            bool rawGltfFallback = metrics.RawGltfFallbackReason != null;
+
+            if (panelView.Visible)
+            {
+                seenFailedConversions = failedConversions;
+                seenWarmUpFailure = warmUpFailed;
+                seenRawGltfFallback = rawGltfFallback;
+            }
+            else if (warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting)
+                seenWarmUpFailure = false; // a new warm-up can fail anew
+
+            bool converting = warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting || metrics.InFlight > 0;
+
+            bool unseenFailure = failedConversions > seenFailedConversions
+                                 || (warmUpFailed && !seenWarmUpFailure)
+                                 || (rawGltfFallback && !seenRawGltfFallback);
+
+            bool attention = converting
+                ? (int)(UnityEngine.Time.unscaledTime * 2f) % 2 == 0
+                : unseenFailure;
+
+            abConversionButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, attention);
+
+            // While collapsed the AB button is hidden, so surface the flash on the collapse handle instead.
+            collapseButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, sidebarCollapsed && attention);
+
+            UpdateAbPanelAutoClose(panelView, warmUpStage, failedConversions, rawGltfFallback);
+        }
+
+        private void UpdateMetricsPanel()
+        {
+            ISceneFacade? currentScene = scenesCache?.CurrentScene.Value;
+
+            if (currentScene != metricsScene)
+            {
+                if (metricsScene != null)
+                    metricsScene.RuntimeMetrics.ContentStats.RequestedByMetricsPanel = false;
+
+                metricsScene = currentScene;
+
+                if (currentScene != null)
+                {
+                    int parcelCount = currentScene.SceneData.Parcels.Count;
+                    metricsCaps = SceneContentCaps.ForParcelCount(parcelCount);
+                }
+                else
+                    metricsCaps = default(SceneContentCaps);
+
+                // Prime the counter so the new scene's values show on the very next refresh check
+                framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
+                lastMetricsCollectionCount = -1;
+
+                SceneContentStatsFormatter.FormatEmpty(out SceneContentStatsText emptyText);
+                metricsPanelView.UpdateValues(in emptyText);
+            }
+
+            if (currentScene == null) return;
+
+            SceneContentStats stats = currentScene.RuntimeMetrics.ContentStats;
+            stats.RequestedByMetricsPanel = metricsPanelView.Visible;
+
+            if (!metricsPanelView.Visible) return;
+            if (++framesSinceMetricsRefresh < METRICS_REFRESH_COOLDOWN_FRAMES) return;
+
+            framesSinceMetricsRefresh = 0;
+
+            if (stats.CollectionCount == lastMetricsCollectionCount) return;
+
+            lastMetricsCollectionCount = stats.CollectionCount;
+            SceneContentStatsFormatter.Format(stats, in metricsCaps, out SceneContentStatsText text);
+            metricsPanelView.UpdateValues(in text);
+        }
+
+        private void UpdateDebugPanelButtonState()
+        {
+            // Mirror the debug panel's actual visibility so the row stays in sync when the panel is
+            // closed from its own header, not just from this button. Gated until the container is
+            // built (shouldHideDebugPanelOwnToggle only clears once Container is available).
+            if (debugContainerBuilder == null || shouldHideDebugPanelOwnToggle) return;
+
+            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
         private void HideDebugPanelOwnToggle()
@@ -131,13 +370,64 @@ namespace DCL.UI.DebugMenu
         private void OnConsoleButtonClicked() =>
             TogglePanel(consolePanelView);
 
+        private void OnAbConversionButtonClicked()
+        {
+            if (abConversionPanelView == null) return;
+
+            // A manual toggle hands the panel back to the user: no pending auto-close survives it.
+            abPanelAutoOpened = false;
+            abPanelAutoCloseAt = -1f;
+            TogglePanel(abConversionPanelView);
+        }
+
+        private void OnMetricsButtonClicked() =>
+            TogglePanel(metricsPanelView);
+
+        private void OnCollapseButtonClicked()
+        {
+            sidebarCollapsed = !sidebarCollapsed;
+            ApplySidebarCollapsed();
+
+            // Collapsing hides the rows that open these panels, so close whichever one is open
+            // (Console / Scene Stats / AB Conversion). The Debug Panel is separate and left as-is.
+            if (sidebarCollapsed && visiblePanel != null)
+                TogglePanel(visiblePanel);
+        }
+
+        private void ApplySidebarCollapsed()
+        {
+            sidebarButtons.style.display = sidebarCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            collapseButton.EnableInClassList(USS_SIDEBAR_COLLAPSE_COLLAPSED, sidebarCollapsed);
+        }
+
+        private void OnSidebarGeometryChanged(GeometryChangedEvent evt)
+        {
+            // Pin the strip to its expanded width so collapsing hides the rows without the box
+            // resizing under the header. Captured while expanded (the default state).
+            if (!sidebarCollapsed && evt.newRect.width > expandedSidebarWidth)
+            {
+                expandedSidebarWidth = evt.newRect.width;
+                sidebar.style.minWidth = expandedSidebarWidth;
+            }
+
+            // The sidebar is drawn on top of the panels, so tuck each panel's right edge just left
+            // of the sidebar's left edge — its width varies with the labels, so a fixed offset would
+            // either overlap or leave a gap. Both are absolute siblings offset from the same parent's
+            // right edge, so the inset is derived from layout rects; sidebar.resolvedStyle.right is
+            // not reliably resolved in player builds.
+            float panelRight = sidebar.parent.layout.width - evt.newRect.xMin + PANEL_SIDEBAR_GAP;
+            consolePanelRoot.style.right = panelRight;
+            abConversionPanelRoot.style.right = panelRight;
+            metricsPanelRoot.style.right = panelRight;
+        }
+
         private void OnDebugPanelButtonClicked()
         {
             if (debugContainerBuilder == null) return;
 
+            // The row's selected state is mirrored from the panel's visibility every frame in
+            // UpdateDebugPanelButtonState, so it only needs to flip the panel here.
             debugContainerBuilder.Container.TogglePanelVisibility();
-
-            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
         private void TogglePanel(DebugPanelView panelView)

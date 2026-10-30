@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
-using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+using UUAV.Compat;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.MediaStream
@@ -14,18 +13,15 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaPlayer mediaPlayerPrefab;
         private readonly Dictionary<string, Queue<MediaPlayerInfo>> offlineMediaPlayers;
         private readonly Transform rootContainerTransform;
-        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly List<string> keysToRemove = new ();
 
         private readonly int tryCleanOfflineMediaPlayersDelayInMinutes = 2;
         private readonly float maxOfflineTimePossibleInSeconds = 300f;
 
-        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab,
-            AssetPreLoadCache assetPreLoadCache)
+        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
-            this.assetPreLoadCache = assetPreLoadCache;
             rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
             offlineMediaPlayers = new Dictionary<string, Queue<MediaPlayerInfo>>();
             TryUnloadAsync().Forget();
@@ -37,36 +33,18 @@ namespace DCL.SDKComponents.MediaStream
 
             if (offlineMediaPlayers.TryGetValue(url, out Queue<MediaPlayerInfo>? queue) && queue.Count > 0)
             {
-                mediaPlayer = queue.Dequeue().mediaPlayer;
-                mediaPlayer.enabled = true;
+                mediaPlayer = queue.Dequeue().MediaPlayer;
                 mediaPlayer.gameObject.SetActive(true);
             }
             else
-            {
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
-                mediaPlayer.PlatformOptionsWindows._audioMode = Windows.AudioOutput.Unity;
-                mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
-            }
-
-            #if UNITY_EDITOR
-                if (UnityEditorInternal.RenderDoc.IsLoaded())
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.MediaFoundation;
-                else
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
-            #else
-                mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
-            #endif
-            mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
-            mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;
-            mediaPlayer.AutoOpen = false;
-            mediaPlayer.enabled = true;
 
             return mediaPlayer;
         }
 
         private async UniTask TryUnloadAsync()
         {
-            while (true)
+            while (!UnityObjectUtils.IsQuitting)
             {
                 //We will do this analysis every two minute
                 await UniTask.Delay(TimeSpan.FromMinutes(tryCleanOfflineMediaPlayersDelayInMinutes));
@@ -78,11 +56,11 @@ namespace DCL.SDKComponents.MediaStream
                     Queue<MediaPlayerInfo>? queue = kvp.Value;
 
                     //IF the video hasnt been used in five minutes, then it will be get closed and destroyed
-                    while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > maxOfflineTimePossibleInSeconds)
+                    while (queue.Count > 0 && now - queue.Peek().LastTimeUsed > maxOfflineTimePossibleInSeconds)
                     {
-                        MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
-                        expiredPlayerInfo.mediaPlayer.CloseMedia();
-                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
+                        MediaPlayerInfo expiredPlayerInfo = queue.Dequeue();
+                        expiredPlayerInfo.MediaPlayer.CloseMedia();
+                        Object.Destroy(expiredPlayerInfo.MediaPlayer.gameObject);
                     }
 
                     if (queue.Count == 0)
@@ -99,14 +77,12 @@ namespace DCL.SDKComponents.MediaStream
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
 
-            mediaPlayer.Stop();
+            // Already destroyed (pool eviction / scene teardown): nothing left to stop or re-pool.
+            if (mediaPlayer == null) return;
+
             mediaPlayer.CloseMedia();
             mediaPlayer.AudioVolume = 0f;
-            mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
-
-            // If the MediaPlayer is cached in the asset load, avoid queuing it in the pool
-            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent _)) return;
 
             var info = new MediaPlayerInfo(mediaPlayer, UnityEngine.Time.realtimeSinceStartup);
 
@@ -122,13 +98,13 @@ namespace DCL.SDKComponents.MediaStream
 
     public class MediaPlayerInfo
     {
-        public MediaPlayer mediaPlayer;
-        public float lastTimeUsed;
+        public MediaPlayer MediaPlayer;
+        public float LastTimeUsed;
 
         public MediaPlayerInfo(MediaPlayer mediaPlayer, float lastTimeUsed)
         {
-            this.mediaPlayer = mediaPlayer;
-            this.lastTimeUsed = lastTimeUsed;
+            MediaPlayer = mediaPlayer;
+            LastTimeUsed = lastTimeUsed;
         }
     }
 }

@@ -16,7 +16,7 @@ using ECS.Abstract;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     internal class NetworkMessageBindings
     {
@@ -194,7 +194,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 Profile playerProfiler = world.Get<Profile>(playerEntity);
                 var profile = Profile.NewProfileWithAvatar(RemotePlayerMovementComponent.TEST_ID, playerProfiler.Avatar);
-                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND);
+                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID, RoomSource.Island);
                 selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
 
                 if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
@@ -221,7 +221,7 @@ namespace DCL.Multiplayer.Movement.Systems
             debugSettings.SelfSending = false;
 
             if (remoteEntities == null) return;
-            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND, world);
+            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, RoomSource.Island, world);
 
             selfReplicaEntity = null;
         }

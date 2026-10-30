@@ -57,7 +57,7 @@ There are two main ways to create an `AssetPromise`:
 This is the most common method. It creates a new entity in the ECS world to represent the loading process.
 
 ```csharp
-// Example from DCL/Infrastructure/ECS/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
+// Example from DCL/Infrastructure/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
 
 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
    .Create(World, new GetSceneDefinition(new CommonLoadingArguments(url), ipfsPath), PartitionComponent.TOP_PRIORITY);
@@ -217,6 +217,8 @@ protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInt
 ```
 
 This is the **processing** stage. `LoadTextureSystem` finds the promise entity that `MapPinLoaderSystem` created. It reads the `GetTextureIntention`, performs the web request to download the image, and creates the texture. When it's done, it adds a `StreamableLoadingResult<Texture2DData>` component to that same promise entity.
+
+`FlowInternalAsync` only runs on a full cache miss. Before it, `LoadSystemBase` consults the in-memory cache, then the persistent [disk cache](disk-cache.md), and deduplicates against the `OngoingRequests` table (concurrent requests for an equal intention piggyback on the first one's flow instead of downloading twice). After a successful download, the result is written back to memory and disk.
 
 ### Step 3: Promise Resolution (`MapPinLoaderSystem`)
 

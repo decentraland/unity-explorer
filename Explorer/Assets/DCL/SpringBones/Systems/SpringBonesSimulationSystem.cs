@@ -121,9 +121,14 @@ namespace DCL.SpringBones
                     continue;
                 }
 
+                // Always glue the cloned wearable pivot to its avatar bone, even for slots that
+                // aren't being simulated (simulation disabled, or avatar beyond MaxSimulatedAvatars).
+                // The pivot isn't parented under the animated skeleton, so without this re-sync the
+                // hair freezes in world space and trails the avatar as it moves.
+                Vector3 avatarLossy = SpringBoneTransformSync.SyncWearableParentToAvatar(slot.WearableParent, slot.AvatarParent);
+
                 if (springBoneService.IsSlotActive(slot.SlotIndex))
                 {
-                    Vector3 avatarLossy = SpringBoneTransformSync.SyncWearableParentToAvatar(slot.WearableParent, slot.AvatarParent);
                     Vector3 restScale = slot.RestAvatarScale;
                     float scaleFactor = (
                         SafeRatio(avatarLossy.x, restScale.x) +

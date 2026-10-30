@@ -8,7 +8,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Utilities;
 using ECS;
 using ECS.TestSuite;
 using LiveKit.Rooms;
@@ -58,10 +57,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
 
             roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
 
-            ObjectProxy<IRoomHub> roomHubProxy = new ObjectProxy<IRoomHub>();
-            roomHubProxy.SetObject(roomHub);
-
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy, sceneData);
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData);
         }
 
         protected override void OnTearDown()

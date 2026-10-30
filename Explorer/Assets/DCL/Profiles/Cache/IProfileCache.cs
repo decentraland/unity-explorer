@@ -41,4 +41,10 @@ namespace DCL.Profiles
 
         void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount);
     }
+
+    public static class ProfileCacheExtensions
+    {
+        public static bool IsGuest(this IProfileCache cache, string userId) =>
+            cache.TryGet(userId, out Profile? profile) && !profile.HasConnectedWeb3;
+    }
 }

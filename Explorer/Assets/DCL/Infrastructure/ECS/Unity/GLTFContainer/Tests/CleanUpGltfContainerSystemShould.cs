@@ -16,7 +16,6 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Primitives;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -29,7 +28,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY);
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY, null);
         }
 
         [Test]

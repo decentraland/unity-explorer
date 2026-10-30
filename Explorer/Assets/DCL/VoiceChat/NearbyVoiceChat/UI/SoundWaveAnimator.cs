@@ -61,12 +61,12 @@ namespace DCL.VoiceChat.UI
 
             // Attack / Decay
             float blendSpeed = isSpeaking ? 1f / attackDuration : 1f / decayDuration;
-            speakingBlend = Mathf.MoveTowards(speakingBlend, isSpeaking ? 1f : 0f, blendSpeed * Time.deltaTime);
+            speakingBlend = Mathf.MoveTowards(speakingBlend, isSpeaking ? 1f : 0f, blendSpeed * UnityEngine.Time.deltaTime);
 
             // Wave keeps running as long as bars are visible — no jerk on decay
             if (speakingBlend > 0f)
             {
-                waveProgress += Time.deltaTime / waveDuration;
+                waveProgress += UnityEngine.Time.deltaTime / waveDuration;
 
                 if (waveProgress >= 1f)
                 {

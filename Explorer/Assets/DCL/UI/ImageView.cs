@@ -10,13 +10,13 @@ namespace DCL.UI
     public class ImageView : MonoBehaviour
     {
         [field: SerializeField]
-        internal GameObject LoadingObject { get; private set; }
+        internal GameObject LoadingObject { get; private set; } = null!;
 
         [field: SerializeField, Tooltip("Optional")]
         private SkeletonLoadingView? skeletonLoadingView { get; set; }
 
         [field: SerializeField]
-        internal Image Image { get; private set; }
+        internal Image Image { get; set; } = null!;
 
         [field: SerializeField]
         internal float imageLoadingFadeDuration { get; private set; } = 0.3f;
@@ -101,7 +101,7 @@ namespace DCL.UI
             {
                 ct.ThrowIfCancellationRequested();
                 Alpha = Mathf.Lerp(from, 1f, t / duration);
-                t += Time.deltaTime;
+                t += UnityEngine.Time.deltaTime;
                 await UniTask.NextFrame(ct);
             }
 

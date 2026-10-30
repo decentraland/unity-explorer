@@ -13,11 +13,21 @@ namespace DCL.Diagnostics
     {
         private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
 
-        private ILogHandler defaultLogHandler;
-        public ReportHubLogger ReportHubLogger { get; private set; }
-        public SentryReportHandler? Sentry { get; private set; }
-        public IReportsHandlingSettings Settings { get; private set; }
-        public SentrySampler? SentrySampler { get; private set; }
+        private readonly ILogHandler defaultLogHandler;
+        private readonly ReportHubLogger reportHubLogger;
+
+        public SentryReportHandler? Sentry { get; }
+        public IReportsHandlingSettings Settings { get; }
+        public SentrySampler? SentrySampler { get; }
+
+        private DiagnosticsContainer(ILogHandler defaultLogHandler, ReportHubLogger reportHubLogger, SentryReportHandler? sentry, IReportsHandlingSettings settings, SentrySampler? sentrySampler)
+        {
+            this.defaultLogHandler = defaultLogHandler;
+            this.reportHubLogger = reportHubLogger;
+            Sentry = sentry;
+            Settings = settings;
+            SentrySampler = sentrySampler;
+        }
 
         public void Dispose()
         {
@@ -30,7 +40,7 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, string? sessionId, params IReportHandler[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
@@ -45,7 +55,14 @@ namespace DCL.Diagnostics
             SentrySampler? sentrySampler = null;
 
             if (settings.IsEnabled(ReportHandler.Sentry))
-                handlers.Add(sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), sentrySampler = new SentrySampler(), settings.DebounceEnabled));
+            {
+                ICategorySeverityMatrix sentryMatrix = settings.GetMatrix(ReportHandler.Sentry);
+
+                if (isLocalSceneDevelopment)
+                    sentryMatrix = new CategoryExclusionMatrix(sentryMatrix, ReportCategory.JAVASCRIPT);
+
+                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, isLocalSceneDevelopment, sessionId));
+            }
 
             var logger = new ReportHubLogger(handlers);
 
@@ -57,14 +74,14 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings, SentrySampler = sentrySampler };
+            return new DiagnosticsContainer(defaultLogHandler, logger, sentryReportHandler, settings, sentrySampler);
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
             SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
             ReportHub.EnforceUnconditionalVerboseLogs = true;
-            ReportHubLogger.AddHandler(reportHandler);
+            reportHubLogger.AddHandler(reportHandler);
         }
 
         private static SceneDebugConsoleReportHandler AddDebugConsoleReportHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
@@ -106,9 +123,13 @@ namespace DCL.Diagnostics
                     ReportCategory.SCENE_FETCH_REQUEST,
                     ReportCategory.PORTABLE_EXPERIENCE,
                     ReportCategory.EMOTE,
+                    ReportCategory.MCP,
+                    ReportCategory.SYNTHETIC_INPUT,
                 }, logType: false);
 
             entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+            entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.MCP, Severity = LogType.Log });
+            entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.SYNTHETIC_INPUT, Severity = LogType.Log });
 
             jsOnlyMatrix.entries = entries;
             return new SceneDebugConsoleReportHandler(jsOnlyMatrix, sceneDebugConsoleMessageBus, false);

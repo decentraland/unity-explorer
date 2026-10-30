@@ -3,19 +3,13 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
-using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
-using DCL.SkyBox;
-using DCL.Utilities;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -31,68 +25,65 @@ namespace DCL.Settings.Configuration
         // Never renumber or reuse a value; new entries must pick the next unused integer.
         public enum ToggleFeatures
         {
-            CHAT_SOUNDS_FEATURE = 0,
-            GRAPHICS_VSYNC_TOGGLE_FEATURE = 1,
-            HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE = 2,
-            HEAD_SYNC_FEATURE = 3,
-            CHAT_REACTIONS_ENABLED_FEATURE = 4,
-            HDR_FEATURE = 5,
-            BLOOM_FEATURE = 6,
-            AVATAR_OUTLINE_FEATURE = 7,
-            SUN_SHADOWS_FEATURE = 8,
-            SCENE_SHADOWS_FEATURE = 9,
-            SCENE_LIGHTS_FEATURE = 10,
-            FULLSCREEN_FEATURE = 11,
-            PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE = 12,
-            SUN_LENS_FLARE_FEATURE = 13,
-            DOUBLE_TAP_TO_MOVE = 14,
-            MUTE_MIC_IN_BACKGROUND_FEATURE = 15,
-            SPRING_BONE_SIMULATION_FEATURE = 16,
+            ChatSoundsFeature = 0,
+            GraphicsVsyncToggleFeature = 1,
+            HideBlockedUserChatMessagesFeature = 2,
+            HeadSyncFeature = 3,
+            ChatReactionsEnabledFeature = 4,
+            HdrFeature = 5,
+            BloomFeature = 6,
+            AvatarOutlineFeature = 7,
+            SunShadowsFeature = 8,
+            SceneShadowsFeature = 9,
+            SceneLightsFeature = 10,
+            FullscreenFeature = 11,
+            PlayCurrentSceneStreamOnlyFeature = 12,
+            SunLensFlareFeature = 13,
+            DoubleTapToMove = 14,
+            MuteMicInBackgroundFeature = 15,
+            SpringBoneSimulationFeature = 16,
+            LobbyFeature = 17,
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
+        public override async UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
-            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
-            UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            IAppArgs appParameters,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
             {
-                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
-                ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
-                ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
-                ToggleFeatures.CHAT_REACTIONS_ENABLED_FEATURE => CreateChatReactionsController(viewInstance, chatSettingsAsset),
-                ToggleFeatures.HDR_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
-                ToggleFeatures.BLOOM_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
-                ToggleFeatures.AVATAR_OUTLINE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
-                ToggleFeatures.SUN_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
-                ToggleFeatures.SUN_LENS_FLARE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunLensFlare, x => x.SunLensFlare),
-                ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
-                ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
-                ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),
-                ToggleFeatures.PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE => new PlayCurrentSceneStreamSettingsController(viewInstance, videoPrioritizationSettings, qualitySettingsController),
-                ToggleFeatures.DOUBLE_TAP_TO_MOVE => new DoubleTapToMoveSettingsController(viewInstance),
-                ToggleFeatures.MUTE_MIC_IN_BACKGROUND_FEATURE => new MuteMicInBackgroundController(viewInstance),
-                ToggleFeatures.SPRING_BONE_SIMULATION_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
+                ToggleFeatures.GraphicsVsyncToggleFeature => new GraphicsVSyncController(viewInstance, qualitySettingsController),
+                ToggleFeatures.HideBlockedUserChatMessagesFeature => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCache),
+                ToggleFeatures.HeadSyncFeature => new HeadSyncController(viewInstance),
+                ToggleFeatures.ChatReactionsEnabledFeature => CreateChatReactionsController(viewInstance, chatSettingsAsset),
+                ToggleFeatures.HdrFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
+                ToggleFeatures.BloomFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
+                ToggleFeatures.AvatarOutlineFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
+                ToggleFeatures.SunShadowsFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
+                ToggleFeatures.SunLensFlareFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunLensFlare, x => x.SunLensFlare),
+                ToggleFeatures.SceneShadowsFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
+                ToggleFeatures.SceneLightsFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
+                ToggleFeatures.FullscreenFeature => new FullscreenSettingsController(viewInstance),
+                ToggleFeatures.PlayCurrentSceneStreamOnlyFeature => new PlayCurrentSceneStreamSettingsController(viewInstance, videoPrioritizationSettings, qualitySettingsController),
+                ToggleFeatures.DoubleTapToMove => new DoubleTapToMoveSettingsController(viewInstance),
+                ToggleFeatures.MuteMicInBackgroundFeature => new MuteMicInBackgroundController(viewInstance),
+                ToggleFeatures.SpringBoneSimulationFeature => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
+                ToggleFeatures.LobbyFeature => new LobbySettingsController(viewInstance, settingsEventListener),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

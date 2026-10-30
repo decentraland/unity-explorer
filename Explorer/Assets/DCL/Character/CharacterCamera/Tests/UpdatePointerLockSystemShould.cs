@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.ECSComponents;
 using DCL.Input.Component;
@@ -8,7 +9,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     public class UpdatePointerLockSystemShould : UnitySystemTestBase<UpdatePointerLockSystem>
     {

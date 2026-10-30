@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -9,7 +10,6 @@ using DCL.Utilities.Extensions;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.Pool;
 
 namespace DCL.Profiles
@@ -24,17 +24,20 @@ namespace DCL.Profiles
             IReadOnlyList<string> forceRender,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
+            IOwnedNftFilter? ownedNftFilter = null,
             bool incrementVersion = true)
         {
             using PooledObject<HashSet<URN>> pooledHashSet = HashSetPool<URN>.Get(out var uniqueWearables);
             uniqueWearables = uniqueWearables.EnsureNotNull();
             uniqueWearables.Clear();
-            equippedWearables.ToFullWearableUrns(wearableStorage, profile, uniqueWearables);
+            equippedWearables.ToFullWearableUrns(wearableStorage, profile, uniqueWearables, ownedNftFilter);
 
             var uniqueEmotes = new URN[profile.Avatar.Emotes.Count];
             ConvertEquippedEmotesIntoUniqueUrns();
 
-            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
+            // The body shape slot is empty while the identity is being switched (the equipped set is cleared before the profile is), so the profile's own shape stays
+            IWearable? equippedBodyShape = equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE);
+            BodyShape bodyShape = equippedBodyShape != null ? BodyShape.FromStringSafe(equippedBodyShape.GetUrn()) : profile.Avatar.BodyShape;
 
             ProfileBuilder builder = PROFILE_BUILDER.From(profile)
                 .WithBodyShape(bodyShape)
@@ -61,11 +64,15 @@ namespace DCL.Profiles
                     URN uniqueUrn = w.GetUrn();
 
                     if (emoteStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
+                    {
+                        URN? pickedRegistryUrn = PickRegistryUrn(registry, ownedNftFilter);
+                        if (pickedRegistryUrn.HasValue)
+                            uniqueUrn = pickedRegistryUrn.Value;
+                    }
                     else
                     {
                         foreach (URN urn in profile?.Avatar?.Emotes ?? Array.Empty<URN>())
-                            if (urn.Shorten() == uniqueUrn)
+                            if (urn.Shorten() == uniqueUrn && (ownedNftFilter == null || !ownedNftFilter.ShouldExclude(urn)))
                                 uniqueUrn = urn;
                     }
 
@@ -74,7 +81,7 @@ namespace DCL.Profiles
             }
         }
 
-        public static void ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile, ICollection<URN> collection)
+        public static void ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile, ICollection<URN> collection, IOwnedNftFilter? ownedNftFilter = null)
         {
             foreach ((string category, var w) in equippedWearables.Items())
             {
@@ -83,12 +90,18 @@ namespace DCL.Profiles
                 var potentialItemUrn = w.GetUrn();
 
                 if (wearableStorage.TryGetOwnedNftRegistry(potentialItemUrn, out var registry) && registry.Count > 0)
-                    potentialItemUrn = registry.Values.First().Urn;
+                {
+                    URN? picked = PickRegistryUrn(registry, ownedNftFilter);
+                    if (picked.HasValue)
+                        potentialItemUrn = picked.Value;
+                    // Every entry excluded: fall through with the base URN so the catalyst returns a coherent
+                    // "not owned" instead of deploying a known-bad tokenId.
+                }
                 else if (profile?.Avatar?.Wearables != null)
                 {
                     foreach (var profileWearable in profile.Avatar.Wearables)
                     {
-                        if (profileWearable.Shorten() == potentialItemUrn)
+                        if (profileWearable.Shorten() == potentialItemUrn && (ownedNftFilter == null || !ownedNftFilter.ShouldExclude(profileWearable)))
                         {
                             potentialItemUrn = profileWearable;
                             break;
@@ -98,6 +111,17 @@ namespace DCL.Profiles
 
                 collection.Add(potentialItemUrn);
             }
+        }
+
+        private static URN? PickRegistryUrn(IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry, IOwnedNftFilter? ownedNftFilter)
+        {
+            // Any owned instance is equally valid for the deploy; the registry's enumeration order is undefined,
+            // but irrelevant. We only need the first tokenId that isn't gift-pending (a null filter excludes none).
+            foreach (NftBlockchainOperationEntry entry in registry.Values)
+                if (ownedNftFilter == null || !ownedNftFilter.ShouldExclude(entry.Urn))
+                    return entry.Urn;
+
+            return null;
         }
 
         /// <summary>
@@ -116,12 +140,12 @@ namespace DCL.Profiles
         ///     Returns a new list of full "Item URNs" (as strings) for all equipped wearables.
         ///     This is a convenience method that allocates a new list.
         /// </summary>
-        public static List<string> ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile)
+        public static List<string> ToFullWearableUrns(this IEquippedWearables equippedWearables, IWearableStorage wearableStorage, Profile profile, IOwnedNftFilter? ownedNftFilter = null)
         {
             // Use a temporary pooled list internally for efficiency
             using PooledObject<List<URN>> pooledUrns = ListPool<URN>.Get(out var urnList);
             urnList.Clear();
-            equippedWearables.ToFullWearableUrns(wearableStorage, profile, urnList);
+            equippedWearables.ToFullWearableUrns(wearableStorage, profile, urnList, ownedNftFilter);
 
             // Create the final list for the caller
             var result = new List<string>(urnList.Count);

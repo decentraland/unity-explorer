@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using ECS.Unity.AssetLoad;
 using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.AssetLoad.Systems;
 using DCL.PluginSystem.World.Dependencies;
@@ -27,7 +26,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in PersistentEntities persistentEntities,
+            in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {

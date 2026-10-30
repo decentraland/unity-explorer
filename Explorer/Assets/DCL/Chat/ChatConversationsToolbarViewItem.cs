@@ -72,7 +72,7 @@ namespace DCL.Chat
         private float offlineThumbnailGreyOutOpacity = 0.6f;
 
         // This is necessary because the data is set while the script has not awakened yet
-        private OnlineStatus storedConnectionStatus = OnlineStatus.OFFLINE;
+        private OnlineStatus storedConnectionStatus = OnlineStatus.Offline;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -150,10 +150,10 @@ namespace DCL.Chat
         public virtual void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
-            connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
+            connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.Online);
 
             if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
-                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.Online ? offlineThumbnailGreyOutOpacity : 0.0f);
 
             storedConnectionStatus = connectionStatus;
         }

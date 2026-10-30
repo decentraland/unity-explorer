@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Friends
@@ -13,12 +14,29 @@ namespace DCL.Friends
         private const int DEBOUNCE_DELAY_MS = 2000;
 
         private readonly IFriendsEventBus friendEventBus;
-        private readonly Dictionary<string, OnlineStatus> friendsOnlineStatus = new ();
+        private readonly Dictionary<string, TrackedFriend> friendsOnlineStatus = new ();
         private readonly Dictionary<string, FriendStatusDebounceInfo> debounceInfo = new ();
 
         public event Action<Profile.CompactInfo>? OnFriendBecameOnline;
         public event Action<Profile.CompactInfo>? OnFriendBecameAway;
         public event Action<Profile.CompactInfo>? OnFriendBecameOffline;
+
+        /// <summary>
+        ///     Raised with the user id when a friendship ends while the friend was known as online or away: no offline event follows.
+        /// </summary>
+        public event Action<string>? OnFriendRemoved;
+
+        /// <summary>
+        ///     Raised after <see cref="Reset" /> forgot every status: the connectivity snapshot re-arrives as regular events.
+        /// </summary>
+        public event Action? OnReset;
+
+        /// <summary>
+        ///     Raised when the last held-back update runs its course, status changed or not; a replaced or reset one never counts.
+        /// </summary>
+        public event Action? OnPendingChangesSettled;
+
+        public bool HasPendingChanges => debounceInfo.Count > 0;
 
         public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus,
             bool isConnectivityStatusEnabled)
@@ -44,45 +62,82 @@ namespace DCL.Friends
             friendEventBus.OnYouRemovedFriend -= FriendRemoved;
             friendEventBus.OnOtherUserRemovedTheFriendship -= FriendRemoved;
 
-            // Cancel all pending debounce operations
-            foreach (var info in debounceInfo.Values)
-                info.CancellationTokenSource.SafeCancelAndDispose();
+            CancelPendingDebounces();
+        }
 
+        /// <summary>
+        ///     Forgets every cached status and cancels pending debounces, so subsequent updates
+        ///     are evaluated against an empty state and always raise their corresponding event.
+        /// </summary>
+        public void Reset()
+        {
+            friendsOnlineStatus.Clear();
+            CancelPendingDebounces();
+            OnReset?.Invoke();
+        }
+
+        /// <summary>
+        ///     Appends every friend currently known as online or away.
+        /// </summary>
+        public void CopyOnlineFriendsTo(List<Profile.CompactInfo> destination)
+        {
+            foreach (TrackedFriend friend in friendsOnlineStatus.Values)
+                if (friend.Status != OnlineStatus.Offline)
+                    destination.Add(friend.Profile);
+        }
+
+        private void CancelPendingDebounces()
+        {
+            if (debounceInfo.Count == 0) return;
+
+            using PooledObject<List<FriendStatusDebounceInfo>> scope = ListPool<FriendStatusDebounceInfo>.Get(out List<FriendStatusDebounceInfo> pendingDebounces);
+            pendingDebounces.AddRange(debounceInfo.Values);
+
+            // Empty the map before cancelling: cancellation continuations run synchronously and mutate it
             debounceInfo.Clear();
+
+            foreach (FriendStatusDebounceInfo info in pendingDebounces)
+                info.CancellationTokenSource.SafeCancelAndDispose();
         }
 
         private void FriendRemoved(string userid)
         {
+            bool wasOnline = friendsOnlineStatus.TryGetValue(userid, out TrackedFriend friend) && friend.Status != OnlineStatus.Offline;
             friendsOnlineStatus.Remove(userid);
 
             // Cancel any pending debounce for this friend
-            if (debounceInfo.TryGetValue(userid, out var info))
+            if (debounceInfo.TryGetValue(userid, out FriendStatusDebounceInfo info))
             {
                 info.CancellationTokenSource.SafeCancelAndDispose();
                 debounceInfo.Remove(userid);
             }
+
+            if (wasOnline)
+                OnFriendRemoved?.Invoke(userid);
         }
 
         public OnlineStatus GetFriendStatus(string friendAddress) =>
-            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.OFFLINE);
+            friendsOnlineStatus.TryGetValue(friendAddress, out TrackedFriend friend) ? friend.Status : OnlineStatus.Offline;
 
         private bool FriendOnlineStatusChanged(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
         {
-            if (friendsOnlineStatus.TryGetValue(friendProfile.UserId, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
+            string userId = friendProfile.UserId.Value;
+
+            if (friendsOnlineStatus.TryGetValue(userId, out TrackedFriend current) && current.Status == onlineStatus)
                 return false;
 
-            friendsOnlineStatus[friendProfile.UserId] = onlineStatus;
+            friendsOnlineStatus[userId] = new TrackedFriend(friendProfile, onlineStatus);
             return true;
         }
 
         private void FriendBecameOnline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.ONLINE, () => OnFriendBecameOnline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Online, () => OnFriendBecameOnline?.Invoke(friendProfile));
 
         private void FriendBecameAway(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.AWAY, () => OnFriendBecameAway?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Away, () => OnFriendBecameAway?.Invoke(friendProfile));
 
         private void FriendBecameOffline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.OFFLINE, () => OnFriendBecameOffline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Offline, () => OnFriendBecameOffline?.Invoke(friendProfile));
 
         private void DebounceStatusChange(Profile.CompactInfo friendProfile, OnlineStatus newStatus, Action onStatusChange)
         {
@@ -100,9 +155,12 @@ namespace DCL.Friends
 
         private async UniTaskVoid DebounceStatusChangeAsync(FriendStatusDebounceInfo info, Action onStatusChange)
         {
+            var ranItsCourse = false;
+
             try
             {
                 await UniTask.Delay(DEBOUNCE_DELAY_MS, cancellationToken: info.CancellationTokenSource.Token);
+                ranItsCourse = true;
 
                 // Check if this is still the latest status change for this friend
                 if (debounceInfo.TryGetValue(info.Profile.UserId, out FriendStatusDebounceInfo currentInfo)
@@ -119,7 +177,22 @@ namespace DCL.Friends
                 {
                     debounceInfo.Remove(info.Profile.UserId);
                     info.CancellationTokenSource.SafeCancelAndDispose();
+
+                    if (ranItsCourse && debounceInfo.Count == 0)
+                        OnPendingChangesSettled?.Invoke();
                 }
+            }
+        }
+
+        private readonly struct TrackedFriend
+        {
+            public readonly Profile.CompactInfo Profile;
+            public readonly OnlineStatus Status;
+
+            public TrackedFriend(Profile.CompactInfo profile, OnlineStatus status)
+            {
+                Profile = profile;
+                Status = status;
             }
         }
 

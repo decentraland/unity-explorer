@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using LiveKit.Audio;
 using RichTypes;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -54,7 +53,7 @@ namespace DCL.VoiceChat
         {
             if (TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? source))
             {
-                buttonPressStartTime = Time.time;
+                buttonPressStartTime = UnityEngine.Time.time;
                 hasIntentionToDisable = source!.IsRecording; // Disable microphone on release if it was recording
                 EnableMicrophone();
             }
@@ -64,7 +63,7 @@ namespace DCL.VoiceChat
         {
             if (TryGetCurrentMicrophoneSourceIfInCall(out _))
             {
-                float pressDuration = Time.time - buttonPressStartTime;
+                float pressDuration = UnityEngine.Time.time - buttonPressStartTime;
 
                 // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
                 bool shouldDisableByThreshold = pressDuration >= voiceChatConfiguration.HoldThresholdInSeconds;
@@ -144,7 +143,7 @@ namespace DCL.VoiceChat
         private void NotifyMicrophoneStateChange(bool isEnabled)
         {
             if (orchestrator != null &&
-                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
+                orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VoiceChatInCall &&
                 orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value)
             {
                 string localParticipantId = orchestrator.ParticipantsStateService.LocalParticipantId;

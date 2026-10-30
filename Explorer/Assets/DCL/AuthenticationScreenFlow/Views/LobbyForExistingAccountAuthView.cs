@@ -20,12 +20,12 @@ namespace DCL.AuthenticationScreenFlow
         public Button DiffAccountButton { get; private set; } = null!;
 
         [Space]
-        [SerializeField] private Animator animator;
-        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private Animator animator = null!;
+        [SerializeField] private CanvasGroup canvasGroup = null!;
 
         [Space]
-        [SerializeField] private LocalizeStringEvent title;
-        [SerializeField] private GameObject description;
+        [SerializeField] private LocalizeStringEvent title = null!;
+        [SerializeField] private GameObject description = null!;
 
         private StringVariable profileNameLabel => profileNameLabelField ??= (StringVariable)title.StringReference["back_profileName"];
 

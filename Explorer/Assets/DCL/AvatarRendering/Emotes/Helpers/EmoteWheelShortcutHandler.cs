@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 using Utility;
 using InputAction = UnityEngine.InputSystem.InputAction;
 
@@ -34,11 +33,11 @@ namespace DCL.AvatarRendering.Emotes
         {
             switch (source)
             {
-                case EmoteTriggerSource.SHORTCUT:
+                case EmoteTriggerSource.Shortcut:
                     ignoreNextRelease = true;
                     break;
-                case EmoteTriggerSource.WHEEL_SLOT:
-                    lockUntilTime = Time.time + QUICK_EMOTE_LOCK_TIME;
+                case EmoteTriggerSource.WheelSlot:
+                    lockUntilTime = UnityEngine.Time.time + QUICK_EMOTE_LOCK_TIME;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
@@ -53,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (Time.time < lockUntilTime)
+            if (UnityEngine.Time.time < lockUntilTime)
             {
                 lockUntilTime = 0f;
                 return;

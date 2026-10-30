@@ -11,6 +11,7 @@ using Plugins.RustSegment.SegmentServerWrap;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -19,11 +20,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public class AnalyticsContainer : DCLGlobalContainer<AnalyticsContainer.Settings>
     {
-        public bool Enabled => settings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
+        public bool Enabled => settings.AnalyticsConfig.Mode != AnalyticsMode.Disabled;
 
         public IAnalyticsController Controller { get; private set; } = null!;
 
         public EntitiesAnalytics EntitiesAnalytics { get; private set; } = null!;
+
+        /// <summary>Decouples analytics-originated events from their UI subscribers, which are created long after this container.</summary>
+        public IEventBus EventBus { get; } = new EventBus(invokeSubscribersOnMainThread: true);
 
         public static async UniTask<AnalyticsContainer> CreateAsync(
             IAppArgs appArgs,
@@ -48,10 +52,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         launcherTraits,
                         appArgs,
                         realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                        container.EventBus,
                         ct);
 
                     var analyticsController = new AnalyticsController(service, appArgs, container.settings.AnalyticsConfig, launcherTraits, installSource, dclVersion, identityCache?.Identity);
-                    CrashDetector.Initialize(analyticsController);
                     LaunchCounter.Increment();
 
                     container.Controller = analyticsController;
@@ -67,26 +71,26 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return container;
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, IEventBus eventBus, CancellationToken token)
         {
             // Avoid Segment analytics for: Unity Editor or Debug Mode (except when in Local Scene Development mode)
 
             if (!Application.isEditor && (!args.HasDebugFlag() || isLocalSceneDevelopment))
-                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, eventBus, token);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
-                       AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
-                       AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
+                       AnalyticsMode.Segment => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, eventBus, token),
+                       AnalyticsMode.DebugLog => new DebugAnalyticsService(),
+                       AnalyticsMode.Disabled => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
-        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IEventBus eventBus, CancellationToken token)
         {
-            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
+            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration? segmentConfiguration))
+                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey, segmentConfiguration.ApiHost, launcherTraits.LauncherAnonymousId, eventBus)
                    .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured

@@ -79,7 +79,8 @@ namespace DCL.Chat
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IMVCManager mvcManager)
         {
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
@@ -100,7 +101,9 @@ namespace DCL.Chat
                 view.JoinCommunityLiveStreamSubTitleButton,
                 voiceChatOrchestrator,
                 currentChannelService.CurrentChannelProperty,
-                communityDataProvider);
+                communityDataProvider,
+                web3IdentityCache,
+                mvcManager);
 
 
             var titleBarPresenter = new ChatTitlebarPresenter(
@@ -118,7 +121,10 @@ namespace DCL.Chat
                 voiceChatOrchestrator,
                 chatEventBus,
                 chatCommandRegistry.GetUserCallStatusCommand,
-                chatCommandRegistry.ToggleAutoTranslateCommand);
+                chatCommandRegistry.ToggleAutoTranslateCommand,
+                web3IdentityCache,
+                mvcManager,
+                profileCache);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
@@ -139,8 +145,6 @@ namespace DCL.Chat
                 view.EmojiPanelView,
                 emojiContainer.emojiPanelConfiguration,
                 emojiMapping,
-                emojiContainer.emojiSectionViewPrefab,
-                emojiContainer.emojiButtonPrefab,
                 inputBlock);
 
             reactionsConfig.Atlas.Initialize();
@@ -222,7 +226,10 @@ namespace DCL.Chat
                 chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
-                chatCommandRegistry.GetChannelMembersCommand);
+                chatCommandRegistry.GetChannelMembersCommand,
+                mvcManager,
+                web3IdentityCache,
+                chatHistory);
 
             SituationalReactionPresenter? situationalReactionPresenter = null;
             if (isChatReactionsEnabled)
@@ -325,7 +332,7 @@ namespace DCL.Chat
             //We only need to hide the chat if a fullscreen view is shown
             switch (evt.ViewSortingLayer)
             {
-                case CanvasOrdering.SortingLayer.FULLSCREEN:
+                case CanvasOrdering.SortingLayer.Fullscreen:
                     chatStateMachine.SetVisibility(false);
                     break;
             }
@@ -333,7 +340,7 @@ namespace DCL.Chat
 
         private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
-            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.Fullscreen) return;
 
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();

@@ -19,7 +19,9 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
+using ECS.Unity.ExplorerUiEvents;
 using ECS.Unity.Systems;
+using System;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
 using Utility.Multithreading;
@@ -29,12 +31,15 @@ namespace SceneRunner.ECSWorld
     public class ECSWorldFactory : IECSWorldFactory
     {
         private readonly ECSWorldSingletonSharedDependencies singletonDependencies;
+        private readonly SystemsDependencies systemsDependencies;
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
+        private readonly Func<bool> isLoadingScreenOn;
 
         public ECSWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
+            SystemsDependencies systemsDependencies,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData cameraSamplingData,
             IReadOnlyList<IDCLWorldPlugin> plugins
@@ -42,8 +47,10 @@ namespace SceneRunner.ECSWorld
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;
+            this.systemsDependencies = systemsDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
+            isLoadingScreenOn = systemsDependencies.LoadingStatus.IsLoadingScreenOn;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
@@ -73,12 +80,13 @@ namespace SceneRunner.ECSWorld
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
 
             foreach (IDCLWorldPlugin worldPlugin in plugins)
-                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
+                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in systemsDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
-            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, isLoadingScreenOn);
+            WriteExplorerUiEventsSystem.InjectToWorld(ref builder, sharedDependencies.ExplorerUiEvents, sharedDependencies.EcsToCRDTWriter);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             ResetRaycastResultSystem.InjectToWorld(ref builder);

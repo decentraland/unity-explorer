@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -12,14 +13,13 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents <see cref="NearbyAudioBindingSystem"/> contract:
@@ -55,7 +55,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             sourceFactory = new FakeNearbyAudioSourceFactory();
 
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
@@ -110,7 +110,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void AvatarWithoutAvatarBaseIsSkipped()
         {
             const string WALLET = "wallet-alice";
-            Entity avatarEntity = world.Create(new Profile(WALLET, WALLET, new Avatar()));
+            Entity avatarEntity = world.Create(new Profile(UserId.New(WALLET).Unwrap(), WALLET, new Avatar()));
             world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { "sid-1" }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.SeedActiveStream(WALLET, "sid-1");
@@ -196,7 +196,7 @@ namespace DCL.VoiceChat.Nearby.Tests
                 registry.SeedActiveStream(wallet, "sid-1");
             }
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             system.Update(0);
 
@@ -230,12 +230,12 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             CreateStreamingAvatar(WALLET, SID);
             registry.SeedActiveStream(WALLET, SID);
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(0), "suppressed tick must not allocate");
 
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(1), "resume must re-bind from the unchanged component snapshot");
@@ -369,7 +369,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Replace registry with the mock for the lifetime of this test.
             var localBindings = new HashSet<StreamKey>();
-            using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {
@@ -417,7 +417,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         // After B2.1 the binding query is gated by StreamingAudioComponent + InAudibleRangeTag;

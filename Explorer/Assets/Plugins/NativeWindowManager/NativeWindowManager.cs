@@ -104,9 +104,13 @@ namespace Plugins.NativeWindowManager
             else
                 fullscreen = Screen.fullScreenMode != FullScreenMode.Windowed;
 
-            // --resolution takes priority over the saved pref.
-            Vector2Int targetResolution = resolutionOverride
-                                          ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+            Vector2Int targetResolution;
+            if (resolutionOverride.HasValue)
+                targetResolution = resolutionOverride.Value;
+            else if (fullscreen)
+                targetResolution = DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+            else
+                targetResolution = DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_WINDOWED_RESOLUTION, ResolutionUtils.GetDefaultResolution());
 
             FullScreenMode targetMode = ResolveFullScreenMode(fullscreen, resolutionOverride.HasValue);
 
@@ -120,6 +124,7 @@ namespace Plugins.NativeWindowManager
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
+            resolutionListener.ResolutionChanged += OnResolutionChanged;
         }
 
         private static FullScreenMode ResolveFullScreenMode(bool fullscreen, bool hasResolutionOverride)
@@ -192,7 +197,8 @@ namespace Plugins.NativeWindowManager
             }
             else
             {
-                Screen.fullScreenMode = FullScreenMode.Windowed;
+                Vector2Int windowed = DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_WINDOWED_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+                Screen.SetResolution(windowed.x, windowed.y, FullScreenMode.Windowed);
                 ApplyConstraints(true);
             }
 
@@ -200,6 +206,13 @@ namespace Plugins.NativeWindowManager
 
             if (store)
                 DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, enabled);
+        }
+
+        private static void OnResolutionChanged(Vector2Int resolution)
+        {
+            // Skip temporary-window requests so their transient size doesn't overwrite the user's real windowed pref.
+            if (requestCounter == 0 && Screen.fullScreenMode == FullScreenMode.Windowed)
+                DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.PS_WINDOWED_RESOLUTION, resolution);
         }
 
         private static void ApplyConstraints(bool enabled)

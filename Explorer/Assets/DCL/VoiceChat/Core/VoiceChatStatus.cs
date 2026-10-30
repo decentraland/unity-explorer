@@ -3,42 +3,42 @@ namespace DCL.VoiceChat
     public enum VoiceChatStatus
     {
         //Default status when no voice chat is started
-        DISCONNECTED,
+        Disconnected,
 
         //Remote state when backend detects an incoming call
-        VOICE_CHAT_RECEIVED_CALL,
+        VoiceChatReceivedCall,
 
         //Local state when user starts a call
-        VOICE_CHAT_STARTING_CALL,
+        VoiceChatStartingCall,
 
         //Remote state when backend confirms a voice chat started
-        VOICE_CHAT_STARTED_CALL,
+        VoiceChatStartedCall,
 
         //Remote state when backend confirms a voice chat is in progress
-        VOICE_CHAT_IN_CALL,
+        VoiceChatInCall,
 
         //Local state when user ends a call
-        VOICE_CHAT_ENDING_CALL,
+        VoiceChatEndingCall,
 
         //Local state when user rejects a call
-        VOICE_CHAT_REJECTING_CALL,
+        VoiceChatRejectingCall,
 
         //Remote status when user is busy
-        VOICE_CHAT_BUSY,
+        VoiceChatBusy,
 
         //Generic error for unhandled exceptions
-        VOICE_CHAT_GENERIC_ERROR,
+        VoiceChatGenericError,
     }
 
     public static class VoiceChatStatusExtensionMethods
     {
         public static bool IsNotConnected(this VoiceChatStatus status) =>
             status is
-                VoiceChatStatus.DISCONNECTED or
-                VoiceChatStatus.VOICE_CHAT_BUSY or
-                VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR;
+                VoiceChatStatus.Disconnected or
+                VoiceChatStatus.VoiceChatBusy or
+                VoiceChatStatus.VoiceChatGenericError;
 
         public static bool IsInCall(this VoiceChatStatus status) =>
-            status is VoiceChatStatus.VOICE_CHAT_IN_CALL;
+            status is VoiceChatStatus.VoiceChatInCall;
     }
 }

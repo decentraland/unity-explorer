@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Movement;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
@@ -16,7 +17,7 @@ using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the contract of <see cref="NearbyAudibleRangeSystem"/>: the avatar-level
@@ -38,7 +39,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Camera camera = null!;
         private VoiceChatConfiguration configuration = null!;
         private NearbyListenerState listenerState = null!;
-        private ObjectPool<SimplePriorityQueue<NetworkMovementMessage>> movementQueuePool = null!;
+        private ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> movementQueuePool = null!;
 
         [SetUp]
         public void SetUp()
@@ -57,8 +58,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             listenerState = new NearbyListenerState();
 
-            movementQueuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            movementQueuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 
@@ -356,7 +357,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             var remoteMovement = new RemotePlayerMovementComponent(movementQueuePool) { Initialized = initialized };
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase, remoteMovement);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase, remoteMovement);
         }
 
         private void MoveAvatar(Entity entity, float distance)

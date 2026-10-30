@@ -33,11 +33,11 @@ namespace DCL.AvatarRendering.Emotes
             AudioSource audioSource = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
             EmoteMaskCatalog emoteMaskCatalog = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteMaskCatalog, ct)).Value;
 
-            bool legacyAnimationsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT)
-                                           || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
+            bool legacyAnimationsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment)
+                                           || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
 
 
-            bool forceBackfaceCulling = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+            bool forceBackfaceCulling = FeaturesRegistry.Instance.IsEnabled(FeatureId.ForceBackfaceCulling);
 
             EmotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, legacyAnimationsEnabled, forceBackfaceCulling);
         }

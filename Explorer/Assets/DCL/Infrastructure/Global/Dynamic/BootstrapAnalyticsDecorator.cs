@@ -15,7 +15,6 @@ using Global.Versioning;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Debugging;
 using System;
-using System.Text.Json.Nodes;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
@@ -51,7 +50,7 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             RealmData realmData,
             Entity playerEntity,
@@ -61,7 +60,7 @@ namespace Global.Dynamic
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, realmData, playerEntity, memoryCap, appArgs, ct);
+                bootstrapContainer, pluginSettingsContainer, debugContainerBuilder, realmData, playerEntity, memoryCap, appArgs, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -74,7 +73,7 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer pluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
@@ -84,7 +83,7 @@ namespace Global.Dynamic
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
-                await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
+                await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, pluginSettingsContainer,
                     settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JObject
@@ -96,9 +95,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, ct);
+            await core.InitializeFeatureFlagsAsync(decentralandUrlsSource, ct);
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
@@ -129,9 +128,9 @@ namespace Global.Dynamic
         public void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity) =>
             core.InitializePlayerEntity(staticContainer, playerEntity);
 
-        public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController, CancellationToken ct)
+        public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController, CancellationToken ct)
         {
-            bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, analytics, ct);
+            bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, pluginSettingsContainer, analytics, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
@@ -168,9 +167,9 @@ namespace Global.Dynamic
             });
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache)
         {
-            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
+            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache, identityCache);
 
             //No analytics to track on this step
         }

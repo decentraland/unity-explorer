@@ -145,7 +145,7 @@ namespace DCL.InWorldCamera.Systems
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Free;
 
-            SwitchCameraInput(to: Kind.PLAYER);
+            SwitchCameraInput(to: Kind.Player);
 
             World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
 
@@ -177,7 +177,7 @@ namespace DCL.InWorldCamera.Systems
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Locked;
 
-            SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
+            SwitchCameraInput(to: Kind.InWorldCamera);
 
             World.Add(camera,
                 new InWorldCameraComponent(),
@@ -244,14 +244,14 @@ namespace DCL.InWorldCamera.Systems
 
             switch (to)
             {
-                case Kind.IN_WORLD_CAMERA:
-                    inputMapComponent.BlockInput(Kind.PLAYER);
-                    inputMapComponent.BlockInput(Kind.SHORTCUTS);
+                case Kind.InWorldCamera:
+                    inputMapComponent.BlockInput(Kind.Player);
+                    inputMapComponent.BlockInput(Kind.Shortcuts);
                     break;
-                case Kind.PLAYER:
+                case Kind.Player:
                     DCLInput.Instance.Shortcuts.CameraReel.Disable();
-                    inputMapComponent.UnblockInput(Kind.PLAYER);
-                    inputMapComponent.UnblockInput(Kind.SHORTCUTS);
+                    inputMapComponent.UnblockInput(Kind.Player);
+                    inputMapComponent.UnblockInput(Kind.Shortcuts);
                     break;
             }
         }

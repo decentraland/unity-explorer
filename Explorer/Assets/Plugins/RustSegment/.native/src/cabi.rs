@@ -3,10 +3,12 @@ use std::ffi::c_char;
 use crate::{
     operations::{as_str, user_from},
     server::SegmentServer,
-    FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, INVALID_OPERATION_HANDLE_ID,
-    SEGMENT_SERVER,
+    FfiCallbackFn, FfiCallbacks, FfiErrorCallbackFn, OperationHandleId, QueueHealthCode,
+    INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
 };
 
+/// Returns how the queue keeps the events of the session; `QueueHealthCode::NotInitialized` when this call did not start the server.
+///
 /// # Safety
 ///
 /// The foreign language must only provide valid pointers
@@ -15,9 +17,10 @@ pub unsafe extern "C" fn segment_server_initialize(
     queue_file_path: *const c_char,
     queue_count_limit: u32,
     segment_write_key: *const c_char,
+    segment_api_host: *const c_char,
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
-) -> bool {
+) -> QueueHealthCode {
     std::panic::set_hook(Box::new(|info| {
         eprintln!("PANIC: {info}");
         eprintln!("{:?}", std::backtrace::Backtrace::force_capture());
@@ -27,13 +30,17 @@ pub unsafe extern "C" fn segment_server_initialize(
         // SAFETY: caller must guarantee valid pointers
         let queue_file_path = as_str(queue_file_path).to_string();
         let write_key = as_str(segment_write_key).to_string();
+        let api_host = as_str(segment_api_host).to_string();
 
         SEGMENT_SERVER.initialize(
             queue_file_path,
             queue_count_limit,
             write_key,
-            callback_fn,
-            error_fn,
+            api_host,
+            FfiCallbacks {
+                callback_fn,
+                error_fn,
+            },
         )
     })
     .unwrap_or_else(|err| {
@@ -56,7 +63,7 @@ pub unsafe extern "C" fn segment_server_initialize(
             unsafe { cb(msg.as_ptr()) };
         }
 
-        false
+        QueueHealthCode::NotInitialized
     })
 }
 
@@ -164,6 +171,7 @@ pub extern "C" fn segment_server_pump_next_event() -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn segment_server_dispose() -> bool {
-    SEGMENT_SERVER.dispose()
+pub extern "C" fn segment_server_dispose() -> u32 {
+    // 1 - disposed, 0 - was not running
+    u32::from(SEGMENT_SERVER.dispose())
 }

@@ -1,5 +1,4 @@
 ﻿using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.UnityBridge;
 using NUnit.Framework;
 using System;
 

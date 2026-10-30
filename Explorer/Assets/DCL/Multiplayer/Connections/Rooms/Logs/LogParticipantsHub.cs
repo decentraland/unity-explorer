@@ -1,6 +1,5 @@
 using DCL.Diagnostics;
 using LiveKit.Rooms.Participants;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs

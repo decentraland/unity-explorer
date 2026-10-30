@@ -15,11 +15,11 @@ namespace DCL.AssetsProvision.CodeResolver
         {
             providers = new Dictionary<AssetSource, WebJsCodeProvider>
             {
-                { AssetSource.WEB, new WebJsCodeProvider(webRequestController) },
+                { AssetSource.Web, new WebJsCodeProvider(webRequestController) },
             };
         }
 
         public UniTask<string> GetCodeContent(URLAddress contentUrl, CancellationToken ct) =>
-            providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
+            providers[AssetSource.Web].GetJsCodeAsync(contentUrl, ct);
     }
 }

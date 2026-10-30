@@ -3,17 +3,14 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using JetBrains.Annotations;
-using DCL.LiveKit.Public;
 using LiveKit.Rooms.Participants;
 using Newtonsoft.Json;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules.Players
@@ -37,7 +34,7 @@ namespace SceneRuntime.Apis.Modules.Players
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
                 Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), disposeCts.Token,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                    batchBehaviour: IProfileRepository.FetchBehaviour.DelayUntilResolved);
                 return new PlayersGetUserDataResponse(profile, walletId);
             }
 

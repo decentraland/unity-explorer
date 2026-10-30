@@ -24,18 +24,18 @@ namespace DCL.CharacterMotion.Animation
 
         private static readonly Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType> AUDIO_CLIP_LOOKUP = new()
         {
-            { (MovementKind.RUN, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
-            { (MovementKind.RUN, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },
-            { (MovementKind.RUN, AvatarAnimationEventType.Step), AvatarAudioClipType.StepRun },
-            { (MovementKind.JOG, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartJog },
-            { (MovementKind.JOG, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandJog },
-            { (MovementKind.JOG, AvatarAnimationEventType.Step), AvatarAudioClipType.StepJog },
-            { (MovementKind.WALK, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
-            { (MovementKind.WALK, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
-            { (MovementKind.WALK, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
-            { (MovementKind.IDLE, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
-            { (MovementKind.IDLE, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
-            { (MovementKind.IDLE, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
+            { (MovementKind.Run, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
+            { (MovementKind.Run, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },
+            { (MovementKind.Run, AvatarAnimationEventType.Step), AvatarAudioClipType.StepRun },
+            { (MovementKind.Jog, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartJog },
+            { (MovementKind.Jog, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandJog },
+            { (MovementKind.Jog, AvatarAnimationEventType.Step), AvatarAudioClipType.StepJog },
+            { (MovementKind.Walk, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
+            { (MovementKind.Walk, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
+            { (MovementKind.Walk, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
+            { (MovementKind.Idle, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
+            { (MovementKind.Idle, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
+            { (MovementKind.Idle, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
             { (ANY_KIND, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
         };
 

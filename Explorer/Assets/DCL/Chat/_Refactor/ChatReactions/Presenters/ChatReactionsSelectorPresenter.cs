@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -69,15 +68,17 @@ namespace DCL.Chat.ChatReactions.Presenters
             view.Show();
         }
 
-        public void Hide() => 
+        public void Hide() =>
             view.Hide();
 
-        /// <summary>
-        /// Records that the user sent this emoji without refreshing the bar.
-        /// The bar updates next time <see cref="Show"/> is called.
-        /// </summary>
-        public void RecordUsage(int atlasIndex) => 
+        public void RecordUsage(int atlasIndex)
+        {
             recentsService.RecordUsage(atlasIndex);
+
+            // Skip the refresh if hidden as it will run in Show()
+            if (IsVisible)
+                RefreshRecents();
+        }
 
         public void Dispose()
         {

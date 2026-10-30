@@ -1,4 +1,3 @@
-using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
 using System;
 using TMPro;

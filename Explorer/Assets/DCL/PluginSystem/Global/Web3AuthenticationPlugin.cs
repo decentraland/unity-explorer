@@ -3,10 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
+using DCL.Donations;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -31,8 +31,8 @@ namespace DCL.PluginSystem.Global
         private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly SelfProfile selfProfile;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -43,22 +43,22 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IAppArgs appArgs;
-        private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IProfileRepository profileRepository;
+        private readonly IDonationsService donationsService;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
-        private Web3ConfirmationPopupView? transactionConfirmationView;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
             ICompositeWeb3Provider web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            SelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -69,10 +69,11 @@ namespace DCL.PluginSystem.Global
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
             IAppArgs appArgs,
-            IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus
+            ProfileChangesBus profileChangesBus,
+            IProfileRepository profileRepository,
+            IDonationsService donationsService
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -91,10 +92,11 @@ namespace DCL.PluginSystem.Global
             this.backgroundMusic = backgroundMusic;
             this.world = world;
             this.appArgs = appArgs;
-            this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.profileRepository = profileRepository;
+            this.donationsService = donationsService;
         }
 
         public void Dispose() { }
@@ -102,7 +104,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+            ControllerBase<AuthenticationScreenView, AuthenticationScreenController.Params>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
 
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory,
                 web3Authenticator,
@@ -118,10 +122,11 @@ namespace DCL.PluginSystem.Global
                 settings.EmotesSettings,
                 inputBlock,
                 backgroundMusic,
-                wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource,
-                profileChangesBus);
+                profileChangesBus,
+                mvcManager,
+                referrer);
 
             mvcManager.RegisterController(authenticationScreenController);
 
@@ -131,10 +136,12 @@ namespace DCL.PluginSystem.Global
 
         private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
         {
-            transactionConfirmationView = Object.Instantiate(popupPrefab);
-            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 500));
-            transactionConfirmationView.gameObject.SetActive(false);
-            web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
+            Web3ConfirmationPopupView view = Object.Instantiate(popupPrefab);
+            view.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            view.gameObject.SetActive(false);
+
+            var controller = new Web3ConfirmationPopupController(view, profileRepository, donationsService, storedIdentityProvider);
+            web3Authenticator.SetTransactionConfirmationCallback(controller.ShowForResultAsync);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

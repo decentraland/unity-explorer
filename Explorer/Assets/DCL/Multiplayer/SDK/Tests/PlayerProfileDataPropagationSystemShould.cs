@@ -10,8 +10,6 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -76,14 +74,14 @@ namespace DCL.Multiplayer.SDK.Tests
 
             characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(world, entity, scene);
 
-            Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out SDKProfile sceneEntityProfile));
+            Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out SDKProfile? sceneEntityProfile));
             Assert.That(sceneWorld.Has<Profile>(scenePlayerEntity), Is.False);
             Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out PlayerSceneCRDTEntity playerSceneCRDTEntity));
             Assert.That(playerSceneCRDTEntity.CRDTEntity.Id, Is.EqualTo(SpecialEntitiesID.PLAYER_ENTITY));
 
-            Assert.That(sceneEntityProfile.IsDirty, Is.True);
+            Assert.That(sceneEntityProfile!.IsDirty, Is.True);
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
-            Assert.AreEqual(profile.UserId, sceneEntityProfile.UserId);
+            Assert.AreEqual(profile.UserId.Value, sceneEntityProfile.UserId);
             AssertAvatarIsEqual(profile.Avatar, sceneEntityProfile.Avatar);
         }
 
@@ -98,11 +96,11 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKProfile sceneEntityProfile));
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKProfile? sceneEntityProfile));
             Assert.That(sceneWorld.Has<Profile>(playerCRDTEntity.SceneWorldEntity), Is.False);
 
-            Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
-            Assert.AreEqual(profile.UserId, sceneEntityProfile.UserId);
+            Assert.AreEqual(profile.Name, sceneEntityProfile!.Name);
+            Assert.AreEqual(profile.UserId.Value, sceneEntityProfile.UserId);
             AssertAvatarIsEqual(profile.Avatar, sceneEntityProfile.Avatar);
 
             playerCRDTEntity.IsDirty = false;
@@ -113,8 +111,8 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEntityProfile));
-            Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
-            Assert.AreEqual(profile.UserId, sceneEntityProfile.UserId);
+            Assert.AreEqual(profile.Name, sceneEntityProfile!.Name);
+            Assert.AreEqual(profile.UserId.Value, sceneEntityProfile.UserId);
             AssertAvatarIsEqual(profile.Avatar, sceneEntityProfile.Avatar);
         }
 

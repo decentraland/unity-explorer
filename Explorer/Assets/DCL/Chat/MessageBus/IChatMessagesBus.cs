@@ -29,14 +29,14 @@ namespace DCL.Chat.MessageBus
             messagesBus.Send(channel, message, origin, timestamp);
         }
 
-        public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
+        public static IChatMessagesBus WithSelfResend(this LiveKitChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
             new SelfResendChatMessageBus(messagesBus, web3IdentityCache, messageFactory);
 
         public static IChatMessagesBus WithDebugPanel(this IChatMessagesBus messagesBus, IDebugContainerBuilder debugContainerBuilder)
         {
             void CreateTestChatEntry()
             {
-                messagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL);
+                messagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DebugPanel);
             }
 
             debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CHAT)?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);

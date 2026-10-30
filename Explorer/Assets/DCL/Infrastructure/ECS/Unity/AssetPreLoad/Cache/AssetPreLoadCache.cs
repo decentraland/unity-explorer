@@ -1,6 +1,7 @@
 using DCL.SDKComponents.MediaStream;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
@@ -10,13 +11,55 @@ namespace ECS.Unity.AssetLoad.Cache
 {
     public class AssetPreLoadCache : IDisposable
     {
+        /// <summary>
+        ///     The never-handed-out template. Clones handed out by <see cref="TryGetGltfInstance" /> are owned
+        ///     by their containers; this cache must never dispose them.
+        /// </summary>
+        private sealed class GltfTemplate
+        {
+            public readonly GltfContainerAsset Template;
+            public readonly string Hash;
+
+            public GltfTemplate(GltfContainerAsset template, string hash)
+            {
+                Template = template;
+                Hash = hash;
+            }
+        }
+
         private readonly IGltfContainerAssetsCache gltfCache;
         private readonly Dictionary<string, object> cache = new ();
+        private readonly Dictionary<string, VideoTemplateData> videoCache = new ();
 
         public AssetPreLoadCache(IGltfContainerAssetsCache gltfCache)
         {
             this.gltfCache = gltfCache;
         }
+
+        public bool TryAddGltf(string key, string hash, GltfContainerAsset template) =>
+            cache.TryAdd(key, new GltfTemplate (template, hash));
+
+        public bool ContainsGltf(string key) =>
+            cache.TryGetValue(key, out object? value) && value is GltfTemplate;
+
+        public bool TryGetGltfInstance(string key, out GltfContainerAsset? instance)
+        {
+            if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate
+                && Utils.TryDuplicateGltfAssetFromTemplate(gltfTemplate.Template, gltfTemplate.Hash, out GltfContainerAsset? duplicate))
+            {
+                instance = duplicate;
+                return true;
+            }
+
+            instance = null;
+            return false;
+        }
+
+        public bool TryAddVideo(string key, in VideoTemplateData data) =>
+            videoCache.TryAdd(key, data);
+
+        public bool TryGetVideoTemplate(string key, out VideoTemplateData data) =>
+            videoCache.TryGetValue(key, out data);
 
         public bool TryAdd<T>(string key, T asset)
         {
@@ -25,7 +68,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 switch (asset)
                 {
                     // AudioClipData and TextureData are reference counted, so we need to acquire a reference when adding them to the cache so that they are not disposed while cached and not being used.
-                    // GltfContainerAsset and MediaPlayerComponent are handled differently as they are not ref counted
+                    // GltfContainerAsset is handled differently as it is not ref counted
                     case AudioClipData audioClipData:
                         audioClipData.AcquireRef();
                         break;
@@ -52,18 +95,17 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public void Dispose()
-        {
-            cache.Clear();
-        }
+        public void Dispose() =>
+            Clear();
 
         public void Clear()
         {
             foreach(var kvp in cache)
                 switch (kvp.Value)
                 {
-                    case GltfContainerAsset gltfAsset:
-                        gltfCache.Dereference(kvp.Key, gltfAsset, handleAssetLoad: false);
+                    // Checked-out clones are owned by their containers; disposing them here would destroy live Roots.
+                    case GltfTemplate gltfTemplate:
+                        gltfCache.Dereference(kvp.Key, gltfTemplate.Template, handleAssetLoad: false);
                         break;
                     case AudioClipData audioClipData:
                         audioClipData.Dereference();
@@ -71,12 +113,10 @@ namespace ECS.Unity.AssetLoad.Cache
                     case TextureData textureData:
                         textureData.Dereference();
                         break;
-                    case MediaPlayerComponent mediaPlayerComponent:
-                        mediaPlayerComponent.Dispose();
-                        break;
                 }
 
             cache.Clear();
+            videoCache.Clear();
         }
     }
 }

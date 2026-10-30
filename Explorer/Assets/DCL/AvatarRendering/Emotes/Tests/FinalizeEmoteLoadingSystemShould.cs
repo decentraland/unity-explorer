@@ -1,5 +1,4 @@
 using Arch.Core;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -29,7 +28,6 @@ using UnityEngine.TestTools;
 // Define Promise types as aliases for clarity, similar to the system file
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>; // Corrected alias
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -270,7 +268,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
 
             // Mocking promise result
-            var assetBundleData = new AssetBundleData(null, null, new []{mockGameObject}, null, null);
+            var assetBundleData = new AssetBundleData(null, new []{mockGameObject}, null, null);
             var promiseResult = new StreamableLoadingResult<AssetBundleData>(assetBundleData);
             world.Add(promise.Entity, promiseResult);
 
@@ -303,7 +301,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, loadingBodyShape, out AssetBundlePromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            var assetBundleData = new AssetBundleData(null, null, new []{mockGameObject}, null, null);
+            var assetBundleData = new AssetBundleData(null, new []{mockGameObject}, null, null);
             world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(assetBundleData));
 
             system.Update(0);

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
@@ -46,7 +46,7 @@ namespace DCL.Gizmos.Plugin
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             DrawSceneGizmosHubSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, SCENE_GIZMOS_PROVIDERS_POOL);
         }

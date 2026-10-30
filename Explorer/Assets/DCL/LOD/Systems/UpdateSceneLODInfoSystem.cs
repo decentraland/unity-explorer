@@ -1,11 +1,12 @@
-﻿using Arch.Core;
+using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
-using DCL.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -30,12 +31,17 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
+        // Production LODs have always been cached under this pseudo build date; an abgen LOD source gets its own key.
+        private const string REGULAR_LOD_CACHE_KEY = "dummyDate";
+
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly IDecentralandUrlsSource? decentralandUrlsSource;
         private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
 
-        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset, IDecentralandUrlsSource? decentralandUrlsSource = null) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void Update(float t)
@@ -45,7 +51,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, ref SceneLoadingState sceneState)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
@@ -62,38 +68,44 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
-                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, issDescriptor, lodForAcquisition);
             }
         }
 
-        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, byte level)
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
-                           && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
+            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.Failed)
             {
-                var initialSceneState = GetAssetBundleIntention.FromHash(
-                    GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
-                    typeof(GameObject),
-                    permittedSources: AssetSource.WEB,
-                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
-                    parentEntityID: sceneDefinitionComponent.Definition.id
-                );
-                sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
-                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
-                sceneLODInfo.CurrentLODLevelPromise = level;
-                return;
+                // ResolveSceneStateByIncreasingRadiusSystem gates SHOWING_LOD/SHOWING_SCENE transitions on
+                // descriptor resolution, so by the time we reach this point the descriptor is guaranteed to
+                // be either None (no ISS for this scene) or a resolved Bundle/Descriptor.
+                if (issDescriptor.SupportsDescriptor())
+                {
+                    sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Processing;
+                    sceneLODInfo.CurrentLODLevelPromise = level;
+                    return;
+                }
+                // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
+            // LOD files are named by scene id only, so the Unity asset-bundle cache key must carry the LOD source.
+            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", decentralandUrlsSource?.AbgenLodsCacheKey ?? REGULAR_LOD_CACHE_KEY);
+
+            // The manifest's digest-bearing name when it has one: immutable, so its cache entry survives a regeneration.
+            AssetBundleManifestVersion sceneManifest = sceneDefinitionComponent.Definition.AssetBundleManifestVersionOrFailed;
+
+            string bundleName = sceneManifest.TryGetLodBundleFile(level, out string digestNamed)
+                ? digestNamed
+                : $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}";
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
-                platformLODKey,
+                lodManifest.GetCdnRequestHash(bundleName),
+                lodManifest,
                 typeof(GameObject),
-                permittedSources: AssetSource.ALL,
+                permittedSources: AssetSource.All,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate"),
                 lookForDependencies: true
                 );
 

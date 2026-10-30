@@ -10,6 +10,10 @@ When interacting with GitHub via `gh`, **always** use this project's templates. 
 
 ## Creating Pull Requests
 
+### PR title convention (enforced by CI)
+
+The `Validate PR Title / semantic` check **blocks merge** unless the title follows `type: description` (Conventional Commits) using an allowed type. The allowed types are defined by the `decentraland/action-semantic-pull-request` action invoked from `.github/workflows/validate-pr-title.yml` — **do not hardcode or memorize the list**, as it can change there. If unsure whether a type is valid, read the action's `types:` input (the check log also prints "Available types"). Keep the commit subject in sync with the PR title (the title becomes the squash-merge subject).
+
 Read `.github/PULL_REQUEST_TEMPLATE.md` before creating any PR. The PR body **must** follow that template's structure:
 
 1. **What does this PR change?** — Describe the problem and solution, link issues with `#123`, include perf comparisons or test scenes if applicable.

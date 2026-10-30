@@ -6,11 +6,11 @@ using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
@@ -31,19 +31,22 @@ namespace DCL.Chat.ChatReactions.Core
             public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
+            public readonly IReactionStreamControl StreamControl;
 
             internal Result(
                 SituationalReactionFacade facade,
                 ISituationalReactionSimulation simulation,
                 ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
-                SituationalReactionDebugController debugController)
+                SituationalReactionDebugController debugController,
+                IReactionStreamControl streamControl)
             {
                 Facade = facade;
                 Simulation = simulation;
                 MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
+                StreamControl = streamControl;
             }
         }
 
@@ -63,7 +66,9 @@ namespace DCL.Chat.ChatReactions.Core
             IReactionMessageBus reactionBus = CreateReactionBus(messagePipesHub,
                 userBlockingCache,
                 web3IdentityCache,
-                environment);
+                environment,
+                reactionsConfig,
+                reactionsConfig.SafeTotalTiles);
             
             var messageReactionService = new ChatMessageReactionService(reactionBus,
                 chatHistory,
@@ -93,10 +98,10 @@ namespace DCL.Chat.ChatReactions.Core
                 remoteTarget, worldReactor, situationalReactionFacade,
                 streamEmitter);
 
-            simulationLoop.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
+            simulationLoop.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.None;
             simulationLoop.UIReactionsEnabled = chatSettingsAsset.chatReactionsEnabled;
 
-            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler = visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
+            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler = visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.None;
             chatSettingsAsset.BubblesVisibilityChanged += bubblesHandler;
 
             ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler = enabled => simulationLoop.UIReactionsEnabled = enabled;
@@ -139,27 +144,42 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController);
+            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(
             IMessagePipesHub messagePipesHub,
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache web3IdentityCache,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            ChatReactionsConfig reactionsConfig,
+            int maxValidEmojiIndex)
         {
+            // Gated here rather than only in the UI: subscribing the pipes would let any
+            // co-located peer drive reaction decoding and retention on a client that cannot
+            // show reactions at all.
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+            {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Chat reactions disabled — using NullReactionMessageBus (no pipes subscribed)");
+                return new NullReactionMessageBus();
+            }
+
             string serverEnv = environment switch
             {
                 DecentralandEnvironment.Org => "prd",
-                DecentralandEnvironment.Today => "prd",
                 DecentralandEnvironment.Zone => "dev",
+
+                // A --base-domain deployment is treated as a non-production stack, like zone: its
+                // comms-message-sfu has to join as message-router-dev-0 for relayed reactions to
+                // authenticate. Explicit, so it is not silently routed as a local dev server.
+                DecentralandEnvironment.Custom => "dev",
                 _ => "local",
             };
 
             string routingUser = $"message-router-{serverEnv}-0";
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (routingUser={routingUser})");
-            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser);
+            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser, reactionsConfig, maxValidEmojiIndex);
         }
 
         private sealed class SettingsUnsubscriber : IDisposable

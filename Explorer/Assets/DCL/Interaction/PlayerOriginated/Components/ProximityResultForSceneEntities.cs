@@ -1,8 +1,5 @@
 using DCL.Interaction.Utility;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
 
 namespace DCL.Interaction.PlayerOriginated.Components
 {

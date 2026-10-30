@@ -29,6 +29,7 @@ namespace DCL.DebugUtilities
                     allowedCategories = new HashSet<string>
                     {
                         IDebugContainerBuilder.Categories.CURRENT_SCENE,
+                        IDebugContainerBuilder.Categories.SCENE_CONTENT,
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.MEMORY_LIMITS,
@@ -40,6 +41,7 @@ namespace DCL.DebugUtilities
                     allowedCategories = new HashSet<string>
                     {
                         IDebugContainerBuilder.Categories.CURRENT_SCENE,
+                        IDebugContainerBuilder.Categories.SCENE_CONTENT,
                         IDebugContainerBuilder.Categories.ROOM_INFO,
                         IDebugContainerBuilder.Categories.ROOM_SCENE,
                         IDebugContainerBuilder.Categories.ROOM_THROUGHPUT,
@@ -47,6 +49,7 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.REALM,
+                        IDebugContainerBuilder.Categories.PULSE,
                         IDebugContainerBuilder.Categories.ENTITY_REQUESTS,
                         IDebugContainerBuilder.Categories.ANALYTICS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,

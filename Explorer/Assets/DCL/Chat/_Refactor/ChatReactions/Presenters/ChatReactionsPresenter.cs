@@ -1,5 +1,4 @@
 using System;
-using DCL.Chat;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
@@ -275,6 +274,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         public void Hide()
         {
             HideBar();
+            buttonPresenter.Hide();
         }
 
         private void SyncShowOthersToggle()

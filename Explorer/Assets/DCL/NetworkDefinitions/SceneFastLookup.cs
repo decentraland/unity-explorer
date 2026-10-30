@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
-    public struct SceneFastLookup
+    public readonly struct SceneFastLookup
     {
         private readonly bool[,] grid;
         private readonly int width, height;
@@ -25,7 +26,7 @@ namespace DCL.Ipfs
 
             grid = new bool[width, height];
 
-            foreach (Vector2Int v in vectorList) { grid[v.x - offsetX, v.y - offsetY] = true; }
+            foreach (Vector2Int v in vectorList) grid[v.x - offsetX, v.y - offsetY] = true;
         }
 
         public readonly bool Contains(int xPoint, int yPoint)

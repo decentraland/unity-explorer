@@ -4,6 +4,20 @@
 
 Unity Explorer is the official desktop client implementation for Decentraland 2.0, allowing users to explore and interact with the Decentraland metaverse using Unity. This desktop client delivers a smoother, more immersive experience compared to the previous web-based version, setting the foundation for Decentraland's future expansion!
 
+## 🗂️ Repository Layout
+
+This repository hosts three sibling Unity roots:
+
+| Folder | What it is |
+| --- | --- |
+| [`Explorer/`](Explorer/) | The desktop client — the main project this README describes. |
+| [`avatar-preview-renderer/`](avatar-preview-renderer/README.md) | Standalone Unity WebGL renderer for avatar/wearable previews (Marketplace, Builder, authentication screen, Profile). Served to users through [wearable-preview](https://github.com/decentraland/wearable-preview), which vendors its released builds. |
+| [`unity-shared-dependencies/`](unity-shared-dependencies/README.md) | UPM package (`com.decentraland.unity-shared-dependencies`): GLTF importer wrappers, the shared Toon/Scene shaders, and wearable utilities. Both projects consume it via a local `file:../../unity-shared-dependencies` reference — edit it in place, no publishing step. |
+
+CI is **path-scoped**: each project's workflows trigger on changes to its own root plus `unity-shared-dependencies/**`, so a shared-deps change builds both projects while a renderer-only change never touches Explorer CI.
+
+Releases are **independent**: Explorer tags `v*` from `main` and owns the repo's *Latest* release (consumed by the launcher); the renderer **auto-releases on every merge to `dev` that touches `avatar-preview-renderer/**`**, tagging `avatar-preview-renderer/v3.X.0` with an auto-incrementing minor (never marked *Latest*; manual dispatch of `avatar-preview-renderer-release.yml` remains available for explicit versions). Details in [Build & CI § Avatar Preview Renderer](docs/build-and-ci.md#avatar-preview-renderer).
+
 ## 🌟 Features
 
 ### Improved Performance
@@ -46,7 +60,7 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
    git clone https://github.com/decentraland/unity-explorer.git
    ```
 
-2. Open the project in Unity
+2. Open the `Explorer/` project in Unity
 
 ## 🎮 Quick Start
 

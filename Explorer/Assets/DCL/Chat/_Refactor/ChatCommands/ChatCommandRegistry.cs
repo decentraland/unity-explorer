@@ -8,7 +8,6 @@ using DCL.Friends;
 using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using System;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.VoiceChat;
@@ -64,7 +63,7 @@ namespace DCL.Chat.ChatCommands
             ICommunityDataService communityDataService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ISpriteCache spriteCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             IVoiceChatOrchestrator voiceChatOrchestrator,
@@ -94,7 +93,7 @@ namespace DCL.Chat.ChatCommands
             InitializeChat = new InitializeChatSystemCommand(eventBus,
                 identityCache,
                 chatHistory,
-                friendsServiceProxy,
+                friendsService,
                 chatHistoryStorage,
                 communitiesDataProvider,
                 communityDataService,

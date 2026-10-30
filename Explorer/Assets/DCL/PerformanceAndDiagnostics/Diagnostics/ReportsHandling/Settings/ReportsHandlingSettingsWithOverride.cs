@@ -6,7 +6,7 @@ namespace DCL.Diagnostics
     public class ReportsHandlingSettingsWithOverride : IReportsHandlingSettings
     {
         private readonly IReportsHandlingSettings baseSettings;
-        private readonly CategorySeverityMatrixOverride? debugLogMatrixOverride;
+        private readonly ICategorySeverityMatrix? debugLogMatrixOverride;
         private readonly CategorySeverityMatrixOverride? sentryMatrixOverride;
 
         public ReportsHandlingSettingsWithOverride(IReportsHandlingSettings baseSettings, CategorySeverityMatrixDto? jsonOverride)
@@ -15,7 +15,13 @@ namespace DCL.Diagnostics
 
             if (jsonOverride != null)
             {
-                if (jsonOverride.debugLogMatrix != null && jsonOverride.debugLogMatrix.Count > 0)
+                // Sentry is deliberately left untouched: everything goes to the log file only
+                if (jsonOverride.allOverride)
+                {
+                    debugLogMatrixOverride = new AllEnabledCategorySeverityMatrix();
+                    ReportHub.LogProductionInfo(LogMatrixConstants.LOG_MATRIX_ALL_OVERRIDE);
+                }
+                else if (jsonOverride.debugLogMatrix != null && jsonOverride.debugLogMatrix.Count > 0)
                 {
                     debugLogMatrixOverride = new CategorySeverityMatrixOverride(
                         baseSettings.GetMatrix(ReportHandler.DebugLog), 

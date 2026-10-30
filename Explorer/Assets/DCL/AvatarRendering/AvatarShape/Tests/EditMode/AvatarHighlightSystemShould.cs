@@ -1,8 +1,8 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Interaction.Raycast.Components;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -127,6 +127,23 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0.1f);
 
             // Assert: Opacity should remain 0
+            highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
+            Assert.That(highlight.Opacity, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ClearHighlightWhenAvatarIsDeletedMidFade()
+        {
+            // Arrange
+            ref AvatarHighlightComponent highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
+            highlight.Opacity = OUTLINE_OPACITY;
+            world.Add<HoveredComponent>(avatarEntity);
+            world.Add<DeleteEntityIntention>(avatarEntity);
+
+            // Act
+            system.Update(0.1f);
+
+            // Assert
             highlight = ref world.Get<AvatarHighlightComponent>(avatarEntity);
             Assert.That(highlight.Opacity, Is.EqualTo(0));
         }

@@ -1,4 +1,3 @@
-using Sentry;
 using Sentry.Unity;
 using System;
 using UnityEngine;
@@ -22,7 +21,16 @@ namespace DCL.Diagnostics.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options)
         {
-            options.SetBeforeSend(AddUnspecifiedCategory);
+            // Implements custom ANR tracing with minidumps and callstack collection
+            SentryMonoBehaviour monoInstance = SentryMonoBehaviour.Instance;
+            DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
+            options.AddIntegration(anrIntegration);
+
+            // DclAnrIntegration above is the only ANR reporter we want. This property gates the
+            // NATIVE app-hang detector only -- Sentry's managed C# watchdog is switched off via
+            // AnrDetectionEnabled in SentryOptions.asset, because ScriptableSentryUnityOptions adds
+            // that integration before this configuration runs.
+            options.EnableAppHangTracking = false;
 
 #if UNITY_EDITOR
             bool isDirty = false;
@@ -55,14 +63,6 @@ namespace DCL.Diagnostics.Sentry
             }
 #endif
 
-        }
-
-        private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
-        {
-            if (!@event.Tags.ContainsKey("category"))
-                @event.SetTag("category", "UNSPECIFIED");
-
-            return @event;
         }
 
 #if UNITY_EDITOR
@@ -167,6 +167,7 @@ namespace DCL.Diagnostics.Sentry
         {
             ScriptableSentryUnityOptions asset = AssetDatabase.LoadAssetAtPath<ScriptableSentryUnityOptions>(path);
             if (asset == null) return;
+            asset.Enabled = options.Enabled;
             asset.ReleaseOverride = options.Release;
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;

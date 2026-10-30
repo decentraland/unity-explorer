@@ -86,7 +86,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 ## Scene & Environment Flags
 
 ### `scene-console`
-**Description:** Enables the scene console for debugging and development. Only available in debug mode or when running local scenes.
+**Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
 
 **Usage:**
 ```bash
@@ -97,7 +97,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ### `dclenv`
 **Type:** String
-**Description:** Sets the Decentraland environment (e.g., `org`, `zone`, `today`). Determines which API endpoints and services the application connects to.
+**Description:** Sets the Decentraland environment (`org` or `zone`). Determines which API endpoints and services the application connects to. `custom` is not accepted here — it is selected by [`base-domain`](#base-domain), which also supplies the domain it needs.
 
 **Usage:**
 ```bash
@@ -106,14 +106,66 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `gateway`
+**Type:** String (URL)
+**Description:** Routes every supported service through this gateway origin — `https://{subdomain}.{base-domain}/{path}` becomes `<gateway>/{subdomain}/{path}` — instead of the default `gateway.{base-domain}`. Specifying it also **forces routing on**: naming a gateway is the opt-in the `use-gateway` remote feature flag would otherwise carry, so the flag is ignored. Without it, the flag decides and the default host is used. The value must be an absolute `http`/`https` url with a host and no query or fragment; anything else ends the launch rather than being coerced. `today` has no gateway and is never routed, with or without this arg. Command line only: never accepted from a deep link, since it aims the session's whole supported-service traffic at the named host.
+
+**Usage:**
+```bash
+--gateway https://gateway.localhost
+```
+
+---
+
+### `base-domain`
+**Type:** String (bare domain)
+**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, whose chain is mainnet unless [`eth-network`](#eth-network) says otherwise, and whose community-message router identity is `message-router-dev-0`. See [Custom base domain](custom-base-domain.md).
+
+The value must be a bare domain — no scheme, port or path — and it takes precedence over `dclenv`. Hosts under it are trusted for deep-link realm switching, so it is **command-line only**: it is never accepted from a `decentraland://` link.
+
+**Usage:**
+```bash
+--base-domain interconnected.online
+```
+
+---
+
+### `eth-network`
+**Type:** String (`mainnet` | `sepolia`)
+**Description:** The chain a [`base-domain`](#base-domain) deployment signs and transacts against. Each value carries the polygon network that pairs with it — `mainnet` with Polygon, `sepolia` with Amoy — because the identity, the credits contracts and the donation contract all have to sit on one chain. It also picks which stored-identity slot the session uses. Defaults to `mainnet`.
+
+Decentraland's own environments each answer for one chain — org mainnet, zone sepolia — and this flag **cannot move them**: paired with `--dclenv`, it is reported in the log and dropped.
+
+On a `base-domain` deployment, where the value *is* read, anything that does not name a known network makes the client report the problem and exit rather than fall back to the default. Command-line only: denied from `decentraland://` links, and accepting it in the denied-params dialog does not apply it.
+
+**Usage:**
+```bash
+--base-domain interconnected.online --eth-network sepolia
+```
+
+---
+
 ### `realm`
 **Type:** String (URL)
-**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same. An unreachable realm keeps the current one.
 
 **Usage:**
 ```bash
 --realm=http://127.0.0.1:8000
 --realm=https://peer-ap1.decentraland.zone/
+```
+
+---
+
+### `accept-untrusted-realm`
+**Type:** Bool (presence flag)
+**Description:** Lets the realm's global comms adapter be served over cleartext `http://`, which an e2e fixture's is (`fixed-adapter:signed-login:http://127.0.0.1:8080/...`). The adapter must still resolve to loopback — `localhost`, `127.0.0.1` or `[::1]` — so a remote `http://` adapter stays rejected, and a host that merely reads as loopback (`127.0.0.1.example.com`, `127.0.0.1@example.com`) does not qualify. It changes nothing else: TLS validation, the untrusted-realm consent prompt and the `https`/`wss` paths are all untouched.
+
+**Command-line only.** It lowers a transport guarantee, which is never a link's call to make, so it is absent from the deep-link allowlist and dropped from `decentraland://` links.
+
+**Usage:**
+```bash
+--accept-untrusted-realm
 ```
 
 ---
@@ -129,9 +181,20 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `lsd-raw-gltf`
+**Type:** Bool (presence flag)
+**Description:** Local scene development only. Skips the embedded [abgen sidecar](abgen-sidecar.md) and loads the scene's raw GLTFs instead of local asset bundles — the way local scene development worked before. Off by default: without it, and with the `alfa-lsd-forced-ab` feature flag on, the scene is served as JIT-converted asset bundles, degrading to raw GLTFs on its own only when the sidecar cannot be installed or started or no manifest can be produced. Ignored outside local scene development.
+
+**Usage:**
+```bash
+--lsd-raw-gltf
+```
+
+---
+
 ### `position`
 **Type:** String (coordinates)
-**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates.
+**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.
 
 **Usage:**
 ```bash
@@ -152,6 +215,32 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `login-bridge-only`
+**Description:** Forces the dapp deep-link login to complete through the deep-link bridge only, by appending `&bridgeOnly` to the auth website URL. Without it, confirming the login on the website can make the launcher spawn a second Explorer instance. See [issue #9524](https://github.com/decentraland/unity-explorer/issues/9524).
+
+Only affects player builds — the Editor always behaves as if the flag were set.
+
+**Usage:**
+```bash
+--login-bridge-only
+```
+
+---
+
+### `ephemeral-guest-account`
+**Type:** Boolean (`true` / `false`)
+**Description:** Overrides the `alfa-ephemeral-guest-account` feature flag: enabled, "play as guest" generates the account on the device; disabled, it uses the ThirdWeb guest wallet.
+
+Enabling it requires [`--debug`](#debug); `--ephemeral-guest-account false` disables it in any build.
+
+**Usage:**
+```bash
+--debug --ephemeral-guest-account true
+--ephemeral-guest-account false
+```
+
+---
+
 ## Avatar & Profile Flags
 
 ### `self-force-emotes`
@@ -165,6 +254,25 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 **Usage:**
 ```bash
 --self-force-emotes emote1,emote2,emote3
+```
+
+---
+
+### `self-force-wearables`
+**Type:** String
+**Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
+
+The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, the same way `self-preview-wearables` already suppresses backpack publishing. Relaunch without the flag to go back to your real avatar.
+
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+In the editor the same set can be filled from the inspector instead, via `DebugSettings.wearablesToAddToUserProfile` (like `emotesToAddToUserProfile`). The set is fixed at startup either way.
+
+**Usage:**
+```bash
+--self-force-wearables wearable1,wearable2
 ```
 
 ---
@@ -214,6 +322,21 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --self-preview-builder-collections collection1,collection2
+```
+
+---
+
+## UI Flags
+
+### `force-open-backpack`
+**Description:** Automatically opens the Backpack panel once the user lands in the world (after authentication and the loading screen). Presence-only: any value triggers it. Also works when a deep link reaches an already-running client — the Backpack opens immediately (or once loading completes).
+
+**Usage:**
+```bash
+--force-open-backpack
+```
+```
+decentraland://?force-open-backpack=true
 ```
 
 ---
@@ -277,6 +400,27 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `mcp`
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+
+**Usage:**
+```bash
+--mcp
+```
+
+---
+
+### `mcp-port`
+**Type:** String (integer port, 1024–65535)
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+
+**Usage:**
+```bash
+--mcp-port 8124
+```
+
+---
+
 ### `launch-cdp-monitor-on-start`
 **Type:** Boolean
 **Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.
@@ -284,17 +428,6 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --launch-cdp-monitor-on-start
-```
-
----
-
-### `creator-hub-bin-path`
-**Type:** String (file path)
-**Description:** Specifies a custom path to the Creator Hub binary. Used when the Creator Hub needs to be launched from a non-standard location.
-
-**Usage:**
-```bash
---creator-hub-bin-path /path/to/creator-hub
 ```
 
 ---
@@ -335,6 +468,20 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+## Multiplayer Flags
+
+### `pulse`
+**Type:** Bool (`true` / `false`)
+**Description:** Toggles the Pulse transport (an ENet-based UDP channel that runs alongside LiveKit), overriding the `pulse` remote feature flag. When **specified**, the value wins over the remote flag: `--pulse true` force-enables Pulse, `--pulse false` force-disables it (LiveKit-only, as if Pulse were never present). When **not specified**, Pulse is driven by the remote feature flag. Always ignored during local scene development.
+
+**Usage:**
+```bash
+--pulse true
+--pulse false
+```
+
+---
+
 ## Feature Flags Configuration
 
 ### `feature-flags-url`
@@ -359,6 +506,17 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `feature-flags-user-id`
+**Type:** String
+**Description:** Overrides the identity feature flags are evaluated against (the `X-Address-Hash` header), replacing the anonymous id the client would otherwise resolve. Use it to reproduce the flags a specific user sees, or to force a particular A/B bucket. The value is not persisted, so it applies only to the launch that passes it. See [Feature Flags](feature-flags.md#which-identity-is-sent).
+
+**Usage:**
+```bash
+--feature-flags-user-id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
+```
+
+---
+
 ## Analytics Flags
 
 ### `session_id`
@@ -379,6 +537,28 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `campaign_anon_user_id`
+**Type:** String
+**Description:** Anonymous user ID forwarded by the launcher from the website, so explorer analytics can be joined to the campaign funnel that originated the install. Also used as the feature-flags evaluation identity (`X-Address-Hash`), which keeps A/B bucketing stable from the first pre-login session — see [Feature Flags](feature-flags.md#which-identity-is-sent). Emitted as the `campaign_anon_user_id` analytics trait only when present.
+
+**Usage:**
+```bash
+--campaign_anon_user_id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
+```
+
+---
+
+### `referrer`
+**Type:** String (Ethereum address, `0x` + 40 hex chars)
+**Description:** Referral attribution address forwarded by the launcher (originally captured by the installer from the download URL). For new accounts it is registered against the referral backend during onboarding, and it is appended to the deep link sign-in URL so the auth website can track the referral for wallet sign-ups. Invalid values are ignored.
+
+**Usage:**
+```bash
+--referrer 0x24e5f44999c151f08609f8e27b2238c773c4d020
 ```
 
 ---
@@ -408,6 +588,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in it. A link reaching a running client that is still on the startup lobby or the auth screen replaces the startup destination (a realm outside the allowlist first asks for consent); the lobby closes once no other panel covers it. An unreachable realm keeps the current one, and a world you cannot enter falls back to Genesis. With the lobby feature off, a link opened on the "Welcome back" step is applied when you click "Jump into World".
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 

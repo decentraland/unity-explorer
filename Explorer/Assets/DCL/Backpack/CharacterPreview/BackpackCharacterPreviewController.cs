@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -15,7 +14,6 @@ using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using Utility;
-using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.CharacterPreview
 {
@@ -77,7 +75,7 @@ namespace DCL.Backpack.CharacterPreview
             }
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             base.Dispose();
 
@@ -122,7 +120,7 @@ namespace DCL.Backpack.CharacterPreview
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (categoryEnum is AvatarWearableCategoryEnum c)
+            if (categoryEnum is { } c)
                 inputEventBus.OnChangePreviewFocus(c);
         }
 
@@ -211,17 +209,18 @@ namespace DCL.Backpack.CharacterPreview
             {
                 URN urn = emote.GetUrn().Shorten();
 
-                // Ensure assets are loaded for the emote
-                if (!previewAvatarModel.Emotes?.Contains(urn) ?? true)
-                {
-                    previewAvatarModel.Emotes!.Add(urn);
+                // An avatar with an empty emote wheel never received an equip, so the set does not exist yet
+                previewAvatarModel.Emotes ??= new HashSet<URN>();
 
+                // Ensure assets are loaded for the emote
+                if (previewAvatarModel.Emotes.Add(urn))
+                {
                     try { await ShowLoadingSpinnerAndUpdateAvatarAsync(ct); }
                     catch (OperationCanceledException) { }
                     finally
                     {
                         // Remove the emote so it stays original
-                        previewAvatarModel.Emotes!.Remove(urn);
+                        previewAvatarModel.Emotes.Remove(urn);
                     }
                 }
 

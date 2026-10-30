@@ -1,6 +1,7 @@
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using System;
 
 namespace DCL.Web3.Identities
@@ -53,7 +54,7 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3IdentityCache origin;
 
-            public Default(IWeb3AccountFactory? web3AccountFactory = null, DecentralandEnvironment dclEnv = DecentralandEnvironment.Org)
+            public Default(IWeb3AccountFactory? web3AccountFactory = null, EthereumNetwork ethereumNetwork = EthereumNetwork.Mainnet)
             {
                 origin = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
@@ -62,7 +63,7 @@ namespace DCL.Web3.Identities
                             new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                                 web3AccountFactory ?? new Web3AccountFactory()
                             ),
-                            dclEnv
+                            ethereumNetwork
                         )
                     )
                 );
@@ -107,5 +108,24 @@ namespace DCL.Web3.Identities
 
             return cache.Identity;
         }
+
+        public static bool IsGuest(this IWeb3IdentityCache cache) =>
+            cache.Identity?.IsGuest() ?? false;
+
+        public static bool IsThirdWebAccount(this IWeb3IdentityCache cache) =>
+            cache.Identity?.IsThirdWebAccount() ?? false;
+    }
+
+    public static class Web3IdentityExtensions
+    {
+        public static bool IsGuest(this IWeb3Identity identity) =>
+            identity.Method is LoginMethod.GUEST or LoginMethod.EPHEMERAL_GUEST;
+
+        /// <summary>
+        ///     The methods ThirdWeb signs for: an account of its own, reachable with an email and its OTP,
+        ///     or the guest wallet it hands out. Everything else is signed elsewhere.
+        /// </summary>
+        public static bool IsThirdWebAccount(this IWeb3Identity identity) =>
+            identity.Method is LoginMethod.EMAIL_OTP or LoginMethod.GUEST;
     }
 }

@@ -1,11 +1,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -40,10 +43,11 @@ namespace DCL.Backpack
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
@@ -73,14 +77,15 @@ namespace DCL.Backpack
             IObjectPool<BackpackItemView> gridItemsPool,
             IThumbnailProvider thumbnailProvider,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ColorToggleView colorToggle,
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
             ColorPresetsSO bodyshapeColors,
             IWearableStorage wearableStorage,
             SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -97,9 +102,10 @@ namespace DCL.Backpack
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
+            this.ownedNftFilter = ownedNftFilter;
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
-            pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
+            pageSelectorController.OnSetPage += page => RequestPage(page, false);
             breadcrumbController = new BackpackBreadCrumbController(mvcManager, view.BreadCrumbView, eventBus, commandBus, categoryIcons, hairColors, eyesColors, bodyshapeColors);
 
             eventBus.EquipWearableEvent += OnEquip;
@@ -136,6 +142,10 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
             backpackSortController.OnSmartWearablesOnlyChanged -= OnSmartWearablesOnlyChanged;
+
+            // The empty-state panels sit outside the categories view, so they would stay on top of the next tab
+            view.NoSearchResults.SetActive(false);
+            view.NoCategoryResults.SetActive(false);
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
@@ -152,9 +162,9 @@ namespace DCL.Backpack
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
 
-            BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
+            BackpackItemView CreateBackpackItem(BackpackItemView prefab)
             {
-                BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
+                BackpackItemView backpackItemView = Object.Instantiate(prefab, view.gameObject.transform);
                 return backpackItemView;
             }
         }
@@ -255,6 +265,7 @@ namespace DCL.Backpack
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 backpackItemView.EquippedIcon.SetActive(equippedWearables.IsEquipped(wearable));
                 backpackItemView.IsEquipped = equippedWearables.IsEquipped(wearable);
+                backpackItemView.IsPending = IsFullyPending(wearable.GetUrn());
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && wearable.IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
@@ -271,6 +282,11 @@ namespace DCL.Backpack
                 InitializeItemViewAsync(wearable, backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
+
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base items have no
+        // registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            ownedNftFilter.IsFullyPending(wearableStorage, itemUrn);
 
         private void EquipItem(int slot, string itemId)
         {
@@ -380,6 +396,10 @@ namespace DCL.Backpack
                     ct,
                     results);
 
+                // The fetch repopulated the registry — a reliable point to prune pending wearable gifts that
+                // left the wallet (or came back).
+                ownedNftFilter.Prune(GiftableType.Wearable);
+
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
@@ -409,13 +429,29 @@ namespace DCL.Backpack
 
         private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
-            if (ct.IsCancellationRequested) return;
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
 
-            itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
         }
 
         private void ClearPoolElements()
@@ -489,6 +525,6 @@ namespace DCL.Backpack
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
     }
 }

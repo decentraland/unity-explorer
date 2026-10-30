@@ -38,14 +38,16 @@ namespace DCL.WebRequests
                 return (false, TimeSpan.Zero);
 
             // Unless repetitions are enforced, non-idempotent requests should not be retried
-            if (!idempotent && retryPolicy.strictness != RetryPolicy.Strictness.ENFORCED)
+            if (!idempotent && retryPolicy.strictness != RetryPolicy.Strictness.Enforced)
                 return (false, TimeSpan.Zero);
 
             // Handle "Retry-After" header. Applicable for 429 Too Many Requests and 503 Service Unavailable
             if (webRequestException?.ResponseCode is 429 or 503)
             {
                 // "Retry-After" header is not present or not parsable, don't repeat
-                if (!webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader) || retryAfterHeader is null)
+                if (webRequestException.ResponseHeaders == null
+                    || !webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader)
+                    || retryAfterHeader is null)
                     return (false, TimeSpan.Zero);
 
                 TimeSpan retryDelay;
@@ -83,7 +85,7 @@ namespace DCL.WebRequests
                 return (true, retryDelay);
             }
 
-            if (retryPolicy.strictness == RetryPolicy.Strictness.RETRY_AFTER_REQUIRED)
+            if (retryPolicy.strictness == RetryPolicy.Strictness.RetryAfterRequired)
 
                 // If default policy is not applied, return immediately
                 return (false, TimeSpan.Zero);
@@ -165,14 +167,6 @@ namespace DCL.WebRequests
 
         public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
             unityWebRequest.GetResponseHeader("Content-Encoding");
-
-        public static bool IsLocalhost(string url) =>
-            url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Does nothing with the web request

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     [TestFixture]
     public class NearbyMuteServiceShould

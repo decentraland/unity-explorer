@@ -1,6 +1,10 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS;
@@ -13,6 +17,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.Tests
@@ -20,16 +25,17 @@ namespace DCL.UserInAppInitializationFlow.Tests
     [TestFixture]
     public class TeleportStartupOperationShould
     {
-        private World world;
-        private ObjectProxy<Entity> cameraEntityProxy;
-        private GlobalWorld globalWorld;
-        private IGlobalRealmController realmController;
-        private IRealmData realmData;
-        private ITeleportController teleportController;
-        private ILoadingStatus loadingStatus;
-        private IAppArgs appArgs;
-        private CancellationTokenSource cts;
-        private CancellationTokenSource globalWorldCts;
+        private World world = null!;
+        private ObjectProxy<Entity> cameraEntityProxy = null!;
+        private GlobalWorld globalWorld = null!;
+        private IGlobalRealmController realmController = null!;
+        private IRealmData realmData = null!;
+        private ITeleportController teleportController = null!;
+        private ILoadingStatus loadingStatus = null!;
+        private IAppArgs appArgs = null!;
+        private IRoomHub roomHub = null!;
+        private CancellationTokenSource cts = null!;
+        private CancellationTokenSource globalWorldCts = null!;
         private WorldManifest worldManifest;
 
         [SetUp]
@@ -64,6 +70,10 @@ namespace DCL.UserInAppInitializationFlow.Tests
                 .Returns(UniTask.FromResult<WaitForSceneReadiness?>(null));
 
             appArgs = Substitute.For<IAppArgs>();
+
+            roomHub = Substitute.For<IRoomHub>();
+            roomHub.SceneRoom().Returns(Substitute.For<IGateKeeperSceneRoom>());
+
             cts = new CancellationTokenSource();
         }
 
@@ -134,6 +144,90 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void UsesAssignedParcelEvenWithWorldManifest()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "10,20" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(Vector2Int.zero);
+            startParcel.Assign(new Vector2Int(10, 20));
+
+            CreateOperation(startParcel)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesManifestSpawnWhenARealmWasPickedAfterALaunchPosition()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(true);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            CreateOperation(startParcel)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(5, 7), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesStartParcelWhenEditorPositionOverrideActiveInLocalSceneDevelopment()
+        {
+            worldManifest = WorldManifest.Create(new[] { new int2(0, 0) });
+            realmData.WorldManifest.Returns(worldManifest);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)), editorPositionOverrideActive: true)
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(10, 20), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+
+            realmController.DidNotReceive().WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void UsesLocalSceneBaseParcelWhenNoPositionArgAndNoEditorOverride()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(3, 4), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public void UsesStartParcelWhenNonWorldRealm()
         {
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
@@ -147,6 +241,40 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void LandsOnTheSavedHomeParcelInsteadOfItsSceneSpawnPoint()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(-4, 1), source: StartParcelSource.Home, landOnParcel: true);
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(-4, 1), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>(), true);
+        }
+
+        [Test]
+        public void LandsOnTheSpawnPointWhenTheManifestSpawnReplacesTheHomeParcel()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(-4, 1), source: StartParcelSource.Home, landOnParcel: true);
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(5, 7), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+            teleportController.DidNotReceive()
+                .TeleportToSceneSpawnPointAsync(Arg.Any<Vector2Int>(), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>(), true);
+        }
+
+        [Test]
         public void StartParcelIsConsumedAfterTeleport()
         {
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
@@ -156,6 +284,78 @@ namespace DCL.UserInAppInitializationFlow.Tests
             CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
 
             Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void ConsumeStartParcelWhenManifestSpawnWins()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void ConsumeStartParcelWhenLocalSceneBaseParcelWins()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.LocalScene));
+            realmData.IsLocalSceneDevelopment.Returns(true);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var definition = new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata { scene = new SceneMetadataScene { DecodedBase = new Vector2Int(3, 4) } },
+            };
+
+            realmController.WaitForStaticScenesEntityDefinitionsAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult<SceneDefinitions?>(new SceneDefinitions(new List<SceneEntityDefinition> { definition })));
+
+            var startParcel = new StartParcel(new Vector2Int(10, 20));
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            Assert.IsTrue(startParcel.IsConsumed());
+        }
+
+        [Test]
+        public void StartsSceneRoomConnectionOnWorldTeleport()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            // StartIfNotAsync is an extension NSubstitute can't intercept; from Stopped it delegates to StartAsync, which the assertion observes
+            roomHub.SceneRoom().CurrentState().Returns(IConnectiveRoom.State.Stopped);
+
+            CreateOperation(new StartParcel(new Vector2Int(5, 7)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            roomHub.SceneRoom().Received(1).StartAsync();
+        }
+
+        [Test]
+        public void DoesNotStartSceneRoomOnNonWorldTeleport()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            roomHub.SceneRoom().DidNotReceive().StartAsync();
         }
 
         private IStartupOperation.Params MakeParams()
@@ -173,7 +373,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         private TeleportStartupOperation CreateOperation(StartParcel startParcel, bool editorPositionOverrideActive = false) =>
-            new TeleportStartupOperation(loadingStatus, realmController, cameraEntityProxy,
-                teleportController, new CameraSamplingData(), startParcel, appArgs, editorPositionOverrideActive);
+            new (loadingStatus, realmController, cameraEntityProxy,
+                teleportController, new CameraSamplingData(), startParcel, appArgs, roomHub, editorPositionOverrideActive);
     }
 }

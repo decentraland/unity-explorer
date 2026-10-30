@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarInstantiatorAssetsShould
     {

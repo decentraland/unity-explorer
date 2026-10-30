@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ExposedTransform playerTransform;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -45,20 +45,20 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             ExposedTransform playerTransform,
             ISceneStateProvider sceneStateProvider,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
             IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.playerTransform = playerTransform;
             this.sceneStateProvider = sceneStateProvider;
-            this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.entityParticipantTable = entityParticipantTable;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBaseProxy.Configured || !entityParticipantTableProxy.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             UpdateAvatarAttachTransformQuery(World);
             UpdateAvatarAttachedEntitySDKTransformQuery(World);
@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                 }
                 else
                 {
-                    LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId, entityParticipantTableProxy.Object);
+                    LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId, entityParticipantTable);
 
                     if (result.Success)
                         avatarBase = result.Result;

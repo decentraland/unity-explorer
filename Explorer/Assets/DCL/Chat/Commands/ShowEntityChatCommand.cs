@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using SceneRunner.Debugging;
 using SceneRunner.Debugging.Hub;
 using System.Threading;

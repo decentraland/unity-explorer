@@ -25,7 +25,6 @@ using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using MVC;
 using System.Threading;
@@ -33,24 +32,22 @@ using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatReactions.Core;
-using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.Commands;
 using DCL.ChatArea;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Profiles.Poses;
 using DCL.Settings;
 using DCL.Translation;
 using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
-using DCL.Character.Components;
 using DCL.Chat.ChatReactions.Configs;
 using TMPro;
 using UnityEngine;
@@ -81,7 +78,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserBlockingCache userBlockingCache;
         private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
@@ -99,6 +96,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMessagePipesHub messagePipesHub;
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
+        private readonly StreamReactionsChatCommand streamReactionsChatCommand;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -132,7 +130,7 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
@@ -146,6 +144,7 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
+            StreamReactionsChatCommand streamReactionsChatCommand,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -170,7 +169,7 @@ namespace DCL.PluginSystem.Global
             this.friendsEventBus = friendsEventBus;
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
@@ -184,6 +183,7 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
+            this.streamReactionsChatCommand = streamReactionsChatCommand;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -193,6 +193,8 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            streamReactionsChatCommand.Detach();
+
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
@@ -230,6 +232,9 @@ namespace DCL.PluginSystem.Global
                 pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
+
+            // Hand the debug /streamreactions command a live control now that the reactions feature exists.
+            streamReactionsChatCommand.Attach(reactions.StreamControl);
 
             var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
                 messageReactionService,
@@ -289,7 +294,7 @@ namespace DCL.PluginSystem.Global
                 currentChannelService,
                 chatEventBus,
                 userBlockingCache,
-                friendsServiceProxy,
+                friendsService,
                 settings.ChatSettingsAsset,
                 privacySettings,
                 friendsEventBus,
@@ -308,7 +313,7 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    mainUIView.SidebarView.UnreadMessagesButton.transform,
                     chatPanelView.ChatReactionButton.transform,
                     chatPanelView.EmojiPanelView.transform);
 
@@ -330,7 +335,7 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(communityUserStateService);
 
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
-                friendsServiceProxy,
+                friendsService,
                 currentChannelService,
                 chatEventBus);
 
@@ -354,7 +359,7 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 profileRepositoryWrapper,
                 thumbnailCache,
-                friendsServiceProxy,
+                friendsService,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
                 voiceChatOrchestrator,
@@ -394,7 +399,8 @@ namespace DCL.PluginSystem.Global
                 messageReactionService,
                 web3IdentityCache,
                 profileCache,
-                inputBlock
+                inputBlock,
+                mvcManager
             );
 
             pluginScope.Add(chatPanelPresenter);
@@ -434,7 +440,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
-            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT)));
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.Chat)));
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {

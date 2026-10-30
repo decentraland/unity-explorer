@@ -183,6 +183,8 @@ namespace DCL.Places
             currentPlaceInfo = placeInfo;
             mainScroll.verticalNormalizedPosition = 1;
 
+            bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
+
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
             creatorContainer.SetActive(false);
@@ -190,7 +192,7 @@ namespace DCL.Places
             creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
             creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) && placeInfo.owner.Length >= 10 ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
             creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
-            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
+            likeRateText.text = $"{(placeInfo.LikeRateAsFloat ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
@@ -199,7 +201,7 @@ namespace DCL.Places
             onlineMembersText.text = $"{onlineMembers}";
             onlineMembersContainer.SetActive(onlineMembers > 0);
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
-            coordsText.text = placeInfo.base_position;
+            coordsText.text = isWorld ? placeInfo.world_name : placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
             updatedDateText.text = DateTimeOffset.TryParse(placeInfo.updated_at, out var date) ? date.ToString("dd/MM/yyyy") : "-";
@@ -213,7 +215,6 @@ namespace DCL.Places
 
             LoadFriendsThumbnailsAsync(friends, cancellationToken).Forget();
 
-            bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
             startExitNavigationButtonsContainer.SetActive(!isWorld);
             if (!isWorld)
                 SetNavigation(isNavigating);
@@ -278,7 +279,7 @@ namespace DCL.Places
                         cancellationToken);
 
                     if (creatorProfileThumbnail.Value.Sprite != null)
-                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
+                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(creatorProfile.Value.Address));
 
                     if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
                     {

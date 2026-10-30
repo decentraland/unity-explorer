@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 #if UNITY_EDITOR
@@ -14,14 +15,15 @@ namespace DCL.AssetsProvision
     ///     * At runtime it can load/instantiate the GameObject, then return the desired component.  API matches base class (LoadAssetAsync & InstantiateAsync).
     /// </summary>
     /// <typeparam name="TComponent"> The component type.</typeparam>
+    [Serializable]
     public class ComponentReference<TComponent> : AssetReference
     {
         public ComponentReference(string guid) : base(guid) { }
 
-        public new AsyncOperationHandle<TComponent> InstantiateAsync(Vector3 position, Quaternion rotation, Transform parent = null) =>
+        public new AsyncOperationHandle<TComponent> InstantiateAsync(Vector3 position, Quaternion rotation, Transform? parent = null) =>
             Addressables.ResourceManager.CreateChainOperation(base.InstantiateAsync(position, Quaternion.identity, parent), GameObjectReady);
 
-        public new AsyncOperationHandle<TComponent> InstantiateAsync(Transform parent = null, bool instantiateInWorldSpace = false) =>
+        public new AsyncOperationHandle<TComponent> InstantiateAsync(Transform? parent = null, bool instantiateInWorldSpace = false) =>
             Addressables.ResourceManager.CreateChainOperation(base.InstantiateAsync(parent, instantiateInWorldSpace), GameObjectReady);
 
         public AsyncOperationHandle<TComponent> LoadAssetAsync() =>
@@ -29,11 +31,19 @@ namespace DCL.AssetsProvision
 
         private AsyncOperationHandle<TComponent> GameObjectReady(AsyncOperationHandle<GameObject> arg)
         {
+            // The chain callback runs on failure too, where dereferencing the null result throws inside ResourceManager with no context.
+            if (arg.Status != AsyncOperationStatus.Succeeded || arg.Result == null)
+                return Addressables.ResourceManager.CreateCompletedOperation(default(TComponent)!, $"Failed to load {AssetGUID}: {arg.OperationException?.Message ?? "no result"}");
+
             TComponent comp = arg.Result.GetComponent<TComponent>();
+
+            if (comp == null)
+                return Addressables.ResourceManager.CreateCompletedOperation(comp, $"Loaded {AssetGUID} but it has no {typeof(TComponent).Name} component");
+
             return Addressables.ResourceManager.CreateCompletedOperation(comp, string.Empty);
         }
 
-        public override bool ValidateAsset(Object obj)
+        public override bool ValidateAsset(UnityEngine.Object obj)
         {
             var go = obj as GameObject;
             return go != null && go.GetComponent<TComponent>() != null;

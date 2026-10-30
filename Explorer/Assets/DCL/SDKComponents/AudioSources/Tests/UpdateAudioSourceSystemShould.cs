@@ -6,7 +6,6 @@ using DCL.PluginSystem.World;
 using DCL.Tests.Editor;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -38,7 +37,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateEntity()
             {
-                entity = world.Create(component, new PBAudioSource());
+                entity = world.Create(component, new PBAudioSource(), new PartitionComponent());
                 AddTransformToEntity(entity);
             }
         }
@@ -57,7 +56,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider, new AudioSourcesPlugin.AudioSourcesPluginSettings());
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null!, sceneStateProvider, new AudioSourcesPlugin.AudioSourcesPluginSettings());
         }
 
         [Test]
@@ -85,7 +84,91 @@ namespace DCL.SDKComponents.AudioSources.Tests
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.AudioSource, Is.Not.Null);
-            Assert.That(afterUpdate.AudioSource.clip, Is.EqualTo(TestAudioClip));
+            Assert.That(afterUpdate.AudioSource!.clip, Is.EqualTo(TestAudioClip));
+        }
+
+        [Test]
+        public void RetriggerSameUrlWhenAlreadyPlaying()
+        {
+            // Arrange: resolve the clip promise and run one update to instantiate the Unity AudioSource.
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+            system.Update(0);
+
+            ref AudioSourceComponent loaded = ref world.Get<AudioSourceComponent>(entity);
+            Assert.That(loaded.AudioSource, Is.Not.Null);
+            Assert.That(loaded.AudioSource!.clip, Is.EqualTo(TestAudioClip));
+
+            // Ensure the cached URL matches the dirty PB so HandleSDKChanges takes the same-URL branch.
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = loaded.AudioClipUrl;
+
+            // Simulate a fresh LWW PUT from the scene: same URL, Playing:true, CurrentTime rewound to 0.
+            sdk.Playing = true;
+            sdk.CurrentTime = 0f;
+            sdk.Volume = 0.5f;
+            sdk.IsDirty = true;
+
+            // Dirty the clock/cursor so we can prove the system seeked it.
+            loaded.AudioSource.time = 1.25f;
+
+            // Act
+            system.Update(0);
+
+            // Assert: same-URL retrigger seeked to CurrentTime and the dirty flag was cleared.
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource!.time, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(world.Get<PBAudioSource>(entity).IsDirty, Is.False);
+        }
+
+        [TestCase(9999f)]
+        [TestCase(-5f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void ClampOutOfRangeSeekOnRetrigger(float currentTime)
+        {
+            // Arrange: resolve the clip promise and run one update to instantiate the Unity AudioSource.
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+            system.Update(0);
+
+            ref AudioSourceComponent loaded = ref world.Get<AudioSourceComponent>(entity);
+            Assert.That(loaded.AudioSource, Is.Not.Null);
+
+            // Simulate a fresh LWW PUT from the scene carrying a CurrentTime outside the clip's seekable range.
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = loaded.AudioClipUrl;
+            sdk.Playing = true;
+            sdk.CurrentTime = currentTime;
+            sdk.IsDirty = true;
+
+            // Act
+            system.Update(0);
+
+            // Assert: the cursor stays inside the clip so FMOD never sees an invalid seek position.
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(afterUpdate.AudioSource.time, Is.LessThan(TestAudioClip.length));
+        }
+
+        [Test]
+        public void SeedCurrentTimeOnCreationSoLaterVolumeChangeDoesNotReseek()
+        {
+            // Arrange
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = component.AudioClipUrl;
+            sdk.Playing = true;
+            sdk.CurrentTime = 0.5f;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThan(0f));
+            Assert.That(afterUpdate.LastAppliedCurrentTime, Is.EqualTo(afterUpdate.AudioSource.time).Within(0.01f));
         }
     }
 }

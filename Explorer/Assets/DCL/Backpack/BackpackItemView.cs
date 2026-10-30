@@ -78,6 +78,12 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject SmartWearableBadgeContainer { get; private set; }
 
+        [field: SerializeField]
+        public Color ThumbnailPendingColor { get; private set; }
+
+        [field: SerializeField]
+        public GameObject PendingBadge { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig EquipWearableAudio { get; private set; }
@@ -116,6 +122,21 @@ namespace DCL.Backpack
             }
         }
         private bool isLoading;
+
+        public bool IsPending
+        {
+            get => isPending;
+
+            set
+            {
+                isPending = value;
+                CanHover = !isPending;
+                WearableThumbnail.color = isPending ? ThumbnailPendingColor : Color.white;
+                PendingBadge.SetActive(isPending);
+            }
+        }
+
+        private bool isPending;
 
         private CancellationTokenSource cts;
         private bool isCompatibleWithBodyShape;
@@ -175,6 +196,7 @@ namespace DCL.Backpack
         {
             if (string.IsNullOrEmpty(ItemId)) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (isPending) return;
 
             if (!CanHover && eventData.clickCount != 2) return;
 

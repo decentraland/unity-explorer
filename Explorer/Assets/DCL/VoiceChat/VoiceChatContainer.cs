@@ -1,9 +1,13 @@
 using DCL.Chat;
 using DCL.Chat.ChatServices;
+using DCL.Communities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Prefs;
 using DCL.SocialService;
+using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -24,6 +28,10 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
+        public readonly JoinedCommunitiesVoiceLiveTracker JoinedCommunitiesVoiceLiveTracker;
+
+        public readonly NearbyMuteService? NearbyMuteService;
+        public readonly NearbyVoiceChatStateModel? NearbyStateModel;
 
         public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
@@ -36,17 +44,18 @@ namespace DCL.VoiceChat
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource,
             ChatEventBus chatEventBus,
-            CurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService,
+            ICommunityDataService communityDataService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus, identityCache);
-            privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
+            privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)
                 ? new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService) : new PrivateVoiceChatCallStatusServiceNull();
 
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource, identityCache);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
-            communityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
+            communityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
@@ -54,11 +63,28 @@ namespace DCL.VoiceChat
                 participantsStateService,
                 sceneVoiceChatTrackerService,
                 chatEventBus,
-                currentChannelService);
+                currentChannelService,
+                identityCache);
+
+            JoinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(VoiceChatOrchestrator, communityDataService);
+
+            NearbyMuteService = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat)
+                ? new NearbyMuteService(
+                    new NearbyMuteCache(),
+                    new RestNearbyMuteRepository(webRequestController, urlsSource))
+                : null;
+
+            NearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat)
+                ? new NearbyVoiceChatStateModel(
+                    DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                        ? NearbyVoiceChatState.Disabled
+                        : NearbyVoiceChatState.Idle)
+                : null;
         }
 
         public void Dispose()
         {
+            JoinedCommunitiesVoiceLiveTracker.Dispose();
             privateVoiceChatCallStatusService.Dispose();
             communityVoiceChatCallStatusService.Dispose();
             rpcPrivateVoiceChatService.Dispose();

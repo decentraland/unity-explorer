@@ -13,6 +13,7 @@ namespace DCL.Backpack.Gifting.Models
         public string ImageUrl;
         public string Rarity;
         public string Category;
+        public GiftableType Type;
     }
 
     /// <summary>

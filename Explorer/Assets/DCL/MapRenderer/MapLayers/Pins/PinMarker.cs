@@ -148,13 +148,18 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
             currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_MIN_SCALE);
-            currentTargetScale = Math.Max(zoom / baseZoom * currentBaseScale * PIN_SIZE_MULTIPLIER, currentBaseScale);
+            float zoomRatio = zoom / baseZoom;
+
+            // Closer than the base zoom, the pin keeps its size on screen.
+            currentTargetScale = zoomRatio < 1
+                ? zoomRatio * currentBaseScale
+                : Math.Max(zoomRatio * currentBaseScale * PIN_SIZE_MULTIPLIER, currentBaseScale);
             poolablePin.instance?.SetScale(currentTargetScale);
         }
 
         public void ResetScale(IPinMarker.ScaleType type)
         {
-            currentTargetScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_PIN_MIN_SCALE : NAVMAP_PIN_MIN_SCALE;
+            currentTargetScale = type == IPinMarker.ScaleType.Minimap ? MINIMAP_PIN_MIN_SCALE : NAVMAP_PIN_MIN_SCALE;
             poolablePin.instance?.SetScale(currentTargetScale);
         }
 

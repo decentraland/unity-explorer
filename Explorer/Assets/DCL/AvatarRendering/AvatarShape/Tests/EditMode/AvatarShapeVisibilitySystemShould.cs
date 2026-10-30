@@ -24,15 +24,15 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private const float START_FADE_DITHERING = 2.0f;
         private const float END_FADE_DITHERING = 0.5f;
 
-        private IUserBlockingCache userBlockingCache;
-        private IRendererFeaturesCache rendererFeaturesCache;
+                private IUserBlockingCache userBlockingCache = null!;
+                private IRendererFeaturesCache rendererFeaturesCache = null!;
 
-        private GameObject cameraGameObject;
-        private Camera testCamera;
+                private GameObject cameraGameObject = null!;
+                private Camera testCamera = null!;
         private Entity cameraEntity;
 
-        private GameObject avatarGameObject;
-        private AvatarBase avatarBase;
+                private GameObject avatarGameObject = null!;
+                private AvatarBase avatarBase = null!;
 
         private readonly List<GameObject> createdGameObjects = new ();
 
@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var renderer = wearableGO.AddComponent<MeshRenderer>();
 
             // CachedAttachment requires proper initialization - we use reflection to create one with Renderers list
-            var attachment = new Loading.Assets.CachedAttachment(null, wearableGO, false, Array.Empty<SpringBoneData>());
+            var attachment = new CachedAttachment(null!, wearableGO, false, Array.Empty<SpringBoneData>());
             // The Renderers list is created but empty, we need to add a renderer to it
             attachment.Renderers.Add(renderer);
 
@@ -130,7 +130,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.LookAt(bounds.center);
 
             // Act
-            bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
+            system.CalculateFrustumPlanes(testCamera);
+            bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
             Assert.IsTrue(isVisible);
@@ -144,7 +145,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.rotation = Quaternion.identity; // Looking forward (+Z)
 
             // Act
-            bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
+            system.CalculateFrustumPlanes(testCamera);
+            bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
             Assert.IsFalse(isVisible);
@@ -282,7 +284,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Assert
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
             ref var hiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
         }
 
         [Test]
@@ -423,7 +425,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Add skinning component for dither test
             var skinningMaterials = new List<AvatarCustomSkinningComponent.MaterialSetup>();
-            var skinningComponent = new AvatarCustomSkinningComponent();
 
             // Act - This update should trigger ResetDitherState due to IsDirty
             system.Update(0);
@@ -449,11 +450,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Manually add banned reason to test combination
             ref var hiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            hiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BANNED;
+            hiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.Banned;
 
             // Act - verify both reasons are present
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Banned));
 
             // Unblock user
             userBlockingCache.UserIsBlocked(USER_ID).Returns(false);
@@ -462,8 +463,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Assert - Only banned reason should remain
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
             ref var updatedHiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            Assert.IsFalse(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
-            Assert.IsTrue(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED));
+            Assert.IsFalse(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
+            Assert.IsTrue(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Banned));
         }
 
         [Test]
@@ -499,6 +500,28 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 "AvatarShapeVisibilitySystem must not re-enable the Animator while a legacy Animation is playing.");
 
             Object.DestroyImmediate(clip);
+        }
+
+        [Test]
+        public void LeaveAnAnimatorTheCullingGateDisabledAlone()
+        {
+            // Arrange - a visible non-player avatar, primed so the cache holds its visible state
+            var avatarShape = CreateAvatarShapeComponent();
+            world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
+            system.Update(0);
+
+            Assume.That(avatarBase.AvatarAnimator.enabled, Is.True,
+                "Sanity check: a visible avatar outside any modifier area starts animated.");
+
+            // FinishAvatarMatricesCalculationSystem culls the avatar later in the same frame
+            avatarBase.AvatarAnimator.enabled = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(avatarBase.AvatarAnimator.enabled,
+                "With no visibility change the system must leave the Animator alone, otherwise it re-enables every culled avatar each frame.");
         }
 
         [Test]

@@ -1,10 +1,7 @@
-﻿#nullable enable
-
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
 using System;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 
@@ -14,9 +11,10 @@ namespace DCL.Multiplayer.Movement
     {
         public const string TEST_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
+        private const double RESET_TIMELINE_PRIORITY = double.MinValue;
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
+        private readonly SimplePriorityQueue<NetworkMovementMessage, double> queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -25,18 +23,17 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
+        public readonly SimplePriorityQueue<NetworkMovementMessage, double>? Queue => disposed ? null : queue;
 
         public float InitialCooldownTime;
 
-        public bool HeadIKYawEnabled;
-        public bool HeadIKPitchEnabled;
-        public float2 HeadIKYawAndPitch;
-
+        public bool HeadIkYawEnabled;
+        public bool HeadIkPitchEnabled;
+        public float2 HeadIkYawAndPitch;
         public bool IsPointingAt;
         public float3 PointAtWorldHitPoint;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
@@ -50,9 +47,9 @@ namespace DCL.Multiplayer.Movement
 
             InitialCooldownTime = 0;
 
-            HeadIKYawEnabled = false;
-            HeadIKPitchEnabled = false;
-            HeadIKYawAndPitch = float2.zero;
+            HeadIkYawEnabled = false;
+            HeadIkPitchEnabled = false;
+            HeadIkYawAndPitch = float2.zero;
 
             IsPointingAt = false;
             PointAtWorldHitPoint = float3.zero;
@@ -60,17 +57,29 @@ namespace DCL.Multiplayer.Movement
 
         public void Enqueue(NetworkMovementMessage message)
         {
-            while (queue.Count > MAX_MESSAGES)
-                queue.Dequeue();
+            if (message.resetTimeline)
+                queue.Clear();
 
-            queue.Enqueue(message, message.timestamp);
+            while (queue.Count > MAX_MESSAGES)
+            {
+                if (queue.First.resetTimeline)
+                {
+                    NetworkMovementMessage resetMessage = queue.Dequeue();
+                    queue.Dequeue();
+                    queue.Enqueue(resetMessage, RESET_TIMELINE_PRIORITY);
+                }
+                else
+                    queue.Dequeue();
+            }
+
+            queue.Enqueue(message, message.resetTimeline ? RESET_TIMELINE_PRIORITY : message.timestamp);
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
         {
             if (!WasTeleported)
             {
-                float totalDuration = message.timestamp - PastMessage.timestamp;
+                var totalDuration = (float)(message.timestamp - PastMessage.timestamp);
 
                 message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
                     message.movementKind, message.velocitySqrMagnitude, settings);
@@ -84,14 +93,14 @@ namespace DCL.Multiplayer.Movement
             WasPassedThisFrame = true;
         }
 
-        public void UpdateHeadIK(in NetworkMovementMessage message)
+        public void UpdateHeadIk(in NetworkMovementMessage message)
         {
-            HeadIKYawEnabled = message.headIKYawEnabled;
-            HeadIKPitchEnabled = message.headIKPitchEnabled;
-            HeadIKYawAndPitch = message.headYawAndPitch;
+            HeadIkYawEnabled = message.headIKYawEnabled;
+            HeadIkPitchEnabled = message.headIKPitchEnabled;
+            HeadIkYawAndPitch = message.headYawAndPitch;
         }
 
-        public void UpdatePointAtIK(in NetworkMovementMessage message)
+        public void UpdatePointAtIk(in NetworkMovementMessage message)
         {
             IsPointingAt = message.isPointingAt;
             PointAtWorldHitPoint = message.pointAtWorldHitPoint;

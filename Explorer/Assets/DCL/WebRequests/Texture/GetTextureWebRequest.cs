@@ -1,12 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
-using KtxUnity;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Networking;
 
 namespace DCL.WebRequests
 {
@@ -37,11 +37,25 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsLocalhost(url);
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !LoopbackUrls.IsLoopbackWebUrl(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
-            UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
+            UnityWebRequest webRequest = textureArguments.DecodeOffMainThread && !useKtx
+                ? NonReadableTextureRequest(requestUrl, textureArguments.TextureType)
+                : UnityWebRequest.Get(requestUrl);
+
+            if (textureArguments.DisableRedirects)
+                webRequest.redirectLimit = 0;
 
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
+        }
+
+        private static UnityWebRequest NonReadableTextureRequest(string url, TextureType textureType)
+        {
+            DownloadedTextureParams parameters = DownloadedTextureParams.Default;
+            parameters.readable = false;
+            parameters.mipmapChain = false;
+            parameters.linearColorSpace = textureType == TextureType.NormalMap;
+            return UnityWebRequestTexture.GetTexture(url, parameters);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
@@ -59,10 +73,10 @@ namespace DCL.WebRequests
             {
                 string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
 
-                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
+                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest) : ExecuteNoCompressionAsync(webRequest);
             }
 
-            private UniTask<Texture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<Texture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest)
             {
                 Texture2D texture;
 
@@ -86,35 +100,23 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult(texture);
+                return UniTask.FromResult<Texture2D?>(texture);
             }
 
-            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest)
             {
-                var ktxTexture = new KtxTexture();
-
                 // TODO: .data creates an array
-                using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
+                var data = webRequest.UnityWebRequest.downloadHandler?.data;
 
-                var result = await ktxTexture.LoadFromBytes(
-                    bufferWrapped.nativeArray,
-                    webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
-                    0,
-                    0,
-                    0,
-                    true
-                );
+                if (data == null)
+                    throw new Exception($"Texture content is empty: {webRequest.url}");
 
-                if (result == null)
-                    throw new Exception($"Failed to load ktx texture from data: {webRequest.url}");
+                // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear.
+                // readable: true keeps the decoded texture CPU-readable.
+                Texture2D texture = await KtxTextureDecoder.DecodeAsync(data, webRequest.textureType != TextureType.Albedo, wrapMode, filterMode, readable: true, webRequest.url);
 
-                var finalTex = result.texture;
-
-                finalTex.wrapMode = wrapMode;
-                finalTex.filterMode = filterMode;
-                finalTex.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return finalTex;
+                return texture;
             }
         }
     }

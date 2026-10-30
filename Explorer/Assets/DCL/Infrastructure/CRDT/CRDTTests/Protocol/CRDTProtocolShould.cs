@@ -35,6 +35,56 @@ namespace CRDT.CRDTTests.Protocol
             AssertGetCurrentState(parsedFile);
         }
 
+        [Test]
+        public void ReportIdenticalDataForAPutMatchingTheStoredPayload()
+        {
+            // Arrange
+            var crdt = new CRDTProtocol();
+            crdt.ProcessMessage(Put(1, new byte[] { 1, 2, 3 }));
+
+            // Act & Assert
+            Assert.That(crdt.IsIdenticalToLwwState(Put(2, new byte[] { 1, 2, 3 })), Is.True);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(2, new byte[] { 1, 2, 4 })), Is.False);
+        }
+
+        [Test]
+        public void NotReportIdenticalDataForAnUnknownComponent()
+        {
+            // Arrange
+            var crdt = new CRDTProtocol();
+
+            // Act & Assert
+            Assert.That(crdt.IsIdenticalToLwwState(Put(1, new byte[] { 1, 2, 3 })), Is.False);
+        }
+
+        [Test]
+        public void ReportIdenticalDataForADeleteOfADeletedComponent()
+        {
+            // Arrange
+            var crdt = new CRDTProtocol();
+            crdt.ProcessMessage(Put(1, new byte[] { 1, 2, 3 }));
+            crdt.ProcessMessage(new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 100, 2, EmptyMemoryOwner<byte>.EMPTY));
+
+            // Act & Assert
+            Assert.That(crdt.IsIdenticalToLwwState(new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 100, 3, EmptyMemoryOwner<byte>.EMPTY)), Is.True);
+            Assert.That(crdt.IsIdenticalToLwwState(Put(3, new byte[] { 1, 2, 3 })), Is.False);
+        }
+
+        [Test]
+        public void NotReportIdenticalDataForAppendMessages()
+        {
+            // Arrange
+            var crdt = new CRDTProtocol();
+            var append = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[] { 9 }));
+            crdt.ProcessMessage(append);
+
+            // Act & Assert
+            Assert.That(crdt.IsIdenticalToLwwState(new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[] { 9 }))), Is.False);
+        }
+
+        private CRDTMessage Put(int timestamp, byte[] data) =>
+            new (CRDTMessageType.PUT_COMPONENT, 10, 100, timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(data));
+
         private void AssertTestFile(ParsedCRDTTestFile parsedFile)
         {
             var crdt = new CRDTProtocol();
@@ -43,7 +93,7 @@ namespace CRDT.CRDTTests.Protocol
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
-                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
+                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.Message)
                 {
                     (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     CRDTReconciliationResult result = crdt.ProcessMessage(msg);
@@ -54,7 +104,7 @@ namespace CRDT.CRDTTests.Protocol
                                                                       + $"in line:{instruction.lineNumber} for file {instruction.fileName}. Expected: {expectedResult}, actual: {result}");
                     }
                 }
-                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
+                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FinalState)
                 {
                     CRDTProtocol.State finalState = ParsedCRDTTestFile.InstructionToFinalState(instruction);
                     bool sameState = AreStatesEqual(crdt.CRDTState, finalState, out string reason);
@@ -75,12 +125,12 @@ namespace CRDT.CRDTTests.Protocol
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
-                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
+                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.Message)
                 {
                     (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     crdt.ProcessMessage(msg);
                 }
-                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
+                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FinalState)
                 {
                     // The order of messages is not important
 

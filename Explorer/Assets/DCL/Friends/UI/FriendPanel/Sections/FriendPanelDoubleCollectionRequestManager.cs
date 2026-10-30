@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
@@ -55,6 +54,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected abstract int GetFirstCollectionCount();
         protected abstract int GetSecondCollectionCount();
 
+        protected virtual int GetFirstCollectionDisplayCount() => GetFirstCollectionCount();
+
+        protected virtual int GetSecondCollectionDisplayCount() => GetSecondCollectionCount();
+
         protected abstract Profile.CompactInfo GetFirstCollectionElement(int index);
 
         protected abstract Profile.CompactInfo GetSecondCollectionElement(int index);
@@ -93,7 +96,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             {
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
-                statusWrapperView.SetStatusText(firstCollectionStatus, GetFirstCollectionCount());
+                statusWrapperView.SetStatusText(firstCollectionStatus, GetFirstCollectionDisplayCount());
                 statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > 0 && index <= onlineFriendMarker)
@@ -117,7 +120,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             {
                 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[statusElementIndex].mItemPrefab.name);
                 StatusWrapperView statusWrapperView = listItem.GetComponent<StatusWrapperView>();
-                statusWrapperView.SetStatusText(secondCollectionStatus, GetSecondCollectionCount());
+                statusWrapperView.SetStatusText(secondCollectionStatus, GetSecondCollectionDisplayCount());
                 statusWrapperView.FolderButtonClicked = FolderClick;
             }
             else if (index > onlineFriendMarker + 1 && index <= onlineFriendMarker + 1 + offlineFriendMarker + 1)

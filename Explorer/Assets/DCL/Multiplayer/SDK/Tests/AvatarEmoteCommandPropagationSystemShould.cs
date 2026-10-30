@@ -2,16 +2,12 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using DCL.Optimization.PerformanceBudgeting;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -20,7 +16,6 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private readonly URN emoteUrn1 = new ("thunder-kiss-65");
         private readonly URN emoteUrn2 = new ("more-human-than-human");
-        private readonly FakeEmoteStorage emoteStorage = new ();
         private Entity entity;
         private World sceneWorld;
         private PlayerCRDTEntity playerCRDTEntity;
@@ -32,147 +27,125 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity sceneWorldEntity = sceneWorld.Create();
             ISceneFacade sceneFacade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
 
-            IEmote emote1 = Substitute.For<IEmote>();
-            emote1.IsLooping().Returns(true);
-            IEmote emote2 = Substitute.For<IEmote>();
-            emote2.IsLooping().Returns(false);
-            emoteStorage.emotes.Clear();
-            emoteStorage.emotes.Add(emoteUrn1, emote1);
-            emoteStorage.emotes.Add(emoteUrn2, emote2);
-
-            system = new AvatarEmoteCommandPropagationSystem(world, emoteStorage);
+            system = new AvatarEmoteCommandPropagationSystem(world);
 
             playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-
             playerCRDTEntity.AssignToScene(sceneFacade, sceneWorldEntity);
 
-            entity = world.Create(playerCRDTEntity);
+            entity = world.Create(playerCRDTEntity, new CharacterEmoteComponent());
         }
 
         protected override void OnTearDown()
         {
             sceneWorld.Dispose();
-            world.Dispose();
         }
 
         [Test]
-        public void PropagateEmoteCommandsCorrectly()
+        public void TransferPendingStartExactlyOnce()
         {
-            Assert.IsFalse(world.Has<AvatarEmoteCommandComponent>(entity));
-            Assert.IsFalse(sceneWorld.Has<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity));
+            // Arrange
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(entity);
+            emoteComponent.PendingStart = new EmoteStartEvent { Urn = emoteUrn1, Loop = true, IsSet = true };
 
-            // Add emote intent
-            var emoteIntent = new CharacterEmoteIntent
-                { EmoteId = emoteUrn1 };
-
-            world.Add(entity, emoteIntent);
-
+            // Act
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
+            // Assert: events + snapshot transferred, source slots cleared.
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent emoteCommand));
+            Assert.IsTrue(emoteCommand.IsDirty);
+            Assert.IsTrue(emoteCommand.StartEvent.IsSet);
+            Assert.AreEqual(emoteUrn1, emoteCommand.StartEvent.Urn);
+            Assert.IsTrue(emoteCommand.StartEvent.Loop);
+            Assert.IsFalse(emoteCommand.StopEvent.IsSet);
+            Assert.AreEqual(emoteUrn1, emoteCommand.PlayingEmote);
+            Assert.IsTrue(emoteCommand.LoopingEmote);
+            Assert.IsTrue(emoteCommand.IsPlaying);
 
-            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            CharacterEmoteComponent source = world.Get<CharacterEmoteComponent>(entity);
+            Assert.IsFalse(source.PendingStart.IsSet);
+            Assert.IsFalse(source.PendingStop.IsSet);
 
-            // Update emote intent with different emote
-            emoteIntent.EmoteId = emoteUrn2;
-            world.Set(entity, emoteIntent);
+            // Act: simulate the scene world consuming the events, then run more frames with no new events.
+            emoteCommand.IsDirty = false;
+            sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommand);
+            system.Update(0);
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
-
-            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            // Assert: no per-frame re-dirty (this was the duplicate-start-appends bug).
+            Assert.IsFalse(sceneWorld.Get<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity).IsDirty);
         }
 
         [Test]
-        public void StopPropagationWithoutPlayerCRDTEntity()
+        public void PropagateStopReasonAndClearPlayingSnapshot()
         {
-            Assert.IsFalse(world.Has<AvatarEmoteCommandComponent>(entity));
-            Assert.IsFalse(sceneWorld.Has<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity));
-
-            // Add emote intent
-            var emoteIntent = new CharacterEmoteIntent
-                { EmoteId = emoteUrn1 };
-
-            world.Add(entity, emoteIntent);
-
+            // Arrange: a start already transferred and consumed, then a natural finish is recorded.
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(entity);
+            emoteComponent.PendingStart = new EmoteStartEvent { Urn = emoteUrn1, Loop = false, IsSet = true };
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
+            AvatarEmoteCommandComponent emoteCommand = sceneWorld.Get<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity);
+            emoteCommand.IsDirty = false;
+            emoteCommand.StartEvent = default(EmoteStartEvent);
+            sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommand);
 
-            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            emoteComponent = ref world.Get<CharacterEmoteComponent>(entity);
+            emoteComponent.PendingStop = new EmoteStopEvent { Urn = emoteUrn1, Loop = false, Reason = EmoteState.EsFinished, IsSet = true };
 
-            // Update emote intent with different emote + remove PlayerCRDTEntity
-            emoteIntent.EmoteId = emoteUrn2;
-            world.Set(entity, emoteIntent);
-            world.Remove<PlayerCRDTEntity>(entity);
+            // Act
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
-
-            Assert.AreNotEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
-            Assert.AreNotEqual(emoteStorage.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+            // Assert
+            emoteCommand = sceneWorld.Get<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity);
+            Assert.IsTrue(emoteCommand.IsDirty);
+            Assert.IsTrue(emoteCommand.StopEvent.IsSet);
+            Assert.AreEqual(EmoteState.EsFinished, emoteCommand.StopEvent.Reason);
+            Assert.AreEqual(emoteUrn1, emoteCommand.StopEvent.Urn);
+            Assert.IsFalse(emoteCommand.StartEvent.IsSet);
+            Assert.IsFalse(emoteCommand.IsPlaying);
         }
 
-        private class FakeEmoteStorage : IEmoteStorage
+        [Test]
+        public void TransferStopAndStartTogetherOnSupersede()
         {
-            internal readonly Dictionary<URN, IEmote> emotes = new ();
+            // Arrange: a new emote superseded a playing one in the same frame.
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(entity);
+            emoteComponent.PendingStop = new EmoteStopEvent { Urn = emoteUrn1, Loop = false, Reason = EmoteState.EsInterrupted, IsSet = true };
+            emoteComponent.PendingStart = new EmoteStartEvent { Urn = emoteUrn2, Loop = false, IsSet = true };
 
-            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
+            // Act
+            system.Update(0);
 
-            public bool TryGetElement(URN urn, out IEmote element)
+            // Assert: both events present, snapshot reflects the new emote.
+            AvatarEmoteCommandComponent emoteCommand = sceneWorld.Get<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity);
+            Assert.IsTrue(emoteCommand.StopEvent.IsSet);
+            Assert.AreEqual(emoteUrn1, emoteCommand.StopEvent.Urn);
+            Assert.AreEqual(EmoteState.EsInterrupted, emoteCommand.StopEvent.Reason);
+            Assert.IsTrue(emoteCommand.StartEvent.IsSet);
+            Assert.AreEqual(emoteUrn2, emoteCommand.StartEvent.Urn);
+            Assert.AreEqual(emoteUrn2, emoteCommand.PlayingEmote);
+            Assert.IsTrue(emoteCommand.IsPlaying);
+        }
+
+        [Test]
+        public void DropEventsWhenNotAssignedToScene()
+        {
+            // Arrange: a player entity that is not assigned to any scene.
+            var unassigned = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1);
+            var emoteComponent = new CharacterEmoteComponent
             {
-                if (!emotes.TryGetValue(urn, out element)) return false;
-                return true;
-            }
+                PendingStart = new EmoteStartEvent { Urn = emoteUrn1, Loop = false, IsSet = true },
+                PendingStop = new EmoteStopEvent { Urn = emoteUrn2, Loop = false, Reason = EmoteState.EsInterrupted, IsSet = true },
+            };
 
-            public void Set(URN urn, IEmote element)
-            {
-                throw new NotImplementedException();
-            }
+            Entity unassignedEntity = world.Create(unassigned, emoteComponent);
 
-            public IEmote GetOrAddByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
-                throw new NotImplementedException();
+            // Act
+            system.Update(0);
 
-            public void Unload(IPerformanceBudget frameTimeBudget)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation)
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
-                throw new NotImplementedException();
-
-            public int GetOwnedNftCount(URN nftUrn)
-            {
-                return 1;
-            }
-
-            public void ClearOwnedNftRegistry()
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
-            {
-                throw new NotImplementedException();
-            }
-
-            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
-
-            public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
-                throw new NotImplementedException();
+            // Assert: the events are dropped so they never go stale.
+            CharacterEmoteComponent source = world.Get<CharacterEmoteComponent>(unassignedEntity);
+            Assert.IsFalse(source.PendingStart.IsSet);
+            Assert.IsFalse(source.PendingStop.IsSet);
         }
     }
 }

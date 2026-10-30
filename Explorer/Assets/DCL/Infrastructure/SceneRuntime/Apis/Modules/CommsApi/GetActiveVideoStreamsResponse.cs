@@ -13,11 +13,11 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private static VideoTrackSourceType From(TrackSource trackSource) =>
             trackSource switch
             {
-                TrackSource.SourceUnknown => VideoTrackSourceType.VTST_UNKNOWN,
-                TrackSource.SourceCamera => VideoTrackSourceType.VTST_CAMERA,
-                TrackSource.SourceMicrophone => VideoTrackSourceType.VTST_UNKNOWN,
-                TrackSource.SourceScreenshare => VideoTrackSourceType.VTST_SCREEN_SHARE,
-                TrackSource.SourceScreenshareAudio => VideoTrackSourceType.VTST_SCREEN_SHARE,
+                TrackSource.SourceUnknown => VideoTrackSourceType.VtstUnknown,
+                TrackSource.SourceCamera => VideoTrackSourceType.VtstCamera,
+                TrackSource.SourceMicrophone => VideoTrackSourceType.VtstUnknown,
+                TrackSource.SourceScreenshare => VideoTrackSourceType.VtstScreenShare,
+                TrackSource.SourceScreenshareAudio => VideoTrackSourceType.VtstScreenShare,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -64,9 +64,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         public enum VideoTrackSourceType
         {
-            VTST_UNKNOWN = 0,
-            VTST_CAMERA = 1,
-            VTST_SCREEN_SHARE = 2,
+            VtstUnknown = 0,
+            VtstCamera = 1,
+            VtstScreenShare = 2,
         }
     }
 }

@@ -64,8 +64,8 @@ namespace MVC
                     persistant.Blur();
 
             return new PopupPushInfo(
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, currentMaxOrderInLayer),
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, currentMaxOrderInLayer - 1),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer - 1),
                     popupStack.Count >= 2 ? popupStack[^2].controller : null,
                     onClose);
         }
@@ -85,7 +85,7 @@ namespace MVC
                 if(persistentController.State == ControllerState.ViewFocused)
                     persistentController.Blur();
 
-            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 0), onClose);
+            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), onClose);
         }
 
         public void PopFullscreen(IController? controller)
@@ -93,22 +93,22 @@ namespace MVC
             if (controller == null) return;
 
             TryGracefulClose(controller);
+            TryPopCloseable(controller);
+
+            // A controller replaced by another fullscreen one is torn down asynchronously; its late pop must not unregister the successor
+            if (fullscreenController != controller) return;
 
             foreach (IController persistentController in persistentStack)
                 persistentController.Focus();
 
             fullscreenController = null;
-
-            if (!controller.CanBeClosedByEscape) return;
-
-            TryPopCloseable(controller);
         }
 
         public PersistentPushInfo PushPersistent(IController controller)
         {
             persistentStack.Add(controller);
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
-            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.PERSISTENT, -20));
+            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
         }
 
         public void RemovePersistent(IController controller)
@@ -121,7 +121,7 @@ namespace MVC
         {
             overlayController = controller;
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
-            return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.OVERLAY, 1));
+            return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 1));
         }
 
         private void TryGracefulClose(IController controller)
@@ -129,8 +129,10 @@ namespace MVC
             for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
-                    controllersClosures[i].closer.TrySetResult();
+                    // Completing the closure can re-enter this method synchronously (a view hiding without an animation), so the entry goes out first
+                    UniTaskCompletionSource closer = controllersClosures[i].closer;
                     controllersClosures.RemoveAt(i);
+                    closer.TrySetResult();
                     break;
                 }
         }
@@ -171,7 +173,7 @@ namespace MVC
             (IController controller, int orderInLayer) topMostPopup = TopMostPopup;
 
             return new PopupPopInfo(
-                new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
+                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
                 topMostPopup.controller);
         }
 
@@ -190,8 +192,6 @@ namespace MVC
 
         private void TryPopCloseable(IController controller)
         {
-            if (!controller.CanBeClosedByEscape) return;
-
             for (var i = 0; i < closeableStack.Count; i++)
                 if (closeableStack[i].controller == controller)
                 {

@@ -4,7 +4,6 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace CrdtEcsBridge.UpdateGate
@@ -46,7 +45,7 @@ namespace CrdtEcsBridge.UpdateGate
         public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _)
         {
             // Let systems run in the remaining of the current frame
-            if (Time.frameCount < keepOpenFrame)
+            if (UnityEngine.Time.frameCount < keepOpenFrame)
                 return false;
 
             return !openGroups.Contains(systemGroupType);
@@ -58,7 +57,7 @@ namespace CrdtEcsBridge.UpdateGate
                 return;
 
             // Let systems run in the remaining of the current frame
-            if (Time.frameCount < keepOpenFrame)
+            if (UnityEngine.Time.frameCount < keepOpenFrame)
                 return;
 
             // Close only at the end of the full frame pass

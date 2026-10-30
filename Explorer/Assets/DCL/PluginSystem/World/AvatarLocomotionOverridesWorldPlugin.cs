@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
@@ -22,7 +21,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in PersistentEntities persistentEntities,
+            in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {

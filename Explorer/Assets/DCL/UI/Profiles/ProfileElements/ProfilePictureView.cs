@@ -70,7 +70,7 @@ namespace DCL.UI.ProfileElements
 
             switch (model.ThumbnailState)
             {
-                case ProfileThumbnailViewModel.State.LOADING:
+                case ProfileThumbnailViewModel.State.Loading:
                     if (model.Sprite != null)
                     {
                         thumbnailImageView.SetImage(model.Sprite, model.FitAndCenterImage);
@@ -83,13 +83,13 @@ namespace DCL.UI.ProfileElements
                         thumbnailImageView.Alpha = 0f;
                     }
                     break;
-                case ProfileThumbnailViewModel.State.FALLBACK:
-                case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
+                case ProfileThumbnailViewModel.State.Fallback:
+                case ProfileThumbnailViewModel.State.LoadedFromCache:
                     thumbnailImageView.SetImage(model.Sprite!, model.FitAndCenterImage);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
-                case ProfileThumbnailViewModel.State.LOADED_REMOTELY:
+                case ProfileThumbnailViewModel.State.LoadedRemotely:
                     SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken, model.FitAndCenterImage).Forget();
                     break;
                 default:

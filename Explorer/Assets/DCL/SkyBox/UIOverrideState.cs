@@ -14,7 +14,7 @@ namespace DCL.SkyBox
             this.transition = transition;
         }
 
-        // The logic of this behavior is processed at SkyboxMenuController
+        // The logic of this behavior is processed at SkyboxTimePresenter
         public bool Applies() =>
             skyboxSettings is { IsUIControlled: true };
 

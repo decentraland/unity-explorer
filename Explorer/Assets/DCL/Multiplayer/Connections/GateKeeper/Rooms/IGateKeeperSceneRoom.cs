@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using ECS;
 using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
-    public interface IGateKeeperSceneRoom : IActivatableConnectiveRoom
+    public interface IGateKeeperSceneRoom : IActivatableConnectiveRoom, ISceneRoomStatus
     {
         /// <summary>
         /// This event is triggered when the current scene room is successfully connected.
@@ -37,12 +38,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public event Action? CurrentSceneRoomConnected;
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
-            public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input());
+            public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input(), false);
 
             public bool Activated => true;
 
             public bool IsSceneConnected(string? sceneId) =>
                 false;
+
+            public bool IsSceneRoomSettled(string sceneId) =>
+                true;
 
             public UniTask ActivateAsync() =>
                 UniTask.CompletedTask;

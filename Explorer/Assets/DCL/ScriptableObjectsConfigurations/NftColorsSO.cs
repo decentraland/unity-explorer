@@ -6,11 +6,14 @@ namespace DCL.Backpack
     [CreateAssetMenu(fileName = "NFTColors", menuName = "DCL/Backpack/NFT Colors")]
     public class NFTColorsSO : ScriptableObject
     {
-        [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors;
+        [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors = null!;
         [SerializeField] private Color defaultColor;
 
-        public Color GetColor(string rarity)
+        public Color GetColor(string? rarity)
         {
+            if (string.IsNullOrEmpty(rarity))
+                return defaultColor;
+
             foreach (SerializableKeyValuePair<string, Color> color in nftColors)
             {
                 if (color.key == rarity)

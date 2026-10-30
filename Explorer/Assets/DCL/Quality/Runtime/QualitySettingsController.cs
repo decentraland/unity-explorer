@@ -3,7 +3,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using System;
 using DCL.Prefs;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
-using DCL.Settings.Utils;
 using DCL.SpringBones;
 using DCL.Utilities;
 using ECS.Prioritization;

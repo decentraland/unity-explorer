@@ -28,7 +28,6 @@ namespace Utility.Primitives
             vertices[6] = new Vector3(-halfSize.x, halfSize.y, 0);
             vertices[7] = new Vector3(-halfSize.x, -halfSize.y, 0);
 
-            Vector2[] uvs = PrimitivesBuffersPool.UVS.Rent(VERTICES_NUM);
             defaultUVs = new Vector2[VERTICES_NUM];
 
             defaultUVs[0] = new Vector2(0f, 0f);
@@ -85,10 +84,7 @@ namespace Utility.Primitives
 
         public static void UpdateMesh(ref Mesh mesh, RepeatedField<float> planeUvs)
         {
-            if (planeUvs is { Count: > 0 })
-                mesh.SetUVs(0, PrimitivesUtility.FloatArrayToV2List(planeUvs, mesh.uv), 0, VERTICES_NUM);
-            else
-                mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
+            PrimitivesUtility.ApplyUVs(mesh, planeUvs, defaultUVs, VERTICES_NUM);
         }
     }
 }

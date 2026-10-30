@@ -115,26 +115,26 @@ namespace DCL.VoiceChat
         {
             cts = cts.SafeRestart();
             DisableAllSections();
-            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL) return;
+            if (status is VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatEndingCall) return;
 
             Web3Address wallet = new Web3Address(walletId);
             switch (status)
             {
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                case VoiceChatStatus.VoiceChatInCall:
                     ConnectingView.gameObject.SetActive(true);
                     ConnectingView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     InCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
+                case VoiceChatStatus.VoiceChatReceivedCall:
                     IncomingCallView.SetActive(true);
                     IncomingCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
+                case VoiceChatStatus.VoiceChatStartedCall:
                     OutgoingCallView.gameObject.SetActive(true);
                     OutgoingCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_BUSY:
-                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                case VoiceChatStatus.VoiceChatBusy:
+                case VoiceChatStatus.VoiceChatGenericError:
                     ErrorView.SetActive(true);
                     ErrorView.StartErrorPanelDisableFlow();
                     break;

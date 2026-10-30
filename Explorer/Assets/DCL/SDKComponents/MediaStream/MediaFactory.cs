@@ -14,7 +14,6 @@ using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using LiveKit.Rooms;
-using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -34,37 +33,48 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneData sceneData;
         private readonly IRoom streamingRoom;
+
+        // Lets LivekitPlayer synchronously detect that the room is stopping (realm change) before the FFI
+        // teardown invalidates track handles. A delegate because this assembly (ECS.Unity) cannot
+        // reference the connective room types without an asmdef cycle; MediaFactoryBuilder supplies it.
+        private readonly Func<bool> streamingRoomRunning;
+        private readonly AvatarPlaceHolderTextureSource? placeholderSource;
+        private readonly SlideTextureCache slideCache;
+        private readonly Material compositorMaterial;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
         private readonly World world;
         private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IUrlResolverService urlResolverService;
+        private readonly IUrlResolverService presentationUrlResolver;
 
-        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
+        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource,
+            SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
+            this.streamingRoomRunning = streamingRoomRunning;
+            this.placeholderSource = placeholderSource;
+            this.slideCache = slideCache;
+            this.compositorMaterial = compositorMaterial;
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
             this.world = world;
-            this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
 
-            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
-                new UrlResolverService(webRequestController),
-                analyticsController);
+            presentationUrlResolver = new UrlResolverService(webRequestController);
+            urlResolverService = new UrlResolverServiceAnalyticsDecorator(presentationUrlResolver, analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -166,29 +176,33 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             var address = MediaAddress.New(url);
-            MediaPlayerComponent component;
 
-            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
-            {
-                component = cachedComponent;
-                component.Cts = new CancellationTokenSource();
-            }
-            else
-            {
-                MultiMediaPlayer player = address.Match(
-                    (streamingRoom, mediaPlayerPool),
-                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
-                );
+            // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
+            MultiMediaPlayer player = address.Match(
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource, slideCache, compositorMaterial, presentationUrlResolver),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromUrlMediaPlayer(new UrlMediaPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource, ctx.slideCache, ctx.compositorMaterial,
+                    new PresentationUrlPlayer(ctx.mediaPlayerPool, ctx.presentationUrlResolver)))
+            );
 
-                component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
-                {
-                    MediaAddress = address,
-                    LastPropagatedVideoState = VideoState.VsPaused,
-                    LastPropagatedVideoTime = 0,
-                    Cts = new CancellationTokenSource(),
-                    OpenMediaPromise = new OpenMediaPromise(),
-                };
+            var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+            {
+                MediaAddress = address,
+                LastPropagatedVideoState = VideoState.VsPaused,
+                LastPropagatedVideoTime = 0,
+                Cts = new CancellationTokenSource(),
+                OpenMediaPromise = new OpenMediaPromise(),
+            };
+
+            // Seed from the cached resolved URL so this player skips re-resolution.
+            var seededFromCache = false;
+
+            if (!address.IsLivekitAddress(out _) && assetPreLoadCache.TryGetVideoTemplate(url, out VideoTemplateData template))
+            {
+                component.OpenMediaPromise.SeedResolved(template);
+                component.IsLiveStream = template.Resolved.IsLiveStream;
+                component.ResolvedUrlExpiresAt = template.Resolved.ExpiresAtRealtimeSinceStartup;
+                seededFromCache = true;
             }
 
             component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
@@ -197,7 +211,7 @@ namespace DCL.SDKComponents.MediaStream
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
-            if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
+            if (!seededFromCache && component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, urlResolverService).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);

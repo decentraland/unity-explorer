@@ -5,7 +5,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
-using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Settings;
@@ -13,7 +12,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -55,7 +53,13 @@ namespace DCL.Roads.Systems
         {
             if (partitionComponent.OutOfRange) return;
 
-            if (sceneLoadingState.PromiseCreated) return;
+            if (sceneLoadingState.PromiseCreated)
+            {
+                // Road already instantiated: release any readiness report a later teleport enqueued for this
+                // parcel (only this system resolves it), otherwise the loading screen times out (#8880).
+                SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+                return;
+            }
 
             if (partitionComponent.IsBehind) return;
 

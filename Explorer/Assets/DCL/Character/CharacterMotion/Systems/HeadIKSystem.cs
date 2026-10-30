@@ -83,7 +83,7 @@ namespace DCL.CharacterMotion.Systems
 
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HeadSync) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
                 UpdateRemoteIKQuery(World, t, playerTransform.Position);
         }
 
@@ -92,7 +92,8 @@ namespace DCL.CharacterMotion.Systems
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            bool isEnabled = emoteComponent.CurrentEmoteReference == null && debugHeadIKIsEnabled && headIK.IsEnabled;
+            // Over the figure the pointer is already on the face, and a drag spins the body under it
+            bool isEnabled = emoteComponent.CurrentEmoteReference == null && debugHeadIKIsEnabled && headIK.IsEnabled && !previewComponent.IsHovered;
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             if (!isEnabled) return;
@@ -170,7 +171,7 @@ namespace DCL.CharacterMotion.Systems
         {
             // Check the upper body layer animator state to detect masked emotes.
             // The component lives in scene worlds (not global), so we check the animator directly.
-            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(avatarBase.UpperBodyLayerIndex);
             bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             bool pitchEnabled = debugHeadIKIsEnabled &&

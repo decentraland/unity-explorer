@@ -1,5 +1,4 @@
 using DCL.Profiles;
-using DCL.UI.ConfirmationDialog.Opener;
 using System;
 using UnityEngine;
 
@@ -11,12 +10,12 @@ namespace DCL.UI.Controls.Configs
 
         public enum FriendshipStatus
         {
-            NONE,
-            FRIEND,
-            REQUEST_SENT,
-            REQUEST_RECEIVED,
-            BLOCKED,
-            DISABLED,
+            None,
+            Friend,
+            RequestSent,
+            RequestReceived,
+            Blocked,
+            Disabled,
         }
 
         internal Profile.CompactInfo userData;

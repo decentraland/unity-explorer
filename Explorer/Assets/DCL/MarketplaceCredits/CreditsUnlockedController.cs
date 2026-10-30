@@ -8,7 +8,7 @@ namespace DCL.MarketplaceCredits
     {
         private const int CREDITS_UNLOCKED_DURATION_MS = 5000;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public CreditsUnlockedController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 

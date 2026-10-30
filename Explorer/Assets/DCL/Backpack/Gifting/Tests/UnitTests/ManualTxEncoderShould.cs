@@ -1,8 +1,8 @@
-﻿using System;
-using DCL.Backpack.Gifting.Utils;
+﻿using DCL.Backpack.Gifting.Utils;
 using NUnit.Framework;
+using System;
 
-namespace DCL.Backpack.Gifting.Tests
+namespace DCL.Backpack.Gifting.Tests.UnitTests
 {
     [TestFixture]
     public class ManualTxEncoderShould

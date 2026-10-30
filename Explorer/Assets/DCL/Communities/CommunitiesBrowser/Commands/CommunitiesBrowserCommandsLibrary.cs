@@ -15,7 +15,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
         public CommunitiesBrowserCommandsLibrary(
             ICommunityCallOrchestrator orchestrator,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IMVCManager mvcManager,
             ISpriteCache spriteCache,

@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.AvatarRendering.Wearables;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
@@ -34,7 +33,9 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         {
             if (promise.IsCancellationRequested(World))
             {
-                wearable.ThumbnailAssetResult = null;
+                // Stamp Cancelled only while the slot is in-flight; an initialized slot (e.g. Failed from a consumer timeout) already carries the terminal state
+                if (wearable.ThumbnailAssetResult is not { IsInitialized: true })
+                    wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.CancelledResult();
                 World.Destroy(entity);
                 return;
             }
@@ -51,7 +52,9 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         {
             if (promise.IsCancellationRequested(World))
             {
-                wearable.ThumbnailAssetResult = null;
+                // Stamp Cancelled only while the slot is in-flight; an initialized slot already carries the terminal state
+                if (wearable.ThumbnailAssetResult is not { IsInitialized: true })
+                    wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.CancelledResult();
                 World.Destroy(entity);
                 return;
             }

@@ -8,7 +8,7 @@ user-invocable: false
 
 ## Sources
 
-- `docs/network-synchronization.md` -- Entity sync via LiveKit rooms, host vs remote entity semantics
+- `docs/livekit-networking.md` -- Entity sync via LiveKit rooms, host vs remote entity semantics
 
 ---
 
@@ -28,7 +28,7 @@ user-invocable: false
 
 ## Host Entity Semantics (CRITICAL GOTCHA)
 
-> See `docs/network-synchronization.md`
+> See `docs/livekit-networking.md`
 
 **Host components (`PBIdentityData`, `PBAvatarEquippedData`, `PBAvatarBase`) are ALWAYS present** on the scene from startup through the entire lifecycle -- regardless of whether the host is inside or outside the scene.
 
@@ -100,7 +100,7 @@ Key API: `Register(walletId, entity, fromRoom)`, `Release(walletId, fromRoom)` (
 
 ### ThreadSafe Disconnect Buffering
 
-LiveKit participant callbacks fire off the main thread. `ThreadSafeRemoveIntentions` buffers disconnect events using `MutexSync`. Main thread consumes via `OwnedBunch<RemoveIntention>` which acquires the lock on construction, exposes the collection, and clears + releases on `Dispose()`.
+LiveKit participant callbacks fire off the main thread. `LiveKitRemoveIntentions` buffers disconnect events using `MutexSync`. Main thread consumes via `OwnedBunch<RemoveIntention>` which acquires the lock on construction, exposes the collection, and clears + releases on `Dispose()`.
 
 ### ProfileBroadcast
 

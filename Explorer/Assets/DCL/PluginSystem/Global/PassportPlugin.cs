@@ -12,15 +12,14 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -30,6 +29,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -44,24 +44,22 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly SelfProfile selfProfile;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly ObjectProxy<IFriendsService> friendsService;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
@@ -69,6 +67,9 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCommunitiesFeatureEnabled;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly UpscalingController upscalingController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -78,31 +79,32 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            SelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            ObjectProxy<IFriendsService> friendsService,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
             bool isCommunitiesFeatureEnabled,
-            ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController,
+            MarketplaceShopAPIClient marketplaceShopAPIClient,
+            UpscalingController upscalingController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -119,15 +121,13 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
-            this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
@@ -135,6 +135,9 @@ namespace DCL.PluginSystem.Global
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.upscalingController = upscalingController;
         }
 
         public void Dispose()
@@ -176,7 +179,6 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 remoteMetadata,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
                 friendsService,
                 friendOnlineStatusCache,
                 onlineUsersProvider,
@@ -187,15 +189,17 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 isCommunitiesFeatureEnabled,
-                profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
+                upscalingController,
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
                 imageControllerProvider,
-                nameColors
+                nameColors,
+                webRequestController,
+                marketplaceShopAPIClient
             );
 
             mvcManager.RegisterController(passportController);
@@ -204,22 +208,22 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus, mvcManager, web3IdentityCache));
         }
 
         [Serializable]
         public class PassportSettings : IDCLPluginSettings
         {
             [field: Space]
-            [field: SerializeField] public AssetReferenceGameObject PassportPrefab;
-            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera;
+            [field: SerializeField] public AssetReferenceGameObject PassportPrefab = null!;
+            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera = null!;
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
+            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab = null!;
             [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
             [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }

@@ -168,15 +168,35 @@ If no settings are required `NoExposedPluginSettings` can be used to prevent con
 - Created in a `static` manner
 - `StaticContainer` is the first class to create:
    - It produces common dependencies needed for other **containers** and [**plugins**](#plugins-system)
-   - It produces **world** plugins.
+   - It produces most **world** plugins (`ECSWorldPlugins`).
 - `DynamicWorldContainer`
    - is dependent on `StaticContainer`
    - produces **global** plugins
+   - produces the few **world** plugins whose dependencies (comms, multiplayer) only exist at this level (`WorldPlugins`); the bootstrap concatenates them with `StaticContainer.ECSWorldPlugins` for plugin initialization and scene-world creation
    - creates `RealmController` and `GlobalWorldFactory`
 - It's highly encouraged to break `Static` and `DynamicWorld` containers into smaller encapsulated pieces as the number of dependencies and contexts grows to prevent creating a god-class from the container.
    - e.g. `ComponentsContainer` and `DiagnosticsContainer` are created in the `Static` container and responsible for building up the logic of utilizing `Protobuf` and other components such as pooling, serialization/deserialization, and special disposal behavior:
       - Each substituent is responsible for creating and holding its own context so it naturally follows the Single Responsibility principle
    - it's possible to introduce as many containers as needed and reference them from `Static` or `DynamicWorldContainer`. All of them should live in the same assemblies: don't introduce an assembly per container, refer to [Assemblies Structure](directories-and-assemblies-structure.md) for more details.
+
+## Deferred dependencies — decoupling without ObjectProxy
+
+`ObjectProxy<T>` (an empty slot filled later via `SetObject`) is an **anti-pattern**: it hides the construction order from the type system, lets a later container mutate an earlier one, and turns missing-dependency bugs into runtime `Configured`/`StrictObject` failures. The codebase was swept of it; the only legitimate remaining instances model true runtime lifecycles that no construction order can fix:
+
+- `StaticContainer.MainPlayerAvatarBaseProxy` — the `AvatarBase` exists only after login/profile load and is released and re-set on avatar teardown.
+- `ExposedCameraData.CameraEntityProxy` — the camera `Entity` is created while the global world is built, after all containers.
+
+**Do not add new `ObjectProxy` instances.** Every other case is a dependency-management mistake with a known fix. Pick the recipe that matches the situation:
+
+1. **The service could exist earlier — create it earlier.** If a service is trapped inside a feature container that is constructed late (usually because the container also builds UI), split the services out into their own small container and create it before any consumer. Example: `FriendsServicesContainer` (cache, RPC service, connectivity tracker) is created right after the social RPC layer exists, long before the UI-owning `FriendsContainer`.
+
+2. **The feature may be disabled — make the dependency nullable or a null-object.** An unconfigured proxy used to double as a feature flag. Instead pass `T?` (`IFriendsService?` is `null` when the FRIENDS flag is off; consumers null-check exactly where they used to check `Configured`) or a null-object when call sites shouldn't branch (`NullUserBlockingCache`, `NullRoomHub`).
+
+3. **A scene-world plugin needs a service that only exists in `DynamicWorldContainer` — construct the plugin there.** Don't register the plugin in `StaticContainer` with an empty slot. `DynamicWorldContainer.WorldPlugins` holds the plugins that need comms/multiplayer services (`AvatarAttachPlugin`, `SceneMaskedEmotePlugin`, `RealmInfoPlugin`); the bootstrap concatenates them with `StaticContainer.ECSWorldPlugins`. Scene worlds are only ever created after `DynamicWorldContainer`, so the order is guaranteed.
+
+4. **The dependency is per-scene data — flow it through `ECSWorldInstanceSharedDependencies`.** A service resolved per scene world (e.g. `IRoomHub` for the media streaming room) belongs in the per-scene dependency struct, threaded from `SceneFactory`, not in a composition-time slot.
+
+5. **The object is created inside a plugin's async `InitializeAsync` (UI prefab loading) but consumed by earlier objects — invert it.** Create the long-lived object eagerly in a container and let the plugin *attach* the late, genuinely UI-bound parts. Example: `NavmapCommandBus` is created in `PlacesAndEventsContainer`; `ExplorePanelPlugin` attaches the navmap UI controllers to `NavmapCommandFactory` once the panel loads. Never have a plugin `SetObject`/assign back into a container — that inverts the dependency flow (see the plugins rule above).
 
 ## Singletons
 

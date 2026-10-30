@@ -8,10 +8,10 @@ namespace DCL.InWorldCamera
 {
     public enum RecordingState
     {
-        UNKNOWN = 0,
-        IDLE = 1,
-        CAPTURING = 2,
-        SCREENSHOT_READY = 3,
+        Unknown = 0,
+        Idle = 1,
+        Capturing = 2,
+        ScreenshotReady = 3,
     }
 
     public sealed class ScreenRecorder : IDisposable
@@ -23,7 +23,9 @@ namespace DCL.InWorldCamera
         // Relation of screen Canvas to the Scale of the "Rule of three" frame that is an area of the target screenshot. Used in calculation for upscaling screenshot to the target resolution.
         public const float FRAME_SCALE = 0.87f;
 
-        private readonly float targetAspectRatio;
+        // Aspect ratio of the saved screenshot, which the cropped frame keeps whatever the screen's own is.
+        public const float TARGET_ASPECT_RATIO = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
+
         private readonly RectTransform canvasRectTransform;
 
         private readonly Texture2D screenshot = new (TARGET_FRAME_WIDTH, TARGET_FRAME_HEIGHT, TextureFormat.RGB24, false);
@@ -32,13 +34,10 @@ namespace DCL.InWorldCamera
 
         private ScreenFrameData debugTargetScreenFrame;
 
-        public RecordingState State { get; private set; } = RecordingState.IDLE;
+        public RecordingState State { get; private set; } = RecordingState.Idle;
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
-            targetAspectRatio = (float)TARGET_FRAME_WIDTH / TARGET_FRAME_HEIGHT;
-            Debug.Assert(targetAspectRatio != 0, "Target aspect ratio cannot be zero");
-
             this.canvasRectTransform = canvasRectTransform;
         }
 
@@ -53,7 +52,7 @@ namespace DCL.InWorldCamera
 
         public IEnumerator CaptureScreenshot()
         {
-            State = RecordingState.CAPTURING;
+            State = RecordingState.Capturing;
 
             yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME; // for UI to appear on screenshot. Converting to UniTask didn't work :(
 
@@ -76,7 +75,7 @@ namespace DCL.InWorldCamera
             Object.Destroy(screenshotTexture);
             Object.Destroy(newScreenShot);
 
-            State = RecordingState.SCREENSHOT_READY;
+            State = RecordingState.ScreenshotReady;
         }
 
         private void UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
@@ -103,10 +102,10 @@ namespace DCL.InWorldCamera
 
         public Texture2D? GetScreenshotAndReset()
         {
-            if (State != RecordingState.SCREENSHOT_READY)
+            if (State != RecordingState.ScreenshotReady)
                 return null;
 
-            State = RecordingState.IDLE;
+            State = RecordingState.Idle;
             return screenshot;
         }
 
@@ -143,20 +142,21 @@ namespace DCL.InWorldCamera
                 ScreenHeight = canvasRectTransform.rect.height * canvasRectTransform.lossyScale.y,
             };
 
-            // Adjust current by smallest side
-            if (screenFrameData.ScreenAspectRatio > targetAspectRatio) // Height is the limiting dimension, so scaling width based on it
-            {
-                screenFrameData.FrameHeight = screenFrameData.ScreenHeight * FRAME_SCALE;
-                screenFrameData.FrameWidth = screenFrameData.FrameHeight * targetAspectRatio;
-            }
-            else // Width is the limiting dimension, so scaling height based on it
-            {
-                screenFrameData.FrameWidth = screenFrameData.ScreenWidth * FRAME_SCALE;
-                screenFrameData.FrameHeight = screenFrameData.FrameWidth / targetAspectRatio;
-            }
+            Vector2 frameSize = CalculateNormalizedFrameSize(screenFrameData.ScreenAspectRatio);
+            screenFrameData.FrameWidth = screenFrameData.ScreenWidth * frameSize.x;
+            screenFrameData.FrameHeight = screenFrameData.ScreenHeight * frameSize.y;
 
             return screenFrameData;
         }
+
+        /// <summary>
+        /// Size of the cropped frame as a fraction of the screen on each axis: a centred box of
+        /// <see cref="TARGET_ASPECT_RATIO" />, scaled by <see cref="FRAME_SCALE" /> on the limiting side.
+        /// </summary>
+        public static Vector2 CalculateNormalizedFrameSize(float screenAspectRatio) =>
+            screenAspectRatio > TARGET_ASPECT_RATIO
+                ? new Vector2(FRAME_SCALE * TARGET_ASPECT_RATIO / screenAspectRatio, FRAME_SCALE)
+                : new Vector2(FRAME_SCALE, FRAME_SCALE * screenAspectRatio / TARGET_ASPECT_RATIO);
 
         private static float CalculateScaleFactorToTargetSize(ScreenFrameData currentScreenFrameData)
         {

@@ -13,9 +13,9 @@ namespace DCL.UI.InputFieldFormatting
 
     public enum TextFormatMatchType
     {
-        URL,
-        SCENE,
-        WORLD,
-        NAME
+        Url,
+        Scene,
+        World,
+        Name
     }
 }

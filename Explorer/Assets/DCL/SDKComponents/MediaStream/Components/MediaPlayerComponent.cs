@@ -1,13 +1,24 @@
 using DCL.ECSComponents;
-using RenderHeads.Media.AVProVideo;
-using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Plugins.NativeAudioAnalysis;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <summary>
+    /// Tracks generic-URL retry state across MediaPlayerComponent re-creation. Lives on the entity
+    /// so backoff doesn't reset when UpdateMediaPlayerSystem destroys+recreates the player.
+    /// YouTube has its own re-resolve path (ResolvedUrlExpiresAt); this covers everything else.
+    /// </summary>
+    public struct MediaPlayerRetryState
+    {
+        public int Attempts;
+        public float NextRetryAt;
+    }
+
     public struct MediaPlayerComponent : IComponentWithAudioFrameBuffer
     {
         public const float DEFAULT_VOLUME = 1f;
@@ -21,9 +32,8 @@ namespace DCL.SDKComponents.MediaStream
         private float frozenTimestamp;
         private float lastPlayTimestamp;
         private bool isFrozen;
-        private bool isSpatial;
 
-        public readonly MultiMediaPlayer MediaPlayer;
+        public MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
 
         public MediaAddress MediaAddress;
@@ -141,17 +151,17 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output)
         {
-            AudioSource? AudioSource = MediaPlayer.AnyExposedAudioSource();
+            AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 
-            if (AudioSource == null)
+            if (audioSource == null)
             {
                 output = null;
                 return false;
             }
 
-            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(AudioSource, out output);
+            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
         }
 
         public void EnsureLastAudioFrameReadFilterIsRemoved() 

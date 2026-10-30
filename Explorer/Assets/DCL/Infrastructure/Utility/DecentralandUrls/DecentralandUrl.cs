@@ -153,5 +153,32 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Faqs = 92,
         Discord = 93,
+
+        LodGeneratorCDN = 94,
+
+        // v2 social-service endpoints (address-only payloads, profiles resolved client-side).
+        CommunitiesV2 = 95,
+        MembersV2 = 96,
+
+        Pulse = 100,
+
+        MarketplaceServer = 101,
+        ShopLink = 102,
+
+        ReferralProgress = 103,
+        IntercomTickets = 104,
+        IntercomTicketsOrigin = 105,
+
+        /// <summary>
+        ///     The chain RPC proxy, over https and without a chain path: the embedded-wallet path appends one per
+        ///     chain. Same host as <see cref="ApiRpc" />, which the external-wallet path speaks websocket to.
+        /// </summary>
+        ChainRpc = 106,
+
+        LodAssetBundlesCDN = 107,
+
+        SatelliteMapTiles = 108,
+
+        CastPresenterService = 109,
     }
 }

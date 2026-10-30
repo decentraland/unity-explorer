@@ -11,7 +11,6 @@ using DCL.SDKComponents.TextShape.Fonts.Settings;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
 using ECS.LifeCycle;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -68,14 +67,15 @@ namespace DCL.PluginSystem.World
             fontsStorage = (await assetsProvisioner.ProvideMainAssetAsync(settings.FontList, ct)).Value;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextShapeComponent>();
 
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
-            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer, sharedDependencies.SceneData);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
             VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer);
 
+            finalizeWorldSystems.Add(ReleaseTextShapeSystem.InjectToWorld(ref builder, fontsStorage, textMeshProPool));
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
         }
 

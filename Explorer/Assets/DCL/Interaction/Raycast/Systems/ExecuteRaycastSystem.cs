@@ -257,14 +257,27 @@ namespace DCL.Interaction.Raycast.Systems
         {
             foundEntity = null;
 
-            // 1. Player is always qualified
+            // 1. Main player: qualify when the SDK mask has CL_PLAYER or CL_MAIN_PLAYER.
             if (RaycastUtils.IsPlayer(collider))
             {
+                if ((collisionMask & PhysicsLayers.PLAYER_QUALIFYING_BITS) == 0)
+                    return false;
+
                 foundEntity = SpecialEntitiesID.PLAYER_ENTITY;
                 return true;
             }
 
-            // 2. If the collider is not a character, we need to check if it's in the collision mask
+            // 2. Remote avatar: qualify when the SDK mask has CL_PLAYER.
+            if (collider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            {
+                if ((collisionMask & ColliderLayer.ClPlayer) == 0)
+                    return false;
+
+                // No CRDT entity ID to report for a remote avatar in this scene.
+                return true;
+            }
+
+            // 3. If the collider is not a character, we need to check if it's in the collision mask
             if (!sceneData.IsPortableExperience())
             {
                 if (collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))

@@ -74,7 +74,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (pbCameraModeArea.IsDirty)
                 sdkEntityTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
 
-            if (cameraData.CameraMode == CameraMode.SDKCamera) return;
+            if (cameraData.CameraMode == CameraMode.SdkCamera) return;
 
             if (sdkEntityTriggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
@@ -119,18 +119,18 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (globalWorld.Has<InWorldCameraComponent>(cameraEntityProxy.Object))
                 globalWorld.Add(cameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false, TargetCameraMode = targetCameraMode});
 
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object);
 
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
 
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
         }
 
         internal void OnExitedCameraModeArea()
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object);
 
             camera.RemoveCameraInputLock();
 
@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
 
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
         }
 
         [Query]
