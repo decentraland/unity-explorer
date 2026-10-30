@@ -120,13 +120,17 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             }
 
             var resolution = new HideWearablesResolution(avatar.ForceRender);
-            WearableComponentsUtils.ExtractVisibleWearables(avatar.BodyShape, loaded, ref resolution);
 
-            if (resolution.VisibleWearables is { } visibleWearables)
-                for (var i = 0; i < byPointer.Count; i++)
-                    visibility.Add(IsVisible(byPointer, i, visibleWearables));
+            try
+            {
+                WearableComponentsUtils.ExtractVisibleWearables(avatar.BodyShape, loaded, ref resolution);
 
-            resolution.Release();
+                if (resolution.VisibleWearables is { } visibleWearables)
+                    for (var i = 0; i < byPointer.Count; i++)
+                        visibility.Add(IsVisible(byPointer, i, visibleWearables));
+            }
+            finally { resolution.Release(); }
+
             return true;
         }
 

@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly HashSet<URN> excludedFromUnloading = new (URNIgnoreCaseEqualityComparer.Default);
 
         private new readonly object lockObject = new ();
 
@@ -87,6 +88,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 if (!cacheKeysDictionary.Remove(urn, out LinkedListNode<(URN key, long lastUsedFrame)> node)) return;
 
                 listedCacheKeys.Remove(node);
+                excludedFromUnloading.Add(urn);
             }
         }
 
@@ -94,9 +96,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             lock (lockObject)
             {
-                foreach (URN urn in wearablesCache.Keys)
-                    if (urn.ToString().StartsWith(urnPrefix, StringComparison.OrdinalIgnoreCase) && !cacheKeysDictionary.ContainsKey(urn))
+                foreach (URN urn in excludedFromUnloading)
+                    if (urn.ToString().StartsWith(urnPrefix, StringComparison.OrdinalIgnoreCase))
                         cacheKeysDictionary[urn] = listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
+
+                excludedFromUnloading.RemoveWhere(cacheKeysDictionary.ContainsKey);
             }
         }
 

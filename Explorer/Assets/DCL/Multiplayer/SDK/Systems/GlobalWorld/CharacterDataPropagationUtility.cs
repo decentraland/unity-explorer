@@ -1,9 +1,7 @@
 ﻿using Arch.Core;
-using CrdtEcsBridge.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
-using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
@@ -17,14 +15,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         public CharacterDataPropagationUtility(IComponentPool<SDKProfile> componentPool)
         {
             profileSDKSubProductPool = componentPool;
-        }
-
-        public void PropagateGlobalPlayerToScenePlayer(World globalWorld, Entity globalPlayerEntity, ISceneFacade sceneFacade)
-        {
-            Entity targetEntity = sceneFacade.PersistentEntities.Player;
-
-            CopyProfileToSceneEntity(globalWorld.Get<Profile>(globalPlayerEntity), sceneFacade.EcsExecutor.World, targetEntity);
-            sceneFacade.EcsExecutor.World.Add(targetEntity, new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, globalPlayerEntity));
         }
 
         public void CopyProfileToSceneEntity(Profile profile, World sceneWorld, Entity sceneEntity)

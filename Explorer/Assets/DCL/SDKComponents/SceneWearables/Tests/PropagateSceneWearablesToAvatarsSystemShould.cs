@@ -90,6 +90,20 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
+        public void WaitWhileAScenePathIsUnresolved()
+        {
+            // Arrange
+            PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(CATALYST_WEARABLE, "models/hat.glb");
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsEmpty(GetOverride().Wearables);
+            Assert.IsTrue(pbAvatarShape.IsDirty);
+        }
+
+        [Test]
         public void KeepProfileWearablesWhenTheListIsEmpty()
         {
             // Arrange

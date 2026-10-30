@@ -53,20 +53,26 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         public override void Initialize()
         {
-            if (globalWorld.TryGet(localPlayerEntity, out Profile? profile))
-                Seed(profile!);
+            Profile profile = globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool exists);
+
+            if (exists)
+                Seed(profile);
         }
 
         protected override void Update(float t)
         {
-            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
+            Profile profile = globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool profileExists);
+
+            if (!profileExists)
                 return;
 
             // No SDKProfile means Initialize ran before the local profile existed.
             // A replaced Profile instance is caught even when its IsDirty is already reset.
-            if (!World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile))
-                Seed(profile!);
-            else if (profile!.IsDirty || !sdkProfile!.IsCopyOf(profile))
+            SDKProfile sdkProfile = World.TryGetRef<SDKProfile>(persistentEntities.Player, out bool seeded);
+
+            if (!seeded)
+                Seed(profile);
+            else if (profile.IsDirty || !sdkProfile.IsCopyOf(profile))
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
             if (!globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))

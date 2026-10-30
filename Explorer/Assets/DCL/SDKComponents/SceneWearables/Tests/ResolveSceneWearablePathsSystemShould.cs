@@ -262,5 +262,22 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             // Assert
             Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
         }
+
+        [Test]
+        public void KeepWearableListedByUrnAfterFinalize()
+        {
+            // Arrange
+            world.Create(new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true });
+            system.Update(0);
+            system.FinalizeComponents(world.Query(QueryDescription.Null));
+            world.Create(new PBAvatarShape { Wearables = { EXPECTED_URN }, IsDirty = true });
+            system.Update(0);
+
+            // Act
+            wearableStorage.Unload(unloadBudget);
+
+            // Assert
+            Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
+        }
     }
 }

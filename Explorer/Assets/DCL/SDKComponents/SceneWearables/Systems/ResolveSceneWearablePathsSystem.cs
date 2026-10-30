@@ -62,8 +62,13 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 {
                     if (!wearable.StartsWith("urn", StringComparison.OrdinalIgnoreCase))
                         Skip(wearables, i, "it is neither a URN nor a '.glb' path");
-                    else if (SceneWearableDTOFactory.IsSceneWearableUrn(wearable) && !IsSeededByThisScene(wearable))
-                        Skip(wearables, i, "it is not a wearable seeded by this scene");
+                    else if (SceneWearableDTOFactory.IsSceneWearableUrn(wearable))
+                    {
+                        if (IsSeededByThisScene(wearable))
+                            wearableStorage.ExcludeFromUnloading(wearable);
+                        else
+                            Skip(wearables, i, "it is not a wearable seeded by this scene");
+                    }
 
                     continue;
                 }
@@ -90,12 +95,8 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         private void Seed(URN urn, string path, string category, string hash)
         {
             if (!wearableStorage.TryGetElement(urn, out IWearable existing))
-            {
-                wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadFromLocalScene), qualifiedForUnloading: false);
-                return;
-            }
-
-            if (!existing.Model.Succeeded)
+                wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadFromLocalScene));
+            else if (!existing.Model.Succeeded)
                 wearableStorage.Set(urn, new Wearable(new StreamableLoadingResult<WearableDTO>(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadFromLocalScene))));
 
             wearableStorage.ExcludeFromUnloading(urn);

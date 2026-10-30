@@ -239,7 +239,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 return WearablePromise.Create(World,
                     WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender), partition);
 
-            // Keeps the DTOs of the replaced profile wearables loaded.
+            // Loads the DTOs of the replaced profile wearables.
             World.Create(new ProfileWearableDTOsRequest(), WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender, dtoOnly: true), partition));
 

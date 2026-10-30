@@ -6,6 +6,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
@@ -105,6 +106,9 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 return;
 
             if ((!player.IsDirty && !pbAvatarShape.IsDirty) || !globalWorld.IsAlive(player.GlobalEntity)) return;
+
+            // Waits until every '.glb' path is resolved to a URN.
+            if (HasScenePath(pbAvatarShape.Wearables)) return;
 
             ApplyOverride(entity, pbAvatarShape, player.GlobalEntity, bridgeEntity);
         }
@@ -217,6 +221,15 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             return true;
         }
 
+        private static bool HasScenePath(RepeatedField<string> wearables)
+        {
+            for (var i = 0; i < wearables.Count; i++)
+                if (SceneWearableDTOFactory.IsSceneWearablePath(wearables[i]))
+                    return true;
+
+            return false;
+        }
+
         private static bool OverridesAnything(PBAvatarShape pbAvatarShape) =>
             pbAvatarShape.HasBodyShape || pbAvatarShape.HasShowOnlyWearables || pbAvatarShape.Wearables.Count > 0
             || pbAvatarShape.SkinColor != null || pbAvatarShape.HairColor != null || pbAvatarShape.EyeColor != null;
@@ -228,8 +241,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         {
             public readonly Entity GlobalEntity;
 
-            // A left player's bridge entity outlives the leave until its deletion runs, and may overlap with the bridge entity
-            // of the player's re-entry: only the leave of the bridge entity that applied the override may drop it.
+            // Only the leave of the bridge entity that applied the override drops it.
             public readonly Entity BridgeEntity;
 
             public SceneWearablesApplied(Entity globalEntity, Entity bridgeEntity)

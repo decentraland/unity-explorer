@@ -139,7 +139,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         {
             if (!pbNametag.IsDirty) return;
 
-            // Still dirty after PropagatePlayerNametag: no such player is inside the scene, its arrival applies the plate.
+            // A player's plate is applied only through its PlayerSceneCRDTEntity.
             if (SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity))
             {
                 pbNametag.IsDirty = false;
@@ -207,8 +207,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         {
             public readonly Entity GlobalEntity;
 
-            // A left player's bridge entity outlives the leave until its deletion runs, and may overlap with the bridge entity
-            // of the player's re-entry: only the leave of the bridge entity that applied the plate may drop it.
+            // Only the leave of the bridge entity that applied the plate drops it.
             // Entity.Null for a scene-spawned avatar.
             public readonly Entity BridgeEntity;
 
