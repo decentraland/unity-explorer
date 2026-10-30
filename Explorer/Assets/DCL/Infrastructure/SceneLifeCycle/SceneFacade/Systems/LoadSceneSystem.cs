@@ -22,10 +22,10 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class LoadSceneSystem : LoadSystemBase<ISceneFacade, GetSceneFacadeIntention>
     {
         private readonly ISceneFactory sceneFactory;
-        private readonly LoadSceneSystemLogicBase loadSceneSystemLogic;
+        private readonly LoadSceneSystemLogic loadSceneSystemLogic;
 
         internal LoadSceneSystem(World world,
-            LoadSceneSystemLogicBase loadSceneSystemLogic,
+            LoadSceneSystemLogic loadSceneSystemLogic,
             ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache) : base(world, cache)
         {
             this.sceneFactory = sceneFactory;

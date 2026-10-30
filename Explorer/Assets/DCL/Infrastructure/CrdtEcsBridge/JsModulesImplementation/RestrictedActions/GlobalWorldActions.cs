@@ -34,18 +34,15 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly bool localSceneDevelopment;
-        private readonly bool useRemoteAssetBundles;
         private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldActions(World world, Entity playerEntity,
             bool localSceneDevelopment,
-            bool useRemoteAssetBundles,
             bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
@@ -112,7 +109,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             (URN Urn, bool IsLooping)? result = null;
 
-            bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
+            bool loadFromLocalScene = localSceneDevelopment ||
                                       (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
 
             if (loadFromLocalScene)
