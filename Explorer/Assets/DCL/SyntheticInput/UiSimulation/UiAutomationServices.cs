@@ -1,11 +1,13 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterCamera.Components;
+using DCL.SDKComponents.SceneUI.Components;
 using DCL.SyntheticInput.Core;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,10 +28,23 @@ namespace DCL.SyntheticInput.UiSimulation
         private const float ASSUMED_MIN_FPS = 15f;
         private const float GESTURE_TIMEOUT_GRACE_SEC = 5f;
 
+        // Frames the virtual mouse rests on the element before a device hover reports; the input module needs one
+        // frame to process the move.
+        private const int DEVICE_HOVER_FRAMES = 2;
+
         private static readonly QueryDescription CURSOR_QUERY = new QueryDescription().WithAll<CursorComponent>();
+
+        // A device hover ends by moving the virtual mouse here, where nothing raycasts.
+        private static readonly Vector2 OFF_SCREEN_POINT = new (-1f, -1f);
 
         private readonly World world;
         private readonly Entity playerEntity;
+
+        // The one parked hover; parkedChain holds the uGUI objects a semantic hover entered.
+        private readonly List<GameObject> parkedChain = new ();
+        private ParkedHoverKind parkedKind;
+        private string parkedAddress = string.Empty;
+        private UITransformComponent? parkedSdkSlot;
 
         // Resolved lazily: the cursor entity may not exist yet when the session is built.
         private Entity cursorEntity = Entity.Null;
@@ -42,6 +57,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
         public AutomationVirtualDevices Devices { get; }
 
+        /// <summary>The address the parked hover rests on, null when none is parked.</summary>
+        public string? HoveredAddress => parkedKind == ParkedHoverKind.None ? null : parkedAddress;
+
         public UiAutomationServices(World world, Entity playerEntity, EventSystem eventSystem, IScenesCache scenesCache)
         {
             this.world = world;
@@ -53,8 +71,129 @@ namespace DCL.SyntheticInput.UiSimulation
             Devices = new AutomationVirtualDevices();
         }
 
-        public void Dispose() =>
+        public void Dispose()
+        {
+            EndHover();
             Devices.Dispose();
+        }
+
+        /// <summary>
+        ///     Parks a hover on a scene UI element: the enter is delivered and drained, and the hover stays until
+        ///     <see cref="EndHover" />. Any hover parked before is ended first. Main thread only.
+        /// </summary>
+        public async UniTask<UiActionResult> HoverSdkAsync(UiElementAddress address, SdkUiElement element, bool force, CancellationToken ct)
+        {
+            string? endedHover = EndHover();
+            (UiActionResult result, bool enterSent) = await Simulator.HoverSdkEnterAsync(element, force, ct);
+            result.EndedHover = endedHover;
+
+            // An enter the scene has not consumed yet still reaches it later, so it is parked to be left.
+            if (enterSent)
+                Park(ParkedHoverKind.Sdk, address, element.Transform);
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Parks a hover on a client UI element, by synthesizing its enter events or, with
+        ///     <paramref name="device" />, by resting the virtual mouse on its center. Any hover parked before is ended
+        ///     first. Main thread only.
+        /// </summary>
+        public async UniTask<UiHoverOutcome> HoverUguiAsync(UiElementAddress address, GameObject target, bool force, bool device,
+            float timeoutSec, CancellationToken ct)
+        {
+            string? endedHover = EndHover();
+
+            if (!device)
+            {
+                UiActionResult semantic = Simulator.HoverUguiEnter(target, force, parkedChain);
+                semantic.EndedHover = endedHover;
+
+                if (semantic.Ok)
+                    Park(ParkedHoverKind.UguiSemantic, address, null);
+
+                return new UiHoverOutcome { Result = semantic };
+            }
+
+            var rectTransform = (RectTransform)target.transform;
+            Vector2 center = UiScreenGeometry.ScreenCenterOf(rectTransform);
+
+            // Read before the gesture, while the pixel still shows what the pointer is about to rest on.
+            string? cover = TryFindUiCoverAt(center, out string coverAtCenter) ? coverAtCenter : null;
+
+            UiGestureResult gesture = await RunGestureAsync(new UiDeviceGestureRequest
+            {
+                Kind = UiDeviceGestureKind.Hover,
+                From = center,
+                To = center,
+                DurationFrames = DEVICE_HOVER_FRAMES,
+            }, timeoutSec, ct);
+
+            Rect imageRect = UiScreenGeometry.ImageRectOf(rectTransform);
+
+            UiActionResult result = gesture.Ok
+                ? UiActionResult.Success(imageRect)
+                : UiActionResult.Failure(gesture.FailureReason ?? "the device hover failed", null, imageRect);
+
+            result.EndedHover = endedHover;
+
+            if (!gesture.Ok)
+            {
+                // The gesture may have moved the pointer before it failed, so it is moved where nothing stays hovered.
+                Devices.QueueMouseState(OFF_SCREEN_POINT);
+                return new UiHoverOutcome { Result = result, PointerOver = cover, ReportsPointerOver = true };
+            }
+
+            Park(ParkedHoverKind.UguiDevice, address, null);
+
+            if (cover == null)
+                result.Info = "no UI element is under the element's center: the virtual mouse rests over the world, so no UI received the hover";
+
+            return new UiHoverOutcome { Result = result, PointerOver = cover, ReportsPointerOver = true };
+        }
+
+        /// <summary>
+        ///     Delivers the leave of the parked hover, if any, and returns the address it was parked on. Synchronous,
+        ///     so every UI gesture can end the hover before it starts. Main thread only.
+        /// </summary>
+        public string? EndHover()
+        {
+            if (parkedKind == ParkedHoverKind.None)
+                return null;
+
+            string ended = parkedAddress;
+
+            switch (parkedKind)
+            {
+                case ParkedHoverKind.Sdk:
+                    if (parkedSdkSlot is { Transform: { panel: not null } })
+                        Simulator.SendSdkLeave(parkedSdkSlot.Transform, parkedSdkSlot);
+                    else
+                        ended += " (the element is gone; no leave was sent)";
+
+                    break;
+                case ParkedHoverKind.UguiSemantic:
+                    Simulator.HoverUguiLeave(parkedChain);
+                    break;
+                case ParkedHoverKind.UguiDevice:
+                    Devices.QueueMouseState(OFF_SCREEN_POINT);
+                    break;
+            }
+
+            parkedKind = ParkedHoverKind.None;
+            parkedAddress = string.Empty;
+            parkedSdkSlot = null;
+            parkedChain.Clear();
+
+            return ended;
+        }
+
+        private void Park(ParkedHoverKind kind, UiElementAddress address, UITransformComponent? sdkSlot)
+        {
+            parkedKind = kind;
+            parkedAddress = address.ToString();
+            parkedSdkSlot = sdkSlot;
+        }
 
         /// <summary>
         ///     Which UI covers a screen point (Unity screen coordinates): the client interface is checked first, then
@@ -150,8 +289,8 @@ namespace DCL.SyntheticInput.UiSimulation
         /// </summary>
         public async UniTask<SceneUiDragAttempt> DragSceneUiAsync(Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
         {
-            if (!SdkResolver.TryGetScenePanel(out IPanel? panel, out string? noPanel) || panel == null)
-                return SceneUiDragAttempt.NotApplicable(noPanel ?? "the current scene has no UI attached to a panel");
+            if (!SdkResolver.TryGetScenePanel(out IPanel? panel, out string? noPanel))
+                return SceneUiDragAttempt.NotApplicable(noPanel);
 
             if (panel.Pick(UiScreenGeometry.ImageToPanelPoint(panel, fromImagePoint)) == null)
                 return SceneUiDragAttempt.NotApplicable(
@@ -181,6 +320,27 @@ namespace DCL.SyntheticInput.UiSimulation
                 CursorState.LockedWithUi => nameof(CursorState.LockedWithUi),
                 _ => "unknown",
             };
+    }
+
+    internal enum ParkedHoverKind : byte
+    {
+        None,
+        Sdk,
+        UguiSemantic,
+        UguiDevice,
+    }
+
+    /// <summary>
+    ///     A uGUI hover's result. The device path also reports what covered the element's center before the pointer
+    ///     moved there, null where the world was under the pixel.
+    /// </summary>
+    public struct UiHoverOutcome
+    {
+        public UiActionResult Result;
+
+        public bool ReportsPointerOver;
+
+        public string? PointerOver;
     }
 
     /// <summary>Exactly one of <see cref="Result" /> and <see cref="SkipReason" /> is set.</summary>

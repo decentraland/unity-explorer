@@ -46,12 +46,14 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Error("dx and dy must not both be zero."));
 
             UiActionResult result;
+            string? endedHover;
 
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
+                endedHover = uiAutomation.EndHover();
                 result = uiAutomation.Simulator.ScrollSdk(element, delta);
             }
             else
@@ -59,8 +61,11 @@ namespace DCL.McpServer.Tools
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
+                endedHover = uiAutomation.EndHover();
                 result = uiAutomation.Simulator.ScrollUgui(target, delta, arguments.GetBool("force", false));
             }
+
+            result.EndedHover = endedHover;
 
             return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));
         }

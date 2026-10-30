@@ -23,7 +23,10 @@ namespace DCL.SyntheticInput.UiSimulation
         /// </summary>
         Drag,
 
-        /// <summary>Holds the pointer at <see cref="UiDeviceGestureRequest.To" /> for the duration.</summary>
+        /// <summary>
+        ///     Moves the pointer from <see cref="UiDeviceGestureRequest.From" /> to <see cref="UiDeviceGestureRequest.To" />
+        ///     over the duration, buttons up; equal points rest it there. The pointer stays after the gesture completes.
+        /// </summary>
         Hover,
 
         /// <summary>Presses and releases <see cref="UiDeviceGestureRequest.Key" />, held for the duration.</summary>

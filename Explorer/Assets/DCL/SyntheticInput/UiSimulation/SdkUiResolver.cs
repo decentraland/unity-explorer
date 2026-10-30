@@ -206,20 +206,41 @@ namespace DCL.SyntheticInput.UiSimulation
             return entries;
         }
 
+        /// <summary>The running current scene's state, whose tick number counts the scene's update loop.</summary>
+        public bool TryGetRunningSceneState([NotNullWhen(true)] out ISceneStateProvider? sceneState)
+        {
+            sceneState = null;
+
+            if (!TryGetRunningScene(out ISceneFacade? scene, out _))
+                return false;
+
+            sceneState = scene.SceneStateProvider;
+            return true;
+        }
+
         private bool TryGetRunningSceneWorld([NotNullWhen(true)] out World? world, [NotNullWhen(false)] out string? failure)
         {
             world = null;
-            failure = null;
 
-            ISceneFacade? scene = scenesCache.CurrentScene.Value;
+            if (!TryGetRunningScene(out ISceneFacade? scene, out failure))
+                return false;
+
+            world = scene.EcsExecutor.World;
+            return true;
+        }
+
+        private bool TryGetRunningScene([NotNullWhen(true)] out ISceneFacade? scene, [NotNullWhen(false)] out string? failure)
+        {
+            scene = scenesCache.CurrentScene.Value;
+            failure = null;
 
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {
+                scene = null;
                 failure = "no running current scene";
                 return false;
             }
 
-            world = scene.EcsExecutor.World;
             return true;
         }
     }
