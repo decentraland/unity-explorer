@@ -91,6 +91,10 @@ const MASTER_CLOCK_INTERVAL: Duration = Duration::from_millis(16);
 /// than its freshness window (250 ms) as a stalled consumer.
 const AUDIO_FEEDBACK_INTERVAL: Duration = Duration::from_millis(50);
 
+/// How long a failed handshake waits for the helper to exit on its own, so
+/// the init error carries the helper's real exit status.
+const HELPER_EXIT_GRACE: Duration = Duration::from_millis(250);
+
 /// Child poll cadence of the recovery worker.
 const MONITOR_INTERVAL: Duration = Duration::from_millis(200);
 
@@ -390,11 +394,19 @@ fn start_session(
     let conn = match conn {
         Ok(conn) => conn,
         Err(e) => {
+            // read the status before kill(): a killed helper reports exit
+            // code 1, indistinguishable from main() returning an error
+            let status = match child.as_mut().map(|c| c.wait_timeout(HELPER_EXIT_GRACE)) {
+                None => String::new(),
+                Some(Ok(Some(status))) => format!(" (helper {status})"),
+                Some(Ok(None)) => " (helper still running, killed)".to_owned(),
+                Some(Err(err)) => format!(" (helper status unknown: {err:#})"),
+            };
             if let Some(mut child) = child {
                 child.kill();
                 child.wait();
             }
-            return Err(format!("failed to start uuav helper: {e:#}"));
+            return Err(format!("failed to start uuav helper: {e:#}{status}"));
         }
     };
     let Some(child) = child else {
