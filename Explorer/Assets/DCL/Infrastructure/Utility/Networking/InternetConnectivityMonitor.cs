@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Utility.Networking
 {
     /// <summary>
-    ///     Internet connectivity confirmed by a TCP connect to a highly-available host and refreshed when read, because no
+    ///     Internet connectivity confirmed by a TCP connect to a highly-available host, because no
     ///     OS-level signal works on desktop: Unity's <c>Application.internetReachability</c> always reports LAN there and the
     ///     Mono BCL stubs <c>NetworkInterface.GetIsNetworkAvailable</c> to <c>true</c>.
     /// </summary>
@@ -32,18 +32,8 @@ namespace Utility.Networking
         private volatile bool isOnline = true;
         private bool disposed;
 
-        /// <summary>The last confirmed state, online until proven otherwise; a read past the TTL starts the probe the next read sees.</summary>
-        public bool IsOnline
-        {
-            get
-            {
-                RefreshIfStale();
-                return isOnline;
-            }
-        }
-
-        /// <summary>The probe in flight, started here when the result is stale, or the current state right away.</summary>
-        public Task<bool> IsOnlineAsync => RefreshIfStale() ?? (isOnline ? ONLINE : OFFLINE);
+        /// <summary>The last confirmed state, online until proven otherwise.</summary>
+        public bool IsOnline => isOnline;
 
         public InternetConnectivityMonitor(string probeHost, int probePort = HTTPS_PORT, TimeSpan? probeTimeout = null, TimeSpan? resultTtl = null)
         {
@@ -60,7 +50,8 @@ namespace Utility.Networking
             lifetimeCts.SafeCancelAndDispose();
         }
 
-        private Task<bool>? RefreshIfStale()
+        /// <summary>The probe in flight, shared by concurrent callers, or the cached state while it is younger than the TTL.</summary>
+        public Task<bool> RefreshIfStaleAsync()
         {
             lock (sync)
             {
@@ -68,7 +59,7 @@ namespace Utility.Networking
                     return probeInFlight;
 
                 if (disposed || DateTime.UtcNow - lastProbeUtc < resultTtl)
-                    return null;
+                    return isOnline ? ONLINE : OFFLINE;
 
                 // Task.Run never returns a completed task, so this assignment lands before RunProbeAsync clears it
                 probeInFlight = RunProbeAsync();

@@ -35,7 +35,7 @@ namespace Utility.Tests
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, StartListener(), SHORT_TIMEOUT);
 
             // Act
-            bool online = await monitor.IsOnlineAsync;
+            bool online = await monitor.RefreshIfStaleAsync();
 
             // Assert
             Assert.IsTrue(online);
@@ -52,7 +52,7 @@ namespace Utility.Tests
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, closedPort, SHORT_TIMEOUT);
 
             // Act
-            bool online = await monitor.IsOnlineAsync;
+            bool online = await monitor.RefreshIfStaleAsync();
 
             // Assert
             Assert.IsFalse(online);
@@ -64,7 +64,7 @@ namespace Utility.Tests
         {
             using var monitor = new InternetConnectivityMonitor(UNRESOLVABLE_HOST, InternetConnectivityMonitor.HTTPS_PORT, SHORT_TIMEOUT);
 
-            Assert.IsFalse(await monitor.IsOnlineAsync);
+            Assert.IsFalse(await monitor.RefreshIfStaleAsync());
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace Utility.Tests
         {
             using var monitor = new InternetConnectivityMonitor(UNROUTABLE_HOST, InternetConnectivityMonitor.HTTPS_PORT, TimeSpan.FromMilliseconds(200));
 
-            Assert.IsFalse(await monitor.IsOnlineAsync);
+            Assert.IsFalse(await monitor.RefreshIfStaleAsync());
         }
 
         [Test]
@@ -82,8 +82,8 @@ namespace Utility.Tests
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, StartListener(), SHORT_TIMEOUT, LONG_TTL);
 
             // Act
-            Task<bool> first = monitor.IsOnlineAsync;
-            Task<bool> second = monitor.IsOnlineAsync;
+            Task<bool> first = monitor.RefreshIfStaleAsync();
+            Task<bool> second = monitor.RefreshIfStaleAsync();
             await first;
 
             // Assert
@@ -96,11 +96,11 @@ namespace Utility.Tests
         {
             // Arrange
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, StartListener(), SHORT_TIMEOUT, LONG_TTL);
-            await monitor.IsOnlineAsync;
+            await monitor.RefreshIfStaleAsync();
             AcceptedConnections();
 
             // Act
-            Task<bool> cached = monitor.IsOnlineAsync;
+            Task<bool> cached = monitor.RefreshIfStaleAsync();
 
             // Assert
             Assert.IsTrue(cached.IsCompleted);
@@ -115,8 +115,8 @@ namespace Utility.Tests
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, StartListener(), SHORT_TIMEOUT, TimeSpan.Zero);
 
             // Act
-            await monitor.IsOnlineAsync;
-            await monitor.IsOnlineAsync;
+            await monitor.RefreshIfStaleAsync();
+            await monitor.RefreshIfStaleAsync();
 
             // Assert
             Assert.AreEqual(2, AcceptedConnections());
@@ -129,31 +129,32 @@ namespace Utility.Tests
             int port = StartListener();
             listener!.Stop();
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, port, SHORT_TIMEOUT, TimeSpan.Zero);
-            Assume.That(await monitor.IsOnlineAsync, Is.False);
+            Assume.That(await monitor.RefreshIfStaleAsync(), Is.False);
 
             // Act
             listener = new TcpListener(IPAddress.Loopback, port);
             listener.Start();
-            bool online = await monitor.IsOnlineAsync;
+            bool online = await monitor.RefreshIfStaleAsync();
 
             // Assert
             Assert.IsTrue(online);
         }
 
         [Test]
-        public async Task StartProbeWhenStaleStateIsRead()
+        public async Task NotProbeWhenStateIsRead()
         {
             // Arrange
             using var monitor = new InternetConnectivityMonitor(LOOPBACK, StartListener(), SHORT_TIMEOUT, TimeSpan.Zero);
-            await monitor.IsOnlineAsync;
+            await monitor.RefreshIfStaleAsync();
+            AcceptedConnections();
 
             // Act
-            bool stale = monitor.IsOnline;
-            await monitor.IsOnlineAsync;
+            bool online = monitor.IsOnline;
+            await Task.Delay(100);
 
             // Assert
-            Assert.IsTrue(stale);
-            Assert.AreEqual(2, AcceptedConnections());
+            Assert.IsTrue(online);
+            Assert.AreEqual(0, AcceptedConnections());
         }
 
         private int StartListener()

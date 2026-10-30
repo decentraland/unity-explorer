@@ -100,8 +100,7 @@ namespace DCL.Diagnostics.Sentry
             options.TracesSampler = sentrySampler.Execute;
 
             // The single gateway every event passes through, whether it was captured via ReportHub or directly by the SDK's integrations
-            // Connectivity is only read for networking failures, so no other event starts a probe
-            options.SetBeforeSend(@event => BeforeSend(@event, isLocalSceneDevelopment, @event.Exception != null && IsNetworkFailure(@event.Exception) && !connectivity.IsOnline));
+            options.SetBeforeSend(@event => BeforeSend(@event, isLocalSceneDevelopment, !connectivity.IsOnline));
 
 #if UNITY_EDITOR
             // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
@@ -220,7 +219,7 @@ namespace DCL.Diagnostics.Sentry
             {
                 bool online = Interlocked.Increment(ref heldNetworkFailures) > MAX_HELD_NETWORK_FAILURES
                     ? connectivity.IsOnline
-                    : await connectivity.IsOnlineAsync;
+                    : await connectivity.RefreshIfStaleAsync();
 
                 if (online)
                     Capture(exception, reportData);

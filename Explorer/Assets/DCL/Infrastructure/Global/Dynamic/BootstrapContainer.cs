@@ -43,10 +43,10 @@ namespace Global.Dynamic
     {
         private IReportsHandlingSettings reportHandlingSettings = null!;
         private ExplorerSessionInfoWriter? sessionInfoWriter;
+        private InternetConnectivityMonitor? connectivity;
 
         public bool EnableAnalytics => Analytics.Enabled;
         public DiagnosticsContainer DiagnosticsContainer { get; private set; } = null!;
-        public InternetConnectivityMonitor Connectivity { get; private set; } = null!;
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; } = null!;
         public UnityAppWebBrowser WebBrowser { get; private set; } = null!;
         public IWeb3AccountFactory Web3AccountFactory { get; private set; } = null!;
@@ -95,7 +95,7 @@ namespace Global.Dynamic
             base.Dispose();
 
             DiagnosticsContainer.Dispose();
-            Connectivity.Dispose();
+            connectivity?.Dispose();
 
             if (sessionInfoWriter != null)
             {
@@ -158,8 +158,8 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 // The raw host has no gateway transform or feature-flag dependency, so it stands for "the internet"
-                container.Connectivity = new InternetConnectivityMonitor(new Uri(decentralandUrlsSource.Probe(DecentralandUrl.Host)).Host);
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment, sessionId, container.Connectivity);
+                container.connectivity = new InternetConnectivityMonitor(new Uri(decentralandUrlsSource.Probe(DecentralandUrl.Host)).Host);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment, sessionId, container.connectivity);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 if (container.IdentityCache != null)
