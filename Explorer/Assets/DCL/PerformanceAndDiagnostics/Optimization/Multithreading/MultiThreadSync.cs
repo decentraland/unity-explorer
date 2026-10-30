@@ -1,6 +1,7 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using System.Collections.Generic;
@@ -51,7 +52,7 @@ namespace Utility.Multithreading
 
         private readonly CancellationTokenSource cts = new ();
 
-        private AcquisitionInfo? currentAcquisitionInfo;
+        private Option<AcquisitionInfo> currentAcquisitionInfo;
         private bool isDisposing;
 
         static MultiThreadSync()
@@ -110,22 +111,31 @@ namespace Utility.Multithreading
                 {
                     lock (monitor)
                     {
-                        DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
+                        // Release may have signaled this owner after the wait timed out but before the monitor was taken
+                        bool signaledAfterTimeout = queue.TryPeek(out Owner? head) && head == owner;
 
-                        int requestingThreadId = NativeThread.CurrentId;
-                        int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+                        if (!signaledAfterTimeout)
+                        {
+                            // A waiter left in the queue would never be released and block every owner behind it
+                            RemoveFromQueue(owner);
 
-                        syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                            int requestingThreadId = NativeThread.CurrentId;
+                            int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
+                            string currentOwner = currentAcquisitionInfo.Has
+                                ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(DateTime.Now - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
+                                : $"none, next in queue: \"{head?.Name}\"";
+
+                            syncLogsBuffer.Print();
+                            throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwner}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        }
                     }
                 }
             }
 
             lock (monitor)
             {
-                currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
+                currentAcquisitionInfo = Option<AcquisitionInfo>.Some(new AcquisitionInfo(owner, DateTime.Now));
                 SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
 #if SYNC_DEBUG
@@ -171,8 +181,21 @@ namespace Utility.Multithreading
                     syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
 
-                currentAcquisitionInfo = null;
+                currentAcquisitionInfo = Option<AcquisitionInfo>.None;
                 SYNC_OWNERSHIP.TryRemove(syncId, out _);
+            }
+        }
+
+        private void RemoveFromQueue(Owner owner)
+        {
+            int count = queue.Count;
+
+            for (var i = 0; i < count; i++)
+            {
+                Owner queued = queue.Dequeue();
+
+                if (queued != owner)
+                    queue.Enqueue(queued);
             }
         }
 
@@ -317,8 +340,9 @@ namespace Utility.Multithreading
             {
                 if (isScoped)
                 {
-                    scope.Dispose();
+                    // Cleared first: Dispose throws when the scope was held too long, and the scope must not be released twice
                     isScoped = false;
+                    scope.Dispose();
                 }
             }
         }
