@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -27,6 +28,7 @@ namespace DCL.Diagnostics.Tests
             yield return new UnityWebRequestException(new UnityWebRequest("http://127.0.0.1:8767/hamsterwood/comms"));
             yield return new WebException("The remote server returned an error: (404) Not Found.");
             yield return new SocketException((int)SocketError.ConnectionRefused);
+            yield return new HttpRequestException("No such host is known.");
         }
 
         [TestCase("[Physics.PhysX] cleaning the mesh failed")]
@@ -135,12 +137,73 @@ namespace DCL.Diagnostics.Tests
         }
 
         [TestCaseSource(nameof(NetworkingFailures))]
-        public void KeepNetworkingFailuresOutsideLocalSceneDevelopment(Exception exception)
+        public void KeepNetworkingFailuresWhileOnlineOutsideLocalSceneDevelopment(Exception exception)
         {
             var @event = new SentryEvent(exception);
             @event.SetTag("category", ReportCategory.MULTIPLAYER);
 
-            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: false));
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: false, isOffline: false));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void DropNetworkingFailuresWhileOffline(Exception exception)
+        {
+            var @event = new SentryEvent(exception);
+            @event.SetTag("category", ReportCategory.MULTIPLAYER);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isOffline: true));
+        }
+
+        [Test]
+        public void DropNetworkingFailureWrappedByUnobservedTaskWhileOffline()
+        {
+            var @event = new SentryEvent(new AggregateException(new HttpRequestException("No such host is known.")));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event, isOffline: true));
+        }
+
+        [Test]
+        public void KeepOtherExceptionsWhileOffline()
+        {
+            var @event = new SentryEvent(new NullReferenceException());
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isOffline: true));
+        }
+
+        [Test]
+        public void KeepAggregateWithActionableInnerExceptionWhileOffline()
+        {
+            var @event = new SentryEvent(new AggregateException(new SocketException((int)SocketError.HostNotFound), new NullReferenceException()));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isOffline: true));
+        }
+
+        [TestCaseSource(nameof(NetworkingFailures))]
+        public void RecognizeNetworkFailures(Exception exception)
+        {
+            Assert.IsTrue(SentryReportHandler.IsNetworkFailure(exception));
+        }
+
+        [Test]
+        public void RecognizeNetworkFailureWrappedByAnotherException()
+        {
+            var exception = new InvalidOperationException("Profile fetch failed", new SocketException((int)SocketError.HostNotFound));
+
+            Assert.IsTrue(SentryReportHandler.IsNetworkFailure(exception));
+        }
+
+        [Test]
+        public void NotRecognizeAggregateWithActionableInnerExceptionAsNetworkFailure()
+        {
+            var exception = new AggregateException(new SocketException((int)SocketError.HostNotFound), new NullReferenceException());
+
+            Assert.IsFalse(SentryReportHandler.IsNetworkFailure(exception));
+        }
+
+        [Test]
+        public void NotRecognizeOtherExceptionsAsNetworkFailure()
+        {
+            Assert.IsFalse(SentryReportHandler.IsNetworkFailure(new IOException("Disk full")));
         }
 
         [Test]

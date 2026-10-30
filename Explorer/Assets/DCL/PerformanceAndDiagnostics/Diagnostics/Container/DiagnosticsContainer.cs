@@ -3,6 +3,7 @@ using DCL.UI.DebugMenu.MessageBus;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Networking;
 
 namespace DCL.Diagnostics
 {
@@ -40,7 +41,7 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, string? sessionId, params IReportHandler[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, string? sessionId, InternetConnectivityMonitor connectivity, params IReportHandler[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
@@ -61,7 +62,7 @@ namespace DCL.Diagnostics
                 if (isLocalSceneDevelopment)
                     sentryMatrix = new CategoryExclusionMatrix(sentryMatrix, ReportCategory.JAVASCRIPT);
 
-                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, isLocalSceneDevelopment, sessionId));
+                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, isLocalSceneDevelopment, sessionId, connectivity));
             }
 
             var logger = new ReportHubLogger(handlers);
