@@ -1,7 +1,7 @@
-using System.Reflection;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Prefs;
 using NUnit.Framework;
+using System.Reflection;
 
 namespace DCL.Chat.ChatReactions.Tests
 {

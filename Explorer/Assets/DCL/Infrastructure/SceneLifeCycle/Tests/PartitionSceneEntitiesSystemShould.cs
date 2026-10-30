@@ -3,16 +3,16 @@ using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using ECS.SceneLifeCycle.Components;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class PartitionSceneEntitiesSystemShould : UnitySystemTestBase<PartitionSceneEntitiesSystem>
     {

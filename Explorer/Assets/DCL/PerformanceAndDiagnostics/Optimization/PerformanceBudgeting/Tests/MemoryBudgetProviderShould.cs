@@ -11,9 +11,9 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
 
         private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold = new ()
         {
-            { MemoryUsageStatus.ABUNDANCE, 0.6f },
-            { MemoryUsageStatus.WARNING, 0.8f },
-            { MemoryUsageStatus.FULL, 0.9f },
+            { MemoryUsageStatus.Abundance, 0.6f },
+            { MemoryUsageStatus.Warning, 0.8f },
+            { MemoryUsageStatus.Full, 0.9f },
         };
 
         private MemoryBudget memoryBudget;

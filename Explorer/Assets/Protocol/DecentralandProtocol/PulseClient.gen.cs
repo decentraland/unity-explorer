@@ -25,8 +25,8 @@ namespace Decentraland.Pulse {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CiVkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2VfY2xpZW50LnByb3RvEhJkZWNl",
-            "bnRyYWxhbmQucHVsc2UaIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5w",
-            "cm90bxolZGVjZW50cmFsYW5kL3B1bHNlL3B1bHNlX3NoYXJlZC5wcm90byKV",
+            "bnRyYWxhbmQucHVsc2UaJWRlY2VudHJhbGFuZC9wdWxzZS9wdWxzZV9zaGFy",
+            "ZWQucHJvdG8aIWRlY2VudHJhbGFuZC9jb21tb24vb3B0aW9ucy5wcm90byKV",
             "AQoQSGFuZHNoYWtlUmVxdWVzdBISCgphdXRoX2NoYWluGAEgASgMEhcKD3By",
             "b2ZpbGVfdmVyc2lvbhgCIAEoBRJCCg1pbml0aWFsX3N0YXRlGAMgASgLMiYu",
             "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllckluaXRpYWxTdGF0ZUgAiAEBQhAK",
@@ -44,21 +44,33 @@ namespace Decentraland.Pulse {
             "KAkSGAoLZHVyYXRpb25fbXMYAiABKA1IAIgBARI1CgxwbGF5ZXJfc3RhdGUY",
             "AyABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGUSEQoEbWFz",
             "axgEIAEoBUgBiAEBQg4KDF9kdXJhdGlvbl9tc0IHCgVfbWFzayILCglFbW90",
-            "ZVN0b3AiZgoPVGVsZXBvcnRSZXF1ZXN0EhQKDHBhcmNlbF9pbmRleBgBIAEo",
-            "BRIuCghwb3NpdGlvbhgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVj",
-            "dG9yMxINCgVyZWFsbRgDIAEoCSK2AwoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
-            "c2hha2UYASABKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVx",
-            "dWVzdEgAEjUKBWlucHV0GAIgASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLlBs",
-            "YXllclN0YXRlSW5wdXRIABIzCgZyZXN5bmMYAyABKAsyIS5kZWNlbnRyYWxh",
-            "bmQucHVsc2UuUmVzeW5jUmVxdWVzdEgAEk4KFHByb2ZpbGVfYW5ub3VuY2Vt",
-            "ZW50GAQgASgLMi4uZGVjZW50cmFsYW5kLnB1bHNlLlByb2ZpbGVWZXJzaW9u",
-            "QW5ub3VuY2VtZW50SAASNQoLZW1vdGVfc3RhcnQYBSABKAsyHi5kZWNlbnRy",
-            "YWxhbmQucHVsc2UuRW1vdGVTdGFydEgAEjMKCmVtb3RlX3N0b3AYBiABKAsy",
-            "HS5kZWNlbnRyYWxhbmQucHVsc2UuRW1vdGVTdG9wSAASNwoIdGVsZXBvcnQY",
-            "ByABKAsyIy5kZWNlbnRyYWxhbmQucHVsc2UuVGVsZXBvcnRSZXF1ZXN0SABC",
-            "CQoHbWVzc2FnZWIGcHJvdG8z"));
+            "ZVN0b3AimQEKD1RlbGVwb3J0UmVxdWVzdBIUCgxwYXJjZWxfaW5kZXgYASAB",
+            "KAUSHwoKcG9zaXRpb25feBgCIAEoDUILirUYBxUAAIBBGAgSHwoKcG9zaXRp",
+            "b25feRgDIAEoDUILirUYBxUAAEhDGA0SHwoKcG9zaXRpb25fehgEIAEoDUIL",
+            "irUYBxUAAIBBGAgSDQoFcmVhbG0YBSABKAkiSAoKUGFyY2VsUmVjdBINCgVt",
+            "aW5feBgBIAEoERINCgVtaW5fehgCIAEoERINCgVtYXhfeBgDIAEoERINCgVt",
+            "YXhfehgEIAEoESJXChBTY2VuZUxpc3RlbmVyQW9pEg0KBXJlYWxtGAEgASgJ",
+            "EjQKDHBhcmNlbF9yZWN0cxgCIAMoCzIeLmRlY2VudHJhbGFuZC5wdWxzZS5Q",
+            "YXJjZWxSZWN0ImYKHVNjZW5lTGlzdGVuZXJIYW5kc2hha2VSZXF1ZXN0EhIK",
+            "CmF1dGhfY2hhaW4YASABKAwSMQoDYW9pGAIgAygLMiQuZGVjZW50cmFsYW5k",
+            "LnB1bHNlLlNjZW5lTGlzdGVuZXJBb2kiSAoTU2NlbmVMaXN0ZW5lclVwZGF0",
+            "ZRIxCgNhb2kYASADKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuU2NlbmVMaXN0",
+            "ZW5lckFvaSLXBAoNQ2xpZW50TWVzc2FnZRI5CgloYW5kc2hha2UYASABKAsy",
+            "JC5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVxdWVzdEgAEjUKBWlu",
+            "cHV0GAIgASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlSW5w",
+            "dXRIABIzCgZyZXN5bmMYAyABKAsyIS5kZWNlbnRyYWxhbmQucHVsc2UuUmVz",
+            "eW5jUmVxdWVzdEgAEk4KFHByb2ZpbGVfYW5ub3VuY2VtZW50GAQgASgLMi4u",
+            "ZGVjZW50cmFsYW5kLnB1bHNlLlByb2ZpbGVWZXJzaW9uQW5ub3VuY2VtZW50",
+            "SAASNQoLZW1vdGVfc3RhcnQYBSABKAsyHi5kZWNlbnRyYWxhbmQucHVsc2Uu",
+            "RW1vdGVTdGFydEgAEjMKCmVtb3RlX3N0b3AYBiABKAsyHS5kZWNlbnRyYWxh",
+            "bmQucHVsc2UuRW1vdGVTdG9wSAASNwoIdGVsZXBvcnQYByABKAsyIy5kZWNl",
+            "bnRyYWxhbmQucHVsc2UuVGVsZXBvcnRSZXF1ZXN0SAASVQoYc2NlbmVfbGlz",
+            "dGVuZXJfaGFuZHNoYWtlGAggASgLMjEuZGVjZW50cmFsYW5kLnB1bHNlLlNj",
+            "ZW5lTGlzdGVuZXJIYW5kc2hha2VSZXF1ZXN0SAASSAoVc2NlbmVfbGlzdGVu",
+            "ZXJfdXBkYXRlGAkgASgLMicuZGVjZW50cmFsYW5kLnB1bHNlLlNjZW5lTGlz",
+            "dGVuZXJVcGRhdGVIAEIJCgdtZXNzYWdlYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::Decentraland.Pulse.PulseSharedReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Pulse.PulseSharedReflection.Descriptor, global::Decentraland.Common.OptionsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain", "ProfileVersion", "InitialState" }, new[]{ "InitialState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerInitialState), global::Decentraland.Pulse.PlayerInitialState.Parser, new[]{ "State", "EmoteId", "EmoteDurationMs", "EmoteStartOffsetMs", "Realm", "EmoteMask" }, new[]{ "EmoteId", "EmoteDurationMs", "EmoteStartOffsetMs", "EmoteMask" }, null, null, null),
@@ -67,8 +79,12 @@ namespace Decentraland.Pulse {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ResyncRequest), global::Decentraland.Pulse.ResyncRequest.Parser, new[]{ "SubjectId", "KnownSeq" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStart), global::Decentraland.Pulse.EmoteStart.Parser, new[]{ "EmoteId", "DurationMs", "PlayerState", "Mask" }, new[]{ "DurationMs", "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStop), global::Decentraland.Pulse.EmoteStop.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "ParcelIndex", "Position", "Realm" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement", "EmoteStart", "EmoteStop", "Teleport" }, new[]{ "Message" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "Realm" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ParcelRect), global::Decentraland.Pulse.ParcelRect.Parser, new[]{ "MinX", "MinZ", "MaxX", "MaxZ" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.SceneListenerAoi), global::Decentraland.Pulse.SceneListenerAoi.Parser, new[]{ "Realm", "ParcelRects" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.SceneListenerHandshakeRequest), global::Decentraland.Pulse.SceneListenerHandshakeRequest.Parser, new[]{ "AuthChain", "Aoi" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.SceneListenerUpdate), global::Decentraland.Pulse.SceneListenerUpdate.Parser, new[]{ "Aoi" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement", "EmoteStart", "EmoteStop", "Teleport", "SceneListenerHandshake", "SceneListenerUpdate" }, new[]{ "Message" }, null, null, null)
           }));
     }
     #endregion
@@ -2030,7 +2046,9 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TeleportRequest(TeleportRequest other) : this() {
       parcelIndex_ = other.parcelIndex_;
-      position_ = other.position_ != null ? other.position_.Clone() : null;
+      positionX_ = other.positionX_;
+      positionY_ = other.positionY_;
+      positionZ_ = other.positionZ_;
       realm_ = other.realm_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -2053,20 +2071,44 @@ namespace Decentraland.Pulse {
       }
     }
 
-    /// <summary>Field number for the "position" field.</summary>
-    public const int PositionFieldNumber = 2;
-    private global::Decentraland.Common.Vector3 position_;
+    /// <summary>Field number for the "position_x" field.</summary>
+    public const int PositionXFieldNumber = 2;
+    private uint positionX_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 Position {
-      get { return position_; }
+    public uint PositionX {
+      get { return positionX_; }
       set {
-        position_ = value;
+        positionX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_y" field.</summary>
+    public const int PositionYFieldNumber = 3;
+    private uint positionY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint PositionY {
+      get { return positionY_; }
+      set {
+        positionY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_z" field.</summary>
+    public const int PositionZFieldNumber = 4;
+    private uint positionZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint PositionZ {
+      get { return positionZ_; }
+      set {
+        positionZ_ = value;
       }
     }
 
     /// <summary>Field number for the "realm" field.</summary>
-    public const int RealmFieldNumber = 3;
+    public const int RealmFieldNumber = 5;
     private string realm_ = "";
     /// <summary>
     /// Non-empty realm identifier. Rejected if empty.
@@ -2096,7 +2138,9 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (ParcelIndex != other.ParcelIndex) return false;
-      if (!object.Equals(Position, other.Position)) return false;
+      if (PositionX != other.PositionX) return false;
+      if (PositionY != other.PositionY) return false;
+      if (PositionZ != other.PositionZ) return false;
       if (Realm != other.Realm) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -2106,7 +2150,9 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (ParcelIndex != 0) hash ^= ParcelIndex.GetHashCode();
-      if (position_ != null) hash ^= Position.GetHashCode();
+      if (PositionX != 0) hash ^= PositionX.GetHashCode();
+      if (PositionY != 0) hash ^= PositionY.GetHashCode();
+      if (PositionZ != 0) hash ^= PositionZ.GetHashCode();
       if (Realm.Length != 0) hash ^= Realm.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -2130,12 +2176,20 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteInt32(ParcelIndex);
       }
-      if (position_ != null) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Position);
+      if (PositionX != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(PositionX);
+      }
+      if (PositionY != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(PositionY);
+      }
+      if (PositionZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(PositionZ);
       }
       if (Realm.Length != 0) {
-        output.WriteRawTag(26);
+        output.WriteRawTag(42);
         output.WriteString(Realm);
       }
       if (_unknownFields != null) {
@@ -2152,12 +2206,20 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteInt32(ParcelIndex);
       }
-      if (position_ != null) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Position);
+      if (PositionX != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(PositionX);
+      }
+      if (PositionY != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(PositionY);
+      }
+      if (PositionZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(PositionZ);
       }
       if (Realm.Length != 0) {
-        output.WriteRawTag(26);
+        output.WriteRawTag(42);
         output.WriteString(Realm);
       }
       if (_unknownFields != null) {
@@ -2173,8 +2235,14 @@ namespace Decentraland.Pulse {
       if (ParcelIndex != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(ParcelIndex);
       }
-      if (position_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
+      if (PositionX != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionX);
+      }
+      if (PositionY != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionY);
+      }
+      if (PositionZ != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionZ);
       }
       if (Realm.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Realm);
@@ -2194,11 +2262,14 @@ namespace Decentraland.Pulse {
       if (other.ParcelIndex != 0) {
         ParcelIndex = other.ParcelIndex;
       }
-      if (other.position_ != null) {
-        if (position_ == null) {
-          Position = new global::Decentraland.Common.Vector3();
-        }
-        Position.MergeFrom(other.Position);
+      if (other.PositionX != 0) {
+        PositionX = other.PositionX;
+      }
+      if (other.PositionY != 0) {
+        PositionY = other.PositionY;
+      }
+      if (other.PositionZ != 0) {
+        PositionZ = other.PositionZ;
       }
       if (other.Realm.Length != 0) {
         Realm = other.Realm;
@@ -2226,14 +2297,19 @@ namespace Decentraland.Pulse {
             ParcelIndex = input.ReadInt32();
             break;
           }
-          case 18: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Position);
+          case 16: {
+            PositionX = input.ReadUInt32();
             break;
           }
-          case 26: {
+          case 24: {
+            PositionY = input.ReadUInt32();
+            break;
+          }
+          case 32: {
+            PositionZ = input.ReadUInt32();
+            break;
+          }
+          case 42: {
             Realm = input.ReadString();
             break;
           }
@@ -2260,15 +2336,1000 @@ namespace Decentraland.Pulse {
             ParcelIndex = input.ReadInt32();
             break;
           }
-          case 18: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Position);
+          case 16: {
+            PositionX = input.ReadUInt32();
             break;
           }
-          case 26: {
+          case 24: {
+            PositionY = input.ReadUInt32();
+            break;
+          }
+          case 32: {
+            PositionZ = input.ReadUInt32();
+            break;
+          }
+          case 42: {
             Realm = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Inclusive rectangle in parcel coordinates. A single parcel is min == max.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ParcelRect : pb::IMessage<ParcelRect>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ParcelRect> _parser = new pb::MessageParser<ParcelRect>(() => new ParcelRect());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ParcelRect> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[8]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ParcelRect() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ParcelRect(ParcelRect other) : this() {
+      minX_ = other.minX_;
+      minZ_ = other.minZ_;
+      maxX_ = other.maxX_;
+      maxZ_ = other.maxZ_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ParcelRect Clone() {
+      return new ParcelRect(this);
+    }
+
+    /// <summary>Field number for the "min_x" field.</summary>
+    public const int MinXFieldNumber = 1;
+    private int minX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MinX {
+      get { return minX_; }
+      set {
+        minX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "min_z" field.</summary>
+    public const int MinZFieldNumber = 2;
+    private int minZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MinZ {
+      get { return minZ_; }
+      set {
+        minZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "max_x" field.</summary>
+    public const int MaxXFieldNumber = 3;
+    private int maxX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MaxX {
+      get { return maxX_; }
+      set {
+        maxX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "max_z" field.</summary>
+    public const int MaxZFieldNumber = 4;
+    private int maxZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MaxZ {
+      get { return maxZ_; }
+      set {
+        maxZ_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ParcelRect);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ParcelRect other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (MinX != other.MinX) return false;
+      if (MinZ != other.MinZ) return false;
+      if (MaxX != other.MaxX) return false;
+      if (MaxZ != other.MaxZ) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (MinX != 0) hash ^= MinX.GetHashCode();
+      if (MinZ != 0) hash ^= MinZ.GetHashCode();
+      if (MaxX != 0) hash ^= MaxX.GetHashCode();
+      if (MaxZ != 0) hash ^= MaxZ.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (MinX != 0) {
+        output.WriteRawTag(8);
+        output.WriteSInt32(MinX);
+      }
+      if (MinZ != 0) {
+        output.WriteRawTag(16);
+        output.WriteSInt32(MinZ);
+      }
+      if (MaxX != 0) {
+        output.WriteRawTag(24);
+        output.WriteSInt32(MaxX);
+      }
+      if (MaxZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteSInt32(MaxZ);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (MinX != 0) {
+        output.WriteRawTag(8);
+        output.WriteSInt32(MinX);
+      }
+      if (MinZ != 0) {
+        output.WriteRawTag(16);
+        output.WriteSInt32(MinZ);
+      }
+      if (MaxX != 0) {
+        output.WriteRawTag(24);
+        output.WriteSInt32(MaxX);
+      }
+      if (MaxZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteSInt32(MaxZ);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (MinX != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeSInt32Size(MinX);
+      }
+      if (MinZ != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeSInt32Size(MinZ);
+      }
+      if (MaxX != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeSInt32Size(MaxX);
+      }
+      if (MaxZ != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeSInt32Size(MaxZ);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ParcelRect other) {
+      if (other == null) {
+        return;
+      }
+      if (other.MinX != 0) {
+        MinX = other.MinX;
+      }
+      if (other.MinZ != 0) {
+        MinZ = other.MinZ;
+      }
+      if (other.MaxX != 0) {
+        MaxX = other.MaxX;
+      }
+      if (other.MaxZ != 0) {
+        MaxZ = other.MaxZ;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            MinX = input.ReadSInt32();
+            break;
+          }
+          case 16: {
+            MinZ = input.ReadSInt32();
+            break;
+          }
+          case 24: {
+            MaxX = input.ReadSInt32();
+            break;
+          }
+          case 32: {
+            MaxZ = input.ReadSInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            MinX = input.ReadSInt32();
+            break;
+          }
+          case 16: {
+            MinZ = input.ReadSInt32();
+            break;
+          }
+          case 24: {
+            MaxX = input.ReadSInt32();
+            break;
+          }
+          case 32: {
+            MaxZ = input.ReadSInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// One realm's slice of a scene listener's area of interest. Parcels only mean anything
+  /// within a realm — every world numbers its own parcels from 0,0 — so a listener that
+  /// observes several realms, as an authoritative server cohosting scenes from several worlds
+  /// does, announces one of these per realm rather than one realm for the whole connection.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class SceneListenerAoi : pb::IMessage<SceneListenerAoi>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SceneListenerAoi> _parser = new pb::MessageParser<SceneListenerAoi>(() => new SceneListenerAoi());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SceneListenerAoi> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[9]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerAoi() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerAoi(SceneListenerAoi other) : this() {
+      realm_ = other.realm_;
+      parcelRects_ = other.parcelRects_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerAoi Clone() {
+      return new SceneListenerAoi(this);
+    }
+
+    /// <summary>Field number for the "realm" field.</summary>
+    public const int RealmFieldNumber = 1;
+    private string realm_ = "";
+    /// <summary>
+    /// Non-empty realm identifier — same rules as TeleportRequest.realm.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Realm {
+      get { return realm_; }
+      set {
+        realm_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "parcel_rects" field.</summary>
+    public const int ParcelRectsFieldNumber = 2;
+    private static readonly pb::FieldCodec<global::Decentraland.Pulse.ParcelRect> _repeated_parcelRects_codec
+        = pb::FieldCodec.ForMessage(18, global::Decentraland.Pulse.ParcelRect.Parser);
+    private readonly pbc::RepeatedField<global::Decentraland.Pulse.ParcelRect> parcelRects_ = new pbc::RepeatedField<global::Decentraland.Pulse.ParcelRect>();
+    /// <summary>
+    /// This realm's parcels as inclusive rects. The sum of rect areas across every announced
+    /// realm is capped server-side (SceneListener:MaxParcels) — overlaps count per rect, so
+    /// announce disjoint rects.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::Decentraland.Pulse.ParcelRect> ParcelRects {
+      get { return parcelRects_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SceneListenerAoi);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SceneListenerAoi other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Realm != other.Realm) return false;
+      if(!parcelRects_.Equals(other.parcelRects_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Realm.Length != 0) hash ^= Realm.GetHashCode();
+      hash ^= parcelRects_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Realm.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Realm);
+      }
+      parcelRects_.WriteTo(output, _repeated_parcelRects_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Realm.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Realm);
+      }
+      parcelRects_.WriteTo(ref output, _repeated_parcelRects_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Realm.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Realm);
+      }
+      size += parcelRects_.CalculateSize(_repeated_parcelRects_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SceneListenerAoi other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Realm.Length != 0) {
+        Realm = other.Realm;
+      }
+      parcelRects_.Add(other.parcelRects_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            Realm = input.ReadString();
+            break;
+          }
+          case 18: {
+            parcelRects_.AddEntriesFrom(input, _repeated_parcelRects_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            Realm = input.ReadString();
+            break;
+          }
+          case 18: {
+            parcelRects_.AddEntriesFrom(ref input, _repeated_parcelRects_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Scene-listener connect: same signed-fetch auth chain as HandshakeRequest, plus a
+  /// parcel-set area of interest per realm. No initial state — a listener is never a subject.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class SceneListenerHandshakeRequest : pb::IMessage<SceneListenerHandshakeRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SceneListenerHandshakeRequest> _parser = new pb::MessageParser<SceneListenerHandshakeRequest>(() => new SceneListenerHandshakeRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SceneListenerHandshakeRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[10]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerHandshakeRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerHandshakeRequest(SceneListenerHandshakeRequest other) : this() {
+      authChain_ = other.authChain_;
+      aoi_ = other.aoi_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerHandshakeRequest Clone() {
+      return new SceneListenerHandshakeRequest(this);
+    }
+
+    /// <summary>Field number for the "auth_chain" field.</summary>
+    public const int AuthChainFieldNumber = 1;
+    private pb::ByteString authChain_ = pb::ByteString.Empty;
+    /// <summary>
+    /// Signed-fetch headers JSON — identical shape to HandshakeRequest.auth_chain.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pb::ByteString AuthChain {
+      get { return authChain_; }
+      set {
+        authChain_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "aoi" field.</summary>
+    public const int AoiFieldNumber = 2;
+    private static readonly pb::FieldCodec<global::Decentraland.Pulse.SceneListenerAoi> _repeated_aoi_codec
+        = pb::FieldCodec.ForMessage(18, global::Decentraland.Pulse.SceneListenerAoi.Parser);
+    private readonly pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi> aoi_ = new pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi>();
+    /// <summary>
+    /// Announced AoI, one entry per realm; replaceable afterwards with SceneListenerUpdate.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi> Aoi {
+      get { return aoi_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SceneListenerHandshakeRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SceneListenerHandshakeRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (AuthChain != other.AuthChain) return false;
+      if(!aoi_.Equals(other.aoi_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (AuthChain.Length != 0) hash ^= AuthChain.GetHashCode();
+      hash ^= aoi_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (AuthChain.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteBytes(AuthChain);
+      }
+      aoi_.WriteTo(output, _repeated_aoi_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (AuthChain.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteBytes(AuthChain);
+      }
+      aoi_.WriteTo(ref output, _repeated_aoi_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (AuthChain.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeBytesSize(AuthChain);
+      }
+      size += aoi_.CalculateSize(_repeated_aoi_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SceneListenerHandshakeRequest other) {
+      if (other == null) {
+        return;
+      }
+      if (other.AuthChain.Length != 0) {
+        AuthChain = other.AuthChain;
+      }
+      aoi_.Add(other.aoi_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            AuthChain = input.ReadBytes();
+            break;
+          }
+          case 18: {
+            aoi_.AddEntriesFrom(input, _repeated_aoi_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            AuthChain = input.ReadBytes();
+            break;
+          }
+          case 18: {
+            aoi_.AddEntriesFrom(ref input, _repeated_aoi_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Scene-listener AoI reassignment: replaces the area of interest announced at connect, in
+  /// place, on an authenticated scene-listener connection. Only valid from a peer that
+  /// authenticated with SceneListenerHandshakeRequest.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class SceneListenerUpdate : pb::IMessage<SceneListenerUpdate>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SceneListenerUpdate> _parser = new pb::MessageParser<SceneListenerUpdate>(() => new SceneListenerUpdate());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SceneListenerUpdate> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[11]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerUpdate() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerUpdate(SceneListenerUpdate other) : this() {
+      aoi_ = other.aoi_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SceneListenerUpdate Clone() {
+      return new SceneListenerUpdate(this);
+    }
+
+    /// <summary>Field number for the "aoi" field.</summary>
+    public const int AoiFieldNumber = 1;
+    private static readonly pb::FieldCodec<global::Decentraland.Pulse.SceneListenerAoi> _repeated_aoi_codec
+        = pb::FieldCodec.ForMessage(10, global::Decentraland.Pulse.SceneListenerAoi.Parser);
+    private readonly pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi> aoi_ = new pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi>();
+    /// <summary>
+    /// The new AoI, replacing (not extending) the current one — realms absent from it are no
+    /// longer observed. Same rules and SceneListener:MaxParcels budget as the handshake's.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::Decentraland.Pulse.SceneListenerAoi> Aoi {
+      get { return aoi_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SceneListenerUpdate);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SceneListenerUpdate other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if(!aoi_.Equals(other.aoi_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      hash ^= aoi_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      aoi_.WriteTo(output, _repeated_aoi_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      aoi_.WriteTo(ref output, _repeated_aoi_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      size += aoi_.CalculateSize(_repeated_aoi_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SceneListenerUpdate other) {
+      if (other == null) {
+        return;
+      }
+      aoi_.Add(other.aoi_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            aoi_.AddEntriesFrom(input, _repeated_aoi_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            aoi_.AddEntriesFrom(ref input, _repeated_aoi_codec);
             break;
           }
         }
@@ -2293,7 +3354,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Pulse.PulseClientReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2334,6 +3395,12 @@ namespace Decentraland.Pulse {
           break;
         case MessageOneofCase.Teleport:
           Teleport = other.Teleport.Clone();
+          break;
+        case MessageOneofCase.SceneListenerHandshake:
+          SceneListenerHandshake = other.SceneListenerHandshake.Clone();
+          break;
+        case MessageOneofCase.SceneListenerUpdate:
+          SceneListenerUpdate = other.SceneListenerUpdate.Clone();
           break;
       }
 
@@ -2430,6 +3497,30 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "scene_listener_handshake" field.</summary>
+    public const int SceneListenerHandshakeFieldNumber = 8;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.SceneListenerHandshakeRequest SceneListenerHandshake {
+      get { return messageCase_ == MessageOneofCase.SceneListenerHandshake ? (global::Decentraland.Pulse.SceneListenerHandshakeRequest) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.SceneListenerHandshake;
+      }
+    }
+
+    /// <summary>Field number for the "scene_listener_update" field.</summary>
+    public const int SceneListenerUpdateFieldNumber = 9;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.SceneListenerUpdate SceneListenerUpdate {
+      get { return messageCase_ == MessageOneofCase.SceneListenerUpdate ? (global::Decentraland.Pulse.SceneListenerUpdate) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.SceneListenerUpdate;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -2441,6 +3532,8 @@ namespace Decentraland.Pulse {
       EmoteStart = 5,
       EmoteStop = 6,
       Teleport = 7,
+      SceneListenerHandshake = 8,
+      SceneListenerUpdate = 9,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2478,6 +3571,8 @@ namespace Decentraland.Pulse {
       if (!object.Equals(EmoteStart, other.EmoteStart)) return false;
       if (!object.Equals(EmoteStop, other.EmoteStop)) return false;
       if (!object.Equals(Teleport, other.Teleport)) return false;
+      if (!object.Equals(SceneListenerHandshake, other.SceneListenerHandshake)) return false;
+      if (!object.Equals(SceneListenerUpdate, other.SceneListenerUpdate)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -2493,6 +3588,8 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.EmoteStart) hash ^= EmoteStart.GetHashCode();
       if (messageCase_ == MessageOneofCase.EmoteStop) hash ^= EmoteStop.GetHashCode();
       if (messageCase_ == MessageOneofCase.Teleport) hash ^= Teleport.GetHashCode();
+      if (messageCase_ == MessageOneofCase.SceneListenerHandshake) hash ^= SceneListenerHandshake.GetHashCode();
+      if (messageCase_ == MessageOneofCase.SceneListenerUpdate) hash ^= SceneListenerUpdate.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -2540,6 +3637,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(58);
         output.WriteMessage(Teleport);
       }
+      if (messageCase_ == MessageOneofCase.SceneListenerHandshake) {
+        output.WriteRawTag(66);
+        output.WriteMessage(SceneListenerHandshake);
+      }
+      if (messageCase_ == MessageOneofCase.SceneListenerUpdate) {
+        output.WriteRawTag(74);
+        output.WriteMessage(SceneListenerUpdate);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2578,6 +3683,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(58);
         output.WriteMessage(Teleport);
       }
+      if (messageCase_ == MessageOneofCase.SceneListenerHandshake) {
+        output.WriteRawTag(66);
+        output.WriteMessage(SceneListenerHandshake);
+      }
+      if (messageCase_ == MessageOneofCase.SceneListenerUpdate) {
+        output.WriteRawTag(74);
+        output.WriteMessage(SceneListenerUpdate);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2608,6 +3721,12 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.Teleport) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Teleport);
+      }
+      if (messageCase_ == MessageOneofCase.SceneListenerHandshake) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SceneListenerHandshake);
+      }
+      if (messageCase_ == MessageOneofCase.SceneListenerUpdate) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SceneListenerUpdate);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2663,6 +3782,18 @@ namespace Decentraland.Pulse {
             Teleport = new global::Decentraland.Pulse.TeleportRequest();
           }
           Teleport.MergeFrom(other.Teleport);
+          break;
+        case MessageOneofCase.SceneListenerHandshake:
+          if (SceneListenerHandshake == null) {
+            SceneListenerHandshake = new global::Decentraland.Pulse.SceneListenerHandshakeRequest();
+          }
+          SceneListenerHandshake.MergeFrom(other.SceneListenerHandshake);
+          break;
+        case MessageOneofCase.SceneListenerUpdate:
+          if (SceneListenerUpdate == null) {
+            SceneListenerUpdate = new global::Decentraland.Pulse.SceneListenerUpdate();
+          }
+          SceneListenerUpdate.MergeFrom(other.SceneListenerUpdate);
           break;
       }
 
@@ -2748,6 +3879,24 @@ namespace Decentraland.Pulse {
             Teleport = subBuilder;
             break;
           }
+          case 66: {
+            global::Decentraland.Pulse.SceneListenerHandshakeRequest subBuilder = new global::Decentraland.Pulse.SceneListenerHandshakeRequest();
+            if (messageCase_ == MessageOneofCase.SceneListenerHandshake) {
+              subBuilder.MergeFrom(SceneListenerHandshake);
+            }
+            input.ReadMessage(subBuilder);
+            SceneListenerHandshake = subBuilder;
+            break;
+          }
+          case 74: {
+            global::Decentraland.Pulse.SceneListenerUpdate subBuilder = new global::Decentraland.Pulse.SceneListenerUpdate();
+            if (messageCase_ == MessageOneofCase.SceneListenerUpdate) {
+              subBuilder.MergeFrom(SceneListenerUpdate);
+            }
+            input.ReadMessage(subBuilder);
+            SceneListenerUpdate = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -2828,6 +3977,24 @@ namespace Decentraland.Pulse {
             }
             input.ReadMessage(subBuilder);
             Teleport = subBuilder;
+            break;
+          }
+          case 66: {
+            global::Decentraland.Pulse.SceneListenerHandshakeRequest subBuilder = new global::Decentraland.Pulse.SceneListenerHandshakeRequest();
+            if (messageCase_ == MessageOneofCase.SceneListenerHandshake) {
+              subBuilder.MergeFrom(SceneListenerHandshake);
+            }
+            input.ReadMessage(subBuilder);
+            SceneListenerHandshake = subBuilder;
+            break;
+          }
+          case 74: {
+            global::Decentraland.Pulse.SceneListenerUpdate subBuilder = new global::Decentraland.Pulse.SceneListenerUpdate();
+            if (messageCase_ == MessageOneofCase.SceneListenerUpdate) {
+              subBuilder.MergeFrom(SceneListenerUpdate);
+            }
+            input.ReadMessage(subBuilder);
+            SceneListenerUpdate = subBuilder;
             break;
           }
         }

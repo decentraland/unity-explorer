@@ -125,7 +125,7 @@ namespace DCL.Chat
                 {
                     vm.DisplayName = cd.name;
 
-                    vm.ImageUrl = cd.thumbnailUrl;
+                    vm.ImageUrl = cd.ThumbnailUrl;
                     view.UpdateConversation(vm);
 
                     if (!string.IsNullOrEmpty(vm.ImageUrl))

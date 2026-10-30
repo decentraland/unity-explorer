@@ -62,7 +62,7 @@ namespace DCL.VoiceChat
             if (connectionUpdate != ConnectionUpdate.Connected) return;
 
             // The LiveKit room is shared between private and community calls
-            if (privateCallOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.PRIVATE) return;
+            if (privateCallOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.Private) return;
 
             view.SetInCallSection();
         }
@@ -100,15 +100,15 @@ namespace DCL.VoiceChat
         {
             switch (status)
             {
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
+                case VoiceChatStatus.VoiceChatStartingCall or VoiceChatStatus.VoiceChatReceivedCall:
                     view.Show();
                     break;
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatEndingCall:
                     view.Hide();
                     break;
             }
 
-            if (status is VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL)
+            if (status is VoiceChatStatus.VoiceChatStartedCall or VoiceChatStatus.VoiceChatReceivedCall)
                 UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(view.CallTuneAudio);
             else
                 UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(view.CallTuneAudio);

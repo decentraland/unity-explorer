@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using System.Collections.Generic;

@@ -20,12 +20,14 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public static class SceneAssetBundleDigestsLoader
     {
-        public static async UniTask EnsureDepsDigestsAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
+        public static async UniTask EnsureDepsDigestsAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLocalSceneDevelopment = false)
         {
-            AssetBundleManifestVersion? manifestVersion = entityDefinition.assetBundleManifestVersion;
+            AssetBundleManifestVersion manifestVersion = entityDefinition.AssetBundleManifestVersionOrFailed;
 
-            // Pre-v49 manifests have no deps digest, and CreateFailed/CreateManualManifest entries report version < v49 as well — short-circuit those.
-            if (manifestVersion == null || !manifestVersion.SupportsDepsDigests())
+            // LSD hashes are path-derived and unique per file, so the cross-scene hash collisions deps
+            // digests disambiguate cannot occur there — skip the extra manifest download entirely.
+            // Pre-v49 manifests have no canonical assets/ layout — skip both the download and the injection.
+            if (isLocalSceneDevelopment || !manifestVersion.SupportsDepsDigests())
                 return;
 
             //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation
@@ -38,7 +40,10 @@ namespace ECS.StreamableLoading.AssetBundles
             StreamableLoadingResult<SceneAssetBundleManifest> result = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
             if (result.Succeeded)
+            {
                 manifestVersion.InjectDepsDigests(result.Asset.GetFiles());
+                manifestVersion.InjectLods(result.Asset.GetLods());
+            }
             else if (result.Exception != null)
                 ReportHub.LogException(result.Exception, ReportCategory.ASSET_BUNDLES);
         }

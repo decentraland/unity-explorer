@@ -34,18 +34,15 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly bool localSceneDevelopment;
-        private readonly bool useRemoteAssetBundles;
         private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldActions(World world, Entity playerEntity,
             bool localSceneDevelopment,
-            bool useRemoteAssetBundles,
             bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
@@ -74,7 +71,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // Fixes https://github.com/decentraland/unity-explorer/issues/6246
             // We need to add a delay before we can start transitioning in the animator, or we might encounter artifacts
-            world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(UnityEngine.Time.frameCount + 20));
+            world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(Time.frameCount + 20));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
@@ -102,7 +99,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask)
         {
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE, Mask = mask });
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.Scene, Mask = mask });
         }
 
         public async UniTask<(URN Urn, bool IsLooping)?> TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask,
@@ -112,7 +109,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             (URN Urn, bool IsLooping)? result = null;
 
-            bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
+            bool loadFromLocalScene = localSceneDevelopment ||
                                       (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
 
             if (loadFromLocalScene)

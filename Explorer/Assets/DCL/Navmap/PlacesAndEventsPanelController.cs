@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -21,7 +20,7 @@ namespace DCL.Navmap
         private CancellationTokenSource? searchPlacesCancellationToken;
         private CancellationTokenSource? collapseExpandCancellationToken;
 
-        private bool isExpanded = false;
+        private bool isExpanded;
 
         public PlacesAndEventsPanelController(
             PlacesAndEventsPanelView view,
@@ -76,17 +75,17 @@ namespace DCL.Navmap
         {
             switch (section)
             {
-                case Section.SEARCH:
+                case Section.Search:
                     searchResultController.Show();
                     placeInfoPanelController.Hide();
                     eventInfoPanelController.Hide();
                     break;
-                case Section.PLACE:
+                case Section.Place:
                     searchResultController.Hide();
                     placeInfoPanelController.Show();
                     eventInfoPanelController.Hide();
                     break;
-                case Section.EVENT:
+                case Section.Event:
                     searchResultController.Hide();
                     placeInfoPanelController.Hide();
                     eventInfoPanelController.Show();
@@ -141,9 +140,9 @@ namespace DCL.Navmap
 
         public enum Section
         {
-            SEARCH,
-            PLACE,
-            EVENT,
+            Search,
+            Place,
+            Event,
         }
     }
 }

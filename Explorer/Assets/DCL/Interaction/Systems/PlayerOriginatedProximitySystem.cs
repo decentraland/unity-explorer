@@ -6,8 +6,8 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -105,7 +105,7 @@ namespace DCL.Interaction.Systems
 
                 // Skip if scene entity has no pointer events of proximity type
                 if (!sceneEntityInfo.TryGetPointerEvents(out PBPointerEvents? pointerEvents)
-                    || !HasProximityEvent(in pointerEvents!))
+                    || !HasProximityEvent(in pointerEvents))
                     continue;
 
                 // Compute vector from player to target's collider closest point
@@ -114,7 +114,7 @@ namespace DCL.Interaction.Systems
                 float sqrDistanceToPlayer = toTargetVec.sqrMagnitude;
 
                 // Get minimum max player distance and highest priority among pointer events entries
-                GetMaxDistanceAndHighestPriority(pointerEvents!, out float maxPlayerDistance, out uint priority);
+                GetMaxDistanceAndHighestPriority(pointerEvents, out float maxPlayerDistance, out uint priority);
                 float sqrMaxPlayerDistance = maxPlayerDistance * maxPlayerDistance;
 
                 // Skip if no pointer event is close enough
@@ -230,7 +230,7 @@ namespace DCL.Interaction.Systems
             {
                 var info = events[i].EventInfo;
 
-                float maxDistance = info.MaxPlayerDistance;
+                float maxDistance = InteractionInputUtils.ResolveMaxPlayerDistance(info) ?? PROXIMITY_DEFAULT_MAX_DISTANCE;
                 if (maxDistance < maxPlayerDistance)
                     maxPlayerDistance = maxDistance;
 

@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.LifeCycle;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdatePlayback(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
             var particleSystem = component.ParticleSystemInstance;
@@ -57,6 +59,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void StopAllParticleSystems(ref ParticleSystemComponent component)
         {
             if (component.ParticleSystemInstance.isPlaying)
@@ -64,6 +67,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResumeAllParticleSystems(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
             var state = particleSystemData.GetPlaybackState();

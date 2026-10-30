@@ -6,9 +6,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI;
-using DCL.UI.Controls.Configs;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -57,7 +54,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     realmNavigator.TryChangeRealmAsync(
                         URLDomain.FromString(worldUrl),
                         ct,
-                        default,
                         isWorld: true,
                         allowsSpawnPointerOverride: true).Forget();
                 }
@@ -71,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.Block))).Forget();
 
         internal static void OpenProfilePassport(Profile.CompactInfo profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();

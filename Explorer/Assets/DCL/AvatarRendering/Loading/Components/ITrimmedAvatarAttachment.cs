@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Loading.Components
             TrimmedDTO.Metadata.id;
 
         public new URLPath GetThumbnail() =>
-            new (TrimmedDTO.thumbnail);
+            new (TrimmedDTO.thumbnail ?? string.Empty);
 
         public new string GetHash() =>
             TrimmedDTO.GetHash();

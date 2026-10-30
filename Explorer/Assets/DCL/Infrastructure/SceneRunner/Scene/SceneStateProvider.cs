@@ -15,6 +15,8 @@ namespace SceneRunner.Scene
 
         public uint TickNumber { get; set; }
 
+        public uint LastUserInputTick { get; set; }
+
         public ref readonly SceneEngineStartInfo EngineStartInfo => ref engineStartInfo;
 
         public void Start(SceneEngineStartInfo startInfo)
@@ -22,6 +24,7 @@ namespace SceneRunner.Scene
             State.Set(SceneState.Starting);
             engineStartInfo = startInfo;
             TickNumber = 0;
+            LastUserInputTick = 0;
         }
     }
 }

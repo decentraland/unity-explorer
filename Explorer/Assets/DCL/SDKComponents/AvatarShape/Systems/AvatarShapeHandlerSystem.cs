@@ -226,7 +226,7 @@ namespace ECS.Unity.AvatarShape.Systems
                     {
                         EmoteId = emoteUrn,
                         Spatial = true,
-                        TriggerSource = TriggerSource.SCENE,
+                        TriggerSource = TriggerSource.Scene,
                     });
             }
         }

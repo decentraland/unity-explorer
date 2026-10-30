@@ -36,6 +36,51 @@ The project follows the **Page Object Model (POM)** pattern. See the [explorer-a
 
 ---
 
+## Static Probes
+
+Some state is awkward to read through the UI hierarchy, and some — resolved feature flags, scene
+loading progress — isn't in it at all. The client exposes that state as plain static methods the
+tests call directly with `AltDriver.CallStaticMethod`, passing the type and its assembly:
+
+```csharp
+AltDriver.CallStaticMethod<bool>(
+    "DCL.FeatureFlags.AltTesterFeatureFlagsProbe", "IsFeatureEnabled",
+    "DCL.Network", new object[] { "MarketplaceCredits" });
+```
+
+| Type | Assembly | Exposes |
+|---|---|---|
+| `SceneRunner.Scene.AlttesterSceneReadinessProbe` | `SceneRunner.Scene` | whether the current scene finished loading, plus its name and base parcel |
+| `DCL.FeatureFlags.AltTesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
+| `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Plugins` | `Begin`/`End` around a test to write a perf CSV |
+| `DCL.SyntheticInput.AltTester.WorldAutomationProbe` | `DCL.SyntheticInput` | synthetic world/avatar input: walk (payload reports start/end position and distance), entity/screen clicks, hover, global SDK input actions, camera look, and `StartSweep` (press, turn the camera while held, release) — start/poll API — plus `GetPlayerStateJson` (position, rotation, parcel, velocity, grounded) in one round-trip, see [Synthetic Input Simulation](synthetic-input-simulation.md) |
+| `DCL.SyntheticInput.AltTester.UiAutomationProbe` | `DCL.SyntheticInput` | UI simulation: list interactable UI, semantic clicks/text/scroll on uGUI and SDK scene UI, virtual-mouse drags (whose payload names the UI cover at each end — `pointerOverStart`/`pointerOverEnd`, `"world"` when none, plus an `info` line for a drag no UI received) |
+| `DCL.SyntheticInput.AltTester.NavigationAutomationProbe` | `DCL.SyntheticInput` | where the client is (`GetStatusJson`: environment, realm, parcel, loading screen, current scene) and start/poll navigation through the `/goto` path: `StartGoToWorld` (change realm to a world and land on a parcel) and `StartTeleport` (parcel of the current realm), both waiting for the destination scene to be ready. The environment is launch-only (`--dclenv`) and is reported, not changed |
+
+The probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
+`PerfSampler` is not gated. The synthetic-input probes additionally need the layer installed at
+launch (`--alttester` or `--mcp`) — `IsReady()` reports it. Note the inconsistent casing —
+`AltTesterFeatureFlagsProbe` against `AlttesterSceneReadinessProbe`. The driver resolves the type
+with `Assembly.GetType`, which is case-sensitive, so a probe renamed on this side silently becomes
+`componentNotFound` on the test side. That error means the assembly loaded but the type was not in
+it; a wrong *assembly* name reports `Assembly not found` instead. **Assembly names here are the
+real compiled assemblies** — a probe placed in a folder whose `.asmref` folds into another assembly
+must be documented under the folded-into name (`PerfSampler`'s folder folds into `DCL.Plugins`).
+
+Reflection-only probes are also a stripping hazard: player builds use IL2CPP with High managed
+stripping, so probe types are preserved explicitly in [`Assets/link.xml`](../Explorer/Assets/link.xml)
+— add new probes there.
+
+**Prefer a probe over re-deriving client state test-side.** Feature flags are the cautionary case:
+the remote document evaluates differently depending on request headers, and the client folds app
+arguments and editor overrides on top, so a suite that fetches the flags itself can get a different
+answer than the UI it is asserting against.
+
+When adding one: keep it static, return a primitive or a JSON string, gate it with `#if ALTTESTER`,
+and put it in an assembly that already sees the state being exposed.
+
+---
+
 ## CI Pipeline
 
 Non-release builds created by CI (for PRs and the dev branch) include AltTester instrumentation. The instrumented build:
@@ -46,13 +91,19 @@ Non-release builds created by CI (for PRs and the dev branch) include AltTester 
 
 ## Visual Regression on PRs
 
+Release and hotfix PRs into `main` automatically run Visual alongside InWorld against the same build. A manual `In-World Tests` dispatch with a `filter` runs InWorld only. When configured as a required check, `InWorld suite result` gates build resolution and InWorld; Visual failures remain visible in the PR's CI status comment and Visual Allure report but are advisory until baselines are versioned per release. The gate finishes independently of Visual. The default explorer-automation baselines follow `dev`, which can be newer than a release cut or a hotfix from `main`.
+
+[Manually dispatched jobs cannot satisfy required PR checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#checks-from-some-workflow-jobs-are-not-evaluated). They still run the suites and report results, but requiring `InWorld suite result` also needs an eligible PR-triggered run for bot-created release PRs.
+
 The visual regression suite can be triggered on any PR by leaving the following comment:
 
 ```
 /visual-tests
 ```
 
-The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation).
+Release and hotfix PRs already have an automatic run. Wait for it to finish before requesting a manual rerun, since both runs update the PR's visual report.
+
+The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation). Both Explorer dispatchers use the workflow definition from automation `main`, matching InWorld. Future merges to automation `main` update the workflow used by both dispatchers; feature-branch commits that become orphaned after a squash merge are not referenced. The dispatcher marks the automation section as running; the reusable writes the final verdict and Allure report link into that section. Test and baseline branch selection remains independent of the workflow-definition ref.
 
 **Requirements:**
 - The commenter must have `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo. Comments from anyone else are silently ignored.
@@ -61,6 +112,28 @@ The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/w
 **Confirmation:** when authorized, the bot reacts to the trigger comment with 👀. No reaction means the comment was ignored (usually an author-association mismatch).
 
 **Branch matching for baselines and fixtures:** if `decentraland/explorer-automation` has a branch with the same name as the PR's head branch, that branch's visual baselines and test fixtures are used. Otherwise the workflow falls back to explorer-automation's default branch. This lets you stage matching test changes alongside Explorer changes by reusing the branch name.
+
+### Regenerating Visual Baselines
+
+**Prerequisite:** filtered slash commands require explorer-automation's default-branch dispatcher to treat `filter` as an additional restriction within `Category=Visual`. Slash commands execute the default-branch workflow even when the PR has a different head branch. Pinning the Explorer Visual callers does not upgrade that separate dispatcher.
+
+With that capability available, open an explorer-automation PR with the **same head branch name** as the Explorer PR, and wait for the Explorer PR's successful Unity Cloud Build. On the explorer-automation PR, comment:
+
+```text
+/generate-baselines
+```
+
+To refresh only one fixture, use:
+
+```text
+/generate-baselines --filter FullyQualifiedName~UiFixture
+```
+
+The Visual-scoped dispatcher enforces `Category=Visual` automatically. It records on CI's macOS runner against the matching Explorer PR build and commits the PNGs back to the explorer-automation PR branch. If the paired build is unavailable, it falls back to a `dev` build: check the reported build before accepting the baseline changes. Inspect the generated PNGs and Allure report, then rerun `/visual-tests` on the Explorer PR to compare against that branch's new baselines.
+
+If the default dispatcher lacks that capability, run **Manual Visual Tests** from an automation branch whose reusable workflow enforces Visual scoping. Select `mode=record`, `platform=macos`, the matching automation branch as `tests_ref`, and the instrumented Explorer build URL as `build_url`; use `FullyQualifiedName~UiFixture` as the optional filter. Manual recording renders PNGs for inspection in the Allure report and does **not** commit them. Use the slash-command path for automatic commits once its default-branch prerequisite is met.
+
+For a release or hotfix, keep its matching automation branch available while testing that older build. Do not replace automation `main` baselines with an older release's pixels. See [explorer-automation's baseline guidance](https://github.com/decentraland/explorer-automation/blob/main/explorer/README.md#visual-regression-testing) for recording details.
 
 ---
 

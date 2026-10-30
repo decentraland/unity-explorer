@@ -11,7 +11,6 @@ using ECS.LifeCycle.Components;
 
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using UnityEngine;
 
 
 namespace ECS.Unity.Systems

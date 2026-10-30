@@ -13,8 +13,7 @@
 
 ## Severity → GitHub Label Reference
 
-> This table is used by the automated issue-labeler bot and is the authoritative mapping between severity and GitHub priority labels.
-> If the bot assigns the wrong label, check the [feature categories doc](issue-triage-categories.md) and move the affected feature to the correct Primary/Secondary section.
+> This table is the authoritative mapping between severity and GitHub priority labels.
 
 | Severity | GitHub label | Criteria |
 | --- | --- | --- |
@@ -53,7 +52,7 @@ Tag the right team when reporting or escalating an incident.
 
 | Area | Examples | Handle |
 | --- | --- | --- |
-| **Explorer / Unity client, launcher, aang-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
+| **Explorer / Unity client, launcher, avatar-preview-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
 | **Marketplace, dApps, website, backend services** | Marketplace down, credits not updating, wallet connection, API failures, asset bundle pipeline, catalysts | @core-support |
 | **Creator Tools** | Creator Hub bugs, SDK issues, scene deployments | @creatorstoolteam |
 | **QA** | Any report, verification, or severity classification | @qa-team |

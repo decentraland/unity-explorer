@@ -15,45 +15,54 @@ namespace DCL.SDKComponents.MediaStream
 
         internal Status status;
 
-        internal MediaAddress mediaAddress;
-        internal MediaAddress originalAddress;
-        internal bool isReachable;
-        internal bool isLiveStream;
-        internal float resolvedUrlExpiresAt;
+        internal VideoTemplateData template;
 
         public bool IsResolved => status == Status.Resolved;
 
         public bool IsConsumed => status == Status.Consumed;
 
+        public MediaAddress ResolvedAddress => template.ResolvedAddress;
+
+        public bool IsLiveStream => template.Resolved.IsLiveStream;
+
+        public float ResolvedUrlExpiresAt => template.Resolved.ExpiresAtRealtimeSinceStartup;
+
+        /// <summary>
+        ///     Seeds preload metadata as already-resolved to skip URL re-resolution.
+        ///     Status stays <see cref="Status.Resolved" /> (not Consumed) so the normal consume path still runs.
+        /// </summary>
+        public void SeedResolved(in VideoTemplateData tpl)
+        {
+            status = Status.Resolved;
+            template = tpl;
+        }
+
+        public VideoTemplateData ToTemplateData() =>
+            template;
+
         public async UniTask UrlReachabilityResolveAsync(MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
             IUrlResolverService urlResolverService)
         {
             status = Status.Pending;
-            isReachable = false;
-            isLiveStream = false;
-            resolvedUrlExpiresAt = 0f;
-            this.mediaAddress = newMediaAddress;
-            this.originalAddress = newMediaAddress;
+            template = default;
 
-            if (mediaAddress.IsLivekitAddress(out _))
+            if (newMediaAddress.IsLivekitAddress(out _))
             {
-                isReachable = true;
+                template = new VideoTemplateData(newMediaAddress, newMediaAddress, new ResolvedMediaUrl(string.Empty, isReachable: true));
                 status = Status.Resolved;
                 return;
             }
 
-            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+            newMediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
 
             ResolvedMediaUrl resolved = await urlResolverService.ResolveAsync(url, reportData, ct);
 
-            isReachable = resolved.IsReachable;
-            isLiveStream = resolved.IsLiveStream;
-            resolvedUrlExpiresAt = resolved.ExpiresAtRealtimeSinceStartup;
+            MediaAddress resolvedAddress = resolved.DirectUrl != url
+                ? MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(resolved.DirectUrl))
+                : newMediaAddress;
 
-            if (resolved.DirectUrl != url)
-                this.mediaAddress = MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(resolved.DirectUrl));
-
+            template = new VideoTemplateData(resolvedAddress, newMediaAddress, resolved);
             status = Status.Resolved;
         }
 
@@ -61,22 +70,17 @@ namespace DCL.SDKComponents.MediaStream
         {
             status = Status.Consumed;
 
-            // mediaAddress may be rewritten to a resolved direct URL (see UrlReachabilityResolveAsync),
-            // so compare against originalAddress which always holds the pre-resolution value
-            // that matches what the component stores in its MediaAddress field
-            if (originalAddress != address)
+            // match against the pre-resolution address; ResolvedAddress may have been rewritten during resolution
+            if (template.OriginalAddress != address)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{originalAddress}>");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{template.OriginalAddress}>");
                 return false;
             }
 
-            if (!isReachable)
-            {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.mediaAddress}>");
-                return false;
-            }
+            if (template.Resolved.IsReachable) return true;
 
-            return true;
+            ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{template.ResolvedAddress}>");
+            return false;
         }
     }
 }

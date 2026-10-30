@@ -93,7 +93,7 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         public async UniTask<string> SendMetaTransactionAsync(IThirdwebWallet wallet, string contractAddress, string functionSignature)
         {
-            string from = await wallet!.GetAddress();
+            string from = await wallet.GetAddress();
 
             // Get contract data for EIP-712 domain (includes chainId for the contract's network)
             ContractMetaTxInfo contractInfo = await GetContractMetaTxInfoAsync(contractAddress);
@@ -143,7 +143,7 @@ namespace DCL.Web3.Authenticators
                 functionSignature
             );
 
-            return await wallet!.SignTypedDataV4(typedDataJson);
+            return await wallet.SignTypedDataV4(typedDataJson);
         }
 
         /// <summary>

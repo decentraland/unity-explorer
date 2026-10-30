@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Announcements;
@@ -6,8 +7,8 @@ using DCL.Profiles.Self;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
-using ECS;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -26,10 +27,17 @@ namespace DCL.Multiplayer.Movement
         private readonly IWeb3IdentityCache identityCache;
 
         private volatile bool isDisposed;
+        private volatile bool routingPurgeRequested;
 
-        internal long ResyncCount { get; private set; }
+        // BroadcastTeleport is main-thread-only, so single-threaded reuse is safe
+        private readonly HashSet<string> staleWalletsBuffer = new ();
 
-        internal long EmoteStateMismatchCount { get; private set; }
+        // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements
+        private string? lastBroadcastRealm;
+
+        internal long resyncCount { get; private set; }
+
+        internal long emoteStateMismatchCount { get; private set; }
 
         public PulseMultiplayerBus(IPulseMultiplayerService pulseService,
             PeerIdCache peerIdCache,
@@ -39,8 +47,8 @@ namespace DCL.Multiplayer.Movement
             PulseRemoveIntentions removeIntentions,
             IWeb3IdentityCache identityCache,
             ReconnectionSettings settings,
-            ISelfProfile selfProfile,
-            IRealmData realmData)
+            SelfProfile selfProfile,
+            PulseRealm pulseRealm)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -49,7 +57,7 @@ namespace DCL.Multiplayer.Movement
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
-            this.realmData = realmData;
+            this.pulseRealm = pulseRealm;
             this.selfProfile = selfProfile;
             this.settings = settings;
         }
@@ -60,6 +68,24 @@ namespace DCL.Multiplayer.Movement
                 return new Web3Address(userId);
 
             return identityCache.EnsuredIdentity().Address;
+        }
+
+        private PeerIdCache.LookupResult GetPeerInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
+        {
+            PeerIdCache.LookupResult result = peerIdCache.GetWalletInRealm(subjectId, pulseRealm.Value, out wallet);
+
+            switch (result)
+            {
+                case PeerIdCache.LookupResult.UnknownPeer:
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
+                    break;
+                case PeerIdCache.LookupResult.RealmMismatch:
+                    // Expected while a realm-change purge is pending, so not a warning
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
+                    break;
+            }
+
+            return result;
         }
 
         public void Dispose()
@@ -79,6 +105,7 @@ namespace DCL.Multiplayer.Movement
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStarted, HandleEmoteStarted);
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped, HandleEmoteStopped);
 
+            pulseService.RegisterBeforeMessageHandler(TryDrainRoutingPurge);
             pulseService.RegisterDisconnectHandler(HandleDisconnect);
             pulseService.RegisterHandshakeHandler(HandshakeAsync);
         }
@@ -89,7 +116,89 @@ namespace DCL.Multiplayer.Movement
 
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
-            emotingSubjects.Clear();
+            peerEmotes.Clear();
+            ClearEmoteIntentions();
+        }
+
+        /// <summary>
+        ///     Must run on the main thread, before the teleport request is sent, so no new-realm announcements can race the scrub.
+        /// </summary>
+        private void PurgeDifferentRealmPeers()
+        {
+            // Everything gathered up to the realm switch belongs to the previous realm
+            incomingProfiles.Clear();
+            ClearEmoteIntentions();
+
+            // The comparison spares co-teleporting peers whose TeleportPerformed already refreshed the cached realm
+            staleWalletsBuffer.Clear();
+            peerIdCache.CollectWalletsNotInRealm(pulseRealm.Value, staleWalletsBuffer);
+
+            foreach (string wallet in staleWalletsBuffer)
+            {
+                removeIntentions.Enqueue(wallet);
+                movementInbox.RemovePending(wallet);
+            }
+
+            routingPurgeRequested = true;
+
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Purged {staleWalletsBuffer.Count} peers from a different realm on teleport to '{pulseRealm.Value}'");
+        }
+
+        /// <summary>
+        ///     Routing-thread collections may only be mutated on the routing thread; deferring their purge to the
+        ///     next incoming message is safe because stale entries are inert until a message arrives.
+        /// </summary>
+        private void TryDrainRoutingPurge()
+        {
+            if (!routingPurgeRequested)
+                return;
+
+            routingPurgeRequested = false;
+
+            peerIdCache.RemoveWhereNotInRealm(pulseRealm.Value, PurgeQueues, RestorePromotedPeer);
+        }
+
+        private void RemovePeerRegistration(uint subjectId)
+        {
+            bool walletLeftRealm = peerIdCache.Remove(subjectId, pulseRealm.Value, out Web3Address wallet, out uint? promotedPeerId);
+            PurgeQueues(subjectId);
+
+            if (walletLeftRealm)
+            {
+                removeIntentions.Enqueue(wallet);
+                DiscardWalletEmoteIntentions(wallet);
+            }
+            else if (promotedPeerId.HasValue)
+                RestorePromotedPeer(wallet, promotedPeerId.Value);
+        }
+
+        private void RestorePromotedPeer(Web3Address wallet, uint subjectId)
+        {
+            // Refresh any state missed while the peer was shadowed.
+            pendingResyncs.Remove(subjectId);
+
+            if (lastMovementMessages.TryGetValue(subjectId, out var lastMovement))
+            {
+                NetworkMovementMessage movementMessage = lastMovement.message;
+                movementMessage.isInstant = true;
+                movementMessage.resetTimeline = true;
+                movementMessage.isEmoting = IsSubjectEmoting(subjectId);
+                Inbox(movementMessage, wallet);
+                RestorePeerEmote(wallet, subjectId, movementMessage.timestamp);
+                TryRequestResync(subjectId, lastMovement.sequence, ResyncKind.Promotion);
+            }
+            else
+            {
+                RestorePeerEmote(wallet, subjectId, 0);
+                TryRequestResync(subjectId, 0, ResyncKind.Promotion);
+            }
+        }
+
+        private void PurgeQueues(uint subjectId)
+        {
+            lastMovementMessages.Remove(subjectId);
+            pendingResyncs.Remove(subjectId);
+            peerEmotes.Remove(subjectId);
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

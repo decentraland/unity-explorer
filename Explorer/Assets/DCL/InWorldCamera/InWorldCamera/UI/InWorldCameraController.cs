@@ -25,6 +25,7 @@ namespace DCL.InWorldCamera.UI
         private const string SOURCE_BUTTON = "Button";
 
         private readonly World world;
+        private readonly InWorldCameraToggle cameraToggle;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
@@ -32,7 +33,7 @@ namespace DCL.InWorldCamera.UI
 
         private CancellationTokenSource ctx;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
         private SingleInstanceEntity? cameraInternal;
 
@@ -40,9 +41,10 @@ namespace DCL.InWorldCamera.UI
 
         private UniTaskCompletionSource? closeViewTask;
 
-        public InWorldCameraController(ViewFactoryMethod viewFactory, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, World world, InWorldCameraToggle cameraToggle, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
+            this.cameraToggle = cameraToggle;
             this.mvcManager = mvcManager;
             this.storageService = storageService;
 
@@ -140,17 +142,8 @@ namespace DCL.InWorldCamera.UI
                 world.Add(camera!.Value, new TakeScreenshotRequest { Source = SOURCE_BUTTON });
         }
 
-        private void RequestDisableInWorldCamera()
-        {
-            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = false });
-        }
-
-        private void ToggleInWorldCamera()
-        {
-            if (world.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
-        }
+        private void RequestDisableInWorldCamera() =>
+            cameraToggle.Disable();
 
         private void ToggleShortcutsInfo() =>
             ToggleShortcutsInfoAsync(!shortcutPanelIsOpen);

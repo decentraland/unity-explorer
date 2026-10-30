@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class StandardUnloadStrategy : UnloadStrategyBase

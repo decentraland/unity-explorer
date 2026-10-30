@@ -118,7 +118,7 @@ namespace DCL.Chat
                     newItem.SetOfficialIconVisibility(user.IsOfficial);
                     newItem.Configure(isClosable: true);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
-                    newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
+                    newItem.SetConnectionStatus(OnlineStatus.Offline);
 
                     break;
 
@@ -155,7 +155,7 @@ namespace DCL.Chat
                     itemToUpdate.SetConversationName(user.DisplayName);
                     itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
                     itemToUpdate.SetOfficialIconVisibility(user.IsOfficial);
-                    itemToUpdate.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    itemToUpdate.SetConnectionStatus(user.IsOnline ? OnlineStatus.Online : OnlineStatus.Offline);
                     break;
 
                 case CommunityChannelViewModel community:
@@ -167,7 +167,7 @@ namespace DCL.Chat
 
         public void SetOnlineStatus(string channelId, bool isOnline)
         {
-            if (items.TryGetValue(new ChatChannel.ChannelId(channelId), out ChatConversationsToolbarViewItem? item)) { item.SetConnectionStatus(isOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE); }
+            if (items.TryGetValue(new ChatChannel.ChannelId(channelId), out ChatConversationsToolbarViewItem? item)) { item.SetConnectionStatus(isOnline ? OnlineStatus.Online : OnlineStatus.Offline); }
         }
 
         public void AddItem(ChatConversationsToolbarViewItem newItem)

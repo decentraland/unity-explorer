@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utility.Types;
 using DCL.Web3;
 using MVC;
 using System.Threading;
@@ -20,7 +19,7 @@ namespace DCL.Friends.UI
         private CancellationTokenSource? unfriendCancellationToken;
         private CancellationTokenSource? fetchProfileCancellationToken;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public UnfriendConfirmationPopupController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,
@@ -89,9 +88,9 @@ namespace DCL.Friends.UI
 
             async UniTaskVoid UnfriendAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                     Close();
             }
         }

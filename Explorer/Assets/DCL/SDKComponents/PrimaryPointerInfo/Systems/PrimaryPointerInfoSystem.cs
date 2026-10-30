@@ -5,12 +5,11 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
-using InputAction = UnityEngine.InputSystem.InputAction;
+using PointerType = DCL.ECSComponents.PointerType;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = Decentraland.Common.Vector3;
 
@@ -20,50 +19,70 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
-        private readonly World globalWorld;
-        private InputAction inputPoint;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private Vector2 previousPosition = Vector2.zero;
-        private Vector2 deltaPos;
-        private Camera cachedCamera;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IExposedCameraData exposedCameraData;
+        private readonly Camera cachedCamera;
+        private Vector2 previousPosition = Vector2.zero;
+        private CumulativePointerDelta lastSeenAccumulatedDelta;
 
         internal PrimaryPointerInfoSystem(
             World world,
             World globalWorld,
             ISceneStateProvider sceneStateProvider,
-            IECSToCRDTWriter ecsToCRDTWriter
+            IECSToCRDTWriter ecsToCRDTWriter,
+            IExposedCameraData exposedCameraData
         ) : base(world)
         {
-            this.globalWorld = globalWorld;
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.exposedCameraData = exposedCameraData;
+            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
         }
 
         public override void Initialize()
         {
             base.Initialize();
 
-            cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
+            lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 
-            inputPoint = DCLInput.Instance.Camera.Point;
-
-            UpdatePointerInfo(Vector2.zero);
+            UpdatePointerInfo();
         }
 
         protected override void Update(float t)
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            UpdatePointerInfo(inputPoint.ReadValue<Vector2>());
+            UpdatePointerInfo();
         }
 
-        private void UpdatePointerInfo(Vector2 pointerPos)
+        private void UpdatePointerInfo()
         {
-            deltaPos = pointerPos - previousPosition;
-            previousPosition = pointerPos;
+            Vector2 cursorPosition = exposedCameraData.PointerScreenPosition;
+            CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
+            Vector2 pointerPos;
+            Vector2 deltaPos;
 
-            var ray = cachedCamera.ScreenPointToRay(pointerPos);
+            if (exposedCameraData.PointerIsLocked.Value)
+            {
+                // Unity freezes the absolute pointer position while the cursor is locked, so source the delta
+                // from the per-render-frame accumulated total (this system is throttled to the scene tick, and
+                // the raw delta action resets every render frame) and report screen-center coordinates.
+                pointerPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                deltaPos = accumulatedDelta - lastSeenAccumulatedDelta;
+            }
+            else
+            {
+                pointerPos = cursorPosition;
+                deltaPos = cursorPosition - previousPosition;
+            }
+
+            // Always track the cursor position and the accumulated total, so the first frame after a
+            // lock-state transition doesn't produce a stale-diff spike.
+            previousPosition = cursorPosition;
+            lastSeenAccumulatedDelta = accumulatedDelta;
+
+            Ray ray = cachedCamera.ScreenPointToRay(pointerPos);
 
             var worldRayDirection = new Vector3
             {
@@ -72,8 +91,14 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 Z = ray.direction.z,
             };
 
+            // The SDK uses a top-left origin with Y growing downwards, the same space as UiTransform.
+            // Flip only after the ray is cast, because ScreenPointToRay expects Unity's bottom-left origin.
+            pointerPos.y = Screen.height - pointerPos.y;
+            deltaPos.y = -deltaPos.y;
+
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
+                component.PointerType = PointerType.PotMouse;
                 component.ScreenCoordinates = new Decentraland.Common.Vector2 { X = data.pos.x, Y = data.pos.y };
                 component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };
                 component.WorldRayDirection = data.rayDir;

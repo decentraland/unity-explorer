@@ -74,12 +74,12 @@ namespace DCL.Multiplayer.Movement
 
             var timeDiff = (float)(UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
+            bool isConsideredTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity) || World.Has<PlayerTeleportIntent>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isConsideredTeleported);
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.Movement
                 if (!anythingChanged && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isConsideredTeleported);
             }
 
             return;
@@ -192,7 +192,7 @@ namespace DCL.Multiplayer.Movement
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending
-                && input.Kind != MovementKind.RUN // simulate package lost when Running
+                && input.Kind != MovementKind.Run // simulate package lost when Running
                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
                                debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))

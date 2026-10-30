@@ -2,12 +2,12 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -26,8 +26,8 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
@@ -37,8 +37,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -48,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEmoteStorage emoteStorage;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IProfileBroadcast profileBroadcast;
@@ -69,6 +66,9 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly MovementInbox movementInbox;
+        private readonly SelfProfile selfProfile;
+        private readonly IProfilePropagation profilePropagation;
+        private readonly PulseActivation pulseActivation;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -87,7 +87,6 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
-            IEmoteStorage emoteStorage,
             CharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
@@ -95,7 +94,10 @@ namespace DCL.PluginSystem.Global
             IActivatableConnectiveRoom voiceChatRoom,
             IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
-            MovementInbox movementInbox)
+            MovementInbox movementInbox,
+            SelfProfile selfProfile,
+            IProfilePropagation profilePropagation,
+            PulseActivation pulseActivation)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -113,7 +115,6 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.poolsRegistry = poolsRegistry;
             this.islandThroughputBufferBunch = islandThroughputBufferBunch;
@@ -122,6 +123,9 @@ namespace DCL.PluginSystem.Global
             this.remoteAnnouncements = remoteAnnouncements;
             this.removeIntentions = removeIntentions;
             this.movementInbox = movementInbox;
+            this.selfProfile = selfProfile;
+            this.profilePropagation = profilePropagation;
+            this.pulseActivation = pulseActivation;
         }
 
         public void Dispose()
@@ -151,8 +155,9 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, roomHub, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
+            PropagateSelfProfileSystem.InjectToWorld(ref builder, selfProfile, profilePropagation, pulseActivation);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,
@@ -171,7 +176,7 @@ namespace DCL.PluginSystem.Global
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
-            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder);
             PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
 #endif
         }

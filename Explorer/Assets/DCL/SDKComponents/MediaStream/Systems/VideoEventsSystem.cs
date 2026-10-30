@@ -40,6 +40,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
+            // Skip players whose MediaPlayer object was destroyed.
+            if (!mediaPlayer.MediaPlayer.IsValid) return;
+
             VideoState state = GetVideoStateForPropagation(mediaPlayer);
             PropagateStateInVideoEvent(in sdkEntity, ref mediaPlayer, state);
         }

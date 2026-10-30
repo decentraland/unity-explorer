@@ -2,6 +2,7 @@
 using DCL.Optimization.ThreadSafePool;
 using UnityEngine.Pool;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Multiplayer.Connections.DecentralandUrls
 {
     public static class DecentralandUrlsUtils

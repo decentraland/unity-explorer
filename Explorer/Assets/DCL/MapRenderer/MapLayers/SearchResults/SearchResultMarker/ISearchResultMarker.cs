@@ -16,7 +16,17 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         void SetData(string title, Vector3 position, PlacesData.PlaceInfo placeInfo);
 
+        new void OnBecameVisible();
+
+        new void OnBecameInvisible();
+
         void SetZoom(float baseScale, float baseZoom, float zoom);
+
+        new void ResetScale(float scale);
+
+        new UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
+
+        new UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
 
         GameObject? GetGameObject();
     }

@@ -19,6 +19,9 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadSceneEmotesSystem : BaseUnityLoopSystem
     {
+        // Logical file name of the synthesized DTO's single content entry; scene emotes have no real file list.
+        private const string SCENE_EMOTE_MAIN_FILE = "scene-emote.glb";
+
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IEmoteStorage emoteStorage;
 
@@ -90,6 +93,14 @@ namespace DCL.AvatarRendering.Emotes.Load
                 {
                     id = urn,
                     assetBundleManifestVersion = sceneAssetBundleManifest,
+
+                    // Scene emotes are a single clip shared by both genders; map the main file to the
+                    // emote's hash so content lookups (e.g. HasSameClipForAllGenders) resolve instead
+                    // of erroring on a null content list.
+                    content = new[]
+                    {
+                        new ContentDefinition { file = SCENE_EMOTE_MAIN_FILE, hash = intention.EmoteHash },
+                    },
                     metadata = new EmoteDTO.EmoteMetadataDto
                     {
                         id = urn,
@@ -113,7 +124,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                                     },
                                     overrideHides = Array.Empty<string>(),
                                     overrideReplaces = Array.Empty<string>(),
-                                    mainFile = string.Empty,
+                                    mainFile = SCENE_EMOTE_MAIN_FILE,
                                 },
                             },
                         },

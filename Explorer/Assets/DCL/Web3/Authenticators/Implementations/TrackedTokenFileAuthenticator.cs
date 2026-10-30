@@ -62,9 +62,6 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public UniTask LogoutAsync(CancellationToken ct) =>
-            inner.LogoutAsync(ct);
-
         public void Dispose() =>
             inner.Dispose();
     }

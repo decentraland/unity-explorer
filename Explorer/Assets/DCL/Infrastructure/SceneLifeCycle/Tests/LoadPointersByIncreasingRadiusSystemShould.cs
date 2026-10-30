@@ -3,6 +3,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -16,7 +17,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class LoadPointersByIncreasingRadiusSystemShould : UnitySystemTestBase<LoadPointersByIncreasingRadiusSystem>
     {

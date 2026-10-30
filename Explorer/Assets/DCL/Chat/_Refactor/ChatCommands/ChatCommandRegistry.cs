@@ -8,7 +8,6 @@ using DCL.Friends;
 using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using System;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.VoiceChat;

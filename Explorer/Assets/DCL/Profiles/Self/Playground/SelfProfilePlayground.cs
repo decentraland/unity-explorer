@@ -5,11 +5,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -53,7 +51,12 @@ namespace DCL.Profiles.Self.Playground
 
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY);
 
-            SelfProfile selfProfile = new SelfProfile(
+            var equippedWearables = new EquippedWearables();
+            var wearableStorage = new WearableStorage();
+            var emoteStorage = new MemoryEmotesStorage();
+            var equippedEmotes = new EquippedEmotes();
+
+            using SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
                         IWebRequestController.TEST,
@@ -64,26 +67,29 @@ namespace DCL.Profiles.Self.Playground
                         false)
                 ),
                 web3IdentityCache,
-                new EquippedWearables(),
-                new WearableStorage(),
-                new MemoryEmotesStorage(),
-                new EquippedEmotes(),
+                realmData,
+                equippedWearables,
+                wearableStorage,
+                emoteStorage,
+                equippedEmotes,
                 null,
                 new DefaultProfileCache(),
                 world,
                 playerEntity,
-                new PassThroughOwnedNftFilter()
+                new ForcedWearables()
             );
 
-            var profile = await selfProfile.ProfileAsync(ct);
-            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
-            await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: false);
-            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
-        }
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile read: {read}");
 
-        private sealed class PassThroughOwnedNftFilter : IOwnedNftFilter
-        {
-            public bool ShouldExclude(URN fullUrn) => false;
+            if (!read.IsOk(out Profile? profile))
+                return;
+
+            Profile edited = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, new List<string>(equippedWearables.ForceRenderCategories),
+                emoteStorage, wearableStorage, incrementVersion: false);
+
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(edited, ct);
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile deploy: {deploy}");
         }
     }
 }

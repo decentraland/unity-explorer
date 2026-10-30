@@ -1,10 +1,9 @@
 using Arch.Core;
-using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
-using DCL.Utility;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -22,7 +21,7 @@ using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine.Networking;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class LoadFixedPointersShould : UnitySystemTestBase<LoadFixedPointersSystem>
     {

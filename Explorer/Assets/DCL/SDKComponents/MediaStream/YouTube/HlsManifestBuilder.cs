@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream.YouTube
 {
@@ -11,28 +12,35 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     <c>hlsManifestUrl</c> or <c>dashManifestUrl</c> — typically embed-restricted music
     ///     videos served only as legacy muxed MP4 (itag=18, ~360p, with known A/V drift).
     ///
-    ///     HLS chosen over DASH because every AVPro backend supports it: AVFoundation (macOS/iOS),
-    ///     Media Foundation (Windows), ExoPlayer (Android). DASH only works on a subset.
+    ///     HLS is synthesized because its byte-range tags (EXT-X-MAP / EXT-X-BYTERANGE) map
+    ///     one-to-one onto the sidx fragment table.
     ///
-    ///     Output: three plain-text playlists meant to be written into the same directory.
-    ///     - <c>master.m3u8</c> — multivariant playlist with one video stream + one audio rendition
-    ///     - <c>video.m3u8</c> — single-segment fMP4 playlist using EXT-X-MAP + EXT-X-BYTERANGE
-    ///     - <c>audio.m3u8</c> — same for audio
+    ///     Output: three plain-text playlists whose master references the media playlists by
+    ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
+    ///     so the loopback URL path that serves the set must expose the media playlists next to
+    ///     the master under exactly these names.
     ///
     ///     Reference: RFC 8216 §4.3 (HLS playlist tags), §4.3.2.5 (EXT-X-MAP byte-range form).
     /// </summary>
     internal static class HlsManifestBuilder
     {
+        public const string MASTER_PLAYLIST_NAME = "master.m3u8";
+        public const string VIDEO_PLAYLIST_NAME = "video.m3u8";
+        public const string AUDIO_PLAYLIST_NAME = "audio.m3u8";
+
+        // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
+        public static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
+
         private const int DEFAULT_PLAYLIST_LENGTH = 2048;
         private const int HEADER_PLAYLIST_LENGTH = 256;
         private const int SEGMENT_PLAYLIST_LENGTH = 128;
 
-        // Codecs every AVPro backend decodes reliably across Windows/macOS/iOS/Android.
+        // H.264 + AAC: the most broadly hardware-decodable pair.
         private const string PREFERRED_VIDEO_CODEC_PREFIX = "avc1";
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
         private const int PREFERRED_HEIGHT = 1080;
 
-        /// <summary>The 3 playlist contents, ready to write to disk in the same directory.</summary>
+        /// <summary>The 3 playlist contents, served together under one loopback path by <see cref="LocalHlsPlaylistServer"/>.</summary>
         public readonly struct PlaylistSet
         {
             public string Master { get; }
@@ -50,7 +58,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         /// <summary>
         ///     Selects the best video + audio pair from a list of adaptive formats and validates
         ///     them as synthesizable (byte ranges present, content length known). Useful when the
-        ///     caller needs to know which streams will be used before invoking <see cref="Build(IReadOnlyList&lt;AdaptiveFormatData&gt;,int,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;)"/>
+        ///     caller needs to know which streams will be used before invoking <see cref="Build"/>
         ///     — for example, to pre-fetch each stream's sidx box.
         /// </summary>
         public static bool TrySelectVideoAndAudio(
@@ -61,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             video = default;
             audio = default;
 
-            if (adaptive == null || adaptive.Count == 0) return false;
+            if (adaptive.Count == 0) return false;
 
             AdaptiveFormatData? v = SelectBestVideo(adaptive);
             AdaptiveFormatData? a = SelectBestAudio(adaptive);
@@ -77,11 +85,11 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         /// <summary>
         ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
-        ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
-        ///     are supplied the media playlists are split into one HLS segment per fmp4
-        ///     fragment — this avoids the multi-second buffer-fill stall AVPro exhibits when
-        ///     handed a single byte range covering the entire video body (issue #8350). Falls
-        ///     back to single-segment if either segment list is null or empty.
+        ///     returned by <see cref="TrySelectVideoAndAudio"/>. When both SIDX-derived segment tables
+        ///     are non-empty, consecutive fragments are coalesced (see <see cref="Coalesce"/>) into
+        ///     segments of at least targetSegmentDurationSeconds, each starting on a clean
+        ///     sidx-described boundary (issue #8350).
+        ///     Falls back to single-segment if either segment list is empty.
         ///
         ///     Caller is expected to have already validated the streams via
         ///     <see cref="TrySelectVideoAndAudio"/>; this method does not re-check byte ranges
@@ -92,24 +100,73 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             AdaptiveFormatData video,
             AdaptiveFormatData audio,
             int durationSeconds,
-            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
+            IReadOnlyList<SidxParser.SegmentInfo> videoSegments,
+            IReadOnlyList<SidxParser.SegmentInfo> audioSegments,
+            float targetSegmentDurationSeconds)
         {
-            bool segmented = videoSegments is { Count: > 0 }
-                             && audioSegments is { Count: > 0 };
+            bool segmented = videoSegments.Count > 0 && audioSegments.Count > 0;
+
+            // Method-scoped rent: a branch-scoped using would return the lists to the
+            // pool while videoSegments/audioSegments still alias them.
+            using var _ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedVideo);
+            using var __ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedAudio);
+
+            if (segmented)
+            {
+                Coalesce(videoSegments, targetSegmentDurationSeconds, coalescedVideo);
+                Coalesce(audioSegments, targetSegmentDurationSeconds, coalescedAudio);
+                videoSegments = coalescedVideo;
+                audioSegments = coalescedAudio;
+            }
 
             string videoPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(video, videoSegments!)
+                ? BuildSegmentedMediaPlaylist(video, videoSegments)
                 : BuildMediaPlaylist(video, durationSeconds);
 
             string audioPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
+                ? BuildSegmentedMediaPlaylist(audio, audioSegments)
                 : BuildMediaPlaylist(audio, durationSeconds);
 
             return new PlaylistSet(
-                BuildMaster(video, audio),
+                BuildMaster(video, audio, VIDEO_PLAYLIST_NAME, AUDIO_PLAYLIST_NAME),
                 videoPlaylist,
                 audioPlaylist);
+        }
+
+        /// <summary>
+        ///     Merges consecutive sidx fragments (contiguous by construction) into segments of at
+        ///     least <paramref name="targetDurationSeconds"/>, filling <paramref name="result"/>
+        ///     (cleared first) — the caller owns the buffer. Fewer, larger byte ranges keep the
+        ///     request rate low — googlevideo rejects bursty range-request patterns with 403s —
+        ///     while still bounding seek granularity and per-request loss.
+        /// </summary>
+        internal static void Coalesce(IReadOnlyList<SidxParser.SegmentInfo> fragments, float targetDurationSeconds, List<SidxParser.SegmentInfo> result)
+        {
+            result.Clear();
+
+            long offset = 0, size = 0;
+            double duration = 0;
+
+            for (var i = 0; i < fragments.Count; i++)
+            {
+                SidxParser.SegmentInfo fragment = fragments[i];
+
+                if (size == 0)
+                    offset = fragment.ByteOffset;
+
+                size += fragment.ByteSize;
+                duration += fragment.DurationSeconds;
+
+                if (duration >= targetDurationSeconds)
+                {
+                    result.Add(new SidxParser.SegmentInfo(offset, size, duration));
+                    size = 0;
+                    duration = 0;
+                }
+            }
+
+            if (size > 0)
+                result.Add(new SidxParser.SegmentInfo(offset, size, duration));
         }
 
         private static AdaptiveFormatData? SelectBestVideo(IReadOnlyList<AdaptiveFormatData> adaptive)
@@ -130,7 +187,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 // Prefer highest resolution up to PREFERRED_HEIGHT, then highest bitrate.
                 // Resolutions above PREFERRED_HEIGHT score 0 so they only win as a fallback.
                 int height = entry.Height!.Value <= PREFERRED_HEIGHT ? entry.Height.Value : 0;
-                long score = ((long)height * 100_000_000L) + Math.Min(entry.Bitrate, 100_000_000L);
+                long score = (height * 100_000_000L) + Math.Min(entry.Bitrate, 100_000_000L);
 
                 if (score > bestScore)
                 {
@@ -194,25 +251,25 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             return comma < 0 ? codecs : codecs.Substring(0, comma).Trim();
         }
 
-        private static string BuildMaster(AdaptiveFormatData video, AdaptiveFormatData audio)
+        private static string BuildMaster(AdaptiveFormatData video, AdaptiveFormatData audio, string videoPlaylistUri, string audioPlaylistUri)
         {
             string videoCodec = FirstCodec(ExtractCodec(video.MimeType));
             string audioCodec = FirstCodec(ExtractCodec(audio.MimeType));
             long combinedBandwidth = video.Bitrate + audio.Bitrate;
 
-            var sb = new StringBuilder(512);
+            var sb = new StringBuilder(512 + videoPlaylistUri.Length + audioPlaylistUri.Length);
             sb.Append("#EXTM3U\n");
             sb.Append("#EXT-X-VERSION:7\n");
             sb.Append("#EXT-X-INDEPENDENT-SEGMENTS\n");
             sb.Append('\n');
-            sb.Append("#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio0\",NAME=\"audio\",DEFAULT=YES,AUTOSELECT=YES,URI=\"audio.m3u8\"\n");
+            sb.Append("#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio0\",NAME=\"audio\",DEFAULT=YES,AUTOSELECT=YES,URI=\"").Append(audioPlaylistUri).Append("\"\n");
             sb.Append('\n');
             sb.Append("#EXT-X-STREAM-INF:BANDWIDTH=").Append(combinedBandwidth);
             sb.Append(",CODECS=\"").Append(videoCodec).Append(',').Append(audioCodec).Append('"');
             sb.Append(",RESOLUTION=").Append(video.Width!.Value).Append('x').Append(video.Height!.Value);
             if (video.Fps.HasValue) sb.Append(",FRAME-RATE=").Append(video.Fps.Value);
             sb.Append(",AUDIO=\"audio0\"\n");
-            sb.Append("video.m3u8\n");
+            sb.Append(videoPlaylistUri).Append('\n');
             return sb.ToString();
         }
 
@@ -244,8 +301,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             sb.Append("#EXT-X-MAP:URI=\"").Append(stream.Url).Append('"');
             sb.Append(",BYTERANGE=\"").Append(initSize).Append('@').Append(initOffset).Append("\"\n");
 
-            // One HLS segment per fmp4 fragment. Each EXT-X-BYTERANGE points at a clean
-            // fragment boundary (sidx-described), so AVPro can decode a single segment in
+            // One HLS segment per coalesced fragment run. Each EXT-X-BYTERANGE starts on a clean
+            // fragment boundary (sidx-described), so the player can decode a single segment in
             // isolation and start playback after the first chunk lands.
             for (int i = 0; i < segments.Count; i++)
             {

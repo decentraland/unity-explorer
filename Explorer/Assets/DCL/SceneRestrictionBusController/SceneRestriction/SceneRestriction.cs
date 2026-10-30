@@ -8,67 +8,67 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         public static SceneRestriction CreateCameraLocked(SceneRestrictionsAction action) =>
             new()
             {
-                Type = SceneRestrictions.CAMERA_LOCKED,
+                Type = SceneRestrictions.CameraLocked,
                 Action = action,
             };
 
         public static SceneRestriction CreateAvatarHidden(SceneRestrictionsAction action) =>
             new()
             {
-                Type = SceneRestrictions.AVATAR_HIDDEN,
+                Type = SceneRestrictions.AvatarHidden,
                 Action = action,
             };
 
         public static SceneRestriction CreateAvatarMovementsBlocked(SceneRestrictionsAction action) =>
             new()
             {
-                Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED,
+                Type = SceneRestrictions.AvatarMovementsBlocked,
                 Action = action,
             };
 
         public static SceneRestriction CreatePassportCannotBeOpened(SceneRestrictionsAction action) =>
             new()
             {
-                Type = SceneRestrictions.PASSPORT_CANNOT_BE_OPENED,
+                Type = SceneRestrictions.PassportCannotBeOpened,
                 Action = action,
             };
 
         public static SceneRestriction CreateExperiencesBlocked(SceneRestrictionsAction action) =>
             new()
             {
-                Type = SceneRestrictions.EXPERIENCES_BLOCKED,
+                Type = SceneRestrictions.ExperiencesBlocked,
                 Action = action,
             };
 
         public static SceneRestriction CreateSkyboxTimeUILocked(SceneRestrictionsAction action) =>
             new ()
             {
-                Type = SceneRestrictions.SKYBOX_TIME_UI_BLOCKED,
+                Type = SceneRestrictions.SkyboxTimeUiBlocked,
                 Action = action,
             };
 
         public static SceneRestriction CreateNearbyVoiceChatBlocked(SceneRestrictionsAction action) =>
             new ()
             {
-                Type = SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED,
+                Type = SceneRestrictions.NearbyVoiceChatBlocked,
                 Action = action,
             };
     }
 
     public enum SceneRestrictions
     {
-        CAMERA_LOCKED,
-        AVATAR_HIDDEN,
-        AVATAR_MOVEMENTS_BLOCKED,
-        PASSPORT_CANNOT_BE_OPENED,
-        EXPERIENCES_BLOCKED,
-        SKYBOX_TIME_UI_BLOCKED,
-        NEARBY_VOICE_CHAT_BLOCKED,
+        CameraLocked,
+        AvatarHidden,
+        AvatarMovementsBlocked,
+        PassportCannotBeOpened,
+        ExperiencesBlocked,
+        SkyboxTimeUiBlocked,
+        NearbyVoiceChatBlocked,
     }
 
     public enum SceneRestrictionsAction
     {
-        APPLIED,
-        REMOVED,
+        Applied,
+        Removed,
     }
 }

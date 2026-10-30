@@ -8,7 +8,6 @@ using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using System;
 
 namespace DCL.Multiplayer.Movement
@@ -25,7 +24,7 @@ namespace DCL.Multiplayer.Movement
             IRoomHub roomHub,
             IMessagePipesHub messagePipesHub,
             MovementInbox movementInbox,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IUserBlockingCache userBlockingCache,
             MultiplayerDebugSettings multiplayerDebugSettings,
             PulseActivation pulseActivation)

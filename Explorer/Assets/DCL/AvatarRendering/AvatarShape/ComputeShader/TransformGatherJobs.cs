@@ -23,9 +23,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     }
 
     /// <summary>
-    ///     Reads each avatar root's worldToLocalMatrix from worker threads into matrixFromAllAvatars.
+    ///     Reads each avatar root's matrix from worker threads: the inverse into matrixFromAllAvatars for the
+    ///     bone calculation, and the forward matrix into localToWorldFromAllAvatars so the bounds transform can
+    ///     run in the job instead of touching Transform again on the main thread.
     ///     The TAA has one entry per slot (including dummy entries for released slots),
-    ///     so transform index maps directly to matrixFromAllAvatars index.
+    ///     so transform index maps directly to both arrays.
     /// </summary>
     [BurstCompile]
     public struct AvatarRootGatherJob : IJobParallelForTransform
@@ -33,9 +35,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         [NativeDisableParallelForRestriction]
         public NativeArray<float4x4> MatrixFromAllAvatars;
 
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float4x4> LocalToWorldFromAllAvatars;
+
         public void Execute(int index, TransformAccess transform)
         {
-            MatrixFromAllAvatars[index] = math.inverse((float4x4)transform.localToWorldMatrix);
+            var localToWorld = (float4x4)transform.localToWorldMatrix;
+
+            LocalToWorldFromAllAvatars[index] = localToWorld;
+            MatrixFromAllAvatars[index] = math.inverse(localToWorld);
         }
     }
 }

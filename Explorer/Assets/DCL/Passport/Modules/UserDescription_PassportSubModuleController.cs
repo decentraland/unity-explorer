@@ -1,5 +1,4 @@
 using DCL.Profiles;
-using System;
 
 namespace DCL.Passport.Modules
 {
@@ -7,14 +6,14 @@ namespace DCL.Passport.Modules
     {
         private const string NO_INTRO_TEXT = "No intro.";
 
-        private readonly UserDetailedInfo_PassportModuleView view;
-        private readonly UserAdditionalFields_PassportSubModuleController additionalFieldsController;
+        private readonly UserDetailedInfoPassportModuleView view;
+        private readonly UserAdditionalFieldsPassportSubModuleController additionalFieldsController;
 
         private Profile currentProfile;
 
         public UserDescription_PassportSubModuleController(
-            UserDetailedInfo_PassportModuleView view,
-            UserAdditionalFields_PassportSubModuleController additionalFieldsController)
+            UserDetailedInfoPassportModuleView view,
+            UserAdditionalFieldsPassportSubModuleController additionalFieldsController)
         {
             this.view = view;
             this.additionalFieldsController = additionalFieldsController;

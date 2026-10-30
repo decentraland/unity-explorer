@@ -1,13 +1,13 @@
-﻿using CommunicationData.URLHelpers;
-using DCL.Ipfs;
+﻿using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>
@@ -26,7 +26,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestWebRequestController.INSTANCE, false, cache);
+            new (world, TestWebRequestController.INSTANCE, false, false, new AbgenConversionMetrics(), cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

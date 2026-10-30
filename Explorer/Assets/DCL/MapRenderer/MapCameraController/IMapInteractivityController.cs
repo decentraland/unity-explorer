@@ -1,5 +1,4 @@
-﻿using DCL.MapRenderer.MapLayers.Pins;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.MapRenderer.MapCameraController
 {

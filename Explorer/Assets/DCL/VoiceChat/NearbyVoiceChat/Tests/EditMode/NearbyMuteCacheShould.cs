@@ -1,7 +1,7 @@
 using DCL.VoiceChat.Nearby.MutePersistence;
 using NUnit.Framework;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     [TestFixture]
     public class NearbyMuteCacheShould

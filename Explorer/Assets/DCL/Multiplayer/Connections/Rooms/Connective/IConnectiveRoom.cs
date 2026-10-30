@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using DCL.LiveKit.Public;
@@ -62,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             public State CurrentState() =>
                 State.Stopped;
 
-            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.NONE;
+            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.None;
 
             public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 
@@ -95,11 +94,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public static string ToStringNonAlloc(this AttemptToConnectState state) =>
             state switch
             {
-                AttemptToConnectState.NONE => "None",
-                AttemptToConnectState.SUCCESS => "Success",
-                AttemptToConnectState.ERROR => "Error",
-                AttemptToConnectState.NO_CONNECTION_REQUIRED => "NoConnectionRequired",
-                AttemptToConnectState.FORBIDDEN_ACCESS => "ForbiddenAccess",
+                AttemptToConnectState.None => "None",
+                AttemptToConnectState.Success => "Success",
+                AttemptToConnectState.Error => "Error",
+                AttemptToConnectState.NoConnectionRequired => "NoConnectionRequired",
+                AttemptToConnectState.ForbiddenAccess => "ForbiddenAccess",
                 _ => UNDEFINED,
             };
 

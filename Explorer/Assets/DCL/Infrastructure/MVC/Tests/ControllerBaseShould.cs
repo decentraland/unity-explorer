@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,11 +9,9 @@ namespace MVC.Tests
 {
     public class ControllerBaseShould
     {
-        private TestController controller;
-        private ControllerBase<ITestView, TestInputData>.ViewFactoryMethod viewFactoryMethod;
-        private ITestView testView;
-
-        private IMVCControllerModule module;
+        private TestController controller = null!;
+        private ControllerBase<ITestView, TestInputData>.ViewFactoryMethod viewFactoryMethod = null!;
+        private ITestView testView = null!;
 
         [SetUp]
         public void SetUp()
@@ -27,7 +26,7 @@ namespace MVC.Tests
         [Test]
         public async Task LaunchViewLifeCycle()
         {
-            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 100);
+            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100);
             var input = new TestInputData { Value = 123 };
 
             // Fire the closing intent
@@ -58,7 +57,7 @@ namespace MVC.Tests
         {
             // Show first
 
-            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 100);
+            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100);
 
             controller.CompletionSource.TrySetResult();
             await controller.LaunchViewLifeCycleAsync(canvasOrdering, new TestInputData(), CancellationToken.None);
@@ -75,6 +74,32 @@ namespace MVC.Tests
             controller.Module.Received(1).OnViewHide();
 
             // View is hidden
+            await testView.Received(1).HideAsync(CancellationToken.None);
+        }
+
+        [Test]
+        public async Task RunCloseAfterShowWhenHideIsRequestedWhileShowing()
+        {
+            // Arrange
+            var showAnimation = new UniTaskCompletionSource();
+            testView.ShowAsync(Arg.Any<CancellationToken>()).Returns(showAnimation.Task);
+
+            UniTask lifeCycle = controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100), new TestInputData(), CancellationToken.None);
+
+            // Act
+            UniTask hide = ((IController)controller).HideViewAsync(CancellationToken.None);
+
+            // Assert
+            Assert.That(hide.Status, Is.EqualTo(UniTaskStatus.Pending));
+            Assert.That(controller.State, Is.EqualTo(ControllerState.ViewShowing));
+            Assert.That(controller.Callbacks, Is.Empty);
+
+            showAnimation.TrySetResult();
+            await hide;
+
+            Assert.That(controller.Callbacks, Is.EqualTo(new[] { "Show", "Close" }));
+            Assert.That(controller.State, Is.EqualTo(ControllerState.ViewHidden));
+            Assert.That(lifeCycle.Status, Is.EqualTo(UniTaskStatus.Pending));
             await testView.Received(1).HideAsync(CancellationToken.None);
         }
 
@@ -115,14 +140,22 @@ namespace MVC.Tests
 
             public readonly IMVCControllerModule Module;
 
-            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+            public readonly List<string> Callbacks = new ();
 
-            internal TestInputData Input => inputData;
+            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+
+            public TestInputData Input => inputData;
 
             public TestController(ViewFactoryMethod viewFactory) : base(viewFactory)
             {
                 AddModule(Module = Substitute.For<IMVCControllerModule>());
             }
+
+            protected override void OnViewShow() =>
+                Callbacks.Add("Show");
+
+            protected override void OnViewClose() =>
+                Callbacks.Add("Close");
 
             protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 CompletionSource.Task;

@@ -85,6 +85,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3088324c393cd6f46bbd8a98592beff3
+    m_Address: Assets/DCL/Lobby/Presets/GameNight.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32976ee587c04db88e083b6775e5ee5f
+    m_Address: SkyboxLookPreset_Legacy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
     m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
     m_ReadOnly: 0
@@ -95,6 +105,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d6760cb640ed184fa85b02a099559c7
+    m_Address: Assets/DCL/Lobby/Presets/Halloween_26.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
     m_Address: M_EyeBrows_00
     m_ReadOnly: 0
@@ -102,6 +117,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4428c33e669492748afd75828965504b
     m_Address: FlatNormal_512_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46abfd8d700191d43b8892c99421c5a7
+    m_Address: PerformanceIssuePrompt
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -165,6 +185,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 656920c5c75f2fdfa40685df8aa57d37
+    m_Address: Assets/DCL/LobbyStage/Prefabs/LobbyStage.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6578400f95c457644a7e77726c1305a2
     m_Address: AvatarAudioSettings.asset
     m_ReadOnly: 0
@@ -177,6 +202,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d9cf781e3084f74699ed2c2582acbf5
+    m_Address: Assets/DCL/Lobby/Presets/GameArena.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fdeef5a54c14a44b8c8fd9b140de6c6
+    m_Address: SkyboxLookPreset_Halloween2026
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -200,6 +235,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c27dfc00496c5442a73aeede131877d
+    m_Address: Assets/Plugins/UUAV/Packages/UUAV/Runtime/Shaders/NV12ToRGB.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7f09a2d0d9adc4e43b67879ab9cdf360
     m_Address: LightSourcePrefab
     m_ReadOnly: 0
@@ -215,8 +255,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82655edf5bc71448d9d43617764bb7d8
+    m_Address: CreditsTopUpPopup
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8432a9b8907c42d49bd4b0f72dfd4a00
+    m_Address: Assets/DCL/Lobby/Presets/GameWorld_01.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a91951d2f71f174d998356f01a3603c
     m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ae3fb61048040438ec8a0347e048766
+    m_Address: Assets/DCL/Lobby/UIToolkit/LobbyDocument.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -260,6 +315,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab23199c8104ca44e837d8ac570fee44
+    m_Address: BugReportView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ace53bd2bc5e2b8439785bb3122b12e3
     m_Address: Assets/DCL/InWorldCamera/InWorldCamera/Prefabs/InWorldCamera.FollowTarget.prefab
     m_ReadOnly: 0
@@ -292,6 +352,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
     m_Address: MediaPlayer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c85615cb88b54cc9a85e397318aff22f
+    m_Address: Assets/DCL/Lobby/Prefabs/LobbyPopups.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -365,6 +430,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f5f9dfc19df574348991427c083d6e04
+    m_Address: Assets/DCL/UI/UpgradeGuestAccountPopup/UpgradeGuestAccountPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f87c3e77ea2e0ec45b0ddef98bfeb066
     m_Address: Assets/DCL/Backpack/Gifting/Notifications/Prefab/GiftReceivedPopup.prefab
     m_ReadOnly: 0
@@ -377,6 +447,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa9a67059d8a204408ce435cc8827612
     m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe492edbd0cef4457951fba2129d4c0a
+    m_Address: CreditsPurchaseModal
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

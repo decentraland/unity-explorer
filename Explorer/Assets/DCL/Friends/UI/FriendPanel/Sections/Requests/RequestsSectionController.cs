@@ -28,9 +28,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource? reportConfirmationDialogCts;
@@ -45,9 +45,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
             bool includeUserBlocking,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile)
+            SelfProfile selfProfile)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
             this.passportBridge = passportBridge;
@@ -63,7 +63,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!.Value), iconColor: redColor, textColor: redColor), includeUserBlocking));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportOptionSprite, () => ReportUserClicked(lastClickedProfileCtx!.Value), iconColor: redColor, textColor: redColor));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
@@ -132,9 +132,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
-            if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT)
+            if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent)
                 CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
-            else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED)
+            else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived)
                 mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams { OneShotFriendAccepted = lastClickedProfileCtx }), ct: friendshipOperationCts.Token).Forget();
 
             return;
@@ -202,7 +202,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             lastClickedProfileCtx = friendProfile;
 
             userProfileContextMenuControlSettings.SetInitialData(friendProfile,
-                elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED);
+                elementView.ParentStatus == FriendPanelStatus.Sent ? UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent : UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                 actionOnHide: () => elementView.CanUnHover = true,

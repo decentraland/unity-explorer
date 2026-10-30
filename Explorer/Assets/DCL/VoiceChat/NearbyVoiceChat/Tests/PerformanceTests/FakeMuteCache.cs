@@ -1,8 +1,9 @@
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Minimal HashSet-backed <see cref="INearbyMuteCache"/> for performance tests. Replaces

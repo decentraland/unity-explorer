@@ -71,14 +71,14 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            LandscapeData landscapeData)
+        public void Initialize(TerrainGenerationData generationData, int[] treeRendererKeys,
+            LandscapeData landscape)
         {
-            this.terrainGenData = terrainGenData;
-            Trees = new TreeData(treeRendererKeys, terrainGenData);
-            this.landscapeData = landscapeData;
-            ParcelSize = terrainGenData.parcelSize;
-            factory = new TerrainFactory(terrainGenData);
+            terrainGenData = generationData;
+            Trees = new TreeData(treeRendererKeys, generationData);
+            landscapeData = landscape;
+            ParcelSize = generationData.parcelSize;
+            factory = new TerrainFactory(generationData);
 
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
 
@@ -152,7 +152,7 @@ namespace DCL.Landscape
 
             TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
-            float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            float startMemory = (float)profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
             try
             {
@@ -205,28 +205,40 @@ namespace DCL.Landscape
 
                     IsTerrainShown = true;
                 }
+
+                // Marked only after a complete generation: a partial one is destroyed below and
+                // must not be treated as an existing terrain that can simply be shown again
+                IsTerrainGenerated = true;
             }
             catch (OperationCanceledException)
             {
-                if (TerrainRoot != null)
-                    UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
-
+                DestroyPartialTerrain();
+                throw;
             }
-            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
-            finally
+            catch (Exception e) when (e is not OperationCanceledException)
             {
-                float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-
-                IsTerrainGenerated = true;
-
-                float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-
-                ReportHub.Log(ReportCategory.LANDSCAPE,
-                    $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
+                ReportHub.LogException(e, reportData);
+                DestroyPartialTerrain();
             }
 
-            float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+            float endMemory = (float)profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
+        }
+
+        /// <summary>
+        ///     Destroys everything an interrupted generation left behind, so the state reflects
+        ///     that no usable terrain exists. The occupancy map is intentionally kept alive:
+        ///     <see cref="OccupancyMapData" /> may still be read for height sampling.
+        /// </summary>
+        private void DestroyPartialTerrain()
+        {
+            if (TerrainRoot != null)
+                UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
+
+            if (Wind != null)
+                UnityObjectUtils.SafeDestroyGameObject(Wind);
+
+            IsTerrainShown = false;
         }
 
         internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
@@ -346,8 +358,6 @@ namespace DCL.Landscape
         private static int ComputeChamferDistanceField(NativeArray<byte> src, NativeArray<int> dist,
             int width, RectInt workingArea)
         {
-            int n = src.Length;
-
             // Initialize working area pixels
             for (int y = workingArea.yMin; y <= workingArea.yMax; y++)
             for (int x = workingArea.xMin; x <= workingArea.xMax; x++)
@@ -438,8 +448,6 @@ namespace DCL.Landscape
             int minValue = 255 - (stepSize * maxPixelDistance);
 
             ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxChamferDistance}, max pixels={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
-
-            int n = src.Length;
 
             // Write back mapped values
             for (int y = area.yMin; y <= area.yMax; y++)

@@ -25,27 +25,33 @@ namespace Decentraland.Pulse {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CiVkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2Vfc2hhcmVkLnByb3RvEhJkZWNl",
-            "bnRyYWxhbmQucHVsc2UaIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5w",
-            "cm90byKwAwoLUGxheWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEi4K",
-            "CHBvc2l0aW9uGAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3Iz",
-            "Ei4KCHZlbG9jaXR5GAMgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
-            "b3IzEhIKCnJvdGF0aW9uX3kYBCABKAISFgoObW92ZW1lbnRfYmxlbmQYBSAB",
-            "KAISEwoLc2xpZGVfYmxlbmQYBiABKAISFQoIaGVhZF95YXcYByABKAJIAIgB",
-            "ARIXCgpoZWFkX3BpdGNoGAggASgCSAGIAQESEwoLc3RhdGVfZmxhZ3MYCSAB",
-            "KA0SMwoLZ2xpZGVfc3RhdGUYCiABKA4yHi5kZWNlbnRyYWxhbmQucHVsc2Uu",
-            "R2xpZGVTdGF0ZRISCgpqdW1wX2NvdW50GAsgASgFEjMKCHBvaW50X2F0GAwg",
-            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzSAKIAQFCCwoJX2hl",
-            "YWRfeWF3Qg0KC19oZWFkX3BpdGNoQgsKCV9wb2ludF9hdCqWAQoUUGxheWVy",
-            "QW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9O",
-            "R19KVU1QEAISDQoJTE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5O",
-            "RUQQEBIMCghIRUFEX1lBVxAgEg4KCkhFQURfUElUQ0gQQBIQCgtQT0lOVElO",
-            "R19BVBCAASpOCgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoMT1BF",
-            "TklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJPUBADYgZw",
-            "cm90bzM="));
+            "bnRyYWxhbmQucHVsc2UaIWRlY2VudHJhbGFuZC9jb21tb24vb3B0aW9ucy5w",
+            "cm90byLNBQoLUGxheWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEh8K",
+            "CnBvc2l0aW9uX3gYAiABKA1CC4q1GAcVAACAQRgIEh8KCnBvc2l0aW9uX3kY",
+            "AyABKA1CC4q1GAcVAABIQxgNEh8KCnBvc2l0aW9uX3oYBCABKA1CC4q1GAcV",
+            "AACAQRgIEiQKCnZlbG9jaXR5X3gYBSABKA1CEJq1GAwNAABIQhUAAABAGAgS",
+            "JAoKdmVsb2NpdHlfeRgGIAEoDUIQmrUYDA0AAEhCFQAAAEAYCBIkCgp2ZWxv",
+            "Y2l0eV96GAcgASgNQhCatRgMDQAASEIVAAAAQBgIEh8KCnJvdGF0aW9uX3kY",
+            "CCABKA1CC4q1GAcVAAC0QxgHEiMKDm1vdmVtZW50X2JsZW5kGAkgASgNQguK",
+            "tRgHFQAAQEAYBRIgCgtzbGlkZV9ibGVuZBgKIAEoDUILirUYBxUAAIA/GAQS",
+            "IgoIaGVhZF95YXcYCyABKA1CC4q1GAcVAAC0QxgHSACIAQESJAoKaGVhZF9w",
+            "aXRjaBgMIAEoDUILirUYBxUAALRDGAdIAYgBARITCgtzdGF0ZV9mbGFncxgN",
+            "IAEoDRIzCgtnbGlkZV9zdGF0ZRgOIAEoDjIeLmRlY2VudHJhbGFuZC5wdWxz",
+            "ZS5HbGlkZVN0YXRlEhIKCmp1bXBfY291bnQYDyABKAUSKQoKcG9pbnRfYXRf",
+            "eBgQIAEoDUIQirUYDA0AgDvFFQCAO0UYEUgCiAEBEiQKCnBvaW50X2F0X3kY",
+            "ESABKA1CC4q1GAcVAABIQxgHSAOIAQESKQoKcG9pbnRfYXRfehgSIAEoDUIQ",
+            "irUYDA0AgDvFFQCAO0UYEUgEiAEBQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9w",
+            "aXRjaEINCgtfcG9pbnRfYXRfeEINCgtfcG9pbnRfYXRfeUINCgtfcG9pbnRf",
+            "YXRfeiqWAQoUUGxheWVyQW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdS",
+            "T1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJTE9OR19GQUxMEAQSCwoHRkFM",
+            "TElORxAIEgsKB1NUVU5ORUQQEBIMCghIRUFEX1lBVxAgEg4KCkhFQURfUElU",
+            "Q0gQQBIQCgtQT0lOVElOR19BVBCAASpOCgpHbGlkZVN0YXRlEg8KC1BST1Bf",
+            "Q0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENM",
+            "T1NJTkdfUFJPUBADYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount", "PointAt" }, new[]{ "HeadYaw", "HeadPitch", "PointAt" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount", "PointAtX", "PointAtY", "PointAtZ" }, new[]{ "HeadYaw", "HeadPitch", "PointAtX", "PointAtY", "PointAtZ" }, null, null, null)
           }));
     }
     #endregion
@@ -74,6 +80,9 @@ namespace Decentraland.Pulse {
   #endregion
 
   #region Messages
+  /// <summary>
+  /// Quantized identically to PlayerStateDeltaTier0 so a full state and a stream of deltas land on the same grid.
+  /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PlayerState : pb::IMessage<PlayerState>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -112,8 +121,12 @@ namespace Decentraland.Pulse {
     public PlayerState(PlayerState other) : this() {
       _hasBits0 = other._hasBits0;
       parcelIndex_ = other.parcelIndex_;
-      position_ = other.position_ != null ? other.position_.Clone() : null;
-      velocity_ = other.velocity_ != null ? other.velocity_.Clone() : null;
+      positionX_ = other.positionX_;
+      positionY_ = other.positionY_;
+      positionZ_ = other.positionZ_;
+      velocityX_ = other.velocityX_;
+      velocityY_ = other.velocityY_;
+      velocityZ_ = other.velocityZ_;
       rotationY_ = other.rotationY_;
       movementBlend_ = other.movementBlend_;
       slideBlend_ = other.slideBlend_;
@@ -122,7 +135,9 @@ namespace Decentraland.Pulse {
       stateFlags_ = other.stateFlags_;
       glideState_ = other.glideState_;
       jumpCount_ = other.jumpCount_;
-      pointAt_ = other.pointAt_ != null ? other.pointAt_.Clone() : null;
+      pointAtX_ = other.pointAtX_;
+      pointAtY_ = other.pointAtY_;
+      pointAtZ_ = other.pointAtZ_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -144,36 +159,87 @@ namespace Decentraland.Pulse {
       }
     }
 
-    /// <summary>Field number for the "position" field.</summary>
-    public const int PositionFieldNumber = 2;
-    private global::Decentraland.Common.Vector3 position_;
+    /// <summary>Field number for the "position_x" field.</summary>
+    public const int PositionXFieldNumber = 2;
+    private uint positionX_;
+    /// <summary>
+    /// Position inside the parcel (X/Z) and world altitude (Y).
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 Position {
-      get { return position_; }
+    public uint PositionX {
+      get { return positionX_; }
       set {
-        position_ = value;
+        positionX_ = value;
       }
     }
 
-    /// <summary>Field number for the "velocity" field.</summary>
-    public const int VelocityFieldNumber = 3;
-    private global::Decentraland.Common.Vector3 velocity_;
+    /// <summary>Field number for the "position_y" field.</summary>
+    public const int PositionYFieldNumber = 3;
+    private uint positionY_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 Velocity {
-      get { return velocity_; }
+    public uint PositionY {
+      get { return positionY_; }
       set {
-        velocity_ = value;
+        positionY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_z" field.</summary>
+    public const int PositionZFieldNumber = 4;
+    private uint positionZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint PositionZ {
+      get { return positionZ_; }
+      set {
+        positionZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_x" field.</summary>
+    public const int VelocityXFieldNumber = 5;
+    private uint velocityX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint VelocityX {
+      get { return velocityX_; }
+      set {
+        velocityX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_y" field.</summary>
+    public const int VelocityYFieldNumber = 6;
+    private uint velocityY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint VelocityY {
+      get { return velocityY_; }
+      set {
+        velocityY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_z" field.</summary>
+    public const int VelocityZFieldNumber = 7;
+    private uint velocityZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint VelocityZ {
+      get { return velocityZ_; }
+      set {
+        velocityZ_ = value;
       }
     }
 
     /// <summary>Field number for the "rotation_y" field.</summary>
-    public const int RotationYFieldNumber = 4;
-    private float rotationY_;
+    public const int RotationYFieldNumber = 8;
+    private uint rotationY_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float RotationY {
+    public uint RotationY {
       get { return rotationY_; }
       set {
         rotationY_ = value;
@@ -181,11 +247,11 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "movement_blend" field.</summary>
-    public const int MovementBlendFieldNumber = 5;
-    private float movementBlend_;
+    public const int MovementBlendFieldNumber = 9;
+    private uint movementBlend_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float MovementBlend {
+    public uint MovementBlend {
       get { return movementBlend_; }
       set {
         movementBlend_ = value;
@@ -193,11 +259,11 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "slide_blend" field.</summary>
-    public const int SlideBlendFieldNumber = 6;
-    private float slideBlend_;
+    public const int SlideBlendFieldNumber = 10;
+    private uint slideBlend_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float SlideBlend {
+    public uint SlideBlend {
       get { return slideBlend_; }
       set {
         slideBlend_ = value;
@@ -205,13 +271,13 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_yaw" field.</summary>
-    public const int HeadYawFieldNumber = 7;
-    private readonly static float HeadYawDefaultValue = 0F;
+    public const int HeadYawFieldNumber = 11;
+    private readonly static uint HeadYawDefaultValue = 0;
 
-    private float headYaw_;
+    private uint headYaw_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float HeadYaw {
+    public uint HeadYaw {
       get { if ((_hasBits0 & 1) != 0) { return headYaw_; } else { return HeadYawDefaultValue; } }
       set {
         _hasBits0 |= 1;
@@ -232,13 +298,13 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_pitch" field.</summary>
-    public const int HeadPitchFieldNumber = 8;
-    private readonly static float HeadPitchDefaultValue = 0F;
+    public const int HeadPitchFieldNumber = 12;
+    private readonly static uint HeadPitchDefaultValue = 0;
 
-    private float headPitch_;
+    private uint headPitch_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float HeadPitch {
+    public uint HeadPitch {
       get { if ((_hasBits0 & 2) != 0) { return headPitch_; } else { return HeadPitchDefaultValue; } }
       set {
         _hasBits0 |= 2;
@@ -259,7 +325,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "state_flags" field.</summary>
-    public const int StateFlagsFieldNumber = 9;
+    public const int StateFlagsFieldNumber = 13;
     private uint stateFlags_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -271,7 +337,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "glide_state" field.</summary>
-    public const int GlideStateFieldNumber = 10;
+    public const int GlideStateFieldNumber = 14;
     private global::Decentraland.Pulse.GlideState glideState_ = global::Decentraland.Pulse.GlideState.PropClosed;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -283,7 +349,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "jump_count" field.</summary>
-    public const int JumpCountFieldNumber = 11;
+    public const int JumpCountFieldNumber = 15;
     private int jumpCount_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -294,20 +360,89 @@ namespace Decentraland.Pulse {
       }
     }
 
-    /// <summary>Field number for the "point_at" field.</summary>
-    public const int PointAtFieldNumber = 12;
-    private global::Decentraland.Common.Vector3 pointAt_;
+    /// <summary>Field number for the "point_at_x" field.</summary>
+    public const int PointAtXFieldNumber = 16;
+    private readonly static uint PointAtXDefaultValue = 0;
+
+    private uint pointAtX_;
     /// <summary>
     /// Absolute world hit position the player is pointing at.
     /// Only meaningful when POINTING_AT is set in `state_flags`.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 PointAt {
-      get { return pointAt_; }
+    public uint PointAtX {
+      get { if ((_hasBits0 & 4) != 0) { return pointAtX_; } else { return PointAtXDefaultValue; } }
       set {
-        pointAt_ = value;
+        _hasBits0 |= 4;
+        pointAtX_ = value;
       }
+    }
+    /// <summary>Gets whether the "point_at_x" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPointAtX {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "point_at_x" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPointAtX() {
+      _hasBits0 &= ~4;
+    }
+
+    /// <summary>Field number for the "point_at_y" field.</summary>
+    public const int PointAtYFieldNumber = 17;
+    private readonly static uint PointAtYDefaultValue = 0;
+
+    private uint pointAtY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint PointAtY {
+      get { if ((_hasBits0 & 8) != 0) { return pointAtY_; } else { return PointAtYDefaultValue; } }
+      set {
+        _hasBits0 |= 8;
+        pointAtY_ = value;
+      }
+    }
+    /// <summary>Gets whether the "point_at_y" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPointAtY {
+      get { return (_hasBits0 & 8) != 0; }
+    }
+    /// <summary>Clears the value of the "point_at_y" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPointAtY() {
+      _hasBits0 &= ~8;
+    }
+
+    /// <summary>Field number for the "point_at_z" field.</summary>
+    public const int PointAtZFieldNumber = 18;
+    private readonly static uint PointAtZDefaultValue = 0;
+
+    private uint pointAtZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint PointAtZ {
+      get { if ((_hasBits0 & 16) != 0) { return pointAtZ_; } else { return PointAtZDefaultValue; } }
+      set {
+        _hasBits0 |= 16;
+        pointAtZ_ = value;
+      }
+    }
+    /// <summary>Gets whether the "point_at_z" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPointAtZ {
+      get { return (_hasBits0 & 16) != 0; }
+    }
+    /// <summary>Clears the value of the "point_at_z" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPointAtZ() {
+      _hasBits0 &= ~16;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -326,17 +461,23 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (ParcelIndex != other.ParcelIndex) return false;
-      if (!object.Equals(Position, other.Position)) return false;
-      if (!object.Equals(Velocity, other.Velocity)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MovementBlend, other.MovementBlend)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SlideBlend, other.SlideBlend)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadYaw, other.HeadYaw)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadPitch, other.HeadPitch)) return false;
+      if (PositionX != other.PositionX) return false;
+      if (PositionY != other.PositionY) return false;
+      if (PositionZ != other.PositionZ) return false;
+      if (VelocityX != other.VelocityX) return false;
+      if (VelocityY != other.VelocityY) return false;
+      if (VelocityZ != other.VelocityZ) return false;
+      if (RotationY != other.RotationY) return false;
+      if (MovementBlend != other.MovementBlend) return false;
+      if (SlideBlend != other.SlideBlend) return false;
+      if (HeadYaw != other.HeadYaw) return false;
+      if (HeadPitch != other.HeadPitch) return false;
       if (StateFlags != other.StateFlags) return false;
       if (GlideState != other.GlideState) return false;
       if (JumpCount != other.JumpCount) return false;
-      if (!object.Equals(PointAt, other.PointAt)) return false;
+      if (PointAtX != other.PointAtX) return false;
+      if (PointAtY != other.PointAtY) return false;
+      if (PointAtZ != other.PointAtZ) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -345,17 +486,23 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (ParcelIndex != 0) hash ^= ParcelIndex.GetHashCode();
-      if (position_ != null) hash ^= Position.GetHashCode();
-      if (velocity_ != null) hash ^= Velocity.GetHashCode();
-      if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
-      if (MovementBlend != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MovementBlend);
-      if (SlideBlend != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SlideBlend);
-      if (HasHeadYaw) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadYaw);
-      if (HasHeadPitch) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadPitch);
+      if (PositionX != 0) hash ^= PositionX.GetHashCode();
+      if (PositionY != 0) hash ^= PositionY.GetHashCode();
+      if (PositionZ != 0) hash ^= PositionZ.GetHashCode();
+      if (VelocityX != 0) hash ^= VelocityX.GetHashCode();
+      if (VelocityY != 0) hash ^= VelocityY.GetHashCode();
+      if (VelocityZ != 0) hash ^= VelocityZ.GetHashCode();
+      if (RotationY != 0) hash ^= RotationY.GetHashCode();
+      if (MovementBlend != 0) hash ^= MovementBlend.GetHashCode();
+      if (SlideBlend != 0) hash ^= SlideBlend.GetHashCode();
+      if (HasHeadYaw) hash ^= HeadYaw.GetHashCode();
+      if (HasHeadPitch) hash ^= HeadPitch.GetHashCode();
       if (StateFlags != 0) hash ^= StateFlags.GetHashCode();
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) hash ^= GlideState.GetHashCode();
       if (JumpCount != 0) hash ^= JumpCount.GetHashCode();
-      if (pointAt_ != null) hash ^= PointAt.GetHashCode();
+      if (HasPointAtX) hash ^= PointAtX.GetHashCode();
+      if (HasPointAtY) hash ^= PointAtY.GetHashCode();
+      if (HasPointAtZ) hash ^= PointAtZ.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -378,49 +525,73 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteInt32(ParcelIndex);
       }
-      if (position_ != null) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Position);
+      if (PositionX != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(PositionX);
       }
-      if (velocity_ != null) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Velocity);
+      if (PositionY != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(PositionY);
       }
-      if (RotationY != 0F) {
-        output.WriteRawTag(37);
-        output.WriteFloat(RotationY);
+      if (PositionZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(PositionZ);
       }
-      if (MovementBlend != 0F) {
-        output.WriteRawTag(45);
-        output.WriteFloat(MovementBlend);
+      if (VelocityX != 0) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(VelocityX);
       }
-      if (SlideBlend != 0F) {
-        output.WriteRawTag(53);
-        output.WriteFloat(SlideBlend);
+      if (VelocityY != 0) {
+        output.WriteRawTag(48);
+        output.WriteUInt32(VelocityY);
+      }
+      if (VelocityZ != 0) {
+        output.WriteRawTag(56);
+        output.WriteUInt32(VelocityZ);
+      }
+      if (RotationY != 0) {
+        output.WriteRawTag(64);
+        output.WriteUInt32(RotationY);
+      }
+      if (MovementBlend != 0) {
+        output.WriteRawTag(72);
+        output.WriteUInt32(MovementBlend);
+      }
+      if (SlideBlend != 0) {
+        output.WriteRawTag(80);
+        output.WriteUInt32(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(61);
-        output.WriteFloat(HeadYaw);
+        output.WriteRawTag(88);
+        output.WriteUInt32(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(69);
-        output.WriteFloat(HeadPitch);
+        output.WriteRawTag(96);
+        output.WriteUInt32(HeadPitch);
       }
       if (StateFlags != 0) {
-        output.WriteRawTag(72);
+        output.WriteRawTag(104);
         output.WriteUInt32(StateFlags);
       }
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
-        output.WriteRawTag(80);
+        output.WriteRawTag(112);
         output.WriteEnum((int) GlideState);
       }
       if (JumpCount != 0) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(120);
         output.WriteInt32(JumpCount);
       }
-      if (pointAt_ != null) {
-        output.WriteRawTag(98);
-        output.WriteMessage(PointAt);
+      if (HasPointAtX) {
+        output.WriteRawTag(128, 1);
+        output.WriteUInt32(PointAtX);
+      }
+      if (HasPointAtY) {
+        output.WriteRawTag(136, 1);
+        output.WriteUInt32(PointAtY);
+      }
+      if (HasPointAtZ) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt32(PointAtZ);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -436,49 +607,73 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteInt32(ParcelIndex);
       }
-      if (position_ != null) {
-        output.WriteRawTag(18);
-        output.WriteMessage(Position);
+      if (PositionX != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(PositionX);
       }
-      if (velocity_ != null) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Velocity);
+      if (PositionY != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(PositionY);
       }
-      if (RotationY != 0F) {
-        output.WriteRawTag(37);
-        output.WriteFloat(RotationY);
+      if (PositionZ != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(PositionZ);
       }
-      if (MovementBlend != 0F) {
-        output.WriteRawTag(45);
-        output.WriteFloat(MovementBlend);
+      if (VelocityX != 0) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(VelocityX);
       }
-      if (SlideBlend != 0F) {
-        output.WriteRawTag(53);
-        output.WriteFloat(SlideBlend);
+      if (VelocityY != 0) {
+        output.WriteRawTag(48);
+        output.WriteUInt32(VelocityY);
+      }
+      if (VelocityZ != 0) {
+        output.WriteRawTag(56);
+        output.WriteUInt32(VelocityZ);
+      }
+      if (RotationY != 0) {
+        output.WriteRawTag(64);
+        output.WriteUInt32(RotationY);
+      }
+      if (MovementBlend != 0) {
+        output.WriteRawTag(72);
+        output.WriteUInt32(MovementBlend);
+      }
+      if (SlideBlend != 0) {
+        output.WriteRawTag(80);
+        output.WriteUInt32(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(61);
-        output.WriteFloat(HeadYaw);
+        output.WriteRawTag(88);
+        output.WriteUInt32(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(69);
-        output.WriteFloat(HeadPitch);
+        output.WriteRawTag(96);
+        output.WriteUInt32(HeadPitch);
       }
       if (StateFlags != 0) {
-        output.WriteRawTag(72);
+        output.WriteRawTag(104);
         output.WriteUInt32(StateFlags);
       }
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
-        output.WriteRawTag(80);
+        output.WriteRawTag(112);
         output.WriteEnum((int) GlideState);
       }
       if (JumpCount != 0) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(120);
         output.WriteInt32(JumpCount);
       }
-      if (pointAt_ != null) {
-        output.WriteRawTag(98);
-        output.WriteMessage(PointAt);
+      if (HasPointAtX) {
+        output.WriteRawTag(128, 1);
+        output.WriteUInt32(PointAtX);
+      }
+      if (HasPointAtY) {
+        output.WriteRawTag(136, 1);
+        output.WriteUInt32(PointAtY);
+      }
+      if (HasPointAtZ) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt32(PointAtZ);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -493,26 +688,38 @@ namespace Decentraland.Pulse {
       if (ParcelIndex != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(ParcelIndex);
       }
-      if (position_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
+      if (PositionX != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionX);
       }
-      if (velocity_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Velocity);
+      if (PositionY != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionY);
       }
-      if (RotationY != 0F) {
-        size += 1 + 4;
+      if (PositionZ != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionZ);
       }
-      if (MovementBlend != 0F) {
-        size += 1 + 4;
+      if (VelocityX != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(VelocityX);
       }
-      if (SlideBlend != 0F) {
-        size += 1 + 4;
+      if (VelocityY != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(VelocityY);
+      }
+      if (VelocityZ != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(VelocityZ);
+      }
+      if (RotationY != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(RotationY);
+      }
+      if (MovementBlend != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(MovementBlend);
+      }
+      if (SlideBlend != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SlideBlend);
       }
       if (HasHeadYaw) {
-        size += 1 + 4;
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(HeadYaw);
       }
       if (HasHeadPitch) {
-        size += 1 + 4;
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(HeadPitch);
       }
       if (StateFlags != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(StateFlags);
@@ -523,8 +730,14 @@ namespace Decentraland.Pulse {
       if (JumpCount != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(JumpCount);
       }
-      if (pointAt_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PointAt);
+      if (HasPointAtX) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt32Size(PointAtX);
+      }
+      if (HasPointAtY) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt32Size(PointAtY);
+      }
+      if (HasPointAtZ) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt32Size(PointAtZ);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -541,25 +754,31 @@ namespace Decentraland.Pulse {
       if (other.ParcelIndex != 0) {
         ParcelIndex = other.ParcelIndex;
       }
-      if (other.position_ != null) {
-        if (position_ == null) {
-          Position = new global::Decentraland.Common.Vector3();
-        }
-        Position.MergeFrom(other.Position);
+      if (other.PositionX != 0) {
+        PositionX = other.PositionX;
       }
-      if (other.velocity_ != null) {
-        if (velocity_ == null) {
-          Velocity = new global::Decentraland.Common.Vector3();
-        }
-        Velocity.MergeFrom(other.Velocity);
+      if (other.PositionY != 0) {
+        PositionY = other.PositionY;
       }
-      if (other.RotationY != 0F) {
+      if (other.PositionZ != 0) {
+        PositionZ = other.PositionZ;
+      }
+      if (other.VelocityX != 0) {
+        VelocityX = other.VelocityX;
+      }
+      if (other.VelocityY != 0) {
+        VelocityY = other.VelocityY;
+      }
+      if (other.VelocityZ != 0) {
+        VelocityZ = other.VelocityZ;
+      }
+      if (other.RotationY != 0) {
         RotationY = other.RotationY;
       }
-      if (other.MovementBlend != 0F) {
+      if (other.MovementBlend != 0) {
         MovementBlend = other.MovementBlend;
       }
-      if (other.SlideBlend != 0F) {
+      if (other.SlideBlend != 0) {
         SlideBlend = other.SlideBlend;
       }
       if (other.HasHeadYaw) {
@@ -577,11 +796,14 @@ namespace Decentraland.Pulse {
       if (other.JumpCount != 0) {
         JumpCount = other.JumpCount;
       }
-      if (other.pointAt_ != null) {
-        if (pointAt_ == null) {
-          PointAt = new global::Decentraland.Common.Vector3();
-        }
-        PointAt.MergeFrom(other.PointAt);
+      if (other.HasPointAtX) {
+        PointAtX = other.PointAtX;
+      }
+      if (other.HasPointAtY) {
+        PointAtY = other.PointAtY;
+      }
+      if (other.HasPointAtZ) {
+        PointAtZ = other.PointAtZ;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -606,57 +828,72 @@ namespace Decentraland.Pulse {
             ParcelIndex = input.ReadInt32();
             break;
           }
-          case 18: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Position);
+          case 16: {
+            PositionX = input.ReadUInt32();
             break;
           }
-          case 26: {
-            if (velocity_ == null) {
-              Velocity = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Velocity);
+          case 24: {
+            PositionY = input.ReadUInt32();
             break;
           }
-          case 37: {
-            RotationY = input.ReadFloat();
+          case 32: {
+            PositionZ = input.ReadUInt32();
             break;
           }
-          case 45: {
-            MovementBlend = input.ReadFloat();
+          case 40: {
+            VelocityX = input.ReadUInt32();
             break;
           }
-          case 53: {
-            SlideBlend = input.ReadFloat();
+          case 48: {
+            VelocityY = input.ReadUInt32();
             break;
           }
-          case 61: {
-            HeadYaw = input.ReadFloat();
+          case 56: {
+            VelocityZ = input.ReadUInt32();
             break;
           }
-          case 69: {
-            HeadPitch = input.ReadFloat();
+          case 64: {
+            RotationY = input.ReadUInt32();
             break;
           }
           case 72: {
-            StateFlags = input.ReadUInt32();
+            MovementBlend = input.ReadUInt32();
             break;
           }
           case 80: {
-            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            SlideBlend = input.ReadUInt32();
             break;
           }
           case 88: {
+            HeadYaw = input.ReadUInt32();
+            break;
+          }
+          case 96: {
+            HeadPitch = input.ReadUInt32();
+            break;
+          }
+          case 104: {
+            StateFlags = input.ReadUInt32();
+            break;
+          }
+          case 112: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            break;
+          }
+          case 120: {
             JumpCount = input.ReadInt32();
             break;
           }
-          case 98: {
-            if (pointAt_ == null) {
-              PointAt = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(PointAt);
+          case 128: {
+            PointAtX = input.ReadUInt32();
+            break;
+          }
+          case 136: {
+            PointAtY = input.ReadUInt32();
+            break;
+          }
+          case 144: {
+            PointAtZ = input.ReadUInt32();
             break;
           }
         }
@@ -682,57 +919,72 @@ namespace Decentraland.Pulse {
             ParcelIndex = input.ReadInt32();
             break;
           }
-          case 18: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Position);
+          case 16: {
+            PositionX = input.ReadUInt32();
             break;
           }
-          case 26: {
-            if (velocity_ == null) {
-              Velocity = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(Velocity);
+          case 24: {
+            PositionY = input.ReadUInt32();
             break;
           }
-          case 37: {
-            RotationY = input.ReadFloat();
+          case 32: {
+            PositionZ = input.ReadUInt32();
             break;
           }
-          case 45: {
-            MovementBlend = input.ReadFloat();
+          case 40: {
+            VelocityX = input.ReadUInt32();
             break;
           }
-          case 53: {
-            SlideBlend = input.ReadFloat();
+          case 48: {
+            VelocityY = input.ReadUInt32();
             break;
           }
-          case 61: {
-            HeadYaw = input.ReadFloat();
+          case 56: {
+            VelocityZ = input.ReadUInt32();
             break;
           }
-          case 69: {
-            HeadPitch = input.ReadFloat();
+          case 64: {
+            RotationY = input.ReadUInt32();
             break;
           }
           case 72: {
-            StateFlags = input.ReadUInt32();
+            MovementBlend = input.ReadUInt32();
             break;
           }
           case 80: {
-            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            SlideBlend = input.ReadUInt32();
             break;
           }
           case 88: {
+            HeadYaw = input.ReadUInt32();
+            break;
+          }
+          case 96: {
+            HeadPitch = input.ReadUInt32();
+            break;
+          }
+          case 104: {
+            StateFlags = input.ReadUInt32();
+            break;
+          }
+          case 112: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            break;
+          }
+          case 120: {
             JumpCount = input.ReadInt32();
             break;
           }
-          case 98: {
-            if (pointAt_ == null) {
-              PointAt = new global::Decentraland.Common.Vector3();
-            }
-            input.ReadMessage(PointAt);
+          case 128: {
+            PointAtX = input.ReadUInt32();
+            break;
+          }
+          case 136: {
+            PointAtY = input.ReadUInt32();
+            break;
+          }
+          case 144: {
+            PointAtZ = input.ReadUInt32();
             break;
           }
         }

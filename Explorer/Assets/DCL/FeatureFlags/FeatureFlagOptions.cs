@@ -1,12 +1,13 @@
 using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3;
 
 namespace DCL.FeatureFlags
 {
     public struct FeatureFlagOptions
     {
-        public Web3Address? UserId { get; set; }
+        public const string APP_NAME = "explorer";
+
+        public string? UserId { get; set; }
         public bool Debug { get; set; }
         public URLDomain URL { get; set; }
         /// <summary>
@@ -23,7 +24,7 @@ namespace DCL.FeatureFlags
         public static FeatureFlagOptions NewFeatureFlagOptions(IDecentralandUrlsSource decentralandUrlsSource) =>
             new()
             {
-                AppName = "explorer",
+                AppName = APP_NAME,
                 URL = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.FeatureFlags)),
                 Debug = false,
                 Hostname = decentralandUrlsSource.GetHostnameForFeatureFlag()

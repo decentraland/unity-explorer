@@ -1,7 +1,6 @@
 using Cinemachine;
-using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -23,15 +22,19 @@ namespace DCL.CharacterPreview
         private float fovTransitionStartTime;
         private float fovTransitionStartValue;
         private bool isFOVTransitioning;
+        private Light? previewLight;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
-        [field: SerializeField] internal Transform avatarParent { get; private set; }
-        [field: SerializeField] internal Camera camera { get; private set; }
-        [field: SerializeField] internal Transform cameraTarget { get; private set; }
-        [field: SerializeField] internal Transform rotationTarget { get; private set; }
-        [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
-        [field: SerializeField] internal GameObject previewPlatform { get; private set; }
-        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
+        [field: SerializeField] internal Transform avatarParent { get; private set; } = null!;
+        [field: SerializeField] internal Camera camera { get; private set; } = null!;
+        [field: SerializeField] internal Transform cameraTarget { get; private set; } = null!;
+        [field: SerializeField] internal Transform rotationTarget { get; private set; } = null!;
+        [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; } = null!;
+        [field: SerializeField] internal GameObject previewPlatform { get; private set; } = null!;
+        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; } = null!;
+
+        // Resolved from the hierarchy so the shared prefab needs no new reference
+        private Light GetPreviewLight() => previewLight ??= GetComponentInChildren<Light>(true);
 
         internal float TargetFOV { get; set; }
         internal float RotationModifier { get; set; }
@@ -48,6 +51,9 @@ namespace DCL.CharacterPreview
         {
             transform.position = position;
             camera.targetTexture = targetTexture;
+
+            // A previous user (the lobby) may have switched the light off in favour of its own
+            SetLightActive(true);
 
             // Rotation
             rotationTarget.rotation = Quaternion.identity;
@@ -91,6 +97,23 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+
+        public void SetLightActive(bool isActive) =>
+            GetPreviewLight().gameObject.SetActive(isActive);
+
+        public void SetCameraFarClipPlane(float farClipPlane) =>
+            freeLookCamera.m_Lens.FarClipPlane = farClipPlane;
+
+        public void SetPostProcessingEnabled(bool isEnabled)
+        {
+            if (!camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(UniversalAdditionalCameraData)} is missing on the character preview camera, post-processing can't be toggled");
+                return;
+            }
+
+            cameraData.renderPostProcessing = isEnabled;
+        }
 
         private void Update()
         {

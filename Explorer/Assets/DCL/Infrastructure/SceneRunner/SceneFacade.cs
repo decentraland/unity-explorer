@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.PluginSystem.World;
 using DCL.Profiling;
 using Microsoft.ClearScript;
-using RichTypes;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
@@ -22,6 +21,9 @@ namespace SceneRunner
         private const int HANG_WATCHDOG_POLL_INTERVAL_MS = 1000;
         private const int UPDATE_HANG_INTERRUPT_THRESHOLD_MS = 10000;
         private const int START_HANG_INTERRUPT_THRESHOLD_MS = 30000;
+
+        // Sentinel interval for a frozen scene (0 FPS): the update loop idles until a positive interval is set
+        private const int FROZEN_INTERVAL_MS = -1;
 
         // Cap dt passed to JS so a slow tick (e.g. host-parking on first iteration) can't feed an
         // absurd value into scene code that does dt-based stepping/integration, which would otherwise
@@ -45,9 +47,15 @@ namespace SceneRunner
 
         public SceneRuntimeMetrics RuntimeMetrics => deps.SyncDeps.RuntimeMetrics;
 
-        private int intervalMS;
+        private int intervalMs;
 
         private readonly InterlockedFlag sceneCodeIsRunning = new ();
+
+        // Set while this is the scene the player stands in: it ticks once per rendered frame instead of by intervalMs
+        private readonly InterlockedFlag tickEveryFrame = new ();
+
+        // Minimum time between frame-bound ticks in TimeSpan ticks, 0 when uncapped; refreshed on the main thread by WaitForTickFrameAsync
+        private long minFrameTickIntervalTicks;
 
         // Hot-path watchdog state: set to Stopwatch.GetTimestamp() at the start of each UpdateScene
         // tick, reset to 0 when the tick completes.
@@ -70,7 +78,7 @@ namespace SceneRunner
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
         /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// <see cref="deps"/> field, which in turns owns its <c>V8ScriptEngine</c>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
         public void Dispose()
@@ -90,7 +98,7 @@ namespace SceneRunner
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
         /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// <see cref="deps"/> field, which in turns owns its <c>V8ScriptEngine</c>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
         public async UniTask DisposeAsync()
@@ -121,10 +129,11 @@ namespace SceneRunner
         private void DisposeInternal() =>
             deps.Dispose();
 
-        public void SetTargetFPS(int fps)
+        public void SetTargetFps(int fps)
         {
-            intervalMS = (int)(1000f / fps);
-            RuntimeMetrics.TargetFps = fps;
+            // Casting 1000f / 0 (+Infinity) to int is platform-dependent: int.MinValue on x86/x64 but int.MaxValue
+            // on IL2CPP ARM64, which would turn the freeze into a multi-day Task.Delay. Set the sentinel explicitly.
+            intervalMs = fps <= 0 ? FROZEN_INTERVAL_MS : (int)(1000f / fps);
         }
 
         UniTask ISceneFacade.StartScene() =>
@@ -142,6 +151,13 @@ namespace SceneRunner
         public void SetIsCurrent(bool isCurrent)
         {
             SceneStateProvider.IsCurrent = isCurrent;
+
+            // Portable experiences are always flagged as current, so they keep the partition interval
+            if (isCurrent && !SceneData.IsPortableExperience())
+                tickEveryFrame.Set();
+            else
+                tickEveryFrame.Reset();
+
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
             deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
 
@@ -153,12 +169,12 @@ namespace SceneRunner
 #endif
         }
 
-        public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
+        public async UniTask StartUpdateLoopAsync(int targetFps, CancellationToken ct)
         {
             MultithreadingUtility.AssertMainThread(nameof(StartUpdateLoopAsync), isMainThread: false);
 
             if (SceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
+                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started! Scene '{SceneData.SceneShortInfo}' (id: {SceneData.SceneEntityDefinition.id}) is {SceneStateProvider.State.Value()}");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
@@ -166,7 +182,7 @@ namespace SceneRunner
 
             SceneStateProvider.Start(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
-            SetTargetFPS(targetFPS);
+            SetTargetFps(targetFps);
 
             sceneCodeIsRunning.Set();
             DCLInterlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
@@ -223,6 +239,7 @@ namespace SceneRunner
                     if (SceneStateProvider.IsNotRunningState()) break;
 
                     stopWatch.Restart();
+                    long tickFrame = MultithreadingUtility.FrameCount;
 
                     sceneCodeIsRunning.Set();
                     DCLInterlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
@@ -249,11 +266,20 @@ namespace SceneRunner
                     if (!await IdleWhileRunningAsync(ct))
                         break;
 
-                    int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
+                    if (tickEveryFrame)
+                    {
+                        // A tick that outlasted its frame starts the next one right away, unless that would exceed the refresh-rate cap
+                        if (MultithreadingUtility.FrameCount == tickFrame || stopWatch.Elapsed.Ticks < minFrameTickIntervalTicks)
+                            await WaitForTickFrameAsync(stopWatch, ct);
+                    }
+                    else
+                    {
+                        int sleepMs = Math.Max(intervalMs - (int)stopWatch.ElapsedMilliseconds, 0);
 
-                    // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-                    // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    await DCLTask.Delay(sleepMS, ct);
+                        // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                        // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
+                        await DCLTask.Delay(sleepMs, ct);
+                    }
 
                     MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay), isMainThread: false);
 
@@ -262,13 +288,43 @@ namespace SceneRunner
                     // Some scenes fail when delta time is large, locking the JS thread
                     // See: https://github.com/decentraland/unity-explorer/issues/8654
                     // https://github.com/decentraland/unity-explorer/issues/8493
-                    deltaTime = Math.Min(stopWatch.ElapsedMilliseconds / 1000f, MAX_DELTA_TIME);
+                    deltaTime = Math.Min(elapsedTicks / (float)TimeSpan.TicksPerSecond, MAX_DELTA_TIME);
 
                     RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
                 }
             }
             catch (OperationCanceledException) { }
             finally { watchdogCts.SafeCancelAndDispose(); }
+        }
+
+        /// <summary>
+        ///     Resumes on a thread pool thread at the next EarlyUpdate at which <paramref name="tickStopwatch" /> has reached the refresh-rate cap
+        /// </summary>
+        private async UniTask WaitForTickFrameAsync(Stopwatch tickStopwatch, CancellationToken ct)
+        {
+            do
+            {
+                // cancelImmediately: the player loop stops pumping when the Editor leaves Play Mode
+                await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, ct, cancelImmediately: true);
+                minFrameTickIntervalTicks = GetUncappedFrameRateTickInterval();
+            }
+            while (tickStopwatch.Elapsed.Ticks < minFrameTickIntervalTicks);
+
+            await DCLTask.SwitchToThreadPool();
+        }
+
+        /// <summary>
+        ///     With VSync off and no FPS limit the app renders as fast as it can: frame-bound ticks are capped at the monitor refresh rate.
+        ///     Must be called on the main thread
+        /// </summary>
+        /// <returns>The minimum interval between frame-bound ticks in TimeSpan ticks, or 0 when the frame rate is already limited</returns>
+        private static long GetUncappedFrameRateTickInterval()
+        {
+            if (QualitySettings.vSyncCount > 0 || Application.targetFrameRate > 0)
+                return 0;
+
+            double refreshRate = Screen.currentResolution.refreshRateRatio.value;
+            return refreshRate > 0 ? (long)(TimeSpan.TicksPerSecond / refreshRate) : 0;
         }
 
         private async UniTaskVoid RunHangWatchdogAsync(int thresholdMs, CancellationToken ct)
@@ -325,8 +381,8 @@ namespace SceneRunner
             if (TryComplete())
                 return false;
 
-            // Support scene freeze (0 FPS, int.MinValue)
-            while (intervalMS < 0)
+            // Support scene freeze (0 FPS, FROZEN_INTERVAL_MS)
+            while (intervalMs < 0)
             {
                 if (TryComplete())
                     return false;

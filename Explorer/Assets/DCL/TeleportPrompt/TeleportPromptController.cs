@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -22,7 +21,7 @@ namespace DCL.TeleportPrompt
         private ImageController? placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
@@ -112,7 +111,7 @@ namespace DCL.TeleportPrompt
         private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)
         {
             SetPopupAsLoading(false);
-            placeImageController.RequestImage(placeInfo.image);
+            placeImageController.RequestImage(placeInfo.image, defaultSprite: viewInstance.defaultImage);
             viewInstance.placeName.text = placeInfo.title;
             viewInstance.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             viewInstance.location.text = placeInfo.base_position;

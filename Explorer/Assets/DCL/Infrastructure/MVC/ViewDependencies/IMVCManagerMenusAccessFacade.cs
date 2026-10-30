@@ -20,11 +20,11 @@ namespace MVC
 
         UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct);
 
-        UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action onShow = null, bool isOpenedOnWorldAvatar = false);
+        UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, Action onShow = null, bool isOpenedOnWorldAvatar = false);
 
-        UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, Action onShow = null);
+        UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, Action? onShow = null);
 
-        UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT);
+        UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default);
 
         /// <summary>
         /// Directly opens the passport for the specified user ID without showing a context menu.
@@ -53,12 +53,12 @@ namespace MVC
 
     public enum MenuAnchorPoint
     {
-        TOP_LEFT,
-        TOP_RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM_RIGHT,
-        CENTER_LEFT,
-        CENTER_RIGHT,
-        DEFAULT
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight,
+        CenterLeft,
+        CenterRight,
+        Default
     }
 }

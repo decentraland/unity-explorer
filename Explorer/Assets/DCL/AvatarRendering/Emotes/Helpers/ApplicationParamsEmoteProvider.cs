@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -61,6 +62,9 @@ namespace DCL.AvatarRendering.Emotes
                 var localBuffer = ListPool<ITrimmedEmote>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
+                    if (!BuilderCollectionIds.IsValid(collections[i], ReportCategory.EMOTE))
+                        continue;
+
                     // localBuffer accumulates the loaded emotes
                     await source.GetTrimmedByParamsAsync(requestOptions, ct, localBuffer,
                         loadingArguments: new CommonLoadingArguments(

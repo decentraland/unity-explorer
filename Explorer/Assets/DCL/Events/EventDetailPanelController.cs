@@ -1,53 +1,31 @@
 using Cysharp.Threading.Tasks;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
-using DCL.UI;
-using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.Browser;
-using DCL.Clipboard;
-using DCL.CommunicationData.URLHelpers;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.EventInfo
 {
     public class EventDetailPanelController : ControllerBase<EventDetailPanelView, EventDetailPanelParameter>
     {
-        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
-        private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
-        
         private readonly EventCardActionsController eventCardActionsController;
-        private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
-        private readonly HttpEventsApiService eventsApiService;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ThumbnailLoader? eventCardThumbnailLoader;
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();
+        private UniTaskCompletionSource? handedOverCloseIntent;
 
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
-            IWebRequestController webRequestController,
-            ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
-            HttpEventsApiService eventsApiService,
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController)
             : base(viewFactory)
         {
             eventCardThumbnailLoader = thumbnailLoader;
             this.eventCardActionsController = eventCardActionsController;
-            this.clipboard = clipboard;
-            this.webBrowser = webBrowser;
-            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
@@ -65,8 +43,11 @@ namespace DCL.Communities.EventInfo
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.GetCloseTasks());
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            handedOverCloseIntent = new UniTaskCompletionSource();
+            return UniTask.WhenAny(UniTask.WhenAny(viewInstance!.GetCloseTasks()), handedOverCloseIntent.Task);
+        }
 
         protected override void OnViewInstantiated()
         {
@@ -87,6 +68,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnViewClose()
         {
             panelCts.SafeCancelAndDispose();
+            handedOverCloseIntent = null;
         }
 
         private void OnEventCopyLinkButtonClicked(IEventDTO eventData) =>
@@ -103,6 +85,14 @@ namespace DCL.Communities.EventInfo
 
         private void OnJumpInButtonClicked(IEventDTO eventData)
         {
+            if (inputData.JumpInHandler != null)
+            {
+                // The summoner takes it from here, the panel has nothing left to show
+                inputData.JumpInHandler(eventData);
+                handedOverCloseIntent?.TrySetResult();
+                return;
+            }
+
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
             eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
         }

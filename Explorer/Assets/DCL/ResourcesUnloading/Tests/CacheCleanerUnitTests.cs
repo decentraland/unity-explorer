@@ -1,7 +1,5 @@
 ﻿using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;

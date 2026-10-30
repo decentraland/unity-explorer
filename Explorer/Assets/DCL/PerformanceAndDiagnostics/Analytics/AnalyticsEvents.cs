@@ -1,10 +1,6 @@
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    /// <summary>
-    ///     IMPORTANT!!
-    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
-    ///     IMPORTANT!!
-    /// </summary>
+
     public static class AnalyticsEvents
     {
         public static class General
@@ -14,9 +10,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PERFORMANCE_REPORT = "performance_report";
             public const string PLUGINS_INIT = "plugins_init";
             public const string ERROR = "error";
-            public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
             public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
+            public const string TELEPORT_OPERATION_DURATION = "teleport_operation_duration";
         }
 
         public static class World
@@ -30,15 +26,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
-        public static class UI
+        public static class Backpack
+        {
+            // 'source' tells which surface showed it: the explore panel or the lobby's modal.
+            public const string BACKPACK_OPENED = "backpack_opened";
+
+            // A profile published from the backpack with a different avatar; 'source' is the surface the backpack was shown in.
+            public const string AVATAR_CHANGED = "avatar_changed";
+        }
+
+        public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
             public const string CHAT_CONVERSATION_OPENED = "chat_conversation_opened";
             public const string CHAT_CONVERSATION_CLOSED = "chat_conversation_closed";
             public const string OPEN_SUPPORT = "open_support";
+            public const string MINIMUM_REQUIREMENTS_SCREEN_SHOWN = "minimum_requirements_screen_shown";
             public const string SKIP_MINIMUM_REQUIREMENTS_SCREEN = "skip_minimum_requirements_screen";
-            public const string EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN = "exit_app_from_minimum_requirements_screen";
             public const string HOME_POSITION_SET = "home_position_set";
         }
 
@@ -100,6 +105,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string AUTOLOGIN_SUCCESS = "autologin_success";
             public const string AUTOLOGIN_FAILURE = "autologin_failure";
 
+            // 0. ENTRY SCREEN
+            public const string ENTRY_SCREEN = "entry_screen";
+
             // 1. LOGIN SELECTION SCREEN
             public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";
@@ -129,6 +137,25 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             // Fires when a new-account user successfully publishes their profile (FinalizeNewUser succeeds).
             // Marks the end of the onboarding step that today is invisible to analytics.
             public const string PROFILE_FINALIZED = "profile_finalized";
+
+            // Fires when the avatar preset screen is shown to a new account
+            public const string AVATAR_SELECTION_SCREEN = "avatar_selection_screen";
+            public const string AVATAR_COMPLETE = "avatar_complete";
+
+            // 5. GUEST UPGRADE
+            // A guest hit a gated feature and was offered the upgrade. Carries the trigger, so the funnel
+            // can be split by what motivated the upgrade.
+            public const string GUEST_UPGRADE_PROMPT = "guest_upgrade_prompt";
+
+            // The guest submitted an email address to link.
+            public const string GUEST_UPGRADE_STARTED = "guest_upgrade_started";
+
+            // The email was linked and the profile is no longer a guest one.
+            public const string GUEST_UPGRADE_COMPLETED = "guest_upgrade_completed";
+
+            // The upgrade could not be completed. 'reason' separates a recoverable step failure
+            // (invalid_email, invalid_code) from a terminal one (email_already_linked, link_error).
+            public const string GUEST_UPGRADE_FAILED = "guest_upgrade_failed";
         }
 
         public static class Friends
@@ -200,13 +227,47 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public static class MarketplaceCredits
         {
+            // Every credits event carries this property so the warehouse can split client events
+            // from the web shop's Segment events even where the event names are shared.
+            public const string PLATFORM_KEY = "platform";
+            public const string PLATFORM_VALUE = "explorer";
+
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+
+            // Credits top-up funnel: event names and property keys are shared with the web shop so
+            // both clients land in one unified Segment funnel.
+            public const string SHOP_STARTED_BUY_CREDITS = "Shop Started Buy Credits";
+            public const string SHOP_REDIRECTED_TO_STRIPE = "Shop Redirected To Stripe";
+            public const string SHOP_COMPLETED_BUY_CREDITS = "Shop Completed Buy Credits";
+            public const string SHOP_BUY_CREDITS_PENDING = "Shop Buy Credits Pending";
+            public const string SHOP_BUY_CREDITS_FAILED = "Shop Buy Credits Failed";
+            public const string SHOP_BUY_CREDITS_CANCELLED = "Shop Buy Credits Cancelled";
+
+            // Buy-with-credits item purchase funnel: names shared with the web shop where a web
+            // counterpart exists; the rest follow the same style so the funnel reads as one.
+            public const string SHOP_STARTED_CHECKOUT = "Shop Started Checkout";
+            public const string SHOP_BUY_CREDITS_PROMPTED = "Shop Buy Credits Prompted";
+            public const string SHOP_STARTED_PURCHASE = "Shop Started Purchase";
+            public const string SHOP_COMPLETED_PURCHASE = "Shop Completed Purchase";
+            public const string SHOP_PURCHASE_FAILED = "Shop Purchase Failed";
+            public const string SHOP_PURCHASE_CANCELLED = "Shop Purchase Cancelled";
+
+            // Client-only auxiliary moments with no web counterpart.
+            public const string CREDITS_TOPUP_OPENED = "credits_topup_opened";
+            public const string CREDITS_TOPUP_RETRY_CLICKED = "credits_topup_retry_clicked";
+            public const string CREDITS_TOPUP_PACKS_LOAD_FAILED = "credits_topup_packs_load_failed";
+            public const string CREDITS_PURCHASE_NAV_CLICKED = "credits_purchase_nav_clicked";
+            public const string CREDITS_PURCHASE_RETRY_CLICKED = "credits_purchase_retry_clicked";
+            public const string CREDITS_BUY_FALLBACK_WEB = "credits_buy_fallback_web";
         }
 
         public static class Settings
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
             public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
+
+            // Carries the toggle's value before and after the change.
+            public const string LOBBY_SETTING_CHANGED = "lobby_setting_changed";
         }
 
         public static class Reactions
@@ -268,6 +329,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string EVENT_LINK_COPIED = "event_link_copied";
         }
 
+        /// <summary>
+        ///     Lifecycle of the lobby panel; what the user does inside it is reported through the mirrored surface's events with 'source' set to lobby.
+        /// </summary>
+        public static class Lobby
+        {
+            // Both events carry the raw remote flag and whether the lobby setting was already stored when the session resolved it.
+            public const string LOBBY_OPENED = "lobby_opened";
+
+            // Carries how long the panel stayed on screen, in seconds.
+            public const string LOBBY_CLOSED = "lobby_closed";
+        }
+
         public static class Places
         {
             public const string PLACES_SECTION_OPENED = "places_section_opened";
@@ -282,6 +355,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PLACE_SHARED = "place_shared";
             public const string PLACE_LINK_COPIED = "place_link_copied";
             public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
+        }
+
+        public static class Profiling
+        {
+            public const string LOADING_TIMES = "synthetic_loading_times";
+        }
+
+        public static class LocalSceneDevelopment
+        {
+            // 'result' is success or failed.
+            public const string AB_CONVERSION = "lsd_ab_conversion";
         }
     }
 }

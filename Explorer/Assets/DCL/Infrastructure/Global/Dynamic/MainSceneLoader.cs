@@ -4,12 +4,9 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
-using DCL.ApplicationMinimumSpecsGuard;
-using DCL.ApplicationVersionGuard;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -29,25 +26,28 @@ using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Time;
 using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.AssetBundles;
 using Global.AppArgs;
-using Global.Dynamic.DebugSettings;
 using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
 using MVC;
 using Newtonsoft.Json.Linq;
 using Plugins.NativeWindowManager;
@@ -61,8 +61,10 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
-using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
+using Utility.Networking;
+using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
+// ReSharper disable once CheckNamespace
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
@@ -72,6 +74,15 @@ namespace Global.Dynamic
 
         [Space]
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
+
+        // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
+        private string? customBaseDomain;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
+
+        // The validated --eth-network value, or null when it was not passed on the command line. Captured by
+        // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
+        private string? ethNetworkArg;
 
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
@@ -85,6 +96,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject deepLinkParamsWarningPopupPrefab = null!;
         [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
@@ -93,19 +105,47 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private AbgenSidecarBootstrap? abgenSidecar;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
         private bool canShutdown;
 
+        // ReSharper disable once UnusedMember.Local
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
+        // ReSharper disable once UnusedMember.Local
         private void OnDestroy()
         {
             Shutdown();
+        }
+
+        private void ShutdownOnExit()
+        {
+            // Unity still renders the frame in which the quit was requested, after the UI below has been torn down
+            CoverScreen();
+            Shutdown();
+        }
+
+        private static void CoverScreen()
+        {
+            var canvas = new GameObject("ExitCurtain", typeof(Canvas)).GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = short.MaxValue;
+
+            var image = new GameObject("Black", typeof(Image)).GetComponent<Image>();
+            image.color = Color.black;
+            image.raycastTarget = false;
+
+            RectTransform rect = image.rectTransform;
+            rect.SetParent(canvas.transform, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
 
         private void Shutdown()
@@ -160,6 +200,9 @@ namespace Global.Dynamic
                 stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
+            abgenSidecar?.Dispose();
+            stopwatch.LogStep("abgenSidecar.Dispose");
+
             bootstrapContainer?.Dispose();
             stopwatch.LogStep("bootstrapContainer.Dispose");
 
@@ -169,9 +212,11 @@ namespace Global.Dynamic
             ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
+        // ReSharper disable once UnusedMember.Local
         private void OnApplicationQuit()
         {
             // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
+            // ReSharper disable once EmptyGeneralCatchClause
             try { singleInstanceLock?.Dispose(); }
             catch { }
 
@@ -191,22 +236,104 @@ namespace Global.Dynamic
 
         private void ParseEnvironment(string environment)
         {
-            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
-                decentralandEnvironment = env;
+            // --base-domain already selected Custom, and it is command-line only while --dclenv can arrive from a
+            // deep link. Letting the link win would move the client back onto a decentraland domain behind the
+            // operator's back, so the base domain is authoritative and the mismatch is reported.
+            if (customBaseDomain != null)
+            {
+                ReportHub.Log(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: --{AppArgsFlags.BASE_DOMAIN}={customBaseDomain} pins the environment to {nameof(DecentralandEnvironment.Custom)}");
+                return;
+            }
+
+            if (!Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                return;
+
+            // Custom has no domain of its own to derive; only --base-domain can select it.
+            if (env == DecentralandEnvironment.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: {nameof(DecentralandEnvironment.Custom)} is selected by --{AppArgsFlags.BASE_DOMAIN} instead");
+                return;
+            }
+
+            decentralandEnvironment = env;
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             canShutdown = true;
-            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), ShutdownOnExit));
 
-            IAppArgs applicationParametersParser = new ApplicationParametersParser(
+            string[] rawApplicationParameters =
 #if UNITY_EDITOR
-                debugSettings.AppParameters
+                debugSettings.AppParameters;
 #else
-                Environment.GetCommandLineArgs()
+                Environment.GetCommandLineArgs();
 #endif
-            );
+
+            // Phase 1: parse CLI flags (incl. --feature-flags-url) but DEFER the deep link — its whitelisted-realm
+            // params must be gated against the world whitelist, which comes from feature flags. Feature flags aren't
+            // initialized until later in bootstrap, so for a deep-link launch we preemptively fetch just the whitelist
+            // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
+            IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
+
+            // Read while the deep link is still deferred, so only the command line can supply it. The ordering is the
+            // reason, not the allowlist: the base domain gates which realms DeepLinkAllowlist trusts, so it has to be
+            // registered before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params against
+            // it. A domain arriving in that same link could not be — its own params would need gating against a domain
+            // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
+            // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
+            ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
+
+            // Read while the deep link is still deferred for the same reason as the base domain: which chain the
+            // client signs against is not something a link may pick, not even through the denied-params dialog.
+            if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Read while the deep link is still deferred, for the same reason as the two above: where a session's
+            // supported-service traffic goes is not something a link may pick, not even through the denied-params
+            // dialog.
+            if (!CaptureGatewayArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Fetched at most once, and only when a start-up decision below needs it.
+            AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
+                UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));
+
+            if (applicationParametersParser.HasPendingDeepLink)
+            {
+                FeatureFlagsConfiguration? flags = await startupFeatureFlags;
+                DeepLinkAllowlist.SetWhitelistedWorlds(flags == null ? Array.Empty<string>() : DeepLinkWorldWhitelistProvider.ReadWorlds(flags));
+            }
+
+            applicationParametersParser.InitializeDeepLinks();
+
+            var assetsProvisioner = new AddressablesProvisioner();
+
+            // The deep link carried params that failed the allowlist: surface them before anything consumes the
+            // app-args, so the user can either exit or explicitly accept the risk and continue with them applied
+            // (they are merged into the args only on consent).
+            if (applicationParametersParser.DeniedDeepLinkParams.Count > 0
+                && !await ShowDeniedDeepLinkParamsConfirmationAsync(assetsProvisioner, applicationParametersParser, ct))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -214,20 +341,30 @@ namespace Global.Dynamic
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
             // Memory limit
-            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
-            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string? simulatedMemory);
 
-            ISystemMemoryCap memoryCap = hasSimulatedMemory
-                ? new SystemMemoryCap(systemMemory)
+            ISystemMemoryCap memoryCap = simulatedMemory != null
+                ? new SystemMemoryCap(int.Parse(simulatedMemory))
                 : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            // Resolved after ApplyConfig, not where the arg was captured: --dclenv is able to move the environment up
+            // to this point, and the environment is what decides whether the override is read at all.
+            EthereumNetwork ethereumNetwork = ResolveEthereumNetwork();
+
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 GetResolutionFromAppArgs(applicationParametersParser));
+
+            // Shown before anything that can wait (the abgen sidecar launch below is serial).
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
 
             World world = World.Create();
 
@@ -235,25 +372,51 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
 
+            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
+            bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
+
+            // Local scene development: the embedded abgen server becomes the optimized-assets source. It is started to
+            // health before the URL sources are built, so the override is set only when it is actually serving.
+            // --lsd-raw-gltf, or the alfa-lsd-forced-ab flag not being on, skips the server.
+            string? localAbBaseUrl = null;
+            var abgenConversionMetrics = new AbgenConversionMetrics();
+
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
+                abgenConversionMetrics.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment
+                     && (await startupFeatureFlags)?.IsEnabled(FeatureFlagsStrings.LSD_FORCED_AB) != true)
+                abgenConversionMetrics.OnMilestone($"raw GLTFs — local asset bundles need the {FeatureFlagsStrings.LSD_FORCED_AB} feature flag, which is off or unreachable");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
+            {
+                // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
+                // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
+                string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
+                    ? IRealmNavigator.LOCALHOST
+                    : launchSettings.customRealm;
+
+                string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain, abgenConversionMetrics);
+
+                if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    localAbBaseUrl = abgenSidecar.BaseUrl;
+            }
+
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
                 realmData,
                 launchSettings,
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
-                cliGatekeeperUrl);
+                cliGatekeeperUrl,
+                localAbBaseUrl,
+                customBaseDomain,
+                cliAbgenPipeline,
+                cliGatewayPrefix,
+                cliAbgenLods);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
-            var assetsProvisioner = new AddressablesProvisioner();
-
-            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
-
-            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
-            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                InstantiateAltTester(applicationParametersParser);
-
             var web3AccountFactory = new Web3AccountFactory();
-            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
@@ -269,12 +432,15 @@ namespace Global.Dynamic
                 identityCache,
                 pluginSettingsContainer,
                 launchSettings,
+                useLocalAssetBundles: localAbBaseUrl != null,
+                abgenConversionMetrics,
                 applicationParametersParser,
                 splashScreen.Value,
                 diskCache,
                 partialsDiskCache,
                 world,
                 decentralandEnvironment,
+                ethereumNetwork,
                 dclVersion,
                 destroyCancellationToken
             );
@@ -293,11 +459,14 @@ namespace Global.Dynamic
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.DecentralandUrlsSource, ct);
 
                 bootstrap.InitializeFeaturesRegistry();
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance, bootstrapContainer.IdentityCache.EnsureNotNull());
+
+                // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
+                // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.
+                DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
@@ -349,7 +518,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -375,6 +544,14 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
+                // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
+                // hold realm loading until the whole-scene warm-up settles.
+                if (abgenSidecar != null)
+                {
+                    await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
+                    TrackLocalAssetBundleConversion(bootstrapContainer.Analytics.Controller, bootstrapContainer.AbgenConversionMetrics);
+                }
+
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
 
@@ -397,32 +574,32 @@ namespace Global.Dynamic
 
             return;
 
-            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            async UniTask LoadStartingRealmAsync(CancellationToken cancellationToken)
             {
-                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, cancellationToken); }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
-                        await LoadStartingRealmAsync(ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadStartingRealmAsync(cancellationToken);
                     else
                         ExitUtils.Exit();
                 }
             }
 
-            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken cancellationToken)
             {
-                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, cancellationToken); }
                 catch (TimeoutException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
-                        await LoadUserFlowAsync(playerEntity, ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
                     else
                         throw;
                 }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
-                        await LoadUserFlowAsync(playerEntity, ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
                     else
                         ExitUtils.Exit();
                 }
@@ -436,13 +613,60 @@ namespace Global.Dynamic
             popup.OkButton.onClick.AddListener(ExitUtils.Exit);
         }
 
+        /// <summary>
+        ///     Shown before anything consumes the app-args (so the MVC manager is not available yet). On consent the
+        ///     denied params are merged into the args; returns false only when the user chose to exit.
+        /// </summary>
+        private async UniTask<bool> ShowDeniedDeepLinkParamsConfirmationAsync(AddressablesProvisioner assetsProvisioner, IAppArgs appArgs, CancellationToken ct)
+        {
+            DeepLinkParamsWarningView popup;
+
+            try
+            {
+                DeepLinkParamsWarningView prefab = (await assetsProvisioner.ProvideMainAssetAsync(deepLinkParamsWarningPopupPrefab, ct)).Value.GetComponent<DeepLinkParamsWarningView>();
+                popup = Instantiate(prefab);
+            }
+            catch (OperationCanceledException)
+            {
+                // The launch is being torn down: InitializeFlowAsync already ignores it.
+                throw;
+            }
+            catch (Exception e)
+            {
+                // This runs before the splash screen exists, so a failure here would otherwise leave the launch on a
+                // black screen. Without the dialog there is no way to ask for consent: keep the params dropped (the
+                // behaviour before this dialog existed) and let the app start.
+                ReportHub.LogException(e, ReportCategory.STARTUP);
+                return true;
+            }
+
+            popup.SetDeniedParams(appArgs.DeniedDeepLinkParams);
+
+            var decision = new UniTaskCompletionSource<bool>();
+
+            // Continuing is two-step on purpose: Advanced only reveals the confirmation, it does not consent.
+            popup.AdvancedButton.onClick.AddListener(popup.RevealContinueOption);
+            popup.ContinueButton.onClick.AddListener(() => decision.TrySetResult(true));
+            popup.ExitButton.onClick.AddListener(() => decision.TrySetResult(false));
+
+            bool continueWithParams = await decision.Task.AttachExternalCancellation(ct);
+
+            if (continueWithParams)
+            {
+                appArgs.ApplyDeniedDeepLinkParams();
+                Destroy(popup.gameObject);
+            }
+
+            return continueWithParams;
+        }
+
         private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
         {
-#if UNITY_EDITOR
-            return false;
-#endif
             if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
 
+#if UNITY_EDITOR
+            return false;
+#else
             try
             {
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
@@ -456,9 +680,131 @@ namespace Global.Dynamic
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
+#endif
         }
 
-        private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
+        /// <summary>
+        ///     Reports a value the deep link carried for an arg that was already read from the command line, where
+        ///     the link's own value is therefore not applied - not even after the user accepts it in the
+        ///     denied-params dialog, since nothing reads the arg again. Without this it would sit in the logged args
+        ///     looking applied.
+        /// </summary>
+        private static void WarnIfCommandLineOnlyArgCameFromTheDeepLink(IAppArgs appArgs, string flag, string? commandLineValue)
+        {
+            if (appArgs.TryGetValue(flag, out string? linkValue)
+                && !string.IsNullOrWhiteSpace(linkValue)
+                && !string.Equals(linkValue.Trim(), commandLineValue, StringComparison.OrdinalIgnoreCase))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{flag}={linkValue} from the deep link: it is only applied from the command line");
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.ETH_NETWORK" /> into <see cref="ethNetworkArg" />, rejecting a value
+        ///     that would otherwise leave the run on the default chain with nothing said. Returns false when the
+        ///     launch must be abandoned; the reason is already reported.
+        ///     <para>
+        ///         Rejecting rather than defaulting is the whole point on a <c>--base-domain</c> deployment: mainnet
+        ///         is the default, so every way of mistyping this flag ends with real contracts and the production
+        ///         identity slot behind an operator who asked for a test chain.
+        ///     </para>
+        /// </summary>
+        private bool CaptureEthNetworkArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.ETH_NETWORK, out string? value))
+                return true;
+
+            // Only a Custom environment reads the value, and only --base-domain selects Custom, so this is already
+            // final here even though --dclenv has not been applied yet.
+            bool valueIsRead = decentralandEnvironment == DecentralandEnvironment.Custom;
+
+            if (valueIsRead && !ChainUtils.TryParseNetwork(value, out _))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.ETH_NETWORK} '{value}' names no known network. Expected {ChainUtils.GetNetworkId(EthereumNetwork.Mainnet)} or {ChainUtils.GetNetworkId(EthereumNetwork.Sepolia)}");
+                return false;
+            }
+
+            ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
+            return true;
+        }
+
+        /// <summary>
+        ///     Turns the captured <see cref="ethNetworkArg" /> into the chain this run uses. Only a
+        ///     <c>--base-domain</c> deployment can answer for its own chain, so an override paired with a
+        ///     decentraland environment is reported and dropped rather than silently having no effect. The rule
+        ///     itself lives in <see cref="ChainUtils.ResolveNetwork" />; this reports what it discarded.
+        /// </summary>
+        private EthereumNetwork ResolveEthereumNetwork()
+        {
+            EthereumNetwork ethereumNetwork = ChainUtils.ResolveNetwork(decentralandEnvironment, ethNetworkArg);
+
+            if (ethNetworkArg != null && ChainUtils.PinnedNetworkOf(decentralandEnvironment) is { } pinned)
+            {
+                if (!ChainUtils.TryParseNetwork(ethNetworkArg, out EthereumNetwork requested))
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: it names no known network, and the {decentralandEnvironment} environment runs on {ChainUtils.GetNetworkId(pinned)} regardless");
+                else if (requested != pinned)
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: the {decentralandEnvironment} environment always runs on {ChainUtils.GetNetworkId(pinned)}");
+            }
+
+            // Logged unconditionally: a custom deployment defaults to mainnet, which puts the production contracts
+            // and identity slot behind it, and that has to be answerable from a log after the fact.
+            ReportHub.Log(ReportCategory.STARTUP, $"Chain: {ChainUtils.GetNetworkId(ethereumNetwork)} (environment {decentralandEnvironment})");
+
+            return ethereumNetwork;
+        }
+
+        /// <summary>
+        ///     Applies <see cref="AppArgsFlags.BASE_DOMAIN" />: it selects <see cref="DecentralandEnvironment.Custom" />
+        ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
+        ///     every realm-trust check resolves against.
+        /// </summary>
+        private void ApplyBaseDomainArg(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))
+            {
+                customBaseDomain = baseDomainArg.Trim();
+                decentralandEnvironment = DecentralandEnvironment.Custom;
+            }
+
+            DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
+        }
+
+        /// <summary>The app's feature-flags document, honouring <see cref="AppArgsFlags.FeatureFlags.URL" />.</summary>
+        private string FeatureFlagsDocumentUrl(IAppArgs appArgs)
+        {
+            appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
+
+            string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
+                : featureFlagsOverride.TrimEnd('/');
+
+            return $"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json";
+        }
+
+        private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
@@ -469,7 +815,21 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
+        /// <summary>
+        ///     One event per local-scene session: success when the scene was converted and the session loads asset
+        ///     bundles. Single files abgen could not convert do not count as a failure.
+        /// </summary>
+        private static void TrackLocalAssetBundleConversion(IAnalyticsController analytics, AbgenConversionMetrics metrics)
+        {
+            bool succeeded = metrics.RawGltfFallbackReason == null && metrics.WarmUp == AbgenConversionMetrics.WarmUpStage.Ready;
+
+            analytics.Track(AnalyticsEvents.LocalSceneDevelopment.AB_CONVERSION, new JObject
+            {
+                ["result"] = succeeded ? "success" : "failed",
+            });
+        }
+
+        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, UnityAppWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
                 new UnitySystemInfoProvider());
@@ -479,12 +839,12 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
-                SavedQualitySettingsApplier.EnforceLowPreset();
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
-            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
+            bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+            MinimumSpecsStatus.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
 
             var specsProperties = new JObject
             {
@@ -587,14 +947,14 @@ namespace Global.Dynamic
             var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
 
             ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+                LivekitHealthGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
-            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealthGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealthGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splash, CancellationToken ct)
         {
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
@@ -613,7 +973,7 @@ namespace Global.Dynamic
             if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
-            splashScreen.Hide();
+            splash.Hide();
 
             var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
 
@@ -646,8 +1006,8 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
-                InputMapComponent.Kind.EMOTE_WHEEL);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FreeCamera,
+                InputMapComponent.Kind.EmoteWheel);
 
             DCLInput.Instance.UI.Enable();
         }
@@ -734,14 +1094,18 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn.decentraland.org") return true;
-            if (uri.Host == "sdk-test-scenes.decentraland.zone") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.org") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
-            if (uri.Host == "worlds-content-server.decentraland.org") return true;
-            if (uri.Host == "worlds-content-server.decentraland.zone") return true;
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
+
+            // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
+            // trust TrustedRealms grants decentraland's own hosts. Its worlds server in particular cannot be reached
+            // any other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers,
+            // which is exactly why decentraland's is named outright. Widening trust this way is safe because
+            // --base-domain is command-line only (never accepted from a deep link), so the operator already chose
+            // this deployment.
+            if (decentralandEnvironment == DecentralandEnvironment.Custom
+                && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
+                return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
@@ -780,7 +1144,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Load Error",
                 description: "A loading error was encountered. Please reload to try again.",
-                iconType: ErrorPopupWithRetryController.IconType.ERROR);
+                iconType: ErrorPopupWithRetryController.IconType.Error);
 
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
@@ -824,7 +1188,7 @@ namespace Global.Dynamic
         private static void DisableAllSelectableTransitions()
         {
             DOTween.KillAll();
-            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include) ?? Array.Empty<Selectable>();
 
             foreach (var s in all)
             {
@@ -842,6 +1206,8 @@ namespace Global.Dynamic
         [Serializable]
         public struct TrustedRealmApiResponse
         {
+            // Deserialized DTO field: keeps the JSON key casing of the /servers endpoint.
+            // ReSharper disable once InconsistentNaming
             public string baseUrl;
         }
 
@@ -874,7 +1240,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Time sync needed",
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
-                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+                iconType: ErrorPopupWithRetryController.IconType.Clock);
 
             var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
 
@@ -884,21 +1250,15 @@ namespace Global.Dynamic
 
             Destroy(viewInstance.gameObject);
 
-            switch (input.SelectedOption)
-            {
-                case ErrorPopupWithRetryController.Result.EXIT:
-                    // The error popup will automatically request application exit
-                    return EnsureClockSync.Result.CONTINUE;
-                case ErrorPopupWithRetryController.Result.RESTART:
-                    return EnsureClockSync.Result.RESTART;
-            }
-
-            return EnsureClockSync.Result.CONTINUE;
+            // On Exit the error popup will automatically request application exit, so Continue is returned for it too.
+            return input.SelectedOption == ErrorPopupWithRetryController.Result.Restart
+                ? EnsureClockSync.Result.Restart
+                : EnsureClockSync.Result.Continue;
         }
 
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
         {
-            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string? resolutionArg) || string.IsNullOrEmpty(resolutionArg))
                 return null;
 
             string[] parts = resolutionArg.Split('x');

@@ -24,7 +24,6 @@ using DCL.Profiles.Self;
 using DCL.SocialService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Web3.Identities;
@@ -45,16 +44,15 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ChatEventBus chatEventBus;
         private readonly RPCCommunitiesService rpcCommunitiesService;
@@ -77,16 +75,15 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
             IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
             ChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,
@@ -106,7 +103,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -157,7 +153,6 @@ namespace DCL.PluginSystem.Global
                 viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
                 friendsService,
                 communitiesDataProvider,
                 webRequestController,
@@ -194,10 +189,11 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 selfProfile,
                 mvcManager,
-                profileRepository);
+                profileRepository,
+                web3IdentityCache);
             mvcManager.RegisterController(communityCreationEditionController);
 
-            rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
+            rpcCommunitiesService.SubscribeToConnectivityStatus();
         }
 
         private void OnInputShortcutsEventsPerformedAsync(InputAction.CallbackContext _) =>

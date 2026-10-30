@@ -333,6 +333,8 @@ Some clean-up behaviour is common enough so it's generalized and can be reused a
   }
   ```
 
+  A game object pool re-parents a released instance under its container and resets its local position, rotation and scale to `Vector3.zero`, `Quaternion.identity` and `Vector3.one`. Set the transform you need after `Get`; don't rely on the root transform of a prefab passed to the creation handler.
+
 - **Returning reference-type components to the pool indirectly**
 
   You may store poolable references in another component which is not pooled on its own.
@@ -492,6 +494,8 @@ Beware that environment scenes are currently not being converted to Asset Bundle
 
 Regardless of being on Windows or macOS, when opening a Decentraland deep link the launcher will be opened and so the latest released build will be used.
 
+A link (or command line) that names a destination through `realm` or `position` skips the startup lobby: after authentication, if any is needed, the client loads straight into it. An unreachable realm keeps the current one.
+
 Any relevant parameter can be used through the deep link, some examples:
 * For connecting to a locally running scene: `decentraland://?realm=http://127.0.0.1:8000/&position=-139,-28&local-scene=true&debug`
 * For connecting to genesis city directly on the specified position: `decentraland://?position=66,66`
@@ -516,13 +520,9 @@ By running the build from a console/terminal you can specify the pertinent param
 
 ## Test media streaming
 
-In the current project, **media streaming** is implemented via external package, namely AVPro. This package is imported during the build process on CI. In order to test media streaming in editor:
-1. Import AVPro package. Trial/preview version of it can be downloaded from the official [GitHub repository](https://github.com/RenderHeads/UnityPlugin-AVProVideo/releases). At the moment of writing this documentation AVPro version used in this project was 2.8.0.
-2. Add `csc.rsp` file to the `Assets` folder with only one line `-define:AV_PRO_PRESENT` in this file.
-3. Close and re-open Unity Editor, so the define symbols are updated.
-4. Verify that symbol is recognized by checking `DCL.Plugins.asmdef` in inspector (the `AV_PRO_PRESENT` define lives there; the MediaStream code itself compiles into `ECS.Unity`). You should not see red sign in front of the `AV_PRO_PRESENT` define there.
+**Media streaming** is served by UUAV, the in-house player (`Explorer/Assets/Plugins/UUAV`, see [UUAV Media Stack](uuav.md)). The Explorer's media systems (`DCL.SDKComponents.MediaStream`) reach it through the `UUAV.Compat` facade (`Packages/UUAV/AVProCompat/`): a poll-based `MediaPlayer` component exposing `Control` / `Info` / `TextureProducer`. The media systems are always compiled in (except on Linux, where they are excluded per platform define).
 
-After importing trial package you can:
+To test media streaming you can:
 1. Run `MediaStreaming` sdk-scene from `StaticSceneLoader.unity` scene to verify that media streaming is working. This scene includes both audio- and video streams.
 2. Run `Main.unity` scene on `https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main` realm and run to coordinates (-12,-3) to observe video played on the big screen (in the open cinema scene)
 
@@ -537,19 +537,14 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 
-**[RECOMMENDED]** For using the protocol [experimental branch](https://github.com/decentraland/protocol/tree/experimental) package (the experimental features depend on this otherwise Unity project won't compile due to missing protobuf message for the experimental components):
-```bash
-cd scripts
-npm install @dcl/protocol@experimental
-npm run build-protocol
-```
-
-For using the protocol [main branch](https://github.com/decentraland/protocol) package:
+unity-explorer uses the `@next` package, which is published from the protocol [main branch](https://github.com/decentraland/protocol):
 ```bash
 cd scripts
 npm install @dcl/protocol@next
 npm run build-protocol
 ```
+
+> **NOTE:** always install `@dcl/protocol@next`. Any other tag will be missing component definitions and the Unity project won't compile.
 
 ## How to test scenes
 

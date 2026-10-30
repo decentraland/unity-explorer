@@ -7,7 +7,6 @@ using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
@@ -16,19 +15,21 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Profiling;
-using DCL.SDKComponents.MediaStream;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.SkyBox;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -38,14 +39,13 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner
 {
@@ -71,11 +71,10 @@ namespace SceneRunner
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
         private readonly ISystemsUpdateGate systemsUpdateGate;
         private readonly ISceneData sceneData;
-        private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly IJsApiPermissionsProvider permissionsProvider = null!;
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
 
@@ -97,7 +96,6 @@ namespace SceneRunner
             ISceneData sceneData,
             MultiThreadSync ecsMultiThreadSync,
             ICRDTDeserializer crdtDeserializer,
-            IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
             ISystemsUpdateGate systemsUpdateGate,
             ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies)
@@ -116,14 +114,14 @@ namespace SceneRunner
             this.sceneData = sceneData;
             this.ecsMultiThreadSync = ecsMultiThreadSync;
             this.crdtDeserializer = crdtDeserializer;
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
             this.systemsUpdateGate = systemsUpdateGate;
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
         }
 #endif
 
-        public SceneInstanceDependencies(
+        private SceneInstanceDependencies(
+            URLAddress sceneCodeUrl,
             ISDKComponentsRegistry sdkComponentsRegistry,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData,
@@ -134,6 +132,8 @@ namespace SceneRunner
         {
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
+
+            SceneCodeUrl = sceneCodeUrl;
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
             SceneStateProvider = new SceneStateProvider();
@@ -143,35 +143,61 @@ namespace SceneRunner
             CRDTMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             crdtDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
             OutgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, CRDTProtocol, CRDTMemoryAllocator);
-            ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
+            var ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var entityEventsBuilder = new EntityEventsBuilder();
+            var explorerUiEvents = new Queue<ExplorerUiEvent>();
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                systemGroupThrottler, systemsUpdateGate);
+                systemGroupThrottler, systemsUpdateGate, RuntimeMetrics, explorerUiEvents);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 
             EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld);
             entityCollidersGlobalCache.AddSceneInfo(EntityCollidersCache, EcsExecutor);
+        }
 
-            if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool
-                sceneData.TryGetMainScriptUrl(out SceneCodeUrl);
+        /// <summary>
+        ///     Fails instead of constructing when an SDK7 scene has no resolvable main script in its content manifest.
+        /// </summary>
+        public static Result<SceneInstanceDependencies> New(
+            ISDKComponentsRegistry sdkComponentsRegistry,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider,
+            IPartitionComponent partitionProvider,
+            IECSWorldFactory ecsWorldFactory,
+            ISceneEntityFactory entityFactory)
+        {
+            URLAddress sceneCodeUrl;
+
+            if (sceneData.IsSdk7())
+            {
+                if (!sceneData.TryGetMainScriptUrl(out sceneCodeUrl))
+                    return Result<SceneInstanceDependencies>.ErrorResult($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
+            }
             else
-                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+                // SHA-256: 18e63cfc2a6913bbed658bde0bf4ca2af60336be2b4cd07806b00948662f12c9
+                // Build provenance: StreamingAssets/Js/sdk6-adapter.provenance.json
+                sceneCodeUrl = URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/sdk6-adapter.min.js");
+
+            return Result<SceneInstanceDependencies>.SuccessResult(
+                new SceneInstanceDependencies(sceneCodeUrl, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory));
         }
 
         public void Dispose()
         {
-            // The order can make a difference here
+            // The order can make a difference here.
+            // The synchronizer goes first: it flags itself disposed, so a buffer the scene thread is still about to apply
+            // is discarded instead of reaching the world that is torn down right after
+            CRDTWorldSynchronizer.Dispose();
             ECSWorldFacade.Dispose();
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
-            CRDTWorldSynchronizer.Dispose();
             PoolsProvider.Dispose();
             CRDTMemoryAllocator.Dispose();
 
@@ -241,7 +267,7 @@ namespace SceneRunner
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),

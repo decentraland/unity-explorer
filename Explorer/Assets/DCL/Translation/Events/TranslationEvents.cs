@@ -1,6 +1,4 @@
-﻿using DCL.Utilities;
-
-namespace DCL.Translation
+﻿namespace DCL.Translation
 {
     public class TranslationEvents
     {

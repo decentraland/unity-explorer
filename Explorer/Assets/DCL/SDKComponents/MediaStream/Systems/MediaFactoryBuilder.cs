@@ -1,14 +1,14 @@
 using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
 using UnityEngine;
 using UnityEngine.Pool;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -24,10 +24,12 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
+        private readonly SlideTextureCache slideCache;
+        private readonly Material compositorMaterial;
 
         public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, SlideTextureCache slideCache, Material compositorMaterial)
         {
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
@@ -35,13 +37,17 @@ namespace DCL.SDKComponents.MediaStream
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
+            this.slideCache = slideCache;
+            this.compositorMaterial = compositorMaterial;
 
-            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub) =>
-            new (sceneDeps.SceneData, roomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(),
+                () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
+                mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
-                analyticsController);
+                analyticsController, placeholderSource, slideCache, compositorMaterial);
     }
 }

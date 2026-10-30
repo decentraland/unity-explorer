@@ -7,6 +7,9 @@ namespace DCL.Diagnostics
     [Serializable]
     public class CategorySeverityMatrixDto
     {
+        // Overrides ALL values, makes ALL category visible in the Player.log file (Should be NOT applicable to Sentry)
+        [SerializeField] public bool allOverride = false;
+
         [SerializeField] public bool isOverride = false;
         [SerializeField] public List<MatrixEntryDto> debugLogMatrix = new();
         [SerializeField] public List<MatrixEntryDto> sentryMatrix = new();

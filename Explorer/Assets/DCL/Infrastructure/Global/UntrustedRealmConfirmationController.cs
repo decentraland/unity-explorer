@@ -14,7 +14,7 @@ namespace DCL.Infrastructure.Global
         {
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewInstantiated()
         {

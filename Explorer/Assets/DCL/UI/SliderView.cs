@@ -1,5 +1,4 @@
 ﻿using DCL.Audio;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 

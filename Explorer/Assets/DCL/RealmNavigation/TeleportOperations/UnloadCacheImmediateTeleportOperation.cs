@@ -23,7 +23,7 @@ namespace DCL.RealmNavigation.TeleportOperations
         {
             teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.UnloadCacheChecking);
             //Only unload if the memory usage is normal. If its different, the regular `ReleaseMemorySystem` will take care of it.
-            //if (memoryUsageProvider.GetMemoryUsageStatus() == MemoryUsageStatus.NORMAL)
+            //if (memoryUsageProvider.GetMemoryUsageStatus() == MemoryUsageStatus.Normal)
             //    cacheCleaner.UnloadCache(false);
             Resources.UnloadUnusedAssets();
             return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());

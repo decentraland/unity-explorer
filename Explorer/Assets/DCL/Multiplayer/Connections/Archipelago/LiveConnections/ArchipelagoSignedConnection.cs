@@ -2,11 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using Decentraland.Kernel.Comms.V3;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -29,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         private readonly IArchipelagoLiveConnection origin;
 
-        private readonly DCLSemaphoreSlim semaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphore = new ();
 
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;

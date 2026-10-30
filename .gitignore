@@ -74,5 +74,19 @@ Explorer/.cursorignore
 .claude/settings.local.json
 .claude/worktrees/
 
+# ReSharper CLI used by the local lint flow (scripts/lint/run-inspectcode.sh)
+/rsharp/
+/rsharp.zip
+
 # API Keys
 .env
+
+# ReSharper CLI download for local linting (scripts/lint/download-resharper.sh)
+/rsharp/
+rsharp.zip
+
+# abgen sidecar server binary (fetched from release, not committed)
+Explorer/Assets/StreamingAssets/abgen
+Explorer/Assets/StreamingAssets/abgen.exe
+Explorer/Assets/StreamingAssets/abgen.exe.meta
+Explorer/Assets/StreamingAssets/abgen.meta

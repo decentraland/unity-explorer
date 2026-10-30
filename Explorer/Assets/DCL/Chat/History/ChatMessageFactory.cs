@@ -1,5 +1,3 @@
-using DCL.FeatureFlags;
-using System;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System.Text.RegularExpressions;
@@ -76,8 +74,7 @@ namespace DCL.Chat.History
                 false,
                 GetUserHash(profile),
                 sentTimestamp,
-                isMention,
-                false
+                isMention
             );
 
             string GetUserHash(Profile.CompactInfo? profile)

@@ -34,6 +34,10 @@ namespace DCL.Time
             }
         }
 
+        /// <summary>Discards the recorded sample so the next trusted response records a fresh one.</summary>
+        public void Invalidate() =>
+            hasSample = false;
+
         /// <summary>Records a server UTC sample. Subsequent <see cref="UtcNow"/> reads advance from here.</summary>
         public void RecordServerTime(DateTime serverUtc)
         {

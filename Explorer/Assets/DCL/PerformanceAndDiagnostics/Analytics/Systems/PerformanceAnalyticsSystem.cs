@@ -105,12 +105,19 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("total_gc_alloc", ((ulong)profiler.TotalGcAlloc).ByteToMB());
 
             // MainThread
-            (bool hasValue, long count, long sumTime, long min, long max, float avg) hiccups = profiler.CalculateMainThreadHiccups();
-            jsonObjectBuilder.Set("hiccups_in_thousand_frames", !hiccups.hasValue ? 0 : hiccups.count);
-            jsonObjectBuilder.Set("hiccups_time", !hiccups.hasValue ? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_min", !hiccups.hasValue ? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_max", !hiccups.hasValue ? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("hiccups_avg", !hiccups.hasValue ? 0 : hiccups.avg * NS_TO_MS);
+            HiccupStats hiccups = profiler.CalculateMainThreadHiccups();
+            jsonObjectBuilder.Set("hiccups_in_thousand_frames", !hiccups.HasValue ? 0 : hiccups.Count);
+            jsonObjectBuilder.Set("hiccups_time", !hiccups.HasValue ? 0 : hiccups.SumTimeNs * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_excess_time", !hiccups.HasValue ? 0 : hiccups.ExcessTimeNs * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_min", !hiccups.HasValue ? 0 : hiccups.MinNs * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_max", !hiccups.HasValue ? 0 : hiccups.MaxNs * NS_TO_MS);
+            jsonObjectBuilder.Set("hiccups_avg", !hiccups.HasValue ? 0 : hiccups.AvgNs * NS_TO_MS);
+
+            // Frames the hiccup stats were measured over; below FRAME_BUFFER_SIZE during warm-up or at low framerate.
+            jsonObjectBuilder.Set("hiccups_samples_amount", !hiccups.HasValue ? 0 : hiccups.SampleCount);
+
+            // Threshold applied this report (scales with target frame rate). GPU hiccups use the same value.
+            jsonObjectBuilder.Set("hiccups_threshold", hiccups.ThresholdNs * NS_TO_MS);
 
             jsonObjectBuilder.Set("min_frame_time", profiler.MainThreadFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("max_frame_time", profiler.MainThreadFrameTimes.Max * NS_TO_MS);
@@ -129,11 +136,13 @@ namespace DCL.Analytics.Systems
 
             // GPU
             hiccups = profiler.CalculateGpuHiccups();
-            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", hiccups.count);
-            jsonObjectBuilder.Set("gpu_hiccups_time", hiccups.count == 0 ? 0 : hiccups.sumTime * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_min", hiccups.count == 0 ? 0 : hiccups.min * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_max", hiccups.count == 0 ? 0 : hiccups.max * NS_TO_MS);
-            jsonObjectBuilder.Set("gpu_hiccups_avg", hiccups.count == 0 ? 0 : hiccups.avg * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_in_thousand_frames", hiccups.Count);
+            jsonObjectBuilder.Set("gpu_hiccups_time", hiccups.Count == 0 ? 0 : hiccups.SumTimeNs * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_excess_time", hiccups.Count == 0 ? 0 : hiccups.ExcessTimeNs * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_min", hiccups.Count == 0 ? 0 : hiccups.MinNs * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_max", hiccups.Count == 0 ? 0 : hiccups.MaxNs * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_avg", hiccups.Count == 0 ? 0 : hiccups.AvgNs * NS_TO_MS);
+            jsonObjectBuilder.Set("gpu_hiccups_samples_amount", !hiccups.HasValue ? 0 : hiccups.SampleCount);
 
             jsonObjectBuilder.Set("gpu_min_frame_time", profiler.GpuFrameTimes.Min * NS_TO_MS);
             jsonObjectBuilder.Set("gpu_max_frame_time", profiler.GpuFrameTimes.Max * NS_TO_MS);

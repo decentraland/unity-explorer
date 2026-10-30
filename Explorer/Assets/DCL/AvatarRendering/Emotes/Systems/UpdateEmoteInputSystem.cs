@@ -6,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
@@ -52,7 +51,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
-            triggeredEmoteSource = EmoteTriggerSource.SHORTCUT;
+            triggeredEmoteSource = EmoteTriggerSource.Shortcut;
         }
 
         protected override void Update(float t)
@@ -76,7 +75,7 @@ namespace DCL.AvatarRendering.Emotes
         private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
         {
             triggeredEmote = intent.Slot;
-            triggeredEmoteSource = EmoteTriggerSource.WHEEL_SLOT;
+            triggeredEmoteSource = EmoteTriggerSource.WheelSlot;
             World.Remove<TriggerEmoteBySlotIntent>(entity);
         }
 
@@ -90,7 +89,7 @@ namespace DCL.AvatarRendering.Emotes
             in AvatarShapeComponent avatarShapeComponent,
             in GlideState glideState)
         {
-            if (inputModifier.DisableEmote || glideState.Value != GlideStateValue.PROP_CLOSED) return;
+            if (inputModifier.DisableEmote || glideState.Value != GlideStateValue.PropClosed) return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
@@ -99,7 +98,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (emoteId.IsNullOrEmpty()) return;
 
-            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.SELF};
+            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.Self};
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
         }

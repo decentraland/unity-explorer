@@ -10,27 +10,27 @@ namespace AssetManagement
     [Flags]
     public enum AssetSource
     {
-        NONE = 0,
+        None = 0,
 
         /// <summary>
         ///     From the resources bundled at build time
         /// </summary>
-        EMBEDDED = 1,
+        Embedded = 1,
 
         /// <summary>
         ///     Downloaded over network
         /// </summary>
-        WEB = 1 << 1,
+        Web = 1 << 1,
 
         /// <summary>
         ///     Downloaded over Addressables
         /// </summary>
-        ADDRESSABLE = 1 << 2,
+        Addressable = 1 << 2,
 
         /// <summary>
         ///     All sources
         /// </summary>
-        ALL = EMBEDDED | WEB | ADDRESSABLE,
+        All = Embedded | Web | Addressable,
     }
 
     public static class AssetSourceEnumExtensions
@@ -38,16 +38,16 @@ namespace AssetManagement
         private static readonly Dictionary<AssetSource, string> CURRENT_SOURCE_STRINGS = new ()
         {
             {
-                AssetSource.ADDRESSABLE, "ADDRESSABLE"
+                AssetSource.Addressable, "ADDRESSABLE"
             },
             {
-                AssetSource.EMBEDDED, "EMBEDDED"
+                AssetSource.Embedded, "EMBEDDED"
             },
             {
-                AssetSource.WEB, "WEB"
+                AssetSource.Web, "WEB"
             },
             {
-                AssetSource.NONE, "NONE"
+                AssetSource.None, "NONE"
             },
         };
 

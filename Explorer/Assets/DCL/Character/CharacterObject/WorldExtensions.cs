@@ -10,5 +10,8 @@ namespace DCL.Character
 
         public static SingleInstanceEntity CachePlayer(this World world) =>
             new (in QUERY, world);
+
+        public static Entity CachePlayerEntityOrNull(this World world) =>
+            world.GetSingleInstanceEntityOrNull(QUERY);
     }
 }

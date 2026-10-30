@@ -1,5 +1,4 @@
 using Arch.Core;
-using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes;

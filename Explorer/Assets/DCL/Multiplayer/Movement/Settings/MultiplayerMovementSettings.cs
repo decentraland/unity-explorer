@@ -42,8 +42,8 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float IdleSlowDownSpeed { get; private set; }
         public Dictionary<MovementKind, float> MoveKindByDistance => new()
         {
-            { MovementKind.WALK, 1f },
-            { MovementKind.JOG, 2f },
+            { MovementKind.Walk, 1f },
+            { MovementKind.Jog, 2f },
         };
     }
 }

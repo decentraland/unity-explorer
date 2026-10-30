@@ -1,12 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Audio;
+﻿using DCL.Audio;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
-using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.Navmap;
-using DCL.UI;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -31,7 +27,7 @@ namespace DCL.MapRenderer.MapCameraController
         private IParcelHighlightMarker? marker;
         private GameObject? previouslyRaycastedObject;
         private CancellationTokenSource clickCt = new ();
-        private IMapRendererMarker? previouslyClickedMarker = null;
+        private IMapRendererMarker? previouslyClickedMarker;
         private CancellationTokenSource longHoverCt = new ();
         private Vector2Int previousParcel = Vector2Int.zero;
 

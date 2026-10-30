@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter);
 
             profile = new SDKProfile();
-            profile.OverrideWith(new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()));
+            profile.OverrideWith(new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", CreateTestAvatar()));
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 

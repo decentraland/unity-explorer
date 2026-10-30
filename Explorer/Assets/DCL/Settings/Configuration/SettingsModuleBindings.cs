@@ -24,7 +24,7 @@ namespace DCL.Settings.Configuration
     public abstract class SettingsModuleBindingBase
     {
         [field: SerializeField]
-        public FeatureId FeatureId { get; set; } = FeatureId.NONE;
+        public FeatureId FeatureId { get; set; } = FeatureId.None;
 
         public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
@@ -40,7 +40,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting);
     }
 
     [Serializable]
@@ -49,9 +50,9 @@ namespace DCL.Settings.Configuration
         where TConfig : SettingsModuleViewConfiguration
         where TControllerType : Enum
     {
-        [field: SerializeField] public ViewRef View { get; private set; }
-        [field: SerializeField] public TConfig Config { get; private set; }
-        [field: SerializeField] public TControllerType Feature { get; private set; }
+        [field: SerializeField] public ViewRef View { get; private set; } = null!;
+        [field: SerializeField] public TConfig Config { get; private set; } = null!;
+        [field: SerializeField] public TControllerType Feature { get; private set; } = default!;
 
         [Serializable]
         public class ViewRef : ComponentReference<TView>

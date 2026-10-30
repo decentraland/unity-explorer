@@ -36,6 +36,7 @@ using Object = UnityEngine.Object;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.TrimmedWearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetTrimmedWearableByParamIntention>;
 using Profile = DCL.Profiles.Profile;
 using Random = UnityEngine.Random;
+using UserId = DCL.Profiles.UserId;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.AvatarRendering.DemoScripts.Systems
@@ -317,8 +318,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             foreach (string wearable in wearables)
                 wearablesURN.Add(new URN(wearable));
 
-            var profile = Profile.Create(
-                StringUtils.GenerateRandomString(5),
+            var profile = new Profile(
+                UserId.NewRandom(),
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
@@ -334,7 +335,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new RandomAvatar());
 
                 if (hasEmote)
-                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.Self });
             }
             else
             {
@@ -366,7 +367,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 );
 
                 if (hasEmote)
-                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.Self });
             }
         }
 

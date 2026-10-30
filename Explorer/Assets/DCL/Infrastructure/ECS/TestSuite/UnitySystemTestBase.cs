@@ -13,7 +13,8 @@ namespace ECS.TestSuite
 {
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
-        protected TSystem? system;
+        // Assigned by each fixture's SetUp before any test runs; null! avoids a nullable-dereference warning on every system.Update call.
+        protected TSystem system = null!;
         private World? cachedWorld;
 
         protected World world

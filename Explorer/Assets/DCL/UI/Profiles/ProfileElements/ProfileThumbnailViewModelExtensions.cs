@@ -7,7 +7,7 @@ namespace DCL.UI.ProfileElements
     public static class ProfileThumbnailViewModelExtensions
     {
         public static void SetLoading(this IReactiveProperty<ProfileThumbnailViewModel> property, Color color) =>
-            property.UpdateValue(new ProfileThumbnailViewModel(State.LOADING, null, color));
+            property.UpdateValue(new ProfileThumbnailViewModel(State.Loading, null, color));
 
         public static void SetLoaded(this IReactiveProperty<ProfileThumbnailViewModel> property, Sprite sprite, bool fromCache) =>
             property.UpdateValue(FromLoaded(sprite, fromCache, property.Value.ProfileColor, property.Value.FitAndCenterImage));
@@ -17,9 +17,9 @@ namespace DCL.UI.ProfileElements
 
         public static void TryBind(this IReactiveProperty<ProfileThumbnailViewModel> property)
         {
-            if (property.Value.ThumbnailState == State.NOT_BOUND)
+            if (property.Value.ThumbnailState == State.NotBound)
 
-                property.UpdateValue(new ProfileThumbnailViewModel(State.LOADING, property.Value.Sprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
+                property.UpdateValue(new ProfileThumbnailViewModel(State.Loading, property.Value.Sprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
         }
     }
 }

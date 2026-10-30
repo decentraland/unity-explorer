@@ -5,7 +5,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -67,8 +66,8 @@ namespace DCL.Chat.ChatServices
         public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser, string? communityName = null)
         {
             if (!nametagsData.showNameTags
-                || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE
-                || (channel.ChannelType != ChatChannel.ChatChannelType.NEARBY && chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NEARBY_ONLY))
+                || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.None
+                || (channel.ChannelType != ChatChannel.ChatChannelType.NEARBY && chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NearbyOnly))
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out var entry))
@@ -98,7 +97,7 @@ namespace DCL.Chat.ChatServices
                         break;
                     case ChatChannel.ChatChannelType.USER:
                         // Chat bubbles appear if the channel is nearby or if settings allow them to appear for private conversations
-                        if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
+                        if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.All)
                         {
                             if (!profileCache.TryGet(channel.Id.Id, out var profile))
                             {

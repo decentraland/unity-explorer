@@ -1,12 +1,12 @@
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Utility;
 
 namespace DCL.UI.InputFieldFormatting
 {
@@ -37,7 +37,7 @@ namespace DCL.UI.InputFieldFormatting
         private static readonly string SCENE_PATTERN = $@"(?<{SCENE_GROUP_NAME}>(?<=^|\s)(?<{X_COORD_GROUP_NAME}>-?\d{{1,3}}),(?<{Y_COORD_GROUP_NAME}>-?\d{{1,3}})(?=\s|!|\?|\.|,|$))";
 
         private static readonly string WORLD_PATTERN =
-            $@"(?<{WORLD_GROUP_NAME}>{LEAD}[A-Za-z0-9]+\.dcl\.eth{TRAIL})";
+            $"(?<{WORLD_GROUP_NAME}>{LEAD}{DestinationRules.WORLD_PATTERN}{TRAIL})";
 
         private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{1,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
         private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
@@ -101,15 +101,15 @@ namespace DCL.UI.InputFieldFormatting
             while (currentMatch.Success)
             {
                 if (currentMatch.Groups[URL_GROUP_NAME].Success)
-                    matchesResult.Add((TextFormatMatchType.URL, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.Url, currentMatch));
                 else if (currentMatch.Groups[SCENE_GROUP_NAME].Success && AreCoordsValid(
                              int.Parse(currentMatch.Groups[X_COORD_GROUP_NAME].Value),
                              int.Parse(currentMatch.Groups[Y_COORD_GROUP_NAME].Value)))
-                    matchesResult.Add((TextFormatMatchType.SCENE, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.Scene, currentMatch));
                 else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
-                    matchesResult.Add((TextFormatMatchType.WORLD, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.World, currentMatch));
                 else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success && IsUserNameValid(currentMatch.Groups[USERNAME_NAME_GROUP_NAME].Value))
-                    matchesResult.Add((TextFormatMatchType.NAME, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.Name, currentMatch));
 
                 currentMatch = currentMatch.NextMatch();
             }
@@ -249,12 +249,13 @@ namespace DCL.UI.InputFieldFormatting
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool AreCoordsValid(int x, int y) =>
-            GenesisCityData.IsInsideBounds(x, y);
+            DestinationRules.IsParcel(x, y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsOwnUsername(ReadOnlySpan<char> username)
         {
-            ReadOnlySpan<char> displayName = selfProfile.OwnProfile?.DisplayName;
+            Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
+            ReadOnlySpan<char> displayName = known.Has ? known.Value.DisplayName : ReadOnlySpan<char>.Empty;
 
             if (displayName.Length != username.Length) return false;
 

@@ -1,5 +1,4 @@
 ﻿using DCL.MapRenderer.MapLayers.Pins;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 

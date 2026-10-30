@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04037fc25e7fc4efd8316b7c14e449d2
+    m_Address: Assets/DCL/Input/Assets/Dragging.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
@@ -370,6 +375,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bca9526827354aa290bdc2818c6c78c
+    m_Address: Assets/DCL/Input/Assets/Grab.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5deacee45f1ebfe4394a97755a51fcca
     m_Address: Assets/Textures/ExplorePanel/BackpackHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -412,6 +422,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65718726e8675f3438790051aed58b6a
     m_Address: Inter-SemiBold SDF (Gr)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66600c85c4d5d40a483a25899d4b10bb
+    m_Address: Assets/DCL/Input/Assets/NotAllowed.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -770,6 +785,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebd7609b18c5429db0cd1ac5fdc1b8b8
+    m_Address: BackpackModal
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f632a9f636549a2b1d4b833b1a6b5df
+    m_Address: ExploreSectionModal
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2df2b2c3721c5840b06c8fe73d5d665
     m_Address: VersionUpdateScreen
     m_ReadOnly: 0
@@ -805,6 +830,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a9ad3746de349f4895c7ed85ad130d9
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_LobbyStagePreset.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e214c9790df4c01b964b55f0feb6fab
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsGroup_SingleColumn.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f9b91c66bb8dc8547849cb992d9cffea
     m_Address: Assets/Textures/ExplorePanel/SettingsTabHoverUnhoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -837,6 +872,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fe90941e720314adfb13574446732ea7
     m_Address: UserProfile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff767aa62c2546829c435addb04026fe
+    m_Address: DeepLinkParamsWarningScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

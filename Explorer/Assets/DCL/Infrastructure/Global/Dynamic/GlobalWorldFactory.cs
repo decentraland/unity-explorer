@@ -1,5 +1,4 @@
 using Arch.Core;
-using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
@@ -32,6 +31,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Systems;
@@ -40,7 +40,6 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
-using DCL.RealmNavigation;
 using DCL.Roads.Systems;
 using SystemGroups.Visualiser;
 using UnityEngine;
@@ -72,16 +71,16 @@ namespace Global.Dynamic
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
+        private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IProfileRepository profileRepository;
-        private readonly bool useRemoteAssetBundles;
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
-        private readonly StartParcel startParcel;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isBuilderCollectionPreview;
+        private readonly ISceneRoomStatus sceneRoomStatus;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData,
@@ -91,7 +90,6 @@ namespace Global.Dynamic
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IDebugContainerBuilder debugContainerBuilder,
             IScenesCache scenesCache,
-            HybridSceneParams hybridSceneParams,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             HashSet<Vector2Int> roadCoordinates,
@@ -99,11 +97,12 @@ namespace Global.Dynamic
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
-            bool useRemoteAssetBundles,
+            bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
-            StartParcel startParcel,
-            EntitiesAnalytics entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            ISceneRoomStatus sceneRoomStatus)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -120,20 +119,20 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
-            this.hybridSceneParams = hybridSceneParams;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
-            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
+            this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
             this.lodSettingsAsset = lodSettingsAsset;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.startParcel = startParcel;
-            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
+            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
             this.entitiesAnalytics = entitiesAnalytics;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -156,34 +155,24 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
-            LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
 
-            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl, lodGeneratorCdnUrl,
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, lodGeneratorCdnUrl,
                 new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
-                new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
+                new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, new GetISSDescriptorIntention.DiskHashCompute(urlsSource), "iss.json"));
 
             // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
             // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in
             // OrderedDataManaged + downstream queries see the resolved state without a refetch.
             ResolveISSDescriptorSystem.InjectToWorld(ref builder);
 
-            if (hybridSceneParams.EnableHybridScene)
-            {
-                URLDomain worldContentServerBaseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldServer));
-                URLDomain worldContentServerContentsUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer));
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams, worldContentServerContentsUrl, worldContentServerBaseUrl);
-            }
-            else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl);
-
             LoadSceneSystem.InjectToWorld(ref builder,
-                loadSceneSystemLogic,
+                new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl, localSceneDevelopment),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
@@ -202,7 +191,8 @@ namespace Global.Dynamic
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue,
+                realmData, sceneRoomStatus);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
@@ -247,7 +237,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, localSceneDevelopment, isBuilderCollectionPreview));
 
             return globalWorld;
         }

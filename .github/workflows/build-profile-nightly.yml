@@ -71,6 +71,13 @@ jobs:
     name: Build Unity Cloud
     needs: [check-commits, get-info]
     if: needs.check-commits.outputs.should_build == 'true'
+    # Union of the called workflow's job-level grants — a caller caps its
+    # callee, so this keeps the call working if the repo default tightens.
+    permissions:
+      contents: read
+      statuses: write
+      actions: read
+      pull-requests: write
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: profile

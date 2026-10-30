@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
             this.realmNavigator = realmNavigator;
             this.realmData = realmData;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
             {
                 this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
                 parcelSubscription = scenesCache.CurrentParcel.Subscribe(OnParcelChanged);

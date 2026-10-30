@@ -34,7 +34,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent, ref PlayerMoveToWithDurationIntent moveIntent, CharacterPlatformComponent platformComponent)
         {
-            bool hasMovementInput = movementInputComponent.Kind != MovementKind.IDLE && movementInputComponent.Axes != Vector2.zero;
+            bool hasMovementInput = movementInputComponent.Kind != MovementKind.Idle && movementInputComponent.Axes != Vector2.zero;
             bool hasJumpInput = jumpInputComponent.IsPressed;
 
             if (!hasMovementInput && !hasJumpInput)
@@ -184,7 +184,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterAnimationComponent animationComponent)
         {
             // Reset to idle state
-            animationComponent.States.MovementBlendValue = 0f;
+            animationComponent.States.MovementBlendValue = MovementBlend.MIN;
             animationComponent.States.IsGrounded = true;
 
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView, isGrounded: true, movementBlendId: 0);

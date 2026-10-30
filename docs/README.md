@@ -2,6 +2,8 @@
 
 Welcome to the official documentation for Unity Explorer — the Decentraland client built on Unity. This wiki covers architecture, development standards, feature guides, and tooling.
 
+> This documentation covers the **`Explorer/`** project. The repository also hosts two sibling roots with their own READMEs: [`avatar-preview-renderer/`](../avatar-preview-renderer/README.md) (Unity WebGL avatar/wearable preview used by the Marketplace, Builder, and authentication screen) and [`unity-shared-dependencies/`](../unity-shared-dependencies/README.md) (UPM package shared by both projects). See the root [README](../README.md#%EF%B8%8F-repository-layout) for the layout, path-scoped CI, and the two release streams.
+
 ---
 
 ## Getting Started
@@ -30,6 +32,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Feature Flags](feature-flags.md)** — Fetching and checking feature flags at runtime
 - **[Features Registry](features-registry.md)** — Centralized feature state registry
 - **[App Arguments](app-arguments.md)** — Command-line flags and launch parameters
+- **[Custom Base Domain](custom-base-domain.md)** — Targeting a non-`decentraland.*` deployment with `--base-domain`
 
 ## Core Systems
 - **[Asset Promises](asset-promises.md)** — Asynchronous asset loading with ECS promises
@@ -37,10 +40,13 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Asset Bundles Conversion](asset-bundles-conversion.md)** — GLTF to Asset Bundle conversion pipeline
 - **[Web Requests Framework](web-requests-framework.md)** — Allocation-free web requests with retry policies
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
+- **[UUAV Media Stack](uuav.md)** — Out-of-process sandboxed media decode: architecture, platform transports, committed-binary pinning, and design rationale
 - **[Multiplayer](multiplayer.md)** — Transport-agnostic multiplayer hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation, dual-transport wiring
 - **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
+- **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
+- **[Skybox](skybox.md)** — Look presets (StylizedV1 ships, Legacy kept for SDK control, Halloween2026 seasonal), remote look selection via feature flag, controller data flow, shader variants, debug switching, authoring
 
 ## Avatar System
 - **[Avatar Rendering](avatar-rendering.md)** — GPU skinning, compute shaders, and cel-shading
@@ -71,14 +77,20 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 ## Testing & Debugging
 - **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
-- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
+- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, static probes for reading client state, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
+- **[MCP Automation](mcp-automation.md)** — Embedded MCP server for coding agents: screenshots, player/scene state, scene logs, and player control via `--mcp`
+- **[Synthetic Input Simulation](synthetic-input-simulation.md)** — Driver-agnostic input layer shared by the MCP tools and AltTester probes: movement, pointer/hover, global SDK input actions, camera look, and UI interaction through the production pipelines
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
+- **[QA: Archipelago Island Room](qa-archipelago-island-room.md)** — Verifying island assignment and LiveKit room membership from the client, and reading the debug room indicator
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
 - **[Performance Benchmark](performance-benchmark.md)** — Generating PDF benchmark reports
 
 ## Build & CI
-- **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, and Unity Cloud
+
+- **[Security Review](security-review.md)** — Jarvis pilot rollout, validation and recovery
+- **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, Unity Cloud, and the app-local Visual C++ runtime
+- **[Delta Updates](delta-updates.md)** — Per-file binary patches for launcher updates: release pipeline, S3 layout and retention, manifest format, launcher contract, and the `scripts/delta/` Rust tool (vocabulary, stages, workflows, local run)
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
 

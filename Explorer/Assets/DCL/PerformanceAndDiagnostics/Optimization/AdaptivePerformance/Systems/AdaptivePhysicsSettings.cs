@@ -6,9 +6,9 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
     [Serializable]
     public enum PhysSimulationMode
     {
-        DEFAULT, // [Fixed time step] Unity default approach - Physics.Simulate called in FixedUpdate with fixedDeltaTime (0.02 sec by default)
-        ADAPTIVE, // [Semi-fixed time step] We adjust fixedDeltaTime to the median frame rate
-        MANUAL, // [Variable time step] We call Physics.Simulate manually in FixedUpdate with the UnityEngine.Time.deltaTime, ensuring to have only one call per frame
+        Default, // [Fixed time step] Unity default approach - Physics.Simulate called in FixedUpdate with fixedDeltaTime (0.02 sec by default)
+        Adaptive, // [Semi-fixed time step] We adjust fixedDeltaTime to the median frame rate
+        Manual, // [Variable time step] We call Physics.Simulate manually in FixedUpdate with the UnityEngine.Time.deltaTime, ensuring to have only one call per frame
     }
 
     [CreateAssetMenu(fileName = "AdaptivePhysicsSettings", menuName = "DCL/AdaptivePhysicsSettings", order = 0)]
@@ -18,7 +18,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
                         "DEFAULT: Uses Unity's default fixed step approach.\n" +
                         "ADAPTIVE: Dynamically adjusts fixedDeltaTime based on the median frame rate.\n" +
                         "MANUAL: Simulates physics manually in each frame.")]
-        [field: SerializeField] internal PhysSimulationMode Mode = PhysSimulationMode.MANUAL;
+        [field: SerializeField] internal PhysSimulationMode Mode = PhysSimulationMode.Manual;
 
         [field: Header("Fixed DeltaTime Clamp")]
         [field: Tooltip("The minimum value that UnityEngine.Time.fixedDeltaTime can be clamped to, preventing the simulation from running too frequently.")]

@@ -8,12 +8,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Prioritization.Components;
-using SceneRunner.Scene;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CRDT;
 using Plugins.NativeAudioAnalysis;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -47,10 +44,13 @@ namespace DCL.SDKComponents.AudioSources
         [Query]
         private void HandleMediaPlayerComponent(
             CRDTEntity entity,
-            ref MediaPlayerComponent mediaPlayerComponent, 
+            ref MediaPlayerComponent mediaPlayerComponent,
             ref PBAudioAnalysis sdkComponent
         )
         {
+            // Skip players whose MediaPlayer object was destroyed.
+            if (!mediaPlayerComponent.MediaPlayer.IsValid) return;
+
             HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);
         }
 
@@ -72,14 +72,13 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
-            ThreadSafeLastAudioFrameReadFilter output = null!;
-            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
+            if (!component.TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output))
             {
                 ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
                 return;
             }
 
-            if (output!.TryConsume(out float[]? data, out int outChannels, out int outSampleRate)) 
+            if (output.TryConsume(out float[]? data, out _, out int outSampleRate))
             {
                 AnalysisResultMode mode = sdkComponent.Mode switch
                 {
@@ -107,7 +106,7 @@ namespace DCL.SDKComponents.AudioSources
                 }
 
                 sdkComponent.IsDirty = false;
-                ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
+                ecsToCRDTWriter.PutMessage(sdkComponent, entity);
             }
         }
     }

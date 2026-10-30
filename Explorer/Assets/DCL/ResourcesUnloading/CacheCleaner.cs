@@ -13,8 +13,8 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Fonts;
 using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using System;
@@ -22,6 +22,9 @@ using System.Collections.Generic;
 
 namespace DCL.ResourcesUnloading
 {
+    /// <summary>
+    ///     Not thread-safe: register caches and unload them from the main thread only.
+    /// </summary>
     public class CacheCleaner : ICacheCleaner
     {
         private const int POOLS_UNLOAD_CHUNK = 10;
@@ -29,8 +32,8 @@ namespace DCL.ResourcesUnloading
         private const int GLTF_UNLOAD_CHUNK = 3;
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
-        private const int NFT_SHAPE_UNLOAD_CHUNK = 1;
         private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
+        private const int FONT_UNLOAD_CHUNK = 1;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IPerformanceBudget fpsCapBudget;
@@ -38,7 +41,7 @@ namespace DCL.ResourcesUnloading
         private readonly DebugWidgetBuilder? widgetBuilder;
         private readonly List<Action> updateCallbacks = new ();
 
-        private readonly List<IThrottledClearable> extendedObjectPools;
+        private readonly List<IThrottledClearable> throttledClearables;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
         private IStreamableCache<GLTFData, GetGLTFIntention>? gltfLoadCache;
@@ -46,6 +49,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<TextureData, GetTextureIntention>? texturesCache;
         private ILODCache? lodCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention>? audioClipsCache;
+        private IStreamableCache<FontData, GetFontIntention>? fontsCache;
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private ITrimmedWearableStorage? trimmedWearableStorage;
@@ -62,7 +66,7 @@ namespace DCL.ResourcesUnloading
             this.fpsCapBudget = fpsCapBudget;
             this.widgetBuilder = widgetBuilder;
             unlimitedFPSBudget = new NullPerformanceBudget();
-            extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
+            throttledClearables = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
 
             widgetBuilder?.AddSingleButton("Update", () =>
             {
@@ -81,6 +85,7 @@ namespace DCL.ResourcesUnloading
 
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
             audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
+            fontsCache?.Unload(budgetToUse, budgeted ? FONT_UNLOAD_CHUNK : int.MaxValue);
             wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
             wearableStorage!.Unload(budgetToUse);
             trimmedWearableStorage!.Unload(budgetToUse);
@@ -94,14 +99,25 @@ namespace DCL.ResourcesUnloading
             roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             jsSourcesCache?.Unload(budgetToUse);
 
-            ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
+            ClearThrottledClearables(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }
 
-        private void ClearExtendedObjectPools(IPerformanceBudget budgetToUse, int maxUnload)
+        public void EvictGltfModel(string hash)
         {
-            foreach (IThrottledClearable pool in extendedObjectPools)
+            // In raw-GLTF development the container cache is keyed by the bare content hash. Evict both
+            // layers: dropping only the container asset would let it be rebuilt from the still-cached
+            // stale import. The import cache is keyed by (Name, Hash) where Name is the verbatim src
+            // from scene code, which this caller cannot reconstruct — evict by hash instead.
+            gltfContainerAssetsCache?.Remove(hash);
+            if (gltfLoadCache is GltfLoadCache typedCache)
+                typedCache.RemoveByHash(hash);
+        }
+
+        private void ClearThrottledClearables(IPerformanceBudget budgetToUse, int maxUnload)
+        {
+            foreach (IThrottledClearable clearable in throttledClearables)
                 if (budgetToUse.TrySpendBudget())
-                    pool.ClearThrottled(maxUnload);
+                    clearable.ClearThrottled(maxUnload);
         }
 
         public void Register(ILODCache lodAssetsPool)
@@ -133,6 +149,9 @@ namespace DCL.ResourcesUnloading
         public void Register(IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
 
+        public void Register(IStreamableCache<FontData, GetFontIntention> fontsCache) =>
+            this.fontsCache = fontsCache;
+
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;
 
@@ -142,8 +161,8 @@ namespace DCL.ResourcesUnloading
         public void Register(ITrimmedEmoteStorage storage) =>
             trimmedEmoteStorage = storage;
 
-        public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
-            extendedObjectPools.Add(extendedObjectPool);
+        public void Register(IThrottledClearable clearable) =>
+            throttledClearables.Add(clearable);
 
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
@@ -157,7 +176,7 @@ namespace DCL.ResourcesUnloading
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage).WearableAssetsInCatalog;
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage!).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache?.AssetsCount ?? 0;
 #endif
         }

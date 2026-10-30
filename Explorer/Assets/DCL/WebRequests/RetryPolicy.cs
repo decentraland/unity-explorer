@@ -18,17 +18,17 @@ namespace DCL.WebRequests
             /// <summary>
             ///     Repetitions can follow the default rules
             /// </summary>
-            NONE = 0,
+            None = 0,
 
             /// <summary>
             ///     Repetitions can only be done if the server explicitly requires it
             /// </summary>
-            RETRY_AFTER_REQUIRED = 1,
+            RetryAfterRequired = 1,
 
             /// <summary>
             ///     Repetitions are manually enforced
             /// </summary>
-            ENFORCED = 2,
+            Enforced = 2,
         }
 
         public const int MAX_RETRIES_COUNT = 2;
@@ -39,11 +39,11 @@ namespace DCL.WebRequests
 
         public const int BACKOFF_MULTIPLIER = 3;
 
-        public static readonly RetryPolicy NONE = new (0, Strictness.NONE);
+        public static readonly RetryPolicy NONE = new (0, Strictness.None);
 
-        public static readonly RetryPolicy DEFAULT = new (MAX_RETRIES_COUNT, Strictness.NONE);
+        public static readonly RetryPolicy DEFAULT = new (MAX_RETRIES_COUNT, Strictness.None);
 
-        public static readonly RetryPolicy HEADER_REQUIRED = new (MAX_RETRIES_COUNT, Strictness.RETRY_AFTER_REQUIRED);
+        public static readonly RetryPolicy HEADER_REQUIRED = new (MAX_RETRIES_COUNT, Strictness.RetryAfterRequired);
 
         internal readonly int minDelayBetweenAttemptsMs;
         internal readonly int backoffMultiplier;
@@ -66,10 +66,10 @@ namespace DCL.WebRequests
         /// </summary>
         /// <returns></returns>
         public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null) =>
-            new (retriesCount, Strictness.ENFORCED, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
+            new (retriesCount, Strictness.Enforced, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
 
         public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null) =>
-            new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
+            new (retriesCount, Strictness.None, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
 
         public override string ToString() =>
             $"MaxRetriesCount={maxRetriesCount}, Strictness={strictness}, MinDelayBetweenAttemptsMs={minDelayBetweenAttemptsMs}, BackoffMultiplier={backoffMultiplier}";

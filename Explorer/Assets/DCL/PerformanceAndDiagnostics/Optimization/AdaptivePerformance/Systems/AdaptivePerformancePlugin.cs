@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.PluginSystem.Global;
 using DCL.Profiling;
 using DCL.RealmNavigation;
@@ -27,7 +26,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             physicsSettings = settings.phyiscsSettings;
 
-            Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
+            Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.Manual ? SimulationMode.Script : SimulationMode.FixedUpdate;
 
             return UniTask.CompletedTask;
         }

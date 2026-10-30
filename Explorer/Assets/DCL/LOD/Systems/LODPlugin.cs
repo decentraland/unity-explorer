@@ -1,17 +1,15 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
 using DCL.LOD;
 using DCL.LOD.Systems;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
-using ECS.SceneLifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using UnityEngine;
 using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
@@ -41,13 +39,14 @@ namespace DCL.PluginSystem.Global
         private readonly Transform lodCacheParent;
 
         private readonly IGltfContainerAssetsCache containerAssetsCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public LODPlugin(IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, IRealmPartitionSettings partitionSettings,
             ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, Transform lodCacheParent, bool lodEnabled,
-            int lodLevels, IGltfContainerAssetsCache containerAssetsCache)
+            int lodLevels, IGltfContainerAssetsCache containerAssetsCache, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
@@ -63,6 +62,7 @@ namespace DCL.PluginSystem.Global
             this.lodCacheParent = lodCacheParent;
             this.lodLevels = lodLevels;
             this.containerAssetsCache = containerAssetsCache;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
                 InitializeSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodLevels, lodGroupPool,
                     lodCacheParent, sceneReadinessReportQueue, scenesCache);
 
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, decentralandUrlsSource);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
 

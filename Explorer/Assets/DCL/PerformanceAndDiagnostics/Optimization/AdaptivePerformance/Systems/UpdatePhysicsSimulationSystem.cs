@@ -26,7 +26,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             switch (settings.Mode)
             {
-                case PhysSimulationMode.MANUAL:
+                case PhysSimulationMode.Manual:
                 {
                     if (profiler.PhysicsSimulationInFrame == 0)
                     {
@@ -36,8 +36,8 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 
                     break;
                 }
-                case PhysSimulationMode.DEFAULT:
-                case PhysSimulationMode.ADAPTIVE:
+                case PhysSimulationMode.Default:
+                case PhysSimulationMode.Adaptive:
                 default:
                 {
                     if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed)

@@ -36,7 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.browserStateService = browserStateService;
             this.commandsLibrary = commandsLibrary;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
             {
                 view.InitializeStreamingResultsGrid(0);
 
@@ -48,7 +48,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             view.JoinStream -= JoinStreamClicked;
@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.HideStreamingSection();
 
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             view.HideStreamingSection();
@@ -107,7 +107,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetAsLoading(bool isLoading)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                 return;
 
             view.SetAsLoading(isLoading);

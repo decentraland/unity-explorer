@@ -1,6 +1,6 @@
+using DCL.Chat.ChatReactions.Networking;
 using System;
 using System.Collections.Generic;
-using DCL.Chat.ChatReactions.Networking;
 
 namespace DCL.Chat.ChatReactions.Tests
 {

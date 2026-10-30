@@ -12,7 +12,6 @@ using ECS.Unity.Transforms;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using UnityEngine;
-using Utility;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {

@@ -1,24 +1,42 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
+using ECS;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.Tests
 {
     [TestFixture]
     public class StartPulseMultiplayerStartupOperationShould
     {
-        private World world;
-        private IPulseMultiplayerService service;
-        private IProfilePropagation profilePropagation;
-        private ISelfProfile selfProfile;
-        private CancellationTokenSource cts;
+        private const string REALM = "main";
+        private const string ENTITY_ID = "b64-L2hvbWUvZGV2L215LXNjZW5l";
+
+        private World world = null!;
+        private IPulseMultiplayerService service = null!;
+        private IProfilePropagation profilePropagation = null!;
+        private SelfProfile selfProfile = null!;
+        private IRealmData realmData = null!;
+        private ILocalSceneEntityIdSource entityIdSource = null!;
+        private CancellationTokenSource cts = null!;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
@@ -26,7 +44,10 @@ namespace DCL.UserInAppInitializationFlow.Tests
             world = World.Create();
             service = Substitute.For<IPulseMultiplayerService>();
             profilePropagation = Substitute.For<IProfilePropagation>();
-            selfProfile = Substitute.For<ISelfProfile>();
+            selfProfile = Substitute.For<SelfProfile>();
+            realmData = Substitute.For<IRealmData>();
+            realmData.RealmName.Returns(REALM);
+            entityIdSource = Substitute.For<ILocalSceneEntityIdSource>();
             cts = new CancellationTokenSource();
         }
 
@@ -38,35 +59,110 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
-        public void SkipConnectionWhenPulseInactive()
+        public async Task SkipConnectionWhenPulseInactive()
         {
             // Arrange
             var activation = new PulseActivation(false);
-            var operation = new StartPulseMultiplayerStartupOperation(service, profilePropagation, selfProfile, activation);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
 
             // Act
-            operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
-            service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             Assert.IsFalse(activation.IsActive);
         }
 
         [Test]
-        public void FallBackToLiveKitWhenUnreachable()
+        public async Task FallBackToLiveKitWhenUnreachable()
         {
             // Arrange
             var activation = new PulseActivation(true);
             service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(false));
-            var operation = new StartPulseMultiplayerStartupOperation(service, profilePropagation, selfProfile, activation);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
 
             // Act
-            operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsFalse(activation.IsActive);
-            profilePropagation.DidNotReceive().Propagate(Arg.Any<Profile>());
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
         }
+
+        [Test]
+        public async Task ResolveTheLocalSceneRealmBeforeConnecting()
+        {
+            // Arrange
+            var activation = new PulseActivation(true);
+            service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(true));
+            entityIdSource.EntityAsync(Arg.Any<CancellationToken>())
+                          .Returns(UniTask.FromResult(Result<LocalSceneEntity>.SuccessResult(new LocalSceneEntity(ENTITY_ID, Vector2Int.zero))));
+
+            var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(profile)));
+            selfProfile.CurrentProfileSnapshot.Returns(SelfProfileModel.FromIdentified(
+                new Identified(profile.UserId, ProfileKnowledge.FromKnown(profile), ProfileActivity.Idle())));
+
+            var pulseRealm = new PulseRealm(realmData, entityIdSource);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert — the realm is only non-empty once resolved, and the connection is gated on that,
+            // so a connected session proves resolution ran first
+            Assert.That(pulseRealm.Value, Is.EqualTo("lsd:" + ENTITY_ID));
+            _ = service.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            Assert.IsTrue(activation.IsActive);
+            profilePropagation.Received(1).PropagateIfNewVersion(profile);
+        }
+
+        [Test]
+        public async Task PropagateTheConfirmedProfileWhileADeployIsInFlight()
+        {
+            // Arrange
+            var activation = new PulseActivation(true);
+            service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(true));
+
+            var confirmed = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
+            Profile pending = new ProfileBuilder().From(confirmed).WithVersion(confirmed.Version + 1).Build();
+            selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ProfileReadResult.FromOk(pending)));
+            selfProfile.CurrentProfileSnapshot.Returns(SelfProfileModel.FromIdentified(new Identified(confirmed.UserId, ProfileKnowledge.FromKnown(pending),
+                ProfileActivity.FromDeploying(new Deploying(pending, pending.Version, ProfileKnowledge.FromKnown(confirmed))))));
+
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert
+            profilePropagation.Received(1).PropagateIfNewVersion(confirmed);
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(pending);
+        }
+
+        [Test]
+        public async Task FallBackToLiveKitWhenTheLocalSceneRealmIsUnresolved()
+        {
+            // Arrange — the local dev server is unreachable
+            var activation = new PulseActivation(true);
+            entityIdSource.EntityAsync(Arg.Any<CancellationToken>())
+                          .Returns(UniTask.FromResult(Result<LocalSceneEntity>.ErrorResult("Local scene server unreachable")));
+
+            var pulseRealm = new PulseRealm(realmData, entityIdSource);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert — an empty realm is rejected server-side, so it must not connect at all
+            Assert.That(pulseRealm.Value, Is.Empty);
+            Assert.IsFalse(activation.IsActive);
+            _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
+        }
+
+        private StartPulseMultiplayerStartupOperation Operation(PulseActivation activation, PulseRealm pulseRealm) =>
+            new (service, profilePropagation, selfProfile, activation, pulseRealm);
 
         private IStartupOperation.Params MakeParams()
         {

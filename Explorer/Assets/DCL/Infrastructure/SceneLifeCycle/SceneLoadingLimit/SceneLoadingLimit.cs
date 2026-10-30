@@ -13,16 +13,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Dictionary<SceneLimitsKey, SceneLimits> constantSceneLimits = new ()
         {
             // 1 scene, 1 high quality LOD, 10 low quality LODs. Limit: 561MB
-            { SceneLimitsKey.LOW_MEMORY, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE + SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.LowMemory, new SceneLimits(SceneLoadingMemoryConstants.MAX_SCENE_SIZE + SceneLoadingMemoryConstants.MAX_SCENE_LOD, 10 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // 3 scenes, 5 high quality LODs, 30 low quality LODs. Limit: 1925MB
-            { SceneLimitsKey.MEDIUM_MEMORY, new SceneLimits((3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE) + (5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD), 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.MediumMemory, new SceneLimits((3 * SceneLoadingMemoryConstants.MAX_SCENE_SIZE) + (5 * SceneLoadingMemoryConstants.MAX_SCENE_LOD), 30 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
 
             // No limits.
-            { SceneLimitsKey.MAX_MEMORY, new SceneLimits(float.MaxValue, float.MaxValue) },
+            { SceneLimitsKey.MaxMemory, new SceneLimits(float.MaxValue, float.MaxValue) },
 
             // 1 scene, 1 high quality LOD. Could be useful for debugging single scenes
-            { SceneLimitsKey.WARNING, new SceneLimits(1, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
+            { SceneLimitsKey.Warning, new SceneLimits(1, 5 * SceneLoadingMemoryConstants.MAX_SCENE_LOWQUALITY_LOD) },
         };
 
         //Initial setup
@@ -44,10 +44,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         public SceneLoadingLimit(ISystemMemoryCap memoryCap)
         {
-            sceneTransitionState = SceneTransitionState.NORMAL;
+            sceneTransitionState = SceneTransitionState.Normal;
             systemMemoryCap = memoryCap;
 
-            initialKey = SceneLimitsKey.MAX_MEMORY;
+            initialKey = SceneLimitsKey.MaxMemory;
             currentSceneLimits = constantSceneLimits[initialKey];
         }
 
@@ -99,15 +99,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 return;
 
             if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.LOW_MEMORY_RIG_THRESHOLD)
-                initialKey = SceneLimitsKey.LOW_MEMORY;
+                initialKey = SceneLimitsKey.LowMemory;
             else if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.MEDIUM_MEMORY_RIGH_THRESHOLD)
-                initialKey = SceneLimitsKey.MEDIUM_MEMORY;
+                initialKey = SceneLimitsKey.MediumMemory;
             else
-                initialKey = SceneLimitsKey.MAX_MEMORY;
+                initialKey = SceneLimitsKey.MaxMemory;
 
             //We reset any possible transition and let it re-acomodate again
             currentSceneLimits = constantSceneLimits[initialKey];
-            sceneTransitionState = SceneTransitionState.NORMAL;
+            sceneTransitionState = SceneTransitionState.Normal;
             currentTransitionFrames = 0;
         }
 
@@ -119,37 +119,37 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (!isMemoryNormal)
             {
-                if (sceneTransitionState is SceneTransitionState.NORMAL or SceneTransitionState.TRANSITIONING_TO_NORMAL)
+                if (sceneTransitionState is SceneTransitionState.Normal or SceneTransitionState.TransitioningToNormal)
                 {
                     currentTransitionFrames = 0;
-                    sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_REDUCED;
+                    sceneTransitionState = SceneTransitionState.TransitioningToReduced;
                     transitionStartSceneLimits = currentSceneLimits;
                 }
 
-                if (sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                if (sceneTransitionState == SceneTransitionState.TransitioningToReduced)
                 {
                     currentTransitionFrames++;
                     float interpolationProgress = Mathf.Lerp(0, 1, currentTransitionFrames / totalFramesToComplete);
-                    currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[SceneLimitsKey.WARNING], interpolationProgress);
+                    currentSceneLimits = SceneLimits.Lerp(transitionStartSceneLimits, constantSceneLimits[SceneLimitsKey.Warning], interpolationProgress);
 
                     if (currentTransitionFrames >= totalFramesToComplete)
                     {
-                        sceneTransitionState = SceneTransitionState.REDUCED;
-                        currentSceneLimits = constantSceneLimits[SceneLimitsKey.WARNING];
+                        sceneTransitionState = SceneTransitionState.Reduced;
+                        currentSceneLimits = constantSceneLimits[SceneLimitsKey.Warning];
                     }
                 }
             }
 
             if (isAbundance)
             {
-                if (sceneTransitionState is SceneTransitionState.REDUCED or SceneTransitionState.TRANSITIONING_TO_REDUCED)
+                if (sceneTransitionState is SceneTransitionState.Reduced or SceneTransitionState.TransitioningToReduced)
                 {
                     currentTransitionFrames = 0;
-                    sceneTransitionState = SceneTransitionState.TRANSITIONING_TO_NORMAL;
+                    sceneTransitionState = SceneTransitionState.TransitioningToNormal;
                     transitionStartSceneLimits = currentSceneLimits;
                 }
 
-                if (sceneTransitionState == SceneTransitionState.TRANSITIONING_TO_NORMAL)
+                if (sceneTransitionState == SceneTransitionState.TransitioningToNormal)
                 {
                     currentTransitionFrames++;
                     float interpolationProgress = Mathf.Lerp(0, 1, currentTransitionFrames / totalFramesToComplete);
@@ -157,7 +157,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                     if (currentTransitionFrames >= totalFramesToComplete)
                     {
-                        sceneTransitionState = SceneTransitionState.NORMAL;
+                        sceneTransitionState = SceneTransitionState.Normal;
                         currentSceneLimits = constantSceneLimits[initialKey];
                     }
                 }

@@ -29,11 +29,11 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly string subtitleMarketOffline = $"Please check the #product-status channel in <color=#FF2D55><b><u><link={DISCORD_LINK_ID}>Decentraland's Discord server</link></u></b></color> for updates if service does not resume shortly.";
 
         private readonly MarketplaceCreditsProgramEndedSubView subView;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         public MarketplaceCreditsProgramEndedSubController(
             MarketplaceCreditsProgramEndedSubView subView,
-            IWebBrowser webBrowser)
+            UnityAppWebBrowser webBrowser)
         {
             this.subView = subView;
             this.webBrowser = webBrowser;
@@ -134,13 +134,13 @@ namespace DCL.MarketplaceCredits.Sections
             switch (id)
             {
                 case SUBSCRIBE_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.NewsletterSubscriptionLink);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.NewsletterSubscriptionLink);
                     break;
                 case X_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.TwitterLink);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.TwitterLink);
                     break;
                 case DISCORD_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.DiscordDirectLink);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.DiscordDirectLink);
                     break;
             }
 

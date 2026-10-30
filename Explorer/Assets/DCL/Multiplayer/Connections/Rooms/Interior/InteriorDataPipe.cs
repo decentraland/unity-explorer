@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.Rooms.Nulls;
-using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;

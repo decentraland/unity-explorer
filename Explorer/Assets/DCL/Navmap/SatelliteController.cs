@@ -1,11 +1,7 @@
 using DCL.Browser;
-using DCL.Character.CharacterMotion.Components;
-using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
-using DCL.MapRenderer.MapLayers;
 using DCL.UI;
-using System;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -16,19 +12,16 @@ namespace DCL.Navmap
 
         private readonly SatelliteView view;
         private readonly RectTransform rectTransform;
-        private readonly IMapRenderer mapRenderer;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         private IMapCameraController cameraController;
 
         public SatelliteController(
             SatelliteView view,
             MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData,
-            IMapRenderer mapRenderer,
-            IWebBrowser webBrowser)
+            UnityAppWebBrowser webBrowser)
         {
             this.view = view;
-            this.mapRenderer = mapRenderer;
             this.webBrowser = webBrowser;
 
             rectTransform = view.GetComponent<RectTransform>();
@@ -38,7 +31,7 @@ namespace DCL.Navmap
 
         private void OnClickedGenesisCityLink()
         {
-            webBrowser.OpenUrl(GENESIS_CITY_LINK);
+            webBrowser.OpenUrlMainThreadOnly(GENESIS_CITY_LINK);
         }
 
         public void InjectCameraController(IMapCameraController controller)
@@ -56,7 +49,6 @@ namespace DCL.Navmap
 
         public void Deactivate()
         {
-            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, false);
             view.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
             view.SatelliteRenderImage.Deactivate();
             view.gameObject.SetActive(false);

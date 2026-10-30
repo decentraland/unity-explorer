@@ -2,7 +2,6 @@
 using DCL.Ipfs;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.SceneApi
 {

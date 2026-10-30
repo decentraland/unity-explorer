@@ -11,7 +11,6 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -89,8 +88,8 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (!pointAt.IsPointing
                 || string.IsNullOrEmpty(profile.UserId)
-                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.NONE && !isLocalPlayer)
-                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (friendsCache == null || !friendsCache.Contains(profile.UserId))))
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.None && !isLocalPlayer)
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FriendsOnly && !isLocalPlayer && (friendsCache == null || !friendsCache.Contains(profile.UserId))))
                 return;
 
             float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;

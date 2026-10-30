@@ -29,7 +29,10 @@ namespace DCL.FeatureFlags
 
         public bool IsEmpty => flags.Count == 0 && variants.Count == 0;
 
+        // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees these fields.
+#pragma warning disable UAC1009
         public Dictionary<string, bool> flags;
         public Dictionary<string, FeatureFlagVariantDto> variants;
+#pragma warning restore UAC1009
     }
 }

@@ -152,7 +152,7 @@ namespace DCL.PluginSystem.Global
         ///     reconnect handshake are not mistaken for a connectivity loss.
         /// </summary>
         private bool IsMultiplayerConnected() =>
-            roomHub.HasAnyRoomConnected() || pulseTransport.State == ITransport.TransportState.CONNECTED;
+            roomHub.HasAnyRoomConnected() || pulseTransport.State == ITransport.TransportState.Connected;
 
         private async UniTask<bool> IsInternetUnreachableAsync(CancellationToken ct)
         {
@@ -183,7 +183,7 @@ namespace DCL.PluginSystem.Global
                     title: "Connection Lost",
                     description: "You appear to be offline. Please check your internet connection and retry.",
                     retryText: "Retry",
-                    iconType: ErrorPopupWithRetryController.IconType.CONNECTION_LOST);
+                    iconType: ErrorPopupWithRetryController.IconType.ConnectionLost);
 
                 // Returns when the user clicks Retry/Exit, or when DismissPopupIfShowing cancels popupCts on recovery.
                 await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), popupCts.Token);

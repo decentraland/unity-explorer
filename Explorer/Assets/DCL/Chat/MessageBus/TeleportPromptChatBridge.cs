@@ -27,6 +27,6 @@ namespace DCL.Chat.MessageBus
             teleportPromptBus.TeleportApproved -= OnTeleportApproved;
 
         private void OnTeleportApproved(Vector2Int coords) =>
-            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {coords.x},{coords.y}", ChatMessageOrigin.TELEPORT_PROMPT);
+            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {coords.x},{coords.y}", ChatMessageOrigin.TeleportPrompt);
     }
 }

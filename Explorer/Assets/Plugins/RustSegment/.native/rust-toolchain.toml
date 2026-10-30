@@ -1,0 +1,10 @@
+# Pinned, not inherited: the compiler is an input to the shipped bytes; bumping it is a rebuild-and-relock event.
+[toolchain]
+channel = "1.97.1"
+# Not part of the bare toolchain; without it the CI clippy job cannot run.
+components = ["clippy"]
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]

@@ -1,6 +1,5 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Bunches;
-using System;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
 {
@@ -12,6 +11,9 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         {
             this.origin = origin;
         }
+
+        public bool NewBunchAvailable() =>
+            origin.NewBunchAvailable();
 
         public OwnedBunch<RemoveIntention> Bunch()
         {

@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Character.CharacterCamera.Components;
-using DCL.CharacterCamera.Components;
-using DCL.CharacterCamera.Systems;
+using DCL.CharacterCamera;
 using DCL.Input;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
@@ -15,20 +14,20 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     [TestFixture]
     public class UpdateCursorInputSystemShould : InputTestFixture
     {
-        private UpdateCursorInputSystem system;
-        private World world;
+        private UpdateCursorInputSystem system = null!;
+        private World world = null!;
         private Entity entity;
-        private Keyboard keyboard;
-        private Mouse mouse;
-        private IEventSystem eventSystem;
-        private ICursor cursor;
-        private ICrosshairView crosshairView;
-        private InputControl<Vector2> positionControl;
+        private Keyboard keyboard = null!;
+        private Mouse mouse = null!;
+        private IEventSystem eventSystem = null!;
+        private ICursor cursor = null!;
+        private ICrosshairView crosshairView = null!;
+        private InputControl<Vector2> positionControl = null!;
         private Entity hoverEntity;
 
         [SetUp]
@@ -63,7 +62,36 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void DontLockCursorWhenOverUI()
+        public void FollowTheSyntheticPointerWhileAnAutomationGestureRuns()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult>());
+
+            var gesturePoint = new Vector2(320f, 240f);
+            SyntheticCursorOverride syntheticCursor = SyntheticCursorOverride.Inactive;
+            syntheticCursor.AssertPointerPositionThisFrame(gesturePoint);
+            world.Add(entity, syntheticCursor);
+
+            system.Update(0);
+
+            // The hardware mouse still sits at (50, 50) from SetUp. The automation pointer must win over it.
+            Assert.AreEqual(gesturePoint, world.Get<CursorComponent>(entity).Position);
+            eventSystem.Received().RaycastAll(gesturePoint);
+        }
+
+        [Test]
+        public void FallBackToTheHardwareMouseWhenNoGestureIsRunning()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult>());
+
+            system.Update(0);
+
+            Assert.AreEqual(new Vector2(50, 50), world.Get<CursorComponent>(entity).Position);
+        }
+
+        [Test]
+        public void DontLockCursorWhenOverUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
 
@@ -78,7 +106,7 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void LockCursorWhenNotClickingUI()
+        public void LockCursorWhenNotClickingUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(true);
@@ -91,7 +119,7 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void SetCursorToInteractableWhenHoveringOverClickableUI()
+        public void SetCursorToInteractableWhenHoveringOverClickableUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
@@ -127,7 +155,53 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void SetCursorToNormalWhenHoveringOverNotClickableUI()
+        public void SetCursorToInteractableWhenHoveringOverAGraphicOfClickableUi()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
+
+            var button = new GameObject("BUTTON");
+            button.AddComponent<Button>();
+            var label = new GameObject("LABEL");
+            label.AddComponent<Image>();
+            label.transform.SetParent(button.transform);
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = label } });
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(CursorStyle.Interaction);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Interaction);
+
+            Object.DestroyImmediate(button);
+        }
+
+        [Test]
+        public void SetCursorToNormalWhenClickableUiIsCoveredByNotClickableUi()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
+
+            var cover = new GameObject("COVER");
+            cover.AddComponent<Image>();
+            var button = new GameObject("BUTTON");
+            button.AddComponent<Button>();
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = cover }, new () { gameObject = button } });
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Normal);
+
+            Object.DestroyImmediate(cover);
+            Object.DestroyImmediate(button);
+        }
+
+        [Test]
+        public void SetCursorToNormalWhenHoveringOverNotClickableUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
@@ -200,7 +274,7 @@ namespace DCL.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
             ref var cameraData = ref world.Get<ExposedCameraData>(entity);
-            cameraData.CameraMode = CameraMode.SDKCamera;
+            cameraData.CameraMode = CameraMode.SdkCamera;
 
             Press(mouse.leftButton); // Temporal lock
 

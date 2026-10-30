@@ -2,13 +2,14 @@ using DCL.UI.DebugMenu.LogHistory;
 using NUnit.Framework;
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace DCL.UI.DebugMenu.Tests
 {
     [TestFixture]
     public class DebugMenuConsoleLogHistoryShould
     {
-        private DebugMenuConsoleLogHistory logHistory;
+        private DebugMenuConsoleLogHistory logHistory = null!;
 
         [SetUp]
         public void SetUp()
@@ -19,7 +20,97 @@ namespace DCL.UI.DebugMenu.Tests
         [TearDown]
         public void TearDown()
         {
-            logHistory = null;
+            logHistory = null!;
+        }
+
+        [Test]
+        public void AddLogMessage_FromWorkerThread_DoesNotBreakMainThreadEnumeration()
+        {
+            // The global Unity log callback fires AddLogMessage on arbitrary threads while the main
+            // thread reads the counters and enumerates FilteredLogMessages
+            const int ENTRY_COUNT = 50000;
+
+            Exception? mainThreadException = null;
+            Exception? workerException = null;
+
+            var worker = new Thread(() =>
+            {
+                try
+                {
+                    for (var i = 0; i < ENTRY_COUNT; i++)
+                        logHistory.AddLogMessage(new DebugMenuConsoleLogEntry(i % 2 == 0 ? LogMessageType.Log : LogMessageType.Error, "worker entry"));
+                }
+                catch (Exception e) { workerException = e; }
+            });
+
+            worker.Start();
+
+            try
+            {
+                while (worker.IsAlive)
+                {
+                    _ = logHistory.LogEntryCount + logHistory.ErrorEntryCount;
+
+                    foreach (DebugMenuConsoleLogEntry entry in logHistory.FilteredLogMessages)
+                        _ = entry.Type == LogMessageType.Error;
+                }
+            }
+            catch (Exception e) { mainThreadException = e; }
+
+            worker.Join();
+
+            Assert.That(mainThreadException, Is.Null, $"Main-thread read raced a logging-thread AddLogMessage: {mainThreadException}");
+            Assert.That(workerException, Is.Null, $"Logging-thread AddLogMessage threw: {workerException}");
+        }
+
+        [Test]
+        public void AddLogMessage_FromWorkerThread_IsInvisibleUntilDrained()
+        {
+            int eventCallCount = 0;
+            logHistory.LogsUpdated += () => eventCallCount++;
+
+            var worker = new Thread(() => logHistory.AddLogMessage(new DebugMenuConsoleLogEntry(LogMessageType.Log, "Worker message")));
+            worker.Start();
+            worker.Join();
+
+            Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(0));
+            Assert.That(logHistory.LogEntryCount, Is.EqualTo(0));
+            Assert.That(eventCallCount, Is.EqualTo(0));
+
+            logHistory.DrainPendingLogs();
+
+            Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(1));
+            Assert.That(logHistory.FilteredLogMessages[0].Message, Does.Contain("Worker message"));
+            Assert.That(logHistory.LogEntryCount, Is.EqualTo(1));
+            Assert.That(eventCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DrainPendingLogs_WithNothingPending_ShouldNotFireEvent()
+        {
+            bool eventFired = false;
+            logHistory.LogsUpdated += () => eventFired = true;
+
+            logHistory.DrainPendingLogs();
+
+            Assert.That(eventFired, Is.False);
+        }
+
+        [Test]
+        public void AddLogMessage_BeyondPendingCap_ShouldDropOldestPendingEntries()
+        {
+            const int PENDING_CAP = 10000;
+            const int OVERFLOW = 5;
+
+            for (var i = 0; i < PENDING_CAP + OVERFLOW; i++)
+                logHistory.AddLogMessage(new DebugMenuConsoleLogEntry(LogMessageType.Log, $"entry #{i:D5}"));
+
+            logHistory.DrainPendingLogs();
+
+            Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(PENDING_CAP));
+            Assert.That(logHistory.LogEntryCount, Is.EqualTo(PENDING_CAP));
+            Assert.That(logHistory.FilteredLogMessages[0].Message, Does.Contain($"entry #{OVERFLOW:D5}"));
+            Assert.That(logHistory.FilteredLogMessages[PENDING_CAP - 1].Message, Does.Contain($"entry #{PENDING_CAP + OVERFLOW - 1:D5}"));
         }
 
         [Test]
@@ -32,6 +123,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             // Act
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(1));
@@ -50,6 +142,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             // Act
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(0));
@@ -68,6 +161,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry1);
             logHistory.AddLogMessage(logEntry2);
             logHistory.AddLogMessage(errorEntry);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(logHistory.LogEntryCount, Is.EqualTo(2));
@@ -84,6 +178,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             logHistory.AddLogMessage(logEntry);
             logHistory.AddLogMessage(errorEntry);
+            logHistory.DrainPendingLogs();
             logHistory.LogsUpdated += () => eventFired = true;
 
             // Act
@@ -108,6 +203,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry1);
             logHistory.AddLogMessage(logEntry2);
             logHistory.AddLogMessage(logEntry3);
+            logHistory.DrainPendingLogs();
             logHistory.LogsUpdated += () => eventFired = true;
 
             // Act
@@ -128,6 +224,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             logHistory.AddLogMessage(logEntry1);
             logHistory.AddLogMessage(logEntry2);
+            logHistory.DrainPendingLogs();
 
             // Act
             logHistory.ApplyFilter("TEST", true, true);
@@ -148,6 +245,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry);
             logHistory.AddLogMessage(errorEntry);
             logHistory.AddLogMessage(warningEntry);
+            logHistory.DrainPendingLogs();
 
             // Act
             logHistory.ApplyFilter("", false, true);
@@ -170,6 +268,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry);
             logHistory.AddLogMessage(errorEntry);
             logHistory.AddLogMessage(warningEntry);
+            logHistory.DrainPendingLogs();
 
             // Act
             logHistory.ApplyFilter("", true, false);
@@ -192,6 +291,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry1);
             logHistory.AddLogMessage(logEntry2);
             logHistory.AddLogMessage(errorEntry);
+            logHistory.DrainPendingLogs();
 
             // Act
             logHistory.ApplyFilter("Important", false, true);
@@ -211,6 +311,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             logHistory.AddLogMessage(logEntry);
             logHistory.AddLogMessage(errorEntry);
+            logHistory.DrainPendingLogs();
 
             // Act
             logHistory.ApplyFilter("", true, true);
@@ -220,15 +321,18 @@ namespace DCL.UI.DebugMenu.Tests
         }
 
         [Test]
-        public void LogsUpdated_Event_ShouldFireOnAddLogMessage()
+        public void LogsUpdated_Event_ShouldFireOncePerDrainWithPendingLogs()
         {
             // Arrange
-            var logEntry = new DebugMenuConsoleLogEntry(LogMessageType.Log, "Test message");
+            var logEntry1 = new DebugMenuConsoleLogEntry(LogMessageType.Log, "Test message 1");
+            var logEntry2 = new DebugMenuConsoleLogEntry(LogMessageType.Log, "Test message 2");
             int eventCallCount = 0;
             logHistory.LogsUpdated += () => eventCallCount++;
 
             // Act
-            logHistory.AddLogMessage(logEntry);
+            logHistory.AddLogMessage(logEntry1);
+            logHistory.AddLogMessage(logEntry2);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(eventCallCount, Is.EqualTo(1));
@@ -240,6 +344,7 @@ namespace DCL.UI.DebugMenu.Tests
             // Arrange
             var logEntry = new DebugMenuConsoleLogEntry(LogMessageType.Log, "Test message");
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             int eventCallCount = 0;
             logHistory.LogsUpdated += () => eventCallCount++;
@@ -257,6 +362,7 @@ namespace DCL.UI.DebugMenu.Tests
             // Arrange
             var logEntry = new DebugMenuConsoleLogEntry(LogMessageType.Log, "Test message");
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             int eventCallCount = 0;
             logHistory.LogsUpdated += () => eventCallCount++;
@@ -277,6 +383,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             // Act
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(0));
@@ -292,6 +399,7 @@ namespace DCL.UI.DebugMenu.Tests
 
             // Act
             logHistory.AddLogMessage(logEntry);
+            logHistory.DrainPendingLogs();
 
             // Assert
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(0));

@@ -1,10 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace Plugins.NativeAudioAnalysis
 {
     public interface IComponentWithAudioFrameBuffer
     {
-        bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output);
+        bool TryAttachLastAudioFrameReadFilterOrUseExisting([NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output);
 
         void EnsureLastAudioFrameReadFilterIsRemoved();
     }
@@ -23,7 +24,7 @@ namespace Plugins.NativeAudioAnalysis
 
         public bool TryAttachLastAudioFrameReadFilterOrUseExisting(
             AudioSource audioSource,
-            out ThreadSafeLastAudioFrameReadFilter? output
+            [NotNullWhen(true)] out ThreadSafeLastAudioFrameReadFilter? output
         )
         {
             if (lastAudioFrameReadFilter != null)
@@ -48,7 +49,7 @@ namespace Plugins.NativeAudioAnalysis
             if (lastAudioFrameReadFilter != null) 
             {
                 // Can be pooled
-                UnityEngine.Object.Destroy(lastAudioFrameReadFilter);
+                Object.Destroy(lastAudioFrameReadFilter);
                 lastAudioFrameReadFilter = null;
             }
         }

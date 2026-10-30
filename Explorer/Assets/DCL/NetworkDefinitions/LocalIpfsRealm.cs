@@ -1,10 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>

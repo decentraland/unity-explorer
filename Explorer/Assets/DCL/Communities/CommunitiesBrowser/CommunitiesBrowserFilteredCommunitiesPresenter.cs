@@ -119,7 +119,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void LoadAllMyCommunities()
         {
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
-            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.MY_COMMUNITIES);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.MyCommunities);
 
             loadResultsCts = loadResultsCts.SafeRestart();
 
@@ -135,7 +135,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void LoadAllStreamingCommunities()
         {
             view.SetResultsTitleText(STREAMING_COMMUNITIES_RESULTS_TITLE);
-            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.STREAMING);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.Streaming);
 
             loadResultsCts = loadResultsCts.SafeRestart();
 
@@ -152,7 +152,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public async UniTask LoadAllCommunitiesAsync(CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
-            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.ALL_COMMUNITIES);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.AllCommunities);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);
 
             await LoadResultsAsync(
@@ -256,7 +256,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void LoadSearchResults(string searchText)
         {
-            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.SEARCH_COMMUNITIES);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.SearchCommunities);
             view.SetResultsBackButtonVisible(true);
             view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 

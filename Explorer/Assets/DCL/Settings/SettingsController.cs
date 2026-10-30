@@ -20,15 +20,16 @@ using Utility;
 
 namespace DCL.Settings
 {
-    public class SettingsController : ISection, IDisposable, ISettingsModuleEventListener
+    public class SettingsController : IHostableSection, IDisposable, ISettingsModuleEventListener
     {
         public enum SettingsSection
         {
-            GENERAL,
-            GRAPHICS,
-            SOUND,
-            CONTROLS,
-            CHAT
+            General,
+            Graphics,
+            Sound,
+            Controls,
+            Chat,
+            Lobby,
         }
 
         private readonly SettingsView view;
@@ -40,17 +41,25 @@ namespace DCL.Settings
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
+        private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
+        private bool isSectionActivated;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+
         public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
+        public event Action<bool, bool>? LobbyEnabledChanged;
 
         public SettingsController(
             SettingsView view,
@@ -66,7 +75,8 @@ namespace DCL.Settings
             VolumeBus volumeBus,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings,
+            LobbyStagePresetSetting lobbyStagePresetSetting)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -82,15 +92,17 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            this.lobbyStagePresetSetting = lobbyStagePresetSetting;
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
             {
-                [SettingsSection.GENERAL] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground, settingsMenuConfiguration.GeneralSectionConfig),
-                [SettingsSection.GRAPHICS] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground, settingsMenuConfiguration.GraphicsSectionConfig),
-                [SettingsSection.SOUND] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
-                [SettingsSection.CONTROLS] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
-                [SettingsSection.CHAT] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
+                [SettingsSection.General] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground, settingsMenuConfiguration.GeneralSectionConfig),
+                [SettingsSection.Graphics] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground, settingsMenuConfiguration.GraphicsSectionConfig),
+                [SettingsSection.Sound] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
+                [SettingsSection.Controls] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
+                [SettingsSection.Chat] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
+                [SettingsSection.Lobby] = (view.LobbySectionContainer, view.LobbySectionButton, view.LobbySectionBackground, settingsMenuConfiguration.LobbySectionConfig),
             };
 
             foreach (var pair in sections)
@@ -103,11 +115,13 @@ namespace DCL.Settings
         public void Activate()
         {
             view.gameObject.SetActive(true);
+            isSectionActivated = true;
         }
 
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+            isSectionActivated = false;
         }
 
         public void Toggle(SettingsSection section)
@@ -130,12 +144,32 @@ namespace DCL.Settings
             view.HeaderAnimator.Update(0);
         }
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            SectionHosting.MoveUnder(viewRect, host);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility)
         {
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
+        }
+
+        public void NotifyLobbyEnabledChanged(bool previousValue, bool newValue)
+        {
+            LobbyEnabledChanged?.Invoke(previousValue, newValue);
         }
 
         private async UniTask GenerateSettingsAsync()
@@ -162,9 +196,11 @@ namespace DCL.Settings
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
-                if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
+                if (group.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
+                // An unassigned reference is an object with an empty key, never null
+                SettingsGroupViewRef groupPrefab = group.GroupPrefabOverride.RuntimeKeyIsValid() ? group.GroupPrefabOverride : settingsMenuConfiguration.SettingsGroupPrefab!;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(groupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -174,7 +210,7 @@ namespace DCL.Settings
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
                     {
-                        if (module.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
+                        if (module.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
                             continue;
 
                         var controller =
@@ -193,7 +229,8 @@ namespace DCL.Settings
                                 assetsProvisioner,
                                 volumeBus,
                                 eventBus,
-                                pointAtMarkerVisibilitySettings);
+                                pointAtMarkerVisibilitySettings,
+                                lobbyStagePresetSetting);
 
                         if (controller != null)
                             controllers.Add(controller);

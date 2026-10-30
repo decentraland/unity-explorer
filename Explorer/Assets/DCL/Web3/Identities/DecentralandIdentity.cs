@@ -1,5 +1,5 @@
 using DCL.Web3.Abstract;
-using DCL.Web3.Accounts;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Chains;
 using System;
 
@@ -12,20 +12,20 @@ namespace DCL.Web3.Identities
         public IWeb3Account EphemeralAccount { get; }
         public bool IsExpired => Expiration < DateTime.UtcNow;
         public AuthChain AuthChain { get; }
-        public IWeb3Identity.Web3IdentitySource Source { get; }
+        public LoginMethod Method { get; }
 
         public DecentralandIdentity(
             Web3Address address,
             IWeb3Account ephemeralAccount,
             DateTime expiration,
             AuthChain authChain,
-            IWeb3Identity.Web3IdentitySource source)
+            LoginMethod method)
         {
             AssertSigner(authChain);
             AssertEcdsaEphemeral(authChain);
 
             AuthChain = authChain;
-            Source = source;
+            Method = method;
             Address = address;
             EphemeralAccount = ephemeralAccount;
             Expiration = expiration;

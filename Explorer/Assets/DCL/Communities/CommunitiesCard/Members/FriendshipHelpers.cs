@@ -10,12 +10,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             return status switch
                    {
-                       FriendshipStatus.friend => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                       FriendshipStatus.request_received => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                       FriendshipStatus.request_sent => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
-                       FriendshipStatus.blocked => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
-                       FriendshipStatus.blocked_by => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                       FriendshipStatus.none => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                       FriendshipStatus.friend => UserProfileContextMenuControlSettings.FriendshipStatus.Friend,
+                       FriendshipStatus.request_received => UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived,
+                       FriendshipStatus.request_sent => UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent,
+                       FriendshipStatus.blocked => UserProfileContextMenuControlSettings.FriendshipStatus.Blocked,
+                       FriendshipStatus.blocked_by => UserProfileContextMenuControlSettings.FriendshipStatus.Disabled,
+                       FriendshipStatus.none => UserProfileContextMenuControlSettings.FriendshipStatus.None,
                        _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
                    };
         }
@@ -24,12 +24,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             return status switch
                    {
-                       Friends.FriendshipStatus.FRIEND => FriendshipStatus.friend,
-                       Friends.FriendshipStatus.REQUEST_RECEIVED => FriendshipStatus.request_received,
-                       Friends.FriendshipStatus.REQUEST_SENT => FriendshipStatus.request_sent,
-                       Friends.FriendshipStatus.BLOCKED => FriendshipStatus.blocked,
-                       Friends.FriendshipStatus.BLOCKED_BY => FriendshipStatus.blocked_by,
-                       Friends.FriendshipStatus.NONE => FriendshipStatus.none,
+                       Friends.FriendshipStatus.Friend => FriendshipStatus.friend,
+                       Friends.FriendshipStatus.RequestReceived => FriendshipStatus.request_received,
+                       Friends.FriendshipStatus.RequestSent => FriendshipStatus.request_sent,
+                       Friends.FriendshipStatus.Blocked => FriendshipStatus.blocked,
+                       Friends.FriendshipStatus.BlockedBy => FriendshipStatus.blocked_by,
+                       Friends.FriendshipStatus.None => FriendshipStatus.none,
                        _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
                    };
         }

@@ -2,7 +2,6 @@
 using System;
 using Unity.Profiling;
 using Utility.Multithreading;
-using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading
 {
@@ -70,6 +69,9 @@ namespace ECS.StreamableLoading
         /// <returns></returns>
         public RefAcquisition AcquireRef() =>
             new (this);
+
+        void IStreamableRefCountData.AddReference() =>
+            AddReference();
 
         internal void AddReference()
         {

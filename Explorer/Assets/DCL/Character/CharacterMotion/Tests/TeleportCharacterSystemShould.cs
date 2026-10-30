@@ -5,7 +5,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
 using DCL.Utilities;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.TestSuite;
@@ -20,7 +19,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
 
-namespace DCL.CharacterMotion.Tests
+namespace DCL.Character.CharacterMotion.Tests
 {
     public class TeleportCharacterSystemShould : UnitySystemTestBase<TeleportCharacterSystem>
     {
@@ -75,7 +74,7 @@ namespace DCL.CharacterMotion.Tests
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
                 new PlayerTeleportIntent(null, new Vector2Int(22, 22), Vector3.one * 100, CancellationToken.None, isPositionSet: true));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False);
             Assert.That(characterController.transform.position, Is.EqualTo(Vector3.one * 100));
@@ -107,7 +106,7 @@ namespace DCL.CharacterMotion.Tests
             // Consume unobserved UniTask exception, otherwise it will be throws from the destructor
             await loadReport.WaitUntilFinishedAsync();
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(cameraSamplingData.Position, Is.EqualTo(camera!.transform.position));
             Assert.That(cameraSamplingData.IsDirty, Is.True);
@@ -124,7 +123,7 @@ namespace DCL.CharacterMotion.Tests
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), rigidTransform,
                 new PlayerTeleportIntent(null, new Vector2Int(22, 22), samePosition, CancellationToken.None, isPositionSet: true));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
             Assert.That(characterController.transform.position, Is.EqualTo(samePosition), "Position should remain unchanged");
@@ -143,7 +142,7 @@ namespace DCL.CharacterMotion.Tests
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
                 LandOnParcelIntent(new Vector3(8f, 5f, 8f)));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
             Assert.That(characterController.transform.position.y, Is.EqualTo(0.1f).Within(0.001f), "Should land just above the floor (top + ground clearance)");
@@ -161,7 +160,7 @@ namespace DCL.CharacterMotion.Tests
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
                 LandOnParcelIntent(new Vector3(8f, 0f, 8f)));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
             Assert.That(characterController.transform.position.y, Is.EqualTo(3.1f).Within(0.001f), "Should land on the elevated step, not the lower plane or the roof");
@@ -176,7 +175,7 @@ namespace DCL.CharacterMotion.Tests
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
                 LandOnParcelIntent(anchor));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
             Assert.That(characterController.transform.position, Is.EqualTo(anchor), "Should keep the anchored position when there is no floor to snap to");

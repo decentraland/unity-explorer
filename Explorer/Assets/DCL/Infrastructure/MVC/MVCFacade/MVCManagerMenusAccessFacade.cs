@@ -14,10 +14,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
@@ -46,9 +46,10 @@ namespace MVC
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NearbyMuteService? nearbyMuteService;
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -71,9 +72,10 @@ namespace MVC
             IVoiceChatOrchestrator voiceChatOrchestrator,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
+            IWeb3IdentityCache web3IdentityCache,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
@@ -95,6 +97,7 @@ namespace MVC
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.selfProfile = selfProfile;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -113,7 +116,7 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
         {
             Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(walletId, ct);
 
@@ -123,7 +126,7 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
         }
 
-        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default)
         {
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
@@ -149,14 +152,14 @@ namespace MVC
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, profileCache, web3IdentityCache, nearbyMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
         private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
                 friendsService, mvcManager,
@@ -182,21 +185,21 @@ namespace MVC
         {
             switch (anchorPoint)
             {
-                case MenuAnchorPoint.TOP_LEFT:
-                    return ContextMenuOpenDirection.TOP_LEFT;
-                case MenuAnchorPoint.TOP_RIGHT:
-                    return ContextMenuOpenDirection.TOP_RIGHT;
-                case MenuAnchorPoint.BOTTOM_LEFT:
-                    return ContextMenuOpenDirection.BOTTOM_LEFT;
-                case MenuAnchorPoint.BOTTOM_RIGHT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
-                case MenuAnchorPoint.CENTER_LEFT:
-                    return ContextMenuOpenDirection.CENTER_LEFT;
-                case MenuAnchorPoint.CENTER_RIGHT:
-                    return ContextMenuOpenDirection.CENTER_RIGHT;
+                case MenuAnchorPoint.TopLeft:
+                    return ContextMenuOpenDirection.TopLeft;
+                case MenuAnchorPoint.TopRight:
+                    return ContextMenuOpenDirection.TopRight;
+                case MenuAnchorPoint.BottomLeft:
+                    return ContextMenuOpenDirection.BottomLeft;
+                case MenuAnchorPoint.BottomRight:
+                    return ContextMenuOpenDirection.BottomRight;
+                case MenuAnchorPoint.CenterLeft:
+                    return ContextMenuOpenDirection.CenterLeft;
+                case MenuAnchorPoint.CenterRight:
+                    return ContextMenuOpenDirection.CenterRight;
                 default:
-                case MenuAnchorPoint.DEFAULT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+                case MenuAnchorPoint.Default:
+                    return ContextMenuOpenDirection.BottomRight;
             }
         }
     }

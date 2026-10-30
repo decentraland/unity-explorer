@@ -1,23 +1,21 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
+using DCL.AvatarRendering.AvatarShape.Tests;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.SceneLifeCycle.Tests;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NUnit.Framework;
 using Runtime.Wearables;
-using System.Collections.Generic;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace DCL.AvatarRendering.Wearables.Tests
+namespace DCL.AvatarRendering.Thumbnails.Tests
 {
     [TestFixture]
     public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveAvatarAttachmentThumbnailSystem>

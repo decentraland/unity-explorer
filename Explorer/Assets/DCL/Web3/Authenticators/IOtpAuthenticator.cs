@@ -31,6 +31,13 @@ namespace DCL.Web3.Authenticators
         ///     Attempts to auto-login using stored session.
         ///     Returns true if auto-login succeeded.
         /// </summary>
-        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct);
+        public UniTask<AutoLoginResult> TryAutoLoginAsync(CancellationToken ct);
+
+        public enum AutoLoginResult
+        {
+            Success,
+            Failed,
+            Unnecessary,
+        }
     }
 }

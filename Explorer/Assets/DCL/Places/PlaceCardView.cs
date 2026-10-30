@@ -159,7 +159,7 @@ namespace DCL.Places
             int onlineMembers = placeInfo.connected_addresses?.Length ?? placeInfo.user_count;
             onlineMembersText.text = $"{onlineMembers}";
             onlineMembersContainer.SetActive(onlineMembers > 0);
-            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
+            likeRateText.text = $"{(placeInfo.LikeRateAsFloat ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
             featuredTag.SetActive(placeInfo.highlighted);
 

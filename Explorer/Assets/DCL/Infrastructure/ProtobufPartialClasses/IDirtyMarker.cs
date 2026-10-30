@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace DCL.ECSComponents
 {
     public interface IDirtyMarker
@@ -238,6 +236,11 @@ namespace DCL.ECSComponents
     }
 
     public partial class PBPhysicsCombinedForce : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBAvatarNametag : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

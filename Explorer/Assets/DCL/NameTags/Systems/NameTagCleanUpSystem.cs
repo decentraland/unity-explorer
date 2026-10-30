@@ -25,10 +25,7 @@ namespace DCL.Nametags
         protected override void Update(float t)
         {
             if (!nametagsData.showNameTags)
-            {
                 RemoveAllTagsQuery(World);
-                return;
-            }
 
             RemoveTagQuery(World);
         }
@@ -41,6 +38,7 @@ namespace DCL.Nametags
         }
 
         [Query]
+        [None(typeof(SceneAvatarTagComponent))]
         private void RemoveAllTags(Entity e, NametagHolder nametagHolder)
         {
             nametagHolderPool.Release(nametagHolder);

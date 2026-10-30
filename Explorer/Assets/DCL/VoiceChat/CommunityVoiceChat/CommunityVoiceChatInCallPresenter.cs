@@ -1,9 +1,7 @@
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -61,7 +59,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            bool isPanelCollapsed = panelSize == VoiceChatPanelSize.COLLAPSED;
+            bool isPanelCollapsed = panelSize == VoiceChatPanelSize.Collapsed;
             view.SetCollapsedState(isPanelCollapsed);
 
             SetInCallElementsVisibility(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value, panelSize);
@@ -69,7 +67,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void SetInCallElementsVisibility(VoiceChatPanelState panelState, VoiceChatPanelSize panelSize)
         {
-            view.SetButtonsVisibility(panelState is not VoiceChatPanelState.UNFOCUSED, panelSize);
+            view.SetButtonsVisibility(panelState is not VoiceChatPanelState.Unfocused, panelSize);
             view.SetScrollAndMasksVisibility(speakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
@@ -138,8 +136,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnToggleCollapseButtonClicked()
         {
-            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED;
-            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.COLLAPSED);
+            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.Collapsed;
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.Expanded : VoiceChatPanelSize.Collapsed);
         }
     }
 }

@@ -2,6 +2,7 @@
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.Utility.Types;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -15,6 +16,10 @@ namespace DCL.Events
 {
     public class EventsByDayView : MonoBehaviour
     {
+        // Sized for the full-width explore panel; a modal host fits one card fewer per row.
+        private const int GRID_COLUMNS = 5;
+        private const int COMPACT_GRID_COLUMNS = 4;
+
         public event Action? BackButtonClicked;
         public event Action? GoToNextDayButtonClicked;
         public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? EventCardClicked;
@@ -27,10 +32,11 @@ namespace DCL.Events
         [SerializeField] private LoopGridView eventsLoopGrid = null!;
         [SerializeField] private GameObject emptyContainer = null!;
         [SerializeField] private SkeletonLoadingView skeletonLoading = null!;
+        [SerializeField] private GameObject[] loadingCardsBeyondCompactColumns = null!;
         [SerializeField] private Button goToNextDayButton = null!;
 
         private EventsStateService eventsStateService = null!;
-        private readonly List<string> currentEventsIds = new ();
+        private readonly List<EventId> currentEventsIds = new ();
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
@@ -65,12 +71,25 @@ namespace DCL.Events
             eventsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
+        public void SetCompactLayout(bool compact)
+        {
+            eventsLoopGrid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, compact ? COMPACT_GRID_COLUMNS : GRID_COLUMNS);
+
+            foreach (GameObject card in loadingCardsBeyondCompactColumns)
+                card.SetActive(!compact);
+        }
+
         public void SetEventsItems(IReadOnlyList<EventDTO> events, bool resetPos)
         {
             ClearEvents();
 
             foreach (EventDTO eventInfo in events)
-                currentEventsIds.Add(eventInfo.id);
+            {
+                Option<EventId> eventId = EventId.New(eventInfo.id);
+
+                if (eventId.Has)
+                    currentEventsIds.Add(eventId.Value);
+            }
 
             eventsLoopGrid.SetListItemCount(currentEventsIds.Count, resetPos);
 

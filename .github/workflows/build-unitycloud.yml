@@ -13,6 +13,13 @@ on:
   push:
     branches:
       - dev
+    # avatar-preview-renderer merges are invisible to the Explorer project; only
+    # Explorer/ and the shared package can affect this build.
+    paths:
+      - 'Explorer/**'
+      - 'unity-shared-dependencies/**'
+      - 'scripts/cloudbuild/**'
+      - '.github/workflows/build-unitycloud.yml'
   workflow_dispatch:
     inputs:
       profile:
@@ -92,6 +99,14 @@ on:
           - both
           - windows-only
           - macos-only
+      install_source:
+        description: 'Install source baked into the build'
+        required: true
+        default: 'launcher'
+        type: choice
+        options:
+          - launcher
+          - epic
   workflow_call:
     inputs:
       profile:
@@ -171,7 +186,8 @@ concurrency:
   # Only cancel an in-flight build when the new event will actually produce a new useful build.
   # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
   # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
-  # Build Gate falsely green.
+  # Build Gate falsely green. Events raised by github-actions[bot] never build (see prebuild.if),
+  # so they never cancel either.
   cancel-in-progress: >-
     ${{
       github.event_name == 'push' ||
@@ -179,6 +195,7 @@ concurrency:
       github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
+        github.actor != 'github-actions[bot]' &&
         (
           github.event.action == 'opened' ||
           github.event.action == 'reopened' ||
@@ -201,8 +218,19 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # Skip when PR has 'perf_test' label (only performance tests should run)
+    # contents: read — checkout + the version composite's `git fetch origin main:main --tags`
+    #   over the checkout's persisted credentials.
+    # statuses: write — "Skip build and test checks" posts 4 commit statuses via github-script.
+    # pull-requests: read — step-security/changed-files' REST fallback (GET /pulls/{n}/files).
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: read
+    timeout-minutes: 20
+    # Skip when PR has 'perf_test' label (only performance tests should run).
+    # Skip pull_request events raised by GITHUB_TOKEN (release and sync PRs):
+    # their runs fire no workflow_run, so no result would reach the PR comment.
+    # github.actor keeps the bot across manual approval and re-run.
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
         (github.ref == 'refs/heads/dev') ||
@@ -210,6 +238,7 @@ jobs:
         (github.event_name == 'workflow_dispatch') ||
         (
           github.event_name == 'pull_request' &&
+          github.actor != 'github-actions[bot]' &&
           (
             (
               (github.event.action == 'opened' ||
@@ -247,17 +276,30 @@ jobs:
       install_source: ${{ steps.set_defaults.outputs.install_source }}
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
+      - name: Plan checkout
+        id: plan
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || { [[ -z "${{ github.event.inputs.version }}" ]] && [[ -z "${{ inputs.version }}" ]]; }; then
+            echo "checkout=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
+        if: steps.plan.outputs.checkout == 'true'
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          filter: blob:none
 
-      - name: Detect changes under Explorer/**
+      - name: Detect changes under Explorer/** or unity-shared-dependencies/**
+        if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
           files: |
             Explorer/**
+            unity-shared-dependencies/**
 
       - name: Decide whether to build
         id: decide
@@ -329,7 +371,7 @@ jobs:
                 sha,
                 state: 'success',
                 context: check,
-                description: 'Skipped — no Explorer/ changes detected'
+                description: 'Skipped — no Explorer/ or unity-shared-dependencies/ changes detected'
               });
             }
             console.log(`Posted success statuses for: ${checks.join(', ')}`);
@@ -345,7 +387,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
-        if: steps.decide.outputs.should_build == 'true'
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
@@ -353,7 +395,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: steps.decide.outputs.should_build == 'true' && github.event.inputs.version == '' && inputs.version == ''
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         uses: ./.github/actions/version
         with:
           commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
@@ -530,6 +572,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
+    # contents: read — checkout + the size-budget step's GET /releases/latest.
+    # actions: read — build.py resolves its own job URL via GET /actions/runs/{run_id}/jobs.
+    # pull-requests: write — live CI status comment upsert (issue-comment POST/PATCH/DELETE
+    #   on the PR via .github/actions/ci-status-comment/upsert-ci-status.sh).
+    #   Safe on this `pull_request` (not `pull_request_target`) trigger: a fork PR gets a
+    #   read-only GITHUB_TOKEN that `permissions:` cannot escalate, and cannot run this job
+    #   anyway (the build needs UNITY_CLOUD_API_KEY/ORG_ID/PROJECT_ID, unavailable to forks);
+    #   a same-repo branch is pushed by someone who already holds this capability with write access.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
     # Safety ceiling around the 450m retry budget + surrounding steps.
     timeout-minutes: 510
     strategy:
@@ -540,7 +594,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
@@ -570,12 +624,17 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60
+          POLL_TIME: 30
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
+          LOG_STALL_THRESHOLD: 900
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
+          # For the live PR status-comment update the moment the Unity-side
+          # build id is known; empty PR number (push/dispatch) disables it.
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
@@ -599,6 +658,36 @@ jobs:
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
+      # Must run before any always() log/report steps: on cancellation GitHub grants a 5-minute
+      # grace window, and the DELETE that frees the Unity-side queue slot has to win that race
+      # (a large-log upload ahead of it can eat the whole window). Also runs on failure() so an
+      # outer-step timeout doesn't leave a Unity-side build holding a slot.
+      - name: Cancel Unity Cloud build
+        if: ${{ cancelled() || failure() }}
+        timeout-minutes: 2
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --cancel || true
+
+      # the app-local Visual C++ runtime (deployed by VCRedistBuildPostprocessor)
+      # is what lets the player start without the VC++ Redistributable installed
+      - name: Verify app-local VC++ runtime
+        if: matrix.target == 'windows64'
+        run: |
+          set -euo pipefail
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            if [[ ! -f "build/$dll" ]]; then
+              echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
+              exit 1
+            fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
+          done
+
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         run: |
@@ -611,6 +700,17 @@ jobs:
           MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
           echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
           echo "Located: $MAIN_EXE_ABS"
+
+          # the UUAV media helper (deployed by HelperBuildPostprocessor)
+          # is a user-facing executable and must be signed like the game exe
+          HELPER_EXE=$(find build -path '*/Plugins/x86_64/uuav-helper.exe' | head -n1)
+          if [[ -z "$HELPER_EXE" ]]; then
+            echo "::error::uuav-helper.exe not found in build/ (HelperBuildPostprocessor regression?)"
+            exit 1
+          fi
+          HELPER_EXE_ABS=$(readlink -f "$HELPER_EXE")
+          echo "HELPER_EXE=$HELPER_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $HELPER_EXE_ABS"
 
       - name: Sign Windows executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -627,6 +727,21 @@ jobs:
           malware_block: 'false'
           environment_name: PROD
 
+      - name: Sign UUAV helper executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.HELPER_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
       - name: Verify Windows signature
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         continue-on-error: true
@@ -634,9 +749,11 @@ jobs:
           set -euo pipefail
           sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
 
-          echo "Verifying signature on $MAIN_EXE ..."
-          osslsigncode verify -in "$MAIN_EXE"
-          echo "::notice::Signature verified for $MAIN_EXE"
+          for exe in "$MAIN_EXE" "$HELPER_EXE"; do
+            echo "Verifying signature on $exe ..."
+            osslsigncode verify -in "$exe"
+            echo "::notice::Signature verified for $exe"
+          done
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
@@ -682,9 +799,6 @@ jobs:
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
           fi
-
-      - name: Install jq
-        run: sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Enforce artifact size budget
         id: size_check
@@ -861,11 +975,29 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          TARGET: ${{ matrix.target }}
         run: |
+          # A new launcher zip invalidates the delta patch set made for the previous zip of this
+          # tag and platform (docs/delta-updates.md): remove it before the zip is replaced and
+          # again after, so a manifest a concurrent run published during the upload is not kept.
+          # Epic zips have no patches, and a zip of one platform says nothing about the other.
+          DELTA_PREFIX="s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/delta/$TARGET/"
+          REPLACES_PATCHES=false
+          if [ "$IS_RELEASE_BUILD" = "true" ] && [ "$INSTALL_SOURCE" = "launcher" ]; then
+            REPLACES_PATCHES=true
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+          if [ "$REPLACES_PATCHES" = "true" ]; then
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
 
       - name: Print S3 upload URL
         run: |
@@ -877,7 +1009,11 @@ jobs:
             echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Symbol artifacts have no downstream consumer (Sentry uploads from the on-disk build/
+      # folder below; release drafting attaches only the player zips) — keep them only where a
+      # human might need post-hoc symbolication, and never at default retention.
       - name: Upload debug symbols
+        if: ${{ inputs.is_release_build == true }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}_debug_symbols
@@ -885,6 +1021,7 @@ jobs:
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          retention-days: 7
           
       - name: Upload debug symbols to Sentry
         if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
@@ -899,22 +1036,35 @@ jobs:
             --project "$SENTRY_PROJECT" \
             "build"
 
-      # Will run always (even if failing)
+      # Runs even on failure, but only once a log actually exists (a run cancelled in-queue
+      # never writes one, and a guaranteed-failing upload would burn the cancellation grace window).
       - name: Upload cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
-      # Will run always (even if failing)
+      # Written by build.py as soon as the Unity-side build id is known, so it exists for
+      # failed builds too. The PR status comment uses it to deep-link the Unity Cloud
+      # build page instead of asking humans to search cloud.unity.com by hand.
+      - name: Upload Unity Cloud build info
+        if: ${{ always() && hashFiles('unity_cloud_build_info.env') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity_build_info_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
+          path: unity_cloud_build_info.env
+          if-no-files-found: error
+          # Only consumed by the immediately-following PR status comment run.
+          retention-days: 7
+
       - name: Print cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
@@ -931,18 +1081,11 @@ jobs:
           path: shader_compilation_report.log
           if-no-files-found: warn
 
-      # Also runs on failure() so an outer-step timeout doesn't leave a Unity-side build holding a slot.
-      - name: Cancel Unity Cloud build
-        if: ${{ cancelled() || failure() }}
-        env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
-          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel || true
-
   build-gate:
     name: Build Gate (Windows + macOS)
     runs-on: ubuntu-latest
+    # Pure bash over needs.* context — no checkout, no token use.
+    permissions: {}
     needs: [prebuild, build]
     if: always() && github.event_name == 'pull_request'
     steps:
@@ -954,16 +1097,25 @@ jobs:
           should_build='${{ needs.prebuild.outputs.should_build }}'
           prebuild_result='${{ needs.prebuild.result }}'
 
-          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
-          # The Prebuild job's "Skip build and test checks" step already posts per-target success
-          # statuses for this case, so the gate can safely pass.
-          if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
-            echo "Gate not applicable (prebuild ran, no Explorer/ changes). Passing."
+          # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
+          # event, a draft without 'force-build', the 'perf_test' label, or a pull_request event
+          # raised by github-actions[bot]). That's a deliberate
+          # "don't build this event" decision, not a failure, so there is nothing to gate.
+          if [ "$prebuild_result" = "skipped" ]; then
+            echo "Gate not applicable (prebuild skipped — no build for this event). Passing."
             exit 0
           fi
 
-          # Any other prebuild outcome (skipped/cancelled/failure) means no real build happened.
-          # Fail closed so an incidental PR event can't silently produce a green Build Gate.
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ or shared-deps changes).
+          # The Prebuild job's "Skip build and test checks" step already posts per-target success
+          # statuses for this case, so the gate can safely pass.
+          if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
+            echo "Gate not applicable (prebuild ran, no Explorer/ or shared-deps changes). Passing."
+            exit 0
+          fi
+
+          # cancelled/failure => a build was expected but never completed. Fail closed so a real
+          # problem can't silently produce a green Build Gate.
           if [ "$prebuild_result" != "success" ]; then
             echo "::error::Prebuild did not succeed (result: $prebuild_result). No build produced for this commit; re-trigger the workflow (e.g. push a new commit or add the 'force-build' label)."
             exit 1

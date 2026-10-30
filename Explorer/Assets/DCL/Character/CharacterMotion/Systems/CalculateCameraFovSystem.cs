@@ -36,7 +36,7 @@ namespace DCL.CharacterMotion.Systems
             in MovementInputComponent movementInput,
             in GlideState glideState)
         {
-            if (movementInput.Kind == MovementKind.RUN && glideState.Value == GlideStateValue.PROP_CLOSED)
+            if (movementInput.Kind == MovementKind.Run && glideState.Value == GlideStateValue.PropClosed)
             {
                 float speedFactor = rigidTransform.MoveVelocity.Velocity.magnitude / characterControllerSettings.RunSpeed;
                 float targetFov = Mathf.Lerp(0, characterControllerSettings.CameraFOVWhileRunning, speedFactor);

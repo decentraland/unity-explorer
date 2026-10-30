@@ -21,7 +21,7 @@ namespace DCL.Friends.UI.BlockUserPrompt
         private UniTaskCompletionSource closePopupTask = new ();
         private CancellationTokenSource blockOperationsCts = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public BlockUserPromptController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService)

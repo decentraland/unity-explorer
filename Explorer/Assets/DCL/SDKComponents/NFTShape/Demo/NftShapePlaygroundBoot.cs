@@ -8,7 +8,6 @@ using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using ECS.Prioritization.Components;
-using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NFTShape.Demo

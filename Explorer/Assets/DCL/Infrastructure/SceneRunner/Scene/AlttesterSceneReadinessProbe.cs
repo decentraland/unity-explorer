@@ -94,7 +94,7 @@ namespace SceneRunner.Scene
         {
             if (string.IsNullOrEmpty(s)) return string.Empty;
 
-            var sb = new StringBuilder(s!.Length);
+            var sb = new StringBuilder(s.Length);
             foreach (char c in s)
             {
                 switch (c)

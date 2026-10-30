@@ -6,7 +6,7 @@ using System.Reflection;
 using Unity.PerformanceTesting;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Benchmarks the ILD equal-power panning cost of <c>LivekitAudioSource.ApplySpatialPanning</c>.

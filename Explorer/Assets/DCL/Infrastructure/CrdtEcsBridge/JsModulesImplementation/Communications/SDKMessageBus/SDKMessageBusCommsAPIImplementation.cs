@@ -2,7 +2,6 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -25,7 +24,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
         public void Send(string data)
         {
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
+            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DropIfNotConnected, null);
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)

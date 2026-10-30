@@ -9,125 +9,190 @@ namespace Decentraland.Common
 {
     public partial class PositionDelta
     {
-        private float? _dx;
+        /// <summary>Coarsest quantization step of <see cref="DxQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float DxQuantizedStep = 0.0030518044f;
         /// <summary>Float accessor for <see cref="Dx"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DxQuantized
         {
-            get => _dx ??= Quantize.Decode(Dx, -100.0f, 100.0f, 16);
-            set { _dx = value; Dx = Quantize.Encode(value, -100.0f, 100.0f, 16); }
+            get => Quantize.Decode(Dx, -100.0f, 100.0f, 16);
+            set => Dx = Quantize.Encode(value, -100.0f, 100.0f, 16);
         }
 
-        private float? _dy;
+        /// <summary>Coarsest quantization step of <see cref="DyQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float DyQuantizedStep = 0.0030518044f;
         /// <summary>Float accessor for <see cref="Dy"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DyQuantized
         {
-            get => _dy ??= Quantize.Decode(Dy, -100.0f, 100.0f, 16);
-            set { _dy = value; Dy = Quantize.Encode(value, -100.0f, 100.0f, 16); }
+            get => Quantize.Decode(Dy, -100.0f, 100.0f, 16);
+            set => Dy = Quantize.Encode(value, -100.0f, 100.0f, 16);
         }
 
-        private float? _dz;
+        /// <summary>Coarsest quantization step of <see cref="DzQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float DzQuantizedStep = 0.0030518044f;
         /// <summary>Float accessor for <see cref="Dz"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DzQuantized
         {
-            get => _dz ??= Quantize.Decode(Dz, -100.0f, 100.0f, 16);
-            set { _dz = value; Dz = Quantize.Encode(value, -100.0f, 100.0f, 16); }
+            get => Quantize.Decode(Dz, -100.0f, 100.0f, 16);
+            set => Dz = Quantize.Encode(value, -100.0f, 100.0f, 16);
         }
 
-        /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
-        public void ResetDecodedCache()
-        {
-            _dx = null;
-            _dy = null;
-            _dz = null;
-        }
+        /// <summary>
+        ///     True when every quantized field holds a wire code within its declared bit width
+        ///     (<c>0 .. 2^bits-1</c>). The encoder never emits a code above this bound, so a larger
+        ///     value is a malformed/hostile message: decoding it would land far outside the field's
+        ///     <c>[min, max]</c> and, since the server relays raw codes verbatim, poison every observer.
+        ///     Reject before storing or relaying. Pure integer comparison — no decode.
+        /// </summary>
+        public bool AreQuantizedFieldsInRange() =>
+            Dx <= 65535u
+            && Dy <= 65535u
+            && Dz <= 65535u;
     }
 
     public partial class PlayerInput
     {
-        private float? _moveX;
+        /// <summary>Coarsest quantization step of <see cref="MoveXQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float MoveXQuantizedStep = 0.0078431373f;
         /// <summary>Float accessor for <see cref="MoveX"/>. Range [-1.0f, 1.0f], 8 bits, step ≈ 0.00784314.</summary>
         public float MoveXQuantized
         {
-            get => _moveX ??= Quantize.Decode(MoveX, -1.0f, 1.0f, 8);
-            set { _moveX = value; MoveX = Quantize.Encode(value, -1.0f, 1.0f, 8); }
+            get => Quantize.Decode(MoveX, -1.0f, 1.0f, 8);
+            set => MoveX = Quantize.Encode(value, -1.0f, 1.0f, 8);
         }
 
-        private float? _moveZ;
+        /// <summary>Coarsest quantization step of <see cref="MoveZQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float MoveZQuantizedStep = 0.0078431373f;
         /// <summary>Float accessor for <see cref="MoveZ"/>. Range [-1.0f, 1.0f], 8 bits, step ≈ 0.00784314.</summary>
         public float MoveZQuantized
         {
-            get => _moveZ ??= Quantize.Decode(MoveZ, -1.0f, 1.0f, 8);
-            set { _moveZ = value; MoveZ = Quantize.Encode(value, -1.0f, 1.0f, 8); }
+            get => Quantize.Decode(MoveZ, -1.0f, 1.0f, 8);
+            set => MoveZ = Quantize.Encode(value, -1.0f, 1.0f, 8);
         }
 
-        private float? _yaw;
+        /// <summary>Coarsest quantization step of <see cref="YawQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float YawQuantizedStep = 0.087912088f;
         /// <summary>Float accessor for <see cref="Yaw"/>. Range [-180.0f, 180.0f], 12 bits, step ≈ 0.0879121.</summary>
         public float YawQuantized
         {
-            get => _yaw ??= Quantize.Decode(Yaw, -180.0f, 180.0f, 12);
-            set { _yaw = value; Yaw = Quantize.Encode(value, -180.0f, 180.0f, 12); }
+            get => Quantize.Decode(Yaw, -180.0f, 180.0f, 12);
+            set => Yaw = Quantize.Encode(value, -180.0f, 180.0f, 12);
         }
 
-        /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
-        public void ResetDecodedCache()
+        /// <summary>
+        ///     True when every quantized field holds a wire code within its declared bit width
+        ///     (<c>0 .. 2^bits-1</c>). The encoder never emits a code above this bound, so a larger
+        ///     value is a malformed/hostile message: decoding it would land far outside the field's
+        ///     <c>[min, max]</c> and, since the server relays raw codes verbatim, poison every observer.
+        ///     Reject before storing or relaying. Pure integer comparison — no decode.
+        /// </summary>
+        public bool AreQuantizedFieldsInRange() =>
+            MoveX <= 255u
+            && MoveZ <= 255u
+            && Yaw <= 4095u;
+    }
+
+    public partial class VelocityState
+    {
+        /// <summary>Coarsest quantization step of <see cref="VxQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VxQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="Vx"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VxQuantized
         {
-            _moveX = null;
-            _moveZ = null;
-            _yaw = null;
+            get => Quantize.DecodePower(Vx, 50.0f, 2.0f, 8);
+            set => Vx = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
         }
+
+        /// <summary>Coarsest quantization step of <see cref="VyQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VyQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="Vy"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VyQuantized
+        {
+            get => Quantize.DecodePower(Vy, 50.0f, 2.0f, 8);
+            set => Vy = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
+        }
+
+        /// <summary>Coarsest quantization step of <see cref="VzQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VzQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="Vz"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VzQuantized
+        {
+            get => Quantize.DecodePower(Vz, 50.0f, 2.0f, 8);
+            set => Vz = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
+        }
+
+        /// <summary>
+        ///     True when every quantized field holds a wire code within its declared bit width
+        ///     (<c>0 .. 2^bits-1</c>). The encoder never emits a code above this bound, so a larger
+        ///     value is a malformed/hostile message: decoding it would land far outside the field's
+        ///     <c>[min, max]</c> and, since the server relays raw codes verbatim, poison every observer.
+        ///     Reject before storing or relaying. Pure integer comparison — no decode.
+        /// </summary>
+        public bool AreQuantizedFieldsInRange() =>
+            Vx <= 255u
+            && Vy <= 255u
+            && Vz <= 255u;
     }
 
     public partial class AvatarStateSnapshot
     {
-        private float? _x;
+        /// <summary>Coarsest quantization step of <see cref="XQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float XQuantizedStep = 0.12500191f;
         /// <summary>Float accessor for <see cref="X"/>. Range [-4096.0f, 4096.0f], 16 bits, step ≈ 0.125002.</summary>
         public float XQuantized
         {
-            get => _x ??= Quantize.Decode(X, -4096.0f, 4096.0f, 16);
-            set { _x = value; X = Quantize.Encode(value, -4096.0f, 4096.0f, 16); }
+            get => Quantize.Decode(X, -4096.0f, 4096.0f, 16);
+            set => X = Quantize.Encode(value, -4096.0f, 4096.0f, 16);
         }
 
-        private float? _y;
+        /// <summary>Coarsest quantization step of <see cref="YQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float YQuantizedStep = 0.031251907f;
         /// <summary>Float accessor for <see cref="Y"/>. Range [-256.0f, 256.0f], 14 bits, step ≈ 0.0312519.</summary>
         public float YQuantized
         {
-            get => _y ??= Quantize.Decode(Y, -256.0f, 256.0f, 14);
-            set { _y = value; Y = Quantize.Encode(value, -256.0f, 256.0f, 14); }
+            get => Quantize.Decode(Y, -256.0f, 256.0f, 14);
+            set => Y = Quantize.Encode(value, -256.0f, 256.0f, 14);
         }
 
-        private float? _z;
+        /// <summary>Coarsest quantization step of <see cref="ZQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float ZQuantizedStep = 0.12500191f;
         /// <summary>Float accessor for <see cref="Z"/>. Range [-4096.0f, 4096.0f], 16 bits, step ≈ 0.125002.</summary>
         public float ZQuantized
         {
-            get => _z ??= Quantize.Decode(Z, -4096.0f, 4096.0f, 16);
-            set { _z = value; Z = Quantize.Encode(value, -4096.0f, 4096.0f, 16); }
+            get => Quantize.Decode(Z, -4096.0f, 4096.0f, 16);
+            set => Z = Quantize.Encode(value, -4096.0f, 4096.0f, 16);
         }
 
-        private float? _pitch;
+        /// <summary>Coarsest quantization step of <see cref="PitchQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PitchQuantizedStep = 0.17595308f;
         /// <summary>Float accessor for <see cref="Pitch"/>. Range [-90.0f, 90.0f], 10 bits, step ≈ 0.175953.</summary>
         public float PitchQuantized
         {
-            get => _pitch ??= Quantize.Decode(Pitch, -90.0f, 90.0f, 10);
-            set { _pitch = value; Pitch = Quantize.Encode(value, -90.0f, 90.0f, 10); }
+            get => Quantize.Decode(Pitch, -90.0f, 90.0f, 10);
+            set => Pitch = Quantize.Encode(value, -90.0f, 90.0f, 10);
         }
 
-        private float? _yaw;
+        /// <summary>Coarsest quantization step of <see cref="YawQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float YawQuantizedStep = 0.087912088f;
         /// <summary>Float accessor for <see cref="Yaw"/>. Range [-180.0f, 180.0f], 12 bits, step ≈ 0.0879121.</summary>
         public float YawQuantized
         {
-            get => _yaw ??= Quantize.Decode(Yaw, -180.0f, 180.0f, 12);
-            set { _yaw = value; Yaw = Quantize.Encode(value, -180.0f, 180.0f, 12); }
+            get => Quantize.Decode(Yaw, -180.0f, 180.0f, 12);
+            set => Yaw = Quantize.Encode(value, -180.0f, 180.0f, 12);
         }
 
-        /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
-        public void ResetDecodedCache()
-        {
-            _x = null;
-            _y = null;
-            _z = null;
-            _pitch = null;
-            _yaw = null;
-        }
+        /// <summary>
+        ///     True when every quantized field holds a wire code within its declared bit width
+        ///     (<c>0 .. 2^bits-1</c>). The encoder never emits a code above this bound, so a larger
+        ///     value is a malformed/hostile message: decoding it would land far outside the field's
+        ///     <c>[min, max]</c> and, since the server relays raw codes verbatim, poison every observer.
+        ///     Reject before storing or relaying. Pure integer comparison — no decode.
+        /// </summary>
+        public bool AreQuantizedFieldsInRange() =>
+            X <= 65535u
+            && Y <= 16383u
+            && Z <= 65535u
+            && Pitch <= 1023u
+            && Yaw <= 4095u;
     }
 
 

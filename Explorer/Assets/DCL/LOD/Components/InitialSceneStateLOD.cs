@@ -3,7 +3,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -15,6 +14,9 @@ namespace DCL.LOD.Components
         private readonly List<ISSStoredAsset> Assets = new ();
         public string SceneID { get; private set; } = string.Empty;
         public GameObject ParentContainer { get; private set; }
+
+        /// <summary>Geometry of the scene this LOD stands in for.</summary>
+        public ParcelMathHelper.SceneGeometry SceneGeometry { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }
         public AssetBundleData? AssetBundleData { get; private set; }
@@ -23,10 +25,10 @@ namespace DCL.LOD.Components
 
         public enum State
         {
-            UNINITIALIZED,
-            PROCESSING,
-            FAILED,
-            RESOLVED
+            Uninitialized,
+            Processing,
+            Failed,
+            Resolved
         }
 
         public State CurrentState;
@@ -37,12 +39,12 @@ namespace DCL.LOD.Components
 
         public void ForgetLoading(World world)
         {
-            if (CurrentState is State.FAILED or State.RESOLVED)
+            if (CurrentState is State.Failed or State.Resolved)
                 return;
 
             AssetBundlePromise.ForgetLoading(world);
 
-            if (CurrentState is State.PROCESSING)
+            if (CurrentState is State.Processing)
             {
                 Generation++;
                 Clear();
@@ -56,7 +58,7 @@ namespace DCL.LOD.Components
                 UnityObjectUtils.SafeDestroy(ParentContainer);
             }
 
-            CurrentState = State.UNINITIALIZED;
+            CurrentState = State.Uninitialized;
         }
 
         private void Clear()
@@ -98,7 +100,7 @@ namespace DCL.LOD.Components
             ParentContainer != null && Assets.Count == TotalAssetsToInstantiate;
 
         public bool IsProcessing() =>
-            CurrentState is State.PROCESSING;
+            CurrentState is State.Processing;
 
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
@@ -112,9 +114,10 @@ namespace DCL.LOD.Components
         /// <summary>
         ///     Descriptor-only initialization: no shared ISS bundle to hold; each asset will arrive via its own promise.
         /// </summary>
-        public void InitializeFromDescriptor(string sceneID, Vector3 sceneGeometryBaseParcelPosition, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
+        public void InitializeFromDescriptor(string sceneID, in ParcelMathHelper.SceneGeometry sceneGeometry, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
-            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
+            SceneGeometry = sceneGeometry;
+            EnsureParentContainer(sceneID, sceneGeometry.BaseParcelPosition);
             AssetBundleData = null;
             gltfCache = gltfContainerAssetsCache;
             TotalAssetsToInstantiate = assetHashCount;

@@ -1,12 +1,9 @@
 ﻿using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
-using DCL.Optimization.ThreadSafePool;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Networking;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests.ChromeDevtool
 {

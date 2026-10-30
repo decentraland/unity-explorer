@@ -16,8 +16,8 @@ namespace DCL.ScenesDebug.ScenesConsistency.Entities
                 string[] items = raw.Split('\t');
                 string[] coordinatesRaw = items[0].Split(',')!;
 
-                int x = ParsedInt(coordinatesRaw[0]!);
-                int y = ParsedInt(coordinatesRaw[1]!);
+                int x = ParsedInt(coordinatesRaw[0]);
+                int y = ParsedInt(coordinatesRaw[1]);
                 coordinate = new Vector2Int(x, y);
                 status = items[1].Trim();
             }

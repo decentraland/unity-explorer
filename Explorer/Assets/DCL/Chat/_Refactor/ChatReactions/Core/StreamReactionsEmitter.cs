@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatReactions.Core
     /// Ticked each frame by <see cref="SituationalSimulationLoop"/>.
     /// The facade's send budget gates what reaches the network.
     /// </summary>
-    public sealed class StreamReactionsEmitter : IDisposable
+    public sealed class StreamReactionsEmitter : IDisposable, IReactionStreamControl
     {
         private readonly SituationalReactionFacade facade;
         private readonly ChatReactionsConfig config;

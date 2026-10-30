@@ -3,15 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
-using DCL.Analytics.Systems;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -122,23 +119,28 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (hideWearablesResolution.VisibleWearables == null)
                     WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, ref hideWearablesResolution);
 
-                resolvedResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
-
-                for (var i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
+                if (wearablesByPointersIntention.DtoOnly)
+                    resolvedResults = wearablesByPointersIntention.Pointers.Count;
+                else
                 {
-                    IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
+                    resolvedResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
 
-                    if (visibleWearable.IsLoading) continue;
-                    if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
-                    if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
+                    for (var i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
+                    {
+                        IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
 
-                    resolvedResults++;
+                        if (visibleWearable.IsLoading) continue;
+                        if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+                        if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
-                    // Reference must be added only once when the wearable is resolved
-                    if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+                        resolvedResults++;
 
-                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
+                        // Reference must be added only once when the wearable is resolved
+                        if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+
+                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                            visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
+                    }
                 }
             }
 
@@ -150,7 +152,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (resolvedResults == wearablesByPointersIntention.Pointers.Count)
             {
                 //One last safeguard in case the dto was successfull but the assets failed
-                WearableComponentsUtils.ConfirmWearableVisibility(wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
+                if (!wearablesByPointersIntention.DtoOnly)
+                    WearableComponentsUtils.ConfirmWearableVisibility(wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
                 World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables!, hideWearablesResolution.HiddenCategories!)));
             }
         }
