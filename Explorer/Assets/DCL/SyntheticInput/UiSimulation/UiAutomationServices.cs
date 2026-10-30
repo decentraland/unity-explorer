@@ -250,6 +250,9 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>Runs a virtual-device gesture. Main thread only.</summary>
         public async UniTask<UiGestureResult> RunGestureAsync(UiDeviceGestureRequest request, float timeoutSec, CancellationToken ct)
         {
+            if (Devices.TryGetDeliveryBlocker(request.Kind, out string? blocker))
+                return new UiGestureResult { Ok = false, FailureReason = blocker };
+
             UniTask<UiGestureResult> gesture = EcsRequest.SendAsync(world, playerEntity, request,
                 new UiGestureResult { Ok = false, FailureReason = "preempted by a newer gesture" });
 
@@ -277,6 +280,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (!Simulator.TryCheckSdkPointer(target, force, "click", out UiActionResult blocked, out Rect imageRect))
                 return blocked;
+
+            if (Devices.TryGetDeliveryBlocker(UiDeviceGestureKind.Click, out string? blocker))
+                return UiActionResult.Failure(blocker, null, imageRect);
 
             if (!await Simulator.SettlePendingSdkEventsAsync(slot, ct))
                 return UiActionResult.Failure("the scene did not consume an earlier pointer event on the element (is the scene paused?); the click was not delivered", null, imageRect);

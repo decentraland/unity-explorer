@@ -277,6 +277,15 @@ namespace DCL.SyntheticInput.Systems
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);
 
+            if (result.Hit && World.TryGet(playerCamera, out CursorComponent cursor))
+            {
+                Camera camera = playerCamera.GetCameraComponent(World).Camera;
+                string? offScreen = DescribeOffScreenCursor(in cursor, camera.pixelWidth, camera.pixelHeight);
+
+                if (offScreen != null)
+                    result.Warning = result.Warning == null ? offScreen : $"{result.Warning}; {offScreen}";
+            }
+
             CompleteAndRemove(in intent, result, press);
         }
 

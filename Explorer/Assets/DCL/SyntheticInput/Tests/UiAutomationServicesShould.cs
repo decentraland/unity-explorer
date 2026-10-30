@@ -188,6 +188,36 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
+        public void RefuseADeviceGestureWhileTheAutomationMouseIsDisabledWithoutQueuingIt()
+        {
+            UnityEngine.InputSystem.InputSystem.DisableDevice(services.Devices.Mouse);
+
+            UniTask<UiGestureResult> gesture = services.RunGestureAsync(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.Click, To = new Vector2(5f, 5f) }, timeoutSec: 1f, CancellationToken.None);
+
+            Assert.That(gesture.Status, Is.EqualTo(UniTaskStatus.Succeeded), "the pre-check refuses before any request is installed");
+            UiGestureResult result = gesture.GetAwaiter().GetResult();
+            Assert.That(result.Ok, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("automation mouse is disabled"));
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void DescribeWhyADeviceStateWouldNotReachTheGame()
+        {
+            Assert.That(AutomationVirtualDevices.DescribeDeliveryBlocker(deviceEnabled: true, editorWithholdsInput: false, keyboard: false), Is.Null);
+            Assert.That(AutomationVirtualDevices.DescribeDeliveryBlocker(deviceEnabled: true, editorWithholdsInput: true, keyboard: false), Does.Contain("Game view is not focused"));
+            Assert.That(AutomationVirtualDevices.DescribeDeliveryBlocker(deviceEnabled: false, editorWithholdsInput: true, keyboard: true), Does.Contain("automation keyboard is disabled"),
+                "a disabled device is the nearer cause and is named first");
+        }
+
+        [Test]
+        public void KeepTheAutomationDevicesRunningInTheBackground()
+        {
+            Assert.That(services.Devices.Mouse, Is.InstanceOf<DclAutomationMouse>());
+            Assert.That(services.Devices.Keyboard, Is.InstanceOf<DclAutomationKeyboard>());
+        }
+
+        [Test]
         public void ReportNoUiCoverWhenNothingIsOnScreen()
         {
             Assert.That(services.TryFindUiCoverAt(new Vector2(5f, 5f), out string cover), Is.False);

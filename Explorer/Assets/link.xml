@@ -20,6 +20,9 @@
         <type fullname="DCL.SyntheticInput.AltTester.WorldAutomationProbe" preserve="all" />
         <type fullname="DCL.SyntheticInput.AltTester.UiAutomationProbe" preserve="all" />
         <type fullname="DCL.SyntheticInput.AltTester.NavigationAutomationProbe" preserve="all" />
+        <!-- Input System device layouts are built by reflection over the class. -->
+        <type fullname="DCL.SyntheticInput.UiSimulation.DclAutomationMouse" preserve="all" />
+        <type fullname="DCL.SyntheticInput.UiSimulation.DclAutomationKeyboard" preserve="all" />
     </assembly>
     <assembly fullname="DCL.Network">
         <type fullname="DCL.FeatureFlags.AltTesterFeatureFlagsProbe" preserve="all" />

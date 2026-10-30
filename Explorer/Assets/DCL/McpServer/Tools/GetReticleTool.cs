@@ -33,7 +33,8 @@ namespace DCL.McpServer.Tools
                .Boolean("rayFromScreenCenter", "True while the cursor is captured; false when the ray goes through the free cursor.")
                .Boolean("cursorLocked")
                .Object("ray", McpJsonSchema.Object().Object("origin", Vector3Schema()).Object("direction", Vector3Schema()), "World-space ray.")
-               .Object("cursor", McpJsonSchema.Object().Number("x").Number("y").Object("center", McpJsonSchema.Object().Number("x").Number("y")),
+               .Object("cursor", McpJsonSchema.Object().Number("x").Number("y").Object("center", McpJsonSchema.Object().Number("x").Number("y"))
+                                              .Boolean("onScreen", "False when the free cursor sits outside the window: the pixel is off-screen, the center is clamped, and the ray still goes through that pixel."),
                     "Where the ray enters the screen: image pixels (origin top-left) in the 'screen' space, plus the normalized center.")
                .Object("screen", McpJsonSchema.Object().Integer("width").Integer("height"), "The screen size the cursor pixel is in.")
                .String("colliderName", nullable: true)
@@ -71,16 +72,25 @@ namespace DCL.McpServer.Tools
             json["screen"] = UiDiscovery.ScreenJson();
 
             Vector2 normalized = UiScreenGeometry.NormalizedCenterOf(new Rect(reading.PointerImagePoint, Vector2.zero));
+            bool onScreen = IsOnScreen(reading.PointerImagePoint);
 
             json["cursor"] = new JObject
             {
                 ["x"] = Math.Round(reading.PointerImagePoint.x, 1),
                 ["y"] = Math.Round(reading.PointerImagePoint.y, 1),
                 ["center"] = new JObject { ["x"] = Math.Round(normalized.x, 4), ["y"] = Math.Round(normalized.y, 4) },
+                ["onScreen"] = onScreen,
             };
 
-            return UniTask.FromResult(McpToolResult.TextWithStructured(Summarize(in reading), json));
+            string summary = onScreen
+                ? Summarize(in reading)
+                : $"{Summarize(in reading)} (the free cursor is outside the window; the ray goes through its off-screen pixel, so aim explicitly rather than by cursor)";
+
+            return UniTask.FromResult(McpToolResult.TextWithStructured(summary, json));
         }
+
+        private static bool IsOnScreen(Vector2 imagePoint) =>
+            imagePoint.x >= 0f && imagePoint.x <= Screen.width && imagePoint.y >= 0f && imagePoint.y <= Screen.height;
 
         private static string Summarize(in ReticleReading reading) =>
             reading.Kind switch

@@ -1,9 +1,11 @@
 using Arch.Core;
 using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.SyntheticInput.Components;
+using DCL.SyntheticInput.UiSimulation;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -170,9 +172,10 @@ namespace DCL.SyntheticInput.Systems
             };
 
         /// <summary>
-        ///     The pipeline appends a result only for an entry whose event type and button match the edge (an
-        ///     <see cref="InputAction.IaAny" /> entry matches every button), so a hit with no such entry notified
-        ///     the entity of nothing. Null when an entry matched, or for a hover.
+        ///     A hover-qualified entity gets every button edge written to its PointerEventsResult whether or not it
+        ///     declares an entry for it (an <see cref="InputAction.IaAny" /> entry matches every button), and that write
+        ///     suppresses the scene-root broadcast. So a hit with no matching entry fired no declared handler, and the
+        ///     root heard nothing either. Null when an entry matched, or for a hover.
         /// </summary>
         private static string? DescribeUndeclaredEntry(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo)
         {
@@ -197,13 +200,33 @@ namespace DCL.SyntheticInput.Systems
 
             string delivered = $"{EventTypeName(intent.EventType)}/{InputActionNames.ToWire(intent.Button)}";
 
-            string recipient = SyntheticPointerAim.IsUntargeted(in intent)
-                ? "; the scene root received the edge as a broadcast"
-                : ", and nothing else did (a targeted edge is never broadcast)";
+            string outcome = $"the pipeline still wrote {delivered} to the entity's PointerEventsResult (a handler bound to a declared entry does not fire on it; "
+                             + $"inputSystem.isTriggered(InputAction.IA_{InputActionNames.ToWire(intent.Button).ToUpperInvariant()}, PointerEventType.{EventTypeName(intent.EventType).ToUpperInvariant()}, entity) does), "
+                             + "and the scene root received no broadcast: a result written to any entity suppresses it, as for a real click";
 
             return listened.Length > 0
-                ? $"the entity declares no PointerEvents entry for {delivered}; it listens for: {listened}; the entity received no result{recipient}"
-                : $"the entity declares no PointerEvents entries at all, so {delivered} produced no result{recipient}";
+                ? $"the entity declares no PointerEvents entry for {delivered}; it listens for: {listened}; {outcome}"
+                : $"the entity declares no PointerEvents entries at all for {delivered}; {outcome}";
+        }
+
+        /// <summary>
+        ///     A free cursor outside the window still builds the reticle ray, so an aimless edge binds through it where
+        ///     a human's click would reach another window. Null while the cursor is captured or on screen.
+        /// </summary>
+        public static string? DescribeOffScreenCursor(in CursorComponent cursor, int pixelWidth, int pixelHeight)
+        {
+            if (cursor.CursorState != CursorState.Free)
+                return null;
+
+            Vector2 position = cursor.Position;
+
+            if (position.x >= 0f && position.x <= pixelWidth && position.y >= 0f && position.y <= pixelHeight)
+                return null;
+
+            Vector2 imagePoint = UiScreenGeometry.ScreenToImagePoint(position);
+
+            return $"the free cursor is outside the window at image pixel ({imagePoint.x:F0}, {imagePoint.y:F0}) (screen {pixelWidth}x{pixelHeight}); "
+                   + "the edge bound through the ray of that off-screen pixel, which a human's click there could not reach: aim explicitly (entityId or x/y/z), or lock the cursor";
         }
 
         private static string EventTypeName(PointerEventType eventType) =>

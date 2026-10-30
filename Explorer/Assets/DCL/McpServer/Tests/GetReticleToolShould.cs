@@ -88,6 +88,33 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void FlagACursorOutsideTheWindow()
+        {
+            agent.InstallReticleProbe(static () =>
+            {
+                ReticleReading reading = SceneEntityReading();
+                reading.PointerImagePoint = new Vector2(-604f, 1175f);
+                return reading;
+            });
+
+            McpToolResult result = Execute();
+
+            var structured = (JObject)result.Payload["structuredContent"]!;
+            Assert.That(structured["cursor"]!["onScreen"]!.Value<bool>(), Is.False);
+            Assert.That(structured["cursor"]!["center"]!["x"]!.Value<float>(), Is.EqualTo(0f), "the center is clamped, which is why the flag exists");
+            Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain("outside the window"));
+        }
+
+        [Test]
+        public void ReportTheCursorOnScreenWhenItIs()
+        {
+            agent.InstallReticleProbe(static () => SceneEntityReading());
+
+            var structured = (JObject)Execute().Payload["structuredContent"]!;
+            Assert.That(structured["cursor"]!["onScreen"]!.Value<bool>(), Is.True);
+        }
+
+        [Test]
         public void KeepTheOutputSchemaInSyncWithTheStructuredPayload()
         {
             agent.InstallReticleProbe(static () => SceneEntityReading());

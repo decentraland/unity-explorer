@@ -227,7 +227,8 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.Button, Is.EqualTo(InputAction.IaPrimary));
             Assert.That(result.Warning, Does.Contain("pet_down/primary"));
             Assert.That(result.Warning, Does.Contain("pet_down/pointer"), "the entries the entity listens for are named");
-            Assert.That(result.Warning, Does.Contain("targeted"), "an entity-targeted edge reaches nobody else");
+            Assert.That(result.Warning, Does.Contain("wrote pet_down/primary to the entity"), "the pipeline writes every edge to the hovered entity, declared or not");
+            Assert.That(result.Warning, Does.Contain("no broadcast"), "a result written to the entity suppresses the root broadcast");
             Assert.That(result.ToJson()["warning"]!.Value<string>(), Is.EqualTo(result.Warning));
         }
 
@@ -255,7 +256,35 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.Hit, Is.True);
             Assert.That(result.Button, Is.EqualTo(InputAction.IaSecondary));
             Assert.That(result.Warning, Does.Contain("pet_down/secondary"));
-            Assert.That(result.Warning, Does.Contain("scene root received"), "an aimless edge the entity ignored went out as a broadcast");
+            Assert.That(result.Warning, Does.Contain("no broadcast"), "the hovered entity consumed the aimless edge, so the root heard nothing");
+        }
+
+        [Test]
+        public void WarnWhenAnAimlessHitBoundThroughAnOffWindowCursor()
+        {
+            world.Add(cameraEntity, new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(-604f, 1175f) });
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Warning, Does.Contain("outside the window"));
+            Assert.That(result.Warning, Does.Contain("pet_down/secondary"), "the undeclared-entry warning is kept beside it");
+        }
+
+        [Test]
+        public void DescribeNoOffScreenCursorWhileCapturedOrOnScreen()
+        {
+            var captured = new CursorComponent { CursorState = CursorState.Locked, Position = new Vector2(-10f, -10f) };
+            var onScreen = new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(10f, 10f) };
+            var offScreen = new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(2050f, 10f) };
+
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in captured, 2044, 1150), Is.Null, "a captured cursor builds the ray from the screen centre");
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in onScreen, 2044, 1150), Is.Null);
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in offScreen, 2044, 1150), Does.Contain("screen 2044x1150"));
         }
 
         private void SetCurrentSceneDefinitionId(string id) =>
