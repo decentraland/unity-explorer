@@ -5,7 +5,6 @@ using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.ECSComponents;
-using DCL.Ipfs;
 using DCL.Multiplayer.SDK.Components;
 using DCL.SDKComponents.SceneWearables.Systems;
 using ECS.LifeCycle.Components;
@@ -53,7 +52,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            system = new PropagateSceneWearablesToAvatarsSystem(world, SceneDataSub(SCENE_ID), sceneStateProvider, entitiesMap, globalWorld);
+            system = new PropagateSceneWearablesToAvatarsSystem(world, sceneStateProvider, entitiesMap, globalWorld);
         }
 
         protected override void OnTearDown()
@@ -63,10 +62,10 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
-        public void ReplaceWearablesWithCatalogAndOwnSceneWearablesOnly()
+        public void ReplaceWearablesWithCatalogAndSceneWearables()
         {
             // Arrange
-            CreateScenePlayerAvatarShape(CATALYST_WEARABLE, OTHER_SCENE_WEARABLE, SCENE_WEARABLE);
+            CreateScenePlayerAvatarShape(CATALYST_WEARABLE, SCENE_WEARABLE);
 
             // Act
             system.Update(0);
@@ -105,21 +104,6 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             Assert.IsEmpty(sceneOverride.Wearables);
             Assert.AreEqual(BodyShape.FEMALE, sceneOverride.BodyShape);
             Assert.IsTrue(sceneOverride.IsDirty);
-        }
-
-        [Test]
-        public void KeepProfileWearablesWhenOnlyOtherScenesWearablesAreListed()
-        {
-            // Arrange
-            CreateScenePlayerAvatarShape(OTHER_SCENE_WEARABLE);
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            SceneAvatarShapeOverride sceneOverride = GetOverride();
-            Assert.IsTrue(sceneOverride.IsEmpty);
-            Assert.IsFalse(sceneOverride.IsDirty);
         }
 
         [Test]
@@ -285,7 +269,6 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             EndFrame();
             ClearOverrideDirtyFlag();
 
-            pbAvatarShape.Wearables.Add(OTHER_SCENE_WEARABLE);
             pbAvatarShape.IsDirty = true;
 
             // Act
@@ -468,8 +451,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
                     new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY, globalPlayerEntity)),
             };
 
-            using var otherSceneSystem = new PropagateSceneWearablesToAvatarsSystem(otherSceneWorld, SceneDataSub(OTHER_SCENE_ID), otherSceneStateProvider,
-                otherEntitiesMap, globalWorld);
+            using var otherSceneSystem = new PropagateSceneWearablesToAvatarsSystem(otherSceneWorld, otherSceneStateProvider, otherEntitiesMap, globalWorld);
 
             otherSceneSystem.Update(0);
             ClearOverrideDirtyFlag();
@@ -502,7 +484,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void ApplyAnAlreadyPresentAvatarShapeWhenTheRemotePlayerArrives()
         {
             // Arrange
-            CreateRemoteAvatarShape(CATALYST_WEARABLE, OTHER_SCENE_WEARABLE, SCENE_WEARABLE);
+            CreateRemoteAvatarShape(CATALYST_WEARABLE, SCENE_WEARABLE);
             system.Update(0);
             EndFrame();
 
@@ -537,7 +519,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void NotAddOverrideToRemotePlayerWhenNothingIsOverridden()
         {
             // Arrange
-            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape(OTHER_SCENE_WEARABLE);
+            PBAvatarShape pbAvatarShape = CreateRemoteAvatarShape();
             pbAvatarShape.Name = "Scene name";
             pbAvatarShape.ExpressionTriggerId = "wave";
             CreateRemoteBridgeEntity(globalRemoteEntity);
@@ -810,13 +792,6 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             SceneAvatarShapeOverride strangerOverride = GetOverride(stranger);
             CollectionAssert.AreEqual(new[] { new URN(OTHER_SCENE_WEARABLE) }, strangerOverride.Wearables);
             Assert.IsFalse(strangerOverride.IsDirty);
-        }
-
-        private static ISceneData SceneDataSub(string sceneId)
-        {
-            ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition(sceneId, new SceneMetadata()));
-            return sceneData;
         }
 
         /// <summary>

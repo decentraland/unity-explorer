@@ -842,7 +842,7 @@ All three skip entities with `DeleteEntityIntention`, and all three skip entitie
 
 1. `RemoveComponentOnPlayerDisconnect` — entity has `DeleteEntityIntention` and `PlayerCRDTEntity`, excluding the host (`PlayerComponent`). Sends `DeleteEntityIntention` to the matching scene-world entity, frees the reserved ID, removes `PlayerCRDTEntity`.
 2. `RemoveComponent` — entity has `PlayerCRDTEntity` but no `Profile` — covers the case where the profile was lost but the entity wasn't deleted yet. Same teardown as (1).
-3. `ModifyPlayerScene` — entity has `PlayerCRDTEntity` and `CharacterTransform`. Re-resolves the current scene via `IScenesCache.TryGetByParcel(characterTransform.ParcelPosition())`. On change, detaches from the old scene (delete the old scene-world entity) and attaches to the new scene by creating a new scene-world entity with `PlayerSceneCRDTEntity(reservedId)`.
+3. `ModifyPlayerScene` — entity has `PlayerCRDTEntity` and `CharacterTransform`. Re-resolves the current scene via `IScenesCache.TryGetByParcel(characterTransform.ParcelPosition())`. On change, detaches from the old scene (delete the old scene-world entity) and attaches to the new scene by creating a new scene-world entity with `PlayerSceneCRDTEntity(reservedId, globalEntity)`.
 4. `AddPlayerCRDTEntity` — entity has `Profile` and is missing `PlayerCRDTEntity`. Reserves the next ID (or `PLAYER_ENTITY` if it's the host) and attaches `PlayerCRDTEntity(id)`, then resolves the current scene.
 
 > **Note:** `globalPlayerCRDTEntity.AssignToScene` / `RemoveFromScene` set `IsDirty` — downstream systems (profile propagation, writer systems) use that to force a re-write when a player crosses a scene boundary.
@@ -858,7 +858,7 @@ Position is stored as world coordinates at this stage — the scene-side writer 
 
 **`AvatarEmoteCommandPropagationSystem`** — `PresentationSystemGroup`, `[UpdateBefore(CharacterEmoteSystem)]`. When a global-world entity has `CharacterEmoteIntent` and `PlayerCRDTEntity`, resolves the emote URN against `IEmoteStorage` (to read the looping flag), then writes (or adds) an `AvatarEmoteCommandComponent` on the scene-world entity with `IsDirty = true`.
 
-**`CharacterDataPropagationUtility`** also exposes `PropagateGlobalPlayerToScenePlayer(globalWorld, globalPlayerEntity, sceneFacade)` — called once at scene startup for the **host** player. It writes into `sceneFacade.PersistentEntities.Player` (the pre-allocated host entity in the scene's world, identity `SpecialEntitiesID.PLAYER_ENTITY`) rather than creating a new entity, and tags it with `PlayerSceneCRDTEntity(PLAYER_ENTITY)` so scene-world writer systems emit host data through the same pipeline.
+**`CharacterDataPropagationUtility`** also exposes `PropagateGlobalPlayerToScenePlayer(globalWorld, globalPlayerEntity, sceneFacade)` — called once at scene startup for the **host** player. It writes into `sceneFacade.PersistentEntities.Player` (the pre-allocated host entity in the scene's world, identity `SpecialEntitiesID.PLAYER_ENTITY`) rather than creating a new entity, and tags it with `PlayerSceneCRDTEntity(PLAYER_ENTITY, globalPlayerEntity)` so scene-world writer systems emit host data through the same pipeline.
 
 ### Scene-world side: CRDT writer systems
 

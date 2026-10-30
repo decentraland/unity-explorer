@@ -69,7 +69,7 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, in CRDTEntity crdtEntity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            // A player's entity is a real avatar, not an NPC
+            // A player's entity is a real avatar, not an NPC.
             if (SpecialEntitiesID.IsAnyPlayerEntity(crdtEntity)) return;
 
             // We have to create a global transform to hold the CharacterTransform. Using the Transform from the TransformComponent

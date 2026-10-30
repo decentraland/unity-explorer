@@ -6,7 +6,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
@@ -34,15 +33,13 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly World globalWorld;
-        private readonly string sceneWearableUrnPrefix;
 
-        internal PropagateSceneWearablesToAvatarsSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider,
+        internal PropagateSceneWearablesToAvatarsSystem(World world, ISceneStateProvider sceneStateProvider,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World globalWorld) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.entitiesMap = entitiesMap;
             this.globalWorld = globalWorld;
-            sceneWearableUrnPrefix = SceneWearableDTOFactory.GetUrnPrefix(sceneData.SceneEntityDefinition.id);
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -134,7 +131,6 @@ namespace DCL.SDKComponents.SceneWearables.Systems
             if (World.TryGet(entity, out SceneWearablesApplied applied) && applied.GlobalEntity != target)
                 ClearOverride(applied.GlobalEntity);
 
-            WarnForeignSceneWearables(pbAvatarShape.Wearables);
             CopyOverride(target, pbAvatarShape);
             pbAvatarShape.IsDirty = false;
 
@@ -202,61 +198,28 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
         private bool SyncWearables(RepeatedField<string> wearables, List<URN> target)
         {
-            var allowedCount = 0;
-            var changed = false;
+            int count = Math.Min(wearables.Count, MAX_PLAYER_WEARABLES);
+            bool changed = count != target.Count;
 
-            for (var i = 0; i < wearables.Count; i++)
-            {
-                string wearable = wearables[i];
+            for (var i = 0; !changed && i < count; i++)
+                changed = !string.Equals(target[i].ToString(), wearables[i], StringComparison.OrdinalIgnoreCase);
 
-                if (!IsAllowedWearable(wearable)) continue;
+            if (!changed) return false;
 
-                if (allowedCount < MAX_PLAYER_WEARABLES
-                    && (allowedCount >= target.Count || !string.Equals(target[allowedCount].ToString(), wearable, StringComparison.OrdinalIgnoreCase)))
-                    changed = true;
-
-                allowedCount++;
-            }
-
-            if (allowedCount > MAX_PLAYER_WEARABLES)
-                ReportHub.LogWarning(GetReportData(), $"AvatarShape on a player has {allowedCount} applicable wearables, only the first {MAX_PLAYER_WEARABLES} apply");
-
-            if (!changed && Math.Min(allowedCount, MAX_PLAYER_WEARABLES) == target.Count)
-                return false;
+            if (wearables.Count > MAX_PLAYER_WEARABLES)
+                ReportHub.LogWarning(GetReportData(), $"AvatarShape on a player has {wearables.Count} wearables, only the first {MAX_PLAYER_WEARABLES} apply");
 
             target.Clear();
 
-            for (var i = 0; i < wearables.Count && target.Count < MAX_PLAYER_WEARABLES; i++)
-                if (IsAllowedWearable(wearables[i]))
-                    target.Add(new URN(wearables[i]));
+            for (var i = 0; i < count; i++)
+                target.Add(new URN(wearables[i]));
 
             return true;
         }
 
-        private bool OverridesAnything(PBAvatarShape pbAvatarShape)
-        {
-            if (pbAvatarShape.HasBodyShape || pbAvatarShape.HasShowOnlyWearables
-                || pbAvatarShape.SkinColor != null || pbAvatarShape.HairColor != null || pbAvatarShape.EyeColor != null)
-                return true;
-
-            RepeatedField<string> wearables = pbAvatarShape.Wearables;
-
-            for (var i = 0; i < wearables.Count; i++)
-                if (IsAllowedWearable(wearables[i]))
-                    return true;
-
-            return false;
-        }
-
-        private void WarnForeignSceneWearables(RepeatedField<string> wearables)
-        {
-            for (var i = 0; i < wearables.Count; i++)
-                if (!IsAllowedWearable(wearables[i]))
-                    ReportHub.LogWarning(GetReportData(), $"Scene wearable '{wearables[i]}' skipped: it belongs to another scene");
-        }
-
-        private bool IsAllowedWearable(string pointer) =>
-            !SceneWearableDTOFactory.IsSceneWearableUrn(pointer) || pointer.StartsWith(sceneWearableUrnPrefix, StringComparison.OrdinalIgnoreCase);
+        private static bool OverridesAnything(PBAvatarShape pbAvatarShape) =>
+            pbAvatarShape.HasBodyShape || pbAvatarShape.HasShowOnlyWearables || pbAvatarShape.Wearables.Count > 0
+            || pbAvatarShape.SkinColor != null || pbAvatarShape.HairColor != null || pbAvatarShape.EyeColor != null;
 
         private static Color? ToColor(Color3? color) =>
             color == null ? null : new Color(color.R, color.G, color.B);

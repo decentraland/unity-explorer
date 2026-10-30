@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage, loadFromLocalScene));
 
-            PropagateSceneWearablesToAvatarsSystem propagateSystem = PropagateSceneWearablesToAvatarsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider,
+            PropagateSceneWearablesToAvatarsSystem propagateSystem = PropagateSceneWearablesToAvatarsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider,
                 sharedDependencies.EntitiesMap, globalWorld);
             sceneIsCurrentListeners.Add(propagateSystem);
             finalizeWorldSystems.Add(propagateSystem);

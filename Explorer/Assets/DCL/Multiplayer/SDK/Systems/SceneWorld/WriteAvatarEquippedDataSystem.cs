@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         [None(typeof(DeleteEntityIntention))]
         private void RetryWearablesVisibility([Data] float dt, Entity entity, ref WearablesVisibilityPending pending, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
         {
-            // A changed profile is written by UpdateAvatarEquippedData later in this frame
+            // A dirty profile gets a full write instead of the retry.
             if (profile.IsDirty || TryWrite(crdtEntity.CRDTEntity, profile, false))
             {
                 World.Remove<WearablesVisibilityPending>(entity);
@@ -87,57 +87,47 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
         }
 
-        /// <returns>Whether the visibility was resolved and written</returns>
+        /// <returns>Whether the visibility was resolved and written.</returns>
         private bool TryWrite(CRDTEntity crdtEntity, SDKProfile profile, bool writeUnresolved)
         {
-            List<bool> visibility = ListPool<bool>.Get();
+            using PooledObject<List<bool>> _ = ListPool<bool>.Get(out List<bool> visibility);
             bool resolved = TryResolveVisibility(profile.Avatar, visibility);
 
             if (resolved || writeUnresolved)
                 ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, (SDKProfile profile, List<bool>? visibility)>(static (pbComponent, data) =>
                     Fill(pbComponent, data.profile, data.visibility), crdtEntity, (profile, resolved ? visibility : null));
 
-            ListPool<bool>.Release(visibility);
             return resolved;
         }
 
         private bool TryResolveVisibility(SDKProfile.SDKAvatar avatar, List<bool> visibility)
         {
             IReadOnlyList<URN> pointers = avatar.ShortenedWearables;
-            List<IWearable> byPointer = WearableComponentsUtils.WEARABLES_POOL.Get()!;
-            List<IWearable> loaded = WearableComponentsUtils.WEARABLES_POOL.Get()!;
-            var resolved = true;
+            using PooledObject<List<IWearable>> byPointerScope = WearableComponentsUtils.WEARABLES_POOL.Get(out List<IWearable> byPointer);
+            using PooledObject<List<IWearable>> loadedScope = WearableComponentsUtils.WEARABLES_POOL.Get(out List<IWearable> loaded);
 
             for (var i = 0; i < pointers.Count; i++)
             {
                 if (!wearableStorage.TryGetElement(pointers[i], out IWearable wearable)
                     || wearable.Model is { Succeeded: false, Exception: null })
-                {
-                    resolved = false;
-                    break;
-                }
+                    return false;
 
                 byPointer.Add(wearable);
 
-                // A wearable that failed to load is not rendered and hides nothing
+                // A wearable that failed to load is not rendered and hides nothing.
                 if (wearable.Model.Succeeded)
                     loaded.Add(wearable);
             }
 
-            if (resolved)
-            {
-                var resolution = new HideWearablesResolution(avatar.ForceRender);
-                WearableComponentsUtils.ExtractVisibleWearables(avatar.BodyShape, loaded, ref resolution);
+            var resolution = new HideWearablesResolution(avatar.ForceRender);
+            WearableComponentsUtils.ExtractVisibleWearables(avatar.BodyShape, loaded, ref resolution);
 
+            if (resolution.VisibleWearables is { } visibleWearables)
                 for (var i = 0; i < byPointer.Count; i++)
-                    visibility.Add(IsVisible(byPointer, i, resolution.VisibleWearables!));
+                    visibility.Add(IsVisible(byPointer, i, visibleWearables));
 
-                resolution.Release();
-            }
-
-            WearableComponentsUtils.WEARABLES_POOL.Release(loaded);
-            WearableComponentsUtils.WEARABLES_POOL.Release(byPointer);
-            return resolved;
+            resolution.Release();
+            return true;
         }
 
         /// <summary>

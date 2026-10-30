@@ -26,7 +26,10 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string UPPERCASE_HAT_HASH = "bafkreicrownhash";
         private const string CATALYST_WEARABLE = "urn:decentraland:off-chain:base-avatars:eyes_00";
         private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH + "-224e2dcb";
+        private const string UNSEEDED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-bafkreimissinghash-00000000";
+        private const string OTHER_SCENE_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":bafkreiotherscene-" + HAT_HASH + "-224e2dcb";
 
+        private ISceneData sceneData = null!;
         private WearableStorage wearableStorage = null!;
         private IPerformanceBudget unloadBudget = null!;
 
@@ -49,7 +52,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
                              return true;
                          });
 
-            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData = Substitute.For<ISceneData>();
             sceneData.SceneShortInfo.Returns(new SceneShortInfo(Vector2Int.zero, SCENE_ID));
             sceneData.SceneContent.Returns(sceneContent);
 
@@ -115,6 +118,26 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         {
             // Arrange
             var pbAvatarShape = new PBAvatarShape { Wearables = { "wearables/kilt/kilt.json", CATALYST_WEARABLE, "not-a-urn" }, IsDirty = true };
+
+            if (onPlayerEntity)
+                world.Create(pbAvatarShape, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            else
+                world.Create(pbAvatarShape);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { CATALYST_WEARABLE }, pbAvatarShape.Wearables);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DropSceneWearableUrnsNotSeededByThisScene(bool onPlayerEntity)
+        {
+            // Arrange
+            wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, HAT_PATH, OTHER_SCENE_URN, "hat", HAT_HASH, false), qualifiedForUnloading: false);
+            var pbAvatarShape = new PBAvatarShape { Wearables = { OTHER_SCENE_URN, CATALYST_WEARABLE, UNSEEDED_URN }, IsDirty = true };
 
             if (onPlayerEntity)
                 world.Create(pbAvatarShape, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));

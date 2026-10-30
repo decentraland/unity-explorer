@@ -61,10 +61,9 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 if (!SceneWearableDTOFactory.IsSceneWearablePath(wearable))
                 {
                     if (!wearable.StartsWith("urn", StringComparison.OrdinalIgnoreCase))
-                    {
-                        ReportHub.LogWarning(GetReportData(), $"AvatarShape wearable '{wearable}' skipped: it is neither a URN nor a '.glb' path");
-                        wearables.RemoveAt(i);
-                    }
+                        Skip(wearables, i, "it is neither a URN nor a '.glb' path");
+                    else if (SceneWearableDTOFactory.IsSceneWearableUrn(wearable) && !IsSeededByThisScene(wearable))
+                        Skip(wearables, i, "it is not a wearable seeded by this scene");
 
                     continue;
                 }
@@ -77,6 +76,15 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                 else
                     wearables.RemoveAt(i);
             }
+        }
+
+        private bool IsSeededByThisScene(string urn) =>
+            urn.StartsWith(sceneWearableUrnPrefix, StringComparison.OrdinalIgnoreCase) && wearableStorage.TryGetElement(urn, out _);
+
+        private void Skip(RepeatedField<string> wearables, int index, string reason)
+        {
+            ReportHub.LogWarning(GetReportData(), $"Scene wearable '{wearables[index]}' skipped: {reason}");
+            wearables.RemoveAt(index);
         }
 
         private void Seed(URN urn, string path, string category, string hash)

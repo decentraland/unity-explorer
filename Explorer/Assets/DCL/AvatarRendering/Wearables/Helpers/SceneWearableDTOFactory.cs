@@ -109,7 +109,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return false;
             }
 
-            // The path tells apart one model reused in folders with different textures
+            // The path tells apart one model reused in folders with different textures.
             urn = new URN($"{GetUrnPrefix(definition.id)}{hash}-{GetPathHash(path).ToString("x8")}");
             return true;
         }
