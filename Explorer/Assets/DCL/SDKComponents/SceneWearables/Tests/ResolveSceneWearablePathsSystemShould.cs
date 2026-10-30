@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string UPPERCASE_HAT_PATH = "assets/wearables/Crown_HAT.GLB";
         private const string UPPERCASE_HAT_HASH = "bafkreicrownhash";
         private const string CATALYST_WEARABLE = "urn:decentraland:off-chain:base-avatars:eyes_00";
-        private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH;
+        private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH + "-224e2dcb";
 
         private WearableStorage wearableStorage = null!;
         private IPerformanceBudget unloadBudget = null!;
@@ -191,7 +191,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             system.Update(0);
 
             // Assert
-            CollectionAssert.AreEqual(new[] { SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + UPPERCASE_HAT_HASH }, pbAvatarShape.Wearables);
+            CollectionAssert.AreEqual(new[] { SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + UPPERCASE_HAT_HASH + "-afa65d20" }, pbAvatarShape.Wearables);
         }
 
         [Test]

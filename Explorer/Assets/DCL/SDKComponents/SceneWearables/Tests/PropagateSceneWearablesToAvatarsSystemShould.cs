@@ -78,6 +78,19 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         }
 
         [Test]
+        public void ClearAvatarShapeDirtyFlagOnceApplied()
+        {
+            // Arrange
+            PBAvatarShape pbAvatarShape = CreateScenePlayerAvatarShape(SCENE_WEARABLE);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(pbAvatarShape.IsDirty);
+        }
+
+        [Test]
         public void KeepProfileWearablesWhenTheListIsEmpty()
         {
             // Arrange

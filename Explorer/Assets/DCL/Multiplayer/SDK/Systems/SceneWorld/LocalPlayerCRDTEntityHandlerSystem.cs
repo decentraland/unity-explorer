@@ -53,13 +53,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         public override void Initialize()
         {
-            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
-                return;
-
-            Entity playerEntity = persistentEntities.Player;
-            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), localPlayerEntity));
-
-            characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
+            if (globalWorld.TryGet(localPlayerEntity, out Profile? profile))
+                Seed(profile!);
         }
 
         protected override void Update(float t)
@@ -67,8 +62,11 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
-            // Also catches a replaced Profile instance whose IsDirty is already reset
-            if (profile!.IsDirty || !World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile) || !sdkProfile!.IsCopyOf(profile))
+            // No SDKProfile means Initialize ran before the local profile existed.
+            // A replaced Profile instance is caught even when its IsDirty is already reset.
+            if (!World.TryGet(persistentEntities.Player, out SDKProfile? sdkProfile))
+                Seed(profile!);
+            else if (profile!.IsDirty || !sdkProfile!.IsCopyOf(profile))
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
             if (!globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))
@@ -80,6 +78,14 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 sdkTalking.Set(talking.IsTalking);
             else
                 World.Add(persistentEntities.Player, new SDKTalking(talking.IsTalking));
+        }
+
+        private void Seed(Profile profile)
+        {
+            Entity playerEntity = persistentEntities.Player;
+            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), localPlayerEntity));
+
+            characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, playerEntity);
         }
     }
 }

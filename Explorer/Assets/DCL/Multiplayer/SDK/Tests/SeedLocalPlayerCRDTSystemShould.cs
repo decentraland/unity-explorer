@@ -82,6 +82,25 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [Test]
+        public void SeedPlayerWhenProfileArrivesAfterInitialize()
+        {
+            // Arrange
+            Profile profile = globalWorld.Get<Profile>(localPlayerEntity);
+            globalWorld.Remove<Profile>(localPlayerEntity);
+            system.Initialize();
+            globalWorld.Add(localPlayerEntity, profile);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
+            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
+            Assert.AreEqual(localPlayerEntity, crdtEntity.GlobalEntity);
+            Assert.AreEqual(FAKE_USER_ID, world.Get<SDKProfile>(persistentPlayerEntity).UserId);
+        }
+
+        [Test]
         public void LeaveTalkingUnsetWithoutNearbyVoiceChat()
         {
             // Act

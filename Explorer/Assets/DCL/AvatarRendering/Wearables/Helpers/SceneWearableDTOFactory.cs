@@ -18,6 +18,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private const string GLB_EXTENSION = ".glb";
         private const string WEARABLE_ENTITY_TYPE = "wearable";
         private const string ENTITY_VERSION = "v3";
+        private const uint FNV_OFFSET_BASIS = 2166136261;
+        private const uint FNV_PRIME = 16777619;
 
         private static readonly string[] GLB_CATEGORIES =
         {
@@ -107,7 +109,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return false;
             }
 
-            urn = new URN($"{GetUrnPrefix(definition.id)}{hash}");
+            // The path tells apart one model reused in folders with different textures
+            urn = new URN($"{GetUrnPrefix(definition.id)}{hash}-{GetPathHash(path).ToString("x8")}");
             return true;
         }
 
@@ -152,6 +155,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             };
 
             return dto;
+        }
+
+        /// <summary>
+        ///     FNV-1a of the case-insensitive path: stable across sessions and clients, unlike <see cref="string.GetHashCode()" />.
+        /// </summary>
+        private static uint GetPathHash(string path)
+        {
+            uint hash = FNV_OFFSET_BASIS;
+
+            foreach (char c in path)
+            {
+                hash ^= char.ToLowerInvariant(c);
+                hash *= FNV_PRIME;
+            }
+
+            return hash;
         }
 
         private static ContentDefinition[] CollectFolderContent(ContentDefinition[] sceneContent, string mainPath, string mainHash)

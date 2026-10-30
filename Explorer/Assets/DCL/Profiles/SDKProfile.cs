@@ -26,6 +26,9 @@ namespace DCL.Profiles
         public bool IsCopyOf(Profile profile) =>
             ReferenceEquals(source, profile);
 
+        public void ReleaseSource() =>
+            source = null;
+
         public void OverrideWith(Profile profile)
         {
             source = profile;

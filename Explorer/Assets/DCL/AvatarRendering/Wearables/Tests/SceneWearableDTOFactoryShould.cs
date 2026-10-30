@@ -21,6 +21,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private const string CONTENT_BASE_URL = "http://127.0.0.1:8000/content/contents/";
         private const string HAT_PATH = "assets/wearables/cap_hat.glb";
         private const string HAT_HASH = "bafkreihathash";
+        private const string HAT_PATH_HASH = "224e2dcb";
+        private const string RED_HAT_PATH = "assets/wearables/red/cap_hat.glb";
 
         private ISceneData sceneData = null!;
         private SceneEntityDefinition definition = null!;
@@ -38,6 +40,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
                     new ContentDefinition { file = HAT_PATH, hash = HAT_HASH },
                     new ContentDefinition { file = "assets/wearables/cap_texture.png", hash = "bafkreitexturehash" },
                     new ContentDefinition { file = "assets/wearables/nested/other.png", hash = "bafkreinestedhash" },
+                    new ContentDefinition { file = RED_HAT_PATH, hash = HAT_HASH },
+                    new ContentDefinition { file = "assets/wearables/red/cap_texture.png", hash = "bafkreiredtexturehash" },
                     new ContentDefinition { file = "assets/models/tree.glb", hash = "bafkreitreehash" },
                     new ContentDefinition { file = "main.js", hash = "bafkreimainhash" },
                 },
@@ -159,7 +163,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             // Assert
             Assert.IsTrue(created);
-            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}", urn.ToString());
+            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}-{HAT_PATH_HASH}", urn.ToString());
             Assert.AreEqual(5, urn.ToString().Split(':').Length);
             Assert.AreEqual(urn, urn.Shorten());
 
@@ -195,8 +199,31 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             // Assert
             Assert.IsTrue(created);
-            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}", urn.ToString());
+            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}-{HAT_PATH_HASH}", urn.ToString());
             Assert.AreEqual(CONTENT_BASE_URL, dto!.ContentDownloadUrl);
+        }
+
+        [Test]
+        public void GiveSameModelInAnotherFolderItsOwnUrn()
+        {
+            // Act
+            TryCreate(HAT_PATH, false, out URN urn, out WearableDTO? _);
+            TryCreate(RED_HAT_PATH, false, out URN redUrn, out WearableDTO? redDto);
+
+            // Assert
+            Assert.AreNotEqual(urn, redUrn);
+            CollectionAssert.AreEqual(new[] { RED_HAT_PATH, "assets/wearables/red/cap_texture.png" }, Array.ConvertAll(redDto!.content, c => c.file));
+        }
+
+        [Test]
+        public void KeepUrnForPathInAnotherCase()
+        {
+            // Act
+            TryCreate(HAT_PATH, false, out URN urn, out WearableDTO? _);
+            TryCreate(HAT_PATH.ToUpperInvariant(), false, out URN upperUrn, out WearableDTO? _);
+
+            // Assert
+            Assert.AreEqual(urn, upperUrn);
         }
 
         [Test]

@@ -136,6 +136,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
 
             WarnForeignSceneWearables(pbAvatarShape.Wearables);
             CopyOverride(target, pbAvatarShape);
+            pbAvatarShape.IsDirty = false;
 
             World.AddOrSet(entity, new SceneWearablesApplied(target, bridgeEntity));
         }
