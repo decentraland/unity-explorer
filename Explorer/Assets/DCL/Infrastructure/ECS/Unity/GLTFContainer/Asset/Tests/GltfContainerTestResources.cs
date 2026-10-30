@@ -63,6 +63,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             assetBundleData.Asset?.Dispose();
             shaderAssetBundleData.Asset?.Dispose();
+            assetBundleData = default;
+            shaderAssetBundleData = default;
         }
     }
 }

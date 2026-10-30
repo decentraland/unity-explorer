@@ -62,6 +62,7 @@ namespace Global.Dynamic
         private readonly string upstreamCdnUrl;
         private readonly string cacheRoot;
         private readonly bool jitContentDigest;
+        private readonly AbgenConversionMetrics metrics;
 
         // System.Diagnostics.Process cannot spawn under IL2CPP (Win32Exception "Native error= Success"),
         // so player builds hold the child as a raw OS handle/pid; only the editor's Mono runtime keeps
@@ -81,7 +82,7 @@ namespace Global.Dynamic
 
         public string BaseUrl { get; }
 
-        private AbgenSidecar(string baseUrl, string executablePath, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
+        private AbgenSidecar(string baseUrl, string executablePath, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest, AbgenConversionMetrics metrics)
         {
             BaseUrl = baseUrl;
             this.executablePath = executablePath;
@@ -90,6 +91,7 @@ namespace Global.Dynamic
             this.upstreamCdnUrl = upstreamCdnUrl;
             this.cacheRoot = cacheRoot;
             this.jitContentDigest = jitContentDigest;
+            this.metrics = metrics;
         }
 
         public static string StreamingAssetsExecutablePath =>
@@ -121,7 +123,7 @@ namespace Global.Dynamic
         ///     path-derived hashes, which never change.
         ///     </para>
         /// </summary>
-        public static AbgenSidecar? TryCreate(string baseUrl, string baseDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
+        public static AbgenSidecar? TryCreate(string baseUrl, string baseDomain, AbgenConversionMetrics metrics, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
         {
             string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
 
@@ -133,7 +135,8 @@ namespace Global.Dynamic
                 realmRootOverride?.TrimEnd('/') ?? $"https://peer.{baseDomain}",
                 $"https://ab-cdn.{baseDomain}",
                 cacheRoot ?? Path.Combine(Application.persistentDataPath, realmRootOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
-                jitContentDigest);
+                jitContentDigest,
+                metrics);
         }
 
         /// <summary>
@@ -164,7 +167,7 @@ namespace Global.Dynamic
                 return true;
             }
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — the scene loads as raw GLTFs");
+            metrics.OnMilestone($"abgen did not answer on {BaseUrl} within {HEALTH_TIMEOUT_MS / 1000}s of launch");
             Dispose();
             return false;
         }
@@ -225,13 +228,13 @@ namespace Global.Dynamic
                     $"it cannot convert — stop pid {resident.pid}, then relaunch");
 
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"adopting the abgen v{resident.version} already serving {catalystContentUrl} on {BaseUrl}");
-            AbgenConversionMetrics.INSTANCE.OnMilestone("reusing the abgen already serving this scene");
+            metrics.OnMilestone("reusing the abgen already serving this scene");
             return ResidentServer.Adopted;
         }
 
         /// <summary>
         ///     Records that <paramref name="what" /> holds <see cref="BaseUrl" /> and that <paramref name="action" />
-        ///     is what would free it, and opens the AB panel so the reason is seen rather than left in a log.
+        ///     is what would free it, as rows the raw-GLTF verdict then follows on the AB panel.
         ///     Always <see cref="ResidentServer.Blocked" /> — the resident is left running and untouched.
         /// </summary>
         private ResidentServer Unusable(string what, string action)
@@ -239,9 +242,8 @@ namespace Global.Dynamic
             ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
                 $"{BaseUrl} is held by {what}; this scene loads as raw GLTFs — {action}");
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"{what} holds {BaseUrl} — the scene loads as raw GLTFs");
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"to use asset bundles: {action}");
-            AbgenConversionMetrics.INSTANCE.RequestPanelOpen();
+            metrics.OnMilestone($"{what} holds {BaseUrl}");
+            metrics.OnMilestone($"to use asset bundles: {action}");
             return ResidentServer.Blocked;
         }
 
@@ -320,13 +322,13 @@ namespace Global.Dynamic
 
                 if (entityId == null)
                 {
-                    AbgenConversionMetrics.INSTANCE.OnMilestone("warm-up skipped — could not resolve the scene entity (no scenesUrn or localSceneParcels in the realm's /about)");
+                    metrics.OnMilestone("warm-up skipped — could not resolve the scene entity (no scenesUrn or localSceneParcels in the realm's /about)");
                     ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up skipped: could not resolve the scene entity from the realm's /about");
                     return;
                 }
 
-                AbgenConversionMetrics.INSTANCE.OnWarmUpStarted(entityId);
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up started — converting scene {entityId} in the background");
+                metrics.OnWarmUpStarted(entityId);
+                metrics.OnMilestone($"warm-up started — converting scene {entityId} in the background");
                 ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: converting scene {entityId} — asset bundles are being built in the background");
 
                 var stopwatch = Stopwatch.StartNew();
@@ -350,7 +352,6 @@ namespace Global.Dynamic
                     if (progress == null) continue;
 
                     sawBuildProgress = true;
-                    AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
 
                     if (progress.done != lastDone || progress.total != lastTotal)
                     {
@@ -376,20 +377,22 @@ namespace Global.Dynamic
 
                 if (convertingFile != null)
                 {
-                    AbgenConversionMetrics.INSTANCE.OnProcessed(convertingFile);
+                    metrics.OnProcessed(convertingFile);
                     convertingFile = null;
                 }
 
                 if (manifestRequest.result != UnityWebRequest.Result.Success)
                     throw new IOException($"manifest request failed ({manifestRequest.responseCode}): {manifestRequest.error}");
 
+                CorpusManifest manifest = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text);
+
                 // The progress poll only samples whichever file is converting at each tick, so fast files
                 // leave no row; backfill the panel with the scene's full convertible file list.
-                await ReconcileCensusAsync(entityId, ct);
+                await ReconcileCensusAsync(entityId, manifest, ct);
 
-                AbgenConversionMetrics.INSTANCE.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
+                metrics.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
 
-                AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
+                metrics.OnMilestone(sawBuildProgress
                     ? $"manifest retrieved — asset bundles ready in {stopwatch.Elapsed.TotalSeconds:F1}s"
                     : "asset bundles already converted — manifest served from warm cache");
 
@@ -397,26 +400,24 @@ namespace Global.Dynamic
                     ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {stopwatch.Elapsed.TotalSeconds:F1}s"
                     : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {stopwatch.Elapsed.TotalSeconds:F1}s");
 
-                int exitCode = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode;
-
-                if (exitCode != 0)
+                if (manifest.exitCode != 0)
                 {
-                    AbgenConversionMetrics.INSTANCE.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
+                    metrics.OnMilestone($"some files failed server-side conversion (manifest exitCode {manifest.exitCode})");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {manifest.exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
                 }
             }
             catch (OperationCanceledException)
             {
                 if (convertingFile != null)
-                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+                    metrics.OnCancelled(convertingFile);
             }
             catch (Exception e)
             {
                 if (convertingFile != null)
-                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+                    metrics.OnCancelled(convertingFile);
 
-                AbgenConversionMetrics.INSTANCE.OnWarmUpFailed();
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
+                metrics.OnWarmUpFailed();
+                metrics.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
                 ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up failed — bundles still convert lazily per request");
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
             }
@@ -425,9 +426,10 @@ namespace Global.Dynamic
         /// <summary>
         ///     Backfills the AB panel with every convertible file of the scene entity, sourced from the
         ///     entity definition's content list (readable paths — the manifest only carries hashed artifact
-        ///     names). Best effort: a failure leaves the sampled rows as they are.
+        ///     names). When the manifest reports a failure, each convertible file with no artifact in it is
+        ///     marked failed. Best effort: a failure leaves the sampled rows as they are.
         /// </summary>
-        private async UniTask ReconcileCensusAsync(string entityId, CancellationToken ct)
+        private async UniTask ReconcileCensusAsync(string entityId, CorpusManifest manifest, CancellationToken ct)
         {
             try
             {
@@ -444,12 +446,30 @@ namespace Global.Dynamic
                     if (IsConvertible(entry.file))
                         files.Add(entry.file);
 
-                AbgenConversionMetrics.INSTANCE.ReconcileWarmUpCensus(files);
+                metrics.ReconcileWarmUpCensus(files);
+
+                if (manifest.exitCode == 0) return;
+
+                foreach (EntityContent.FileEntry entry in entity.content)
+                    if (IsConvertible(entry.file) && !HasArtifact(manifest.files, entry.hash))
+                        metrics.OnFailed(entry.file, $"not converted (manifest exitCode {manifest.exitCode})");
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
             }
+        }
+
+        /// <summary>Artifact names are <c>{lowercased content hash}_{digest}_{platform}</c>.</summary>
+        private static bool HasArtifact(string[] artifacts, string contentHash)
+        {
+            string prefix = $"{contentHash.ToLowerInvariant()}_";
+
+            foreach (string artifact in artifacts)
+                if (artifact.StartsWith(prefix, StringComparison.Ordinal))
+                    return true;
+
+            return false;
         }
 
         /// <summary>
@@ -562,31 +582,34 @@ namespace Global.Dynamic
         ///     and <see cref="TryCreate" /> will resolve it; false on an unsupported platform,
         ///     cancellation or a failed download.
         /// </summary>
-        public static async UniTask<bool> EnsurePinnedBinaryAsync(CancellationToken ct)
+        public static async UniTask<bool> EnsurePinnedBinaryAsync(AbgenConversionMetrics metrics, CancellationToken ct)
         {
             if (Platform() == null)
+            {
+                metrics.OnMilestone($"abgen v{PINNED_VERSION} has no release for {Application.platform}");
                 return false;
+            }
 
             try
             {
                 (string target, string sha256) = Platform()!.Value;
-                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256, ct);
+                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256, metrics, ct);
                 return true;
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)
             {
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen download failed ({e.Message}) — retried on the next launch");
+                metrics.OnMilestone($"abgen download failed ({e.Message}) — retried on the next launch");
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
                 return false;
             }
         }
 
-        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256, CancellationToken ct)
+        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256, AbgenConversionMetrics metrics, CancellationToken ct)
         {
             string url = $"https://github.com/decentraland/abgen/releases/download/v{version}/abgen-v{version}-{target}.tar.gz";
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen binary not installed — downloading the pinned release v{version}");
+            metrics.OnMilestone($"abgen binary not installed — downloading the pinned release v{version}");
 
             using UnityWebRequest req = UnityWebRequest.Get(url);
             req.timeout = 600;
@@ -603,7 +626,7 @@ namespace Global.Dynamic
                 if (quarter > lastReportedQuarter && quarter < 4)
                 {
                     lastReportedQuarter = quarter;
-                    AbgenConversionMetrics.INSTANCE.OnMilestone($"downloading abgen v{version} — {quarter * 25}% ({req.downloadedBytes / (1024 * 1024)} MB)");
+                    metrics.OnMilestone($"downloading abgen v{version} — {quarter * 25}% ({req.downloadedBytes / (1024 * 1024)} MB)");
                 }
             }
 
@@ -647,7 +670,7 @@ namespace Global.Dynamic
                 PruneOtherInstalls(binRoot, version);
             });
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed");
+            metrics.OnMilestone($"abgen v{version} installed");
             ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded and installed");
         }
 
@@ -891,9 +914,12 @@ namespace Global.Dynamic
                         continue;
 
                     // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                    // Once supervision gives up, every bundle request fails fast on the dead port and the
+                    // GLTF container falls back to the raw file, so the panel is told the session degraded.
                     if (++restarts > MAX_RESTARTS)
                     {
-                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; the scene loads raw GLTFs from here on");
+                        metrics.OnRawGltfFallback($"the abgen server kept exiting ({MAX_RESTARTS} restarts)");
                         return;
                     }
 
@@ -901,7 +927,8 @@ namespace Global.Dynamic
 
                     if (!Launch())
                     {
-                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; the scene loads raw GLTFs from here on");
+                        metrics.OnRawGltfFallback("the abgen server exited and could not be relaunched");
                         return;
                     }
 
@@ -1025,11 +1052,12 @@ namespace Global.Dynamic
             public string file = null!;
         }
 
-        /// <summary>The corpus manifest's failure indicator (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
+        /// <summary>The corpus manifest's failure indicator and artifact list (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
         [Serializable]
         private class CorpusManifest
         {
             public int exitCode;
+            public string[] files = null!;
         }
 
         /// <summary>The content mapping of a deployed entity (ADR-80 entity schema); the rest of the document is ignored here.</summary>
@@ -1042,6 +1070,7 @@ namespace Global.Dynamic
             public class FileEntry
             {
                 public string file = null!;
+                public string hash = null!;
             }
         }
     }

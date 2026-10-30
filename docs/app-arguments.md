@@ -181,36 +181,13 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
-### `lsd-use-remote-ab`
+### `lsd-raw-gltf`
 **Type:** Bool (presence flag)
-**Description:** Enables the use of remote asset bundles during local scene development (LSD). By default, local scene development relies on locally converted assets; with this flag the explorer can instead fetch already-deployed asset bundles from a remote content server. Only takes effect when local scene development is active (`--local-scene true` together with a valid `--realm` URL). Pair it with either `--lsd-remote-ab-world` or `--lsd-remote-ab-server` to choose where the remote asset bundles are sourced from.
+**Description:** Local scene development only. Skips the embedded [abgen sidecar](abgen-sidecar.md) and loads the scene's raw GLTFs instead of local asset bundles — the way local scene development worked before. Off by default: without it, and with the `alfa-lsd-forced-ab` feature flag on, the scene is served as JIT-converted asset bundles, degrading to raw GLTFs on its own only when the sidecar cannot be installed or started or no manifest can be produced. Ignored outside local scene development.
 
 **Usage:**
 ```bash
---lsd-use-remote-ab
-```
-
----
-
-### `lsd-remote-ab-world`
-**Type:** String (world name)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), sources them from a specific deployed **world**. The value is the world name to pull the asset bundles from. Setting this flag implicitly selects the `World` content server, so it takes precedence over `--lsd-remote-ab-server`. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-world my-world.dcl.eth
-```
-
----
-
-### `lsd-remote-ab-server`
-**Type:** String (`Genesis`, `Goerli`, case-insensitive)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), selects which deployed environment the asset bundles are sourced from — `Genesis` (Genesis City) or `Goerli` (Goerli Plaza). `World` is also accepted, but to target a world you should use `--lsd-remote-ab-world` instead, since it sets the world name as well. Invalid values are ignored. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-server Genesis
---lsd-remote-ab-server Goerli
+--lsd-raw-gltf
 ```
 
 ---

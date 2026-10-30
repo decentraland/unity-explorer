@@ -49,6 +49,7 @@ using DCL.SDKComponents.PhysicsImpulse.Systems;
 using DCL.SDKComponents.SkyboxTime;
 using DCL.Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -160,8 +161,8 @@ namespace Global
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             ILaunchMode launchMode,
-            bool useRemoteAssetBundles,
             bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             World globalWorld,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
@@ -283,7 +284,7 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, useLocalAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs, componentsContainer.ComponentPoolsRegistry.RootContainerTransform()),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useLocalAssetBundles, abgenConversionMetrics, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs, componentsContainer.ComponentPoolsRegistry.RootContainerTransform()),
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.MediaContainer.mediaFactoryBuilder),
@@ -293,7 +294,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
-                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new SceneContentStatsPlugin(),
                 new VisibilityPlugin(),
