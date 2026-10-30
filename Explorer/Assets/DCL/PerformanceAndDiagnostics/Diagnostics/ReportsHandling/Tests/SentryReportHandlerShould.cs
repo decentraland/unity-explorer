@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Networking;
@@ -21,6 +22,54 @@ namespace DCL.Diagnostics.Tests
 
         private static Scope NewScope() =>
             new (new SentryOptions());
+
+        // A real request to a loopback listener is the only way a UnityWebRequestException gets a response code.
+        private static async Task<UnityWebRequestException> NewFailedRequestExceptionAsync(int statusCode)
+        {
+            var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            int port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+
+            var listener = new HttpListener();
+            listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            listener.Start();
+
+            Task serverTask = ServeOneResponseAsync(listener, statusCode);
+
+            try
+            {
+                using UnityWebRequest request = UnityWebRequest.Get($"http://127.0.0.1:{port}/places");
+                UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+                DateTime deadline = DateTime.UtcNow.AddSeconds(10);
+
+                // EditMode tests do not run the player loop, so only a real-time delay is guaranteed to elapse.
+                while (!operation.isDone && DateTime.UtcNow < deadline)
+                    await Task.Delay(20);
+
+                Assert.That(request.responseCode, Is.EqualTo(statusCode), "The loopback listener should have answered the request");
+
+                return new UnityWebRequestException(request);
+            }
+            finally
+            {
+                listener.Stop();
+                listener.Close();
+
+                try { await serverTask; }
+                catch (Exception)
+                {
+                    // A listener stopped before serving faults its pending GetContextAsync, which the assertion above already covers.
+                }
+            }
+        }
+
+        private static async Task ServeOneResponseAsync(HttpListener listener, int statusCode)
+        {
+            HttpListenerContext context = await listener.GetContextAsync().ConfigureAwait(false);
+            context.Response.StatusCode = statusCode;
+            context.Response.Close();
+        }
 
         private static IEnumerable<Exception> NetworkingFailures()
         {
@@ -141,6 +190,35 @@ namespace DCL.Diagnostics.Tests
             @event.SetTag("category", ReportCategory.MULTIPLAYER);
 
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event, isLocalSceneDevelopment: false));
+        }
+
+        [TestCase(502)]
+        [TestCase(525)]
+        public async Task DropTransientGatewayFailuresRegardlessOfCategory(int statusCode)
+        {
+            var @event = new SentryEvent(await NewFailedRequestExceptionAsync(statusCode));
+            @event.SetTag("category", ReportCategory.PLACES);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public async Task DropTransientGatewayFailureWrappedByAnApiException()
+        {
+            var @event = new SentryEvent(new InvalidOperationException("Error fetching search places info:", await NewFailedRequestExceptionAsync(502)));
+            @event.SetTag("category", ReportCategory.UI);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [TestCase(401)]
+        [TestCase(404)]
+        public async Task KeepDefinitiveHttpFailures(int statusCode)
+        {
+            var @event = new SentryEvent(await NewFailedRequestExceptionAsync(statusCode));
+            @event.SetTag("category", ReportCategory.PLACES);
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }
 
         [Test]

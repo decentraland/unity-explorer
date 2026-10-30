@@ -5,13 +5,12 @@ using System;
 using System.Globalization;
 using System.Threading;
 using UnityEngine.Networking;
+using Utility.Networking;
 
 namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
-        public const string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
-
         public const int BAD_REQUEST = 400;
         public const int UNAUTHORIZED_ACCESS = 401;
         public const int FORBIDDEN_ACCESS = 403;
@@ -108,53 +107,9 @@ namespace DCL.WebRequests
             }
         }
 
-        private static bool IsDNSLookupError(this UnityWebRequestException exception) =>
-            exception.ResponseCode == 0 && exception.Message.Contains(CANNOT_CONNECT_ERROR);
-
-        public static bool IsIrrecoverableError(this UnityWebRequestException exception)
-        {
-            if (exception.IsDNSLookupError())
-                return false;
-
-            return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
-                   && !exception.IsUnableToCompleteSSLConnection()
-                   && !exception.IsSSLCACertificateError();
-        }
-
-        private static bool IsIrrecoverableResponseCode(long responseCode)
-        {
-            switch (responseCode)
-            {
-                // Recoverable client errors
-                case 408: // Request Timeout
-                case 425: // Too Early
-                case 429: // Too Many Requests
-
-                // Recoverable server errors
-                case 500: // Internal Server Error
-                case 502: // Bad Gateway — reverse proxy/CDN got a bad response from upstream
-                case 503: // Service Unavailable — overload, maintenance window
-                case 504: // Gateway Timeout — upstream didn’t respond in time
-
-                // Recoverable CDN-specific errors (transient)
-                case 521: // Web Server Is Down
-                case 522: // Connection Timed Out
-                case 523: // Origin Is Unreachable
-                case 524: // A Timeout Occurred — Cloudflare equivalent of 504
-                case 525: // SSL Handshake Failed
-                    return false;
-
-                // Everything else is irrecoverable (4xx client errors, permanent 5xx like 501/505/507/508/511, etc.)
-                default:
-                    return true;
-            }
-        }
-
-        private static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
-            exception.Message.Contains("Unable to complete SSL connection");
-
-        private static bool IsSSLCACertificateError(this UnityWebRequestException exception) =>
-            exception.Message.Contains("SSL CA certificate error");
+        public static bool IsIrrecoverableError(this UnityWebRequestException exception) =>
+            !TransientWebRequestFailure.IsConnectionFailure(exception.ResponseCode, exception.Message)
+            && (exception.IsAborted() || !TransientWebRequestFailure.IsTransientResponseCode(exception.ResponseCode));
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
             exception is { Error: "Request timeout" };
