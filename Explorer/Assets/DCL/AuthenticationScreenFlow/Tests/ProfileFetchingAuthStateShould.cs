@@ -25,11 +25,10 @@ namespace DCL.AuthenticationScreenFlow.Tests
     [TestFixture]
     public class ProfileFetchingAuthStateShould
     {
-        // Mirrors ProfileFetchingAuthState.PROFILE_FETCH_TIMEOUT (private)
-        private const float FETCH_TIMEOUT_SECONDS = 15f;
+        private static readonly float FETCH_TIMEOUT_SECONDS = (float)SelfProfile.LOGIN_READ_TIMEOUT.TotalSeconds;
 
         // Long enough for the fetch timeout to fire and be observed
-        private const float OBSERVATION_SECONDS = 16.5f;
+        private static readonly float OBSERVATION_SECONDS = FETCH_TIMEOUT_SECONDS + 1.5f;
 
         private const string FAKE_WALLET = "0x0000000000000000000000000000000000000001";
 
