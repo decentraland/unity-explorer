@@ -79,10 +79,7 @@ namespace ECS.Unity.Materials.Systems
         {
             // If isPbr is the same right the same material is reused
             if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
-            {
                 ReleaseMaterial.Execute(entity, World!, ref materialComponent, destroyMaterial);
-                materialComponent.Result = null;
-            }
         }
 
         private MaterialComponent StartNewMaterialLoad(Entity entity, MaterialComponent materialComponent, in MaterialData.TexturesData prevTexturesData, PartitionComponent partitionComponent)
@@ -162,9 +159,7 @@ namespace ECS.Unity.Materials.Systems
             in MaterialData.TexturesData? oldTexturesData,
             PartitionComponent partitionComponent)
         {
-            bool success = false;
-
-            success = TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent)
+            bool success = TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent)
                       || !materialComponent.Data.Textures.AlbedoTexture.HasValue;
 
             success &= TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent)
