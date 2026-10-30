@@ -39,6 +39,7 @@ namespace DCL.Tests
         private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
             "Assets/DCL/Input/UnityInputSystem/DCLInput.cs", // cause it's autogen
             "Assets/Plugins/UUAV/Packages/UUAV/Runtime/UUAVPlayer.cs", // desktop-only native plugin; Interlocked guards FFI callback state and the assembly never targets WebGL
+            "Assets/Plugins/UUAV/Packages/UUAV/Runtime/AudioFrameSnapshot.cs", // desktop-only native plugin; Interlocked/Volatile hand the DSP buffer from the audio mixer thread to the main thread
             "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs", // desktop-only; SynchronizationContext.Current gates the connect continuation's thread affinity
         };
 
