@@ -36,7 +36,8 @@ namespace DCL.Multiplayer.Connections.Pulse
         /// <param name="maxAttempts">
         ///     Upper bound on connection attempts before giving up on an unreachable server. The start-up
         ///     operation passes a small bound so it can fall back to LiveKit; runtime reconnection uses the
-        ///     default to keep retrying.
+        ///     default to keep retrying. Ignored when an attempt is already in flight: the call joins it with
+        ///     that attempt's budget, and its <paramref name="ct" /> releases only this caller.
         /// </param>
         /// <returns>
         ///     <c>true</c> once connected and authenticated; <c>false</c> when the connection keeps
