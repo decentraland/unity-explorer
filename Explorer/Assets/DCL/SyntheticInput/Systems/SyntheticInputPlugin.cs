@@ -23,9 +23,9 @@ namespace DCL.SyntheticInput.Systems
         public void Dispose()
         {
 #if ALTTESTER
-            DCL.SyntheticInput.AltTester.WorldAutomationProbe.Uninstall();
-            DCL.SyntheticInput.AltTester.NavigationAutomationProbe.Uninstall();
-            DCL.SyntheticInput.AltTester.UiAutomationProbe.Uninstall();
+            AltTester.WorldAutomationProbe.Uninstall();
+            AltTester.NavigationAutomationProbe.Uninstall();
+            AltTester.UiAutomationProbe.Uninstall();
 #endif
             uiAutomation.Dispose();
         }

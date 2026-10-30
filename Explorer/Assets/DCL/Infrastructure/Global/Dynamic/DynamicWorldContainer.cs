@@ -21,6 +21,7 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
@@ -457,6 +458,8 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
+            var inWorldCameraToggle = new InWorldCameraToggle(globalWorld);
+
             var badgesApiClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -604,20 +607,20 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
                     userLogout,
-                    globalWorld,
-                    chatContainer.ChatHistory,
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
                     profileContainer.SelfProfile,
-                    staticContainer.RealmData,
-                    staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource,
                     uiShellContainer.PassportBridge,
                     chatContainer.ChatEventBus,
-                    placesAndEventsContainer.EventsApiService,
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
-                    voiceChatContainer.JoinedCommunitiesVoiceLiveTracker),
+                    placesAndEventsContainer.EventsApiService,
+                    marketplaceCreditsApiClient,
+                    inWorldCameraToggle,
+                    generalAudioMixer,
+                    bootstrapContainer.VolumeBus,
+                    uiShellContainer.Clipboard),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,
@@ -944,7 +947,7 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                     globalPlugins.Add(new McpServerPlugin(
                         appArgs,
-                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                         chatContainer.ChatMessagesBus,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
@@ -1013,6 +1016,7 @@ namespace Global.Dynamic
                     wearableContainer.WearablesProvider,
                     uiShellContainer.Cursor,
                     globalWorld,
+                    inWorldCameraToggle,
                     debugBuilder,
                     dynamicSettings.NametagsData,
                     profileContainer.ProfileRepositoryWrapper,
@@ -1108,7 +1112,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     assetsProvisioner,
                     debugBuilder,
-                    staticContainer.ScenesCache
+                    staticContainer.ScenesCache,
+                    bootstrapContainer.AbgenConversionMetrics
                 ));
 
             if (!localSceneDevelopment)
@@ -1123,7 +1128,6 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams,
                 commsContainer.CurrentSceneInfo,
                 lodContainer.LodCache,
                 lodContainer.RoadCoordinates,
@@ -1131,8 +1135,8 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
-                bootstrapContainer.UseRemoteAssetBundles,
                 bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,

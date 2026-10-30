@@ -1,5 +1,3 @@
-using DCL.FeatureFlags;
-using System;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System.Text.RegularExpressions;

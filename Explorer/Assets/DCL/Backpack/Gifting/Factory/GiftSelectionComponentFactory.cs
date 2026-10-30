@@ -5,7 +5,6 @@ using DCL.Backpack.Gifting.Views;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 
 namespace DCL.Backpack.Gifting.Factory
 {

@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var renderer = wearableGO.AddComponent<MeshRenderer>();
 
             // CachedAttachment requires proper initialization - we use reflection to create one with Renderers list
-            var attachment = new Loading.Assets.CachedAttachment(null!, wearableGO, false, Array.Empty<SpringBoneData>());
+            var attachment = new CachedAttachment(null!, wearableGO, false, Array.Empty<SpringBoneData>());
             // The Renderers list is created but empty, we need to add a renderer to it
             attachment.Renderers.Add(renderer);
 
@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.LookAt(bounds.center);
 
             // Act
-            system!.CalculateFrustumPlanes(testCamera);
+            system.CalculateFrustumPlanes(testCamera);
             bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
@@ -145,7 +145,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.rotation = Quaternion.identity; // Looking forward (+Z)
 
             // Act
-            system!.CalculateFrustumPlanes(testCamera);
+            system.CalculateFrustumPlanes(testCamera);
             bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
@@ -160,7 +160,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarGameObject.transform.position = new Vector3(0, 0, 5); // 5 units away
 
             // Act
-            bool isWithin = system!.IsWithinCameraDistance(testCamera, avatarGameObject.transform, maxDistanceSquared);
+            bool isWithin = system.IsWithinCameraDistance(testCamera, avatarGameObject.transform, maxDistanceSquared);
 
             // Assert
             Assert.IsTrue(isWithin);
@@ -174,7 +174,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarGameObject.transform.position = new Vector3(0, 0, 10); // 10 units away
 
             // Act
-            bool isWithin = system!.IsWithinCameraDistance(testCamera, avatarGameObject.transform, maxDistanceSquared);
+            bool isWithin = system.IsWithinCameraDistance(testCamera, avatarGameObject.transform, maxDistanceSquared);
 
             // Assert
             Assert.IsFalse(isWithin);
@@ -191,7 +191,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.IsTrue(world.Has<AvatarCachedVisibilityComponent>(playerEntity));
@@ -205,7 +205,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity otherEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.IsTrue(world.Has<AvatarCachedVisibilityComponent>(otherEntity));
@@ -227,7 +227,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraComponent.Mode = CameraMode.FirstPerson;
 
             // Act - first update adds component, second updates state
-            system!.Update(0);
+            system.Update(0);
             system.Update(0);
 
             // Assert
@@ -249,7 +249,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             ref var cameraComponent = ref world.Get<CameraComponent>(cameraEntity);
             cameraComponent.Mode = CameraMode.FirstPerson;
 
-            system!.Update(0);
+            system.Update(0);
 
             // Verify avatar is hidden in first person
             ref var avatarShapeAfterFirstPerson = ref world.Get<AvatarShapeComponent>(playerEntity);
@@ -279,7 +279,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
@@ -300,7 +300,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First update - user is blocked
-            system!.Update(0);
+            system.Update(0);
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
 
             // Change blocking status
@@ -355,7 +355,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.IsFalse(world.Has<HiddenPlayerComponent>(avatarEntity));
@@ -372,7 +372,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
-            system!.Update(0);
+            system.Update(0);
             system.Update(0);
 
             // Assert
@@ -390,7 +390,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First update - avatar should be hidden due to modifier area
-            system!.Update(0);
+            system.Update(0);
 
             ref var avatarShapeAfterHide = ref world.Get<AvatarShapeComponent>(avatarEntity);
             Assert.IsFalse(avatarShapeAfterHide.IsVisible, "Avatar should be hidden by modifier area");
@@ -417,7 +417,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Act - first update adds component
-            system!.Update(0);
+            system.Update(0);
 
             // Set dirty again
             ref var shapeRef = ref world.Get<AvatarShapeComponent>(playerEntity);
@@ -446,7 +446,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First, add blocked reason
-            system!.Update(0);
+            system.Update(0);
 
             // Manually add banned reason to test combination
             ref var hiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
@@ -476,7 +476,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Prime the cached state — marks the avatar as hidden so the next update's visible-transition is NOT early-returned.
-            system!.Update(0);
+            system.Update(0);
 
             // Start a legacy Animation on the avatar — LSD/Builder-preview FullBody emotes run through this component.
             Animation legacyAnimation = avatarBase.AddOrGetLegacyAnimation();
@@ -508,7 +508,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Arrange - a visible non-player avatar, primed so the cache holds its visible state
             var avatarShape = CreateAvatarShapeComponent();
             world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
-            system!.Update(0);
+            system.Update(0);
 
             Assume.That(avatarBase.AvatarAnimator.enabled, Is.True,
                 "Sanity check: a visible avatar outside any modifier area starts animated.");
@@ -542,7 +542,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraComponent.IsTransitioningToFirstPerson = true;
 
             // Act
-            system!.Update(0);
+            system.Update(0);
             system.Update(0);
 
             // Assert
@@ -568,7 +568,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraComponent.IsTransitioningToFirstPerson = true;
 
             // Act
-            system!.Update(0);
+            system.Update(0);
             system.Update(0);
 
             // Assert

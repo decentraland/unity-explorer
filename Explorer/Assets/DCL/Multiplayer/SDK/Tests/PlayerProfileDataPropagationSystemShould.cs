@@ -10,8 +10,6 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -96,7 +94,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(sceneWorld.Has<SDKProfile>(playerCRDTEntity.SceneWorldEntity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKProfile? sceneEntityProfile));
             Assert.That(sceneWorld.Has<Profile>(playerCRDTEntity.SceneWorldEntity), Is.False);

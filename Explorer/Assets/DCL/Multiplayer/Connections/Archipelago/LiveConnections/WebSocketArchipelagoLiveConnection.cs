@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.Typing;
 using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
-using System.Buffers;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -69,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             try
             {
                 using (data)
-                    await current!.Value.WebSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
+                    await current!.Value.WebSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token);
 
                 return EnumResult<IArchipelagoLiveConnection.ResponseError>.SuccessResult();
             }
@@ -103,7 +102,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             try
             {
-                WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token)!;
+                WebSocketReceiveResult? result = await current!.Value.WebSocket.ReceiveAsync(buffer, token);
 
                 return result.MessageType switch
                        {

@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using NUnit.Framework;
 

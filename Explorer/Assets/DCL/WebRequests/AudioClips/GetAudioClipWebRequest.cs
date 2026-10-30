@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiling;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;

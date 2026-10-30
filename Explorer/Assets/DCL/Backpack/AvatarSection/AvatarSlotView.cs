@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.UI;

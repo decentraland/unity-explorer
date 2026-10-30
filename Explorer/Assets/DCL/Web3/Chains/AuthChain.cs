@@ -17,7 +17,7 @@ namespace DCL.Web3.Chains
         private bool disposed;
 
         public static AuthChain Create() =>
-            POOL.Get()!;
+            POOL.Get();
 
         private AuthChain() { }
 

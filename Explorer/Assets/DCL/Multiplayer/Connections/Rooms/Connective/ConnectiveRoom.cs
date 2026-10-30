@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Credentials;
 using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;

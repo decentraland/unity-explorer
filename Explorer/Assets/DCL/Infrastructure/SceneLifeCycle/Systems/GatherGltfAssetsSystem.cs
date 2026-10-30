@@ -14,7 +14,6 @@ using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace ECS.SceneLifeCycle.Systems

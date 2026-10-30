@@ -12,7 +12,6 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;

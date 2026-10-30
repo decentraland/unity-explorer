@@ -49,7 +49,7 @@ namespace Plugins.NativeAudioAnalysis
             if (lastAudioFrameReadFilter != null) 
             {
                 // Can be pooled
-                UnityEngine.Object.Destroy(lastAudioFrameReadFilter);
+                Object.Destroy(lastAudioFrameReadFilter);
                 lastAudioFrameReadFilter = null;
             }
         }

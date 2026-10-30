@@ -7,7 +7,6 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -211,7 +210,7 @@ namespace ECS.SceneLifeCycle
         /// <summary>
         ///     True when the hash addresses a raw GLTF, i.e. no asset-bundle manifest maps it. The GLTF
         ///     container cache is keyed by <see cref="AssetBundleManifestVersion.ComposeCacheKey" />,
-        ///     which returns the bare hash only in that case; under <c>--local-ab</c> the key differs and
+        ///     which returns the bare hash only in that case; under local asset bundles the key differs and
         ///     the model lives in the asset-bundle caches instead, so scoped eviction must not be used.
         /// </summary>
         internal static bool IsRawGltfModel(SceneEntityDefinition? definition, string hash)

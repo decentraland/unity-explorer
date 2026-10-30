@@ -1,7 +1,5 @@
 ﻿using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using UnityEngine;
 
 namespace DCL.LOD
 {

@@ -4,7 +4,6 @@ using DCL.Utility;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.InWorldCamera.CameraReelToast
 {

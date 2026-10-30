@@ -118,7 +118,7 @@ namespace Utility.Multithreading
                         int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
 
                         syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
                     }
                 }
             }

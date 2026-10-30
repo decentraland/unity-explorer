@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;

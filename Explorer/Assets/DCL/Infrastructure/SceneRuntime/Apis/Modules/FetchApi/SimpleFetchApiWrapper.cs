@@ -2,11 +2,9 @@
 using DCL.WebRequests;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules.FetchApi
 {

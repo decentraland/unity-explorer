@@ -21,7 +21,7 @@ namespace DCL.Communities
         public static Option<CommunityId> New(string? raw) =>
             string.IsNullOrEmpty(raw)
                 ? Option<CommunityId>.None
-                : Option<CommunityId>.Some(new CommunityId(raw!));
+                : Option<CommunityId>.Some(new CommunityId(raw));
 
         public bool Equals(CommunityId? other) =>
             other is not null && string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);

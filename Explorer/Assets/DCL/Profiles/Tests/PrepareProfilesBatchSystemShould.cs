@@ -47,14 +47,14 @@ namespace DCL.Profiles.Tests
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 
-            system!.Update(0);
+            system.Update(0);
 
             // The first iteration is never deferred
             CheckPromise(true);
 
             await Task.Delay(TimeSpan.FromSeconds(delay));
 
-            system!.Update(0);
+            system.Update(0);
 
             CheckPromise(created);
 
@@ -96,7 +96,7 @@ namespace DCL.Profiles.Tests
 
             repository.ConsumePendingBatch().Returns(batches);
 
-            system!.Update(0);
+            system.Update(0);
 
             // The first iteration is never deferred
 
@@ -127,7 +127,7 @@ namespace DCL.Profiles.Tests
 
             repository.ConsumePendingBatch().Returns(batches);
 
-            system!.Update(0);
+            system.Update(0);
 
             // The first iteration is never deferred
 
@@ -151,7 +151,7 @@ namespace DCL.Profiles.Tests
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 
-            system!.Update(0);
+            system.Update(0);
 
             QueryDescription query = new QueryDescription().WithAll<GetProfilesBatchIntent, IPartitionComponent>();
 

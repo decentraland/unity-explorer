@@ -104,7 +104,7 @@ namespace DCL.WebRequests.ChromeDevtool
             if (result.IsBridgeStartError(out BridgeStartError error))
                 ReportHub.LogError(
                     ReportCategory.CHROME_DEVTOOL_PROTOCOL,
-                    $"Cannot start bridge on creation: {error!}"
+                    $"Cannot start bridge on creation: {error}"
                 );
 
             return result;

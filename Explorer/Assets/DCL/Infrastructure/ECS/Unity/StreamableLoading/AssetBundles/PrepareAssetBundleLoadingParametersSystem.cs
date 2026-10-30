@@ -5,7 +5,6 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 
 namespace ECS.StreamableLoading.AssetBundles
 {

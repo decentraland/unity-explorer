@@ -1,5 +1,4 @@
 using DCL.AvatarRendering.AvatarShape.Components;
-using System.Collections;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;

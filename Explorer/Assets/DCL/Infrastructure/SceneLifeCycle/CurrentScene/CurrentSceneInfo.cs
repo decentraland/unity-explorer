@@ -1,6 +1,5 @@
 using DCL.Utilities;
 using SceneRunner.Scene;
-using System;
 using DCL.Ipfs;
 
 namespace ECS.SceneLifeCycle.CurrentScene

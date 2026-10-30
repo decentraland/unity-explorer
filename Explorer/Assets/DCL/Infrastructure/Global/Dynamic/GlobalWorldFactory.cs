@@ -31,6 +31,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Systems;
@@ -70,11 +71,10 @@ namespace Global.Dynamic
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IProfileRepository profileRepository;
-        private readonly bool useRemoteAssetBundles;
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -90,7 +90,6 @@ namespace Global.Dynamic
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IDebugContainerBuilder debugContainerBuilder,
             IScenesCache scenesCache,
-            HybridSceneParams hybridSceneParams,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             HashSet<Vector2Int> roadCoordinates,
@@ -98,8 +97,8 @@ namespace Global.Dynamic
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
-            bool useRemoteAssetBundles,
             bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             EntitiesAnalytics entitiesAnalytics,
@@ -120,18 +119,17 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
-            this.hybridSceneParams = hybridSceneParams;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
             this.lodSettingsAsset = lodSettingsAsset;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
@@ -157,10 +155,9 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, abgenConversionMetrics, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
-            LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
@@ -174,17 +171,8 @@ namespace Global.Dynamic
             // OrderedDataManaged + downstream queries see the resolved state without a refetch.
             ResolveISSDescriptorSystem.InjectToWorld(ref builder);
 
-            if (hybridSceneParams.EnableHybridScene)
-            {
-                URLDomain worldContentServerBaseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldServer));
-                URLDomain worldContentServerContentsUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer));
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams, worldContentServerContentsUrl, worldContentServerBaseUrl);
-            }
-            else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl, localSceneDevelopment);
-
             LoadSceneSystem.InjectToWorld(ref builder,
-                loadSceneSystemLogic,
+                new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl, localSceneDevelopment),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
@@ -252,7 +240,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, localSceneDevelopment, isBuilderCollectionPreview));
 
             return globalWorld;
         }

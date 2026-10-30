@@ -21,7 +21,7 @@ namespace DCL.PlacesAPIService
         public static Option<PlaceId> New(string? raw) =>
             string.IsNullOrEmpty(raw)
                 ? Option<PlaceId>.None
-                : Option<PlaceId>.Some(new PlaceId(raw!));
+                : Option<PlaceId>.Some(new PlaceId(raw));
 
         public bool Equals(PlaceId? other) =>
             other is not null && string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);

@@ -147,7 +147,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
                     if (renderer.sharedMaterial == null)
                         continue;
 
-					if (renderer.sharedMaterial.renderQueue != (int)UnityEngine.Rendering.RenderQueue.Geometry)
+					if (renderer.sharedMaterial.renderQueue != (int)RenderQueue.Geometry)
                         continue;
 
                     cmd.SetGlobalColor(Highlight_Colour, !bClear ? settings.Color : Color.clear);

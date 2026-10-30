@@ -7,7 +7,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
-using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Clipboard;
 using DCL.Input;
@@ -25,7 +24,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using ECS;
-using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -66,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
         private readonly Arch.Core.World globalWorld;
+        private readonly InWorldCameraToggle cameraToggle;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -80,8 +79,6 @@ namespace DCL.PluginSystem.Global
         private InWorldCameraSettings? settings;
         private InWorldCameraController? inWorldCameraController;
         private CharacterController? followTarget;
-        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
-        private SingleInstanceEntity? cameraInternal;
 
         public InWorldCameraPlugin(SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
@@ -93,6 +90,7 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
             ICursor cursor,
             Arch.Core.World globalWorld,
+            InWorldCameraToggle cameraToggle,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
             ProfileRepositoryWrapper profileDataProvider,
@@ -119,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
             this.globalWorld = globalWorld;
+            this.cameraToggle = cameraToggle;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
             this.profileRepositoryWrapper = profileDataProvider;
@@ -181,7 +180,7 @@ namespace DCL.PluginSystem.Global
                     settings.PhotoSuccessfullySetAsPublicMessage, settings.LinkCopiedMessage),
                 galleryEventBus));
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), globalWorld, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), globalWorld, cameraToggle, mvcManager, cameraReelStorageService);
             mvcManager.RegisterController(inWorldCameraController);
 
             dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnShortcutToggleInWorldCameraPressed;
@@ -189,11 +188,7 @@ namespace DCL.PluginSystem.Global
 
         private void OnShortcutToggleInWorldCameraPressed(InputAction.CallbackContext obj)
         {
-            // Note: The following comment was in the original code and I preserved it because I agree, opening a window should not require adding a component...
-            // TODO: When we have more time, the InWorldCameraController and EmitInWorldCameraInputSystem and other stuff should be refactored and adapted properly
-            // Clue: It is handled by ToggleInWorldCameraActivitySystem
-            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_SHORTCUT });
+            cameraToggle.Toggle(SOURCE_SHORTCUT);
         }
 
 

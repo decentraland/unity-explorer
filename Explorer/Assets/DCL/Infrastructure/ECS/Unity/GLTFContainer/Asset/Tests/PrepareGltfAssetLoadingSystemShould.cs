@@ -14,7 +14,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
@@ -64,7 +63,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
                 LocalSceneDevelopment = true,
-                UseRemoteAssetBundles = false,
             });
 
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
@@ -73,46 +71,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             system.Update(0);
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
-            Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
-            Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
-        }
-
-        [Test]
-        public void CreateAssetBundleIntentionWhenLsdWithRemoteAb()
-        {
-            sceneContent.IsRawAsset("TEST").Returns(false);
-
-            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
-            {
-                LocalSceneDevelopment = true,
-                UseRemoteAssetBundles = true,
-            });
-
-            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
-            Entity e = world.Create(intent);
-
-            system.Update(0);
-
-            Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
-            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetCurrentPlatform()}"));
-        }
-
-        [Test]
-        public void CreateGltfIntentionForRawAssetWhenLsdWithRemoteAb()
-        {
-            sceneContent.IsRawAsset("models/local_only.glb").Returns(true);
-
-            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
-            {
-                LocalSceneDevelopment = true,
-                UseRemoteAssetBundles = true,
-            });
-
-            var intent = new GetGltfContainerAssetIntention("models/local_only.glb", "TEST_HASH", new CancellationTokenSource());
-            Entity e = world.Create(intent);
-
-            system.Update(0);
-
             Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
         }
@@ -222,7 +180,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             // LSD must hit the GltfContainerAssetsCache like any other path — per-consumer cloning in
             // CreateGltfAssetFromRawGltfSystem makes cache reuse safe across multiple entities.
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true });
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
@@ -249,7 +207,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void FallBackToRawGltfLoadOnCacheMissInLocalSceneDevelopment()
         {
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true });
 
             // Cache miss: default Substitute returns false
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
@@ -266,7 +224,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void EvictStaleRawGltfOnCacheHitInLocalSceneDevelopment()
         {
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true });
 
             // The import fetched an external texture that has since been republished under a new
             // content URL (content-versioned dev server), so the cached asset holds stale bytes.
@@ -310,7 +268,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void ServeCachedRawGltfWhenDependenciesUnchangedInLocalSceneDevelopment()
         {
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true });
 
             var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"),
                 externalDependencies: new[] { new GltfExternalDependency("images/tex.png", "http://localhost/content/same-hash") });

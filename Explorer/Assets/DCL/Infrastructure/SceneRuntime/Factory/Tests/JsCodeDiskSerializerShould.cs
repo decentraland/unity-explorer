@@ -3,7 +3,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
-using SceneRuntime.Factory.JsSource;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -87,7 +86,7 @@ namespace SceneRuntime.Factory.Tests
             var result = await diskCache.PutAsync(key, EXTENSION, DATA, token);
 
             if (result.Success == false)
-                throw new System.Exception($"CachedWebJsSources: SceneSourceCodeAsync: diskCache.PutAsync failed: {result.Error!.Value.State} {result.Error!.Value.Message}");
+                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync: diskCache.PutAsync failed: {result.Error!.Value.State} {result.Error!.Value.Message}");
 
             var contentResult = await diskCache.ContentAsync(key, EXTENSION, token);
 

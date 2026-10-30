@@ -4,8 +4,6 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
 using DCL.Profiles;
 using ECS.Abstract;

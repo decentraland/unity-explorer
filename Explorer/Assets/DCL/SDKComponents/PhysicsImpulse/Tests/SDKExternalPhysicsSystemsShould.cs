@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
             AddPlayerForceEntity(world, FORCE_A);
 
             // Act
-            system!.Update(0);
+            system.Update(0);
             systemB.Update(0);
 
             // Assert
@@ -71,7 +71,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
         {
             // Arrange
             AddPlayerForceEntity(world, FORCE_A);
-            system!.Update(0);
+            system.Update(0);
 
             // Act - world B unloads (e.g. a PX is disposed) while A's force is active
             systemB.FinalizeComponents(default!);
@@ -86,11 +86,11 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
             // Arrange
             AddPlayerForceEntity(world, FORCE_A);
             AddPlayerForceEntity(worldB, FORCE_B);
-            system!.Update(0);
+            system.Update(0);
             systemB.Update(0);
 
             // Act
-            system!.OnSceneIsCurrentChanged(false);
+            system.OnSceneIsCurrentChanged(false);
 
             // Assert
             Assert.AreEqual(FORCE_B, RunApplyExternalForce().ExternalForce);
@@ -101,12 +101,12 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
         {
             // Arrange
             Entity forceEntity = AddPlayerForceEntity(world, FORCE_A);
-            system!.Update(0);
+            system.Update(0);
             Assert.AreEqual(FORCE_A, RunApplyExternalForce().ExternalForce);
 
             // Act
             world.Remove<PBPhysicsCombinedForce>(forceEntity);
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.AreEqual(Vector3.zero, RunApplyExternalForce().ExternalForce);
@@ -120,7 +120,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
             AddPlayerForceEntity(worldB, FORCE_B);
 
             // Act
-            system!.Update(0);
+            system.Update(0);
             systemB.Update(0);
 
             // Assert
@@ -133,14 +133,14 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
             // Arrange
             Entity forceEntityA = AddPlayerForceEntity(world, FORCE_A);
             Entity forceEntityB = AddPlayerForceEntity(worldB, FORCE_B);
-            system!.Update(0);
+            system.Update(0);
             systemB.Update(0);
             Assert.AreNotEqual(Vector3.zero, RunApplyExternalForce().ExternalAcceleration);
 
             // Act
             world.Remove<PBPhysicsCombinedForce>(forceEntityA);
             worldB.Remove<PBPhysicsCombinedForce>(forceEntityB);
-            system!.Update(0);
+            system.Update(0);
             systemB.Update(0);
 
             // Assert
@@ -154,7 +154,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
         {
             // Arrange
             AddPlayerForceEntity(world, FORCE_A);
-            system!.Update(0);
+            system.Update(0);
             Assert.AreEqual(FORCE_A, RunApplyExternalForce().ExternalForce);
 
             // Act - the /reload chat command clears all slots at once

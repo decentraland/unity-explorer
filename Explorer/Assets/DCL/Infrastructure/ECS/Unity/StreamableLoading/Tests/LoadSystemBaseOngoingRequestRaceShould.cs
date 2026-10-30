@@ -15,7 +15,6 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Tests
@@ -24,7 +23,7 @@ namespace ECS.StreamableLoading.Tests
     public class LoadSystemBaseOngoingRequestRaceShould
     {
         [Test]
-        public async Task CheckWhenMultipleWaitersRaceOnCancellation()
+        public void CheckWhenMultipleWaitersRaceOnCancellation()
         {
             // Arrange
             using var mockedReportScope = new MockedReportScope();

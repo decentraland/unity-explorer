@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.ECSComponents;
 using ECS.TestSuite;
 using NSubstitute;

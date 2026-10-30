@@ -74,7 +74,7 @@ namespace DCL.InWorldCamera
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
                     screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
@@ -202,7 +202,7 @@ namespace DCL.InWorldCamera
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
+                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -216,7 +216,7 @@ namespace DCL.InWorldCamera
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId;
+                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;
