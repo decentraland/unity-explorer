@@ -72,7 +72,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             this.navmapBus = navmapBus;
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
+        public UniTask InitializeAsync(CancellationToken cancellationToken) => UniTask.CompletedTask;
 
         protected override void DisposeImpl()
         {
