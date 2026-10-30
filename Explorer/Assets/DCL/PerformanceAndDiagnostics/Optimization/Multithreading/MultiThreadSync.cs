@@ -1,6 +1,7 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace Utility.Multithreading
 
         private static readonly ProfilerMarker COMMON_SAMPLER;
 
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan DEFAULT_TIMEOUT = TimeSpan.FromSeconds(10);
 
         /// <summary>
         ///     Maps each <see cref="MultiThreadSync" /> instance (by its <see cref="syncId" />) to the managed thread id
@@ -51,7 +52,9 @@ namespace Utility.Multithreading
 
         private readonly CancellationTokenSource cts = new ();
 
-        private AcquisitionInfo? currentAcquisitionInfo;
+        private readonly TimeSpan timeout;
+
+        private Option<AcquisitionInfo> currentAcquisitionInfo;
         private bool isDisposing;
 
         static MultiThreadSync()
@@ -59,8 +62,11 @@ namespace Utility.Multithreading
             COMMON_SAMPLER = new ProfilerMarker("MultithreadSync.Wait");
         }
 
-        public MultiThreadSync(SceneShortInfo sceneInfo)
+        public MultiThreadSync(SceneShortInfo sceneInfo) : this(sceneInfo, DEFAULT_TIMEOUT) { }
+
+        internal MultiThreadSync(SceneShortInfo sceneInfo, TimeSpan timeout)
         {
+            this.timeout = timeout;
             syncId = Interlocked.Increment(ref nextSyncId);
             syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
             perSceneSampler = CustomSampler.Create("MultithreadSync.Wait " + sceneInfo.BaseParcel);
@@ -90,6 +96,7 @@ namespace Utility.Multithreading
         {
             bool shouldWait;
 
+            // Not held across the wait: Release needs the monitor to signal
             lock (monitor)
             {
 #if SYNC_DEBUG
@@ -104,28 +111,34 @@ namespace Utility.Multithreading
             }
 
             // There is already one thread doing work. Wait for the signal
+            var timedOut = false;
+
             if (shouldWait)
-            {
-                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled)
-                {
-                    lock (monitor)
-                    {
-                        DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
-
-                        int requestingThreadId = NativeThread.CurrentId;
-                        int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
-
-                        syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
-                    }
-                }
-            }
+                timedOut = !owner.Wait(timeout, cts.Token, out bool wasCancelled) && !wasCancelled;
 
             lock (monitor)
             {
-                currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
+                if (isDisposing)
+                    throw new ObjectDisposedException(nameof(MultiThreadSync));
+
+                // Release may have signaled this owner after the wait timed out but before the monitor was taken
+                if (timedOut && !(queue.TryPeek(out Owner? head) && head == owner))
+                {
+                    // A waiter left in the queue would never be released and block every owner behind it
+                    RemoveFromQueue(owner);
+
+                    int requestingThreadId = NativeThread.CurrentId;
+                    int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
+                    string currentOwner = currentAcquisitionInfo.Has
+                        ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(DateTime.Now - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
+                        : $"none, next in queue: \"{head?.Name}\"";
+
+                    syncLogsBuffer.Print();
+                    throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwner}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                }
+
+                currentAcquisitionInfo = Option<AcquisitionInfo>.Some(new AcquisitionInfo(owner, DateTime.Now));
                 SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
 #if SYNC_DEBUG
@@ -171,8 +184,21 @@ namespace Utility.Multithreading
                     syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
 
-                currentAcquisitionInfo = null;
+                currentAcquisitionInfo = Option<AcquisitionInfo>.None;
                 SYNC_OWNERSHIP.TryRemove(syncId, out _);
+            }
+        }
+
+        private void RemoveFromQueue(Owner owner)
+        {
+            int count = queue.Count;
+
+            for (var i = 0; i < count; i++)
+            {
+                Owner queued = queue.Dequeue();
+
+                if (queued != owner)
+                    queue.Enqueue(queued);
             }
         }
 
@@ -289,7 +315,7 @@ namespace Utility.Multithreading
             {
                 multiThreadSync.Release(source);
 
-                if (DateTime.Now - start > TIMEOUT)
+                if (DateTime.Now - start > multiThreadSync.timeout)
                     throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {NativeThread.CurrentId}");
             }
         }
@@ -317,8 +343,9 @@ namespace Utility.Multithreading
             {
                 if (isScoped)
                 {
-                    scope.Dispose();
+                    // Cleared first: Dispose throws when the scope was held too long, and the scope must not be released twice
                     isScoped = false;
+                    scope.Dispose();
                 }
             }
         }
