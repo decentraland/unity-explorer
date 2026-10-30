@@ -1,5 +1,4 @@
 using CRDT;
-using CRDT.Protocol;
 using Google.Protobuf;
 using JetBrains.Annotations;
 using System;

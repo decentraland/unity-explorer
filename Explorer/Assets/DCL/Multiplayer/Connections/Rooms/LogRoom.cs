@@ -4,7 +4,6 @@
 
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Logs;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;

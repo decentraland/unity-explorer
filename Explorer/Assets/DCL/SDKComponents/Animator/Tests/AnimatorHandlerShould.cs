@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Special;
-using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;

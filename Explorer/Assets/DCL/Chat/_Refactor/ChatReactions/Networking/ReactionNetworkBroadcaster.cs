@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
-using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions.Networking

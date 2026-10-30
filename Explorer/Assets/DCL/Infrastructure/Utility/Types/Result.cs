@@ -197,7 +197,7 @@ namespace DCL.Utility.Types
             if (error.HasValue == false)
                 return "Not an error";
 
-            (TErrorEnum state, string message, Exception exception) = error!.Value;
+            (TErrorEnum state, string message, Exception exception) = error.Value;
             return $"{state}: {message}";
         }
 

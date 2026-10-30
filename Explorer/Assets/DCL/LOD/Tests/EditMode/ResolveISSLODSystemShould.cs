@@ -118,7 +118,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(lod.AllAssetsInstantiated(), Is.True);
             Assert.That(cache.Outstanding(HASH_A), Is.EqualTo(1));
@@ -144,7 +144,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Entity helper = FindHelperEntity();
             Assert.That(helper, Is.Not.EqualTo(Entity.Null), "Update must spawn one helper entity per descriptor asset");
@@ -172,7 +172,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
             DeliverResult(FindHelperEntity(), abResult);
             system.Update(0);
 
@@ -198,7 +198,7 @@ namespace DCL.LOD.Tests
             descriptor.MarkResolved(new[] { NewDescriptorEntry("MISSING_HASH") });
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
-            system!.Update(0);
+            system.Update(0);
 
             var failure = new StreamableLoadingResult<AssetBundleData>(
                 ReportData.UNSPECIFIED,
@@ -238,7 +238,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(lod.AllAssetsInstantiated(), Is.True);
 
@@ -270,7 +270,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
             Assert.That(renderer.forceRenderingOff, Is.True);
 
             lod.Dispose(world);
@@ -294,7 +294,7 @@ namespace DCL.LOD.Tests
             Assert.That(descriptor.TryReserveBridgeSlot(HASH), Is.False, "Capacity is 1 — second reserve must fail");
 
             CreateLODEntity(descriptor);
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(descriptor.TryReserveBridgeSlot(HASH), Is.True,
                 "Cache hit must call TryReleaseBridgeSlot so the slot is reusable");
@@ -324,7 +324,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             ParcelMathHelper.SceneCircumscribedPlanes planes = sceneDefinition.SceneGeometry.CircumscribedPlanes;
             Vector4 verticalClipping = material.GetVector(Shader.PropertyToID("_VerticalClipping"));

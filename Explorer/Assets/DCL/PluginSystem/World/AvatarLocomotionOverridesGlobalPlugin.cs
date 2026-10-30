@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
-using ECS.SceneLifeCycle;
 using System.Threading;
 
 namespace DCL.SDKComponents.AvatarLocomotion

@@ -13,7 +13,7 @@ namespace DCL.UI.Controls
 
         public void Configure(ToggleContextMenuControlSettings settings, bool initialValue)
         {
-            TextComponent.SetText(settings!.toggleText);
+            TextComponent.SetText(settings.toggleText);
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
             HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;

@@ -11,7 +11,6 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;

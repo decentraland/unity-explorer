@@ -32,7 +32,7 @@ namespace ECS.Unity.Materials.Tests
             IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>()!;
             frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world!, pool, frameTimeBudget, frameTimeBudget);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudget);
             system.Initialize();
         }
 
@@ -48,7 +48,7 @@ namespace ECS.Unity.Materials.Tests
             CreateAndFinalizeTexturePromise(ref component.EmissiveTexPromise);
             CreateAndFinalizeTexturePromise(ref component.BumpTexPromise);
 
-            Entity e = world!.Create(component, new ShouldInstanceMaterialComponent());
+            Entity e = world.Create(component, new ShouldInstanceMaterialComponent());
 
             system.Update(0);
 

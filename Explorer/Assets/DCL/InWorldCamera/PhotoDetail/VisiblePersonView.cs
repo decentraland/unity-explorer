@@ -1,4 +1,3 @@
-using DCL.UI;
 using DCL.UI.ProfileElements;
 using TMPro;
 using UnityEngine;

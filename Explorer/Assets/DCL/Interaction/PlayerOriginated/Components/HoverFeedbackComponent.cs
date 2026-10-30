@@ -1,4 +1,3 @@
-using DCL.ECSComponents;
 using System.Collections.Generic;
 using UnityEngine;
 

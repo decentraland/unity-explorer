@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
             shape.Urn = newURN;
             shape.IsDirty = true;
 
-            system!.Update(0);
+            system.Update(0);
 
             bool urnChanged = newURN != INITIAL_URN;
 

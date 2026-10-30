@@ -1,6 +1,4 @@
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine;
-using UnityEngine.Animations;
 using UnityEngine.Animations.Rigging;
 
 namespace DCL.Character.CharacterMotion.AdditiveBreath

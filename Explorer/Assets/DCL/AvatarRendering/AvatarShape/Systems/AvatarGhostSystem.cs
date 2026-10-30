@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.GhostRenderer.sharedMaterial = ghostMaterial;
 
             ghostMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_OFFSET, 0, 0));
-            ghostMaterial.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
+            ghostMaterial.SetColor(COLOR_SHADER_ID, profile.UserNameColor);
             ghostMaterial.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
 
             avatarBase.GhostGameObject.SetActive(true);

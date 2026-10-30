@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;

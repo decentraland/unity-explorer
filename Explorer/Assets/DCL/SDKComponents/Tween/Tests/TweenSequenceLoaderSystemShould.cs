@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Systems;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NUnit.Framework;

@@ -70,7 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct)
         {
-            var hashedContent = new SceneHashedContent(definition.content!, contentBaseUrl);
+            var hashedContent = new SceneHashedContent(definition.content, contentBaseUrl);
 
             string? abVersion = definition.assetBundleManifestVersion?.GetAssetBundleManifestVersion();
 

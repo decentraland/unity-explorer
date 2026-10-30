@@ -296,7 +296,7 @@ namespace DCL.Prefs
 
             lock (userData)
             {
-                userData.Strings.TryAdd(key, unityPrefs!.GetString(key, null));
+                userData.Strings.TryAdd(key, unityPrefs.GetString(key, null));
                 dataChanged = true;
             }
 
@@ -310,7 +310,7 @@ namespace DCL.Prefs
 
             lock (userData)
             {
-                userData.Ints.TryAdd(key, unityPrefs!.GetInt(key, 0));
+                userData.Ints.TryAdd(key, unityPrefs.GetInt(key, 0));
                 dataChanged = true;
             }
 
@@ -324,7 +324,7 @@ namespace DCL.Prefs
 
             lock (userData)
             {
-                userData.Floats.TryAdd(key, unityPrefs!.GetFloat(key, 0f));
+                userData.Floats.TryAdd(key, unityPrefs.GetFloat(key, 0f));
                 dataChanged = true;
             }
 
@@ -338,7 +338,7 @@ namespace DCL.Prefs
 
             lock (userData)
             {
-                userData.Bools.TryAdd(key, unityPrefs!.GetBool(key, false));
+                userData.Bools.TryAdd(key, unityPrefs.GetBool(key, false));
                 dataChanged = true;
             }
 

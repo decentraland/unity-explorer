@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             world.Add(entity, component);
 
             Assert.IsFalse(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
-            system!.Update(1f);
+            system.Update(1f);
             Assert.IsTrue(world.TryGet(entity, out vCamComponent));
 
             sdkVirtualCameraPool.Received().Get();
@@ -94,7 +94,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             var component = new PBVirtualCamera();
             world.Add(entity, component);
 
-            system!.Update(1f);
+            system.Update(1f);
             Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
             sdkVirtualCameraPool.Received().Get();
             virtualCamera.enabled = true; // emulates being active on the MainCamera component
@@ -115,7 +115,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             var component = new PBVirtualCamera();
             world.Add(entity, component);
 
-            system!.Update(1f);
+            system.Update(1f);
             Assert.IsTrue(world.TryGet(entity, out VirtualCameraComponent vCamComponent));
             sdkVirtualCameraPool.Received().Get();
             virtualCamera.enabled = true; // emulates being active on the MainCamera component

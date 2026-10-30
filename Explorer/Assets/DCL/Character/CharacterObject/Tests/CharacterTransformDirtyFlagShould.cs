@@ -187,7 +187,7 @@ namespace DCL.Character.CharacterObject.Tests
             Assert.IsTrue(dirtyTransform.IsDirty, "Transform should be dirty before system update");
 
             // Act - Run partition system
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             // Assert - Dirty flag should be cleared
             ref var clearedTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
@@ -231,7 +231,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             // Act - Update with camera not dirty (should only process dirty entities)
             camSampling.IsDirty.Returns(false);
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             // Assert
             ref CharacterTransform dirtyAfter = ref globalWorld.Get<CharacterTransform>(dirtyEntity);
@@ -260,7 +260,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             // Act - Update with camera dirty (triggers RePartitionExistingEntityQuery)
             camSampling.IsDirty.Returns(true);
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             // Assert - CharacterTransform.IsDirty should remain unchanged since entity didn't move
             ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(entity);
@@ -458,7 +458,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             // Step 2: Partition system clears dirty
             camSampling.IsDirty.Returns(true);
-            system!.Update(0.1f);
+            system.Update(0.1f);
 
             ref var afterPartition = ref globalWorld.Get<CharacterTransform>(entity);
             system.Dispose();

@@ -6,7 +6,7 @@ namespace DCL.CharacterCamera.Settings
     [Serializable]
     public class CameraFarClipPlaneSettings
     {
-        [field: SerializeField] public float MinFarClipPlaneAltitude { get; set; } = 0;
+        [field: SerializeField] public float MinFarClipPlaneAltitude { get; set; }
 
         [field: SerializeField] public float MaxFarClipPlaneAltitude { get; set; } = 100;
 

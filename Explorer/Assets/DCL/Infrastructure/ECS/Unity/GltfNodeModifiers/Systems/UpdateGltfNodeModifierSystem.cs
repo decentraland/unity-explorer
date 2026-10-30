@@ -75,7 +75,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 // Add global GltfNode component to container entity if transitioning from individual
                 if (!World.Has<GltfNode>(containerEntity)) { CreateGlobalGltfNode(containerEntity, asset); }
 
-                nodeModifiers.GltfNodeEntities!.Add(containerEntity, string.Empty);
+                nodeModifiers.GltfNodeEntities.Add(containerEntity, string.Empty);
             }
 
             (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
@@ -135,7 +135,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             foreach (Entity orphanedEntity in auxiliaryGltfNodePathEntities.Values)
             {
                 CleanupGltfNodeEntity(orphanedEntity, containerEntity);
-                nodeModifiers.GltfNodeEntities!.Remove(orphanedEntity);
+                nodeModifiers.GltfNodeEntities.Remove(orphanedEntity);
             }
             auxiliaryGltfNodePathEntities.Clear();
         }

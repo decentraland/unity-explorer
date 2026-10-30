@@ -1,7 +1,6 @@
 ﻿using DCL.PluginSystem;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.Optimization.AdaptivePerformance.Systems
 {

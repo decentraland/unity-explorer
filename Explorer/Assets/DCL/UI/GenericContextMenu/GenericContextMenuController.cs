@@ -198,7 +198,7 @@ namespace DCL.UI
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 
-                totalHeight += component!.RectTransformComponent.rect.height;
+                totalHeight += component.RectTransformComponent.rect.height;
             }
 
             container.HideNonInteractableTooltip();

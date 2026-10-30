@@ -1,5 +1,4 @@
 using Decentraland.Kernel.Comms.Rfc4;
-using ECS.SceneLifeCycle;
 using Google.Protobuf;
 using System;
 

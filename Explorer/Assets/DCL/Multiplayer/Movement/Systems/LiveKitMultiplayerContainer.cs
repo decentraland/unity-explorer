@@ -8,7 +8,6 @@ using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using System;
 
 namespace DCL.Multiplayer.Movement

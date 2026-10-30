@@ -1,5 +1,4 @@
 using DCL.ECSComponents;
-using DCL.SDKComponents.Tween;
 using NUnit.Framework;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;

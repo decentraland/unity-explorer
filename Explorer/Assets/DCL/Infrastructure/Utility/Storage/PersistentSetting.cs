@@ -87,7 +87,7 @@ namespace Utility.Storage
             PersistentSetting<Color>.ApplyIfNot(
                 static (key, defaultValue) =>
                 {
-                    string str = DCLPlayerPrefs.GetString(key, string.Empty)!;
+                    string str = DCLPlayerPrefs.GetString(key, string.Empty);
 
                     if (string.IsNullOrEmpty(str))
                         return defaultValue;

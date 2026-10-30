@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarLocomotion.Systems;

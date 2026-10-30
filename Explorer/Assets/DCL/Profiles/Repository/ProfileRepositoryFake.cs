@@ -35,7 +35,7 @@ namespace DCL.Profiles
             if (profiles.ContainsKey(key) == false)
                 profiles[key] = NewRandomProfile();
 
-            return UniTask.FromResult<ProfileTier?>(profiles[key])!;
+            return UniTask.FromResult<ProfileTier?>(profiles[key]);
         }
 
         private static Profile NewRandomProfile() =>
