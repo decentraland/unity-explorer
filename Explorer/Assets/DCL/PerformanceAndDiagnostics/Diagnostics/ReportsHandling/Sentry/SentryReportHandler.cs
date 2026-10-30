@@ -53,6 +53,13 @@ namespace DCL.Diagnostics.Sentry
         private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
 
+        // Every UUAV init error is logged from the same call site, so default stack grouping folds all helper start failures into one issue (UNITY-EXPLORER-PP6)
+        private const string UUAV_HELPER_START_FAILURE_PREFIX = "[UUAV] init: failed to start uuav helper: ";
+        private const string UUAV_HELPER_SPAWN_FAILURE = "failed to spawn ";
+        private const string UUAV_HELPER_STATUS_OPENING = " (helper ";
+        private const string UUAV_HELPER_FINGERPRINT = "uuav-helper-start";
+        private const string UUAV_HELPER_SPAWN_FINGERPRINT = "spawn";
+
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
 #endif
@@ -254,7 +261,45 @@ namespace DCL.Diagnostics.Sentry
             if (category == null)
                 @event.SetTag(CATEGORY_TAG, ReportCategory.UNSPECIFIED);
 
+            if (message != null)
+                AddUuavHelperFingerprint(@event, message);
+
             return @event;
+        }
+
+        /// <summary>
+        ///     Groups UUAV helper start failures by how they failed: the OS error of a failed spawn,
+        ///     or the handshake error plus the helper's exit status.
+        /// </summary>
+        private static void AddUuavHelperFingerprint(SentryEvent @event, string message)
+        {
+            if (!message.StartsWith(UUAV_HELPER_START_FAILURE_PREFIX, StringComparison.Ordinal))
+                return;
+
+            int causeStart = UUAV_HELPER_START_FAILURE_PREFIX.Length;
+
+            if (string.CompareOrdinal(message, causeStart, UUAV_HELPER_SPAWN_FAILURE, 0, UUAV_HELPER_SPAWN_FAILURE.Length) == 0)
+            {
+                // The helper path embeds the user's home directory, only the OS error after it is stable
+                int reasonStart = message.LastIndexOf(": ", StringComparison.Ordinal) + 2;
+                @event.SetFingerprint(UUAV_HELPER_FINGERPRINT, UUAV_HELPER_SPAWN_FINGERPRINT, message.Substring(reasonStart));
+                return;
+            }
+
+            int statusStart = message.LastIndexOf(UUAV_HELPER_STATUS_OPENING, StringComparison.Ordinal);
+
+            if (statusStart < causeStart || !message.EndsWith(')'))
+            {
+                @event.SetFingerprint(UUAV_HELPER_FINGERPRINT, message.Substring(causeStart));
+                return;
+            }
+
+            int statusContentStart = statusStart + UUAV_HELPER_STATUS_OPENING.Length;
+
+            @event.SetFingerprint(
+                UUAV_HELPER_FINGERPRINT,
+                message.Substring(causeStart, statusStart - causeStart),
+                message.Substring(statusContentStart, message.Length - 1 - statusContentStart));
         }
 
         private static SentryEvent? Demote(string message)
