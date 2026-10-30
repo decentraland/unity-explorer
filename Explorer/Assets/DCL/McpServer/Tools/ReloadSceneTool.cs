@@ -10,6 +10,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.McpServer.Tools
 {
@@ -74,8 +75,8 @@ namespace DCL.McpServer.Tools
             finally
             {
                 await UniTask.SwitchToMainThread();
-                world.Remove<StopCharacterMotion>(playerEntity);
-                world.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
+                world.TryRemove<StopCharacterMotion>(playerEntity);
+                world.TryRemove<PauseSkyboxTimeUpdate>(skyboxEntity);
             }
 
             return McpToolResult.Text("Scene reloaded. Call get_scene_state to confirm readiness and get_scene_logs for startup output.");

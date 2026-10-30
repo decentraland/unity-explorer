@@ -10,6 +10,7 @@ using ECS.Unity.Materials.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using UnityEngine;
 using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
@@ -47,12 +48,16 @@ namespace ECS.Unity.Materials.Tests
         public void Dereference()
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
+            Material material = DefaultMaterial.New();
             component.Status = StreamableLoading.LifeCycle.LoadingFinished;
-            component.Result = DefaultMaterial.New();
+            component.Result = material;
 
             system.Update(0);
 
-            destroyMaterial.Received(1)(in component.Data, component.Result);
+            MaterialComponent released = world.Get<MaterialComponent>(e);
+            destroyMaterial.Received(1)(in released.Data, material);
+            Assert.That(released.Result, Is.Null);
+            Assert.That(released.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingNotStarted));
         }
     }
 }

@@ -7,6 +7,7 @@ using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Arch;
 
 namespace DCL.Chat.Commands
 {
@@ -51,7 +52,7 @@ namespace DCL.Chat.Commands
                 ResetExternalPhysics(globalWorld.Get<CharacterRigidTransform>(playerEntity));
 
             if (isLocalSceneDevelopmentMode)
-                globalWorld.Add<StopCharacterMotion>(playerEntity);
+                globalWorld.AddOrGet(playerEntity, new StopCharacterMotion());
 
             try
             {
@@ -68,7 +69,7 @@ namespace DCL.Chat.Commands
             }
             finally
             {
-                globalWorld.Remove<StopCharacterMotion>(playerEntity);
+                globalWorld.TryRemove<StopCharacterMotion>(playerEntity);
             }
         }
 

@@ -71,9 +71,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 foreach (Entity entityToCleanup in nodeModifiers.GltfNodeEntities.Keys) { CleanupGltfNodeEntity(entityToCleanup, containerEntity); }
 
                 nodeModifiers.GltfNodeEntities.Clear();
-
-                // Add global GltfNode component to container entity if transitioning from individual
-                if (!World.Has<GltfNode>(containerEntity)) { CreateGlobalGltfNode(containerEntity, asset); }
+                CreateGlobalGltfNode(containerEntity, asset);
 
                 nodeModifiers.GltfNodeEntities!.Add(containerEntity, string.Empty);
             }

@@ -85,7 +85,7 @@ namespace ECS.SceneLifeCycle
                 : null;
 
             //There is a lingering promise we need to remove, and add the DeleteEntityIntention to make the standard unload flow.
-            world.Add<DeleteEntityIntention>(entity);
+            world.AddOrGet<DeleteEntityIntention>(entity);
 
             //We wait until scene is fully disposed
             await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct);

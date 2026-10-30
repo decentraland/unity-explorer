@@ -10,6 +10,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using Utility;
+using Utility.Arch;
 
 namespace ECS.SceneLifeCycle
 {
@@ -45,9 +46,9 @@ namespace ECS.SceneLifeCycle
             if (foundEntity == Entity.Null)
                 return false;
 
-            world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(foundEntity);
-            world.Add<DeleteEntityIntention>(foundEntity);
-            world.Add<BannedSceneComponent>(foundEntity);
+            world.TryRemove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(foundEntity);
+            world.AddOrGet<DeleteEntityIntention>(foundEntity);
+            world.AddOrGet<BannedSceneComponent>(foundEntity);
 
             await UniTask.WaitUntil(() => sceneInCache.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct)
                          .Timeout(DISPOSE_SCENE_TIMEOUT);

@@ -83,7 +83,6 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
             {
                 ReleaseMaterial.Execute(entity, World!, ref materialComponent, destroyMaterial);
-                materialComponent.Result = null;
             }
         }
 
