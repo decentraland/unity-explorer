@@ -29,10 +29,9 @@ namespace ECS.Unity.Materials
         {
             switch (materialComponent.Status)
             {
-                // Dereference the loaded material
-                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result:
+                // Dereference the loaded textures
+                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied:
                     ReleaseTextures(ref materialComponent, false);
-                    destroyMaterial(in materialComponent.Data, materialComponent.Result);
                     break;
 
                 // Abort the loading process of the textures
@@ -40,6 +39,14 @@ namespace ECS.Unity.Materials
                     ReleaseTextures(ref materialComponent, true);
                     break;
             }
+
+            // A reloading material still holds the instance from its previous load
+            if (materialComponent.Result)
+                destroyMaterial(in materialComponent.Data, materialComponent.Result);
+
+            // Drop ownership together with the release, so releasing this component again is a no-op
+            materialComponent.Result = null;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
 
             void ReleaseTextures(ref MaterialComponent mat, bool forgetLoading)
             {

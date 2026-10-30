@@ -10,13 +10,14 @@ using ECS.Unity.Materials.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using UnityEngine;
 using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
 {
     public class CleanUpMaterialsSystemShould : UnitySystemTestBase<CleanUpMaterialsSystem>
     {
-        private DestroyMaterial destroyMaterial;
+        private DestroyMaterial destroyMaterial = null!;
 
         private Entity e;
         private Entity texPromise;
@@ -35,7 +36,7 @@ namespace ECS.Unity.Materials.Tests
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            CancellationToken ct = component.AlbedoTexPromise.Value.LoadingIntention.CommonArguments.CancellationToken;
+            CancellationToken ct = component.AlbedoTexPromise!.Value.LoadingIntention.CommonArguments.CancellationToken;
 
             system.Update(0);
 
@@ -48,11 +49,37 @@ namespace ECS.Unity.Materials.Tests
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = StreamableLoading.LifeCycle.LoadingFinished;
-            component.Result = DefaultMaterial.New();
+            Material material = component.Result = DefaultMaterial.New();
 
             system.Update(0);
 
-            destroyMaterial.Received(1)(in component.Data, component.Result);
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), material);
+            Assert.That(world.Get<MaterialComponent>(e).Result, Is.Null);
+        }
+
+        [Test]
+        public void ReleaseMaterialOnlyOnceWhenReleasedTwice()
+        {
+            ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
+            component.Status = StreamableLoading.LifeCycle.Applied;
+            Material material = component.Result = DefaultMaterial.New();
+
+            ReleaseMaterial.Execute(e, world, ref component, destroyMaterial);
+            ReleaseMaterial.Execute(e, world, ref component, destroyMaterial);
+
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), material);
+        }
+
+        [Test]
+        public void ReleaseMaterialOfReloadingComponent()
+        {
+            ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
+            Material material = component.Result = DefaultMaterial.New();
+
+            system.Update(0);
+
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), material);
         }
     }
 }
