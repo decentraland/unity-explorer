@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.RequestsHub;
+using Utility.Networking;
 
 namespace DCL.WebRequests
 {
@@ -28,7 +29,7 @@ namespace DCL.WebRequests
             try { return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op, expectedContentLength, progressReporter); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                if (e.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
+                if (e.Message.Contains(TransientWebRequestFailure.CANNOT_CONNECT_ERROR))
                     requestCannotConnectDebugMetric.Value++;
 
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
