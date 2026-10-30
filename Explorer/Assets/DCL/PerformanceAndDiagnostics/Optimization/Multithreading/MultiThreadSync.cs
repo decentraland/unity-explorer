@@ -91,6 +91,7 @@ namespace Utility.Multithreading
         {
             bool shouldWait;
 
+            // Enqueue under the monitor; it can't be held during the wait below or Release could never signal
             lock (monitor)
             {
 #if SYNC_DEBUG
@@ -105,36 +106,31 @@ namespace Utility.Multithreading
             }
 
             // There is already one thread doing work. Wait for the signal
+            var timedOut = false;
+
             if (shouldWait)
-            {
-                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled)
-                {
-                    lock (monitor)
-                    {
-                        // Release may have signaled this owner after the wait timed out but before the monitor was taken
-                        bool signaledAfterTimeout = queue.TryPeek(out Owner? head) && head == owner;
+                timedOut = !owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled;
 
-                        if (!signaledAfterTimeout)
-                        {
-                            // A waiter left in the queue would never be released and block every owner behind it
-                            RemoveFromQueue(owner);
-
-                            int requestingThreadId = NativeThread.CurrentId;
-                            int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
-
-                            string currentOwner = currentAcquisitionInfo.Has
-                                ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(DateTime.Now - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
-                                : $"none, next in queue: \"{head?.Name}\"";
-
-                            syncLogsBuffer.Print();
-                            throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwner}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
-                        }
-                    }
-                }
-            }
-
+            // Re-taken after the wait to resolve the timeout and claim ownership as one step
             lock (monitor)
             {
+                // Release may have signaled this owner after the wait timed out but before the monitor was taken
+                if (timedOut && !(queue.TryPeek(out Owner? head) && head == owner))
+                {
+                    // A waiter left in the queue would never be released and block every owner behind it
+                    RemoveFromQueue(owner);
+
+                    int requestingThreadId = NativeThread.CurrentId;
+                    int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
+                    string currentOwner = currentAcquisitionInfo.Has
+                        ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(DateTime.Now - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
+                        : $"none, next in queue: \"{head?.Name}\"";
+
+                    syncLogsBuffer.Print();
+                    throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwner}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                }
+
                 currentAcquisitionInfo = Option<AcquisitionInfo>.Some(new AcquisitionInfo(owner, DateTime.Now));
                 SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
