@@ -140,5 +140,7 @@ namespace DCL.Prefs
 
         // The placements of the lobby widgets on the corner grids, as one JSON string (see LobbyLayoutStorage)
         public const string LOBBY_LAYOUT = "Lobby_Layout";
+
+        public const string SETTINGS_SINGLE_SCENE_MODE = "Settings_SingleSceneMode";
     }
 }

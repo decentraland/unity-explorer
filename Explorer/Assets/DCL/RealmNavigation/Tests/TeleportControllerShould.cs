@@ -4,7 +4,10 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SingleScene;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -20,6 +23,9 @@ namespace DCL.RealmNavigation.Tests
         private Entity playerEntity;
         private TeleportController controller = null!;
         private IRetrieveScene retrieveScene = null!;
+        private ILandscape landscape = null!;
+        private SingleSceneMode singleSceneMode = null!;
+        private IRealmData realmData = null!;
 
         [SetUp]
         public void SetUp()
@@ -28,11 +34,15 @@ namespace DCL.RealmNavigation.Tests
             playerEntity = world.Create(new PlayerComponent());
 
             retrieveScene = Substitute.For<IRetrieveScene>();
+            landscape = Substitute.For<ILandscape>();
+            singleSceneMode = new SingleSceneMode();
+            realmData = new IRealmData.Fake();
 
-            controller = new TeleportController(Substitute.For<ISceneReadinessReportQueue>())
+            controller = new TeleportController(Substitute.For<ISceneReadinessReportQueue>(), singleSceneMode, realmData)
             {
                 World = world,
                 SceneProviderStrategy = retrieveScene,
+                Landscape = landscape,
             };
         }
 
@@ -68,6 +78,62 @@ namespace DCL.RealmNavigation.Tests
             // spawn-point resolution (incl. the spawn's cameraTarget) runs instead - matching map/chat.
             Assert.That(intent.LandOnParcel, Is.False,
                 "landOnParcel must be cleared when the requested parcel equals the scene's base parcel, so spawn-point resolution is used instead of the raw parcel center");
+        }
+
+        [Test]
+        public async Task GenerateTheDestinationSceneTerrainWhileSingleSceneModeIsActive()
+        {
+            singleSceneMode.Init(true);
+
+            var baseParcel = new Vector2Int(-148, 141);
+            SceneEntityDefinition sceneDef = BuildSceneDefWithDefaultSpawnPoint(baseParcel);
+
+            retrieveScene.ByParcelAsync(baseParcel, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<SceneEntityDefinition?>(sceneDef));
+
+            await controller.TeleportToSceneSpawnPointAsync(baseParcel, AsyncLoadProcessReport.Create(CancellationToken.None), CancellationToken.None);
+
+            landscape.Received(1).GenerateSingleSceneTerrain(sceneDef.metadata.scene.DecodedParcels);
+        }
+
+        [Test]
+        public async Task NotGenerateTerrainWhenSingleSceneModeIsInactive()
+        {
+            var baseParcel = new Vector2Int(-148, 141);
+            SceneEntityDefinition sceneDef = BuildSceneDefWithDefaultSpawnPoint(baseParcel);
+
+            retrieveScene.ByParcelAsync(baseParcel, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<SceneEntityDefinition?>(sceneDef));
+
+            await controller.TeleportToSceneSpawnPointAsync(baseParcel, AsyncLoadProcessReport.Create(CancellationToken.None), CancellationToken.None);
+
+            landscape.DidNotReceiveWithAnyArgs().GenerateSingleSceneTerrain(default!);
+        }
+
+        [Test]
+        public async Task NotGenerateTerrainOutsideGenesisWhileSingleSceneModeIsActive()
+        {
+            singleSceneMode.Init(true);
+
+            var worldRealm = Substitute.For<IRealmData>();
+            worldRealm.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
+
+            var worldController = new TeleportController(Substitute.For<ISceneReadinessReportQueue>(), singleSceneMode, worldRealm)
+            {
+                World = world,
+                SceneProviderStrategy = retrieveScene,
+                Landscape = landscape,
+            };
+
+            var baseParcel = new Vector2Int(-148, 141);
+            SceneEntityDefinition sceneDef = BuildSceneDefWithDefaultSpawnPoint(baseParcel);
+
+            retrieveScene.ByParcelAsync(baseParcel, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<SceneEntityDefinition?>(sceneDef));
+
+            await worldController.TeleportToSceneSpawnPointAsync(baseParcel, AsyncLoadProcessReport.Create(CancellationToken.None), CancellationToken.None);
+
+            landscape.DidNotReceiveWithAnyArgs().GenerateSingleSceneTerrain(default!);
         }
 
         private static SceneEntityDefinition BuildSceneDefWithDefaultSpawnPoint(Vector2Int baseParcel)

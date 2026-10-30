@@ -835,6 +835,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dfe79687037014506aefcf889c9b7a4d
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Spacer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2e214c9790df4c01b964b55f0feb6fab
     m_Address: Assets/DCL/Settings/Prefabs/SettingsGroup_SingleColumn.prefab
     m_ReadOnly: 0

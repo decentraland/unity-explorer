@@ -4,10 +4,13 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -21,7 +24,10 @@ namespace DCL.RealmNavigation
             new QueryDescription().WithAll<SceneDefinitionComponent, BannedSceneComponent>();
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly SingleSceneMode singleSceneMode;
+        private readonly IRealmData realmData;
 
+        private ILandscape? landscape;
         private IRetrieveScene? retrieveScene;
         private World? world;
         private Entity playerEntity;
@@ -29,6 +35,11 @@ namespace DCL.RealmNavigation
         public IRetrieveScene SceneProviderStrategy
         {
             set => retrieveScene = value;
+        }
+
+        public ILandscape Landscape
+        {
+            set => landscape = value;
         }
 
         public World World
@@ -40,9 +51,11 @@ namespace DCL.RealmNavigation
             }
         }
 
-        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue, SingleSceneMode singleSceneMode, IRealmData realmData)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.singleSceneMode = singleSceneMode;
+            this.realmData = realmData;
         }
 
         public void InvalidateRealm()
@@ -98,6 +111,9 @@ namespace DCL.RealmNavigation
                 if (nullifySceneDef)
                     sceneDef = null;
             }
+
+            if (singleSceneMode.IsActive && realmData.IsGenesis() && sceneDef != null)
+                landscape?.GenerateSingleSceneTerrain(sceneDef.metadata.scene.DecodedParcels);
 
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
 

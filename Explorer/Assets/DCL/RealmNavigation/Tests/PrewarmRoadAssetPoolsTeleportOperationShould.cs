@@ -5,6 +5,7 @@ using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
+using ECS.SceneLifeCycle.SingleScene;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
         private IRealmController realmController = null!;
         private IRoadAssetPool roadAssetPool = null!;
         private ILoadingStatus loadingStatus = null!;
+        private SingleSceneMode singleSceneMode = null!;
         private CancellationTokenSource cts = null!;
 
         [SetUp]
@@ -29,6 +31,7 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
             realmController = Substitute.For<IRealmController>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
             loadingStatus = Substitute.For<ILoadingStatus>();
+            singleSceneMode = new SingleSceneMode();
             cts = new CancellationTokenSource();
         }
 
@@ -72,9 +75,21 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
             roadAssetPool.DidNotReceive().Prewarm();
         }
 
+        [Test]
+        public void SkipPrewarmWhileSingleSceneModeIsActive()
+        {
+            realmController.RealmData.Returns(MakeConfiguredRealm(scenesAreFixed: false));
+            singleSceneMode.Init(true);
+
+            EnumResult<TaskError> result = Execute();
+
+            Assert.IsTrue(result.Success, result.Error?.Message);
+            roadAssetPool.DidNotReceive().Prewarm();
+        }
+
         private EnumResult<TaskError> Execute()
         {
-            var operation = new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetPool);
+            var operation = new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetPool, singleSceneMode);
 
             var teleportParams = new TeleportParams(
                 URLDomain.EMPTY,

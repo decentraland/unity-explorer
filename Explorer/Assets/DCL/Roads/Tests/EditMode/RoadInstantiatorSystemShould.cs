@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -25,6 +26,8 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
     private static readonly Vector2Int EXISTING_COORD = new (0, 0);
     private static readonly Vector2Int NON_EXISTING_COORD = new (1, 1);
     private Transform existingInstantiatedRoad;
+    private SingleSceneMode singleSceneMode;
+    private IRoadAssetPool roadAssetPool;
 
     [SetUp]
     public void Setup()
@@ -52,7 +55,7 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
                 },
             };
 
-        IRoadAssetPool roadAssetPool = Substitute.For<IRoadAssetPool>();
+        roadAssetPool = Substitute.For<IRoadAssetPool>();
         existingInstantiatedRoad = new GameObject(EXISTING_ROAD_KEY).transform;
 
         roadAssetPool.Get(EXISTING_ROAD_KEY, out Arg.Any<Transform>())
@@ -72,7 +75,9 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         IScenesCache scenesCache = Substitute.For<IScenesCache>();
         ISceneReadinessReportQueue sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
 
-        system = new RoadInstantiatorSystem(world, frameCapBudget, memoryBudget, roadDescriptions, roadAssetPool, sceneReadinessReportQueue, scenesCache);
+        singleSceneMode = new SingleSceneMode();
+
+        system = new RoadInstantiatorSystem(world, frameCapBudget, memoryBudget, roadDescriptions, roadAssetPool, sceneReadinessReportQueue, scenesCache, singleSceneMode);
     }
 
     [Test]
@@ -160,5 +165,64 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
 
         Assert.AreEqual(Quaternion.Angle(existingInstantiatedRoad.localRotation, EXISTING_ROTATION), 0);
         Assert.IsTrue(existingInstantiatedRoad.gameObject.activeSelf);
+    }
+
+    [Test]
+    public void SkipRoadsOutsideTheAnchorSceneWhileSingleSceneModeIsActive()
+    {
+        singleSceneMode.Init(true);
+        singleSceneMode.SetAnchor(NON_EXISTING_COORD);
+
+        var sceneEntityDefinition = new SceneEntityDefinition
+        {
+            id = "fakeHash", metadata = new SceneMetadata
+            {
+                scene = new SceneMetadataScene
+                {
+                    DecodedBase = EXISTING_COORD, DecodedParcels = new[]
+                    {
+                        EXISTING_COORD,
+                    },
+                },
+            },
+        };
+
+        SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+
+        Entity roadEntity = world.Create(RoadInfo.Create(), new PartitionComponent { IsBehind = false }, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
+
+        system.Update(0);
+
+        Assert.IsNull(world.Get<RoadInfo>(roadEntity).CurrentAsset);
+        roadAssetPool.DidNotReceive().Get(Arg.Any<string>(), out Arg.Any<Transform>());
+    }
+
+    [Test]
+    public void InstantiateTheAnchorRoadWhileSingleSceneModeIsActive()
+    {
+        singleSceneMode.Init(true);
+        singleSceneMode.SetAnchor(EXISTING_COORD);
+
+        var sceneEntityDefinition = new SceneEntityDefinition
+        {
+            id = "fakeHash", metadata = new SceneMetadata
+            {
+                scene = new SceneMetadataScene
+                {
+                    DecodedBase = EXISTING_COORD, DecodedParcels = new[]
+                    {
+                        EXISTING_COORD,
+                    },
+                },
+            },
+        };
+
+        SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+
+        Entity roadEntity = world.Create(RoadInfo.Create(), new PartitionComponent { IsBehind = false }, sceneDefinitionComponent, SceneLoadingState.CreateRoad());
+
+        system.Update(0);
+
+        Assert.AreEqual(existingInstantiatedRoad, world.Get<RoadInfo>(roadEntity).CurrentAsset);
     }
 }

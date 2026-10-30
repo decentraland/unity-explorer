@@ -60,7 +60,7 @@ namespace ECS.SceneLifeCycle
             if (world.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
             {
                 teleportParcel.IsTeleporting = true;
-                teleportParcel.Parcel = playerTeleportIntent.Parcel;
+                teleportParcel.Parcel = playerTeleportIntent.DestinationParcel;
             }
 
             if (world.TryGet(playerEntity, out PlayerTeleportIntent.JustTeleported justTeleported))
