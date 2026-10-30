@@ -51,8 +51,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
             world.TryGet(found, out UIInputComponent? input);
             world.TryGet(found, out UIDropdownComponent? dropdown);
+            world.TryGet(found, out PBPointerEvents? pointerEvents);
 
-            element = new SdkUiElement(transform, input, dropdown);
+            element = new SdkUiElement(transform, input, dropdown, pointerEvents);
             return true;
         }
 
@@ -252,11 +253,15 @@ namespace DCL.SyntheticInput.UiSimulation
         public readonly UIInputComponent? Input;
         public readonly UIDropdownComponent? Dropdown;
 
-        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown)
+        /// <summary>The pointer events the entity declares; null when it declares none.</summary>
+        public readonly PBPointerEvents? PointerEvents;
+
+        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown, PBPointerEvents? pointerEvents = null)
         {
             Transform = transform;
             Input = input;
             Dropdown = dropdown;
+            PointerEvents = pointerEvents;
         }
     }
 }

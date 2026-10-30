@@ -10,9 +10,8 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Drags between two screen points: semantically inside the SDK scene UI, whose UI Toolkit panels take
-    ///     events sent to their elements rather than virtual-device pointer state, and through the virtual mouse
-    ///     elsewhere.
+    ///     Drags between two screen points: semantically inside the SDK scene UI, whose elements hold a single
+    ///     pointer-event slot that a per-frame device drag would overwrite, and through the virtual mouse elsewhere.
     /// </summary>
     public class UiDragTool : McpTool
     {

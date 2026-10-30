@@ -19,7 +19,8 @@ namespace DCL.McpServer.Tools
     /// <summary>Argument parsing shared by the tools that aim a pointer gesture at the world: the button and the aim.</summary>
     internal static class PointerArgs
     {
-        public const string BUTTON_DESCRIPTION = "Which input action to press. Default pointer (left click / IA_POINTER).";
+        public const string BUTTON_DESCRIPTION = "Which input action to press. Default pointer (left click / IA_POINTER); a handler bound to E or F needs primary or secondary. "
+                                                 + "The result's button names what was sent, and a hit on an entity whose PointerEvents declare no entry for that button and event type carries a warning: the entity received nothing.";
 
         public const float DEFAULT_TIMEOUT_SEC = 3f;
         public const float MIN_TIMEOUT_SEC = 0.5f;

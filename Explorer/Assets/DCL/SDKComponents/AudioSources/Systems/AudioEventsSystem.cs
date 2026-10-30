@@ -15,7 +15,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -147,26 +146,8 @@ namespace DCL.SDKComponents.AudioSources
                 sdkEntity, sdkComponent);
         }
 
-        internal static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent)
-        {
-            // Check if clip is still loading
-            if (!audioSourceComponent.ClipPromise.IsConsumed)
-                return MediaState.MsLoading;
-
-            // The promise result is retained after consumption, so a failed load is reported as an error
-            if (audioSourceComponent.ClipPromise.Result is { Succeeded: false })
-                return MediaState.MsError;
-
-            AudioSource? audioSource = audioSourceComponent.AudioSource;
-
-            if (audioSource == null || audioSource.clip == null)
-                return !string.IsNullOrEmpty(audioSourceComponent.AudioClipUrl)
-                    ? MediaState.MsError // the promise was consumed but produced no clip for the requested URL
-                    : MediaState.MsNone;
-
-            // Check if audio is playing, otherwise is ready
-            return audioSource.isPlaying ? MediaState.MsPlaying : MediaState.MsReady;
-        }
+        internal static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent) =>
+            audioSourceComponent.GetMediaState();
 
         private MediaState GetAudioStreamState(in MediaPlayerComponent mediaPlayer)
         {

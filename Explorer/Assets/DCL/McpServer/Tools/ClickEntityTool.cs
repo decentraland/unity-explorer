@@ -6,7 +6,6 @@ using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
@@ -38,7 +37,12 @@ namespace DCL.McpServer.Tools
             + "refusal there still broadcasts the press to the scene root, like any unqualified edge. Ids "
             + "come from list_scene_entities and are engine entity ids, NOT the CRDT ids a scene logs; the result's "
             + "crdtEntityId is the CRDT one, so compare it against the entity you meant. For entities whose collider "
-            + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
+            + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at. "
+            + "The button sent is pointer (left click / IA_POINTER) unless button says otherwise: a handler listening for "
+            + "IA_PRIMARY (E) or IA_SECONDARY (F) needs button:primary / button:secondary, or press_input action:primary "
+            + "with the entityId. hit:true means the reticle qualified the entity; the result's button names what was "
+            + "sent, and when the entity's PointerEvents declare no entry for that button and event type the result "
+            + "carries a warning, because the entity received no result from the click.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             PointerArgs.DescribeAim(schema, "click")

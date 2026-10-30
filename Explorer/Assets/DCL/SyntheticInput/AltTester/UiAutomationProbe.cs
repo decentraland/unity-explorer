@@ -156,6 +156,27 @@ namespace DCL.SyntheticInput.AltTester
                      .ContinueWith(result => WithEndedHover(result, endedHover).ToJson(ready.CursorStateName()).ToString()));
         }
 
+        /// <summary>
+        ///     Clicks a scene-UI element through the virtual mouse (start/poll), paced one input state per scene drain.
+        ///     The payload's <c>delivered</c> names which events the scene consumed.
+        /// </summary>
+        public static int StartSdkDeviceClick(int crdtId, bool rightButton, bool force)
+        {
+            if (services == null)
+                return AltOperationRegistry.Start(UniTask.FromResult(NotInstalledPayload()));
+
+            UiAutomationServices ready = services;
+
+            if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
+                return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(failure)));
+
+            string? endedHover = ready.EndHover();
+
+            return AltOperationRegistry.Start(
+                ready.ClickSdkWithDevicesAsync(element, rightButton ? MouseButton.Right : MouseButton.Left, force, SDK_CLICK_TIMEOUT_SEC, CancellationToken.None)
+                     .ContinueWith(result => WithEndedHover(result, endedHover).ToJson(ready.CursorStateName()).ToString()));
+        }
+
         public static int StartDrag(float fromX, float fromY, float toX, float toY, int durationFrames, bool rightButton)
         {
             if (services == null)

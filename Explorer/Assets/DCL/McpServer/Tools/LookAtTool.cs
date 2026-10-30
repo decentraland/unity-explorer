@@ -5,7 +5,6 @@ using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -13,8 +12,6 @@ namespace DCL.McpServer.Tools
 {
     public class LookAtTool : McpTool
     {
-        private const float RESIDUAL_AIM_WARNING_DEGREES = 2f;
-
         private readonly SyntheticInputAgent syntheticInput;
         private readonly ExposedCameraData exposedCameraData;
 
@@ -50,20 +47,13 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("look_at was not applied by the camera (is the simulation paused?).");
 
             (Vector3 cameraPosition, Quaternion cameraRotation) = await exposedCameraData.ReadSettledPoseAsync(ct);
-            var target = new Vector3(x, y, z);
-
-            float aimErrorDegrees = Vector3.Angle(cameraRotation * Vector3.forward, target - cameraPosition);
 
             var result = new JObject
             {
                 ["cameraPosition"] = cameraPosition.ToVector(),
-                ["cameraRotationEuler"] = cameraRotation.eulerAngles.ToVector(),
-                ["aimErrorDegrees"] = Math.Round(aimErrorDegrees, 1),
             };
 
-            if (aimErrorDegrees > RESIDUAL_AIM_WARNING_DEGREES)
-                result["warning"] = "the camera stopped short of the point (a rig limit, e.g. the third-person pitch clamp): "
-                                    + "back away so the target sits at a shallower angle, or use set_camera_mode first_person / set_camera_pose";
+            CameraAimReport.Append(result, cameraPosition, cameraRotation, new Vector3(x, y, z));
 
             return McpToolResult.Json(result);
         }

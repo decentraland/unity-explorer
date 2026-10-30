@@ -29,13 +29,16 @@ namespace DCL.McpServer.Tools
         public override string Name => "get_scene_logs";
 
         public override string Description =>
-            "Read the scene's JavaScript console output (logs, warnings, errors and exceptions). Entries carry monotonic sequence numbers; "
-            + "pass the last seen sequence as sinceSeq to poll incrementally.";
+            "Read the scene's JavaScript console output (logs, errors and exceptions), one line per entry prefixed [scene]. Entries carry monotonic "
+            + "sequence numbers; pass the last seen sequence as sinceSeq to poll incrementally. The Explorer's own errors and the automation "
+            + "categories' lines are kept apart: they are not the scene's and are returned only with includeClient, prefixed [client:<category>].";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("limit", "Maximum entries to return (newest win). Default 100.")
                   .Enum<Severity>("severity", "Filter by severity. Default all.")
-                  .Integer("sinceSeq", "Only return entries with a sequence number greater than this.");
+                  .Integer("sinceSeq", "Only return entries with a sequence number greater than this.")
+                  .Boolean("includeClient", "Also return the Explorer's own errors and exceptions (client categories such as REALM, LIVEKIT or UNSPECIFIED) "
+                                            + "and the MCP / SYNTHETIC_INPUT lines, each tagged [client:<category>]. Default false: only the scene's output.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
@@ -57,9 +60,10 @@ namespace DCL.McpServer.Tools
 
             bool errorsOnly = severity == Severity.Error;
             long sinceSeq = arguments.GetLong("sinceSeq", -1);
+            bool includeClient = arguments.GetBool("includeClient", false);
 
             using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);
-            logBuffer.CopyTo(entries, sinceSeq, errorsOnly, limit);
+            logBuffer.CopyTo(entries, sinceSeq, errorsOnly, includeClient, limit);
 
             var output = new StringBuilder();
 
@@ -67,14 +71,22 @@ namespace DCL.McpServer.Tools
                   .Append(logBuffer.LatestSeq)
                   .Append(" returned=")
                   .Append(entries.Count)
+                  .Append(" source=")
+                  .Append(includeClient ? "scene+client" : "scene")
                   .AppendLine();
 
             foreach (SceneLogBuffer.Entry entry in entries)
             {
                 output.Append('#')
                       .Append(entry.Seq)
-                      .Append(' ')
-                      .Append(entry.Message)
+                      .Append(' ');
+
+                if (entry.Source == SceneLogSource.Scene)
+                    output.Append("[scene] ");
+                else
+                    output.Append("[client:").Append(entry.Category).Append("] ");
+
+                output.Append(entry.Message)
                       .AppendLine();
             }
 

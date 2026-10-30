@@ -52,16 +52,22 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             if (uiTransformComponent.PointerEventTriggered == null)
                 return;
 
+            PointerEventType triggered = uiTransformComponent.PointerEventTriggered.Value;
+            var appended = false;
+
             // Check if the component has any pointer events associated
             foreach (var pEvent in sdkModel.PointerEvents)
             {
-                if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
+                if (pEvent.EventType != triggered)
                     continue;
 
                 AppendMessage(ref sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
+                appended = true;
                 break;
             }
 
+            // The slot is cleared either way: an event the entity did not declare is dropped, and the log says so.
+            uiTransformComponent.Drains.Record(triggered, appended);
             uiTransformComponent.PointerEventTriggered = null;
         }
 

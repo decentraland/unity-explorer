@@ -1,5 +1,7 @@
 using Arch.Core;
+using CRDT;
 using Cysharp.Threading.Tasks;
+using DCL.SDKComponents.SceneUI.Components;
 using DCL.SyntheticInput.UiSimulation;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
@@ -10,12 +12,14 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using MouseButton = UnityEngine.InputSystem.LowLevel.MouseButton;
 
 namespace DCL.SyntheticInput.Tests
 {
     public class UiAutomationServicesShould
     {
         private World world = null!;
+        private Entity playerEntity;
         private GameObject eventSystemGo = null!;
         private GameObject canvasRoot = null!;
         private Texture2D highlightTexture = null!;
@@ -26,7 +30,7 @@ namespace DCL.SyntheticInput.Tests
         public void SetUp()
         {
             world = World.Create();
-            Entity playerEntity = world.Create();
+            playerEntity = world.Create();
 
             eventSystemGo = new GameObject("test-event-system");
             var eventSystem = eventSystemGo.AddComponent<EventSystem>();
@@ -168,6 +172,19 @@ namespace DCL.SyntheticInput.Tests
             SceneUiDragAttempt attempt = drag.GetAwaiter().GetResult();
             Assert.That(attempt.Result, Is.Null);
             Assert.That(attempt.SkipReason, Is.EqualTo("no running current scene"));
+        }
+
+        [Test]
+        public void RefuseADeviceClickOnADetachedSdkElementWithoutQueuingAGesture()
+        {
+            var transform = new UITransformComponent();
+            transform.InitializeAsChild("Detached", new CRDTEntity(600), new CRDTEntity(0));
+
+            UniTask<UiActionResult> click = services.ClickSdkWithDevicesAsync(new SdkUiElement(transform, null, null), MouseButton.Left, force: false, timeoutSec: 1f, CancellationToken.None);
+
+            Assert.That(click.Status, Is.EqualTo(UniTaskStatus.Succeeded), "the pre-check refuses before any device state is queued");
+            Assert.That(click.GetAwaiter().GetResult().Ok, Is.False);
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
         }
 
         [Test]

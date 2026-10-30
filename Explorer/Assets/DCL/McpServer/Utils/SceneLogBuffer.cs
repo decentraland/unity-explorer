@@ -1,13 +1,25 @@
+using DCL.Diagnostics;
 using DCL.UI.DebugMenu.LogHistory;
 using System.Collections.Generic;
 
 namespace DCL.McpServer.Utils
 {
     /// <summary>
-    ///     Thread-safe ring buffer of scene console log entries with monotonic sequence numbers,
-    ///     so agents can poll incrementally via sinceSeq.
+    ///     Who produced a buffered log line: the scene's own JavaScript, or the client (its errors, and the
+    ///     automation categories' own lines).
     /// </summary>
-    public class SceneLogBuffer
+    public enum SceneLogSource : byte
+    {
+        Scene,
+        Client,
+    }
+
+    /// <summary>
+    ///     Thread-safe ring buffer of console log entries with monotonic sequence numbers, so agents can poll
+    ///     incrementally via sinceSeq. Fed by a <see cref="ReportSinkHandler" />, so each entry keeps its report
+    ///     category and the scene it was reported for.
+    /// </summary>
+    public class SceneLogBuffer : IReportSink
     {
         private const int CAPACITY = 1000;
 
@@ -28,22 +40,30 @@ namespace DCL.McpServer.Utils
         }
 
         /// <summary>
-        ///     Fed from <see cref="DCL.UI.DebugMenu.MessageBus.DebugMenuConsoleLogEntryBus" />; may be invoked from any thread.
+        ///     May be invoked from any thread.
         /// </summary>
-        public void Append(DebugMenuConsoleLogEntry logEntry)
+        public void Receive(in ReportLogEntry report)
         {
+            // The console entry's formatting (timestamp and level prefix) keeps the lines identical to the scene debug console's.
+            DebugMenuConsoleLogEntry consoleEntry = DebugMenuConsoleLogEntry.FromUnityLog(report.LogType, report.Message);
+            string message = string.IsNullOrEmpty(report.StackTrace) ? consoleEntry.Message : $"{consoleEntry.Message}\n{report.StackTrace}";
+            SceneLogSource source = report.Category == ReportCategory.JAVASCRIPT ? SceneLogSource.Scene : SceneLogSource.Client;
+            string? sceneName = report.Scene.Equals(default(SceneShortInfo)) ? null : report.Scene.Name;
+
             lock (gate)
             {
-                entries[nextSeq % CAPACITY] = new Entry(nextSeq, logEntry.Type, logEntry.Message);
+                entries[nextSeq % CAPACITY] = new Entry(nextSeq, consoleEntry.Type, source, report.Category, sceneName, message);
                 nextSeq++;
             }
         }
 
         /// <summary>
         ///     Copies up to <paramref name="limit" /> newest entries with Seq greater than <paramref name="sinceSeq" />
-        ///     into <paramref name="target" /> in chronological order.
+        ///     into <paramref name="target" /> in chronological order. Client entries are skipped unless
+        ///     <paramref name="includeClient" />; sequence numbers are never renumbered, so a skipped entry still
+        ///     advances the seq a poller sees.
         /// </summary>
-        public void CopyTo(List<Entry> target, long sinceSeq, bool errorsOnly, int limit)
+        public void CopyTo(List<Entry> target, long sinceSeq, bool errorsOnly, bool includeClient, int limit)
         {
             lock (gate)
             {
@@ -55,6 +75,9 @@ namespace DCL.McpServer.Utils
                     Entry entry = entries[seq % CAPACITY];
 
                     if (errorsOnly && entry.Type != LogMessageType.Error)
+                        continue;
+
+                    if (!includeClient && entry.Source == SceneLogSource.Client)
                         continue;
 
                     target.Add(entry);
@@ -69,12 +92,18 @@ namespace DCL.McpServer.Utils
         {
             public readonly long Seq;
             public readonly LogMessageType Type;
+            public readonly SceneLogSource Source;
+            public readonly string Category;
+            public readonly string? SceneName;
             public readonly string Message;
 
-            public Entry(long seq, LogMessageType type, string message)
+            public Entry(long seq, LogMessageType type, SceneLogSource source, string category, string? sceneName, string message)
             {
                 Seq = seq;
                 Type = type;
+                Source = source;
+                Category = category;
+                SceneName = sceneName;
                 Message = message;
             }
         }

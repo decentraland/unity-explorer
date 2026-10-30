@@ -13,6 +13,7 @@ using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -174,16 +175,87 @@ namespace DCL.SyntheticInput.Tests
             PointerEventType eventType = PointerEventType.PetDown,
             int? targetId = null,
             SyntheticPressHandoff? press = null,
-            string? sceneId = null)
+            string? sceneId = null,
+            InputAction button = InputAction.IaPointer)
         {
             var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
 
-            world.Add(playerEntity, new SyntheticPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
+            world.Add(playerEntity, new SyntheticPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, button, eventType, press)
             {
                 Completion = completion,
             });
 
             return completion;
+        }
+
+        private SyntheticPointerResult DeliverPressWith(InputAction button)
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(button: button);
+
+            system.Update(0); // inject
+            RunPipelineFrame();
+            system.Update(0); // observe
+
+            return ResultOf(completion);
+        }
+
+        [Test]
+        public void ReportTheDeliveredButton()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPointer);
+
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaPointer));
+            Assert.That(result.ToJson()["button"]!.Value<string>(), Is.EqualTo("pointer"));
+        }
+
+        [Test]
+        public void WarnNothingWhenTheEntryMatches()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPointer);
+
+            Assert.That(result.Warning, Is.Null, "the target declares pet_down/pointer, so the press produced a result");
+            Assert.That(result.ToJson()["warning"], Is.Null);
+        }
+
+        [Test]
+        public void WarnWhenTheEntityDeclaresNoEntryForTheButton()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPrimary);
+
+            Assert.That(result.Hit, Is.True, "the reticle qualified the entity; the warning is about what it was notified of");
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaPrimary));
+            Assert.That(result.Warning, Does.Contain("pet_down/primary"));
+            Assert.That(result.Warning, Does.Contain("pet_down/pointer"), "the entries the entity listens for are named");
+            Assert.That(result.Warning, Does.Contain("targeted"), "an entity-targeted edge reaches nobody else");
+            Assert.That(result.ToJson()["warning"]!.Value<string>(), Is.EqualTo(result.Warning));
+        }
+
+        [Test]
+        public void WarnNothingForAnIaAnyEntry()
+        {
+            sceneWorld.Get<PBPointerEvents>(targetEntity).PointerEvents[0]!.EventInfo.Button = InputAction.IaAny;
+
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPrimary);
+
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Warning, Is.Null, "an IA_ANY entry matches every button, as in the production merge");
+        }
+
+        [Test]
+        public void WarnOnAnAimlessHitToo()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaSecondary));
+            Assert.That(result.Warning, Does.Contain("pet_down/secondary"));
+            Assert.That(result.Warning, Does.Contain("scene root received"), "an aimless edge the entity ignored went out as a broadcast");
         }
 
         private void SetCurrentSceneDefinitionId(string id) =>

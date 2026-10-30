@@ -79,6 +79,70 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
+        public void PressTheButtonInOneFrameAndKeepItHeld()
+        {
+            var target = new Vector2(100f, 200f);
+            UniTask<UiGestureResult> gesture = Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.ButtonDown, To = target, Button = MouseButton.Left });
+
+            system.Update(0);
+            InputSystem.Update();
+
+            Assert.That(devices.Mouse.leftButton.isPressed, Is.True);
+            Assert.That(devices.Mouse.position.ReadValue(), Is.EqualTo(target));
+            Assert.That(gesture.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(gesture.GetAwaiter().GetResult().Ok, Is.True);
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
+
+            InputSystem.Update();
+            Assert.That(devices.Mouse.leftButton.isPressed, Is.True, "the edge leaves the button held until a release is queued");
+        }
+
+        [Test]
+        public void ReleaseAHeldButtonInOneFrame()
+        {
+            var target = new Vector2(100f, 200f);
+            Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.ButtonDown, To = target, Button = MouseButton.Left });
+            system.Update(0);
+            InputSystem.Update();
+
+            UniTask<UiGestureResult> release = Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.ButtonUp, To = target, Button = MouseButton.Left });
+            system.Update(0);
+            InputSystem.Update();
+
+            Assert.That(devices.Mouse.leftButton.isPressed, Is.False);
+            Assert.That(release.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void PublishThePointerPositionForAButtonEdge()
+        {
+            var target = new Vector2(30f, 40f);
+            Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.ButtonDown, To = target, Button = MouseButton.Left });
+
+            system.Update(0);
+
+            Assert.That(cursorOverride.TryGetPointerPosition(out Vector2 published), Is.True);
+            Assert.That(published, Is.EqualTo(target));
+            Assert.That(cursorOverride.SuppressOsWarp, Is.True);
+        }
+
+        [Test]
+        public void RejectAButtonEdgeWhileTheCursorIsCaptured()
+        {
+            cursor.CursorState = CursorState.Locked;
+
+            UniTask<UiGestureResult> gesture = Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.ButtonDown, To = Vector2.zero, Button = MouseButton.Left });
+
+            system.Update(0);
+            InputSystem.Update();
+
+            Assert.That(gesture.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(gesture.GetAwaiter().GetResult().Ok, Is.False);
+            Assert.That(devices.Mouse.leftButton.isPressed, Is.False, "a refused edge queues nothing");
+        }
+
+        [Test]
         public void HoldTheButtonWhileInterpolatingADrag()
         {
             var from = new Vector2(10f, 10f);

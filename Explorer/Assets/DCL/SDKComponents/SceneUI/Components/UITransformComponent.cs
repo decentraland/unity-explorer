@@ -43,6 +43,10 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool StylesApplied;
 
         public PointerEventType? PointerEventTriggered;
+
+        /// <summary>Written on every drain of <see cref="PointerEventTriggered" />.</summary>
+        public PointerEventDrainLog Drains;
+
         public bool IsRoot { get; private set; }
         public int? ZIndex;
 
@@ -72,6 +76,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsHidden = false;
             StylesApplied = false;
             PointerEventTriggered = null;
+            Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = 0;
@@ -85,6 +90,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsHidden = false;
             StylesApplied = false;
             PointerEventTriggered = null;
+            Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = rightOf;

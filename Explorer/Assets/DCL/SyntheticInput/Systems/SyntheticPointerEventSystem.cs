@@ -272,6 +272,7 @@ namespace DCL.SyntheticInput.Systems
                 };
 
             SyntheticPointerResult result = BuildAimlessResult(
+                in intent,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);

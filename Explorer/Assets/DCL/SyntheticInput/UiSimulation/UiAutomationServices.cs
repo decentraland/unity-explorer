@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterCamera.Components;
+using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SyntheticInput.Core;
 using ECS.Abstract;
@@ -264,6 +265,112 @@ namespace DCL.SyntheticInput.UiSimulation
             }
         }
 
+        /// <summary>
+        ///     Clicks a scene-UI element through the virtual mouse, one input state per scene drain: the element's
+        ///     single pointer-event slot would otherwise be overwritten by the next edge before the throttled scene
+        ///     system reads it. The result says which events the scene consumed. Main thread only.
+        /// </summary>
+        public async UniTask<UiActionResult> ClickSdkWithDevicesAsync(SdkUiElement element, MouseButton button, bool force, float timeoutSec, CancellationToken ct)
+        {
+            VisualElement target = element.Transform.Transform;
+            UITransformComponent slot = element.Transform;
+
+            if (!Simulator.TryCheckSdkPointer(target, force, "click", out UiActionResult blocked, out Rect imageRect))
+                return blocked;
+
+            if (!await Simulator.SettlePendingSdkEventsAsync(slot, ct))
+                return UiActionResult.Failure("the scene did not consume an earlier pointer event on the element (is the scene paused?); the click was not delivered", null, imageRect);
+
+            Vector2 center = UiScreenGeometry.ImageToScreenPoint(imageRect.center);
+
+            var delivery = new SdkClickDelivery
+            {
+                DeclaresDown = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetDown),
+                DeclaresUp = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetUp),
+            };
+
+            bool declaresEnter = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetHoverEnter);
+
+            // Off the element first, so the pointer's arrival produces the enter even when the mouse already rests there.
+            Devices.QueueMouseState(OFF_SCREEN_POINT);
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+            var pressed = false;
+
+            try
+            {
+                (UiGestureResult moved, SdkDrainObservation enter) = await RunPacedEdgeAsync(UiDeviceGestureKind.MoveTo, center, button, slot, PointerEventType.PetHoverEnter, declaresEnter, timeoutSec, ct);
+
+                if (!moved.Ok)
+                    return UiActionResult.Failure(moved.FailureReason ?? "the device click failed", null, imageRect);
+
+                delivery.Enter = SdkClickVerdict.Judge(PointerEventType.PetHoverEnter, declaresEnter, in enter);
+
+                (UiGestureResult downEdge, SdkDrainObservation down) = await RunPacedEdgeAsync(UiDeviceGestureKind.ButtonDown, center, button, slot, PointerEventType.PetDown, delivery.DeclaresDown, timeoutSec, ct);
+                pressed = downEdge.Ok;
+
+                if (!downEdge.Ok)
+                    return UiActionResult.Failure(downEdge.FailureReason ?? "the device click failed", null, imageRect);
+
+                delivery.Down = SdkClickVerdict.Judge(PointerEventType.PetDown, delivery.DeclaresDown, in down);
+
+                (UiGestureResult upEdge, SdkDrainObservation up) = await RunPacedEdgeAsync(UiDeviceGestureKind.ButtonUp, center, button, slot, PointerEventType.PetUp, delivery.DeclaresUp, timeoutSec, ct);
+                pressed = pressed && !upEdge.Ok;
+
+                if (!upEdge.Ok)
+                    return UiActionResult.Failure(upEdge.FailureReason ?? "the device click failed", null, imageRect);
+
+                delivery.Up = SdkClickVerdict.Judge(PointerEventType.PetUp, delivery.DeclaresUp, in up);
+
+                return SdkClickVerdict.Build(in delivery, imageRect, in down, in up);
+            }
+            finally
+            {
+                // A held button must never outlive the click; the move off the element is what produces its leave.
+                if (pressed)
+                    Devices.QueueMouseState(center);
+
+                Devices.QueueMouseState(OFF_SCREEN_POINT);
+                Simulator.NoteUnsettledLeave(slot);
+            }
+        }
+
+        /// <summary>Clicks a client UI element positionally through the virtual mouse. Main thread only.</summary>
+        public async UniTask<UiActionResult> ClickWithDevicesAsync(Vector2 screenCenter, Rect imageRect, MouseButton button, float timeoutSec, CancellationToken ct)
+        {
+            UiGestureResult gesture = await RunGestureAsync(new UiDeviceGestureRequest
+            {
+                Kind = UiDeviceGestureKind.Click,
+                To = screenCenter,
+                Button = button,
+            }, timeoutSec, ct);
+
+            return gesture.Ok
+                ? UiActionResult.Success(imageRect)
+                : UiActionResult.Failure(gesture.FailureReason ?? "the device click failed", null, imageRect);
+        }
+
+        /// <summary>One queued pointer state, then the scene's drain of the event it should have produced.</summary>
+        private async UniTask<(UiGestureResult Gesture, SdkDrainObservation Observed)> RunPacedEdgeAsync(UiDeviceGestureKind kind, Vector2 point, MouseButton button,
+            UITransformComponent slot, PointerEventType sent, bool declared, float timeoutSec, CancellationToken ct)
+        {
+            int drainsBefore = slot.Drains.DrainCount;
+
+            UiGestureResult gesture = await RunGestureAsync(new UiDeviceGestureRequest
+            {
+                Kind = kind,
+                From = point,
+                To = point,
+                DurationFrames = 1,
+                Button = button,
+            }, timeoutSec, ct);
+
+            if (!gesture.Ok)
+                return (gesture, SdkDrainObservation.NotDrained);
+
+            return (gesture, await Simulator.ObserveOrSettleAsync(slot, sent, declared, drainsBefore, ct));
+        }
+
         /// <summary>Drags through the virtual devices. Main thread only.</summary>
         public async UniTask<UiDeviceDragOutcome> DragWithDevicesAsync(Vector2 fromScreenPoint, Vector2 toScreenPoint,
             int durationFrames, MouseButton button, CancellationToken ct)
@@ -285,7 +392,8 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Scene UI does not react to the virtual devices, so a drag inside it is synthesized against its elements.
+        ///     A drag inside the scene UI is synthesized against its elements: the virtual mouse does reach the scene's
+        ///     panel, but a drag writes more events per frame than the element's single pointer-event slot can hold.
         /// </summary>
         public async UniTask<SceneUiDragAttempt> DragSceneUiAsync(Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
         {

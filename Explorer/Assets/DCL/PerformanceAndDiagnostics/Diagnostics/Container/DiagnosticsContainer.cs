@@ -79,12 +79,27 @@ namespace DCL.Diagnostics
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
-            SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
+            var reportHandler = new SceneDebugConsoleReportHandler(CreateDebugConsoleMatrix(), sceneDebugConsoleMessageBus, false);
             ReportHub.EnforceUnconditionalVerboseLogs = true;
             reportHubLogger.AddHandler(reportHandler);
         }
 
-        private static SceneDebugConsoleReportHandler AddDebugConsoleReportHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
+        /// <summary>
+        ///     Feeds <paramref name="sink" /> the same reports the scene debug console shows, with their category and
+        ///     scene attached. Like <see cref="AddDebugConsoleHandler" />, it enables verbose logs process-wide so the
+        ///     scene's console output is reported in every build.
+        /// </summary>
+        public void AddReportSink(IReportSink sink)
+        {
+            ReportHub.EnforceUnconditionalVerboseLogs = true;
+            reportHubLogger.AddHandler(new ReportSinkHandler(CreateDebugConsoleMatrix(), sink));
+        }
+
+        /// <summary>
+        ///     The scene's JavaScript output at every level, plus errors and exceptions from the categories a scene's
+        ///     content can trip (and the automation categories, so their own lines are readable too).
+        /// </summary>
+        internal static ICategorySeverityMatrix CreateDebugConsoleMatrix()
         {
             var jsOnlyMatrix = new CategorySeverityMatrix();
 
@@ -132,7 +147,7 @@ namespace DCL.Diagnostics
             entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.SYNTHETIC_INPUT, Severity = LogType.Log });
 
             jsOnlyMatrix.entries = entries;
-            return new SceneDebugConsoleReportHandler(jsOnlyMatrix, sceneDebugConsoleMessageBus, false);
+            return jsOnlyMatrix;
         }
 
         private static List<CategorySeverityMatrix.Entry> GetMatrixEntriesList(string[] reportCategories, bool errorType = true, bool exceptionType = true, bool logType = true)

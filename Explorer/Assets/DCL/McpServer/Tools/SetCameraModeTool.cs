@@ -87,13 +87,28 @@ namespace DCL.McpServer.Tools
                 return "A scene virtual camera controls the view right now (mode SDKCamera); the mode cannot change until the scene releases it.";
 
             if (!camera.CameraInputChangeEnabled)
-                return $"Camera mode is locked by the scene (CameraModeArea; current mode: {camera.Mode}). Leave the area to change modes.";
+                return DescribeCameraModeLock(world, cameraEntity, camera.Mode);
 
             if (world.Has<InWorldCameraComponent>(cameraEntity))
                 return "The in-world photo camera is active; close it before changing the camera mode.";
 
             camera.Mode = targetMode;
             return null;
+        }
+
+        /// <summary>
+        ///     Names the area holding the lock when the scene mirrored it onto the camera entity; the lock counter alone
+        ///     cannot say which area, so the generic text is the fallback.
+        /// </summary>
+        private static string DescribeCameraModeLock(World world, Entity cameraEntity, CameraMode currentMode)
+        {
+            if (!world.TryGet(cameraEntity, out CameraModeAreaLock areaLock))
+                return $"Camera mode is locked by the scene (CameraModeArea; current mode: {currentMode}). Leave the area to change modes.";
+
+            string nested = areaLock.ActiveAreaCount > 1 ? $"; {areaLock.ActiveAreaCount} areas nested, the newest is in effect" : string.Empty;
+
+            return $"Camera mode is locked by a CameraModeArea of scene '{areaLock.SceneName}' (base parcel {areaLock.SceneBaseParcel.x},{areaLock.SceneBaseParcel.y}; "
+                   + $"entity crdtId {areaLock.CrdtEntityId}; forces {McpWireEnum<CameraMode>.ToWire(areaLock.Mode)}; area {areaLock.AreaSize}{nested}). Leave the area to change modes.";
         }
     }
 }

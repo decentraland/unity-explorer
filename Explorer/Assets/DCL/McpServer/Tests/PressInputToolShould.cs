@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.ECSComponents;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.SyntheticInput;
@@ -35,6 +36,18 @@ namespace DCL.McpServer.Tests
             CollectionAssert.Contains(values, "primary");
             CollectionAssert.Contains(values, "action_3");
             CollectionAssert.DoesNotContain(values, "PRIMARY");
+        }
+
+        [Test]
+        public void SpellTheActionLikeTheSyntheticLayer()
+        {
+            string[] values = ((JObject)tool.InputSchema["properties"]!)["action"]!["enum"]!.ToObject<string[]>()!;
+
+            foreach (string value in values)
+            {
+                Assert.That(InputActionNames.TryParse(value, out InputAction action), Is.True, value);
+                Assert.That(InputActionNames.ToWire(action), Is.EqualTo(value), "click results name the button in the spelling press_input accepts");
+            }
         }
 
         [Test]

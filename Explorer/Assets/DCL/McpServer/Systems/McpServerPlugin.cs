@@ -11,7 +11,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.UiSimulation;
-using DCL.UI.DebugMenu.MessageBus;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -56,12 +55,11 @@ namespace DCL.McpServer.Systems
         private readonly UiAutomationServices uiAutomation;
 
         private readonly SceneLogBuffer logBuffer;
-        private readonly DebugMenuConsoleLogEntryBus logEntryBus;
 
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
 
-        private ScreenshotTool? screenshotTool;
+        private ScreenCaptureService? captureService;
 
         public McpServerPlugin(
             IAppArgs appArgs,
@@ -101,25 +99,23 @@ namespace DCL.McpServer.Systems
             this.localSceneDevelopment = localSceneDevelopment;
 
             logBuffer = new SceneLogBuffer();
-            logEntryBus = new DebugMenuConsoleLogEntryBus();
-            logEntryBus.MessageAdded += logBuffer.Append;
-            diagnosticsContainer.AddDebugConsoleHandler(logEntryBus);
+            diagnosticsContainer.AddReportSink(logBuffer);
         }
 
         public void Dispose()
         {
-            logEntryBus.MessageAdded -= logBuffer.Append;
-            screenshotTool?.Dispose();
+            captureService?.Dispose();
             server?.Dispose();
             serverCts.SafeCancelAndDispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
+            captureService = new ScreenCaptureService(coroutineRunner, globalWorld);
 
             var toolsRegistry = new McpToolsRegistry()
-                          .Add(screenshotTool)
+                          .Add(new ScreenshotTool(captureService, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new CaptureSequenceTool(captureService, globalWorld, arguments.PlayerEntity))
                           .Add(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
                           .Add(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
                           .Add(new GetSceneContentStatsTool(scenesCache))
@@ -127,15 +123,18 @@ namespace DCL.McpServer.Systems
                           .Add(new GetPerformanceStatsTool(scenesCache))
                           .Add(new GetCrdtTrafficTool(scenesCache))
                           .Add(new GetSceneLogsTool(logBuffer))
+                          .Add(new GetReticleTool(syntheticInput))
+                          .Add(new GetAudioStateTool(scenesCache, globalWorld, arguments.PlayerEntity))
+                          .Add(new GetVisibleEntitiesTool(scenesCache, globalWorld, arguments.PlayerEntity))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
-                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData, syntheticInput))
                           .Add(new LookAtTool(syntheticInput, exposedCameraData))
                           .Add(new CameraLookTool(syntheticInput, exposedCameraData))
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
                           .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus))
-                          .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
+                          .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity, coroutineRunner))
                           .Add(new ListSceneEntitiesTool(scenesCache))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))

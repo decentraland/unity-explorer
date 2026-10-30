@@ -58,7 +58,7 @@ namespace DCL.McpServer.Tools
             if (address.Stack == UiStack.SDK)
             {
                 if (device)
-                    return McpToolResult.Error("device:true applies only to client UI: the virtual mouse does not reach the scene's UI panels. Omit device to hover scene UI.");
+                    return McpToolResult.Error("device:true applies only to client UI: a device hover on scene UI is not offered, because the real mouse shares its pointer and would end it at any moment. Omit device to hover scene UI (the semantic path parks and drains the enter).");
 
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? sdkFailure))
                     return McpToolResult.Error(sdkFailure);

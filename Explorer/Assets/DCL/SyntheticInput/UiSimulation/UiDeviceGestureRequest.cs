@@ -31,6 +31,15 @@ namespace DCL.SyntheticInput.UiSimulation
 
         /// <summary>Presses and releases <see cref="UiDeviceGestureRequest.Key" />, held for the duration.</summary>
         KeyPress,
+
+        /// <summary>
+        ///     Presses <see cref="UiDeviceGestureRequest.Button" /> at <see cref="UiDeviceGestureRequest.To" /> in one
+        ///     frame and leaves it held, so a caller can pace the release on the scene's own cadence.
+        /// </summary>
+        ButtonDown,
+
+        /// <summary>Releases <see cref="UiDeviceGestureRequest.Button" /> at <see cref="UiDeviceGestureRequest.To" /> in one frame.</summary>
+        ButtonUp,
     }
 
     public enum UiGesturePhase : byte

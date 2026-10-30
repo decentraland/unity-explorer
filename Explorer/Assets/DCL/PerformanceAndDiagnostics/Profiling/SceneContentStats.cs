@@ -106,8 +106,23 @@ namespace DCL.Profiling
         public long Triangles;
         public int Bodies;
         public int Geometries;
+        /// <summary>
+        ///     Unique live material instances. The client instantiates every GLTF renderer's materials
+        ///     (scene-bounds culling setup), so this counts per renderer, not per authored material.
+        /// </summary>
         public int Materials;
+
+        /// <summary>
+        ///     Unique textures: those probed from the counted materials plus <see cref="UiTextures" />.
+        /// </summary>
         public int Textures;
+
+        /// <summary>
+        ///     Unique textures referenced by scene-UI backgrounds. Included in <see cref="Textures" />:
+        ///     the deploy-time limit counts texture files, and UI textures are files too.
+        /// </summary>
+        public int UiTextures;
+
         public int Colliders;
 
         /// <summary>

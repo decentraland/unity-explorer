@@ -76,6 +76,7 @@ namespace DCL.McpServer.Tests
             stats.Geometries = 7;
             stats.Materials = 5;
             stats.Textures = 3;
+            stats.UiTextures = 1;
             stats.ShaderVariants = 2;
             stats.Colliders = 2;
             stats.Videos = 1;
@@ -94,8 +95,21 @@ namespace DCL.McpServer.Tests
             Assert.That(structured["triangles"]!.Value<long>(), Is.EqualTo(5200));
             Assert.That(structured["trianglesCap"]!.Value<long>(), Is.EqualTo(20000));
             Assert.That(structured["geometries"]!.Value<int>(), Is.EqualTo(7));
+            Assert.That(structured["textures"]!.Value<int>(), Is.EqualTo(3));
+            Assert.That(structured["uiTextures"]!.Value<int>(), Is.EqualTo(1));
             Assert.That(structured["shaderVariants"]!.Value<int>(), Is.EqualTo(2));
             Assert.That(structured["videos"]!.Value<int>(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void StateThatMaterialsArePerRendererInstances()
+        {
+            // Arrange
+            var tool = new GetSceneContentStatsTool(scenesCache, collectionTimeoutMs: 0);
+
+            // Assert — agents reconcile this number against authored counts unless told how it is made
+            Assert.That(tool.Description, Does.Contain("instantiates every GLTF renderer's materials"));
+            Assert.That(tool.OutputSchema["properties"]!["materials"]!["description"]!.Value<string>(), Does.Contain("per renderer"));
         }
 
         [Test]

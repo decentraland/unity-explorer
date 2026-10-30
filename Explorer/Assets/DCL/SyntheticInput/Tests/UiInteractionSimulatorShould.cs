@@ -1,6 +1,10 @@
+using CRDT;
+using Cysharp.Threading.Tasks;
+using DCL.SDKComponents.SceneUI.Components;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -83,6 +87,22 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.Ok, Is.False, "assigning .text bypasses uGUI's own guard, so the guard has to be applied here");
             Assert.That(result.FailureReason, Does.Contain("not interactable"));
             Assert.That(field.text, Is.Empty, "the write must not have happened");
+        }
+
+        [Test]
+        public void RefuseToClickADetachedSdkElement()
+        {
+            var transform = new UITransformComponent();
+            transform.InitializeAsChild("Detached", new CRDTEntity(600), new CRDTEntity(0));
+
+            UniTask<UiActionResult> click = simulator.ClickSdkAsync(new SdkUiElement(transform, null, null), force: false, CancellationToken.None);
+
+            // Completing synchronously is the assertion: nothing was sent to an element no panel shows.
+            Assert.That(click.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            UiActionResult result = click.GetAwaiter().GetResult();
+            Assert.That(result.Ok, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("not attached"));
+            Assert.That(result.SdkDelivery, Is.Null, "no verdict is claimed for events that were never sent");
         }
 
         [Test]
