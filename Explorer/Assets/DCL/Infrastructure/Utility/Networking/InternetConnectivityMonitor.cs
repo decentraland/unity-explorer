@@ -1,3 +1,4 @@
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG: desktop-only, System.Net.Sockets has no WebGL implementation
 using System;
 using System.Net.Sockets;
 using System.Threading;

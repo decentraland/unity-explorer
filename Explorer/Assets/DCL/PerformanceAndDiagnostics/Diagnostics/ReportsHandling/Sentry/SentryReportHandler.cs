@@ -217,7 +217,7 @@ namespace DCL.Diagnostics.Sentry
         {
             try
             {
-                bool online = Interlocked.Increment(ref heldNetworkFailures) > MAX_HELD_NETWORK_FAILURES
+                bool online = Interlocked.Increment(ref heldNetworkFailures) > MAX_HELD_NETWORK_FAILURES // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     ? connectivity.IsOnline
                     : await connectivity.RefreshIfStaleAsync();
 
@@ -227,7 +227,7 @@ namespace DCL.Diagnostics.Sentry
                     Demote(exception.Message);
             }
             catch (Exception) { /* reporting it would re-enter this handler */ }
-            finally { Interlocked.Decrement(ref heldNetworkFailures); }
+            finally { Interlocked.Decrement(ref heldNetworkFailures); } // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         }
 
         private void Capture(Exception exception, ReportData? reportData)
