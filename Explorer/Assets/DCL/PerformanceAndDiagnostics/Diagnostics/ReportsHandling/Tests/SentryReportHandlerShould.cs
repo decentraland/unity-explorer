@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Networking;
@@ -16,6 +18,10 @@ namespace DCL.Diagnostics.Tests
     public class SentryReportHandlerShould
     {
         private const string TASK_ALREADY_COMPLETED = "An attempt was made to transition a task to a final state when it had already completed.";
+        private const int TOO_MANY_REQUESTS = 429;
+        private const string EVENTS_RATE_LIMIT_BODY = "{\"ok\":false,\"error\":\"Too many requests\",\"code\":\"too_many_requests\"}";
+        private const string TRANSLATION_RATE_LIMIT_BODY = "{\"error\":\"Slowdown: 360 per 1 minute\"}";
+        private static readonly TimeSpan RESPONSE_TIMEOUT = TimeSpan.FromSeconds(10);
 
         private static readonly SceneShortInfo SCENE_INFO = new (Vector2Int.zero, "kingdom-of-antrom");
 
@@ -93,6 +99,22 @@ namespace DCL.Diagnostics.Tests
         public void KeepOtherInvalidOperations()
         {
             var @event = new SentryEvent(new InvalidOperationException("Collection was modified"));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public async Task DropRateLimitAnswersOfTheEventsServer()
+        {
+            var @event = new SentryEvent(await ReceiveErrorAnswerAsync(TOO_MANY_REQUESTS, EVENTS_RATE_LIMIT_BODY));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public async Task KeepRateLimitAnswersOfOtherServices()
+        {
+            var @event = new SentryEvent(await ReceiveErrorAnswerAsync(TOO_MANY_REQUESTS, TRANSLATION_RATE_LIMIT_BODY));
 
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }
@@ -249,6 +271,61 @@ namespace DCL.Diagnostics.Tests
             SentryReportHandler.AddSceneJsFingerprint(scope, reportData, new Exception("Error: boom"));
 
             CollectionAssert.AreEqual(new[] { "scene-js", "unknown-scene", "Error: boom" }, scope.Fingerprint);
+        }
+
+        /// <summary>
+        ///     A <see cref="UnityWebRequestException" /> takes its status and body from a sent request only,
+        ///     so a loopback listener answers one real request with them.
+        /// </summary>
+        private static async Task<UnityWebRequestException> ReceiveErrorAnswerAsync(int statusCode, string body)
+        {
+            int port = FreeLoopbackPort();
+            var listener = new HttpListener();
+            listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            listener.Start();
+
+            try
+            {
+                Task answer = AnswerOnceAsync(listener, statusCode, body);
+
+                using UnityWebRequest request = UnityWebRequest.Get($"http://127.0.0.1:{port}/api/events");
+                UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+                DateTime deadline = DateTime.UtcNow + RESPONSE_TIMEOUT;
+
+                // Task.Delay rather than UniTask: EditMode tests do not run the Player Loop in playing state
+                while (!operation.isDone && DateTime.UtcNow < deadline)
+                    await Task.Delay(10);
+
+                await answer;
+
+                Assert.AreEqual(statusCode, request.responseCode);
+                return new UnityWebRequestException(request);
+            }
+            finally
+            {
+                listener.Stop();
+                listener.Close();
+            }
+        }
+
+        private static async Task AnswerOnceAsync(HttpListener listener, int statusCode, string body)
+        {
+            HttpListenerContext context = await listener.GetContextAsync().ConfigureAwait(false);
+            byte[] content = Encoding.UTF8.GetBytes(body);
+            context.Response.StatusCode = statusCode;
+            context.Response.ContentType = "application/json";
+            context.Response.ContentLength64 = content.Length;
+            await context.Response.OutputStream.WriteAsync(content, 0, content.Length).ConfigureAwait(false);
+            context.Response.Close();
+        }
+
+        private static int FreeLoopbackPort()
+        {
+            var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            int freePort = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+            return freePort;
         }
     }
 }
