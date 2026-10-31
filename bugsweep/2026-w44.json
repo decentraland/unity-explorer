@@ -48,9 +48,9 @@
     },
     {
       "number": 10574,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "no category-specific code in the spring-bone path; the main suspect is that in-world compute skinning maps wearable bones to the avatar skeleton by list position (AttachmentAssetUtility.cs:128/151, ComputeSkinningBufferContainer.cs:92/129) while the Builder preview maps them by name, so a GLB that lists spring bones between avatar bones shifts the chain onto shoulder/arm bones; confirming needs the GLBs (only in Slack, not attached to the issue), and the real fix (bind by bone name when building skinning buffers) changes the GPU skinning path and needs on-device verification"
     },
     {
       "number": 10545,
