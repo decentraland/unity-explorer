@@ -1,0 +1,188 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-10-24T12:01:32Z",
+ "collectedAt": "2026-10-31T12:02:06Z",
+ "groups": [
+  [
+   10558,
+   10559
+  ],
+  [
+   7813,
+   7814
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10547,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10550,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10561,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10494,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10578,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10574,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10545,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10490,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10539,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10566,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10542,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10552,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10558,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10559,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10570,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 7344,
+   "status": "skipped",
+   "commit": null,
+   "note": "Places 'Most Active' order comes from the server: the Destinations API ORDER BY has no most_active override (tracked by sdilauro in decentraland/discovery-server#117); the client only passes the sort"
+  },
+  {
+   "number": 10540,
+   "status": "skipped",
+   "commit": null,
+   "note": "tech debt refactor (IProfileRepository to Result<T,E>), duplicate of #10346; a cross-caller migration, not a bug fix"
+  },
+  {
+   "number": 10346,
+   "status": "skipped",
+   "commit": null,
+   "note": "tech debt refactor (model profile fetch outcomes as a union type across ~20 callers); not a bug fix"
+  },
+  {
+   "number": 9440,
+   "status": "skipped",
+   "commit": null,
+   "note": "Genesis Plaza memory growth on macOS (still reproducing per NickKhalow, 2026-10); needs profiling sessions, no single root cause identifiable in a sweep"
+  },
+  {
+   "number": 7906,
+   "status": "skipped",
+   "commit": null,
+   "note": "Segment send-loop network error: fixed on dev by #10525 (network failures retried silently), merged 2026-10-29 after v0.193.0 was cut; verify once the next release ships"
+  },
+  {
+   "number": 10563,
+   "status": "skipped",
+   "commit": null,
+   "note": "tooling change plus repo-wide migration (BannedApiAnalyzers package and every Dictionary Add/indexer call site); too large for a sweep fix"
+  },
+  {
+   "number": 10329,
+   "status": "skipped",
+   "commit": null,
+   "note": "already in flight: closed by the open PR https://github.com/decentraland/unity-explorer/pull/10565"
+  },
+  {
+   "number": 10283,
+   "status": "skipped",
+   "commit": null,
+   "note": "architectural: move LiveKit FFI into a restartable helper process, out of scope for a bug sweep"
+  },
+  {
+   "number": 10567,
+   "status": "skipped",
+   "commit": null,
+   "note": "process change to the Sentry alert rule and sweep selection, no client code to change"
+  },
+  {
+   "number": 10572,
+   "status": "skipped",
+   "commit": null,
+   "note": "fix in progress in #10571 (bumps the LiveKit SDK pin), blocked on decentraland/client-sdk-unity#71"
+  },
+  {
+   "number": 10537,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed by the 2026-W43 sweep (#10538, merged to dev 2026-10-30, after v0.193.0 was cut); verify once the next release ships"
+  },
+  {
+   "number": 7813,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed on dev by #10569 (MultiThreadSync lock stuck after timeout), merged 2026-10-30 after v0.193.0 was cut; the Sentry reopen is from v0.193 and older builds"
+  },
+  {
+   "number": 7814,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed on dev by #10569 (MultiThreadSync lock stuck after timeout), merged 2026-10-30 after v0.193.0 was cut; the Sentry reopen is from v0.193 and older builds"
+  }
+ ]
+}
