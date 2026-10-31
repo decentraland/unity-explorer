@@ -60,9 +60,9 @@
     },
     {
       "number": 10490,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "already fixed on dev: the 2026-W43 sweep PR #10538 (merged 2026-10-30) bounds the self-profile request with SelfProfile.FETCH_REQUEST_TIMEOUT (10s) so a stalled catalyst fetch settles as FetchFailed; v0.193.0 was cut before that merge, so the v0.193 events predate the fix; verify once the next release ships"
     },
     {
       "number": 10539,
