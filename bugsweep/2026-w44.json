@@ -72,9 +72,9 @@
     },
     {
       "number": 10566,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "root cause not proven: component pools only hold their own type, so the cast needs another thread to rewrite the sdkComponentBridge of a shared pooled BatchState between WorldSyncCommandBuffer.cs:182-184's two reads, but no double release was found on any release path; breadcrumbs show it right after MultiThreadSync 10s timeouts during a teleport (a cross-scene race, possibly related to #7813/#7814 fixed by #10569), with an IL2CPP generic-sharing cast issue also possible; 4 events from 1 user, needs a multi-threaded repro before a fix"
     },
     {
       "number": 10542,
