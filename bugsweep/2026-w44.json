@@ -90,14 +90,14 @@
     },
     {
       "number": 10558,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "242aaf5e3a",
       "note": null
     },
     {
       "number": 10559,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "242aaf5e3a",
       "note": null
     },
     {
