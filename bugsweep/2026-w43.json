@@ -1,5 +1,5 @@
 {
-  "status": "pr-open",
+  "status": "done",
   "prUrl": "https://github.com/decentraland/unity-explorer/pull/10538",
   "requester": "U0ADNDHL1T7",
   "originChannel": "C0BB9H2CS5D",
@@ -240,5 +240,6 @@
       "commit": null,
       "note": "already fixed on dev by the w42 sweep PR #10492 (merged 2026-10-23); stays open until it ships to main"
     }
-  ]
+  ],
+  "note": "PR #10538 merged into dev on 2026-10-30; closed out by the 2026-w44 sweep"
 }
