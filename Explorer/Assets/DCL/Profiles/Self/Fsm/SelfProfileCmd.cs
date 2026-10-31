@@ -15,22 +15,27 @@ namespace DCL.Profiles.Self
         /// <summary>The profile is reported as saved without being sent to the catalyst.</summary>
         public readonly bool LocalOnly;
 
-        public DeployCmd(UserId address, Profile profile, int version, bool localOnly = false)
+        /// <summary>The catalyst held no profile of the address before the edit, so the deploy creates it.</summary>
+        public readonly bool CreatesProfile;
+
+        public DeployCmd(UserId address, Profile profile, int version, bool localOnly = false, bool createsProfile = false)
         {
             Address = address;
             Profile = profile;
             Version = version;
             LocalOnly = localOnly;
+            CreatesProfile = createsProfile;
         }
 
         public bool Equals(DeployCmd other) =>
-            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version && LocalOnly == other.LocalOnly;
+            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version && LocalOnly == other.LocalOnly
+            && CreatesProfile == other.CreatesProfile;
 
         public override bool Equals(object? obj) =>
             obj is DeployCmd other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version, LocalOnly);
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version, LocalOnly, CreatesProfile);
 
         public override string ToString() =>
             LocalOnly ? $"{Address.Value} v{Version} local only" : $"{Address.Value} v{Version}";
