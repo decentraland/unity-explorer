@@ -24,9 +24,9 @@
     },
     {
       "number": 10550,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "the fix belongs in js-sdk-toolchain: the local preview answers POST /content/entities/active for the wearable's parcel with [], and that entity id is the shared session key for both the LiveKit local scene room and the Pulse realm (lsd:<id>, a contract documented in js-sdk-toolchain docs/lsd-identity-and-pulse-realm.md); substituting another id on the Explorer side only works if sdk-commands keys its room on the same id, so the preview must return a scene-like entity for its pointers (sdk-commands start/server/endpoints.ts) or define a wearable-preview id in that contract"
     },
     {
       "number": 10561,
