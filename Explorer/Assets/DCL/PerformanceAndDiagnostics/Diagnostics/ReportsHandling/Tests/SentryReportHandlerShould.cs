@@ -120,6 +120,24 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropUnreachableThirdwebBundler()
+        {
+            var @event = new SentryEvent(new Exception("Bundler Request Failed. Error: 0 - "));
+            @event.SetTag("category", ReportCategory.AUTHENTICATION);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepThirdwebBundlerFailuresWithAStatus()
+        {
+            var @event = new SentryEvent(new Exception("Bundler Request Failed. Error: 500 - {\"error\":\"internal\"}"));
+            @event.SetTag("category", ReportCategory.AUTHENTICATION);
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void KeepAggregateWhenAnyInnerExceptionIsActionable()
         {
             var @event = new SentryEvent(new AggregateException(new IOException("Disk full"), new NullReferenceException()));
