@@ -30,15 +30,15 @@
     },
     {
       "number": 10561,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "one root cause for both (same session, failing back to back every frame on CharacterTransform.Transform.position of a live remote player, all reports from scene (1,95) Meta GamiMall): the pooled remote-player Transform (RemoteEntities.cs:139) gets destroyed while the entity lives, but what destroys it could not be found (checked RemoteEntities create/remove, the shared GameObjectPool release path, AvatarShapeHandlerSystem re-parenting, AvatarAttach and every SetParent; Sentry breadcrumbs hold only the repeating exceptions and miss the onset); a null guard would only hide it; next step is reproducing in (1,95) with pool double-release checks enabled"
     },
     {
       "number": 10494,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "one root cause for both (same session, failing back to back every frame on CharacterTransform.Transform.position of a live remote player, all reports from scene (1,95) Meta GamiMall): the pooled remote-player Transform (RemoteEntities.cs:139) gets destroyed while the entity lives, but what destroys it could not be found (checked RemoteEntities create/remove, the shared GameObjectPool release path, AvatarShapeHandlerSystem re-parenting, AvatarAttach and every SetParent; Sentry breadcrumbs hold only the repeating exceptions and miss the onset); a null guard would only hide it; next step is reproducing in (1,95) with pool double-release checks enabled"
     },
     {
       "number": 10578,
