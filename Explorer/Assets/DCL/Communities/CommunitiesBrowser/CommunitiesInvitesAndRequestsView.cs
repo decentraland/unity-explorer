@@ -179,7 +179,7 @@ namespace DCL.Communities.CommunitiesBrowser
             SetRequestsReceivedAsEmpty(true);
         }
 
-        public void SetRequestsReceivedItems(List<KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>> requestsReceivedGroups)
+        public void SetRequestsReceivedItems(List<KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>>> requestsReceivedGroups)
         {
             foreach (var requestsReceivedGroup in requestsReceivedGroups)
                 CreateAndSetupRequestsReceivedGroup(requestsReceivedGroup);
@@ -404,7 +404,7 @@ namespace DCL.Communities.CommunitiesBrowser
             return requestsReceivedGroup;
         }
 
-        private void CreateAndSetupRequestsReceivedGroup(KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]> requestsReceivedGroup)
+        private void CreateAndSetupRequestsReceivedGroup(KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>> requestsReceivedGroup)
         {
             CommunityRequestsReceivedGroupView requestsReceivedGroupView = requestReceivedGroupsPool.Get();
 

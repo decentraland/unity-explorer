@@ -1,8 +1,10 @@
+using System.Collections.Generic;
+
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     public interface ICommunityMemberPagedResponse
     {
-        ICommunityMemberData[] members { get; }
+        IReadOnlyList<ICommunityMemberData> members { get; }
         int total { get; }
     }
 }

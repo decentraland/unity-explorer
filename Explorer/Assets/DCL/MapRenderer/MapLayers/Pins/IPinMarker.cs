@@ -28,8 +28,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetData(string title, string description);
 
-        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
-
         UniTaskVoid AnimateDeselectionAsync(CancellationToken ct);
 
         public void DeselectImmediately(ScaleType scaleType);

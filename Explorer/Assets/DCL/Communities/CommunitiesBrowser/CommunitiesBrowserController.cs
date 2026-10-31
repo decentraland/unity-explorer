@@ -402,7 +402,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 return 0;
             }
 
-            List<KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>> requestsReceivedCommunities = new ();
+            List<KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>>> requestsReceivedCommunities = new ();
             var totalAmountOfRequests = 0;
             if (myCommunitiesResult.Value.data.results.Length > 0)
             {
@@ -422,7 +422,7 @@ namespace DCL.Communities.CommunitiesBrowser
                             break;
 
                         requestsReceivedCommunities.Add(
-                            new KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>(
+                            new KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>>(
                                 myCommunityData,
                                 communityRequestsReceived.Success ? communityRequestsReceived.Value.members : Array.Empty<ICommunityMemberData>()));
 

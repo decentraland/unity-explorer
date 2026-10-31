@@ -2,7 +2,6 @@
 {
     public interface IMemoryProfiler : IBudgetProfiler
     {
-        long SystemUsedMemoryInBytes { get; }
         long GcUsedMemoryInBytes { get; }
 
         /// <summary>Profiler used memory, excluded from <see cref="IBudgetProfiler.TotalUsedMemoryInBytes" />. Zero in release builds.</summary>
