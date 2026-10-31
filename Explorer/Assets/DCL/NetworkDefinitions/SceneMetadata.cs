@@ -15,7 +15,11 @@ namespace DCL.Ipfs
         public string runtimeVersion;
         public string sdkVersion;
         public List<string> allowedMediaHostnames;
-        public List<string> requiredPermissions;
+
+        // Optional in scene.json: absent or null means the scene requests no permissions
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public List<string> requiredPermissions = new ();
+
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
