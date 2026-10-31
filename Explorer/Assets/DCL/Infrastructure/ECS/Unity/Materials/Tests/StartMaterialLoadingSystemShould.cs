@@ -94,6 +94,22 @@ namespace ECS.Unity.Materials.Tests
             AssertBasicMaterial(basic, materialComponent);
         }
 
+        [Test]
+        public void TreatEmptyTextureUnionAsNoTexture()
+        {
+            PBMaterial material = CreatePBRMaterial1();
+            material.Pbr.AlphaTexture = new TextureUnion();
+
+            Entity e = world.Create(material, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
+            Assert.IsFalse(materialComponent.Data.Textures.AlphaTexture.HasValue);
+            Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
+            AssertTexturePromise(materialComponent.AlbedoTexPromise, tex1);
+        }
+
         private static void AssertBasicMaterial(PBMaterial expected, MaterialComponent actual)
         {
             Assert.AreEqual(expected.GetAlphaTest(), actual.Data.AlphaTest);

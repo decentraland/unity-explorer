@@ -130,7 +130,7 @@ namespace DCL.Profiles.Self
                 }
 
                 Profile fetched = Copy(profile);
-                ApplySessionOverrides(fetched);
+                ApplySessionOverrides(fetched, fillEmptyEmoteWheel: true);
 
                 // A non-guest identity has connected web3, even when the deployed profile was made by a guest.
                 if (identityCache.Identity is { } identity && !identity.IsGuest())
@@ -176,8 +176,8 @@ namespace DCL.Profiles.Self
                 ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
-        /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
-        private void ApplySessionOverrides(Profile profile)
+        /// <summary>Applies the session-wide tooling overrides; when asked, an empty emote wheel is filled with the base emotes.</summary>
+        private void ApplySessionOverrides(Profile profile, bool fillEmptyEmoteWheel)
         {
             forcedWearables.ApplyTo(profile);
 
@@ -185,7 +185,7 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = forcedEmotes[slot];
 
-            if (profile.Avatar.IsEmotesWheelEmpty())
+            if (fillEmptyEmoteWheel && profile.Avatar.IsEmotesWheelEmpty())
                 for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
         }
@@ -224,10 +224,10 @@ namespace DCL.Profiles.Self
 
             sent.Version = deploy.Version;
             activity ??= new CancellationTokenSource();
-            DeployAsync(deploy.Address, sent, inbox, activity.Token).Forget();
+            DeployAsync(deploy.Address, sent, deploy.CreatesProfile, inbox, activity.Token).Forget();
         }
 
-        private async UniTaskVoid DeployAsync(UserId address, Profile sent, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
+        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool createsProfile, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
             try
             {
@@ -242,9 +242,9 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                // The re-read profile gets the same overrides as a fetched one, e.g. a new account deploys an empty emote wheel.
+                // A created profile gets the base emotes a fetch would give it; an existing one keeps the wheel it deployed, even an empty one.
                 Profile reported = Copy(saved);
-                ApplySessionOverrides(reported);
+                ApplySessionOverrides(reported, fillEmptyEmoteWheel: createsProfile);
 
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }

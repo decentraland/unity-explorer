@@ -53,6 +53,15 @@ namespace DCL.Diagnostics.Sentry
         private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
 
+        // The events server rate-limits with this body even at the client's ~1 request per minute, a remote limit the client cannot act on (#10558, #10559).
+        // Matched by body so 429s of other services, which can come from a client burst, stay reported
+        private const long TOO_MANY_REQUESTS_STATUS = 429;
+        private const string EVENTS_RATE_LIMIT_BODY_CODE = "\"code\":\"too_many_requests\"";
+
+        // Thirdweb's bundler failure with status 0: the request got no HTTP answer at all, a network condition of the player (#7713, #10570).
+        // Failures with a real status keep reporting
+        private const string THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE = "Bundler Request Failed. Error: 0 - ";
+
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
 #endif
@@ -295,8 +304,14 @@ namespace DCL.Diagnostics.Sentry
 
                 case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
                                                     || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+
+                case UnityWebRequestException { ResponseCode: TOO_MANY_REQUESTS_STATUS, Text: { } body } when body.Contains(EVENTS_RATE_LIMIT_BODY_CODE, StringComparison.Ordinal):
                     return true;
             }
+
+            // Thirdweb raises its bundler failures as a plain Exception
+            if (exception.GetType() == typeof(Exception) && exception.Message.StartsWith(THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE, StringComparison.Ordinal))
+                return true;
 
             string? typeName = exception.GetType().FullName;
 

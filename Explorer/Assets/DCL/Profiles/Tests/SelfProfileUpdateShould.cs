@@ -318,6 +318,34 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void MarkAnEditOfAMissingProfileAsCreatingIt()
+        {
+            // Arrange
+            Profile edited = NewProfile(1);
+            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
+
+            // Assert
+            Assert.That(AssertDeploy(cmd, edited).CreatesProfile, Is.True);
+        }
+
+        [Test]
+        public void NotMarkAnEditOfAKnownProfileAsCreatingIt()
+        {
+            // Arrange
+            Profile edited = NewProfile(5);
+            edited.Description = "edited";
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(NewProfile(5)), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
+
+            // Assert
+            Assert.That(AssertDeploy(AssertBatch(cmd, 2)[0], edited).CreatesProfile, Is.False);
+        }
+
+        [Test]
         public void SupersedeAFetchInFlightWithAnEdit()
         {
             // Arrange

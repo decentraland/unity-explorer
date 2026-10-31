@@ -12,7 +12,8 @@ namespace ECS.Unity.Textures.Components.Extensions
     {
         public static TextureComponent? CreateTextureComponent(this TextureUnion? self, ISceneData data)
         {
-            if (self == null)
+            // An empty union (no oneof case set, e.g. `texture: {}` from the scene) carries no texture, same as an absent one
+            if (self == null || self.TexCase == TextureUnion.TexOneofCase.None)
                 return null;
 
             if (self.IsVideoTexture())

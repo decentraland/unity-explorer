@@ -92,12 +92,12 @@ namespace DCL.McpServer.Tools
             if (!result.Ok)
                 return result;
 
-            bool observed = element.Transform.PointerEventTriggered != null;
+            bool observed = element.Transform.PendingPointerEvents.Count > 0;
 
             for (var frame = 0; !observed && frame < SDK_DEVICE_OBSERVE_FRAMES; frame++)
             {
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                observed = element.Transform.PointerEventTriggered != null;
+                observed = element.Transform.PendingPointerEvents.Count > 0;
             }
 
             result.Info = observed

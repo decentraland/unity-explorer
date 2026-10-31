@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, input);
 
             // Act
-            uiTransformComponent.PointerEventTriggered = eventType;
+            uiTransformComponent.PendingPointerEvents.Add(eventType);
             system.Update(0);
 
             // Assert
@@ -77,12 +77,54 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<CRDTEntity>(),
                 Arg.Any<int>(),
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
-            Assert.IsNull(uiTransformComponent.PointerEventTriggered);
+            Assert.IsEmpty(uiTransformComponent.PendingPointerEvents);
 
             if (isUserGesture)
                 sceneStateProvider.Received(1).LastUserInputTick = 123u;
             else
                 sceneStateProvider.DidNotReceive().LastUserInputTick = Arg.Any<uint>();
+        }
+
+        [Test]
+        public void ReportPressAndReleaseRaisedBetweenUpdates()
+        {
+            // Arrange
+            var input = new PBPointerEvents { IsDirty = true };
+            input.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetDown,
+                EventInfo = new PBPointerEvents.Types.Info(),
+            });
+            input.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetUp,
+                EventInfo = new PBPointerEvents.Types.Info(),
+            });
+
+            world.Add(entity, input);
+
+            // Act: a quick click lands both events before the scene ticks
+            uiTransformComponent.PendingPointerEvents.Add(PointerEventType.PetDown);
+            uiTransformComponent.PendingPointerEvents.Add(PointerEventType.PetUp);
+            system.Update(0);
+
+            // Assert
+            Received.InOrder(() =>
+            {
+                ecsToCRDTWriter.AppendMessage(
+                    Arg.Any<Action<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>>(),
+                    Arg.Any<CRDTEntity>(),
+                    Arg.Any<int>(),
+                    Arg.Is<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(d => d.eventType == PointerEventType.PetDown));
+
+                ecsToCRDTWriter.AppendMessage(
+                    Arg.Any<Action<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>>(),
+                    Arg.Any<CRDTEntity>(),
+                    Arg.Any<int>(),
+                    Arg.Is<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(d => d.eventType == PointerEventType.PetUp));
+            });
+
+            Assert.IsEmpty(uiTransformComponent.PendingPointerEvents);
         }
 
         [Test]
