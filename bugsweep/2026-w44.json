@@ -84,9 +84,9 @@
     },
     {
       "number": 10552,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "the player's network, not the client or our backend: media.decentraland-dashboard.org (third-party, behind Cloudflare) resolves over IPv4 and IPv6 and serves the scene's .mp4/.jpg with 200/206 from here, the scene allowlists that host so the client's media gating passes, and Curl error 7 (TCP connect failure) also hits the scene's images on the same host, so it is not the AVPro/custom Windows video player; the user should check ISP, firewall or DNS access to Cloudflare"
     },
     {
       "number": 10558,
