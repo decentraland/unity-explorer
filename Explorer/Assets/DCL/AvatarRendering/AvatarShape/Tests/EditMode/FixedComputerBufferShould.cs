@@ -89,6 +89,37 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                         CollectionAssert.AreEqual(new FixedComputeBufferHandler.Slice[] { new (0, 1000) }, handler.FreeRegions);
                     }),
                 },
+                new TestScenario[]
+                {
+                    new RentScenario(10),
+                    new RentScenario(10),
+                    new RentScenario(10),
+                    new RentScenario(10),
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(0, 10)),
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(20, 10)),
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(10, 10), handler =>
+                    {
+                        CollectionAssert.AreEquivalent(new FixedComputeBufferHandler.Slice[] { new (30, 10) }, handler.RentedRegions);
+                        CollectionAssert.AreEqual(new FixedComputeBufferHandler.Slice[] { new (0, 30), new (40, 960) }, handler.FreeRegions);
+                    }), // Should Merge With Both Neighbours Keeping The Previous Region
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(30, 10), handler =>
+                    {
+                        Assert.That(handler.RentedRegions.Count, Is.EqualTo(0));
+                        CollectionAssert.AreEqual(new FixedComputeBufferHandler.Slice[] { new (0, 1000) }, handler.FreeRegions);
+                    }),
+                },
+                new TestScenario[]
+                {
+                    new RentScenario(500),
+                    new RentScenario(500), // Exhausts the trailing free region
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(0, 500)),
+                    new ReleaseScenario(new FixedComputeBufferHandler.Slice(500, 500), handler =>
+                    {
+                        Assert.That(handler.RentedRegions.Count, Is.EqualTo(0));
+                        CollectionAssert.AreEqual(new FixedComputeBufferHandler.Slice[] { new (0, 1000) }, handler.FreeRegions);
+                    }), // Should Keep A Slice Released Past The Last Free Region
+                    new RentScenario(1000),
+                },
 
                 // Defragmentation Threshold = 4 (3 freed region + 1 default)
                 new TestScenario[]

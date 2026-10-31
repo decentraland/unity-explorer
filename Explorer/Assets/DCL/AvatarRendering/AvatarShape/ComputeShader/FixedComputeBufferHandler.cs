@@ -97,40 +97,29 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 return;
             }
 
-            if (freeRegions.Count == 0)
-            {
-                freeRegions.Add(slice);
-                return;
-            }
+            // Sorted position for the slice: past the last free region when none starts after it
+            var i = 0;
 
-            // Find the position for the slice in the list
-            for (var i = 0; i < freeRegions.Count; i++)
-            {
-                Slice freeRegion = freeRegions[i];
+            while (i < freeRegions.Count && freeRegions[i].StartIndex < slice.StartIndex)
+                i++;
 
-                if (slice.StartIndex < freeRegion.StartIndex)
-                {
-                    freeRegions.Insert(i, slice);
+            freeRegions.Insert(i, slice);
 
-                    // Try to merge with the previous region
-                    MergePreviousSlice(slice, ref i);
-
-                    // Try to merge with the next region
-                    MergeNextSlice(slice, i);
-
-                    break;
-                }
-            }
+            MergePreviousSlice(slice, ref i);
+            MergeNextSlice(i);
         }
 
-        private void MergeNextSlice(Slice slice, int i)
+        private void MergeNextSlice(int i)
         {
             if (i >= freeRegions.Count - 1) return;
+
+            // Read the region back: it already spans the previous region when the slice was merged into it
+            Slice region = freeRegions[i];
             Slice nextRegion = freeRegions[i + 1];
 
-            if (slice.StartIndex + slice.Length == nextRegion.StartIndex)
+            if (region.StartIndex + region.Length == nextRegion.StartIndex)
             {
-                freeRegions[i] = new Slice(slice.StartIndex, slice.Length + nextRegion.Length);
+                freeRegions[i] = new Slice(region.StartIndex, region.Length + nextRegion.Length);
                 freeRegions.RemoveAt(i + 1);
             }
         }
