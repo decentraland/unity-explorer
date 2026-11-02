@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using JetBrains.Annotations;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class FixedComputerBufferShould
     {
-        private FixedComputeBufferHandler bufferHandler;
+        private FixedComputeBufferHandler bufferHandler = null!;
 
         [SetUp]
         public void Setup()
@@ -169,9 +168,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         public abstract class TestScenario
         {
-            [CanBeNull] private readonly Action<FixedComputeBufferHandler> assertCumulative;
+            private readonly Action<FixedComputeBufferHandler>? assertCumulative;
 
-            protected TestScenario(Action<FixedComputeBufferHandler> assertCumulative = null)
+            protected TestScenario(Action<FixedComputeBufferHandler>? assertCumulative = null)
             {
                 this.assertCumulative = assertCumulative;
             }
@@ -188,7 +187,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             private readonly int length;
 
-            public RentScenario(int length, Action<FixedComputeBufferHandler> assertCumulative = null) : base(assertCumulative)
+            public RentScenario(int length, Action<FixedComputeBufferHandler>? assertCumulative = null) : base(assertCumulative)
             {
                 this.length = length;
             }
@@ -204,7 +203,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             private readonly FixedComputeBufferHandler.Slice slice;
 
-            public ReleaseScenario(FixedComputeBufferHandler.Slice slice, Action<FixedComputeBufferHandler> assertCumulative = null) : base(assertCumulative)
+            public ReleaseScenario(FixedComputeBufferHandler.Slice slice, Action<FixedComputeBufferHandler>? assertCumulative = null) : base(assertCumulative)
             {
                 this.slice = slice;
             }
@@ -222,7 +221,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             public DefragmentationScenario(
                 Action<IReadOnlyDictionary<int, FixedComputeBufferHandler.Slice>> assertDefragmentationMap,
-                Action<FixedComputeBufferHandler> assertCumulative = null) : base(assertCumulative)
+                Action<FixedComputeBufferHandler>? assertCumulative = null) : base(assertCumulative)
             {
                 this.assertDefragmentationMap = assertDefragmentationMap;
             }

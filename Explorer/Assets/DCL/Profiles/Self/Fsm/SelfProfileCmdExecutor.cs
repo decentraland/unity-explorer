@@ -176,7 +176,7 @@ namespace DCL.Profiles.Self
                 ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
-        /// <summary>Applies the session-wide tooling overrides; when asked, an empty emote wheel is filled with the base emotes.</summary>
+        /// <summary>Applies the session-wide tooling overrides; optionally, an empty emote wheel is filled with the base emotes.</summary>
         private void ApplySessionOverrides(Profile profile, bool fillEmptyEmoteWheel)
         {
             forcedWearables.ApplyTo(profile);
@@ -242,7 +242,7 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                // A profile deployed where none was fetched gets the base emotes a fetch would give it; a known one keeps the wheel it deployed, even an empty one.
+                // A first deploy gets the base emotes a fetch would give it; a known profile keeps the wheel it deployed, even an empty one.
                 Profile reported = Copy(saved);
                 ApplySessionOverrides(reported, fillEmptyEmoteWheel: wasLastProfileMissing);
 

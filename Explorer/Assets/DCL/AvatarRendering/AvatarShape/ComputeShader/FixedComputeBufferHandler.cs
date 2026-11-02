@@ -97,7 +97,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 return;
             }
 
-            // Sorted position for the slice: the first free region starting after it, or past the last one.
             int i;
 
             for (i = 0; i < freeRegions.Count; i++)
@@ -114,7 +113,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             if (i >= freeRegions.Count - 1) return;
 
-            // Read the region back: it already spans the previous region when the slice was merged into it
+            // freeRegions[i] rather than the released slice: MergePreviousSlice may have already widened it.
             Slice region = freeRegions[i];
             Slice nextRegion = freeRegions[i + 1];
 

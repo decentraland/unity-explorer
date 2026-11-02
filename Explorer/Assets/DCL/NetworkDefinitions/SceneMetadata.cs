@@ -4,15 +4,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.ComponentModel;
 
+// ReSharper disable InconsistentNaming
 // ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
+    // Server schema: decentraland/common-schemas src/platform/scene/scene.ts#/Scene
     [Serializable]
     public class SceneMetadata
     {
-        public string main;
-        public SceneMetadataScene scene;
-        public string runtimeVersion;
+        public string main = null!;
+        public SceneMetadataScene scene = null!;
+        public string? runtimeVersion;
         public string sdkVersion;
         public List<string> allowedMediaHostnames;
 

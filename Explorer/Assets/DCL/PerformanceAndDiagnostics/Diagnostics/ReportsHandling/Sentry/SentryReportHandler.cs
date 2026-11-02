@@ -53,8 +53,7 @@ namespace DCL.Diagnostics.Sentry
         private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
 
-        // Thirdweb's bundler failure with status 0: the request got no HTTP answer at all, a network condition of the player (#7713, #10570).
-        // Failures with a real status keep reporting
+        // Status 0 means Thirdweb's bundler request got no HTTP answer at all: the player's network, not a client defect (#7713, #10570)
         private const string THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE = "Bundler Request Failed. Error: 0 - ";
 
 #if UNITY_EDITOR
