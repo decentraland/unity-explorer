@@ -366,7 +366,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             var exception = new StreamableLoadingException(LogType.Exception, "Simulated local AssetBundle load failure");
 
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
-            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY));
+            var cts = new CancellationTokenSource();
+            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY, cts));
             Entity resultHolderEntity = promise.Entity;
 
             LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
@@ -378,10 +379,55 @@ namespace DCL.AvatarRendering.Emotes.Tests
             // Assert
             Assert.IsFalse(world.IsAlive(emoteEntity));
             Assert.IsFalse(world.IsAlive(resultHolderEntity));
-            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>()));
+            AssertSingleRawGltfFallbackPromise("assets/dance_emote.glb", "DANCE_HASH", cts);
             Assert.IsFalse(mockEmote.AssetResults[bodyShape].HasValue);
             Assert.IsTrue(mockEmote.IsLoading);
             Assert.AreEqual(1, metrics.Failed);
+        }
+
+        [Test]
+        public void FallBackToRawGltfWhenLocalSceneEmoteBundleHasNoGameObject()
+        {
+            // Arrange
+            var metrics = new AbgenConversionMetrics();
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, metrics);
+
+            var emoteURN = new URN("urn:ab:local_scene_emote_no_go");
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { IsLoading = true };
+            mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, false));
+            ((MockEmote)mockEmote).IsLoading = true;
+
+            BodyShape bodyShape = BodyShape.FEMALE;
+            var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
+            var cts = new CancellationTokenSource();
+            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY, cts));
+
+            // A bundle that loaded but holds no GameObject; the reference mirrors the one LoadSystemBase adds on success
+            var emptyBundle = new AssetBundleData(null, Array.Empty<Object>(), null, Array.Empty<AssetBundleData>());
+            emptyBundle.AddReference();
+            world.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(emptyBundle));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.IsAlive(emoteEntity));
+            Assert.IsTrue(emptyBundle.CanBeDisposed(), "The bundle reference taken on load must be released when falling back.");
+            AssertSingleRawGltfFallbackPromise("assets/dance_emote.glb", "DANCE_HASH", cts);
+            Assert.IsTrue(mockEmote.IsLoading);
+            Assert.AreEqual(1, metrics.Failed);
+        }
+
+        private void AssertSingleRawGltfFallbackPromise(string expectedName, string expectedHash, CancellationTokenSource expectedCts)
+        {
+            var fallbackPromises = new List<GltfPromise>();
+            world.Query(new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(), (ref GltfPromise p) => fallbackPromises.Add(p));
+
+            Assert.AreEqual(1, fallbackPromises.Count);
+            Assert.AreEqual(expectedName, fallbackPromises[0].LoadingIntention.Name);
+            Assert.AreEqual(expectedHash, fallbackPromises[0].LoadingIntention.Hash);
+            Assert.AreSame(expectedCts, fallbackPromises[0].LoadingIntention.CancellationTokenSource, "The fallback must stay cancellable through the requesting intention.");
         }
 
         [Test]

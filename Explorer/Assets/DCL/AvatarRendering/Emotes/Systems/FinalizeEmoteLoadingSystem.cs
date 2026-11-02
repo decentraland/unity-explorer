@@ -136,11 +136,11 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         private void FallBackToRawGltf(Entity entity, IEmote emote, BodyShape bodyShape, SceneEmoteRawGltfFallback fallback, string reason)
         {
-            ReportHub.LogWarning(GetReportData(), $"{fallback.EmotePath}: scene emote asset bundle unavailable ({reason}), loading the raw GLB instead");
-            abgenConversionMetrics.OnFailed(fallback.EmotePath, $"{reason} — loaded as raw GLB");
+            if (abgenConversionMetrics.OnFellBackToRawGltf(fallback.EmotePath, reason))
+                ReportHub.LogWarning(GetReportData(), $"{fallback.EmotePath}: scene emote asset bundle unavailable ({reason}), loading the raw GLB instead");
 
             World.Destroy(entity);
-            GetSceneEmoteFromLocalSceneIntention.CreateRawGltfPromise(World, fallback.EmotePath, fallback.EmoteHash, fallback.Partition, emote, bodyShape);
+            GetSceneEmoteFromLocalSceneIntention.CreateRawGltfPromise(World, fallback.EmotePath, fallback.EmoteHash, fallback.Partition, fallback.CancellationTokenSource, emote, bodyShape);
         }
 
         private void AssignEmoteResult(IEmote emote, BodyShape bodyShape, AttachmentRegularAsset regularAssetResult)

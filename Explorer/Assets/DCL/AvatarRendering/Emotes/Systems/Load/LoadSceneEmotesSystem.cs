@@ -67,10 +67,6 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromLocalSceneIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            // A scene whose manifest could not be fetched from the local asset-bundle server has no bundles to load.
-            AssetBundleManifestVersion? sceneManifest = intention.SceneData.SceneEntityDefinition.assetBundleManifestVersion;
-            intention.LocalBundleManifest = useLocalAssetBundles && sceneManifest is { assetBundleManifestRequestFailed: false } ? sceneManifest : null;
-
             ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, AssetBundleManifestVersion.CreateLSDAsset());
         }
 
@@ -166,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;
 
-            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, emote);
+            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, useLocalAssetBundles, emote);
 
             emote.UpdateLoadingStatus(true);
             return true;

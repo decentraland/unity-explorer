@@ -1,4 +1,5 @@
 using ECS.Prioritization.Components;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -11,12 +12,14 @@ namespace DCL.AvatarRendering.Emotes
         public readonly string EmotePath;
         public readonly string EmoteHash;
         public readonly IPartitionComponent Partition;
+        public readonly CancellationTokenSource CancellationTokenSource;
 
-        public SceneEmoteRawGltfFallback(string emotePath, string emoteHash, IPartitionComponent partition)
+        public SceneEmoteRawGltfFallback(string emotePath, string emoteHash, IPartitionComponent partition, CancellationTokenSource cancellationTokenSource)
         {
             EmotePath = emotePath;
             EmoteHash = emoteHash;
             Partition = partition;
+            CancellationTokenSource = cancellationTokenSource;
         }
     }
 }
