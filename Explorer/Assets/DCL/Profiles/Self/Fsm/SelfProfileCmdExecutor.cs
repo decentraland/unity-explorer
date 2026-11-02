@@ -224,10 +224,10 @@ namespace DCL.Profiles.Self
 
             sent.Version = deploy.Version;
             activity ??= new CancellationTokenSource();
-            DeployAsync(deploy.Address, sent, deploy.CreatesProfile, inbox, activity.Token).Forget();
+            DeployAsync(deploy.Address, sent, deploy.WasLastProfileMissing, inbox, activity.Token).Forget();
         }
 
-        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool createsProfile, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
+        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool wasLastProfileMissing, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
             try
             {
@@ -242,9 +242,9 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                // A created profile gets the base emotes a fetch would give it; an existing one keeps the wheel it deployed, even an empty one.
+                // A profile deployed where none was fetched gets the base emotes a fetch would give it; a known one keeps the wheel it deployed, even an empty one.
                 Profile reported = Copy(saved);
-                ApplySessionOverrides(reported, fillEmptyEmoteWheel: createsProfile);
+                ApplySessionOverrides(reported, fillEmptyEmoteWheel: wasLastProfileMissing);
 
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }

@@ -554,7 +554,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void FillAnEmptyEmoteWheelOfACreatedProfileWithTheBaseEmotes()
+        public void FillAnEmptyEmoteWheelDeployedOverAMissingProfileWithTheBaseEmotes()
         {
             // Arrange
             Profile sent = NewProfile(ALICE, 1);
@@ -562,7 +562,7 @@ namespace DCL.Profiles.Tests
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version, createsProfile: true)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version, wasLastProfileMissing: true)), inbox);
 
             // Assert
             Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);

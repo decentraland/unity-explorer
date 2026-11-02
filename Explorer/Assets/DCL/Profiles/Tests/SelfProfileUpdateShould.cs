@@ -318,7 +318,7 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void MarkAnEditOfAMissingProfileAsCreatingIt()
+        public void MarkAnEditOfAMissingProfileAsLastMissing()
         {
             // Arrange
             Profile edited = NewProfile(1);
@@ -328,11 +328,11 @@ namespace DCL.Profiles.Tests
             (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
-            Assert.That(AssertDeploy(cmd, edited).CreatesProfile, Is.True);
+            Assert.That(AssertDeploy(cmd, edited).WasLastProfileMissing, Is.True);
         }
 
         [Test]
-        public void NotMarkAnEditOfAKnownProfileAsCreatingIt()
+        public void NotMarkAnEditOfAKnownProfileAsLastMissing()
         {
             // Arrange
             Profile edited = NewProfile(5);
@@ -342,7 +342,7 @@ namespace DCL.Profiles.Tests
             (_, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(NewProfile(5)), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
-            Assert.That(AssertDeploy(AssertBatch(cmd, 2)[0], edited).CreatesProfile, Is.False);
+            Assert.That(AssertDeploy(AssertBatch(cmd, 2)[0], edited).WasLastProfileMissing, Is.False);
         }
 
         [Test]
