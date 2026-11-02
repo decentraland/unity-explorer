@@ -8,8 +8,8 @@ namespace Diagnostics.ReportsHandling.Tests
 {
     public class ReportHandlerShould
     {
-        private ICategorySeverityMatrix categorySeverityMatrix;
-        private ReportHandlerBase reportHandlerBase;
+        private ICategorySeverityMatrix categorySeverityMatrix = null!;
+        private ReportHandlerBase reportHandlerBase = null!;
 
         [SetUp]
         public void SetUp()
