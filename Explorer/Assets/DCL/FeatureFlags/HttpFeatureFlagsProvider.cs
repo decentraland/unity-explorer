@@ -52,7 +52,7 @@ namespace DCL.FeatureFlags
         /// <summary>
         ///     Drops the app-name prefix (e.g. "explorer-") from flag and variant keys so they match the codebase
         ///     flag constants. Shared by the regular fetch and any standalone fetch (e.g.
-        ///     <see cref="DeepLinkWorldWhitelistProvider" />). Null-safe against a partially populated document.
+        ///     <see cref="StartupFeatureFlagsFetcher" />). Null-safe against a partially populated document.
         /// </summary>
         public static FeatureFlagsResultDto StripAppNameFromKeys(string name, FeatureFlagsResultDto response)
         {

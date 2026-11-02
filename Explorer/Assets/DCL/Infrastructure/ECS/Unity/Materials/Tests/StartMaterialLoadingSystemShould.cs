@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.MediaStream;
 using Decentraland.Common;
 using ECS.Prioritization.Components;

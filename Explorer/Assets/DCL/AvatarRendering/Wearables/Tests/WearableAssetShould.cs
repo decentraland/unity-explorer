@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading;
 using NUnit.Framework;
 using System.Collections.Generic;

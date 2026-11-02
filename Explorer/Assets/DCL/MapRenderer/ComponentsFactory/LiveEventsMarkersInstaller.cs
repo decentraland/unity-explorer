@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;

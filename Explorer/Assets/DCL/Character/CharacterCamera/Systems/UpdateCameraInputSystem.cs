@@ -5,7 +5,6 @@ using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
 using DCL.Input.Systems;
-using DCL.InWorldCamera;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems

@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using RichTypes;
 

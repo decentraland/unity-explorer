@@ -12,13 +12,13 @@ namespace DCL.AvatarRendering.Emotes
         public ElementIndividualDataDto[] individualData;
 
         [Serializable]
-        public class EmoteMetadataDto : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase<TrimmedAvatarAttachmentDTO.TrimmedDataBase>
+        public class EmoteMetadataDto : TrimmedMetadataBase<TrimmedDataBase>
         {
             public DataDto emoteDataADR74 = new ();
-            public override TrimmedAvatarAttachmentDTO.TrimmedDataBase AbstractData => emoteDataADR74;
+            public override TrimmedDataBase AbstractData => emoteDataADR74;
 
             [Serializable]
-            public class DataDto : TrimmedAvatarAttachmentDTO.TrimmedDataBase
+            public class DataDto : TrimmedDataBase
             {
             }
         }

@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.Tween.Tests
             var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);
             pbTween.CurrentTime = 1f;
             pbTween.IsDirty = true;
-            system!.Update(0);
+            system.Update(0);
 
             await RunSystemForSeconds(10, testEntity);
 
@@ -624,7 +624,7 @@ namespace DCL.SDKComponents.Tween.Tests
             {
                 await Task.Delay(updateInterval);
                 currentInterval += updateInterval;
-                system!.Update(updateInterval);
+                system.Update(updateInterval);
                 foreach (Entity testEntity in testEntities)
                 {
                     var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -124,7 +123,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 return false;
             }
 
-            asset = (T)assetInfo.Asset!;
+            asset = (T)assetInfo.Asset;
             return true;
         }
 

@@ -17,7 +17,7 @@ public class ReflectionProbeRenderer : MonoBehaviour
 
     private void Update()
     {
-        timer += UnityEngine.Time.deltaTime;
+        timer += Time.deltaTime;
 
         // Update the reflection probe after timer
         if (timer >= intervalInSeconds)

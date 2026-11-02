@@ -1,6 +1,5 @@
 ﻿using CrdtEcsBridge.UpdateGate;
 using DCL.PluginSystem.World.Dependencies;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 
 namespace SceneRunner.ECSWorld

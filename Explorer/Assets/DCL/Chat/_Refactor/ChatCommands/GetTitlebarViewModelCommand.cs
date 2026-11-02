@@ -7,7 +7,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
-using DCL.Chat.ChatServices;
 using DCL.FeatureFlags;
 using DCL.Profiles;
 using UnityEngine;

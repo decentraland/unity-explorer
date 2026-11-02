@@ -18,7 +18,6 @@ namespace DCL.MarketplaceCredits
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         private const string PURCHASE_SOURCE = "client";
 
-        public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
         public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
         private readonly IWebRequestController webRequestController;
@@ -69,7 +68,6 @@ namespace DCL.MarketplaceCredits
                 string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail)
                 && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
-            OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
         }
 

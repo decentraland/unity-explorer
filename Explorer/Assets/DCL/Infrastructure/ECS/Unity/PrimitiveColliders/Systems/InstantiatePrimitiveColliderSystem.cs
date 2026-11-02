@@ -113,7 +113,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             ref TransformComponent transformComponent
         )
         {
-            var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType)!.Rent()!;
+            var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType).Rent();
             component.AssignCollider(new SDKCollider(collider), setupCollider.ColliderType, sdkComponent.MeshCase);
 
             SetupCollider(entity, sdkEntity, setupCollider, ref component.SDKCollider, in sdkComponent);

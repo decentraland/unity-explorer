@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using MVC;
-using System;
 using System.Threading;
 
 namespace DCL.UI

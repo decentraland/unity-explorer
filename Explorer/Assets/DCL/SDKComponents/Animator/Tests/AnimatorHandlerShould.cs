@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Special;
-using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
@@ -53,7 +52,7 @@ namespace DCL.SDKComponents.Animator.Tests
                 NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false, new AbgenConversionMetrics());
 
             system = new LegacyAnimationPlayerSystem(world);
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
     public class SceneLoadingState

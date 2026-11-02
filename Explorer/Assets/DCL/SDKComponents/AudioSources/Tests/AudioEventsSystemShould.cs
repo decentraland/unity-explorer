@@ -7,7 +7,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;

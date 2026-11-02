@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.PrimaryPointerInfo.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;

@@ -7,7 +7,6 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;

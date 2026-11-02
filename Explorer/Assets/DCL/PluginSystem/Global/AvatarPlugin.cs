@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
-        private Transform? poolParent = null;
+        private Transform? poolParent;
 
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
         private TextureArrayContainer textureArrayContainer;

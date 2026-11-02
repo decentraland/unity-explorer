@@ -1,4 +1,3 @@
-using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using System;
 using TMPro;

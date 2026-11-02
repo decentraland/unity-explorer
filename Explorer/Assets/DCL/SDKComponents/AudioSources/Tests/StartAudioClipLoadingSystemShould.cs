@@ -9,7 +9,6 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources.Tests
 {

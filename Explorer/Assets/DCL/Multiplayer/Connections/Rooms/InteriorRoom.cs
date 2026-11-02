@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -11,7 +10,6 @@ using LiveKit.Rooms.Participants;
 
 #if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Streaming.Audio;
-using LiveKit.Rooms.TrackPublications;
 #endif
 
 using LiveKit.Rooms.Tracks;

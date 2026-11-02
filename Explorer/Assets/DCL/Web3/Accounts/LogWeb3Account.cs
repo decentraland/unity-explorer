@@ -1,7 +1,5 @@
 using DCL.Diagnostics;
 using DCL.Web3.Abstract;
-using Nethereum.Signer;
-using System;
 
 namespace DCL.Web3.Accounts
 {

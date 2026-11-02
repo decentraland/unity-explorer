@@ -10,7 +10,7 @@ namespace DCL.MapRenderer.Culling
             public override IMapPositionProvider Obj => obj;
 
             private readonly IMapCullingListener<T> listener;
-            private bool? lastCalledWasVisible = null;
+            private bool? lastCalledWasVisible;
 
             public TrackedState(T obj, IMapCullingListener<T> listener)
             {

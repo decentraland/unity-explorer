@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.Ipfs;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;

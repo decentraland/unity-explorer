@@ -1,6 +1,5 @@
 using Arch.Core;
 using ECS.Unity.Transforms.Components;
-using System;
 using UnityEngine;
 
 namespace DCL.DemoWorlds

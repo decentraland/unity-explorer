@@ -1,5 +1,4 @@
-﻿using LiveKit.Proto;
-using LiveKit.Rooms.DataPipes;
+﻿using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;

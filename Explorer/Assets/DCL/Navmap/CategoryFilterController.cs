@@ -1,7 +1,6 @@
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
-using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 

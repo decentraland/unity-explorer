@@ -95,7 +95,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(scene1World.TryGet(playerCRDTEntity.SceneWorldEntity, out PlayerSceneCRDTEntity scenePlayerCRDTEntity));
@@ -120,7 +120,7 @@ namespace DCL.Multiplayer.SDK.Tests
             if (isMainPlayer)
                 world.Add(entity, new PlayerComponent());
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity globalEntity));
             Assert.IsFalse(globalEntity.AssignedToScene);
@@ -141,7 +141,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.AssignedToScene);
@@ -149,7 +149,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Move player transform outside scene
             fakeCharacterUnityTransform.position = Vector3.one * 100;
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity newState));
             Assert.IsFalse(newState.AssignedToScene);
@@ -183,7 +183,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.That(playerCRDTEntity.SceneFacade, Is.EqualTo(scene1Facade));
@@ -193,7 +193,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Change the current scene
             fakeCharacterUnityTransform.position = new Vector3(30, 0, 30); // Inside scene 2
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
             Assert.That(playerCRDTEntity.SceneFacade, Is.EqualTo(scene2Facade));
@@ -228,14 +228,14 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.SceneFacade!.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
 
             // "Disconnect" player
             world.Add(entity, new DeleteEntityIntention());
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
             Assert.IsTrue(playerCRDTEntity.SceneFacade!.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
@@ -257,7 +257,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, playerCRDTEntity.CRDTEntity.Id);
@@ -266,7 +266,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity entity2 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
             Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), playerCRDTEntity.CRDTEntity);
@@ -274,21 +274,21 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity entity3 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity3, out playerCRDTEntity));
             Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, 0), playerCRDTEntity.CRDTEntity);
 
             // "Disconnect" 2nd player
             world.Add(entity2, new DeleteEntityIntention());
-            system!.Update(0);
+            system.Update(0);
 
             // Add 4th different player and check it's assigned with the disconnected player CRDT number
             // under the next version, so scenes tell it apart from the player that left
             Entity entity4 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity4, out playerCRDTEntity));
             Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), playerCRDTEntity.CRDTEntity);
@@ -304,7 +304,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsFalse(playerCRDTEntity.AssignedToScene);
@@ -312,7 +312,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // "Disconnect" the player while it is still assigned to no scene
             world.Add(remotePlayer, new DeleteEntityIntention());
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(remotePlayer));
 
@@ -320,7 +320,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity nextRemotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(nextRemotePlayer, out playerCRDTEntity));
             Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), playerCRDTEntity.CRDTEntity);
@@ -340,13 +340,13 @@ namespace DCL.Multiplayer.SDK.Tests
                 Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                     new CharacterTransform(fakeCharacterUnityTransform));
 
-                system!.Update(0);
+                system.Update(0);
 
                 Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity), $"No PlayerCRDTEntity assigned on cycle {i}");
                 Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, i), playerCRDTEntity.CRDTEntity, $"Reserved id was not reused on cycle {i}");
 
                 world.Add(remotePlayer, new DeleteEntityIntention());
-                system!.Update(0);
+                system.Update(0);
 
                 Assert.IsFalse(world.Has<PlayerCRDTEntity>(remotePlayer));
 
@@ -364,7 +364,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity));
             Entity firstSceneEntity = playerCRDTEntity.SceneWorldEntity;
@@ -373,13 +373,13 @@ namespace DCL.Multiplayer.SDK.Tests
 
             //Act: the player disconnects and another one takes the freed number over
             world.Add(remotePlayer, new DeleteEntityIntention());
-            system!.Update(0);
+            system.Update(0);
             world.Destroy(remotePlayer);
 
             Entity nextRemotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             //Assert: the scene gets the same number under a new version, which is what keeps its CRDT
             //state from discarding every message addressed to the player that took the slot over
@@ -400,12 +400,12 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity firstPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Entity secondPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(firstPlayer, out PlayerCRDTEntity firstCRDTEntity));
             Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), firstCRDTEntity.CRDTEntity);
@@ -414,13 +414,13 @@ namespace DCL.Multiplayer.SDK.Tests
 
             //Act: only the first number is released and handed out again
             world.Add(firstPlayer, new DeleteEntityIntention());
-            system!.Update(0);
+            system.Update(0);
             world.Destroy(firstPlayer);
 
             Entity thirdPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             Assert.IsTrue(world.TryGet(thirdPlayer, out PlayerCRDTEntity thirdCRDTEntity));
@@ -443,17 +443,17 @@ namespace DCL.Multiplayer.SDK.Tests
             //Act: use up every version the 16 bits of the id can hold
             for (var version = 0; version <= CRDTEntity.MAX_VERSION; version++)
             {
-                system!.Update(0);
+                system.Update(0);
 
                 Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity), $"No PlayerCRDTEntity assigned on version {version}");
                 Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, version), playerCRDTEntity.CRDTEntity, $"Wrong id handed out on version {version}");
 
                 world.Add(remotePlayer, new DeleteEntityIntention());
-                system!.Update(0);
+                system.Update(0);
                 world.Remove<DeleteEntityIntention>(remotePlayer);
             }
 
-            system!.Update(0);
+            system.Update(0);
 
             //Assert: reusing the number would repeat a version scenes may still hold as deleted,
             //so it is retired and the player moves onto the next free number instead
@@ -476,7 +476,7 @@ namespace DCL.Multiplayer.SDK.Tests
             if (isMainPlayer)
                 world.Add(entity, new PlayerComponent());
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.AssignedToScene);
@@ -500,7 +500,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 world.Add(entity, new PlayerComponent());
 
             // First tick: scene is Starting — player is assigned immediately
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.AssignedToScene);
@@ -509,7 +509,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Running));
 
             // Next tick: assignment persists through state transition
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.AssignedToScene);
@@ -527,7 +527,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(playerCRDTEntity.AssignedToScene);
@@ -538,7 +538,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Player walks somewhere with no valid scene to trigger the reassignment path.
             fakeCharacterUnityTransform.position = Vector3.one * 100;
-            system!.Update(0);
+            system.Update(0);
 
             // Global state still reflects "not in any scene" — global cleanup must always run.
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
@@ -561,7 +561,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsFalse(playerCRDTEntity.AssignedToScene);
