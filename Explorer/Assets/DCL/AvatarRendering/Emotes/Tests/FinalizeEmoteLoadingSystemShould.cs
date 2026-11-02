@@ -37,13 +37,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
 {
     public class FinalizeEmoteLoadingSystemShould : UnitySystemTestBase<FinalizeEmoteLoadingSystem>
     {
-        private MockEmoteStorage mockEmoteStorage;
-        private ListObjectPool<URN> urnPool;
+        private MockEmoteStorage mockEmoteStorage = null!;
+        private ListObjectPool<URN> urnPool = null!;
 
         // Shared mock objects for assets
-        private GameObject mockGameObject;
-        private AttachmentRegularAsset mockAttachmentAsset;
-        private MockStreamableDataWithURN mockStreamableData;
+        private GameObject mockGameObject = null!;
+        private AttachmentRegularAsset mockAttachmentAsset = null!;
+        private MockStreamableDataWithURN mockStreamableData = null!;
 
         [SetUp]
         public void SetUp()
@@ -612,7 +612,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly Dictionary<URN, IEmote> Emotes = new ();
             public readonly List<URN> GetOrAddByDTOCalls = new ();
             public readonly List<URN> TryGetElementCalls = new ();
-            public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
+            public Action<MockEmote, bool>? OnUpdateLoadingStatusCalled;
             public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)

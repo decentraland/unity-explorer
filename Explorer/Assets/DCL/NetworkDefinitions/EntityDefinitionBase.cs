@@ -45,12 +45,9 @@ namespace DCL.Ipfs
         [JsonIgnore]
         public AssetBundleManifestVersion AssetBundleManifestVersionOrFailed => assetBundleManifestVersion ?? AssetBundleManifestVersion.FAILED;
 
-        /// <summary>The scene's local asset-bundle manifest, or false when local bundles are off or the manifest could not be fetched — no bundle can load then.</summary>
-        public bool TryGetLocalBundleManifest(bool useLocalAssetBundles, out AssetBundleManifestVersion manifest)
-        {
-            manifest = assetBundleManifestVersion!;
-            return useLocalAssetBundles && assetBundleManifestVersion is { assetBundleManifestRequestFailed: false };
-        }
+        /// <summary>The scene's local asset-bundle manifest, or null when local bundles are off or the manifest could not be fetched — no bundle can load then.</summary>
+        public AssetBundleManifestVersion? GetLocalBundleManifest(bool useLocalAssetBundles) =>
+            useLocalAssetBundles && assetBundleManifestVersion is { assetBundleManifestRequestFailed: false } ? assetBundleManifestVersion : null;
 
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;

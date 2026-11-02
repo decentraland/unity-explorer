@@ -75,7 +75,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Whole-scene degrade: without a fetched local manifest every AB request would dead-end, so load raw GLTFs instead.
             if (options.LocalSceneDevelopment)
-                loadRawGltf |= !sceneData.SceneEntityDefinition.TryGetLocalBundleManifest(options.UseLocalAssetBundles, out _);
+                loadRawGltf |= sceneData.SceneEntityDefinition.GetLocalBundleManifest(options.UseLocalAssetBundles) == null;
 
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));

@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, bool useLocalAssetBundles, IEmote emote)
         {
-            if (!SceneData.SceneEntityDefinition.TryGetLocalBundleManifest(useLocalAssetBundles, out AssetBundleManifestVersion manifest))
+            if (SceneData.SceneEntityDefinition.GetLocalBundleManifest(useLocalAssetBundles) is not { } manifest)
             {
                 CreateRawGltfPromise(world, EmotePath, EmoteHash, partitionComponent, CancellationTokenSource, emote, BodyShape);
                 return;
