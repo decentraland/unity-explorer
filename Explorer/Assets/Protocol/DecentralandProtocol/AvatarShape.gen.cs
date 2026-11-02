@@ -57,16 +57,18 @@ namespace DCL.ECSComponents {
   /// All fields (except ID) are optional and have reasonable default values. In the case of `wearables`,
   /// each slot on the Avatar's body that is not explicitly included in the list has its own default.
   ///
-  /// AvatarShape can be attached to any Entity, where it draws an avatar (e.g. an NPC). Other requirements
-  /// are usually better served by GLTFs.
+  /// On most entities, AvatarShape draws an avatar, for example an NPC. Other requirements are usually
+  /// better served by GLTFs.
   ///
-  /// On `engine.PlayerEntity` or another player's reserved entity, AvatarShape draws no separate avatar.
-  /// It overrides that player's own avatar instead: unset fields keep the player's profile values, and a
-  /// non-empty `wearables` replaces the player's whole wearable set (with the same default-slot rules as any
-  /// entity). An empty `wearables` list is the same as an unset one, so it keeps the player's own wearables.
-  /// Fields marked as ignored below have no effect there. The override is local to the viewer, is never
-  /// broadcast, and applies only while the scene that wrote it is the current one. AvatarBase and
-  /// AvatarEquippedData keep reporting the player's profile, not the override.
+  /// On a player entity (`engine.PlayerEntity` or the entity of another player), AvatarShape changes the
+  /// look of that player's avatar:
+  /// - An unset field keeps the value from the player's profile. The defaults below apply only to other entities.
+  /// - A non-empty `wearables` replaces all the wearables. A body slot that it does not fill stays empty.
+  ///   An empty `wearables` is the same as unset.
+  /// - Fields marked "ignored on player entities" have no effect.
+  /// - The change is local to this client. It is not broadcast.
+  /// - The change applies only while the scene that wrote it is the current scene.
+  /// - AvatarBase and AvatarEquippedData keep the values from the profile.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarShape : pb::IMessage<PBAvatarShape>
@@ -339,12 +341,12 @@ namespace DCL.ECSComponents {
         = pb::FieldCodec.ForString(82);
     private readonly pbc::RepeatedField<string> wearables_ = new pbc::RepeatedField<string>();
     /// <summary>
-    /// Wearables, one per body slot. Each item is a wearable URN, or the path of a scene content GLB named
-    /// `&lt;name>_&lt;category>.glb`, where `&lt;category>` is a wearable category such as `hat` or `upper_body`.
-    /// A later item replaces an earlier one of the same category. A scene GLB is always rendered and hides
-    /// nothing, except that a `skin` one hides the body parts it replaces; URNs keep their own hiding rules.
-    /// An item that is neither a URN nor a `.glb` path, or that cannot be resolved, is skipped and the rest
-    /// still applies.
+    /// Wearables, one per body slot. Each item is one of:
+    /// - a wearable URN
+    /// - the path of a GLB file in the scene content, named `&lt;name>_&lt;category>.glb`, for example `cap_hat.glb`
+    /// If two items have the same category, the later item is used.
+    /// A scene GLB is always visible and hides nothing. Exception: a `skin` GLB hides the body that it replaces.
+    /// If an item is not a URN or a `.glb` path, or if it cannot be loaded, the item is skipped.
     ///   Default values for each unspecified slot:
     ///     Eyes    : "urn:decentraland:off-chain:base-avatars:f_eyes_00",
     ///     Eyebrows: "urn:decentraland:off-chain:base-avatars:f_eyebrows_00",

@@ -45,8 +45,7 @@ namespace DCL.ECSComponents {
   /// <summary>
   /// AvatarEquipData is used to read the information about the avatar's owneables.
   /// this component is written by the engine using the communications transports'
-  /// data. It describes the player's own outfit from their profile; an AvatarShape
-  /// written by a scene on the player entity does not change it.
+  /// data. It describes the outfit in the player's profile.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarEquippedData : pb::IMessage<PBAvatarEquippedData>
@@ -359,8 +358,8 @@ namespace DCL.ECSComponents {
 
         private bool visible_;
         /// <summary>
-        /// whether the wearable is shown in the player's own outfit, after hides, replaces and
-        /// force-rendered categories; unset until the wearable has loaded
+        /// true if the wearable is visible in the profile outfit, after hides, replaces and force render apply.
+        /// Unset until all the wearables of the outfit have loaded or failed. A wearable that failed to load is false.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
