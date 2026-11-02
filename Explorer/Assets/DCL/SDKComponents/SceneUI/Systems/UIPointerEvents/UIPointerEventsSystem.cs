@@ -13,7 +13,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
@@ -50,30 +49,20 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
             sdkModel.IsDirty = false;
 
-            List<PointerEventType> pendingEvents = uiTransformComponent.PendingPointerEvents;
-
-            if (pendingEvents.Count == 0)
+            if (uiTransformComponent.PointerEventTriggered == null)
                 return;
 
-            for (var i = 0; i < pendingEvents.Count; i++)
-                TryAppendMessage(ref sdkEntity, sdkModel, pendingEvents[i]);
-
-            pendingEvents.Clear();
-        }
-
-        private void TryAppendMessage(ref CRDTEntity sdkEntity, PBPointerEvents sdkModel, PointerEventType eventType)
-        {
-            // Only the event types the scene listens to are reported
-            for (var i = 0; i < sdkModel.PointerEvents.Count; i++)
+            // Check if the component has any pointer events associated
+            foreach (var pEvent in sdkModel.PointerEvents)
             {
-                PBPointerEvents.Types.Entry pEvent = sdkModel.PointerEvents[i];
-
-                if (pEvent.EventType != eventType)
+                if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
                     continue;
 
                 AppendMessage(ref sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
-                return;
+                break;
             }
+
+            uiTransformComponent.PointerEventTriggered = null;
         }
 
         [Query]

@@ -13,11 +13,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         private static readonly Comparison<VisualElement> CACHED_COMPARISON = StackingComparison;
 
         /// <summary>
-        ///     Bounds <see cref="PendingPointerEvents" /> while the scene does not tick (e.g. hover churn on a paused scene)
-        /// </summary>
-        private const int MAX_PENDING_POINTER_EVENTS = 16;
-
-        /// <summary>
         ///     The element's <see cref="VisualElement.userData" /> points back at this component so the sibling
         ///     comparison can read <see cref="ZIndex" /> and <see cref="chainIndex" /> from it.
         /// </summary>
@@ -47,11 +42,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public bool StylesApplied;
 
-        /// <summary>
-        ///     Pointer events raised by UI Toolkit since the scene last consumed them, in the order they happened:
-        ///     several arrive between two runs of the throttled consumer (e.g. the press and release of a quick click)
-        /// </summary>
-        public readonly List<PointerEventType> PendingPointerEvents = new (MAX_PENDING_POINTER_EVENTS);
+        public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
         public int? ZIndex;
 
@@ -80,7 +71,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             Transform = root;
             IsHidden = false;
             StylesApplied = false;
-            PendingPointerEvents.Clear();
+            PointerEventTriggered = null;
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = 0;
@@ -93,18 +84,10 @@ namespace DCL.SDKComponents.SceneUI.Components
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
             StylesApplied = false;
-            PendingPointerEvents.Clear();
+            PointerEventTriggered = null;
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = rightOf;
-        }
-
-        internal void EnqueuePointerEvent(PointerEventType eventType)
-        {
-            if (PendingPointerEvents.Count == MAX_PENDING_POINTER_EVENTS)
-                PendingPointerEvents.RemoveAt(0);
-
-            PendingPointerEvents.Add(eventType);
         }
 
         public void SortIfRequired(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap)
