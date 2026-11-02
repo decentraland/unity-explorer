@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
@@ -171,7 +170,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private void RunFrame()
         {
             jobWrapper.ScheduleBoneMatrixCalculation();
-            system!.Update(0);
+            system.Update(0);
         }
 
         /// <summary>

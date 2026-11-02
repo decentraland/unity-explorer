@@ -290,12 +290,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
-            if (DCL.Utility.ExitUtils.IsAboutToQuit)
+            if (Utility.ExitUtils.IsAboutToQuit)
             {
                 return;
             }
 
-            var stopwatch = DCL.Utility.ShutdownStopwatch.StartNew(nameof(RemoteAvatarPipeline));
+            var stopwatch = Utility.ShutdownStopwatch.StartNew(nameof(RemoteAvatarPipeline));
 
             bonesCombined.Dispose();
             stopwatch.LogStep("bonesCombined.Dispose");

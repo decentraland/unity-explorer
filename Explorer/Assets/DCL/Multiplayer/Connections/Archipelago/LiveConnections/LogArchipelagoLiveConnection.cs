@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using System;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections

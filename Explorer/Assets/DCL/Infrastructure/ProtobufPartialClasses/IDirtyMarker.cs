@@ -195,6 +195,21 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBSkybox : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBSun : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBEnvironmentFog : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBGltfNodeModifiers : IDirtyMarker
     {
         public bool IsDirty { get; set; }

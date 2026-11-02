@@ -217,7 +217,7 @@ namespace DCL.PluginSystem.Global
 
             void UpdateWidget()
             {
-                unityOutputSampleRate.Value = (ulong)UnityEngine.AudioSettings.outputSampleRate;
+                unityOutputSampleRate.Value = (ulong)AudioSettings.outputSampleRate;
 
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;

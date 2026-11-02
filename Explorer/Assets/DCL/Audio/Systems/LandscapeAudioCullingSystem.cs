@@ -14,7 +14,6 @@ using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
 using DCL.Audio.Jobs;
 using DCL.Landscape;
-using DCL.Landscape.Systems;
 using ECS;
 using Random = UnityEngine.Random;
 

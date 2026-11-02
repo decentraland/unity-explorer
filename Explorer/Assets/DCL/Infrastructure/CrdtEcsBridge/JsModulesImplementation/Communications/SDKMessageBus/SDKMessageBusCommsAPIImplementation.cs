@@ -2,7 +2,6 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
-using System;
 using System.Collections.Generic;
 using System.Text;
 

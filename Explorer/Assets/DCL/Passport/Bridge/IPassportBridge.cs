@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3;
 
 namespace DCL.Passport
 {

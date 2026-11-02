@@ -14,7 +14,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;

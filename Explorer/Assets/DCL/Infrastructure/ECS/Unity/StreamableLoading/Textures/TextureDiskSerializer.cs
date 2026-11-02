@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Textures
                 return SerializeMemoryIterator<State>.New(new State(), static (_, _, _) => 0, static (_, _, _) => false);
             }
 
-            NativeArray<byte> textureData = tex2D!.GetRawTextureData<byte>()!;
+            NativeArray<byte> textureData = tex2D.GetRawTextureData<byte>();
 
             var meta = new Meta(tex2D);
             State state = new State(meta, textureData);

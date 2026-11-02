@@ -6,7 +6,6 @@ using DCL.PluginSystem.Global;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;

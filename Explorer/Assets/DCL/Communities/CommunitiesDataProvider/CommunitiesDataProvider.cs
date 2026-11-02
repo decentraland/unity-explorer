@@ -14,7 +14,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
-using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {

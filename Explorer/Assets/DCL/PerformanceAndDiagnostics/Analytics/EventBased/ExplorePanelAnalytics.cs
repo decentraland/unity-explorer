@@ -1,8 +1,6 @@
-﻿using DCL.Events;
-using DCL.ExplorePanel;
+﻿using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
-using DCL.Places;
 using DCL.Settings;
 using DCL.Settings.Settings;
 using Newtonsoft.Json.Linq;

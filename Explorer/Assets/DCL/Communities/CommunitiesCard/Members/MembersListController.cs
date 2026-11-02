@@ -11,7 +11,6 @@ using DCL.Passport;
 using DCL.Profiles.Self;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;

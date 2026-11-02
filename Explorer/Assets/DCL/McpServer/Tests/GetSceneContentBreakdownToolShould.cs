@@ -95,13 +95,13 @@ namespace DCL.McpServer.Tests
             // Assert — schema and payload agree, default sort is triangles, heaviest first
             McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
             Assert.That(entries.Count, Is.EqualTo(3));
-            Assert.That(entries[0]!["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
-            Assert.That(entries[1]!["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
-            Assert.That(entries[2]!["source"]!.Value<string>(), Is.EqualTo("light.glb"));
+            Assert.That(entries[0]["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
+            Assert.That(entries[1]["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
+            Assert.That(entries[2]["source"]!.Value<string>(), Is.EqualTo("light.glb"));
 
             // 600 of the scene's 1000 triangles; 100 of the 400 visible ones
-            Assert.That(entries[0]!["trianglesSharePercent"]!.Value<float>(), Is.EqualTo(60f));
-            Assert.That(entries[0]!["visibleTrianglesSharePercent"]!.Value<float>(), Is.EqualTo(25f));
+            Assert.That(entries[0]["trianglesSharePercent"]!.Value<float>(), Is.EqualTo(60f));
+            Assert.That(entries[0]["visibleTrianglesSharePercent"]!.Value<float>(), Is.EqualTo(25f));
 
             // Scene totals sum across ALL sources, not only the returned ones
             Assert.That(structured["sceneDrawCallsEstimate"]!.Value<int>(), Is.EqualTo(10));
@@ -122,9 +122,9 @@ namespace DCL.McpServer.Tests
 
             // Assert
             Assert.That(structured["sortedBy"]!.Value<string>(), Is.EqualTo("visibleTriangles"));
-            Assert.That(entries[0]!["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
-            Assert.That(entries[1]!["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
-            Assert.That(entries[2]!["source"]!.Value<string>(), Is.EqualTo("light.glb"));
+            Assert.That(entries[0]["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
+            Assert.That(entries[1]["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
+            Assert.That(entries[2]["source"]!.Value<string>(), Is.EqualTo("light.glb"));
         }
 
         [Test]

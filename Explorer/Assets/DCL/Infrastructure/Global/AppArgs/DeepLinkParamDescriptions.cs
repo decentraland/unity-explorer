@@ -25,8 +25,6 @@ namespace Global.AppArgs
             [AppArgsFlags.FRIENDS_API_URL] = "Changes the server that holds your friends and social data.",
             [AppArgsFlags.FeatureFlags.URL] = "Changes the server that decides which features are enabled.",
             [AppArgsFlags.FeatureFlags.HOSTNAME] = "Changes the server that decides which features are enabled.",
-            [AppArgsFlags.LSD_REMOTE_AB_SERVER] = "Changes the server scene asset bundles are downloaded from.",
-            [AppArgsFlags.LSD_REMOTE_AB_WORLD] = "Loads scene content from a world chosen by the link.",
             [AppArgsFlags.PULSE_MULTIPLAYER] = "Changes how this session connects to other players.",
             [AppArgsFlags.GATEWAY] = "Routes all Decentraland traffic through a server chosen by the link.",
 

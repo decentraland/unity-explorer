@@ -1,6 +1,5 @@
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using ECS.StreamableLoading.Common;
-using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {

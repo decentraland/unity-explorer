@@ -1,5 +1,3 @@
-#nullable enable
-
 using DCL.AssetsProvision;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -14,7 +12,7 @@ namespace ECS.Unity.Materials.Pooling
         public MaterialsPool(ProvidedAsset<Material> materialReference, int defaultCapacity = 256, int maxSize = 2048)
         {
             pool = new ObjectPool<Material>(
-                () => new Material(materialReference.Value!),
+                () => new Material(materialReference.Value),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
                 defaultCapacity: defaultCapacity,
                 maxSize: maxSize

@@ -75,9 +75,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             if (options.LocalSceneDevelopment)
             {
-                if (options.UseRemoteAssetBundles)
-                    loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
-                else if (options.UseLocalAssetBundles)
+                if (options.UseLocalAssetBundles)
 
                     // Whole-scene degrade: when the manifest could not be fetched from the local
                     // asset-bundle server every AB request would dead-end, so load raw GLTFs instead.
@@ -106,7 +104,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         public struct Options
         {
             public bool LocalSceneDevelopment;
-            public bool UseRemoteAssetBundles;
             public bool UseLocalAssetBundles;
             public bool PreviewingBuilderCollection;
         }

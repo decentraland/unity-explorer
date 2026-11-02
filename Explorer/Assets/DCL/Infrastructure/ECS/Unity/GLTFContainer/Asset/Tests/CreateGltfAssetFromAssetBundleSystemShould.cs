@@ -1,8 +1,10 @@
 ﻿using Arch.Core;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
@@ -11,6 +13,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
@@ -23,7 +26,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false, new AbgenConversionMetrics());
         }
 
         [TearDown]
@@ -104,6 +107,64 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             system.Update(0);
 
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.False);
+        }
+
+        [Test]
+        public void FallBackToRawGltfWhenBundleFailsAndFallbackIsEnabled()
+        {
+            LogAssert.ignoreFailingMessages = true; // a failed loading result logs its exception on construction
+
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            var metrics = new AbgenConversionMetrics();
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: true, metrics);
+
+            Entity e = world.Create(
+                new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource()),
+                GetAssetBundleIntention.FromHash("TEST_HASH", AssetBundleManifestVersion.FAILED),
+                new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new ArgumentException("bundle missing")),
+                StreamableLoadingState.Create());
+
+            system.Update(0);
+
+            // Not failed: re-issued as a raw GLTF load on the same entity, with a fresh loading state for the GLTF lane.
+            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
+            Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
+            Assert.That(world.Has<StreamableLoadingResult<AssetBundleData>>(e), Is.False);
+            Assert.That(world.TryGet(e, out GetGLTFIntention gltfIntention), Is.True);
+            Assert.That(gltfIntention.Name, Is.EqualTo("TEST"));
+            Assert.That(gltfIntention.Hash, Is.EqualTo("TEST_HASH"));
+            Assert.That(world.Get<StreamableLoadingState>(e).Value, Is.EqualTo(StreamableLoadingState.Status.NotStarted));
+
+            // The fallback is recorded as a failed conversion.
+            Assert.That(metrics.Failed, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ReleaseBundleAndFallBackToRawGltfWhenBundleHasNoGameObject()
+        {
+            // Arrange
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: true, new AbgenConversionMetrics());
+
+            var bundle = new AssetBundleData(null, Array.Empty<UnityEngine.Object>(), typeof(GameObject), Array.Empty<AssetBundleData>());
+            bundle.AddReference();
+
+            Entity e = world.Create(
+                new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource()),
+                GetAssetBundleIntention.FromHash("TEST_HASH", AssetBundleManifestVersion.FAILED),
+                new StreamableLoadingResult<AssetBundleData>(bundle),
+                StreamableLoadingState.Create());
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(bundle.referenceCount, Is.EqualTo(0));
+            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
+            Assert.That(world.Has<StreamableLoadingResult<AssetBundleData>>(e), Is.False);
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
         }
 
         [Test]

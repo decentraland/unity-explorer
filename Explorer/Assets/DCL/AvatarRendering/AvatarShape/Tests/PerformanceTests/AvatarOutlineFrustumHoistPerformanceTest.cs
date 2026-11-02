@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
@@ -129,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.PerformanceTests
             }
 
             ClearBucket();
-            system!.Update(0);
+            system.Update(0);
             Assert.AreEqual(frontCount, BucketCount(),
                 "Outline bucket must contain exactly the front-facing avatars. A wrong count means the "
                 + "once-per-frame frustum planes were stale/zeroed and TestPlanesAABB mis-classified avatars.");

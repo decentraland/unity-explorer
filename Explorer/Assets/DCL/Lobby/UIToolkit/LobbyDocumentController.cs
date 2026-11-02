@@ -395,7 +395,10 @@ namespace DCL.Lobby
             LobbyLandingCardElement landingCard = viewInstance.LandingCard;
             landingCard.Clicked = OnLandingCardClicked;
             landingCard.JumpInClicked = OnLandingJumpInClicked;
-            viewInstance.GoToField.Submitted = OnGoToSubmitted;
+            // Reset on show, not on close: a close that follows a failed show finds no hierarchy
+            LobbyGoToElement goToField = viewInstance.GoToField;
+            goToField.Reset();
+            goToField.Submitted = OnGoToSubmitted;
 
             // The four-column sections list the same places as the seven-column ones, so their rails share the lists
             recentPlacesRail ??= CreatePlacesRail(recentPlaces, LobbyCardOrigin.Recent, PlacesSection.RecentlyVisited);
@@ -489,8 +492,6 @@ namespace DCL.Lobby
             profileMenuCts = null;
             notificationsCts.SafeCancelAndDispose();
             notificationsCts = null;
-
-            viewInstance?.GoToField.Reset();
 
             // The next show starts outside edit mode, like the first one
             layoutEditor.Hide();

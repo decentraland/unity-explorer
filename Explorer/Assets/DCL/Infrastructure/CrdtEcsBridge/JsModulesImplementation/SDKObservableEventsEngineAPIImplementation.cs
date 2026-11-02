@@ -10,7 +10,6 @@ using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Profiling;
-using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;

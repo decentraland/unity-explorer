@@ -1,7 +1,6 @@
 ﻿using DCL.Landscape.Config;
 using System;
 using System.Collections.Generic;
-using Unity.Collections;
 using UnityEngine.Assertions;
 
 namespace DCL.Landscape.NoiseGeneration

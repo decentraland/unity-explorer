@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -14,7 +15,6 @@ using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -25,7 +25,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
-using System.Collections.Generic;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -59,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system = new LoadGltfContainerSystem(world, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), sceneData, Substitute.For<IEntityCollidersSceneCache>(), hash => hash);
             var budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, rawGltfFallback: false, new AbgenConversionMetrics());
         }
 
         [TearDown]

@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.WebRequests;
 using MVC;
 using System;
 using DCL.UI;

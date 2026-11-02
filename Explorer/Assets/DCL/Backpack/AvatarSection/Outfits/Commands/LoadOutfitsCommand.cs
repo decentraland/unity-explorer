@@ -10,7 +10,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
-using ECS;
 using UnityEngine.Pool;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands

@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.MediaStream;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -18,7 +17,6 @@ using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
-using UnityEngine;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
