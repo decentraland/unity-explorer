@@ -10,6 +10,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
+using Utility.Networking;
 using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics.Sentry
@@ -289,6 +290,9 @@ namespace DCL.Diagnostics.Sentry
 
                 // In local scene development every endpoint is the creator's own preview server, so its failures are never a client defect (#10318)
                 case UnityWebRequestException or WebException or SocketException when isLocalSceneDevelopment:
+
+                // A gateway or transport failure that outlasted the retry policy is an infrastructure condition the client cannot act on (#7808)
+                case UnityWebRequestException webRequestException when TransientWebRequestFailure.IsTransient(webRequestException.ResponseCode, webRequestException.Message):
 
                 case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
                                       || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal):
