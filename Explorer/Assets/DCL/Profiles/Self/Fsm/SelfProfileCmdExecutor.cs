@@ -176,7 +176,7 @@ namespace DCL.Profiles.Self
                 ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
-        /// <summary>Applies the session-wide tooling overrides; optionally, an empty emote wheel is filled with the base emotes.</summary>
+        /// <summary>Applies the session-wide tooling overrides.</summary>
         private void ApplySessionOverrides(Profile profile, bool fillEmptyEmoteWheel)
         {
             forcedWearables.ApplyTo(profile);
@@ -224,10 +224,10 @@ namespace DCL.Profiles.Self
 
             sent.Version = deploy.Version;
             activity ??= new CancellationTokenSource();
-            DeployAsync(deploy.Address, sent, deploy.WasLastProfileMissing, inbox, activity.Token).Forget();
+            DeployAsync(deploy.Address, sent, deploy.FillEmptyEmoteWheel, inbox, activity.Token).Forget();
         }
 
-        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool wasLastProfileMissing, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
+        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool fillEmptyEmoteWheel, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
             try
             {
@@ -242,9 +242,8 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                // A first deploy gets the base emotes a fetch would give it; a known profile keeps the wheel it deployed, even an empty one.
                 Profile reported = Copy(saved);
-                ApplySessionOverrides(reported, fillEmptyEmoteWheel: wasLastProfileMissing);
+                ApplySessionOverrides(reported, fillEmptyEmoteWheel);
 
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }

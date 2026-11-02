@@ -318,21 +318,28 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void MarkAnEditOfAMissingProfileAsLastMissing()
+        public void FillTheEmoteWheelOnAnEditOfAMissingProfile()
         {
-            // Arrange
-            Profile edited = NewProfile(1);
-            SelfProfileModel model = Model(ProfileKnowledge.Missing(), ProfileActivity.Idle());
-
-            // Act
-            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
-
-            // Assert
-            Assert.That(AssertDeploy(cmd, edited).WasLastProfileMissing, Is.True);
+            // Act & Assert
+            AssertFillsEmptyEmoteWheelOnEdit(ProfileKnowledge.Missing());
         }
 
         [Test]
-        public void NotMarkAnEditOfAKnownProfileAsLastMissing()
+        public void FillTheEmoteWheelOnAnEditOfAnUnknownProfile()
+        {
+            // Act & Assert
+            AssertFillsEmptyEmoteWheelOnEdit(ProfileKnowledge.Unknown());
+        }
+
+        [Test]
+        public void FillTheEmoteWheelOnAnEditAfterAFailedFetch()
+        {
+            // Act & Assert
+            AssertFillsEmptyEmoteWheelOnEdit(ProfileKnowledge.FromFailed(FETCH_FAILURE));
+        }
+
+        [Test]
+        public void KeepTheEmoteWheelOnAnEditOfAKnownProfile()
         {
             // Arrange
             Profile edited = NewProfile(5);
@@ -342,7 +349,7 @@ namespace DCL.Profiles.Tests
             (_, SelfProfileCmd cmd) = SelfProfileModel.Update(Known(NewProfile(5)), SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
 
             // Assert
-            Assert.That(AssertDeploy(AssertBatch(cmd, 2)[0], edited).WasLastProfileMissing, Is.False);
+            Assert.That(AssertDeploy(AssertBatch(cmd, 2)[0], edited).FillEmptyEmoteWheel, Is.False);
         }
 
         [Test]
@@ -735,6 +742,19 @@ namespace DCL.Profiles.Tests
             AssertKnown(identified.Knowledge, saved);
             Assert.That(identified.Activity.GetKind(), Is.EqualTo(ProfileActivity.Kind.Idle));
             AssertPublish(cmd, saved);
+        }
+
+        private static void AssertFillsEmptyEmoteWheelOnEdit(ProfileKnowledge before)
+        {
+            // Arrange
+            Profile edited = NewProfile(1);
+            SelfProfileModel model = Model(before, ProfileActivity.Idle());
+
+            // Act
+            (_, SelfProfileCmd cmd) = SelfProfileModel.Update(model, SelfProfileMsg.FromDeployProfileOnEditRequested(new DeployRequest(DEPLOY, edited)));
+
+            // Assert
+            Assert.That(AssertDeploy(cmd, edited).FillEmptyEmoteWheel, Is.True);
         }
 
         private static void AssertDeploysWithoutPublishing(ProfileKnowledge before)

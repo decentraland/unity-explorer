@@ -26,8 +26,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private readonly List<Slice> rentedRegionsSortedTemp;
 
-        internal IReadOnlyCollection<Slice> RentedRegions => rentedRegions;
-        internal IReadOnlyList<Slice> FreeRegions => freeRegions;
+        public IReadOnlyCollection<Slice> RentedRegions => rentedRegions;
+        public IReadOnlyList<Slice> FreeRegions => freeRegions;
 
         public FixedComputeBufferHandler(int elementsCount, int stride, int defragmentationThreshold = DEFRAGMENTATION_THRESHOLD)
         {

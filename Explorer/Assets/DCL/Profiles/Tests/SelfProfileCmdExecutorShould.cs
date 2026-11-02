@@ -562,7 +562,7 @@ namespace DCL.Profiles.Tests
             AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
 
             // Act
-            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version, wasLastProfileMissing: true)), inbox);
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version, fillEmptyEmoteWheel: true)), inbox);
 
             // Assert
             Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);

@@ -18,7 +18,7 @@ namespace DCL.Ipfs
         public string sdkVersion;
         public List<string> allowedMediaHostnames;
 
-        // Optional in scene.json: absent or null means the scene requests no permissions
+        // An explicit null in scene.json would otherwise replace the default
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<string> requiredPermissions = new ();
 
