@@ -125,7 +125,7 @@ namespace CrdtEcsBridge.RestrictedActions
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
                     hash, loop, ct);
 
-            world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
+            world.TryRemove<CharacterWaitingSceneEmoteLoading>(playerEntity);
             return result;
         }
 
