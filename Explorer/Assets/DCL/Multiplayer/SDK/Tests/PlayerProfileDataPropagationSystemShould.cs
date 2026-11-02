@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
         private Entity entity;
         private Entity playerEntity;
-        private World sceneWorld;
+        private World sceneWorld = null!;
         private PlayerCRDTEntity playerCRDTEntity;
 
         [OneTimeSetUp]

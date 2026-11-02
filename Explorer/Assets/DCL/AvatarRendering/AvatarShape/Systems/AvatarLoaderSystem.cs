@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape
             CreateMainPlayerAvatarShapeFromProfileQuery(World);
             CreateAvatarShapeFromProfileQuery(World);
 
-            ConsumeProfileWearableDTOsQuery(World);
+            ConsumeProfileWearableDtosQuery(World);
         }
 
         [Query]
@@ -217,8 +217,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 partition);
 
         [Query]
-        [All(typeof(ProfileWearableDTOsRequest))]
-        private void ConsumeProfileWearableDTOs(Entity entity, ref WearablePromise promise)
+        [All(typeof(ProfileWearableDtosRequest))]
+        private void ConsumeProfileWearableDtos(Entity entity, ref WearablePromise promise)
         {
             if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<WearablesResolution> result)) return;
 
@@ -240,7 +240,7 @@ namespace DCL.AvatarRendering.AvatarShape
                     WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender), partition);
 
             // Loads the DTOs of the replaced profile wearables.
-            World.Create(new ProfileWearableDTOsRequest(), WearablePromise.Create(World,
+            World.Create(new ProfileWearableDtosRequest(), WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender, dtoOnly: true), partition));
 
             return WearablePromise.Create(World, WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, sceneWearables, Array.Empty<string>()), partition);
@@ -261,6 +261,6 @@ namespace DCL.AvatarRendering.AvatarShape
             World.Create(EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, profile.Avatar.Emotes), partition));
         }
 
-        private struct ProfileWearableDTOsRequest { }
+        private struct ProfileWearableDtosRequest { }
     }
 }

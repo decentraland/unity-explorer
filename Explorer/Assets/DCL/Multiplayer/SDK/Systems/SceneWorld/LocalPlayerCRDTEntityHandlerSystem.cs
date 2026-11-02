@@ -53,7 +53,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         public override void Initialize()
         {
-            Profile profile = globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool exists);
+            ref Profile profile = ref globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool exists);
 
             if (exists)
                 Seed(profile);
@@ -61,14 +61,14 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         protected override void Update(float t)
         {
-            Profile profile = globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool profileExists);
+            ref Profile profile = ref globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool profileExists);
 
             if (!profileExists)
                 return;
 
             // No SDKProfile means Initialize ran before the local profile existed.
             // A replaced Profile instance is caught even when its IsDirty is already reset.
-            SDKProfile sdkProfile = World.TryGetRef<SDKProfile>(persistentEntities.Player, out bool seeded);
+            ref SDKProfile sdkProfile = ref World.TryGetRef<SDKProfile>(persistentEntities.Player, out bool seeded);
 
             if (!seeded)
                 Seed(profile);

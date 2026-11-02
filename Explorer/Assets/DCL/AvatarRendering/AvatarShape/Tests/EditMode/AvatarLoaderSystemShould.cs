@@ -48,12 +48,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private static readonly QueryDescription EMOTE_PROMISES_QUERY = new QueryDescription().WithAll<EmotePromise>();
         private static readonly QueryDescription WEARABLE_PROMISES_QUERY = new QueryDescription().WithAll<WearablePromise>();
 
-        private PBAvatarShape pbAvatarShape;
-        private List<URN> fakePointers;
+        private PBAvatarShape pbAvatarShape = null!;
+        private List<URN> fakePointers = null!;
 
-        private Color3 fakeHairColor;
-        private Color3 fakeSkinColor;
-        private Color3 fakeEyeColor;
+        private Color3 fakeHairColor = null!;
+        private Color3 fakeSkinColor = null!;
+        private Color3 fakeEyeColor = null!;
 
         [SetUp]
         public void Setup()
@@ -403,7 +403,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void RequestProfileWearableDTOsWhenSceneWearablesReplaceThem()
+        public void RequestProfileWearableDtosWhenSceneWearablesReplaceThem()
         {
             // Arrange
             var sceneOverride = new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }) { BodyShape = BodyShape.FEMALE, IsDirty = true };
@@ -420,7 +420,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void RequestNewProfileWearableDTOsWhenRemoteProfileChangesUnderSceneWearables()
+        public void RequestNewProfileWearableDtosWhenRemoteProfileChangesUnderSceneWearables()
         {
             // Arrange
             Entity entity = world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }));
@@ -440,7 +440,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void NotRequestProfileWearableDTOsWithoutSceneWearables()
+        public void NotRequestProfileWearableDtosWithoutSceneWearables()
         {
             // Arrange
             var sceneOverride = new SceneAvatarShapeOverride(new List<URN>()) { BodyShape = BodyShape.FEMALE, IsDirty = true };
@@ -454,7 +454,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void ReleaseResolvedProfileWearableDTOsPromise()
+        public void ReleaseResolvedProfileWearableDtosPromise()
         {
             // Arrange
             world.Create(CreateProfile(), PartitionComponent.TOP_PRIORITY, new SceneAvatarShapeOverride(new List<URN> { SCENE_WEARABLE }));
