@@ -244,6 +244,7 @@ Shader "DCL/DCL_Toon"
             //V.2.0.4
             //#pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
             #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+            #pragma multi_compile_fog
             //#pragma multi_compile_instancing
             //#pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"

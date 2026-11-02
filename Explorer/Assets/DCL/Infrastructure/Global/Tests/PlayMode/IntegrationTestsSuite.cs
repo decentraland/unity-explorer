@@ -32,6 +32,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.InputModifier.Components;
+using DCL.SkyBox.Components;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
@@ -86,6 +87,9 @@ namespace Global.Tests.PlayMode
                 new PlayerMovementNetworkComponent(),
                 new InputModifierComponent(),
                 new CharacterRigidTransform());
+
+            // Stands in for the skybox entity that SkyboxPlugin tags in the real global world
+            world.Create(new SceneSkyboxOverrides());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
