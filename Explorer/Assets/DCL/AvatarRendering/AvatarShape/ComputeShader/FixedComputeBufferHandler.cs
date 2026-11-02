@@ -97,11 +97,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 return;
             }
 
-            // Sorted position for the slice: past the last free region when none starts after it
-            var i = 0;
+            // Sorted position for the slice: the first free region starting after it, or past the last one.
+            int i;
 
-            while (i < freeRegions.Count && freeRegions[i].StartIndex < slice.StartIndex)
-                i++;
+            for (i = 0; i < freeRegions.Count; i++)
+                if (freeRegions[i].StartIndex >= slice.StartIndex)
+                    break;
 
             freeRegions.Insert(i, slice);
 
