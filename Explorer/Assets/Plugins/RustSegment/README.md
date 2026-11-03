@@ -24,6 +24,7 @@ src/
   lib.rs          Public entry point and globals
   cabi.rs         C ABI surface (extern "C")
   server.rs       Native server lifecycle and runtime ownership
+  queue_file.rs   Opening the queue file as its owner, with the in-memory fallback
   operations.rs   Construction of analytics operations
 ```
 
@@ -81,7 +82,7 @@ The shipped `.so` is built by CI on `ubuntu-22.04` and needs glibc 2.34 or newer
 ### Initialization
 
 ```c
-bool segment_server_initialize(
+QueueHealthCode segment_server_initialize(
     const char* queue_file_path,
     uint32_t queue_count_limit,
     const char* segment_write_key,
@@ -97,6 +98,7 @@ Notes:
 * All pointer arguments must remain valid for the duration of the call.
 * `segment_api_host` is the Tracking API origin with no path: the client appends `/v1/batch`, `/v1/track` and the other endpoint paths itself.
 * Callbacks must be thread-safe and non-blocking.
+* `queue_file_path` has one owner: the file is opened in exclusive locking mode, so a second process of the same user keeps its events in memory for its session. The returned [health code](#health-codes) says how the queue keeps the events of the session; `255` (`NotInitialized`) means this call did not start the server.
 
 ---
 
@@ -114,6 +116,32 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
+### Error channel
+
+`FfiErrorCallbackFn` receives genuine faults only: an operation that failed for a reason that is not an environment condition, a queued row the API can never take, a request the API rejects, a row that could not be read. The conditions of the queue file are returned by `segment_server_initialize` as a health code.
+
+### Health codes
+
+How the queue keeps the events of the session is decided once, when the file is opened, and returned by `segment_server_initialize`:
+
+| Code | Name | Meaning |
+|---|---|---|
+| 0 | `Persistent` | This process owns the queue file; the events are kept on disk. |
+| 1 | `OwnedByAnotherInstance` | Another process owns the queue file; the events of this process stay in memory. |
+| 2 | `Recreated` | The queue file was corrupt and has been replaced by an empty one. |
+| 3 | `DegradedDiskFull` | The queue file is given up for the session: the disk is full. |
+| 4 | `DegradedReadOnly` | The queue file is given up for the session: it cannot be written. |
+| 5 | `DegradedIoError` | The queue file is given up for the session: the disk failed. |
+| 6 | `DegradedPermissionDenied` | The queue file is given up for the session: the OS refused access. |
+| 7 | `DegradedCannotOpen` | The queue file is given up for the session: it cannot be opened. |
+| 8 | `DegradedCorrupt` | The queue file is given up for the session: it could not be recreated after it was found corrupt. |
+| 9 | `DegradedOther` | The queue file is given up for the session: it failed in a way that says nothing about the file or its environment, reported on the error channel. |
+| 255 | `NotInitialized` | This call did not start the server: it already runs. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
+
+A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s and reported once per failure streak. A row that was sent but could not be removed is not sent again.
+
+A send that fails on the network (no answer, a 5xx, 408 or 429) is retried with a delay that doubles up to 60 s and is not reported. A send the API rejects with any other status except 400, such as 401 for an invalid write key, is retried the same way and reported once per failure streak. A 400 drops the row and is reported.
+
 ---
 
 ## Shutdown / Disposal Contract
@@ -130,7 +158,7 @@ During application shutdown or disposal:
 
 ## Testing
 
-`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
+`cargo test` runs the unit tests (disk-full response mapping, queue file opening, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
 ```sh
 SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... SEGMENT_API_HOST=... cargo test -- --ignored
 ````

@@ -1,5 +1,4 @@
 ﻿using DCL.Browser.DecentralandUrls;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Time;
 using DCL.Web3.Identities;

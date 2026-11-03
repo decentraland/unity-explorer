@@ -5,8 +5,8 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     Live record of the session's abgen conversions, written from the sidecar's warm-up flow and read
     ///     by the scene dev console's "AB Conversion" panel on the main thread: per-file entries and the
-    ///     whole-scene warm-up stage of the eager build. A process-wide instance: the writers are static or
-    ///     singular and the reader lives in the global UI, so there is exactly one pipeline to describe.
+    ///     whole-scene warm-up stage of the eager build. Every member is guarded by one lock, so writers may
+    ///     run off the main thread.
     /// </summary>
     public sealed class AbgenConversionMetrics
     {
@@ -32,8 +32,6 @@ namespace ECS.StreamableLoading.AssetBundles
             Failed,
         }
 
-        public static readonly AbgenConversionMetrics INSTANCE = new ();
-
         private readonly object gate = new ();
         private readonly Dictionary<string, Entry> entries = new ();
 
@@ -46,6 +44,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private int version;
 
         private bool panelOpenRequested;
+        private string? rawGltfFallbackReason;
 
         private WarmUpStage warmUpStage;
         private string? warmUpSceneId;
@@ -153,6 +152,40 @@ namespace ECS.StreamableLoading.AssetBundles
                 lock (gate) { return warmUpTotal; }
             }
         }
+
+        /// <summary>
+        ///     Why the scene loads raw GLTFs instead of local asset bundles, or null while bundles are the
+        ///     source. Set by whichever step gave up — the binary install, the server launch, the scene's
+        ///     manifest fetch, or the server dying mid-session — and kept for the session: the first reason wins.
+        /// </summary>
+        public string? RawGltfFallbackReason
+        {
+            get
+            {
+                lock (gate) { return rawGltfFallbackReason; }
+            }
+        }
+
+        /// <summary>
+        ///     Records the degrade to raw GLTFs, adds it as a row, and asks for the panel so the verdict is seen.
+        ///     Only the first reason is recorded; later calls do nothing.
+        /// </summary>
+        public void OnRawGltfFallback(string reason)
+        {
+            lock (gate)
+            {
+                if (rawGltfFallbackReason != null) return;
+
+                rawGltfFallbackReason = reason;
+                panelOpenRequested = true;
+                version++;
+            }
+
+            OnMilestone($"loading raw GLTFs — {reason}");
+        }
+
+        public void OnSceneManifestUnavailable() =>
+            OnRawGltfFallback("the scene's manifest could not be fetched from the local asset-bundle server");
 
         /// <summary>The server's authoritative converted/planned counters for the running whole-scene build.</summary>
         public void OnWarmUpProgress(int done, int total)
@@ -310,18 +343,22 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        /// <summary>A file already marked failed is counted once, however many times it fails.</summary>
         public void OnFailed(string contentPath, string error)
         {
             lock (gate)
             {
-                Entry entry = TakeEntry(contentPath);
-                bool wasInFlight = entry.Status == ConversionStatus.Converting;
+                bool known = entries.TryGetValue(contentPath, out Entry entry);
+                if (!known) entry = new Entry { Path = contentPath, Sequence = sequence++ };
+
+                bool wasInFlight = known && entry.Status == ConversionStatus.Converting;
+                bool wasFailed = known && entry.Status == ConversionStatus.Failed;
                 entry.Status = ConversionStatus.Failed;
                 entry.Error = error;
                 entries[contentPath] = entry;
 
                 if (wasInFlight) inFlight--;
-                failed++;
+                if (!wasFailed) failed++;
                 version++;
             }
         }

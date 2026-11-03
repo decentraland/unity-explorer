@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
 using DCL.WebRequests;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 

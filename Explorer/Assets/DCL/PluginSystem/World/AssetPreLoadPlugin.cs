@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using ECS.Unity.AssetLoad;
 using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.AssetLoad.Systems;
 using DCL.PluginSystem.World.Dependencies;

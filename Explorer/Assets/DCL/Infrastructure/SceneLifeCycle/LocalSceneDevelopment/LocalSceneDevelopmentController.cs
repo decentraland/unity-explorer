@@ -2,12 +2,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;
 using System;
 using System.Threading;
+using Utility.Arch;
 using Utility.Multithreading;
 using Utility.Networking;
 
@@ -108,8 +108,8 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     catch (TimeoutException) { }
                     finally
                     {
-                        globalWorld.Remove<StopCharacterMotion>(playerEntity);
-                        globalWorld.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
+                        globalWorld.TryRemove<StopCharacterMotion>(playerEntity);
+                        globalWorld.TryRemove<PauseSkyboxTimeUpdate>(skyboxEntity);
                     }
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)

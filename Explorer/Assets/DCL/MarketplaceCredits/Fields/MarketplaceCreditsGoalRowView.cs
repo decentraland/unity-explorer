@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

@@ -142,13 +142,13 @@ namespace DCL.SmartWearables
 
                 string id = SmartWearableCache.GetCacheId(wearable);
                 if (pendingScenes.ContainsKey(id) ||
-                    smartWearableCache.RunningSmartWearables.Contains(id) ||
+                    smartWearableCache.IsRunning(id) ||
                     // Do not load scenes that were manually killed
                     // To re-enable a wearable, the user must unequip it and then equip it again
                     // NOTICE reloading can be triggered whenever moving between scenes too, that's why we need this
                     smartWearableCache.KilledPortableExperiences.Contains(id)) return;
 
-                string wearableName = wearable.DTO.Metadata.name;
+                string? wearableName = wearable.DTO?.Metadata.name;
                 ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{wearableName}'. Loading scene...");
 
                 var partition = PartitionComponent.TOP_PRIORITY;
@@ -264,9 +264,9 @@ namespace DCL.SmartWearables
                     return;
                 }
 
-                if (!smartWearableCache.RunningSmartWearables.Remove(id)) return;
+                if (!smartWearableCache.RemoveRunningSmartWearable(id)) return;
 
-                string wearableName = wearable.DTO.Metadata.name;
+                string? wearableName = wearable.DTO?.Metadata.name;
                 ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{wearableName}'. Unloading scene...");
 
                 portableExperiencesController.UnloadPortableExperienceById(id);
@@ -322,7 +322,7 @@ namespace DCL.SmartWearables
 
             AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
 
-            smartWearableCache.RunningSmartWearables.Add(smartWearableId.Value);
+            smartWearableCache.AddRunningSmartWearable(smartWearableId.Value);
         }
 
         private void AddPortableExperience(IWearable smartWearable, Entity scene)
@@ -334,7 +334,7 @@ namespace DCL.SmartWearables
                 Type = PortableExperienceType.SmartWearable,
                 Ens = string.Empty,
                 Id = id,
-                Name = smartWearable.DTO.Metadata.name,
+                Name = smartWearable.DTO?.Metadata.name ?? string.Empty,
                 ParentSceneId = "avatar"
             };
             World.Add(scene, metadata);
@@ -354,7 +354,7 @@ namespace DCL.SmartWearables
             promise.ForgetLoading(World);
 
         private void OnPortableExperienceUnloaded(string id) =>
-            smartWearableCache.RunningSmartWearables.Remove(id);
+            smartWearableCache.RemoveRunningSmartWearable(id);
 
         private void OnCurrentSceneChanged(ISceneFacade? scene) =>
             currentSceneDirty = true;

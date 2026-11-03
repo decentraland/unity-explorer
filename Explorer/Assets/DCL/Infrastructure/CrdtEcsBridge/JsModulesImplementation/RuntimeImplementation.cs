@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SkyBox;
 using DCL.WebRequests;

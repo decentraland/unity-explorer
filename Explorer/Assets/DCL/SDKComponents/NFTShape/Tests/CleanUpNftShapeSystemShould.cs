@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             world.Add(imagePromise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.TryGet(entity, out NFTLoadingComponent loadingComponent), Is.True);
             Assert.That(loadingComponent.TypePromise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             world.Add(imagePromise.Entity, new StreamableLoadingResult<TextureData>(texData));
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.TryGet(entity, out NFTLoadingComponent loadingComponent), Is.True);
             Assert.That(loadingComponent.TypePromise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);

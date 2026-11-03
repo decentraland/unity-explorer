@@ -6,8 +6,6 @@ using DCL.SDKComponents.ParticleSystem.Systems;
 using DCL.WebRequests;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;

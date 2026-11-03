@@ -18,13 +18,15 @@ namespace DCL.CharacterPreview.Tests
 
         private TestPreview preview = null!;
         private World world = null!;
+        private CharacterPreviewEventBus eventBus = null!;
         private List<CharacterPreviewPointerInput> drags = null!;
 
         [SetUp]
         public void SetUp()
         {
             world = World.Create();
-            preview = new TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, new CharacterPreviewEventBus());
+            eventBus = new CharacterPreviewEventBus();
+            preview = new TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, eventBus);
             drags = new List<CharacterPreviewPointerInput>();
             preview.InputEventBus.OnDraggingEvent += drags.Add;
         }
@@ -117,6 +119,32 @@ namespace DCL.CharacterPreview.Tests
             CollectionAssert.IsEmpty(drags);
         }
 
+        [Test]
+        public void ReportTheContainerOffWhileAnotherPreviewIsOnTopAndOnOnceItHides()
+        {
+            // Arrange
+            var other = new TestPreview(CharacterPreviewTestViews.Create(created), Substitute.For<ICharacterPreviewFactory>(), world, eventBus);
+            eventBus.OnAnyCharacterPreviewShow(preview);
+
+            // Act
+            eventBus.OnAnyCharacterPreviewShow(other);
+            eventBus.OnAnyCharacterPreviewHide(other);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { false, true }, preview.ContainerActiveChanges);
+            other.Dispose();
+        }
+
+        [Test]
+        public void IgnoreItsOwnShowForTheContainerState()
+        {
+            // Act
+            eventBus.OnAnyCharacterPreviewShow(preview);
+
+            // Assert
+            CollectionAssert.IsEmpty(preview.ContainerActiveChanges);
+        }
+
         private class TestPreview : CharacterPreviewControllerBase
         {
             public TestPreview(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
@@ -125,6 +153,8 @@ namespace DCL.CharacterPreview.Tests
             public CharacterPreviewInputEventBus InputEventBus => inputEventBus;
 
             public CharacterPreviewView View => view;
+
+            public List<bool> ContainerActiveChanges { get; } = new ();
 
             public bool RotateEnabled
             {
@@ -135,6 +165,9 @@ namespace DCL.CharacterPreview.Tests
             {
                 set => panEnabled = value;
             }
+
+            protected override void OnContainerActiveChanged(bool isActive) =>
+                ContainerActiveChanges.Add(isActive);
         }
     }
 }

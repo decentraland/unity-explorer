@@ -59,6 +59,11 @@ namespace DCL.Lobby
             trackedCamera = camera;
         }
 
+        public void SetKeyLightActive(bool isActive)
+        {
+            keyLight.enabled = isActive;
+        }
+
         /// <summary>
         ///     Shows this image instead of the preset's one until the next <see cref="ApplyPreset" />; null goes back to the preset.
         /// </summary>

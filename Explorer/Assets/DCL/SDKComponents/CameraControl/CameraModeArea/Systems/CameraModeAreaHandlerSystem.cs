@@ -116,10 +116,10 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
-            if (globalWorld.Has<InWorldCameraComponent>(cameraEntityProxy.Object))
+            if (globalWorld.Has<InWorldCameraComponent>(cameraEntityProxy.Object) && !globalWorld.Has<ToggleInWorldCameraRequest>(cameraEntityProxy.Object))
                 globalWorld.Add(cameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false, TargetCameraMode = targetCameraMode});
 
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object);
 
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
@@ -130,7 +130,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnExitedCameraModeArea()
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object);
 
             camera.RemoveCameraInputLock();
 

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.History;
 using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 
 namespace DCL.ScenesDebug.ScenesConsistency.Conditions

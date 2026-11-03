@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SceneRunner.Scene;
 using DG.Tweening;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;

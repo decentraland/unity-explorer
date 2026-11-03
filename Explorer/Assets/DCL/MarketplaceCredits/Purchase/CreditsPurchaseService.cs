@@ -358,13 +358,13 @@ namespace DCL.MarketplaceCredits.Purchase
 
             SetState(CreditsPurchaseState.WaitingSettlement);
 
-            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash!, SETTLEMENT_TIMEOUT, ct); // non-null: guarded by the IsNullOrEmpty check above
+            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash, SETTLEMENT_TIMEOUT, ct); // non-null: guarded by the IsNullOrEmpty check above
 
             switch (settlement)
             {
                 case SettlementOutcome.Confirmed:
                     SetState(CreditsPurchaseState.Success);
-                    return CreditsPurchaseResult.Ok(txHash!);
+                    return CreditsPurchaseResult.Ok(txHash);
                 case SettlementOutcome.Reverted:
                     await ReleaseIntentAsync(authorization.credit.id);
                     return Fail(CreditsPurchaseError.TransactionReverted, txHash);

@@ -3,7 +3,6 @@ using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SceneRunner.Scene;
 using UnityEditor;
 using UnityEngine;
 using Utility;
@@ -127,43 +126,6 @@ namespace Global.Editor
             return position;
         }
 
-        private static Rect DrawLocalhost(Rect position, SerializedProperty parent, InitialRealm initialRealm)
-        {
-            if (initialRealm == InitialRealm.Localhost)
-            {
-                SerializedProperty remoteWorldContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHibridWorld));
-                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
-                SerializedProperty useHibridAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles));
-                SerializedProperty useLocalAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useLocalAssetBundles));
-
-                EditorGUI.PropertyField(position, useLocalAssets);
-                position.y += singleLineHeight;
-
-                EditorGUI.PropertyField(position, useHibridAssets);
-                position.y += singleLineHeight;
-
-                if (useHibridAssets.boolValue)
-                {
-                    EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
-                    position.y += singleLineHeight;
-
-                    EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
-                    position.y += singleLineHeight;
-
-                    if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
-                    {
-                        EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
-                        position.y += singleLineHeight;
-
-                        EditorGUI.PropertyField(position, remoteWorldContentServerProperty);
-                        position.y += singleLineHeight;
-                    }
-                }
-            }
-
-            return position;
-        }
-
         private static Rect DrawPredefinedScenes(Rect position, SerializedProperty parent)
         {
             SerializedProperty predefinedList = parent.FindPropertyRelative(nameof(RealmLaunchSettings.predefinedScenes));
@@ -242,7 +204,6 @@ namespace Global.Editor
             position = DrawTargetScene(position, property, initialRealmValue);
             position = DrawTargetWorld(position, property, initialRealmValue);
             position = DrawCustomRealm(position, property, initialRealmValue);
-            position = DrawLocalhost(position, property, initialRealmValue);
             position = DrawIsolateSceneCommunication(position, property, initialRealmValue);
             position = DrawPredefinedScenes(position, property);
             position = DrawOverridenScenes(position);
@@ -259,20 +220,6 @@ namespace Global.Editor
 
             switch (initialRealmValue)
             {
-                case InitialRealm.Localhost:
-                    var fieldToAdd = 2;
-
-                    if (property.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles)).boolValue)
-                    {
-                        fieldToAdd += 2;
-                        SerializedProperty remoteSceneContentServerProperty = property.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
-
-                        if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
-                            fieldToAdd += 2;
-                    }
-
-                    fieldsCount += fieldToAdd;
-                    break;
                 case InitialRealm.World:
                 case InitialRealm.Custom:
                     fieldsCount += 1;

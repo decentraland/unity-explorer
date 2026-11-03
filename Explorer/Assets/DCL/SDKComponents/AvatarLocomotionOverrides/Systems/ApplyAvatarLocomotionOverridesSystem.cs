@@ -3,10 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterMotion.Settings;
-using DCL.CharacterMotion.Systems;
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
-using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using CalculateCharacterVelocitySystem = DCL.Character.CharacterMotion.Systems.CalculateCharacterVelocitySystem;
 

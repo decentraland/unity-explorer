@@ -1,7 +1,6 @@
 using Microsoft.ClearScript.V8;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace SceneRuntime
 {

@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;

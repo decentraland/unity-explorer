@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.Ipfs;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
@@ -13,7 +12,7 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmote : IAvatarAttachment<EmoteDTO>, ITrimmedEmote
     {
-        int Amount { get; set; }
+        new int Amount { get; set; }
 
         StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }

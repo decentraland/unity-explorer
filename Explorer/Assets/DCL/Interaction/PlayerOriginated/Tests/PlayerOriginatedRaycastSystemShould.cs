@@ -76,7 +76,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             ref CursorComponent cursorComponent = ref world.Get<CursorComponent>(cameraEntity);
             cursorComponent.Position = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
@@ -103,7 +103,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             ref CursorComponent cc = ref world.Get<CursorComponent>(cameraEntity);
             cc.CursorState = CursorState.Locked;
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
@@ -127,7 +127,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                            return true;
                                        });
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
@@ -151,7 +151,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                            return true;
                                        });
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
@@ -168,7 +168,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
@@ -195,7 +195,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             ref CursorComponent cc = ref world.Get<CursorComponent>(cameraEntity);
             cc.CursorState = CursorState.Panning;
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
@@ -224,7 +224,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Vector3 aim = colliderGo.transform.localPosition;
             playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = aim, PostedAtFrame = UnityEngine.Time.frameCount };
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(result.SyntheticAimPoint, Is.EqualTo((Vector3?)aim));
@@ -239,7 +239,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             var aim = new Vector3(0f, 50f, 10f);
             playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = aim, PostedAtFrame = UnityEngine.Time.frameCount };
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(result.SyntheticAimPoint, Is.EqualTo((Vector3?)aim));
@@ -253,7 +253,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             var staleAim = new Vector3(5f, 0f, 10f);
             playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = staleAim, PostedAtFrame = UnityEngine.Time.frameCount - 1 };
 
-            system!.Update(0);
+            system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(result.SyntheticAimPoint, Is.Null, "a stale aim must not steer the ray nor be echoed");
@@ -271,7 +271,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             ref CursorComponent cursorComponent = ref world.Get<CursorComponent>(cameraEntity);
             cursorComponent.CursorState = CursorState.Panning;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint, Is.Null);
 
@@ -280,7 +280,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             playerInteractionEntity.SyntheticPointerInput = default(SyntheticPointerInput);
             cursorComponent.CursorState = CursorState.Free;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint, Is.Null);
         }
@@ -316,7 +316,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             cursorComponent.Position = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity), Is.True);
@@ -341,7 +341,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                            x[1] = globalEntityInfo1;  // Out param
                                            return true;
                                        });
-            system!.Update(0);
+            system.Update(0);
             Assert.That(world.Has<HoveredComponent>(globalEntity1), Is.True);
 
             // Disable entity 1 collider, create entity 2 with collider and trigger a hit
@@ -357,7 +357,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                        });
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity1), Is.False, "Hover should be removed from entity 1");
@@ -384,7 +384,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                            x[1] = globalEntityInfo;  // Out param
                                            return true;
                                        });
-            system!.Update(0);
+            system.Update(0);
             Assert.That(world.Has<HoveredComponent>(globalEntity), Is.True);
 
             // Disable collider to make raycast miss
@@ -392,7 +392,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             entityCollidersGlobalCache.TryGetGlobalEntity(collider, out Arg.Any<GlobalColliderGlobalEntityInfo>()).Returns(false);
 
             // Act
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity), Is.False, "Hover should be removed when raycast misses");

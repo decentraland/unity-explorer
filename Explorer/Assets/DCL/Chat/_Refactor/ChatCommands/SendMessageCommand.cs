@@ -2,7 +2,6 @@
 using DCL.Chat.ChatServices;
 using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
-using System;
 
 namespace DCL.Chat.ChatCommands
 {

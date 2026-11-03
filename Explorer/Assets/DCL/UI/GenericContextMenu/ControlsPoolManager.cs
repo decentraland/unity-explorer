@@ -125,7 +125,7 @@ namespace DCL.UI
                 };
 
             component.transform.SetParent(parent);
-            component!.transform.SetSiblingIndex(index);
+            component.transform.SetSiblingIndex(index);
             currentControls.Add(component);
 
             return component;

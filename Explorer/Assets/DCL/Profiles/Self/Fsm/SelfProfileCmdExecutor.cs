@@ -121,11 +121,7 @@ namespace DCL.Profiles.Self
                 if (!realmData.Configured)
                     await UniTask.WaitUntil(realmData, static realm => realm.Configured, cancellationToken: ct);
 
-                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
-                // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
-                Profile? profile = await profileRepository.GetAsync(address.Value, 0, null, ct,
-                    getFromCacheIfPossible: false,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+                Profile? profile = await GetWithTimeoutAsync(address, ct);
 
                 if (profile == null)
                 {
@@ -134,7 +130,7 @@ namespace DCL.Profiles.Self
                 }
 
                 Profile fetched = Copy(profile);
-                ApplySessionOverrides(fetched);
+                ApplySessionOverrides(fetched, fillEmptyEmoteWheel: true);
 
                 // A non-guest identity has connected web3, even when the deployed profile was made by a guest.
                 if (identityCache.Identity is { } identity && !identity.IsGuest())
@@ -152,6 +148,26 @@ namespace DCL.Profiles.Self
             }
         }
 
+        /// <summary>The profile requests carry no transport timeout, so a stalled connection is ended here as a <see cref="TimeoutException" />.</summary>
+        private async UniTask<Profile?> GetWithTimeoutAsync(UserId address, CancellationToken ct)
+        {
+            using CancellationTokenSource requestCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            using IDisposable timeoutTimer = requestCts.CancelAfterSlim(SelfProfile.FETCH_REQUEST_TIMEOUT);
+
+            try
+            {
+                // Not the suppressing overload, so a failure is sent as FetchFailed rather than FetchNotFound.
+                // Bypasses the cache, which can hold a published edit the catalyst never confirmed.
+                return await profileRepository.GetAsync(address.Value, 0, null, requestCts.Token,
+                    getFromCacheIfPossible: false,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
+            }
+            catch (OperationCanceledException) when (requestCts.IsCancellationRequested && !ct.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Self profile request timed out after {SelfProfile.FETCH_REQUEST_TIMEOUT.TotalSeconds:F0}s");
+            }
+        }
+
         private static void ReportFetchFailure(in ProfileFailure failure)
         {
             if (failure.Streak == 1)
@@ -160,8 +176,8 @@ namespace DCL.Profiles.Self
                 ReportHub.LogWarning(ReportCategory.PROFILE, $"Self profile fetch failed again: {failure}");
         }
 
-        /// <summary>Applies the session-wide tooling overrides; an empty emote wheel is filled with the base emotes.</summary>
-        private void ApplySessionOverrides(Profile profile)
+        /// <summary>Applies the session-wide tooling overrides.</summary>
+        private void ApplySessionOverrides(Profile profile, bool fillEmptyEmoteWheel)
         {
             forcedWearables.ApplyTo(profile);
 
@@ -169,7 +185,7 @@ namespace DCL.Profiles.Self
                 for (var slot = 0; slot < forcedEmotes.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = forcedEmotes[slot];
 
-            if (profile.Avatar.IsEmotesWheelEmpty())
+            if (fillEmptyEmoteWheel && profile.Avatar.IsEmotesWheelEmpty())
                 for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
         }
@@ -208,10 +224,10 @@ namespace DCL.Profiles.Self
 
             sent.Version = deploy.Version;
             activity ??= new CancellationTokenSource();
-            DeployAsync(deploy.Address, sent, inbox, activity.Token).Forget();
+            DeployAsync(deploy.Address, sent, deploy.FillEmptyEmoteWheel, inbox, activity.Token).Forget();
         }
 
-        private async UniTaskVoid DeployAsync(UserId address, Profile sent, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
+        private async UniTaskVoid DeployAsync(UserId address, Profile sent, bool fillEmptyEmoteWheel, IMsgInbox<SelfProfileMsg> inbox, CancellationToken ct)
         {
             try
             {
@@ -226,9 +242,8 @@ namespace DCL.Profiles.Self
                 if (saved == null || saved.Version < sent.Version)
                     throw new ProfileNotFoundAfterDeployException(address, sent.Version);
 
-                // The re-read profile gets the same overrides as a fetched one, e.g. a new account deploys an empty emote wheel.
                 Profile reported = Copy(saved);
-                ApplySessionOverrides(reported);
+                ApplySessionOverrides(reported, fillEmptyEmoteWheel);
 
                 inbox.Send(SelfProfileMsg.FromDeploySucceeded(new DeploySucceeded(address, sent, reported)));
             }

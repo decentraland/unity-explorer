@@ -46,7 +46,7 @@ namespace DCL.ResourcesUnloading.Tests
             standardStrategy = new MockUnloadStrategy(1);
             aggresiveStrategy = new MockUnloadStrategy(1);
 
-            unloadStrategies = new[]
+            unloadStrategies = new UnloadStrategyBase[]
             {
                 standardStrategy,
                 aggresiveStrategy

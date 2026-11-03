@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using MVC;
 using System;

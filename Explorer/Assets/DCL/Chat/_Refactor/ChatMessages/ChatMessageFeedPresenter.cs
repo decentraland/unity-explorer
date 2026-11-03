@@ -206,12 +206,12 @@ namespace DCL.Chat.ChatMessages
             // It is possible that the current channel is not yet set (initialization is in progress)
             if (currentChannelService.CurrentChannel == null) return;
 
-            messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
+            messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel.Messages.Count;
         }
 
         private void TryAddNewMessagesSeparatorAfterPendingMessages()
         {
-            ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+            ChatChannel currentChannel = currentChannelService.CurrentChannel;
             int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
             if (unreadMessagesCount > 0)
@@ -294,7 +294,7 @@ namespace DCL.Chat.ChatMessages
             if (needsSeparator)
             {
                 if (messageCountWhenSeparatorViewed.HasValue)
-                    markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
+                    markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel, messageCountWhenSeparatorViewed.Value);
 
                 TryAddNewMessagesSeparatorAfterPendingMessages();
             }
@@ -312,7 +312,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (hasSeparator) return;
 
-            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel);
             view.ShowLastMessage();
         }
 
@@ -467,7 +467,7 @@ namespace DCL.Chat.ChatMessages
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
 
-                    ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+                    ChatChannel currentChannel = currentChannelService.CurrentChannel;
                     int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
                     if (unreadCount > 0)
@@ -485,7 +485,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel == null) return;
 
-            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel);
             scrollToBottomPresenter.OnScrolledToBottom();
         }
 

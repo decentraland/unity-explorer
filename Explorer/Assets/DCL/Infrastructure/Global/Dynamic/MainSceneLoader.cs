@@ -44,6 +44,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.AssetBundles;
 using Global.AppArgs;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Requests;
@@ -306,8 +307,15 @@ namespace Global.Dynamic
                 return;
             }
 
+            // Fetched at most once, and only when a start-up decision below needs it.
+            AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
+                UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));
+
             if (applicationParametersParser.HasPendingDeepLink)
-                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+            {
+                FeatureFlagsConfiguration? flags = await startupFeatureFlags;
+                DeepLinkAllowlist.SetWhitelistedWorlds(flags == null ? Array.Empty<string>() : DeepLinkWorldWhitelistProvider.ReadWorlds(flags));
+            }
 
             applicationParametersParser.InitializeDeepLinks();
 
@@ -367,13 +375,18 @@ namespace Global.Dynamic
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
             bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
 
-            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
-            // local scene and read-throughs everything else from production). Brought up to health serially,
-            // before the URL sources are built, so the override is seeded only when the server is actually
-            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
+            // Local scene development: the embedded abgen server becomes the optimized-assets source. It is started to
+            // health before the URL sources are built, so the override is set only when it is actually serving.
+            // --lsd-raw-gltf, or the alfa-lsd-forced-ab flag not being on, skips the server.
             string? localAbBaseUrl = null;
+            var abgenConversionMetrics = new AbgenConversionMetrics();
 
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && applicationParametersParser.HasFlag(AppArgsFlags.LSD_RAW_GLTF))
+                abgenConversionMetrics.OnMilestone($"raw GLTFs requested with --{AppArgsFlags.LSD_RAW_GLTF} — no asset bundle server started");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment
+                     && (await startupFeatureFlags)?.IsEnabled(FeatureFlagsStrings.LSD_FORCED_AB) != true)
+                abgenConversionMetrics.OnMilestone($"raw GLTFs — local asset bundles need the {FeatureFlagsStrings.LSD_FORCED_AB} feature flag, which is off or unreachable");
+            else if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment)
             {
                 // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
                 // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
@@ -382,7 +395,7 @@ namespace Global.Dynamic
                     : launchSettings.customRealm;
 
                 string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
-                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain, abgenConversionMetrics);
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
@@ -419,6 +432,8 @@ namespace Global.Dynamic
                 identityCache,
                 pluginSettingsContainer,
                 launchSettings,
+                useLocalAssetBundles: localAbBaseUrl != null,
+                abgenConversionMetrics,
                 applicationParametersParser,
                 splashScreen.Value,
                 diskCache,
@@ -532,7 +547,10 @@ namespace Global.Dynamic
                 // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
                 // hold realm loading until the whole-scene warm-up settles.
                 if (abgenSidecar != null)
+                {
                     await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
+                    TrackLocalAssetBundleConversion(bootstrapContainer.Analytics.Controller, bootstrapContainer.AbgenConversionMetrics);
+                }
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
@@ -774,7 +792,8 @@ namespace Global.Dynamic
             DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
         }
 
-        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
+        /// <summary>The app's feature-flags document, honouring <see cref="AppArgsFlags.FeatureFlags.URL" />.</summary>
+        private string FeatureFlagsDocumentUrl(IAppArgs appArgs)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
 
@@ -782,8 +801,7 @@ namespace Global.Dynamic
                 ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
-            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
-            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
+            return $"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json";
         }
 
         private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
@@ -795,6 +813,20 @@ namespace Global.Dynamic
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        /// <summary>
+        ///     One event per local-scene session: success when the scene was converted and the session loads asset
+        ///     bundles. Single files abgen could not convert do not count as a failure.
+        /// </summary>
+        private static void TrackLocalAssetBundleConversion(IAnalyticsController analytics, AbgenConversionMetrics metrics)
+        {
+            bool succeeded = metrics.RawGltfFallbackReason == null && metrics.WarmUp == AbgenConversionMetrics.WarmUpStage.Ready;
+
+            analytics.Track(AnalyticsEvents.LocalSceneDevelopment.AB_CONVERSION, new JObject
+            {
+                ["result"] = succeeded ? "success" : "failed",
+            });
         }
 
         private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, UnityAppWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)

@@ -14,7 +14,7 @@ namespace DCL.UI.Controls
 
         public void Configure(SimpleButtonContextMenuControlSettings settings)
         {
-            TextComponent.SetText(settings!.buttonText);
+            TextComponent.SetText(settings.buttonText);
             TextComponent.color = settings.textColor;
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;

@@ -15,22 +15,27 @@ namespace DCL.Profiles.Self
         /// <summary>The profile is reported as saved without being sent to the catalyst.</summary>
         public readonly bool LocalOnly;
 
-        public DeployCmd(UserId address, Profile profile, int version, bool localOnly = false)
+        /// <summary>No trusted profile preceded the edit, so an empty emote wheel on the re-read profile is a new account's, not one cleared on purpose.</summary>
+        public readonly bool FillEmptyEmoteWheel;
+
+        public DeployCmd(UserId address, Profile profile, int version, bool localOnly = false, bool fillEmptyEmoteWheel = false)
         {
             Address = address;
             Profile = profile;
             Version = version;
             LocalOnly = localOnly;
+            FillEmptyEmoteWheel = fillEmptyEmoteWheel;
         }
 
         public bool Equals(DeployCmd other) =>
-            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version && LocalOnly == other.LocalOnly;
+            Address.Equals(other.Address) && ReferenceEquals(Profile, other.Profile) && Version == other.Version && LocalOnly == other.LocalOnly
+            && FillEmptyEmoteWheel == other.FillEmptyEmoteWheel;
 
         public override bool Equals(object? obj) =>
             obj is DeployCmd other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version, LocalOnly);
+            HashCode.Combine(Address, RuntimeHelpers.GetHashCode(Profile), Version, LocalOnly, FillEmptyEmoteWheel);
 
         public override string ToString() =>
             LocalOnly ? $"{Address.Value} v{Version} local only" : $"{Address.Value} v{Version}";

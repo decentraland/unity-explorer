@@ -9,7 +9,6 @@ using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 

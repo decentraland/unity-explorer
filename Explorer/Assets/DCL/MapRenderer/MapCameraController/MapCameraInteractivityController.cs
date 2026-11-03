@@ -27,7 +27,7 @@ namespace DCL.MapRenderer.MapCameraController
         private IParcelHighlightMarker? marker;
         private GameObject? previouslyRaycastedObject;
         private CancellationTokenSource clickCt = new ();
-        private IMapRendererMarker? previouslyClickedMarker = null;
+        private IMapRendererMarker? previouslyClickedMarker;
         private CancellationTokenSource longHoverCt = new ();
         private Vector2Int previousParcel = Vector2Int.zero;
 
