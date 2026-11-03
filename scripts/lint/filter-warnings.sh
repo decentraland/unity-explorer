@@ -14,6 +14,8 @@ excluded_rules=(
     '.CSharpErrors'      # false positive from '--no-build' (unresolved refs)
     '.CppCompilerErrors' # false positive from '--no-build' (unresolved refs)
     'CheckNamespace'     # namespaces are domain names, not folder paths (docs/code-style-guidelines.md § Namespaces)
+    'DCL0001'            # throwing dictionary APIs: warnings while the existing call sites are migrated (#10563),
+    'DCL0002'            # then promoted to compile errors, which fail the Unity build instead of this count
 )
 
 # vendored / third-party code we don't own; ../unity-shared-dependencies is the local UPM

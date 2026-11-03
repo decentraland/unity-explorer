@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DCL.Analyzers</AssemblyName>
+    <RootNamespace>DCL.Analyzers</RootNamespace>
+    <!-- Reproducible output, so build.sh check can compare the committed DLL with a fresh build of this source -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- C# only: Unity compiles no Visual Basic -->
+    <NoWarn>$(NoWarn);RS1004</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Compiled against an old Roslyn so any newer compiler Unity ships can load it; the host supplies the assembly at runtime -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DCL.Analyzers.Tests" />
+  </ItemGroup>
+</Project>

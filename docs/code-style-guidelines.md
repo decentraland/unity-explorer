@@ -254,6 +254,25 @@ List<string> filteredWords = new FilterLogic(listWords).
   - The lint filter shared by CI and the local hook (`scripts/lint/filter-warnings.sh`) already excludes the `CheckNamespace` inspection, so the comment changes nothing in the warning count — it is pure noise, and it hides genuine cases where a type joined the wrong namespace.
   - If the IDE flags a mismatch, either move the type into the domain namespace its closest collaborators live in, or leave the warning visible.
 
+### Throwing dictionary APIs
+
+Dictionary members that throw on a duplicate or missing key surface in Sentry as `ArgumentException: An item with the same key has already been added` and `KeyNotFoundException`, usually far from the real cause. The in-repo Roslyn analyzer [`DCL.Analyzers`](../Explorer/Assets/DCL/Analyzers/.source/README.md) reports them at compile time in Unity and the IDE:
+
+| Rule | Reported | Use instead |
+|---|---|---|
+| `DCL0001` | `map.Add(k, v)`, `Enumerable.ToDictionary` | `TryAdd` |
+| `DCL0002` | indexer reads: `var x = map[k]`, `map[k] += 1`, `map[k] ??= v` | `TryGetValue` |
+
+- It covers every `IDictionary<,>` / `IReadOnlyDictionary<,>` implementation (`Dictionary`, `SortedDictionary`, `ConcurrentDictionary`, `DCLConcurrentDictionary`, ...) and the `Unity.Collections` hash maps (`NativeHashMap`, `NativeParallelHashMap`, their `Unsafe*` variants and `ReadOnly` / `ParallelWriter` views).
+- Still allowed: plain indexer writes (`map[k] = v` upserts and never throws), `TryAdd`, `TryGetValue`, `ContainsKey`, `Remove`, collection and index initializers, multi hash maps, and Newtonsoft `JObject` indexer reads (they return `null` for a missing property; `JObject.Add` still throws and is reported).
+- Only code under `Assets/` is reported. Unity also runs the analyzer on package assemblies, but that code is not ours. Vendored code under `Assets/` opts out with a `.ruleset` next to its `.asmdef` (see `Assets/Plugins/SocketIO/SocketIOClient/SocketIOClient.ruleset`).
+- Swapping `Add` for `TryAdd` without a decision hides the bug. Pick one per call site:
+  - Duplicate is a bug: `if (!map.TryAdd(k, v)) ReportHub.LogError(...)`, and fix the cause where it is known.
+  - Duplicate is expected: `TryAdd` and ignore the result, or `map[k] = v` if the latest value should win.
+  - Missing key on read: `TryGetValue` with an explicit miss branch (early return, log or fallback).
+- Exemptions: `#pragma warning disable DCL0001` (or `DCL0002`) around the line, with the reason on the same line, only at serialization or third-party boundaries. The `Add` method and indexer getter of a type that itself implements a dictionary interface are exempt automatically, since forwarding there implements the same contract.
+- The rules are warnings while the existing call sites are migrated ([#10563](https://github.com/decentraland/unity-explorer/issues/10563)) and are excluded from the lint ratchet until then; they become compile errors once the count reaches zero.
+
 ### Whitespaces
 
 Most of these rules are saved in the `.editorconfig` and will be applied automatically on formatting.
