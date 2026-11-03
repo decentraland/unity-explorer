@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using Global.AppArgs;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace DCL.CharacterPreview
     /// </summary>
     public interface ICharacterPreviewFactory
     {
-        CharacterPreviewController Create(World world,
+        CharacterPreviewController? Create(World world,
             RectTransform renderImage,
             RenderTexture targetTexture,
             CharacterPreviewInputEventBus inputEventBus,
@@ -33,15 +34,25 @@ namespace DCL.CharacterPreview
             this.appArgs = appArgs;
         }
 
-        public CharacterPreviewController Create(World world,
+        public CharacterPreviewController? Create(World world,
             RectTransform renderImage,
             RenderTexture targetTexture,
             CharacterPreviewInputEventBus inputEventBus,
             CharacterPreviewCameraSettings cameraSettings,
             Vector3 position)
         {
-            characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
-            transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
+            if (characterPreviewComponentPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out characterPreviewComponentPool))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(CharacterPreviewAvatarContainer)}");
+                return null;
+            }
+
+            if (transformPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out transformPool))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(Transform)}");
+                return null;
+            }
+
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get()!;
             container.Initialize(targetTexture, position);
             return new CharacterPreviewController(world, renderImage, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool, appArgs);

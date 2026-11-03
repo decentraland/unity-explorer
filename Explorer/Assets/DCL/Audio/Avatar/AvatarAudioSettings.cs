@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -54,7 +55,8 @@ namespace DCL.Audio.Avatar
 
             foreach (AudioClipTypeAndConfigKeyValuePair clipConfig in audioClipConfigsList)
             {
-                if (clipConfig.Value != null) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
+                if (clipConfig.Value != null && !audioClipConfigs.TryAdd(clipConfig.Key, clipConfig.Value))
+                    ReportHub.LogError(ReportCategory.AUDIO, $"Audio settings list the avatar audio clip type {clipConfig.Key} more than once, the first entry is used");
             }
         }
 

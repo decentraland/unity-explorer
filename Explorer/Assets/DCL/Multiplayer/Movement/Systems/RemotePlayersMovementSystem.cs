@@ -14,6 +14,7 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.PriorityQueue;
 
@@ -298,10 +299,11 @@ namespace DCL.Multiplayer.Movement
             float distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
 
             MovementKind movementKind = MovementKind.Run;
+            Dictionary<MovementKind, float> moveKindByDistance = settings.MoveKindByDistance;
 
-            if (distance < settings.MoveKindByDistance[MovementKind.Walk])
+            if (moveKindByDistance.TryGetValue(MovementKind.Walk, out float walkDistance) && distance < walkDistance)
                 movementKind = MovementKind.Walk;
-            else if (distance < settings.MoveKindByDistance[MovementKind.Jog])
+            else if (moveKindByDistance.TryGetValue(MovementKind.Jog, out float jogDistance) && distance < jogDistance)
                 movementKind = MovementKind.Jog;
 
             float speed = MovementSpeedLimitHelper.GetMovementSpeedLimit(characterControllerSettings, movementKind);

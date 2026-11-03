@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (!emotes.TryGetValue(convertedUrn, out IEmote? emote))
                 {
                     emote = new Emote(new StreamableLoadingResult<EmoteDTO>(emoteDto), false);
-                    emotes.Add(convertedUrn, emote);
+                    emotes[convertedUrn] = emote;
                 }
 
                 if (qualifiedForUnloading && !UpdateListedCachePriority(convertedUrn))

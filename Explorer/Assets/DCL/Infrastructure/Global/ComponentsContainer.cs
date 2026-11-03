@@ -1,13 +1,13 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
@@ -158,16 +158,26 @@ namespace Global
 
             // add others as required
 
-            var componentPoolsRegistry = new ComponentPoolsRegistry(
+            // merge SDK components with Non-SDK
+            var pools = new Dictionary<Type, IComponentPool>(sdkComponentsRegistry.SdkComponents.Count + 2);
 
-                // merge SDK components with Non-SDK
-                sdkComponentsRegistry.SdkComponents
-                                     .Select(c => (c.ComponentType, c.Pool))
-                                     .Append((typeof(RaycastHit), raycastHitPool))
-                                     .Concat(GetMiscComponents())
-                                     .ToDictionary(x => x.Item1, x => x.Item2), rootContainer);
+            foreach (SDKComponentBridge bridge in sdkComponentsRegistry.SdkComponents)
+                AddPool(pools, bridge.ComponentType, bridge.Pool);
+
+            AddPool(pools, typeof(RaycastHit), raycastHitPool);
+
+            foreach ((Type type, IComponentPool pool) in GetMiscComponents())
+                AddPool(pools, type, pool);
+
+            var componentPoolsRegistry = new ComponentPoolsRegistry(pools, rootContainer);
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
+        }
+
+        private static void AddPool(Dictionary<Type, IComponentPool> pools, Type type, IComponentPool pool)
+        {
+            if (!pools.TryAdd(type, pool))
+                ReportHub.LogError(ReportCategory.ECS, $"Component pool for {type.Name} is already registered");
         }
 
         private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()

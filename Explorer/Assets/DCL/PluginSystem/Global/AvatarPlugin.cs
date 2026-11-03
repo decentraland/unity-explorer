@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
@@ -73,7 +74,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly NametagsData nametagsData;
 
-        private IComponentPool<Transform> transformPoolRegistry = null!;
+        private IComponentPool<Transform>? transformPoolRegistry;
         private Transform? poolParent;
 
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
@@ -155,7 +156,9 @@ namespace DCL.PluginSystem.Global
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
-            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out transformPoolRegistry))
+                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(Transform)}");
+
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
             debugContainerBuilder.TryAddWidget("Nametags")
@@ -200,7 +203,8 @@ namespace DCL.PluginSystem.Global
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+            if (transformPoolRegistry != null)
+                InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
 #if UNITY_EDITOR
             PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
 #endif
@@ -210,7 +214,7 @@ namespace DCL.PluginSystem.Global
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
-            componentPoolsRegistry.AddGameObjectPool(
+            avatarPoolRegistry = componentPoolsRegistry.AddGameObjectPool(
                 () =>
                 {
                     AvatarBase instance = Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity);
@@ -223,7 +227,6 @@ namespace DCL.PluginSystem.Global
                     return instance;
                 },
                 onRelease: avatarBase => avatarBase.ResetState());
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)

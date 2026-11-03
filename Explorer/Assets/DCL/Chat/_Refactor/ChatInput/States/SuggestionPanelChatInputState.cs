@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatInput
             emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
 
             foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
-                emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
+                emojiSuggestionsDictionary[pair.Key] = new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName);
         }
 
         public void Dispose()

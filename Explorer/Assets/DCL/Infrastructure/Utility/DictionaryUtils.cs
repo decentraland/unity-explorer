@@ -14,7 +14,7 @@ namespace Utility
         {
             result.Clear();
             int iterationCount = 0;
-            foreach (var key in dictionary.Keys)
+            foreach ((string key, TValue value) in dictionary)
             {
                 iterationCount++;
                 if (iterationCount % THROTTLE_RATE == 0)
@@ -23,7 +23,7 @@ namespace Utility
                     iterationCount = 0;
                 }
                 if (key.StartsWith(prefix, true, CultureInfo.InvariantCulture))
-                    result.Add(dictionary[key]);
+                    result.Add(value);
             }
             return result;
         }
@@ -32,7 +32,7 @@ namespace Utility
         {
             result.Clear();
             int iterationCount = 0;
-            foreach (var key in dictionary.Keys)
+            foreach ((string key, TValue value) in dictionary)
             {
                 iterationCount++;
                 if (iterationCount % THROTTLE_RATE == 0)
@@ -41,7 +41,7 @@ namespace Utility
                     iterationCount = 0;
                 }
                 if (key.Contains(matchingText, StringComparison.InvariantCultureIgnoreCase))
-                    result.Add(dictionary[key]);
+                    result.Add(value);
             }
             return result;
         }

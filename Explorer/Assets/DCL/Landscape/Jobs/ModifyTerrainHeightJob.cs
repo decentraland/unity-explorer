@@ -66,8 +66,11 @@ namespace DCL.Landscape.Jobs
 
             if (emptyParcelNeighborData.TryGetValue(parcel, out EmptyParcelNeighborData data))
             {
+                if (!emptyParcelHeight.TryGetValue(parcel, out int parcelHeight))
+                    return;
+
                 float noise = terrainNoise[index];
-                float currentHeight = emptyParcelHeight[parcel];
+                float currentHeight = parcelHeight;
 
                 // get the pixel position within the parcel coords
                 float lx = x % parcelSize / (float)parcelSize;

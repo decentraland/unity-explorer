@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
@@ -110,9 +111,9 @@ namespace DCL.Character.Plugin
             private readonly byte bucketPropagationLimit;
             private readonly IExposedCameraData exposedCameraData;
             private readonly IExposedTransform exposedTransform;
-            private readonly IComponentPool<SDKTransform> sdkTransformPool;
-            private readonly IComponentPool<PBMainCamera> mainCameraPool;
-            private readonly IComponentPool<PBPointerLock> pointerLockPool;
+            private readonly IComponentPool<SDKTransform>? sdkTransformPool;
+            private readonly IComponentPool<PBMainCamera>? mainCameraPool;
+            private readonly IComponentPool<PBPointerLock>? pointerLockPool;
 
             public WorldPlugin(IExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
@@ -120,18 +121,27 @@ namespace DCL.Character.Plugin
                 this.exposedTransform = exposedTransform;
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
-                sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
-                mainCameraPool = componentPoolsRegistry.GetReferenceTypePool<PBMainCamera>();
-                pointerLockPool = componentPoolsRegistry.GetReferenceTypePool<PBPointerLock>();
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out sdkTransformPool))
+                    ReportHub.LogError(ReportCategory.PLAYER_SDK_DATA, $"No component pool registered for {nameof(SDKTransform)}");
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out mainCameraPool))
+                    ReportHub.LogError(ReportCategory.PLAYER_SDK_DATA, $"No component pool registered for {nameof(PBMainCamera)}");
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out pointerLockPool))
+                    ReportHub.LogError(ReportCategory.PLAYER_SDK_DATA, $"No component pool registered for {nameof(PBPointerLock)}");
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
+                if (sdkTransformPool == null) return;
+
                 WriteMainPlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
-                WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, pointerLockPool, persistentEntities.Camera);
+                if (mainCameraPool != null && pointerLockPool != null)
+                    WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
+                        sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, pointerLockPool, persistentEntities.Camera);
             }
         }
 

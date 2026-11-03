@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -16,15 +17,18 @@ namespace ECS.Unity.Transforms.Systems
     [ThrottlingEnabled]
     public partial class InstantiateTransformSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<Transform> transformPool;
+        private readonly IComponentPool<Transform>? transformPool;
 
         public InstantiateTransformSystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            transformPool = componentPools.GetReferenceTypePool<Transform>();
+            if (!componentPools.TryGetReferenceTypePool(out transformPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(Transform)}");
         }
 
         protected override void Update(float _)
         {
+            if (transformPool == null) return;
+
             InstantiateTransformQuery(World);
         }
 
@@ -33,7 +37,7 @@ namespace ECS.Unity.Transforms.Systems
         [None(typeof(TransformComponent))]
         private void InstantiateTransform(in Entity entity, CRDTEntity sdkEntity)
         {
-            World.Add(entity, transformPool.CreateTransformComponent(entity, sdkEntity));
+            World.Add(entity, transformPool!.CreateTransformComponent(entity, sdkEntity));
         }
     }
 }

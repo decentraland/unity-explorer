@@ -22,14 +22,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     {
         private const string COMPONENT_NAME = "UIText";
 
-        private readonly IComponentPool<Label> labelsPool;
+        private readonly IComponentPool<Label>? labelsPool;
         private readonly StyleFontDefinition[] styleFontDefinitions;
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent scenePartition;
 
         public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out labelsPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(Label)}");
+
             this.styleFontDefinitions = styleFontDefinitions;
             this.sceneData = sceneData;
             this.scenePartition = scenePartition;
@@ -37,6 +39,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         protected override void Update(float t)
         {
+            if (labelsPool == null) return;
+
             InstantiateUITextQuery(World);
             UpdateUITextQuery(World);
             ApplyLoadedFontQuery(World);
@@ -47,7 +51,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [None(typeof(UITextComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var label = labelsPool.Get();
+            var label = labelsPool!.Get();
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
             UiElementUtils.SetElementDefaultStyle(label.style);

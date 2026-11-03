@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.Components;
+using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using Decentraland.Pulse;
 using Google.Protobuf;
@@ -33,12 +34,20 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ClientMessage.MessageOneofCase.Teleport] = CreatePool<TeleportRequest>((packet, mes) => packet.Teleport = mes),
         };
 
-        public ClientMessage Get(ClientMessage.MessageOneofCase kind) =>
-            POOLS[kind].Get();
+        public ClientMessage Get(ClientMessage.MessageOneofCase kind)
+        {
+            if (POOLS.TryGetValue(kind, out IObjectPool<ClientMessage> pool))
+                return pool.Get();
+
+            ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pulse has no client message pool for {kind}, the message is not pooled");
+            return new ClientMessage();
+        }
 
         public void Release(ClientMessage message)
         {
-            POOLS[message.MessageCase].Release(message);
+            // A message of a kind without a pool was not taken from one, so it is left to the GC
+            if (POOLS.TryGetValue(message.MessageCase, out IObjectPool<ClientMessage> pool))
+                pool.Release(message);
         }
     }
 
@@ -69,12 +78,20 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ServerMessage.MessageOneofCase.Teleported] = CreatePool<TeleportPerformed>((packet, mes) => packet.Teleported = mes),
         };
 
-        public ServerMessage Get(ServerMessage.MessageOneofCase kind) =>
-            POOLS[kind].Get();
+        public ServerMessage Get(ServerMessage.MessageOneofCase kind)
+        {
+            if (POOLS.TryGetValue(kind, out IObjectPool<ServerMessage> pool))
+                return pool.Get();
+
+            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse has no server message pool for {kind}, the message is not pooled");
+            return new ServerMessage();
+        }
 
         public void Release(ServerMessage message)
         {
-            POOLS[message.MessageCase].Release(message);
+            // A message of a kind without a pool was not taken from one, so it is left to the GC
+            if (POOLS.TryGetValue(message.MessageCase, out IObjectPool<ServerMessage> pool))
+                pool.Release(message);
         }
     }
 }

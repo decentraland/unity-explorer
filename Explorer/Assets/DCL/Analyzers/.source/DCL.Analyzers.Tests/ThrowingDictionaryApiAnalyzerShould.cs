@@ -207,6 +207,20 @@ class Wrapper : IReadOnlyDictionary<int, int>
 }");
         }
 
+        [TestCase("DCL.EditMode.Tests")]
+        [TestCase("ECS.TestSuite")]
+        public void SkipTestAssemblies(string assemblyName)
+        {
+            const string SOURCE = @"
+using System.Collections.Generic;
+class C
+{
+    int M(Dictionary<int, int> d) => d[1];
+}";
+
+            Assert.That(Analyze(SOURCE, assemblyName: assemblyName), Is.Empty);
+        }
+
         [Test]
         public void HonorPragmaSuppression()
         {
@@ -273,17 +287,17 @@ class C
             Assert.That(actual, Is.EquivalentTo(expected));
         }
 
-        private static ImmutableArray<Diagnostic> Analyze(string source, string path = "Assets/DCL/Sample.cs")
+        private static ImmutableArray<Diagnostic> Analyze(string source, string path = "Assets/DCL/Sample.cs", string assemblyName = "DCL.Sample")
         {
-            var references = new List<MetadataReference>();
+            var metadataReferences = new List<MetadataReference>();
 
             foreach (string assemblyPath in ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator))
-                references.Add(MetadataReference.CreateFromFile(assemblyPath));
+                metadataReferences.Add(MetadataReference.CreateFromFile(assemblyPath));
 
             CSharpCompilation compilation = CSharpCompilation.Create(
-                "Sample",
+                assemblyName,
                 new[] { CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.CSharp9), path) },
-                references,
+                metadataReferences,
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
 
             ImmutableArray<Diagnostic> compileErrors = compilation.GetDiagnostics().RemoveAll(d => d.Severity != DiagnosticSeverity.Error);

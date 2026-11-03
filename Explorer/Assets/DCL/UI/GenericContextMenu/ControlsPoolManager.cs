@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.UI.Controls;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -236,7 +237,11 @@ namespace DCL.UI
 
         public void ReleaseControl<T>(T control) where T : GenericContextMenuComponentBase
         {
-            poolRegistry[control.GetType()].ReleaseAction.Invoke(control);
+            if (poolRegistry.TryGetValue(control.GetType(), out (object Pool, Action<object> ReleaseAction) pool))
+                pool.ReleaseAction.Invoke(control);
+            else
+                ReportHub.LogError(ReportCategory.UI, $"No context menu pool for control type {control.GetType()}, the control is not returned to a pool");
+
             control.UnregisterListeners();
             currentControls.Remove(control);
         }
@@ -246,8 +251,13 @@ namespace DCL.UI
             while(currentControls.Count > 0)
                 ReleaseControl(currentControls[0]);
 
-            foreach (var containerView in currentContainers)
-                poolRegistry[typeof(ControlsContainerView)].ReleaseAction.Invoke(containerView);
+            if (poolRegistry.TryGetValue(typeof(ControlsContainerView), out (object Pool, Action<object> ReleaseAction) containerPool))
+            {
+                foreach (var containerView in currentContainers)
+                    containerPool.ReleaseAction.Invoke(containerView);
+            }
+            else
+                ReportHub.LogError(ReportCategory.UI, $"No context menu pool for {nameof(ControlsContainerView)}, the containers are not returned to a pool");
 
             foreach (SimpleButtonContextMenuControlSettings simpleButtonContextMenuControlSettings in currentSimpleButtonConfigs)
                 simpleButtonPool.Release(simpleButtonContextMenuControlSettings);

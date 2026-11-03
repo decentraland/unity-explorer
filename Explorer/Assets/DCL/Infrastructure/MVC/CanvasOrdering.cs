@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace MVC
+﻿namespace MVC
 {
     public readonly struct CanvasOrdering
     {
@@ -12,21 +10,22 @@ namespace MVC
             Overlay,
         }
 
-        private static IReadOnlyDictionary<SortingLayer, int> sortingLayerOffsets => new Dictionary<SortingLayer, int>
-        {
-            {SortingLayer.Persistent, 0},
-            {SortingLayer.Fullscreen, 200},
-            {SortingLayer.Popup, 400},
-            {SortingLayer.Overlay, 600},
-        };
-
         public readonly SortingLayer Layer;
         public readonly int OrderInLayer;
 
         public CanvasOrdering(SortingLayer layer, int orderInLayer) : this()
         {
             Layer = layer;
-            OrderInLayer = orderInLayer + sortingLayerOffsets[layer];
+            OrderInLayer = orderInLayer + SortingLayerOffset(layer);
         }
+
+        private static int SortingLayerOffset(SortingLayer layer) =>
+            layer switch
+            {
+                SortingLayer.Fullscreen => 200,
+                SortingLayer.Popup => 400,
+                SortingLayer.Overlay => 600,
+                _ => 0,
+            };
     }
 }

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -51,7 +52,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 navmapBus
             );
 
-            writer.Add(MapLayer.Pins, controller);
+            if (!writer.TryAdd(MapLayer.Pins, controller))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.Pins} is already installed");
             zoomScalingWriter.Add(controller);
             return controller;
         }

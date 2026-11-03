@@ -137,7 +137,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     userIdEntitiesMap[pendingMessage.Entity] = playerIdentityData.Address;
                     break;
                 case CRDTMessageType.DELETE_COMPONENT:
-                    if (userIdEntitiesMap.ContainsKey(pendingMessage.Entity)) // we may get more than 1 DELETE_COMPONENT of the same component
+                    if (userIdEntitiesMap.TryGetValue(pendingMessage.Entity, out string? leavingUserId)) // we may get more than 1 DELETE_COMPONENT of the same component
                     {
                         // onLeaveScene + playerDisconnected observables
                         if (enableSDKObservableMessagesDetection)
@@ -145,13 +145,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
                                 sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.LeaveScene, new UserIdPayload
                                 {
-                                    userId = userIdEntitiesMap[pendingMessage.Entity],
+                                    userId = leavingUserId,
                                 }));
 
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
                                 sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
                                 {
-                                    userId = userIdEntitiesMap[pendingMessage.Entity],
+                                    userId = leavingUserId,
                                 }));
                         }
 
@@ -198,11 +198,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         case ComponentID.AVATAR_BASE: // profileChanged observable
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
                             {
-                                if (!userIdEntitiesMap.ContainsKey(message.Entity)) break;
+                                if (!userIdEntitiesMap.TryGetValue(message.Entity, out string? ethAddress)) break;
 
                                 sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
-                                    ethAddress = userIdEntitiesMap[message.Entity],
+                                    ethAddress = ethAddress,
                                     version = 0,
                                 }));
                             }

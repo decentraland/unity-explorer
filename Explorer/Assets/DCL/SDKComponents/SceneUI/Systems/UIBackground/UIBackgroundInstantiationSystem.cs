@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     {
         private const int ATTEMPTS_COUNT = 6;
 
-        private readonly IComponentPool<DCLImage> imagesPool;
+        private readonly IComponentPool<DCLImage>? imagesPool;
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
@@ -41,7 +41,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider) : base(world)
         {
-            imagesPool = poolsRegistry.GetReferenceTypePool<DCLImage>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out imagesPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(DCLImage)}");
+
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
@@ -49,6 +51,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         protected override void Update(float t)
         {
+            if (imagesPool == null) return;
+
             InstantiateUIBackgroundQuery(World);
             UpdateUIBackgroundQuery(World);
             LoadUIBackgroundTextureQuery(World);
@@ -59,7 +63,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var image = imagesPool.Get();
+            var image = imagesPool!.Get();
             image.Initialize(uiTransformComponent.Transform);
 
             var uiBackgroundComponent = new UIBackgroundComponent();

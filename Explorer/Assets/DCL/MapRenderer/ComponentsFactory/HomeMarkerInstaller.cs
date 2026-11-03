@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -48,7 +49,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             homeMarkerController.Initialize();
 
-            writer.Add(MapLayer.HomeMarker, homeMarkerController);
+            if (!writer.TryAdd(MapLayer.HomeMarker, homeMarkerController))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.HomeMarker} is already installed");
             zoomScalingWriter.Add(homeMarkerController);
 
             return homeMarkerController;

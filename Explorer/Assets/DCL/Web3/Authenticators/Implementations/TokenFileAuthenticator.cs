@@ -75,7 +75,11 @@ namespace DCL.Web3.Authenticators
             var authChain = AuthChain.Create();
             foreach (AuthLink authLink in json.identity.authChain)
                 authChain.Set(authLink);
-            string address = authChain.Get(AuthLinkType.SIGNER).payload;
+
+            if (!authChain.TryGet(AuthLinkType.SIGNER, out AuthLink signer))
+                throw new AuthChainException(authChain, "The identity read for the auto-login token has no SIGNER link");
+
+            string address = signer.payload;
             IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 

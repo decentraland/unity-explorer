@@ -17,7 +17,7 @@
 # Environment: UNITY_EDITOR_CONTENTS overrides the Editor install
 #   (default: /Applications/Unity/Hub/Editor/<version>/Unity.app/Contents).
 #
-# Exit codes: 0 no findings, 1 findings, 2 setup error, 3 an assembly failed to compile.
+# Exit codes: 0 no findings, 1 findings, 2 setup error, 3 an assembly failed to compile for another reason.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -100,14 +100,22 @@ if [ "$findings" -gt 0 ]; then
     grep -oE "$pattern" "$work/findings" | awk '{print $2}' | sort | uniq -c | sort -rn >&2
 fi
 
+# DCL rules are errors, so a finding alone fails the compile: only C# errors count as a compile failure
 if [ -f "$work/failed" ]; then
-    echo >&2
-    echo "Failed to compile (stale Library/Bee? recompile in Unity):" >&2
+    : > "$work/broken"
     while read -r name; do
-        echo "  $name" >&2
-        grep -m 3 -E 'error CS[0-9]+' "$work/$name.log" | sed 's/^/    /' >&2 || true
+        grep -qE 'error CS[0-9]+' "$work/$name.log" && echo "$name" >> "$work/broken"
     done < "$work/failed"
-    exit 3
+
+    if [ -s "$work/broken" ]; then
+        echo >&2
+        echo "Failed to compile (stale Library/Bee? recompile in Unity):" >&2
+        while read -r name; do
+            echo "  $name" >&2
+            grep -m 3 -E 'error CS[0-9]+' "$work/$name.log" | sed 's/^/    /' >&2 || true
+        done < "$work/broken"
+        exit 3
+    fi
 fi
 
 [ "$findings" -eq 0 ] || exit 1

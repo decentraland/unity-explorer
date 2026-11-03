@@ -24,7 +24,12 @@ namespace ECS.Unity.Transforms.Tests
             transformPool.Get().Returns(testTransform = new GameObject().transform);
 
             componentRegistry = Substitute.For<IComponentPoolsRegistry>();
-            componentRegistry.GetReferenceTypePool<Transform>().Returns(transformPool);
+            componentRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<Transform>?>())
+                             .Returns(x =>
+                              {
+                                  x[0] = transformPool;
+                                  return true;
+                              });
 
             sdkTransform = new SDKTransform();
             system = new InstantiateTransformSystem(world, componentRegistry);

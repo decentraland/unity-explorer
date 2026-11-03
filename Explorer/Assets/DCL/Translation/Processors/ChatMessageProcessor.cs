@@ -159,10 +159,8 @@ namespace DCL.Translation.Processors
 
             foreach (var lang in languages)
             {
-                if (languageCounts.ContainsKey(lang))
-                    languageCounts[lang]++;
-                else
-                    languageCounts[lang] = 1;
+                languageCounts.TryGetValue(lang, out int count);
+                languageCounts[lang] = count + 1;
             }
 
             // Find the language with the highest count.

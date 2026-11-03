@@ -23,17 +23,20 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private const string COMPONENT_NAME = "UITransform";
 
         private readonly UIDocument canvas;
-        private readonly IComponentPool<UITransformComponent> transformsPool;
+        private readonly IComponentPool<UITransformComponent>? transformsPool;
 
         public UITransformInstantiationSystem(World world, UIDocument canvas,
             IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out transformsPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(UITransformComponent)}");
         }
 
         protected override void Update(float t)
         {
+            if (transformsPool == null) return;
+
             InstantiateUITransformQuery(World);
         }
 
@@ -41,7 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel)
         {
-            UITransformComponent newTransform = transformsPool.Get();
+            UITransformComponent newTransform = transformsPool!.Get();
 
             newTransform.InitializeAsChild(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 

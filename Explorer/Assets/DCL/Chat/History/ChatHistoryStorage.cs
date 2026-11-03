@@ -214,12 +214,16 @@ namespace DCL.Chat.History
                 return false;
             }
 
+            if (!chatHistory.Channels.TryGetValue(channelId, out ChatChannel channel))
+            {
+                ReportHub.LogError(reportData, "Initialization canceled. The channel is not in the chat history: " + channelId.Id);
+                return false;
+            }
+
             messagesBuffer.Clear();
-            await ReadMessagesFromFileAsync(channelId, messagesBuffer);
+            await ReadMessagesFromFileAsync(channelId, channel.ChannelType, messagesBuffer);
 
             bool loadedAny = messagesBuffer.Count > 0;
-
-            ChatChannel channel = chatHistory.Channels[channelId];
 
             if (loadedAny)
                 channel.FillChannel(messagesBuffer);
@@ -289,7 +293,7 @@ namespace DCL.Chat.History
             {
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChannelFile> channelFilePair in channelFiles)
                 {
-                    ChannelFile channelFile = channelFiles[channelFilePair.Key];
+                    ChannelFile channelFile = channelFilePair.Value;
 
                     if (channelFile.Content != null)
                         CloseChannelFile(channelFilePair.Key);
@@ -490,7 +494,7 @@ namespace DCL.Chat.History
 
                     // Snapshot any messages already added in this session
                     // (includes `addedMessage` and possibly a few more if multiple arrived fast)
-                    var channel = chatHistory.Channels[channelId];
+                    var channel = destinationChannel;
                     var sessionTail = new List<ChatMessage>(channel.Messages);
 
                     // Hydrate history from disk. If the file had content, FillChannel(...) will REPLACE
@@ -681,10 +685,16 @@ namespace DCL.Chat.History
         {
             ReportHub.Log(reportData, $"Appending message to file. Message: " + messageToAppend.Message);
 
+            if (!chatHistory.Channels.TryGetValue(channelId, out ChatChannel channel))
+            {
+                ReportHub.Log(reportData, "Message not appended, the channel was removed: " + channelId.Id);
+                return;
+            }
+
             ChannelFile channelFile = OpenChannelFileForWriting(channelId);
             channelFile.LastMessageTime = UnityEngine.Time.realtimeSinceStartup;
 
-            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+            if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 chatSerializer.AppendPrivateConversationMessage(messageToAppend, channelFile.Content);
 
             channelFile.IsInitialized = true; // It could be the first message to be written to the file, so it makes sure the channel is marked as initialized
@@ -692,7 +702,7 @@ namespace DCL.Chat.History
             ReportHub.Log(reportData, $"Message appended to file. Message: " + messageToAppend.Message);
         }
 
-        private async UniTask ReadMessagesFromFileAsync(ChatChannel.ChannelId channelId, List<ChatMessage> messages)
+        private async UniTask ReadMessagesFromFileAsync(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, List<ChatMessage> messages)
         {
             ReportHub.Log(reportData, $"Reading messages from file for " + channelId.Id);
 
@@ -701,7 +711,7 @@ namespace DCL.Chat.History
 
             if (fileSize > 0)
             {
-                if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+                if (channelType == ChatChannel.ChatChannelType.USER)
                     await chatSerializer.ReadAllPrivateConversationMessagesAsync(channelFile.Content, localUserWalletAddress, channelId.Id, messages, cts.Token);
 
                 channelFile.IsInitialized = true;
@@ -849,7 +859,11 @@ namespace DCL.Chat.History
 
                     lock (channelsLocker)
                     {
-                        channelFiles.Add(channelId, channelFile);
+                        // The lookup above is not locked, so another thread may have registered the channel since
+                        if (channelFiles.TryGetValue(channelId, out ChannelFile registeredFile))
+                            channelFile = registeredFile;
+                        else
+                            channelFiles[channelId] = channelFile;
                     }
                 }
 

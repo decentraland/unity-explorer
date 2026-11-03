@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -58,7 +59,8 @@ namespace DCL.MapRenderer.ComponentsFactory
         private async UniTask InitializeControllerAsync(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)
         {
             await controller.InitializeAsync(cancellationToken);
-            writer.Add(layer, controller);
+            if (!writer.TryAdd(layer, controller))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {layer} is already installed");
         }
 
         private static CategoryMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, CategoryMarkerObject prefab, ICoordsUtils coordsUtils)

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
@@ -36,8 +37,13 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
 
         public void Release(AbstractFrame frame)
         {
-            Pool(types[frame]).Release(frame);
-            types.Remove(frame);
+            if (!types.Remove(frame, out NftFrameType frameType))
+            {
+                ReportHub.LogError(ReportCategory.ECS, "NFT frame was not created by this pool or was already released");
+                return;
+            }
+
+            Pool(frameType).Release(frame);
         }
 
         private IObjectPool<AbstractFrame> Pool(NftFrameType frameType)

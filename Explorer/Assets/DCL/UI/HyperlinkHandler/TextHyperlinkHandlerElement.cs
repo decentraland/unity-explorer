@@ -89,10 +89,10 @@ namespace DCL.UI.HyperlinkHandler
         
         private void AddLinkHandlers()
         {
-            linkHandlers.Add(HyperlinkConstants.URL, HandleURLLink);
-            linkHandlers.Add(HyperlinkConstants.WORLD, HandleWorldLink);
-            linkHandlers.Add(HyperlinkConstants.SCENE, HandleSceneLink);
-            linkHandlers.Add(HyperlinkConstants.PROFILE, HandleUserLink);
+            linkHandlers[HyperlinkConstants.URL] = HandleURLLink;
+            linkHandlers[HyperlinkConstants.WORLD] = HandleWorldLink;
+            linkHandlers[HyperlinkConstants.SCENE] = HandleSceneLink;
+            linkHandlers[HyperlinkConstants.PROFILE] = HandleUserLink;
         }
 
         private void ProcessLink(string linkType, string linkValue)

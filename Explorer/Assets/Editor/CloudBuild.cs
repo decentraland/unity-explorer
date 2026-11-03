@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -32,8 +31,12 @@ namespace Editor
             Debug.Log($"~~ {nameof(CloudBuild)} PreExport ~~");
 
             // Get all environment variables
-            var environmentVariables = Environment.GetEnvironmentVariables();
-            Parameters = environmentVariables.Cast<DictionaryEntry>().ToDictionary(x => x.Key.ToString(), x => x.Value);
+            IDictionary environmentVariables = Environment.GetEnvironmentVariables();
+            Parameters = new Dictionary<string, object>(environmentVariables.Count);
+
+            // The keys come from a Hashtable, so they are already unique
+            foreach (DictionaryEntry entry in environmentVariables)
+                Parameters.TryAdd(entry.Key.ToString(), entry.Value);
 
             // E.g. access like:
             // Debug.Log(Parameters["TEST_VALUE"] as string);
@@ -44,10 +47,15 @@ namespace Editor
             EditorApplication.ExecuteMenuItem("File/Save Project");
 
             // Set version for this build
-            var buildVersion = Parameters["BUILD_VERSION"] as string;
-            PlayerSettings.bundleVersion = buildVersion;
-            PlayerSettings.macOS.buildNumber = buildVersion;
-            Debug.Log($"Build version set to: {buildVersion}");
+            if (Parameters.TryGetValue("BUILD_VERSION", out object buildVersionValue))
+            {
+                var buildVersion = buildVersionValue as string;
+                PlayerSettings.bundleVersion = buildVersion;
+                PlayerSettings.macOS.buildNumber = buildVersion;
+                Debug.Log($"Build version set to: {buildVersion}");
+            }
+            else
+                Debug.LogError($"BUILD_VERSION is not set, keeping the project version {PlayerSettings.bundleVersion}");
 
             if(Parameters.TryGetValue(SEGMENT_WRITE_KEY, out object segmentKey))
             {

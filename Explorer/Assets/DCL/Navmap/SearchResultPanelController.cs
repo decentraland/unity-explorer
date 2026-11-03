@@ -71,7 +71,7 @@ namespace DCL.Navmap
                 var key = i.ToString();
                 if (usedPoolElements.ContainsKey(key)) continue;
                 PlaceElementView placeElementView = resultsPool.Get();
-                usedPoolElements.Add(key, placeElementView);
+                usedPoolElements[key] = placeElementView;
             }
             view.scrollView.verticalNormalizedPosition = 1;
         }
@@ -93,7 +93,7 @@ namespace DCL.Navmap
                 if (usedPoolElements.ContainsKey(key)) continue;
 
                 PlaceElementView placeElementView = resultsPool.Get();
-                usedPoolElements.Add(key, placeElementView);
+                usedPoolElements[key] = placeElementView;
                 placeElementView.transform.SetAsLastSibling();
                 // Worlds have no Genesis coordinates, so they must not drive map hover/selection.
                 placeElementView.IsHoverEnabled = !isWorld;

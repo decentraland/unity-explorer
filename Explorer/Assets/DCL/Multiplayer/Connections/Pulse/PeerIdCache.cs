@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Web3;
 using System;
 using System.Collections.Generic;
@@ -100,7 +101,13 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (entry.realm != realm)
                     return LookupResult.RealmMismatch;
 
-                if (walletsByPeerId[entry.wallet] != peerId)
+                if (!walletsByPeerId.TryGetValue(entry.wallet, out uint selectedPeerId))
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pulse peer {peerId} is registered but its wallet has no selected peer");
+                    return LookupResult.UnknownPeer;
+                }
+
+                if (selectedPeerId != peerId)
                     return LookupResult.SupersededPeer;
 
                 wallet = entry.wallet;
@@ -165,21 +172,21 @@ namespace DCL.Multiplayer.Connections.Pulse
                 return false;
 
             wallet = entry.wallet;
-            bool wasSelected = walletsByPeerId[wallet] == peerId;
+            bool hasSelection = walletsByPeerId.TryGetValue(wallet, out uint selectedPeerId);
 
-            if (!wasSelected && (realm == null || peersByWallet[walletsByPeerId[wallet]].realm == realm))
+            if (!hasSelection)
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pulse peer {peerId} was removed but its wallet had no selected peer");
+
+            bool wasSelected = !hasSelection || selectedPeerId == peerId;
+
+            if (!wasSelected && (realm == null || IsPeerInRealm(selectedPeerId, realm)))
                 return false;
 
-            bool hasEligiblePeer = TrySelectPeer(wallet, realm, out uint survivor);
-
-            if (hasEligiblePeer)
+            // Past this point the selection is either the removed peer or a peer outside the realm, so a survivor replaces it
+            if (TrySelectPeer(wallet, realm, out uint survivor))
             {
-                if (wasSelected || (realm != null && peersByWallet[walletsByPeerId[wallet]].realm != realm))
-                {
-                    walletsByPeerId[wallet] = survivor;
-                    promotedPeerId = survivor;
-                }
-
+                walletsByPeerId[wallet] = survivor;
+                promotedPeerId = survivor;
                 return false;
             }
 
@@ -189,6 +196,15 @@ namespace DCL.Multiplayer.Connections.Pulse
                 walletsByPeerId.Remove(wallet);
 
             return true;
+        }
+
+        private bool IsPeerInRealm(uint peerId, string realm)
+        {
+            if (peersByWallet.TryGetValue(peerId, out var entry))
+                return entry.realm == realm;
+
+            ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pulse wallet selection points to the unregistered peer {peerId}");
+            return false;
         }
 
         private bool TrySelectPeer(Web3Address wallet, string? realm, out uint peerId)

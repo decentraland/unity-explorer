@@ -28,6 +28,8 @@ namespace DCL.Chat
         private readonly Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
 
         private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
+        private ChatChannel.ChannelId selectedChannelId;
+        private bool hasSelectedChannel;
 
         private const float REACTIONS_BUTTON_BOTTOM_PADDING = 48f;
         public void SetBottomSpaceForReactionsButton(bool reserveSpace)
@@ -45,10 +47,12 @@ namespace DCL.Chat
         /// <param name="invoke">Whether to raise the ConversationSelected event</param>
         public void SelectConversation(ChatChannel.ChannelId channelId, bool invoke = true)
         {
-            foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
-                itemPair.Value.SetSelectionStatus(false);
+            // The channel can be selected before its item is added; AddConversation applies the selection then
+            selectedChannelId = channelId;
+            hasSelectedChannel = true;
 
-            items[channelId].SetSelectionStatus(true);
+            foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
+                itemPair.Value.SetSelectionStatus(itemPair.Key.Equals(channelId));
 
             if (invoke)
                 ConversationSelected?.Invoke(channelId);
@@ -86,6 +90,9 @@ namespace DCL.Chat
         public void AddConversation(BaseChannelViewModel viewModel)
         {
             chatConversationsToolbarViewItemPool ??= new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
+
+            // Re-adding a conversation replaces its item so it is rebound with the latest view model
+            TryRemoveConversation(viewModel.Id);
 
             ChatConversationsToolbarViewItem newItem = viewModel.ChannelType switch
                                                        {
@@ -135,7 +142,11 @@ namespace DCL.Chat
                     break;
             }
 
-            items.Add(viewModel.Id, newItem);
+            items[viewModel.Id] = newItem;
+
+            if (hasSelectedChannel && selectedChannelId.Equals(viewModel.Id))
+                newItem.SetSelectionStatus(true);
+
             UpdateScrollButtonsVisibility();
         }
 
@@ -251,8 +262,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(ChatChannel.ChannelId destinationChannel, OnlineStatus connectionStatus)
         {
-            if (items[destinationChannel] != null)
-                items[destinationChannel].SetConnectionStatus(connectionStatus);
+            if (items.TryGetValue(destinationChannel, out ChatConversationsToolbarViewItem? item))
+                item.SetConnectionStatus(connectionStatus);
         }
 
         /// <summary>

@@ -11,6 +11,8 @@ namespace DCL.Analyzers
     ///     Indexer writes (<c>map[key] = value</c>) upsert and never throw, so they are allowed.
     ///     Covers every implementation of <c>IDictionary&lt;,&gt;</c> / <c>IReadOnlyDictionary&lt;,&gt;</c> and the Unity.Collections hash maps.
     ///     Only sources under <c>Assets/</c> are reported: Unity passes the analyzer to package assemblies too, and that code is not ours to change.
+    ///     Test assemblies (<c>*.Tests</c>, <c>*.TestSuite</c>) are skipped: a missing or duplicate key there already fails the test.
+    ///     They are matched by name because Unity's Editor compile references NUnit from almost every assembly.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class ThrowingDictionaryApiAnalyzer : DiagnosticAnalyzer
@@ -29,7 +31,7 @@ namespace DCL.Analyzers
             "Dictionary insertion that throws on a duplicate key",
             "'{0}' throws when the key is already present; use TryAdd and handle the duplicate, or assign through the indexer if the latest value should win",
             CATEGORY,
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             helpLinkUri: HELP_LINK);
 
@@ -38,7 +40,7 @@ namespace DCL.Analyzers
             "Dictionary indexer read that throws on a missing key",
             "Reading '{0}' through the indexer throws when the key is missing; use TryGetValue and handle the miss",
             CATEGORY,
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             helpLinkUri: HELP_LINK);
 
@@ -51,6 +53,9 @@ namespace DCL.Analyzers
 
             context.RegisterCompilationStartAction(compilationContext =>
             {
+                if (IsTestAssembly(compilationContext.Compilation))
+                    return;
+
                 var symbols = new WellKnownSymbols(compilationContext.Compilation);
 
                 compilationContext.RegisterOperationAction(c => AnalyzeInvocation(c, symbols), OperationKind.Invocation);
@@ -110,6 +115,12 @@ namespace DCL.Analyzers
                 return;
 
             context.ReportDiagnostic(Diagnostic.Create(THROWING_READ, reference.Syntax.GetLocation(), $"{property.ContainingType.Name}[key]"));
+        }
+
+        private static bool IsTestAssembly(Compilation compilation)
+        {
+            string? name = compilation.AssemblyName;
+            return name != null && (name.EndsWith(".Tests", StringComparison.Ordinal) || name.EndsWith(".TestSuite", StringComparison.Ordinal));
         }
 
         /// <summary>

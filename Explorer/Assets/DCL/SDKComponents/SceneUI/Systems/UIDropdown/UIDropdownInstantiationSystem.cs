@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private const float HOVER_BORDER_DARKEN_FACTOR = 0.3f;
         private const float HOVER_BACKGROUND_DARKEN_FACTOR = 0.15f;
 
-        private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
+        private readonly IComponentPool<UIDropdownComponent>? dropdownsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly StyleFontDefinition[] styleFontDefinitions;
         private readonly ISceneData sceneData;
@@ -42,7 +42,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out dropdownsPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(UIDropdownComponent)}");
+
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.styleFontDefinitions = styleFontDefinitions;
             this.sceneData = sceneData;
@@ -51,6 +53,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         protected override void Update(float t)
         {
+            if (dropdownsPool == null) return;
+
             UpdateUIDropdownTransformDefaultsQuery(World);
 
             InstantiateUIDropdownQuery(World);
@@ -65,7 +69,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         [None(typeof(UIDropdownComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIDropdown(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
-            var newDropdown = dropdownsPool.Get();
+            var newDropdown = dropdownsPool!.Get();
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity));
             uiTransformComponent.ContentContainer.Add(newDropdown.DropdownField);
 

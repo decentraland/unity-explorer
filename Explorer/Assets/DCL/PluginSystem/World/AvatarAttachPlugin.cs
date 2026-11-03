@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
@@ -43,7 +44,10 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<Transform>(), persistentEntities.SceneRoot);
+            if (componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
+                InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, transformPool, persistentEntities.SceneRoot);
+            else
+                ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"No component pool registered for {nameof(Transform)}");
 
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
 

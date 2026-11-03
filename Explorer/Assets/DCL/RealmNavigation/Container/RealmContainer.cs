@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
@@ -54,6 +56,12 @@ namespace DCL.RealmNavigation
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
+            if (!staticContainer.ComponentsContainer.ComponentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"No component pool registered for {nameof(PartitionComponent)}, using a standalone pool");
+                partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(component => component.Clear());
+            }
+
             var realmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,
                 teleportController,
@@ -63,8 +71,7 @@ namespace DCL.RealmNavigation
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.ComponentsContainer.ComponentPoolsRegistry
-                               .GetReferenceTypePool<PartitionComponent>(),
+                partitionComponentPool,
                 realmNavigatorDebugView,
                 localSceneDevelopment,
                 appArgs,

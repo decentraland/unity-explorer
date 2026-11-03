@@ -39,9 +39,6 @@ namespace DCL.Web3.Chains
         public bool TryGet(AuthLinkType type, out AuthLink link) =>
             chain.TryGetValue(type, out link);
 
-        public AuthLink Get(AuthLinkType type) =>
-            chain[type];
-
         public void Set(AuthLink link) =>
             chain[link.type] = link;
 

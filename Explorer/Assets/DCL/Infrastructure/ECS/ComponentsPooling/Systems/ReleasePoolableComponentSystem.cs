@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -56,7 +57,7 @@ namespace ECS.ComponentsPooling.Systems
                 // If deletion was delayed so should be the release
                 if (deleteEntityIntention.DeferDeletion) return;
 
-                poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
+                ReleaseToPool(poolsRegistry, ref provider);
                 provider.Dispose();
             }
         }
@@ -72,9 +73,17 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
-                poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
+                ReleaseToPool(poolsRegistry, ref provider);
                 provider.Dispose();
             }
+        }
+
+        private static void ReleaseToPool(IComponentPoolsRegistry poolsRegistry, ref TProvider provider)
+        {
+            if (poolsRegistry.TryGetPool(provider.PoolableComponentType, out IComponentPool pool))
+                pool.Release(provider.PoolableComponent);
+            else
+                ReportHub.LogError(ReportCategory.ECS, $"No component pool registered for {provider.PoolableComponentType}");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -14,7 +14,11 @@ namespace Utility
 
         public static void SyncAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {
-            lock (dictionary) { dictionary.Add(key, value); }
+            bool added;
+            lock (dictionary) { added = dictionary.TryAdd(key, value); }
+
+            if (!added)
+                ReportHub.LogError(ReportCategory.UNSPECIFIED, $"Key {key} is already present in the dictionary");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,17 +30,6 @@ namespace Utility
         public static bool SyncTryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, out TValue value)
         {
             lock (dictionary) { return dictionary.TryGetValue(key, out value); }
-        }
-
-        public static void AlignWithDictionary<TSource, TKey, TValue>(this IReadOnlyList<TSource> source, IDictionary<TKey, TValue> dictionary, Func<TSource, TKey> keySelector, Func<TSource, TValue> elementSelector)
-        {
-            dictionary.Clear();
-
-            for (var i = 0; i < source.Count; i++)
-            {
-                TSource element = source[i];
-                dictionary.Add(keySelector(element), elementSelector(element));
-            }
         }
     }
 }

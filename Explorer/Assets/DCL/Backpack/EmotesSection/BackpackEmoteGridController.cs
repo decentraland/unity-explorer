@@ -274,7 +274,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 loadingResults[i] = backpackItemView;
-                usedPoolItems.Add(i.ToString(), backpackItemView);
+                usedPoolItems[i.ToString()] = backpackItemView;
             }
         }
 
@@ -295,8 +295,12 @@ namespace DCL.Backpack.EmotesSection
             for (int i = emotes.Count - 1; i >= 0; i--)
             {
                 BackpackEmoteGridItemView backpackItemView = loadingResults[i]!;
+
+                // A page can list the same emote twice: keep the first one and leave this slot in its loading state
+                if (!usedPoolItems.TryAdd(emotes[i].GetUrn(), backpackItemView))
+                    continue;
+
                 usedPoolItems.Remove(i);
-                usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
 
                 if (emoteStorage.TryGetLatestTransferredAt(emotes[i].GetUrn(), out DateTime latestTransferredAt))
                 {

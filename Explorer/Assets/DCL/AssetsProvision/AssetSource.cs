@@ -52,6 +52,6 @@ namespace AssetManagement
         };
 
         public static string ToStringNonAlloc(this AssetSource source) =>
-            CURRENT_SOURCE_STRINGS[source]!;
+            CURRENT_SOURCE_STRINGS.TryGetValue(source, out string? value) ? value : source.ToString();
     }
 }

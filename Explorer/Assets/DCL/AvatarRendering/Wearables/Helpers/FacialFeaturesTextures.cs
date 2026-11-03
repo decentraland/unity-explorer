@@ -13,18 +13,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             texturesByCategory = value;
         }
 
-        public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
-
         public void CopyInto(ref FacialFeaturesTextures other)
         {
             var texturesByCategory = other.texturesByCategory;
 
             foreach ((string? category, Dictionary<int, Texture>? existingTextures) in Value)
             {
-                if (!texturesByCategory.ContainsKey(category))
-                    texturesByCategory[category] = new Dictionary<int, Texture>();
+                if (!texturesByCategory.TryGetValue(category, out Dictionary<int, Texture>? newTextures))
+                {
+                    newTextures = new Dictionary<int, Texture>();
+                    texturesByCategory[category] = newTextures;
+                }
 
-                var newTextures = texturesByCategory[category];
                 newTextures.Clear();
 
                 foreach ((int textureId, Texture? texture) in existingTextures)

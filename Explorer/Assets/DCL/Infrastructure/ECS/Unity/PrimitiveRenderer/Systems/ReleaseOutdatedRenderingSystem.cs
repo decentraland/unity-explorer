@@ -26,17 +26,21 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     public partial class ReleaseOutdatedRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
-        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
+        private readonly IComponentPool<MeshRenderer>? rendererPoolRegistry;
 
 
         internal ReleaseOutdatedRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.poolsRegistry = poolsRegistry;
-            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+
+            if (!poolsRegistry.TryGetReferenceTypePool(out rendererPoolRegistry))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(MeshRenderer)}");
         }
 
         protected override void Update(float t)
         {
+            if (rendererPoolRegistry == null) return;
+
             ValidateRenderingQuery(World);
             HandleComponentRemovalQuery(World);
             World.Remove<PrimitiveMeshRendererComponent>(in HandleComponentRemoval_QueryDescription);
@@ -47,7 +51,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
         {
             Release(ref rendererComponent);
-            rendererPoolRegistry.Release(rendererComponent.MeshRenderer);
+            rendererPoolRegistry!.Release(rendererComponent.MeshRenderer);
         }
 
         [Query]

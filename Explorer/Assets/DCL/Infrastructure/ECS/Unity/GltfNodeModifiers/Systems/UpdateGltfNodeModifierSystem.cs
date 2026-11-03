@@ -73,7 +73,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 nodeModifiers.GltfNodeEntities.Clear();
                 CreateGlobalGltfNode(containerEntity, asset);
 
-                nodeModifiers.GltfNodeEntities.Add(containerEntity, string.Empty);
+                nodeModifiers.GltfNodeEntities[containerEntity] = string.Empty;
             }
 
             (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);

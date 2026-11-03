@@ -61,7 +61,12 @@ namespace DCL.RealmNavigation
             ReportHub.LogProductionInfo($"Current loading stage: {stage}");
             CurrentLoadingStage.Set(stage.ToString());
             CurrentStageMut.Value = stage;
-            return PROGRESS[stage];
+
+            if (PROGRESS.TryGetValue(stage, out float progress))
+                return progress;
+
+            ReportHub.LogError(ReportCategory.UNSPECIFIED, $"No loading progress defined for stage {stage}");
+            return 0f;
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)

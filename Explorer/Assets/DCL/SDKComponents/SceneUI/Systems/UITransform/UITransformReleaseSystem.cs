@@ -19,15 +19,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<UITransformComponent> componentPool;
+        private readonly IComponentPool<UITransformComponent>? componentPool;
 
         private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            componentPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out componentPool))
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(UITransformComponent)}");
         }
 
         protected override void Update(float t)
         {
+            if (componentPool == null) return;
+
             HandleUITransformRemovalQuery(World);
             World.Remove<UITransformComponent>(in HandleUITransformRemoval_QueryDescription);
         }
@@ -39,7 +42,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private void RemoveVisualElement(ref UITransformComponent uiTransformComponent)
         {
-            componentPool.Release(uiTransformComponent);
+            componentPool!.Release(uiTransformComponent);
         }
     }
 }
