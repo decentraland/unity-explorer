@@ -262,7 +262,7 @@ namespace DCL.Diagnostics.Sentry
                 @event.SetTag(CATEGORY_TAG, ReportCategory.UNSPECIFIED);
 
             if (message != null)
-                AddUuavHelperFingerprint(@event, message);
+                TryAddUuavHelperFingerprint(@event, message);
 
             return @event;
         }
@@ -271,7 +271,7 @@ namespace DCL.Diagnostics.Sentry
         ///     Groups UUAV helper start failures by how they failed: the OS error of a failed spawn,
         ///     or the handshake error plus the helper's exit status.
         /// </summary>
-        private static void AddUuavHelperFingerprint(SentryEvent @event, string message)
+        private static void TryAddUuavHelperFingerprint(SentryEvent @event, string message)
         {
             if (!message.StartsWith(UUAV_HELPER_START_FAILURE_PREFIX, StringComparison.Ordinal))
                 return;
