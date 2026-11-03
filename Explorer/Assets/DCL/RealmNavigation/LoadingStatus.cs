@@ -65,7 +65,7 @@ namespace DCL.RealmNavigation
             if (PROGRESS.TryGetValue(stage, out float progress))
                 return progress;
 
-            ReportHub.LogError(ReportCategory.UNSPECIFIED, $"No loading progress defined for stage {stage}");
+            ReportHub.LogError(ReportCategory.SCENE_LOADING, $"No loading progress defined for stage {stage}");
             return 0f;
         }
 

@@ -848,22 +848,17 @@ namespace DCL.Chat.History
             {
                 CreateUserFolderIfDoesNotExist();
 
-                if (!channelFiles.TryGetValue(channelId, out channelFile))
+                lock (channelsLocker)
                 {
-                    // Registers the channel if it does not exist
-                    channelFile = new ChannelFile()
+                    if (!channelFiles.TryGetValue(channelId, out channelFile))
                     {
-                        LastMessageTime = float.MaxValue,
-                        Path = userFilesFolder + chatEncryptor.StringToFileName(channelId.Id)
-                    };
+                        channelFile = new ChannelFile()
+                        {
+                            LastMessageTime = float.MaxValue,
+                            Path = userFilesFolder + chatEncryptor.StringToFileName(channelId.Id)
+                        };
 
-                    lock (channelsLocker)
-                    {
-                        // The lookup above is not locked, so another thread may have registered the channel since
-                        if (channelFiles.TryGetValue(channelId, out ChannelFile registeredFile))
-                            channelFile = registeredFile;
-                        else
-                            channelFiles[channelId] = channelFile;
+                        channelFiles[channelId] = channelFile;
                     }
                 }
 

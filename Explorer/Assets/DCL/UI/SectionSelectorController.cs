@@ -53,13 +53,13 @@ namespace DCL.UI
             if (!isOn || EnumUtils.Equals(section, previousSection))
                 return new UniTaskVoid();
 
-            SetAnimationState(true, selectorToggle);
-
             if (!sections.TryGetValue(previousSection, out ISection? closingSection) || !sections.TryGetValue(section, out ISection? openingSection))
             {
                 ReportHub.LogError(ReportCategory.UI, $"Section selector cannot switch from {previousSection} to {section}, one of them is not registered");
                 return new UniTaskVoid();
             }
+
+            SetAnimationState(true, selectorToggle);
 
             if (animate)
                 AnimatePanelsAsync(closingSection, openingSection, section, ct);

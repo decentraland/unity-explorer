@@ -67,7 +67,10 @@ namespace DCL.Landscape.Jobs
             if (emptyParcelNeighborData.TryGetValue(parcel, out EmptyParcelNeighborData data))
             {
                 if (!emptyParcelHeight.TryGetValue(parcel, out int parcelHeight))
+                {
+                    heights[index] = rMinHeight;
                     return;
+                }
 
                 float noise = terrainNoise[index];
                 float currentHeight = parcelHeight;

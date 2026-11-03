@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using System;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 {
@@ -21,18 +22,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     [ThrottlingEnabled]
     public partial class UIDropdownReleaseSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IComponentPool<UIDropdownComponent>? componentPool;
+        private readonly IComponentPool<UIDropdownComponent> componentPool;
 
         internal UIDropdownReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            if (!poolsRegistry.TryGetReferenceTypePool(out componentPool))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(UIDropdownComponent)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIDropdownComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UIDropdownComponent)}");
+
+            componentPool = pool;
         }
 
         protected override void Update(float t)
         {
-            if (componentPool == null) return;
-
             HandleEntityDestructionQuery(World);
             HandleUIDropdownRemovalQuery(World);
         }
@@ -57,7 +58,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private void RemoveDropdownField(Entity entity, UIDropdownComponent uiDropdownComponent)
         {
             ReleaseFont(uiDropdownComponent);
-            componentPool!.Release(uiDropdownComponent);
+            componentPool.Release(uiDropdownComponent);
 
             //Removing here the component to avoid double release to the pool in ReleaseReferenceComponentsSystem
             World.Remove<UIDropdownComponent>(entity);

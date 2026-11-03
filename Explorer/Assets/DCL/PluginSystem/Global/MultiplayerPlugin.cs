@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Connections.FfiClients;
@@ -179,10 +178,10 @@ namespace DCL.PluginSystem.Global
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder);
 
-            if (poolsRegistry.TryGetReferenceTypePool(out IComponentPool<SDKTransform>? sdkTransformPool))
-                PlayerTransformPropagationSystem.InjectToWorld(ref builder, sdkTransformPool);
-            else
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"No component pool registered for {nameof(SDKTransform)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<SDKTransform>? sdkTransformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(SDKTransform)}");
+
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder, sdkTransformPool);
 #endif
         }
 

@@ -14,6 +14,7 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -32,7 +33,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             { PBMeshRenderer.MeshOneofCase.Cylinder, new MeshSetupCylinder() },
             { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() },
         };
-        private readonly IComponentPool<MeshRenderer>? rendererPoolRegistry;
+        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPoolsRegistry poolRegistry;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly ISceneData sceneData;
@@ -49,14 +50,14 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             this.changedMeshes = changedMeshes;
             poolRegistry = poolsRegistry;
 
-            if (!poolsRegistry.TryGetReferenceTypePool(out rendererPoolRegistry))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(MeshRenderer)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<MeshRenderer>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(MeshRenderer)}");
+
+            rendererPoolRegistry = pool;
         }
 
         protected override void Update(float t)
         {
-            if (rendererPoolRegistry == null) return;
-
             InstantiateNonExistingRendererQuery(World);
             TrySetupExistingRendererQuery(World);
         }
@@ -73,7 +74,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
-            MeshRenderer meshRendererGo = rendererPoolRegistry!.Get();
+            MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
 
             if (!Instantiate(entity, setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform))
             {

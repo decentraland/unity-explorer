@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
@@ -56,39 +55,37 @@ namespace DCL.PluginSystem.World
             in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<RaycastHit>? raycastHitPool))
-                ReportHub.LogError(ReportCategory.INPUT, $"No component pool registered for {nameof(RaycastHit)}");
+                throw new InvalidOperationException($"No component pool registered for {nameof(RaycastHit)}");
 
             if (!sharedDependencies.ComponentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PBRaycastResult>? raycastResultPool))
-                ReportHub.LogError(ReportCategory.INPUT, $"No component pool registered for {nameof(PBRaycastResult)}");
+                throw new InvalidOperationException($"No component pool registered for {nameof(PBRaycastResult)}");
 
             InitializeRaycastSystem.InjectToWorld(ref builder);
 
-            if (raycastHitPool != null && raycastResultPool != null)
-                sceneIsCurrentListeners.Add(
-                    ExecuteRaycastSystem.InjectToWorld(
-                        ref builder,
-                        sceneDeps.SceneData,
-                        raycastBudget,
-                        settings.RaycastBucketThreshold,
-                        raycastHitPool,
-                        raycastResultPool,
-                        sceneDeps.EntityCollidersSceneCache,
-                        systemsDependencies.EntityCollidersGlobalCache,
-                        sceneDeps.EntitiesMap,
-                        sceneDeps.EcsToCRDTWriter,
-                        sceneDeps.SceneStateProvider
-                    )
-                );
-
-            if (raycastHitPool != null)
-                WritePointerEventResultsSystem.InjectToWorld(
+            sceneIsCurrentListeners.Add(
+                ExecuteRaycastSystem.InjectToWorld(
                     ref builder,
                     sceneDeps.SceneData,
+                    raycastBudget,
+                    settings.RaycastBucketThreshold,
+                    raycastHitPool,
+                    raycastResultPool,
+                    sceneDeps.EntityCollidersSceneCache,
+                    systemsDependencies.EntityCollidersGlobalCache,
+                    sceneDeps.EntitiesMap,
                     sceneDeps.EcsToCRDTWriter,
-                    sceneDeps.SceneStateProvider,
-                    globalInputEvents,
-                    raycastHitPool
-                );
+                    sceneDeps.SceneStateProvider
+                )
+            );
+
+            WritePointerEventResultsSystem.InjectToWorld(
+                ref builder,
+                sceneDeps.SceneData,
+                sceneDeps.EcsToCRDTWriter,
+                sceneDeps.SceneStateProvider,
+                globalInputEvents,
+                raycastHitPool
+            );
 
             sceneIsCurrentListeners.Add(InteractionHighlightSystem.InjectToWorld(ref builder, interactionData,
                 sceneDeps.SceneStateProvider));

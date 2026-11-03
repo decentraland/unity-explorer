@@ -212,6 +212,7 @@ namespace DCL.Events
         public void ClearAllEvents()
         {
             currentEventsIds.Clear();
+            currentOccupancies.Clear();
 
             foreach (var eventList in eventsLists)
                 eventList.eventsLoopList.SetListItemCount(0, false);
@@ -219,6 +220,8 @@ namespace DCL.Events
 
         public void ClearEventsForDay(int eventsListIndex)
         {
+            currentOccupancies.Remove(eventsListIndex);
+
             if (!currentEventsIds.Remove(eventsListIndex))
                 return;
 

@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
@@ -22,15 +23,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     {
         private const string COMPONENT_NAME = "UIText";
 
-        private readonly IComponentPool<Label>? labelsPool;
+        private readonly IComponentPool<Label> labelsPool;
         private readonly StyleFontDefinition[] styleFontDefinitions;
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent scenePartition;
 
         public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            if (!poolsRegistry.TryGetReferenceTypePool(out labelsPool))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(Label)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<Label>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Label)}");
+
+            labelsPool = pool;
 
             this.styleFontDefinitions = styleFontDefinitions;
             this.sceneData = sceneData;
@@ -39,8 +42,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         protected override void Update(float t)
         {
-            if (labelsPool == null) return;
-
             InstantiateUITextQuery(World);
             UpdateUITextQuery(World);
             ApplyLoadedFontQuery(World);
@@ -51,7 +52,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [None(typeof(UITextComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var label = labelsPool!.Get();
+            var label = labelsPool.Get();
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
             UiElementUtils.SetElementDefaultStyle(label.style);

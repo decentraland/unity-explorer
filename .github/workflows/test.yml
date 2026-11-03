@@ -798,7 +798,8 @@ jobs:
             echo "::warning::No Unity Editor log found, cannot check that the DCL analyzers ran."
             exit 0
           fi
-          if grep -E '(CS8034|AD0001).*DCL\.Analyzers' "$LOG" | sort -u; then
+          # No pipe here: a run step without an explicit shell has no pipefail, so a pipe would take the last command's status
+          if grep -E '(CS8034|AD0001).*DCL\.Analyzers' "$LOG"; then
             echo "::error::The DCL Roslyn analyzers did not run in this compile (see above), so DCL0001/DCL0002 were not enforced. Check that Explorer/Assets/DCL/Analyzers/DCL.Analyzers.dll was pulled from LFS."
             exit 1
           fi

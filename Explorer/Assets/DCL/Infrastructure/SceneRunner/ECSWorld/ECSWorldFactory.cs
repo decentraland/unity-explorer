@@ -4,7 +4,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
-using DCL.Diagnostics;
 using DCL.Interaction.Raycast;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
@@ -84,11 +83,10 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in systemsDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
-            if (componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
-                PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, partitionComponentPool, persistentEntities.SceneRoot);
-            else
-                ReportHub.LogError(ReportCategory.PRIORITIZATION, $"No component pool registered for {nameof(PartitionComponent)}");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(PartitionComponent)}");
 
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, partitionComponentPool, persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, isLoadingScreenOn);
             WriteExplorerUiEventsSystem.InjectToWorld(ref builder, sharedDependencies.ExplorerUiEvents, sharedDependencies.EcsToCRDTWriter);

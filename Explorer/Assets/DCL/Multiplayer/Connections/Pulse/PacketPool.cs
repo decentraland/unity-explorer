@@ -1,10 +1,10 @@
 ﻿using CrdtEcsBridge.Components;
-using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using Decentraland.Pulse;
 using Google.Protobuf;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -39,8 +39,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (POOLS.TryGetValue(kind, out IObjectPool<ClientMessage> pool))
                 return pool.Get();
 
-            ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pulse has no client message pool for {kind}, the message is not pooled");
-            return new ClientMessage();
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Pulse has no client message pool for this kind");
         }
 
         public void Release(ClientMessage message)
@@ -78,13 +77,16 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ServerMessage.MessageOneofCase.Teleported] = CreatePool<TeleportPerformed>((packet, mes) => packet.Teleported = mes),
         };
 
-        public ServerMessage Get(ServerMessage.MessageOneofCase kind)
+        public bool TryGet(ServerMessage.MessageOneofCase kind, [MaybeNullWhen(false)] out ServerMessage message)
         {
             if (POOLS.TryGetValue(kind, out IObjectPool<ServerMessage> pool))
-                return pool.Get();
+            {
+                message = pool.Get();
+                return true;
+            }
 
-            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse has no server message pool for {kind}, the message is not pooled");
-            return new ServerMessage();
+            message = null;
+            return false;
         }
 
         public void Release(ServerMessage message)

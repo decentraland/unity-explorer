@@ -95,7 +95,10 @@ namespace DCL.AvatarRendering.Loading.Assets
                 cachedAttachment.Instance.SetActive(false);
 
                 foreach (Renderer renderer in cachedAttachment.Renderers)
+                {
                     renderer.enabled = true;
+                    renderer.forceRenderingOff = false;
+                }
                 cachedAttachment.Instance.transform.SetParent(parentContainer);
             }
         }

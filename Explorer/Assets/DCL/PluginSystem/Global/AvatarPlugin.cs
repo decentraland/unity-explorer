@@ -7,7 +7,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
@@ -74,7 +73,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly NametagsData nametagsData;
 
-        private IComponentPool<Transform>? transformPoolRegistry;
+        private IComponentPool<Transform> transformPoolRegistry = null!;
         private Transform? poolParent;
 
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
@@ -156,8 +155,10 @@ namespace DCL.PluginSystem.Global
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
-            if (!componentPoolsRegistry.TryGetReferenceTypePool(out transformPoolRegistry))
-                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(Transform)}");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            transformPoolRegistry = transformPool;
 
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
@@ -203,8 +204,7 @@ namespace DCL.PluginSystem.Global
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
 
             //Debug scripts
-            if (transformPoolRegistry != null)
-                InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
 #if UNITY_EDITOR
             PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
 #endif

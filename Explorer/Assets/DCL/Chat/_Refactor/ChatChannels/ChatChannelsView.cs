@@ -28,8 +28,7 @@ namespace DCL.Chat
         private readonly Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
 
         private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
-        private ChatChannel.ChannelId selectedChannelId;
-        private bool hasSelectedChannel;
+        private ChatChannel.ChannelId? selectedChannelId;
 
         private const float REACTIONS_BUTTON_BOTTOM_PADDING = 48f;
         public void SetBottomSpaceForReactionsButton(bool reserveSpace)
@@ -49,7 +48,6 @@ namespace DCL.Chat
         {
             // The channel can be selected before its item is added; AddConversation applies the selection then
             selectedChannelId = channelId;
-            hasSelectedChannel = true;
 
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> itemPair in items)
                 itemPair.Value.SetSelectionStatus(itemPair.Key.Equals(channelId));
@@ -144,7 +142,7 @@ namespace DCL.Chat
 
             items[viewModel.Id] = newItem;
 
-            if (hasSelectedChannel && selectedChannelId.Equals(viewModel.Id))
+            if (selectedChannelId.HasValue && selectedChannelId.Value.Equals(viewModel.Id))
                 newItem.SetSelectionStatus(true);
 
             UpdateScrollButtonsVisibility();
@@ -195,6 +193,7 @@ namespace DCL.Chat
         public void Clear()
         {
             items.Clear();
+            selectedChannelId = null;
         }
 
         public void Show()
@@ -252,6 +251,7 @@ namespace DCL.Chat
                 chatConversationsToolbarViewItemPool?.Release(itemsValue);
 
             items.Clear();
+            selectedChannelId = null;
             UpdateScrollButtonsVisibility();
         }
 

@@ -126,11 +126,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 bool materialIsSet = TrySetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture, out AvatarCustomSkinningComponent.MaterialSetup materialSetup);
                 auxVertCounter += currentVertexCount;
 
+                // A renderer without a skinned material stays hidden even when its enabled flag is toggled
+                meshData.Renderer.forceRenderingOff = !materialIsSet;
+
                 if (!materialIsSet)
-                {
-                    meshData.Renderer.enabled = false;
                     continue;
-                }
 
                 list.Add(materialSetup);
 

@@ -34,12 +34,11 @@ namespace Editor
             IDictionary environmentVariables = Environment.GetEnvironmentVariables();
             Parameters = new Dictionary<string, object>(environmentVariables.Count);
 
-            // The keys come from a Hashtable, so they are already unique
             foreach (DictionaryEntry entry in environmentVariables)
-                Parameters.TryAdd(entry.Key.ToString(), entry.Value);
+                Parameters[entry.Key.ToString()] = entry.Value;
 
             // E.g. access like:
-            // Debug.Log(Parameters["TEST_VALUE"] as string);
+            // Parameters.TryGetValue("TEST_VALUE", out object testValue)
             //
 
             //Unity suggestion: 1793168
@@ -47,13 +46,14 @@ namespace Editor
             EditorApplication.ExecuteMenuItem("File/Save Project");
 
             // Set version for this build
-            if (Parameters.TryGetValue("BUILD_VERSION", out object buildVersionValue))
+            if (Parameters.TryGetValue("BUILD_VERSION", out object buildVersionValue) && buildVersionValue is string buildVersion)
             {
-                var buildVersion = buildVersionValue as string;
                 PlayerSettings.bundleVersion = buildVersion;
                 PlayerSettings.macOS.buildNumber = buildVersion;
                 Debug.Log($"Build version set to: {buildVersion}");
             }
+            else if (IsReleaseBuild())
+                throw new InvalidOperationException("BUILD_VERSION is not set, a release build cannot be versioned");
             else
                 Debug.LogError($"BUILD_VERSION is not set, keeping the project version {PlayerSettings.bundleVersion}");
 

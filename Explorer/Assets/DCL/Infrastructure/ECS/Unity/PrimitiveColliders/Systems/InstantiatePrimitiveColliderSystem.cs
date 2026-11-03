@@ -58,10 +58,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             if (sdkComponent.MeshCase == PBMeshCollider.MeshOneofCase.None) return;
 
             if (!setupColliderCases.TryGetValue(sdkComponent.MeshCase, out ISetupCollider setupCollider))
-            {
-                ReportHub.LogError(GetReportData(), $"No collider setup registered for mesh case {sdkComponent.MeshCase} on entity {crdtEntity}");
                 return;
-            }
 
             var component = new PrimitiveColliderComponent();
 

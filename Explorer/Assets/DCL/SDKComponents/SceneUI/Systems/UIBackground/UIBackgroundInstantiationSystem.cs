@@ -19,6 +19,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
@@ -29,7 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     {
         private const int ATTEMPTS_COUNT = 6;
 
-        private readonly IComponentPool<DCLImage>? imagesPool;
+        private readonly IComponentPool<DCLImage> imagesPool;
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
@@ -41,8 +42,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider) : base(world)
         {
-            if (!poolsRegistry.TryGetReferenceTypePool(out imagesPool))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(DCLImage)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<DCLImage>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(DCLImage)}");
+
+            imagesPool = pool;
 
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
@@ -51,8 +54,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         protected override void Update(float t)
         {
-            if (imagesPool == null) return;
-
             InstantiateUIBackgroundQuery(World);
             UpdateUIBackgroundQuery(World);
             LoadUIBackgroundTextureQuery(World);
@@ -63,7 +64,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var image = imagesPool!.Get();
+            var image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
 
             var uiBackgroundComponent = new UIBackgroundComponent();

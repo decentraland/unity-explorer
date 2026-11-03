@@ -60,10 +60,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
 
             if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? registeredTransformPool))
-            {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"No component pool registered for {nameof(Transform)}, registering a default one");
-                registeredTransformPool = componentPoolsRegistry.AddGameObjectPool<Transform>();
-            }
+                throw new System.InvalidOperationException($"No component pool registered for {nameof(Transform)}");
 
             transformPool = registeredTransformPool;
         }

@@ -15,6 +15,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -36,7 +37,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private const float HOVER_BORDER_DARKEN_FACTOR = 0.3f;
         private const float HOVER_BACKGROUND_DARKEN_FACTOR = 0f;
 
-        private readonly IComponentPool<UIInputComponent>? inputTextsPool;
+        private readonly IComponentPool<UIInputComponent> inputTextsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IInputBlock inputBlock;
         private readonly StyleFontDefinition[] styleFontDefinitions;
@@ -45,8 +46,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            if (!poolsRegistry.TryGetReferenceTypePool(out inputTextsPool))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(UIInputComponent)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIInputComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UIInputComponent)}");
+
+            inputTextsPool = pool;
 
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
@@ -57,8 +60,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         protected override void Update(float t)
         {
-            if (inputTextsPool == null) return;
-
             UpdateUIInputTransformDefaultsQuery(World!);
 
             InstantiateUIInputQuery(World!);
@@ -73,7 +74,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [None(typeof(UIInputComponent), typeof(DeleteEntityIntention))]
         private void InstantiateUIInput(in Entity entity, in PBUiInput sdkModel, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
-            var newUIInputComponent = inputTextsPool!.Get()!;
+            var newUIInputComponent = inputTextsPool.Get()!;
             newUIInputComponent.Initialize(inputBlock,
                 UiElementUtils.BuildElementName(COMPONENT_NAME, entity),
                 sdkModel.Value,

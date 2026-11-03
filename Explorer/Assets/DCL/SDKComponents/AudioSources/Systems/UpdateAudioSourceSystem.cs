@@ -10,6 +10,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -29,7 +30,7 @@ namespace DCL.SDKComponents.AudioSources
 
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
-        private readonly IComponentPool<AudioSource>? audioSourcesPool;
+        private readonly IComponentPool<AudioSource> audioSourcesPool;
         private readonly World world;
         private readonly ISceneData sceneData;
         private readonly AudioMixerGroup[]? worldGroup;
@@ -48,8 +49,10 @@ namespace DCL.SDKComponents.AudioSources
             this.sceneStateProvider = sceneStateProvider;
             this.settings = settings;
 
-            if (!poolsRegistry.TryGetReferenceTypePool(out audioSourcesPool))
-                ReportHub.LogError(GetReportData(), $"No component pool registered for {nameof(AudioSource)}");
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<AudioSource>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(AudioSource)}");
+
+            audioSourcesPool = pool;
 
             if (audioMixer != null)
                 worldGroup = audioMixer.FindMatchingGroups("World");
@@ -57,8 +60,6 @@ namespace DCL.SDKComponents.AudioSources
 
         protected override void Update(float t)
         {
-            if (audioSourcesPool == null) return;
-
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World, t);
         }
@@ -74,7 +75,7 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (audioSourceComponent.AudioSourceAssigned == false)
-                audioSourceComponent.SetAudioSource(audioSourcesPool!.Get()!, (worldGroup is { Length: > 0 } ? worldGroup[0] : null)!);
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, (worldGroup is { Length: > 0 } ? worldGroup[0] : null)!);
 
             AudioSource? audioSource = audioSourceComponent.AudioSource;
 

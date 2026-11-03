@@ -1,5 +1,4 @@
-﻿using DCL.Diagnostics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Utility
@@ -10,15 +9,6 @@ namespace Utility
         public static bool SyncRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             lock (dictionary) { return dictionary.Remove(key); }
-        }
-
-        public static void SyncAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
-        {
-            bool added;
-            lock (dictionary) { added = dictionary.TryAdd(key, value); }
-
-            if (!added)
-                ReportHub.LogError(ReportCategory.UNSPECIFIED, $"Key {key} is already present in the dictionary");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -37,6 +37,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
@@ -194,13 +195,11 @@ namespace Global.Dynamic
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue,
                 realmData, sceneRoomStatus);
 
-            if (componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
-            {
-                PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
-                PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
-            }
-            else
-                ReportHub.LogError(ReportCategory.PRIORITIZATION, $"No component pool registered for {nameof(PartitionComponent)}");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(PartitionComponent)}");
+
+            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
+            PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);
             ResetCameraSamplingDataDirty.InjectToWorld(ref builder, realmData, cameraSamplingData);

@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
@@ -12,6 +11,7 @@ using ECS.SceneLifeCycle.Reporting;
 using Global;
 using Global.Dynamic;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -57,10 +57,7 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             if (!staticContainer.ComponentsContainer.ComponentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
-            {
-                ReportHub.LogError(ReportCategory.REALM, $"No component pool registered for {nameof(PartitionComponent)}, using a standalone pool");
-                partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(component => component.Clear());
-            }
+                throw new InvalidOperationException($"No component pool registered for {nameof(PartitionComponent)}");
 
             var realmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,

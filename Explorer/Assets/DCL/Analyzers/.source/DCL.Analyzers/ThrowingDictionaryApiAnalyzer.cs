@@ -107,8 +107,7 @@ namespace DCL.Analyzers
             if (SymbolEqualityComparer.Default.Equals(property.ContainingType, symbols.JObject))
                 return;
 
-            // `map[k] = v` only calls the setter; compound assignments (`+=`, `??=`) and increments read first
-            if (reference.Parent is ISimpleAssignmentOperation assignment && assignment.Target == reference)
+            if (IsPlainWrite(reference))
                 return;
 
             if (IsImplementingThrowingMember(context.ContainingSymbol, symbols))
@@ -136,10 +135,45 @@ namespace DCL.Analyzers
         }
 
         /// <summary>
-        ///     True inside the <c>Add</c> method or indexer getter of a map type: forwarding to the inner map there implements the same throwing contract.
+        ///     True when the indexer is only assigned: <c>map[k] = v</c> or a tuple deconstruction target <c>(map[a], map[b]) = ...</c>.
+        ///     Compound assignments (<c>+=</c>, <c>??=</c>) and increments read first.
         /// </summary>
-        private static bool IsImplementingThrowingMember(ISymbol containingSymbol, WellKnownSymbols symbols) =>
-            containingSymbol is IMethodSymbol { Name: "Add" or "get_Item" } method && symbols.IsMapType(method.ContainingType);
+        private static bool IsPlainWrite(IOperation reference)
+        {
+            IOperation target = reference;
+
+            while (target.Parent is ITupleOperation tuple)
+                target = tuple;
+
+            return target.Parent switch
+                   {
+                       ISimpleAssignmentOperation assignment => assignment.Target == target,
+                       IDeconstructionAssignmentOperation deconstruction => deconstruction.Target == target,
+                       _ => false,
+                   };
+        }
+
+        /// <summary>
+        ///     True inside the <c>Add</c> method or indexer getter of a map type, implicit or explicit interface implementation:
+        ///     forwarding to the inner map there implements the same throwing contract.
+        /// </summary>
+        private static bool IsImplementingThrowingMember(ISymbol containingSymbol, WellKnownSymbols symbols)
+        {
+            if (containingSymbol is not IMethodSymbol method || !symbols.IsMapType(method.ContainingType))
+                return false;
+
+            if (IsThrowingMemberName(method.Name))
+                return true;
+
+            foreach (IMethodSymbol implemented in method.ExplicitInterfaceImplementations)
+                if (IsThrowingMemberName(implemented.Name))
+                    return true;
+
+            return false;
+        }
+
+        private static bool IsThrowingMemberName(string name) =>
+            name is "Add" or "get_Item";
 
         private sealed class WellKnownSymbols
         {

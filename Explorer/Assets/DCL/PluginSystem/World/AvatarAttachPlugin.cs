@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
@@ -9,6 +8,7 @@ using DCL.SDKComponents.AvatarAttach.Systems;
 using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -44,10 +44,10 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            if (componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
-                InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, transformPool, persistentEntities.SceneRoot);
-            else
-                ReportHub.LogError(ReportCategory.AVATAR_ATTACH, $"No component pool registered for {nameof(Transform)}");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, transformPool, persistentEntities.SceneRoot);
 
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
 

@@ -95,6 +95,22 @@ class C
         }
 
         [Test]
+        public void AllowDeconstructionWritesButReportDeconstructionReads()
+        {
+            Verify(@"
+using System.Collections.Generic;
+class C
+{
+    void M(Dictionary<int, int> d)
+    {
+        (d[1], d[2]) = (3, 4);
+        ((d[1], d[2]), d[3]) = ((5, 6), 7);
+        var (a, b) = (d[1], 2); // expect: DCL0002
+    }
+}");
+        }
+
+        [Test]
         public void AllowCollectionAndIndexInitializers()
         {
             Verify(@"
@@ -195,6 +211,7 @@ class Wrapper : IReadOnlyDictionary<int, int>
 
     public int this[int key] => inner[key];
     public void Add(int key, int value) => inner.Add(key, value);
+    int IReadOnlyDictionary<int, int>.this[int key] => inner[key];
     public int First() => inner[0]; // expect: DCL0002
 
     public IEnumerable<int> Keys => inner.Keys;

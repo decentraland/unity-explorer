@@ -15,7 +15,8 @@
 #   -a         also print the diagnostics of every other analyzer, not just DCL*
 #
 # Environment: UNITY_EDITOR_CONTENTS overrides the Editor install
-#   (default: /Applications/Unity/Hub/Editor/<version>/Unity.app/Contents).
+#   (default: /Applications/Unity/Hub/Editor/<version>/Unity.app/Contents; on Windows pass the
+#   Editor's Data folder, e.g. "C:/Program Files/Unity/Hub/Editor/<version>/Editor/Data").
 #
 # Exit codes: 0 no findings, 1 findings, 2 setup error (including the analyzers failing to load),
 #             3 an assembly failed to compile for another reason.
@@ -32,7 +33,7 @@ fi
 
 version="$(sed -n 's/^m_EditorVersion: //p' "$explorer/ProjectSettings/ProjectVersion.txt")"
 contents="${UNITY_EDITOR_CONTENTS:-/Applications/Unity/Hub/Editor/$version/Unity.app/Contents}"
-dotnet="$(find "$contents" -path '*DotNetSdk/dotnet' -type f 2>/dev/null | head -1 || true)"
+dotnet="$(find "$contents" \( -path '*DotNetSdk/dotnet' -o -path '*DotNetSdk/dotnet.exe' \) -type f 2>/dev/null | head -1 || true)"
 csc="$(find "$contents" -path '*DotNetSdk/sdk/*/Roslyn/bincore/csc.dll' -type f 2>/dev/null | head -1 || true)"
 
 if [ -z "$dotnet" ] || [ -z "$csc" ]; then
@@ -40,9 +41,10 @@ if [ -z "$dotnet" ] || [ -z "$csc" ]; then
     exit 2
 fi
 
-# The Editor build graph (*EDbg.dag); fall back to any graph that has response files
-dag="$(ls -d "$explorer"/Library/Bee/artifacts/*EDbg.dag 2>/dev/null | head -1 || true)"
-[ -n "$dag" ] || dag="$(ls -d "$explorer"/Library/Bee/artifacts/*.dag 2>/dev/null | head -1 || true)"
+# The newest Editor build graph (*EDbg.dag; graphs of older Editor versions stay behind after an upgrade),
+# falling back to the newest graph of any kind
+dag="$(ls -td "$explorer"/Library/Bee/artifacts/*EDbg.dag 2>/dev/null | head -1 || true)"
+[ -n "$dag" ] || dag="$(ls -td "$explorer"/Library/Bee/artifacts/*.dag 2>/dev/null | head -1 || true)"
 
 if [ -z "$dag" ] || ! ls "$dag"/*.rsp >/dev/null 2>&1; then
     echo "run-dcl-analyzers: no Unity response files in Explorer/Library/Bee - open or batch-compile the project in Unity first" >&2

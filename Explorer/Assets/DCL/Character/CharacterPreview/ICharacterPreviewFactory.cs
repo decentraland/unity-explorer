@@ -1,7 +1,7 @@
 using Arch.Core;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using Global.AppArgs;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -12,7 +12,7 @@ namespace DCL.CharacterPreview
     /// </summary>
     public interface ICharacterPreviewFactory
     {
-        CharacterPreviewController? Create(World world,
+        CharacterPreviewController Create(World world,
             RectTransform renderImage,
             RenderTexture targetTexture,
             CharacterPreviewInputEventBus inputEventBus,
@@ -34,7 +34,7 @@ namespace DCL.CharacterPreview
             this.appArgs = appArgs;
         }
 
-        public CharacterPreviewController? Create(World world,
+        public CharacterPreviewController Create(World world,
             RectTransform renderImage,
             RenderTexture targetTexture,
             CharacterPreviewInputEventBus inputEventBus,
@@ -42,16 +42,10 @@ namespace DCL.CharacterPreview
             Vector3 position)
         {
             if (characterPreviewComponentPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out characterPreviewComponentPool))
-            {
-                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(CharacterPreviewAvatarContainer)}");
-                return null;
-            }
+                throw new InvalidOperationException($"No component pool registered for {nameof(CharacterPreviewAvatarContainer)}");
 
             if (transformPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out transformPool))
-            {
-                ReportHub.LogError(ReportCategory.AVATAR, $"No component pool registered for {nameof(Transform)}");
-                return null;
-            }
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
 
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get()!;
             container.Initialize(targetTexture, position);

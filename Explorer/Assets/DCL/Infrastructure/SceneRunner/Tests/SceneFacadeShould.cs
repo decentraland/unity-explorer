@@ -420,6 +420,38 @@ namespace SceneRunner.Tests
             });
         }
 
+        [Test]
+        public async Task DisposeDependenciesOnceWhenDisposedAsyncTwice()
+        {
+            // Arrange
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, new SceneStateProvider()));
+
+            // Act
+            await sceneFacade.DisposeAsync();
+            await sceneFacade.DisposeAsync();
+
+            // Assert
+            sceneFacade.deps.Runtime.Received(1).Dispose();
+            sceneFacade.deps.SyncDeps.EntityCollidersCache.Received(1).Dispose();
+            Assert.That(sceneFacade.SceneStateProvider.State.Value(), Is.EqualTo(SceneState.Disposed));
+        }
+
+        [Test]
+        public async Task DisposeDependenciesOnceWhenDisposedThenDisposedAsync()
+        {
+            // Arrange
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, new SceneStateProvider()));
+
+            // Act
+            sceneFacade.Dispose();
+            await sceneFacade.DisposeAsync();
+
+            // Assert
+            sceneFacade.deps.Runtime.Received(1).Dispose();
+            sceneFacade.deps.SyncDeps.EntityCollidersCache.Received(1).Dispose();
+            Assert.That(sceneFacade.SceneStateProvider.State.Value(), Is.EqualTo(SceneState.Disposed));
+        }
+
         public class TestDeps : SceneInstanceDependencies.WithRuntimeAndJsAPIBase
         {
             public TestDeps(IECSWorldFactory worldFactory) : this(worldFactory, CreateSceneStateProvider()) { }
