@@ -9,6 +9,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.DebugUtilities;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -70,6 +71,8 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
         private readonly UpscalingController upscalingController;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -104,7 +107,8 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IWebRequestController webRequestController,
             MarketplaceShopAPIClient marketplaceShopAPIClient,
-            UpscalingController upscalingController)
+            UpscalingController upscalingController,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -138,6 +142,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.marketplaceShopAPIClient = marketplaceShopAPIClient;
             this.upscalingController = upscalingController;
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void Dispose()
@@ -209,7 +214,13 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
                 webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus, mvcManager, web3IdentityCache));
+
+            BuildDebugContainer();
         }
+
+        private void BuildDebugContainer() =>
+            debugContainerBuilder.TryAddWidget("Passport")
+                                ?.AddStringFieldWithConfirmation("0x..", "Open passport", address => mvcManager.ShowAndForget(PassportController.IssueCommand(new PassportParams(address))));
 
         [Serializable]
         public class PassportSettings : IDCLPluginSettings
