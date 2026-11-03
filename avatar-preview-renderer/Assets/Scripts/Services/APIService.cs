@@ -11,20 +11,40 @@ namespace Services
     {
         private const int RETRY_COUNT = 2;
 
-        private static string EndpointPeer => $"https://peer.decentraland.{Environment}";
-        private static string EndpointMarketplace => $"https://marketplace-api.decentraland.{Environment}";
+        // Path templates on their own: the host is prepended after formatting, so a host is never
+        // read for placeholders.
+        private const string CONTENT_PATH = "/content/contents/{0}";
+        private const string PROFILE_PATH = "/lambdas/profiles/{0}";
+        private const string ACTIVE_ENTITIES_PATH = "/content/entities/active";
+        private const string MARKETPLACE_ITEM_PATH = "/v1/items?contractAddress={0}&itemId={1}";
+        private const string MARKETPLACE_NFT_PATH = "/v1/nfts?contractAddress={0}&tokenId={1}";
 
-        public static string APICatalyst => EndpointPeer + "/content/contents/{0}";
-        private static string APIProfile => EndpointPeer + "/lambdas/profiles/{0}";
-        private static string APIActiveEntities => EndpointPeer + "/content/entities/active";
-        private static string APIMarketplaceItemID => EndpointMarketplace + "/v1/items?contractAddress={0}&itemId={1}";
-        private static string APIMarketplaceTokenID => EndpointMarketplace + "/v1/nfts?contractAddress={0}&tokenId={1}";
+        private static string EndpointMarketplace => MarketplaceServerUrl ?? $"https://marketplace-api.decentraland.{Environment}";
+
+        /// <summary>
+        /// The Catalyst every content request goes to: <see cref="PeerUrl"/>, or the one
+        /// <see cref="Environment"/> picks.
+        /// </summary>
+        public static string PeerHost => PeerUrl ?? $"https://peer.decentraland.{Environment}";
+
+        /// <summary>
+        /// A Catalyst and a Marketplace API host the page chose; null keeps the one
+        /// <see cref="Environment"/> picks.
+        /// </summary>
+        public static string PeerUrl { get; set; }
+
+        public static string MarketplaceServerUrl { get; set; }
+
+        /// <summary>
+        /// The URL of a file on the Catalyst, by content hash.
+        /// </summary>
+        public static string ContentUrl(string hash) => PeerHost + string.Format(CONTENT_PATH, hash);
 
         public static string Environment { get; set; } = "org";
 
         public static async Awaitable<ProfileResponse.Avatar.AvatarData> GetAvatar(string profileID)
         {
-            var profile = await GetWithRetry<ProfileResponse>(APIProfile, profileID);
+            var profile = await GetWithRetry<ProfileResponse>(PeerHost, PROFILE_PATH, profileID);
 
             var avatar = profile.avatars[0].avatar;
 
@@ -54,53 +74,59 @@ namespace Services
         }
 
         public static Awaitable<MarketplaceItemResponse> GetMarketplaceItemFromID(string contract, string itemID) =>
-            GetWithRetry<MarketplaceItemResponse>(APIMarketplaceItemID, contract, itemID);
+            GetWithRetry<MarketplaceItemResponse>(EndpointMarketplace, MARKETPLACE_ITEM_PATH, contract, itemID);
 
 
         public static Awaitable<MarketplaceNTFResponse> GetMarketplaceItemFromToken(string contract, string tokenID) =>
-            GetWithRetry<MarketplaceNTFResponse>(APIMarketplaceTokenID, contract, tokenID);
+            GetWithRetry<MarketplaceNTFResponse>(EndpointMarketplace, MARKETPLACE_NFT_PATH, contract, tokenID);
 
         public static async Awaitable<ActiveEntity[]> GetActiveEntities(string[] pointers)
         {
+            var body = JsonUtility.ToJson(new ActiveEntitiesRequest(pointers));
             var retries = 0;
-            UnityWebRequest request;
 
-            do
+            // Each attempt owns its request, so the handlers of a failed one are released.
+            while (true)
             {
-                request = UnityWebRequest.Post(APIActiveEntities,
-                    JsonUtility.ToJson(new ActiveEntitiesRequest(pointers)), "application/json");
-                await request.SendWebRequest();
+                using var attempt = UnityWebRequest.Post(PeerHost + ACTIVE_ENTITIES_PATH, body, "application/json");
+                await attempt.SendWebRequest();
                 retries++;
-            } while (request.result != UnityWebRequest.Result.Success && retries <= RETRY_COUNT);
 
-            if (request.result != UnityWebRequest.Result.Success)
-                throw new Exception(request.error);
+                if (attempt.result == UnityWebRequest.Result.Success)
+                {
+                    // Newtonsoft (not JsonUtility) because ActiveEntity.springBones contains a
+                    // Dictionary<string, Dictionary<string, SpringBoneParamsDto>> that JsonUtility can't bind.
+                    return JsonConvert.DeserializeObject<ActiveEntity[]>(attempt.downloadHandler.text)
+                           ?? Array.Empty<ActiveEntity>();
+                }
 
-            // Newtonsoft (not JsonUtility) because ActiveEntity.springBones contains a
-            // Dictionary<string, Dictionary<string, SpringBoneParamsDto>> that JsonUtility can't bind.
-            return JsonConvert.DeserializeObject<ActiveEntity[]>(request.downloadHandler.text) ?? Array.Empty<ActiveEntity>();
+                if (retries > RETRY_COUNT) throw new Exception(attempt.error);
+            }
         }
 
 
-        private static async Awaitable<T> GetWithRetry<T>(string url, params object[] args)
+        /// <summary>
+        /// The body of <paramref name="url"/> as text, for a definition the page hosts itself.
+        /// </summary>
+        public static Awaitable<string> GetText(string url) => GetTextWithRetry(url);
+
+        private static async Awaitable<T> GetWithRetry<T>(string host, string pathTemplate, params object[] args) =>
+            JsonUtility.FromJson<T>(await GetTextWithRetry(host + string.Format(pathTemplate, args)));
+
+        private static async Awaitable<string> GetTextWithRetry(string url)
         {
             var retries = 0;
 
-            UnityWebRequest request;
-
-            do
+            // Each attempt owns its request, so the handlers of a failed one are released.
+            while (true)
             {
-                request = UnityWebRequest.Get(string.Format(url, args));
-                await request.SendWebRequest();
+                using var attempt = UnityWebRequest.Get(url);
+                await attempt.SendWebRequest();
                 retries++;
-            } while (request.result != UnityWebRequest.Result.Success && retries <= RETRY_COUNT);
 
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                throw new Exception(request.error);
+                if (attempt.result == UnityWebRequest.Result.Success) return attempt.downloadHandler.text;
+                if (retries > RETRY_COUNT) throw new Exception($"{attempt.error} ({url})");
             }
-
-            return JsonUtility.FromJson<T>(request.downloadHandler.text);
         }
 
     }

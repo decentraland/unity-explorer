@@ -28,6 +28,10 @@ namespace Data
             public string[] replaces = Array.Empty<string>();
             public string[] removesDefaultHiding = Array.Empty<string>();
             public bool loop; // For emotes only
+
+            // A social emote's clips, ADR-287. JsonUtility fills an absent one with empty fields.
+            public StartAnimation startAnimation;
+            public OutcomeGroup[] outcomes = Array.Empty<OutcomeGroup>();
         }
 
         [Serializable]
@@ -110,6 +114,8 @@ namespace Data
                         {
                             category = emoteDataADR74.category,
                             loop = emoteDataADR74.loop,
+                            startAnimation = emoteDataADR74.startAnimation,
+                            outcomes = emoteDataADR74.outcomes,
                             representations = emoteDataADR74.representations.Select(r =>
                                 new ActiveEntity.Metadata.Representation
                                 {
