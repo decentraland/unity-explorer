@@ -8,10 +8,10 @@ namespace DCL.Diagnostics.Tests
 {
     public class FrameDebouncerShould
     {
-        private MockedReportScope mockedReportScope;
+        private MockedReportScope mockedReportScope = null!;
         private ReportData reportData;
-        private ReportHandlerBase handler;
-        private FrameDebouncer frameDebouncer;
+        private ReportHandlerBase handler = null!;
+        private FrameDebouncer frameDebouncer = null!;
 
         [SetUp]
         public void SetUp()

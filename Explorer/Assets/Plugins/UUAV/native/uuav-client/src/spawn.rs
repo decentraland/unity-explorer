@@ -20,6 +20,9 @@
 
 use anyhow::{Context as _, Result};
 use std::path::PathBuf;
+use std::time::Duration;
+#[cfg(target_os = "macos")]
+use std::time::Instant;
 use uuav_ipc::channel::ChildHandoff;
 
 #[cfg(target_os = "macos")]
@@ -76,6 +79,18 @@ impl HelperChild {
             .try_wait()
             .context("poll helper process")?
             .map(HelperExitStatus))
+    }
+
+    /// `try_wait` that gives the helper up to `timeout` to exit.
+    pub fn wait_timeout(&mut self, timeout: Duration) -> Result<Option<HelperExitStatus>> {
+        let started = Instant::now();
+        loop {
+            let status = self.try_wait()?;
+            if status.is_some() || started.elapsed() >= timeout {
+                return Ok(status);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
     }
 
     pub fn kill(&mut self) {
@@ -281,10 +296,16 @@ impl HelperChild {
     }
 
     pub fn try_wait(&mut self) -> Result<Option<HelperExitStatus>> {
+        self.wait_timeout(Duration::ZERO)
+    }
+
+    /// `try_wait` that gives the helper up to `timeout` to exit.
+    pub fn wait_timeout(&mut self, timeout: Duration) -> Result<Option<HelperExitStatus>> {
         use windows::Win32::Foundation::{WAIT_OBJECT_0, WAIT_TIMEOUT};
         use windows::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject};
 
-        match unsafe { WaitForSingleObject(self.process, 0) } {
+        let millis = u32::try_from(timeout.as_millis()).context("helper wait timeout")?;
+        match unsafe { WaitForSingleObject(self.process, millis) } {
             WAIT_OBJECT_0 => {
                 let mut code = 0u32;
                 unsafe { GetExitCodeProcess(self.process, &mut code) }
