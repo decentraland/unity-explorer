@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics.Sentry;
+using Microsoft.ClearScript;
 using NUnit.Framework;
 using Sentry;
 using System;
@@ -128,6 +129,14 @@ namespace DCL.Diagnostics.Tests
         public void DropTaskAlreadyCompletedTransitions()
         {
             var @event = new SentryEvent(new InvalidOperationException(TASK_ALREADY_COMPLETED));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void DropScriptInterruptionsEvenWhenUnobservedTaskWrapsThem()
+        {
+            var @event = new SentryEvent(new AggregateException(new ScriptInterruptedException("Script execution interrupted by host")));
 
             Assert.IsNull(SentryReportHandler.BeforeSend(@event));
         }

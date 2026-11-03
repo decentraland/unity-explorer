@@ -40,6 +40,9 @@ namespace DCL.Diagnostics.Sentry
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
+        // Interruptions of scene engines; not a ScriptEngineException subtype, so matched separately (#10194)
+        private const string SCRIPT_INTERRUPTED_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptInterruptedException";
+
         // A websocket dropped by the remote end is a backend condition the client cannot act on (#10103, #10377)
         private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
@@ -356,7 +359,7 @@ namespace DCL.Diagnostics.Sentry
 
             string? typeName = exception.GetType().FullName;
 
-            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
+            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or SCRIPT_INTERRUPTED_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
             return exception.InnerException != null && IsIgnoredException(exception.InnerException, isLocalSceneDevelopment, isOffline);
