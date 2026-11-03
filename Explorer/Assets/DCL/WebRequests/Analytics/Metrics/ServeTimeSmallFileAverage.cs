@@ -1,6 +1,5 @@
 ﻿using DCL.DebugUtilities;
 using System;
-using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {

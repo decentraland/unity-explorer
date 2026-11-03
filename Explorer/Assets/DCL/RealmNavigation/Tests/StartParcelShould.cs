@@ -65,6 +65,72 @@ namespace DCL.RealmNavigation.Tests
         }
 
         [Test]
+        public void TakeARealmAndParcelAsTheStartupDestination()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, LAUNCH_SPAWN_POINT);
+            var realm = URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth");
+
+            // Act
+            bool taken = startParcel.TryTakeAsStartupDestination(realm, new Vector2Int(4, 5), "stage");
+
+            // Assert
+            Assert.That(taken, Is.True);
+            Assert.That(startParcel.JumpInRequested, Is.True);
+            Assert.That(startParcel.Realm, Is.EqualTo(realm));
+            Assert.That(startParcel.IsParcelAssigned, Is.True);
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(4, 5)));
+            Assert.That(startParcel.SpawnPointName, Is.EqualTo("stage"));
+        }
+
+        [Test]
+        public void KeepTheBootstrapRealmWhenOnlyAParcelIsTaken()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+
+            // Act
+            bool taken = startParcel.TryTakeAsStartupDestination(null, new Vector2Int(4, 5));
+
+            // Assert
+            Assert.That(taken, Is.True);
+            Assert.That(startParcel.Realm, Is.Null);
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(4, 5)));
+        }
+
+        [Test]
+        public void LandOnTheRealmSpawnWhenOnlyARealmIsTaken()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.Assign(new Vector2Int(1, 1));
+            var realm = URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth");
+
+            // Act
+            startParcel.TryTakeAsStartupDestination(realm, null);
+
+            // Assert
+            Assert.That(startParcel.Realm, Is.EqualTo(realm));
+            Assert.That(startParcel.IsParcelAssigned, Is.False);
+        }
+
+        [Test]
+        public void RefuseADestinationOnceConsumed()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            bool taken = startParcel.TryTakeAsStartupDestination(null, new Vector2Int(4, 5));
+
+            // Assert
+            Assert.That(taken, Is.False);
+            Assert.That(startParcel.JumpInRequested, Is.False);
+            Assert.That(startParcel.Peek(), Is.EqualTo(LAUNCH_PARCEL));
+        }
+
+        [Test]
         public void IgnoreAJumpInRequestOnceConsumed()
         {
             // Arrange
@@ -125,6 +191,58 @@ namespace DCL.RealmNavigation.Tests
             // Assert
             Assert.That(startParcel.SpawnPointName, Is.EqualTo("physics"));
             Assert.That(startParcel.IsParcelAssigned, Is.False);
+        }
+
+        [Test]
+        public void CarryTheLandOnParcelRequestOfTheLaunchDestination()
+        {
+            // Arrange & Act
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
+        }
+
+        [Test]
+        public void TakeTheLandOnParcelRequestWithAnAssignedParcel()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL);
+
+            // Act
+            startParcel.TryTakeAsStartupDestination(null, new Vector2Int(-4, 1), landOnParcel: true);
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
+            Assert.That(startParcel.Peek(), Is.EqualTo(new Vector2Int(-4, 1)));
+        }
+
+        [Test]
+        public void DropTheLandOnParcelRequestWhenARealmIsAssigned()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+
+            // Act
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.False);
+        }
+
+        [Test]
+        public void RestoreTheLaunchLandOnParcelRequestOnReset()
+        {
+            // Arrange
+            var startParcel = new StartParcel(LAUNCH_PARCEL, source: StartParcelSource.Home, landOnParcel: true);
+            startParcel.AssignRealm(URLDomain.FromString("https://worlds.example.com/myworld.dcl.eth"));
+            startParcel.ConsumeByTeleportOperation();
+
+            // Act
+            startParcel.Reset();
+
+            // Assert
+            Assert.That(startParcel.LandOnParcel, Is.True);
         }
 
         [Test]

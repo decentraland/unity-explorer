@@ -9,7 +9,6 @@ using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement;
 using DCL.Web3;
 using ECS.Abstract;
-using System;
 using System.Threading;
 using Utility;
 
@@ -105,13 +104,13 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             elapsed += t;
             windowElapsed += t;
 
-            resyncsLastMinute!.SetAndUpdate((multiplayerBus.ResyncCount - resyncCountAtWindowStart).ToString());
-            emoteMismatchesLastMinute!.SetAndUpdate((multiplayerBus.EmoteStateMismatchCount - emoteMismatchCountAtWindowStart).ToString());
+            resyncsLastMinute!.SetAndUpdate((multiplayerBus.resyncCount - resyncCountAtWindowStart).ToString());
+            emoteMismatchesLastMinute!.SetAndUpdate((multiplayerBus.emoteStateMismatchCount - emoteMismatchCountAtWindowStart).ToString());
 
             if (windowElapsed >= 60f)
             {
-                resyncCountAtWindowStart = multiplayerBus.ResyncCount;
-                emoteMismatchCountAtWindowStart = multiplayerBus.EmoteStateMismatchCount;
+                resyncCountAtWindowStart = multiplayerBus.resyncCount;
+                emoteMismatchCountAtWindowStart = multiplayerBus.emoteStateMismatchCount;
                 windowElapsed = 0f;
             }
 

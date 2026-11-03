@@ -2,13 +2,19 @@ using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class UrlResolverServiceShould
     {
+        private const string SIGNED_VIMEO_URL = "https://player.vimeo.com/external/123456.m3u8?s=secret-token";
+
         private IWebRequestController webRequestController = null!;
         private IYouTubeUrlResolver youTubeResolver = null!;
         private UrlResolverService service = null!;
@@ -99,6 +105,60 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.That(result.DirectUrl, Is.EqualTo(url));
             Assert.That(result.IsReachable, Is.False);
+        }
+
+        // --- Direct URL reachability ---
+
+        [Test]
+        public async Task ResolveAsync_WhenDirectHttpUrl_AndHeadProbeFails_ReturnsUnreachableWithoutThrowing()
+        {
+            // Arrange
+            // A non-loopback http host: with the project's "insecure http not allowed" setting the GET fallback's
+            // SendWebRequest throws InvalidOperationException synchronously, which must be answered as unreachable
+            const string URL = "http://media.invalid/stream.mp4";
+
+            webRequestController
+               .SendAsync<GenericHeadRequest, GenericHeadArguments, WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(
+                    Arg.Any<RequestEnvelope<GenericHeadRequest, GenericHeadArguments>>(),
+                    Arg.Any<WebRequestUtils.NoOp<GenericHeadRequest>>(),
+                    Arg.Any<long>(),
+                    Arg.Any<IProgress<float>?>())
+               .Returns(UniTask.FromException<WebRequestUtils.NoResult>(new Exception("HEAD probe failed")));
+
+            // Act
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, default, CancellationToken.None).AsTask();
+
+            // Assert
+            Assert.That(result.DirectUrl, Is.EqualTo(URL));
+            Assert.That(result.IsReachable, Is.False);
+        }
+
+        [Test]
+        public async Task ResolveAsync_WhenSignedVimeoUrl_SkipsHeadProbe()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act
+            await service.ResolveAsync(SIGNED_VIMEO_URL, default, cts.Token).AsTask();
+
+            // Assert
+            _ = webRequestController.DidNotReceiveWithAnyArgs()
+                                    .SendAsync<GenericHeadRequest, GenericHeadArguments, WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(
+                                         default, default, default);
+        }
+
+        [Test]
+        public async Task ResolveAsync_WhenDirectUrl_LogsItWithoutQuery()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            LogAssert.Expect(LogType.Log, new Regex(@"Resource <https://player\.vimeo\.com/external/123456\.m3u8> isReachable"));
+
+            // Act & Assert
+            await service.ResolveAsync(SIGNED_VIMEO_URL, default, cts.Token).AsTask();
         }
 
         // --- Cancellation ---

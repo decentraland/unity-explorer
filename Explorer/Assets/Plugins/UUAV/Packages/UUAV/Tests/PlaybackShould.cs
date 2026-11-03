@@ -61,6 +61,27 @@ namespace UUAV.Tests
         }
 
         [UnityTest]
+        public IEnumerator DropPresentedFrameOnClose()
+        {
+            VideoProbe.RequireGraphics();
+
+            // Arrange
+            UUAVPlayer player = CreatePlayer(out _);
+            yield return OpenPlayAndAwaitPlaying(player, UrlFor(Fixtures.ToneColorBands));
+            yield return Wait.Until(
+                () => player.CurrentTexture != null,
+                StateTimeout,
+                () => $"no output surface was created\n{Wait.Diagnostics(player)}"
+            );
+
+            // Act
+            player.CloseMedia();
+
+            // Assert
+            Assert.That(player.CurrentTexture, Is.Null, Wait.Diagnostics(player));
+        }
+
+        [UnityTest]
         public IEnumerator FreezeClockOnPauseAndResume()
         {
             // Arrange

@@ -22,7 +22,7 @@ namespace DCL.Backpack
         }
 
         protected override void OnBeforeViewShow() =>
-            backpack.AttachTo(viewInstance!.BackpackHost, compact: true);
+            backpack.AttachTo(viewInstance!.BackpackHost);
 
         protected override void OnViewShow()
         {

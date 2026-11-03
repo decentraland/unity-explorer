@@ -1,0 +1,43 @@
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using MVC;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DCL.ExplorePanel
+{
+    /// <summary>
+    ///     Frame that hosts one explore section while it is shown on its own, on top of whatever panel opened it.
+    /// </summary>
+    public class ExploreSectionModalView : ViewBase, IView
+    {
+        private const float ANIMATION_SPEED = 0.2f;
+
+        /// <summary>Header width the close button takes at the section's right edge, button plus margin.</summary>
+        public const float CLOSE_BUTTON_SLOT_WIDTH = 62f;
+
+        /// <summary>Band at the section's top edge on whose centre line the close button sits.</summary>
+        public const float HEADER_HEIGHT = 68f;
+
+        [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; } = null!;
+
+        /// <summary>The hosted section paints its own background over this whole slot, so this rect frames the modal.</summary>
+        [field: SerializeField]
+        public RectTransform SectionHost { get; internal set; } = null!;
+
+        /// <summary>The sections carry no close control of their own.</summary>
+        [field: SerializeField]
+        public Button CloseButton { get; internal set; } = null!;
+
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
+        {
+            CanvasGroup.alpha = 0;
+            return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+        }
+
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct) =>
+            CanvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+    }
+}

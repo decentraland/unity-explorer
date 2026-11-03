@@ -47,7 +47,7 @@ namespace DCL.SkyBox
 
             var controller = (SkyboxRenderController)target;
 
-            if (!Application.isPlaying || !controller.editMode)
+            if (!Application.isPlaying || !controller.EditMode)
                 return;
 
             EditorGUILayout.Space();
@@ -160,7 +160,7 @@ namespace DCL.SkyBox
 
             var controller = target as SkyboxRenderController;
 
-            if (controller == null || !Application.isPlaying || !controller.editMode || capturing)
+            if (controller == null || !Application.isPlaying || !controller.EditMode || capturing)
             {
                 cycling = false;
                 return;

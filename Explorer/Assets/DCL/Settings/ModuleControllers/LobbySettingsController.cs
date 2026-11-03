@@ -6,10 +6,12 @@ namespace DCL.Settings.ModuleControllers
     public class LobbySettingsController : SettingsFeatureController
     {
         private readonly SettingsToggleModuleView view;
+        private readonly ISettingsModuleEventListener settingsEventListener;
 
-        public LobbySettingsController(SettingsToggleModuleView view)
+        public LobbySettingsController(SettingsToggleModuleView view, ISettingsModuleEventListener settingsEventListener)
         {
             this.view = view;
+            this.settingsEventListener = settingsEventListener;
 
             view.ConfigureWithoutNotify(FeaturesRegistry.Instance.LobbyEnabledSetting);
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
@@ -18,7 +20,12 @@ namespace DCL.Settings.ModuleControllers
         public override void Dispose() =>
             view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
 
-        private static void OnToggleValueChanged(bool isOn) =>
+        private void OnToggleValueChanged(bool isOn)
+        {
+            bool previousValue = FeaturesRegistry.Instance.LobbyEnabledSetting;
             FeaturesRegistry.Instance.LobbyEnabledSetting = isOn;
+
+            settingsEventListener.NotifyLobbyEnabledChanged(previousValue, isOn);
+        }
     }
 }

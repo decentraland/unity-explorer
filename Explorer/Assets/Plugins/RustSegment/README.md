@@ -24,6 +24,7 @@ src/
   lib.rs          Public entry point and globals
   cabi.rs         C ABI surface (extern "C")
   server.rs       Native server lifecycle and runtime ownership
+  queue_file.rs   Opening the queue file as its owner, with the in-memory fallback
   operations.rs   Construction of analytics operations
 ```
 
@@ -61,7 +62,18 @@ Builds `x86_64-pc-windows-msvc` and copies the DLL to `SegmentServerWrap/Librari
 
 `build.sh` passes `--locked`, so a manifest change that would rewrite `Cargo.lock` fails the build instead of silently resolving different crates than the lock records. `.cargo/config.toml` carries the flags that make the MSVC link deterministic (`/Brepro`, `/PDBALTPATH`).
 
-`Libraries/Linux/segment-server.so` is not produced by `build.sh` and is outside the lock: Linux is not a release target and the file predates the crate's current source.
+### Linux
+
+Prerequisites: Rust via `rustup`. A C linker (`cc`) must be available (`build-essential` on Debian/Ubuntu).
+
+```sh
+cd .native
+bash build.sh
+```
+
+Builds `x86_64-unknown-linux-gnu` and copies the shared object to `SegmentServerWrap/Libraries/Linux/segment-server.so`. This is a native build — no cross-compilation is required on a Linux x86_64 host.
+
+The shipped `.so` is built by CI on `ubuntu-22.04` and needs glibc 2.34 or newer at runtime (its newest versioned glibc symbol is `GLIBC_2.34`). `scripts/rust-segment/build-canonical.sh` builds under `/tmp/rust-segment-build` on Linux (override with `RUST_SEGMENT_CANONICAL_ROOT`). The `.so` is stored in Git LFS like the `.dll` and `.dylib`.
 
 ---
 
@@ -70,10 +82,11 @@ Builds `x86_64-pc-windows-msvc` and copies the DLL to `SegmentServerWrap/Librari
 ### Initialization
 
 ```c
-bool segment_server_initialize(
+QueueHealthCode segment_server_initialize(
     const char* queue_file_path,
     uint32_t queue_count_limit,
     const char* segment_write_key,
+    const char* segment_api_host,
     FfiCallbackFn callback_fn,
     FfiErrorCallbackFn error_fn
 );
@@ -83,7 +96,9 @@ Notes:
 
 * Must be called exactly once before any operations.
 * All pointer arguments must remain valid for the duration of the call.
+* `segment_api_host` is the Tracking API origin with no path: the client appends `/v1/batch`, `/v1/track` and the other endpoint paths itself.
 * Callbacks must be thread-safe and non-blocking.
+* `queue_file_path` has one owner: the file is opened in exclusive locking mode, so a second process of the same user keeps its events in memory for its session. The returned [health code](#health-codes) says how the queue keeps the events of the session; `255` (`NotInitialized`) means this call did not start the server.
 
 ---
 
@@ -101,7 +116,31 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
-`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` and has not been rebuilt (Linux is not a release target), so on Linux a full disk still completes with `Error`.
+### Error channel
+
+`FfiErrorCallbackFn` receives genuine faults only: an operation that failed for a reason that is not an environment condition, a queued row the API can never take, a request the API rejects, a row that could not be read. The conditions of the queue file are returned by `segment_server_initialize` as a health code.
+
+### Health codes
+
+How the queue keeps the events of the session is decided once, when the file is opened, and returned by `segment_server_initialize`:
+
+| Code | Name | Meaning |
+|---|---|---|
+| 0 | `Persistent` | This process owns the queue file; the events are kept on disk. |
+| 1 | `OwnedByAnotherInstance` | Another process owns the queue file; the events of this process stay in memory. |
+| 2 | `Recreated` | The queue file was corrupt and has been replaced by an empty one. |
+| 3 | `DegradedDiskFull` | The queue file is given up for the session: the disk is full. |
+| 4 | `DegradedReadOnly` | The queue file is given up for the session: it cannot be written. |
+| 5 | `DegradedIoError` | The queue file is given up for the session: the disk failed. |
+| 6 | `DegradedPermissionDenied` | The queue file is given up for the session: the OS refused access. |
+| 7 | `DegradedCannotOpen` | The queue file is given up for the session: it cannot be opened. |
+| 8 | `DegradedCorrupt` | The queue file is given up for the session: it could not be recreated after it was found corrupt. |
+| 9 | `DegradedOther` | The queue file is given up for the session: it failed in a way that says nothing about the file or its environment, reported on the error channel. |
+| 255 | `NotInitialized` | This call did not start the server: it already runs. In debug builds also returned when the initialization panicked (reported on the error channel); release builds abort on panic. |
+
+A sqlite failure after the file is open is a fault on the error channel: a failed enqueue completes its operation with `Error` (or `ErrorDiskFull`), a failed read or a row that cannot be removed is retried by the send loop with a delay that doubles up to 60 s and reported once per failure streak. A row that was sent but could not be removed is not sent again.
+
+A send that fails on the network (no answer, a 5xx, 408 or 429) is retried with a delay that doubles up to 60 s and is not reported. A send the API rejects with any other status except 400, such as 401 for an invalid write key, is retried the same way and reported once per failure streak. A 400 drops the row and is reported.
 
 ---
 
@@ -119,11 +158,10 @@ During application shutdown or disposal:
 
 ## Testing
 
-`cargo test` runs the unit tests (disk-full response mapping, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key and the network; run it explicitly with:
-
+`cargo test` runs the unit tests (disk-full response mapping, queue file opening, operation construction). The integration test is `#[ignore]`d because it needs a Segment write key, an API host and the network; run it explicitly with:
 ```sh
-SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... cargo test -- --ignored
-```
+SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... SEGMENT_API_HOST=... cargo test -- --ignored
+````
 
 `rust-segment-verify.yml` runs `cargo check`, `cargo test` and `cargo clippy -- -D warnings` on every PR touching this plugin.
 

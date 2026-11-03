@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
+using Utility.Arch;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
@@ -165,7 +166,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (!emoteReference) return;
 
-            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
+            bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity) || IsRemoteAvatarHiddenByModifierArea(entity);
             if (shouldCancelEmote)
             {
                 StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
@@ -241,6 +242,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
             World.Remove<CharacterEmoteIntent>(entity);
+        }
+
+        // A modifier area hides only the wearables, so a hidden avatar's emote props would float on their own.
+        private bool IsRemoteAvatarHiddenByModifierArea(Entity entity)
+        {
+            // Stopping the local player's emote would broadcast the stop to every other client.
+            if (World.Has<PlayerComponent>(entity)) return false;
+
+            ref AvatarShapeComponent avatarShape = ref World.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            return hasAvatarShape && avatarShape.HiddenByModifierArea;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -428,7 +439,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                             };
 
                             uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                            World.AddOrSet(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
                     else
@@ -464,7 +475,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                             // The duration comes from the masked emote's own clip; a looping emote has no end to report.
                             uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
-                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                            World.AddOrSet(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
 

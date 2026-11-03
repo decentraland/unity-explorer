@@ -49,14 +49,14 @@ namespace UI.LayoutGroups
                 {
                     // New row
                     x = padding.left;
-                    y += rowHeight + SpacingX;
+                    y += rowHeight + SpacingY;
                     rowHeight = 0;
                 }
 
                 SetChildAlongAxis(child, 0, x, childWidth);
                 SetChildAlongAxis(child, 1, y, childHeight);
 
-                x += childWidth + SpacingY;
+                x += childWidth + SpacingX;
                 rowHeight = Mathf.Max(rowHeight, childHeight);
             }
 

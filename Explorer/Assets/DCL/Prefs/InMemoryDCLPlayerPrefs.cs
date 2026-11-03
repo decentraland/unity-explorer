@@ -47,7 +47,7 @@ namespace DCL.Prefs
             bools.GetValueOrDefault(key, defaultValue);
 
         public bool HasKey(string key) =>
-            strings.ContainsKey(key) || ints.ContainsKey(key) || floats.ContainsKey(key);
+            strings.ContainsKey(key) || ints.ContainsKey(key) || floats.ContainsKey(key) || bools.ContainsKey(key);
 
         public void DeleteKey(string key)
         {

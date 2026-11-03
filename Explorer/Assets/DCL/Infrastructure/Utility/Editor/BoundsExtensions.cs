@@ -12,14 +12,14 @@ namespace Utility.Editor
         public static void DrawInEditor(this Bounds bounds, Color color)
         {
             Vector3 halfSize = bounds.size * 0.5f;
-            Vector3[] bottomCorners = new Vector3[4]
+            Vector3[] bottomCorners = new Vector3[]
                     {
                         new Vector3(bounds.center.x - halfSize.x, bounds.center.y - halfSize.y, bounds.center.z + halfSize.z),
                         new Vector3(bounds.center.x + halfSize.x, bounds.center.y - halfSize.y, bounds.center.z + halfSize.z),
                         new Vector3(bounds.center.x + halfSize.x, bounds.center.y - halfSize.y, bounds.center.z - halfSize.z),
                         new Vector3(bounds.center.x - halfSize.x, bounds.center.y - halfSize.y, bounds.center.z - halfSize.z),
                     };
-            Vector3[] topCorners = new Vector3[4]
+            Vector3[] topCorners = new Vector3[]
                     {
                         new Vector3(bottomCorners[0].x, bottomCorners[0].y + bounds.size.y, bottomCorners[0].z),
                         new Vector3(bottomCorners[1].x, bottomCorners[1].y + bounds.size.y, bottomCorners[1].z),

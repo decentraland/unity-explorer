@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tests
         [SetUp]
         public void Setup()
         {
-            runtimeMetrics = new SceneRuntimeMetrics { TargetFps = 30 };
+            runtimeMetrics = new SceneRuntimeMetrics();
 
             scene = Substitute.For<ISceneFacade>();
             scene.RuntimeMetrics.Returns(runtimeMetrics);
@@ -43,7 +43,7 @@ namespace DCL.McpServer.Tests
             var structured = (JObject)Execute(tool).Payload["structuredContent"]!;
 
             // Assert
-            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
             Assert.That(structured["framesSampled"]!.Value<int>(), Is.EqualTo(100));
             Assert.That(structured["averageFps"]!.Value<float>(), Is.EqualTo(50f));
             Assert.That(structured["minFps"]!.Value<float>(), Is.EqualTo(20f));
@@ -73,11 +73,10 @@ namespace DCL.McpServer.Tests
             var sceneTick = (JObject)structured["sceneTick"]!;
 
             // Assert
-            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
             Assert.That(sceneTick["averageFps"]!.Value<float>(), Is.EqualTo(40f));
             Assert.That(sceneTick["minFps"]!.Value<float>(), Is.EqualTo(40f));
             Assert.That(sceneTick["maxFps"]!.Value<float>(), Is.EqualTo(40f));
-            Assert.That(sceneTick["targetFps"]!.Value<int>(), Is.EqualTo(30));
         }
 
         [Test]

@@ -46,7 +46,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 - **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
-- **[Skybox](skybox.md)** — Look presets (StylizedV1 ships, Legacy kept for SDK control), controller data flow, shader variants, debug switching, authoring
+- **[Skybox](skybox.md)** — Look presets (StylizedV1 ships, Legacy kept for SDK control, Halloween2026 seasonal), remote look selection via feature flag, controller data flow, shader variants, `PBSkybox`, `PBSun` and `PBEnvironmentFog` scene overrides (sky texture, derived reflections, environment gradients, sun intensity and direction), debug switching, authoring
 
 ## Avatar System
 - **[Avatar Rendering](avatar-rendering.md)** — GPU skinning, compute shaders, and cel-shading
@@ -90,6 +90,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 - **[Security Review](security-review.md)** — Jarvis pilot rollout, validation and recovery
 - **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, Unity Cloud, and the app-local Visual C++ runtime
+- **[Delta Updates](delta-updates.md)** — Per-file binary patches for launcher updates: release pipeline, S3 layout and retention, manifest format, launcher contract, and the `scripts/delta/` Rust tool (vocabulary, stages, workflows, local run)
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
 

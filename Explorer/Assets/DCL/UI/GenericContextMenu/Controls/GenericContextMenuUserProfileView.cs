@@ -5,6 +5,7 @@ using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -29,32 +30,32 @@ namespace DCL.UI.Controls
             Address,
         }
 
-        [field: SerializeField] public TMP_Text UserName { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
-        [field: SerializeField] public TMP_Text UserAddress { get; private set; }
-        [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
-        [field: SerializeField] public GameObject OfficialBadge { get; private set; }
-        [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
-        [field: SerializeField] public Button CopyNameButton { get; private set; }
-        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
-        [field: SerializeField] public Button CopyAddressButton { get; private set; }
-        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
-        [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
-        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] public GameObject FriendsButtonsContainer { get; private set; }
+        [field: SerializeField] public TMP_Text UserName { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserNameTag { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserAddress { get; private set; } = null!;
+        [field: SerializeField] public Image ClaimedNameBadge { get; private set; } = null!;
+        [field: SerializeField] public GameObject OfficialBadge { get; private set; } = null!;
+        [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; } = null!;
+        [field: SerializeField] public Button CopyNameButton { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; } = null!;
+        [field: SerializeField] public Button CopyAddressButton { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; } = null!;
+        [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; } = null!;
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
+        [field: SerializeField] public GameObject FriendsButtonsContainer { get; private set; } = null!;
 
         [field: Header("Friendship Button")]
-        [field: SerializeField] public Button AddFriendButton { get; private set; }
-        [field: SerializeField] public Button AcceptFriendButton { get; private set; }
-        [field: SerializeField] public Button RemoveFriendButton { get; private set; }
-        [field: SerializeField] public Button CancelFriendButton { get; private set; }
+        [field: SerializeField] public Button AddFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button AcceptFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button RemoveFriendButton { get; private set; } = null!;
+        [field: SerializeField] public Button CancelFriendButton { get; private set; } = null!;
 
         [field: Header("Components cache")]
-        [field: SerializeField] private RectTransform userNameRectTransform;
-        [field: SerializeField] private RectTransform faceFrameRectTransform;
-        [field: SerializeField] private RectTransform userAddressRectTransform;
-        [field: SerializeField] private RectTransform buttonContainerRectTransform;
-        [field: SerializeField] private Sprite defaultEmptyThumbnail;
+        [field: SerializeField] private RectTransform userNameRectTransform = null!;
+        [field: SerializeField] private RectTransform faceFrameRectTransform = null!;
+        [field: SerializeField] private RectTransform userAddressRectTransform = null!;
+        [field: SerializeField] private RectTransform buttonContainerRectTransform = null!;
+        [field: SerializeField] private Sprite defaultEmptyThumbnail = null!;
 
         private CancellationTokenSource copyAnimationCts = new ();
         private CancellationTokenSource? loadThumbnailCts;
@@ -151,8 +152,7 @@ namespace DCL.UI.Controls
             else
             {
                 userAddressRectTransform.gameObject.SetActive(true);
-                string userId = userData.UserId.Value;
-                UserAddress.text = $"{userId[..5]}...{userId[^5..]}";
+                UserAddress.text = Web3Address.Shorten(userData.UserId.Value);
             }
 
             UserNameTag.gameObject.SetActive(!userData.HasClaimedName);

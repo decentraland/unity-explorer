@@ -8,7 +8,6 @@ using ECS;
 using ECS.Abstract;
 using Newtonsoft.Json.Linq;
 using System;
-using UnityEngine;
 
 namespace DCL.Analytics.Systems
 {

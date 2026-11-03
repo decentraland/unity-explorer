@@ -2,7 +2,6 @@
 using System;
 using Unity.Profiling;
 using Utility.Multithreading;
-using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading
 {

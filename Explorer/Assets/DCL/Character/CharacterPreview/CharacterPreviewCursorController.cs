@@ -33,19 +33,19 @@ namespace DCL.CharacterPreview
             inputEventBus.OnDraggingEvent += OnDrag;
         }
 
-        private void OnDrag(PointerEventData pointerEventData)
+        private void OnDrag(CharacterPreviewPointerInput input)
         {
-            MoveCursor(pointerEventData.position);
+            MoveCursor(input.Position);
         }
 
-        private void OnPointerUp(PointerEventData pointerEventData)
+        private void OnPointerUp(CharacterPreviewPointerInput _)
         {
             RestoreCursor();
         }
 
-        private void OnPointerDown(PointerEventData pointerEventData)
+        private void OnPointerDown(CharacterPreviewPointerInput input)
         {
-            ReplaceCursor(pointerEventData);
+            ReplaceCursor(input);
         }
 
         private void MoveCursor(Vector2 position)
@@ -59,7 +59,7 @@ namespace DCL.CharacterPreview
             Cursor.visible = true;
         }
 
-        private void ReplaceCursor(PointerEventData pointerEventData)
+        private void ReplaceCursor(in CharacterPreviewPointerInput input)
         {
             static CharacterPreviewInputAction? FromInputButton(PointerEventData.InputButton inputButton) =>
                 inputButton switch
@@ -69,11 +69,11 @@ namespace DCL.CharacterPreview
                     _ => null,
                 };
 
-            CharacterPreviewInputAction? action = FromInputButton(pointerEventData.button);
+            CharacterPreviewInputAction? action = FromInputButton(input.Button);
             if (action.HasValue && cursorReplacementSprites.TryGetValue(action.Value, out Sprite sprite))
             {
                 cursorContainer.CursorOverrideImage.sprite = sprite!;
-                MoveCursor(pointerEventData.position);
+                MoveCursor(input.Position);
                 cursorContainer.CursorOverrideImage.gameObject.SetActive(true);
                 Cursor.visible = false;
                 cursorContainer.CursorOverrideImage.SetNativeSize();

@@ -210,6 +210,7 @@ namespace DCL.Input.Systems
                     if (isHoveringAnInteractable)
                         cursorStyle = CursorStyle.Interaction;
 
+                    // Only the first hit can take a click.
                     for (var i = 0; i < raycastResults.Count; i++)
                     {
                         GameObject? obj = raycastResults[i].gameObject;
@@ -217,12 +218,9 @@ namespace DCL.Input.Systems
                         if (obj == null)
                             continue;
 
-                        bool isInteractable = interactionCache.IsInteractable(obj, cursorComponent.Position);
+                        if (interactionCache.IsInteractable(obj, cursorComponent.Position))
+                            cursorStyle = CursorStyle.Interaction;
 
-                        if (!isInteractable)
-                            continue;
-
-                        cursorStyle = CursorStyle.Interaction;
                         break;
                     }
 
@@ -240,9 +238,6 @@ namespace DCL.Input.Systems
             crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SdkCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
         }
 
-        // We check if the gameObject is interactable or not, at least once.
-        // For UI Elements we do a PickAll and check its results by using the same logic
-        // we have to check if we can avoid doing a PickAll every frame, it seems that its not slow at least
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {

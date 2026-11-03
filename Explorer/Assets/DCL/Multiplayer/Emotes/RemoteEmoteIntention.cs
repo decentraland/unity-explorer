@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using System;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -14,13 +13,18 @@ namespace DCL.Multiplayer.Emotes
         public readonly string WalletId;
         public readonly double Timestamp;
         public readonly AvatarEmoteMask Mask;
+        public readonly IEmotesMessageBus Source;
+        public readonly ulong RetryGeneration;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId, double timestamp, AvatarEmoteMask mask)
+        public RemoteEmoteIntention(URN emoteId, string walletId, double timestamp, AvatarEmoteMask mask,
+            IEmotesMessageBus source, ulong retryGeneration = 0)
         {
             EmoteId = emoteId;
             WalletId = walletId;
             Timestamp = timestamp;
             Mask = mask;
+            Source = source;
+            RetryGeneration = retryGeneration;
         }
 
         public bool Equals(RemoteEmoteIntention other) =>

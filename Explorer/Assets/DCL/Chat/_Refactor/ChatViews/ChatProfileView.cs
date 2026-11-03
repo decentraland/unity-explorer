@@ -1,5 +1,4 @@
 ﻿using DCL.Chat.ChatViewModels;
-using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;

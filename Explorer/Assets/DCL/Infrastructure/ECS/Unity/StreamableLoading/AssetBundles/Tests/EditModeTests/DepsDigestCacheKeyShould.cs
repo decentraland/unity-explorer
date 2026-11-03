@@ -4,7 +4,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -54,6 +53,20 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             // The lookup is case-insensitive and returns the manifest's casing — the name that exists on the case-sensitive CDN.
             Assert.That(manifest.GetCdnRequestHash("QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}"));
+        }
+
+        [Test]
+        public void ListOnlyTheFilesTheManifestNamesAsConverted()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
+            manifest.InjectContent("QmSceneEntity", new[] { new ContentDefinition { file = "fonts/b.ttf", hash = HASH_B } });
+
+            Assert.That(manifest.ListsConvertedFile(HASH_A), Is.True);
+            Assert.That(manifest.ListsConvertedFile(HASH_A.ToUpperInvariant()), Is.True);
+            Assert.That(manifest.ListsConvertedFile(HASH_B), Is.False,
+                "Qm casing entries name every content file, converted or not");
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01").ListsConvertedFile(HASH_A), Is.False);
         }
 
         [Test]

@@ -1,8 +1,6 @@
 using DCL.Browser;
-using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
-using DCL.MapRenderer.MapLayers;
 using DCL.UI;
 using UnityEngine;
 
@@ -14,7 +12,6 @@ namespace DCL.Navmap
 
         private readonly SatelliteView view;
         private readonly RectTransform rectTransform;
-        private readonly IMapRenderer mapRenderer;
         private readonly UnityAppWebBrowser webBrowser;
 
         private IMapCameraController cameraController;
@@ -22,11 +19,9 @@ namespace DCL.Navmap
         public SatelliteController(
             SatelliteView view,
             MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData,
-            IMapRenderer mapRenderer,
             UnityAppWebBrowser webBrowser)
         {
             this.view = view;
-            this.mapRenderer = mapRenderer;
             this.webBrowser = webBrowser;
 
             rectTransform = view.GetComponent<RectTransform>();
@@ -54,7 +49,6 @@ namespace DCL.Navmap
 
         public void Deactivate()
         {
-            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, false);
             view.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
             view.SatelliteRenderImage.Deactivate();
             view.gameObject.SetActive(false);

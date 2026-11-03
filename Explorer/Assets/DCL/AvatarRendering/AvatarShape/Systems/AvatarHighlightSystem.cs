@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.CharacterPreview.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
@@ -27,7 +26,6 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             HighlightAvatarQuery(World, t);
             RemoveHighlightAvatarQuery(World, t);
-            HighlightPreviewQuery(World, t);
             ClearHighlightQuery(World);
         }
 
@@ -46,20 +44,9 @@ namespace DCL.AvatarRendering.AvatarShape
         /// Smoothly decreases opacity to 0 over FadeOutTimeSeconds.
         /// </summary>
         [Query]
-        [None(typeof(HoveredComponent), typeof(CharacterPreviewComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(HoveredComponent), typeof(DeleteEntityIntention))]
         private void RemoveHighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape) =>
             FadeOut(t, ref highlight, in avatarShape);
-
-        // A preview is never raycast, so its hover comes from the UI hosting it through the component flag
-        [Query]
-        [None(typeof(HoveredComponent), typeof(DeleteEntityIntention))]
-        private void HighlightPreview([Data] float t, in CharacterPreviewComponent preview, ref AvatarHighlightComponent highlight, in AvatarShapeComponent avatarShape)
-        {
-            if (preview.IsHovered)
-                FadeIn(t, ref highlight, in avatarShape);
-            else
-                FadeOut(t, ref highlight, in avatarShape);
-        }
 
         // The render feature keeps outlining the renderers, so an avatar released mid-fade would outline whichever avatar reuses them
         [Query]

@@ -15,6 +15,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
@@ -35,8 +36,8 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
-        private readonly bool useRemoteAssetBundles;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
@@ -51,8 +52,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
-            bool useRemoteAssetBundles,
             bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
@@ -62,8 +63,8 @@ namespace DCL.PluginSystem.World
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
@@ -105,13 +106,13 @@ namespace DCL.PluginSystem.World
                 new PrepareGltfAssetLoadingSystem.Options
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
-                    UseRemoteAssetBundles = useRemoteAssetBundles,
                     UseLocalAssetBundles = useLocalAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 
             CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget,
+                rawGltfFallback: useLocalAssetBundles, abgenConversionMetrics);
 
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);

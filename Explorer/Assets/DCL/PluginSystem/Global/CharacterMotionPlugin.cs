@@ -15,7 +15,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.ComponentsPooling.Systems;

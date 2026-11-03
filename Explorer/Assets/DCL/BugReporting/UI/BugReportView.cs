@@ -33,7 +33,6 @@ namespace DCL.BugReporting.UI
         [field: SerializeField] public Button SubmitButton { get; private set; } = null!;
         [field: SerializeField] public TMP_Text SubmitButtonLabel { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
-        [field: SerializeField] public Button CloseButton { get; private set; } = null!;
 
         [field: Header("Screenshots")]
         [field: SerializeField] public GameObject ScreenshotSection { get; private set; } = null!;

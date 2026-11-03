@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvProSwitch;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -106,26 +105,20 @@ namespace DCL.SDKComponents.MediaStream
             AddUuavRow(ref component);
         }
 
-        // The backend is chosen once globally at startup, so the per-player kind follows
-        // from the address type plus the global switch.
         private static string BackendLabel(ref MediaPlayerComponent component) =>
-            component.MediaPlayer.IsLivekitPlayer(out _) ? "LiveKit"
-            : MediaPlayerBackendSelection.UseCustomPlayer ? "UUAV" : "AVPro";
+            component.MediaPlayer.IsLivekitPlayer(out _) ? "LiveKit" : "UUAV";
 
         /// <summary>
         ///     Native-layer drill-down: UUAVPlayer lives on the same GameObject as the
-        ///     AvProSwitch MediaPlayer when the UUAV backend is active. Comparing its state
-        ///     with the ECS <c>State</c> row shows which layer a stall lives in.
+        ///     compat MediaPlayer. Comparing its state with the ECS <c>State</c> row shows
+        ///     which layer a stall lives in.
         /// </summary>
         private void AddUuavRow(ref MediaPlayerComponent component)
         {
-            if (!MediaPlayerBackendSelection.UseCustomPlayer)
+            if (!component.MediaPlayer.IsUrlMediaPlayer(out var urlMediaPlayer))
                 return;
 
-            if (!component.MediaPlayer.TryGetAvProPlayer(out MediaPlayer? mediaPlayer) || mediaPlayer == null)
-                return;
-
-            UUAVPlayer? uuavPlayer = mediaPlayer.GetComponent<UUAVPlayer>();
+            UUAVPlayer? uuavPlayer = urlMediaPlayer.MediaPlayer.GetComponent<UUAVPlayer>();
 
             if (uuavPlayer == null)
             {

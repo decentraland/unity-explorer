@@ -14,7 +14,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.UpgradeGuestAccountPopup;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -46,13 +45,12 @@ namespace DCL.Places
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
@@ -71,7 +69,7 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -93,7 +91,6 @@ namespace DCL.Places
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
-            this.worldPermissionsService = worldPermissionsService;
             this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
@@ -301,15 +298,19 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.Browse:
+                    bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
+                    bool onlyFeatured = currentFilters.IsBrowsingFeatured;
+
                     placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.Browse ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.Browse && !onlyFeatured ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              category: isSearching || onlyFeatured ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
                                                               onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY,
-                                                              withLiveEvents: true)
+                                                              withLiveEvents: true,
+                                                              onlyHighlighted: onlyFeatured ? true : null)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.Favorites:
@@ -322,10 +323,20 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MyPlaces:
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-                    if (ownProfile == null) return;
+                    ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+                    if (ownRead.IsCancelled)
+                        return;
+
+                    if (!ownRead.IsOk(out Profile? ownProfile))
+                    {
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                        EndPlacesGridLoading(pageNumber);
+                        return;
+                    }
+
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
-                                                              ownerAddress: ownProfile.UserId,
+                                                              ownerAddress: ownProfile.UserId.Value,
                                                               ct: ct,
                                                               withConnectedUsers: true,
                                                               onlySdk7: false,
@@ -350,6 +361,7 @@ namespace DCL.Places
             if (!placesResult.Success)
             {
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                EndPlacesGridLoading(pageNumber);
                 return;
             }
 
@@ -386,11 +398,15 @@ namespace DCL.Places
 
             currentPlacesTotalAmount = placesResult.Value.Total;
 
+            EndPlacesGridLoading(pageNumber);
+        }
+
+        private void EndPlacesGridLoading(int pageNumber)
+        {
             if (pageNumber == 0)
                 view.SetPlacesGridAsLoading(false);
 
             view.SetPlacesGridLoadingMoreActive(false);
-
             isPlacesGridLoadingItems = false;
         }
 

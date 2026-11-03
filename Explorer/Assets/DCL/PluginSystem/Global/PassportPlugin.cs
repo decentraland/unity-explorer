@@ -29,6 +29,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -43,14 +44,13 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IFriendsService? friendsService;
@@ -69,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IWebRequestController webRequestController;
         private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly UpscalingController upscalingController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -78,14 +79,13 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
-            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
             IFriendsService? friendsService,
@@ -103,7 +103,8 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             ImageControllerProvider imageControllerProvider,
             IWebRequestController webRequestController,
-            MarketplaceShopAPIClient marketplaceShopAPIClient)
+            MarketplaceShopAPIClient marketplaceShopAPIClient,
+            UpscalingController upscalingController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -120,7 +121,6 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -137,6 +137,7 @@ namespace DCL.PluginSystem.Global
             this.imageControllerProvider = imageControllerProvider;
             this.webRequestController = webRequestController;
             this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.upscalingController = upscalingController;
         }
 
         public void Dispose()
@@ -178,7 +179,6 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 remoteMetadata,
                 cameraReelStorageService,
-                cameraReelScreenshotsStorage,
                 friendsService,
                 friendOnlineStatusCache,
                 onlineUsersProvider,
@@ -191,6 +191,7 @@ namespace DCL.PluginSystem.Global
                 isCommunitiesFeatureEnabled,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
+                upscalingController,
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,

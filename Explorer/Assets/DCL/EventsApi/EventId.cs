@@ -21,7 +21,7 @@ namespace DCL.EventsApi
         public static Option<EventId> New(string? raw) =>
             string.IsNullOrEmpty(raw)
                 ? Option<EventId>.None
-                : Option<EventId>.Some(new EventId(raw!));
+                : Option<EventId>.Some(new EventId(raw));
 
         public bool Equals(EventId? other) =>
             other is not null && string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);

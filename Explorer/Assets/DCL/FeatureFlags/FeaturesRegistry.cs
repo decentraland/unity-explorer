@@ -30,6 +30,8 @@ namespace DCL.FeatureFlags
         private readonly bool lobbyDefault;
         private readonly bool lobbyFlagEnabled;
 
+        private bool? lobbyGrandfathered;
+
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)
@@ -83,9 +85,6 @@ namespace DCL.FeatureFlags
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
-                [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
-                [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
-                [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
@@ -112,7 +111,12 @@ namespace DCL.FeatureFlags
         {
             get
             {
-                if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED))
+                bool stored = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
+
+                // Sampled before the toggle is persisted below, so this session's own flag roll does not count as a stored setting
+                lobbyGrandfathered ??= stored;
+
+                if (stored)
                     return DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
                 // Persisted as the user's own choice so the lobby survives the flag being withdrawn; skipped when `--lobby false` overrides it
@@ -124,6 +128,17 @@ namespace DCL.FeatureFlags
 
             set => DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_LOBBY_ENABLED, value, true);
         }
+
+        /// <summary>
+        ///     The remote lobby flag as resolved for this session, before the Settings toggle and the <c>--lobby</c> app arg are applied.
+        /// </summary>
+        public bool LobbyFlagEnabled => lobbyFlagEnabled;
+
+        /// <summary>
+        ///     Whether the lobby setting was already stored when this session first resolved the lobby, either by the user in Settings or
+        ///     by an earlier session's flag roll, as opposed to being decided by this session's flag roll.
+        /// </summary>
+        public bool LobbyGrandfathered => lobbyGrandfathered ??= DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_LOBBY_ENABLED);
 
         /// <summary>
         ///     Checks if a feature is enabled.
@@ -261,9 +276,6 @@ namespace DCL.FeatureFlags
         CreditsWearablePurchase = 68,
         CreditsTopup = 69,
         McpServer = 70,
-        UseCustomMediaPlayerWindows = 71,
-        UseCustomMediaPlayerMacSilicon = 72,
-        UseCustomMediaPlayerMacIntel = 73,
         NearbyVoiceChatTip = 74,
         BugReport = 75,
         InGameShop = 76,

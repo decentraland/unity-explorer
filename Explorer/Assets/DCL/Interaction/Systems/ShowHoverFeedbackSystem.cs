@@ -3,14 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.CharacterCamera.Components;
-using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Systems;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Utility.UIToolkit;
 
 namespace DCL.Interaction.HoverCanvas.Systems

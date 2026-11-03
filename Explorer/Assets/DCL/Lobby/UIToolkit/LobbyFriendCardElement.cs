@@ -1,4 +1,6 @@
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UIToolkit.Elements;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -31,6 +33,7 @@ namespace DCL.Lobby
         public Action? JoinClicked;
 
         private VisualElement? picture;
+        private SkeletonLoadingElement? skeleton;
         private Label? nameLabel;
         private Label? walletTagLabel;
         private Label? locationLabel;
@@ -156,7 +159,14 @@ namespace DCL.Lobby
         public bool IsLoading
         {
             get => ClassListContains(USS_LOADING);
-            set => EnableInClassList(USS_LOADING, value);
+
+            set
+            {
+                EnableInClassList(USS_LOADING, value);
+
+                if (skeleton != null)
+                    LobbyThumbnailSkeleton.SetLoading(skeleton, value);
+            }
         }
 
         public LobbyFriendCardElement()
@@ -173,6 +183,7 @@ namespace DCL.Lobby
                 return;
 
             picture = this.Q<VisualElement>(PICTURE_NAME);
+            skeleton = LobbyThumbnailSkeleton.AddTo(picture);
             nameLabel = this.Q<Label>(NAME_NAME);
             walletTagLabel = this.Q<Label>(WALLET_TAG_NAME);
             locationLabel = this.Q<Label>(LOCATION_TEXT_NAME);
@@ -185,12 +196,13 @@ namespace DCL.Lobby
             walletTagLabel.text = walletTag;
             locationLabel.text = location;
             ApplyPicture(picture);
+            LobbyThumbnailSkeleton.SetLoading(skeleton, IsLoading);
         }
 
         private void ApplyPicture(VisualElement target)
         {
-            target.style.backgroundColor = pictureColor;
-            target.style.backgroundImage = LobbyCardBackground.From(pictureSprite);
+            target.SetProfileColor(pictureColor);
+            target.style.backgroundImage = VisualElementsExtensions.CoverBackground(pictureSprite);
         }
 
         private void OnClicked() =>

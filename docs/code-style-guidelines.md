@@ -30,6 +30,7 @@ Use:
 - Asynchronous methods end with `Async`.
 - Events name is in past tense and without `On` prefix.
 - `_`, `__`, `___` for unused parameters of the method (for example, for event subscribers, interface implementation and inheritance overridden methods).
+- UI Toolkit USS class names follow [BEM](https://getbem.com/naming/), the convention Unity recommends for UI Toolkit: `block`, `block__element`, `block--modifier` (for example `lobby-place-card`, `lobby-place-card__title`, `lobby-place-card--selected`). A custom `VisualElement` keeps its block name in a `USS_BLOCK` constant and derives the element and modifier names from it.
 
 ```csharp
 namespace MyProject                                     // Namespace -> PascalCase

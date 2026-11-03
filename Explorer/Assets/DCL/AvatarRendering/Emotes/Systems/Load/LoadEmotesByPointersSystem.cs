@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static _ => "Pointer request cancelled"))
                 return;
 
-            using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest)!;
+            using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest);
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
             ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp.List);
@@ -97,9 +97,22 @@ namespace DCL.AvatarRendering.Emotes.Load
             bool success = GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
 
             if (success)
+            {
+                RemoveEmotesWithFailedDTO(resolvedEmotesTmp.List);
                 World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+            }
             else
                 resolvedEmotesTmp.Dispose();
+        }
+
+        /// <summary>
+        ///     An emote whose DTO request failed counts as resolved but has no DTO, so it is not part of the result.
+        /// </summary>
+        internal static void RemoveEmotesWithFailedDTO(List<IEmote> emotes)
+        {
+            for (var i = emotes.Count - 1; i >= 0; i--)
+                if (!emotes[i].Model.Succeeded)
+                    emotes.RemoveAt(i);
         }
 
         private void ResolveIntentionWithSuccessfulEmotes(Entity entity,
@@ -112,8 +125,16 @@ namespace DCL.AvatarRendering.Emotes.Load
                     emote.UpdateLoadingStatus(false);
 
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
+            List<IEmote> resolvedEmotes = resolvedEmotesTmp.List;
+
             // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
-            resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
+            for (var i = resolvedEmotes.Count - 1; i >= 0; i--)
+            {
+                IEmote emote = resolvedEmotes[i];
+
+                if (emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()))
+                    resolvedEmotes.RemoveAt(i);
+            }
 
             World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }

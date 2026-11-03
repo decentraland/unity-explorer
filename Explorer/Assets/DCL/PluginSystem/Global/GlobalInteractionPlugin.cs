@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 using PlayerOriginatedProximitySystem = DCL.Interaction.Systems.PlayerOriginatedProximitySystem;
@@ -67,7 +68,10 @@ namespace DCL.PluginSystem.Global
         {
             settings = pluginSettings;
 
-            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(pluginSettings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
+            UIDocument hoverDocument = (await assetsProvisioner.ProvideInstanceAsync(pluginSettings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value;
+            PanelSpriteLookupTables.Build(hoverDocument.panelSettings);
+
+            hoverCanvas = hoverDocument.rootVisualElement.Q<HoverCanvas>();
             hoverCanvas.Initialize();
         }
 

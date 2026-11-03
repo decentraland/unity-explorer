@@ -37,7 +37,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         /// </summary>
         public UniTask PersistPngAsync(int slotIndex, byte[] pngBytes, CancellationToken ct);
 
-        public UniTask<Texture2D> LoadScreenshotAsync(int slotIndex, CancellationToken ct);
+        public UniTask<Texture2D?> LoadScreenshotAsync(int slotIndex, CancellationToken ct);
 
         public UniTask DeleteScreenshotAsync(int slotIndex, CancellationToken ct);
     }

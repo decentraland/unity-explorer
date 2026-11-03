@@ -21,6 +21,7 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
@@ -48,6 +49,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.AvatarNametag;
+using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Systems;
@@ -55,6 +57,7 @@ using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -88,6 +91,8 @@ namespace Global.Dynamic
         private readonly ProfileContainer profileContainer;
         private readonly UIShellContainer uiShellContainer;
         private readonly ChatContainer chatContainer;
+        private readonly UpscalingController upscalingController;
+        private readonly LobbyStagePresetCatalog lobbyStagePresetCatalog;
 
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
@@ -131,7 +136,9 @@ namespace Global.Dynamic
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
             CommunitiesContainer communitiesContainer,
-            VoiceChatContainer voiceChatContainer)
+            VoiceChatContainer voiceChatContainer,
+            UpscalingController upscalingController,
+            LobbyStagePresetCatalog lobbyStagePresetCatalog)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -149,11 +156,15 @@ namespace Global.Dynamic
             this.multiplayerContainer = multiplayerContainer;
             this.communitiesContainer = communitiesContainer;
             this.voiceChatContainer = voiceChatContainer;
+            this.upscalingController = upscalingController;
+            this.lobbyStagePresetCatalog = lobbyStagePresetCatalog;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
+            lobbyStagePresetCatalog.Dispose();
+            upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
@@ -308,7 +319,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager, dynamicWorldParams.StartParcel);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -442,9 +453,11 @@ namespace Global.Dynamic
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
+            var upscaleController = new UpscalingController(characterPreviewEventBus);
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
+
+            var inWorldCameraToggle = new InWorldCameraToggle(globalWorld);
 
             var badgesApiClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
@@ -527,6 +540,20 @@ namespace Global.Dynamic
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
 
+            var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
+
+            // Read here because Settings needs the names and backdrops even in a session without the lobby plugin
+            LobbyPlugin.LobbyPluginSettings.StagePresetEntry[] stagePresets = dynamicWorldDependencies.SettingsContainer.GetSettings<LobbyPlugin.LobbyPluginSettings>().StagePresets;
+            var stagePresetNames = new string[stagePresets.Length];
+
+            for (var i = 0; i < stagePresets.Length; i++)
+                stagePresetNames[i] = stagePresets[i].Name;
+
+            var lobbyStagePresetSetting = new LobbyStagePresetSetting(stagePresetNames);
+
+            var lobbyStagePresetCatalog = new LobbyStagePresetCatalog(stagePresets, lobbyStagePresetSetting, assetsProvisioner);
+            lobbyStagePresetCatalog.Start();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -537,7 +564,7 @@ namespace Global.Dynamic
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsServices?.FriendsCache, multiplayerContainer.MovementMessageBus),
-                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler),
+                uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler, staticContainer.CurrentSceneUiOnly),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
@@ -578,24 +605,21 @@ namespace Global.Dynamic
                     profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
-                    profileCache,
-                    globalWorld,
-                    playerEntity,
-                    chatContainer.ChatHistory,
+                    userLogout,
                     profileContainer.ProfileRepositoryWrapper,
                     profileContainer.ProfileChangesBus,
                     profileContainer.SelfProfile,
-                    staticContainer.RealmData,
-                    staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource,
                     uiShellContainer.PassportBridge,
                     chatContainer.ChatEventBus,
-                    placesAndEventsContainer.EventsApiService,
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
-                    voiceChatContainer.JoinedCommunitiesVoiceLiveTracker),
+                    placesAndEventsContainer.EventsApiService,
+                    marketplaceCreditsApiClient,
+                    inWorldCameraToggle,
+                    generalAudioMixer,
+                    bootstrapContainer.VolumeBus,
+                    uiShellContainer.Clipboard),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,
@@ -639,21 +663,18 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
                     cameraReelContainer.StorageService,
-                    cameraReelContainer.StorageService,
                     uiShellContainer.Clipboard,
                     bootstrapContainer.DecentralandUrlsSource,
                     wearableContainer.WearableCatalog,
                     characterPreviewFactory,
                     profilesRepository,
-                    dynamicWorldDependencies.CompositeWeb3Provider,
-                    initializationFlowContainer.InitializationFlow,
+                    userLogout,
                     profileContainer.SelfProfile,
                     profileContainer.EquippedWearables,
                     profileContainer.EquippedEmotes,
                     webBrowser,
                     emotesCache,
                     staticContainer.RealmData,
-                    profileCache,
                     characterPreviewEventBus,
                     placesAndEventsContainer.MapPathEventBus,
                     wearableContainer.BackpackEventBus,
@@ -664,7 +685,7 @@ namespace Global.Dynamic
                     wearableContainer.EmoteProvider,
                     globalWorld,
                     playerEntity,
-                    chatContainer.ChatMessagesBus,
+                    chatContainer.ChatTeleporter,
                     staticContainer.MemoryCap,
                     bootstrapContainer.VolumeBus,
                     placesAndEventsContainer.EventsApiService,
@@ -700,13 +721,14 @@ namespace Global.Dynamic
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService,
-                    marketplaceCreditsApiClient
+                    marketplaceCreditsApiClient,
+                    lobbyStagePresetSetting
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
-                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, debugBuilder, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, staticContainer.QualityContainer.RendererFeaturesCache, debugBuilder, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, uiShellContainer.Cursor),
@@ -761,7 +783,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     commsContainer.RemoteMetadata,
                     cameraReelContainer.StorageService,
-                    cameraReelContainer.StorageService,
                     globalWorld,
                     playerEntity,
                     friendsServices?.FriendsService,
@@ -779,7 +800,8 @@ namespace Global.Dynamic
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    marketplaceShopApiClient
+                    marketplaceShopApiClient,
+                    upscaleController
                 ),
                 new CreditPurchasePlugin(
                     assetsProvisioner,
@@ -848,12 +870,13 @@ namespace Global.Dynamic
             globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Lobby))
-                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, staticContainer.LoadingStatus, debugBuilder,
+                globalPlugins.Add(new LobbyPlugin(assetsProvisioner, uiShellContainer.MvcManager, staticContainer.InputBlock, uiShellContainer.Cursor, staticContainer.LoadingStatus, debugBuilder,
                     profileContainer.SelfProfile, profileContainer.ProfileChangesBus, characterPreviewFactory, characterPreviewEventBus, globalWorld,
-                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
-                    identityCache, profilesRepository, profileCache, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, playerEntity, webBrowser,
-                    dynamicWorldDependencies.CompositeWeb3Provider, initializationFlowContainer.InitializationFlow, marketplaceCreditsApiClient, notificationsRequestController,
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, placesAndEventsContainer.OnlineUsersProvider));
+                    placesAndEventsContainer.PlacesAPIService, staticContainer.RealmData, placesAndEventsContainer.HomePlaceEventBus, placesAndEventsContainer.EventsApiService, realmNavigator, bootstrapContainer.DecentralandUrlsSource, chatContainer.ChatMessagesBus, uiShellContainer.Clipboard, dynamicWorldParams.StartParcel, staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache, profilesRepository, profileContainer.ProfileRepositoryWrapper, uiShellContainer.PassportBridge, webBrowser,
+                    userLogout, marketplaceCreditsApiClient, notificationsRequestController,
+                    FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus) ? friendsServices?.ConnectivityStatusTracker : null, friendsServices?.FriendsService, placesAndEventsContainer.OnlineUsersProvider,
+                    communitiesContainer.IncludeCommunities ? communitiesContainer.DataProvider : null, includeCameraReel ? cameraReelContainer : null, lobbyStagePresetSetting, lobbyStagePresetCatalog));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
@@ -879,6 +902,7 @@ namespace Global.Dynamic
                         uiShellContainer.MainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
+                        identityCache,
                         voiceChatContainer.NearbyMuteService,
                         voiceChatContainer.NearbyStateModel)
                 );
@@ -921,7 +945,7 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                     globalPlugins.Add(new McpServerPlugin(
                         appArgs,
-                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
+                        new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                         chatContainer.ChatMessagesBus,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
@@ -990,6 +1014,7 @@ namespace Global.Dynamic
                     wearableContainer.WearablesProvider,
                     uiShellContainer.Cursor,
                     globalWorld,
+                    inWorldCameraToggle,
                     debugBuilder,
                     dynamicSettings.NametagsData,
                     profileContainer.ProfileRepositoryWrapper,
@@ -1037,7 +1062,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.InputBlock,
                     cameraReelContainer.StorageService,
-                    cameraReelContainer.ScreenshotsStorage,
                     profileContainer.ProfileRepositoryWrapper,
                     friendsServices?.FriendsService,
                     communitiesContainer.DataProvider,
@@ -1086,7 +1110,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     assetsProvisioner,
                     debugBuilder,
-                    staticContainer.ScenesCache
+                    staticContainer.ScenesCache,
+                    bootstrapContainer.AbgenConversionMetrics
                 ));
 
             if (!localSceneDevelopment)
@@ -1101,7 +1126,6 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams,
                 commsContainer.CurrentSceneInfo,
                 lodContainer.LodCache,
                 lodContainer.RoadCoordinates,
@@ -1109,8 +1133,8 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
-                bootstrapContainer.UseRemoteAssetBundles,
                 bootstrapContainer.UseLocalAssetBundles,
+                bootstrapContainer.AbgenConversionMetrics,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,
@@ -1133,7 +1157,9 @@ namespace Global.Dynamic
                 bannedNotificationHandler,
                 multiplayerContainer,
                 communitiesContainer,
-                voiceChatContainer
+                voiceChatContainer,
+                upscaleController,
+                lobbyStagePresetCatalog
             );
 
             // Init itself

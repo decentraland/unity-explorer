@@ -19,8 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public EquippedWearables()
         {
-            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
-                wearables.Add(category, null);
+            ResetSlots();
         }
 
         public IWearable? Wearable(string category) =>
@@ -67,13 +66,24 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             foreach (string category in categories) { forceRenderCategories.Add(category); }
         }
 
+        /// <summary>
+        ///     Empties every category slot without removing it, so <see cref="Wearable" /> answers null for any category.
+        /// </summary>
         public void Clear()
         {
-            wearables.Clear();
+            ResetSlots();
             forceRenderCategories.Clear();
         }
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;
+
+        private void ResetSlots()
+        {
+            wearables.Clear();
+
+            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
+                wearables.Add(category, null);
+        }
     }
 }

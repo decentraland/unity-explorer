@@ -1,7 +1,5 @@
 ﻿using DCL.Chat.History;
-using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Utilities;
-using DCL.VoiceChat;
 using UnityEngine;
 
 namespace DCL.Chat.ChatViewModels

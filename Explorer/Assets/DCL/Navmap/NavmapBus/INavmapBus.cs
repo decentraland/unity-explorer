@@ -38,22 +38,23 @@ namespace DCL.Navmap
             IReadOnlyList<PlacesData.PlaceInfo> places,
             int totalResultCount);
 
-        event Action<PlacesData.PlaceInfo> OnJumpIn;
+        event Action<PlacesData.PlaceInfo>? OnJumpIn;
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         event SearchPlaceResultDelegate? OnPlaceSearched;
         event Action<string?>? OnFilterByCategory;
         event Action? OnClearFilter;
         event Action? OnClearPlacesFromMap;
-        event Action<Vector2, float> OnMoveCameraTo;
+        event Action<Vector2, float>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
-        public event Action<Vector2Int, Vector2> OnLongHover;
-        public event Action<Vector2Int, bool, bool> OnSelectPlaceFromResultsPanel;
+        public event Action<Vector2Int, Vector2>? OnLongHover;
+        public event Action<Vector2Int, bool, bool>? OnSelectPlaceFromResultsPanel;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false,
             // We need to know the original coordinates of the requested parcel for handling cases like roads.
             // Roads begin at one coordinate but may extend across the map.
             // The user should be able to teleport along the entirety of the road seamlessly.
-            Vector2Int? originalParcel = null);
+            Vector2Int? originalParcel = null,
+            bool landOnOriginalParcel = false);
         UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false);
 
         UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);

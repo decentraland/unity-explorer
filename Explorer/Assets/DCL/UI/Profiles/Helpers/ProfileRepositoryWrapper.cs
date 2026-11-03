@@ -47,11 +47,13 @@ namespace DCL.UI.Profiles.Helpers
         private void OnIdentityCleared() =>
             latestThumbnailUrlByUser.Clear();
 
+        /// <remarks>An empty url (a profile without a face snapshot) has no thumbnail: the cache is not consulted.</remarks>
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetSpriteAsync(thumbnailUrl, RETRY_POLICY, ct);
+            string.IsNullOrEmpty(thumbnailUrl) ? null : await thumbnailCache.GetSpriteAsync(thumbnailUrl, RETRY_POLICY, ct);
 
+        /// <remarks>An empty url (a profile without a face snapshot) has no thumbnail: the cache is not consulted.</remarks>
         public Sprite? GetProfileThumbnail(string thumbnailUrl) =>
-            thumbnailCache.GetCachedSprite(thumbnailUrl);
+            string.IsNullOrEmpty(thumbnailUrl) ? null : thumbnailCache.GetCachedSprite(thumbnailUrl);
 
         public Sprite? GetLatestThumbnailForUser(string userId)
         {

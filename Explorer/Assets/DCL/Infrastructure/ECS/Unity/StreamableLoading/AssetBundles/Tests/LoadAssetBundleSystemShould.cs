@@ -6,7 +6,6 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Buffers;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {

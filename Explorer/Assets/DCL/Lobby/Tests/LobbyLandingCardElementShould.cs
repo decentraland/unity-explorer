@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -36,7 +37,6 @@ namespace DCL.Lobby.Tests
         {
             //Arrange
             card.Title = "Genesis Plaza";
-            card.Creator = "creator";
             card.OnlineCount = 7;
             card.CanJumpIn = false;
 
@@ -45,7 +45,6 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual("Genesis Plaza", card.Q<Label>("Title").text);
-            Assert.AreEqual("creator", card.Q<Label>("Creator").text);
             Assert.AreEqual("7", card.Q<Label>("OnlineCount").text);
             Assert.IsFalse(card.Q<Button>("JumpIn").enabledSelf);
         }
@@ -66,19 +65,32 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheOnlineCountWhileItHasNone()
+        public void ShowTheOnlineCountOnlyWhileSomebodyIsThere()
         {
             //Act
-            card.HasOnlineCount = false;
+            card.OnlineCount = 0;
 
             //Assert
             Assert.IsFalse(card.ClassListContains("lobby-landing-card--with-online"));
 
             //Act
-            card.HasOnlineCount = true;
+            card.OnlineCount = 3;
 
             //Assert
             Assert.IsTrue(card.ClassListContains("lobby-landing-card--with-online"));
+        }
+
+        [Test]
+        public void ExposeTheConnectedFriendsRowOnceAttached()
+        {
+            //Assert
+            Assert.IsNull(card.ConnectedFriends);
+
+            //Act
+            AttachToPanel();
+
+            //Assert
+            Assert.AreSame(card.Q<LobbyConnectedFriendsElement>("ConnectedFriends"), card.ConnectedFriends);
         }
 
         [Test]
@@ -95,6 +107,28 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.IsFalse(card.ClassListContains("lobby-landing-card--loading"));
+        }
+
+        [Test]
+        public void SweepTheSkeletonOverTheThumbnailWhileLoading()
+        {
+            //Arrange
+            card.IsLoading = true;
+
+            //Act
+            AttachToPanel();
+
+            //Assert
+            SkeletonLoadingElement skeleton = card.Q<VisualElement>("Thumbnail").Q<SkeletonLoadingElement>("Skeleton");
+            Assert.IsTrue(skeleton.ClassListContains("lobby-thumbnail-skeleton--shown"));
+            Assert.IsTrue(skeleton.IsAnimating);
+
+            //Act
+            card.IsLoading = false;
+
+            //Assert
+            Assert.IsFalse(skeleton.ClassListContains("lobby-thumbnail-skeleton--shown"));
+            Assert.IsFalse(skeleton.IsAnimating);
         }
 
         [Test]

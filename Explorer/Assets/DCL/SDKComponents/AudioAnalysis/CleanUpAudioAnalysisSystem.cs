@@ -5,13 +5,10 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.MediaStream;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.AudioClips;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -38,20 +35,20 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
         private void HandleComponentRemovalAudio(ref AudioSourceComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestructionAudio(ref AudioSourceComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         private void FinalizeComponentsAudio(ref AudioSourceComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 #endregion
 
@@ -61,20 +58,20 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioAnalysis), typeof(DeleteEntityIntention))]
         private void HandleComponentRemovalPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestructionPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 
         [Query]
         private void FinalizeComponentsPlayer(ref MediaPlayerComponent component)
         {
-            component.EnsureLastAudioFrameReadFilterIsRemoved();
+            component.DetachAudioFrameBuffer();
         }
 #endregion
 

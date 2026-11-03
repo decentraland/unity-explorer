@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using Utility;
 
 namespace DCL.MapRenderer.MapLayers.PlayerMarker
@@ -49,7 +48,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
 
         public void SetZoom(float baseZoom, float zoom)
         {
-            float newScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+            float newScale = MarkerHelper.ScaleForZoom(baseScale, baseZoom, zoom);
             markerObject.transform.localScale = new Vector3(newScale, newScale, 1f);
         }
 

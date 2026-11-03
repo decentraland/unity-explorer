@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
@@ -6,7 +7,12 @@ using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading;
 using UnityEngine;
+using Utility.Networking;
 using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics.Sentry
@@ -21,13 +27,14 @@ namespace DCL.Diagnostics.Sentry
 
         // Native engine messages are captured by the Sentry Unity SDK's own log integration and never pass through ReportHub,
         // so they can only be filtered on the SDK's BeforeSend gateway. All of them are un-actionable for the client:
-        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182)
-        // and camera projection warnings of off-screen points (#10154)
+        // PhysX mesh-cooking warnings from creator assets (#7928, #10148, #10181), libcurl transport failures (#10182),
+        // camera projection warnings of off-screen points (#10154) and the compute shader rejection the minimum specs guard already covers (#10338)
         private static readonly string[] IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
             "Curl error ",
             "Screen position out of view frustum",
+            "Platform does not support compute shaders",
         };
 
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
@@ -36,11 +43,14 @@ namespace DCL.Diagnostics.Sentry
         // Interruptions of scene engines; not a ScriptEngineException subtype, so matched separately (#10194)
         private const string SCRIPT_INTERRUPTED_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptInterruptedException";
 
-        // Connect failures of scene-owned websockets are the scene's problem; the same wrapper type is kept for the client's own sockets (#10103)
-        private const string SCENE_WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
+        // A websocket dropped by the remote end is a backend condition the client cannot act on (#10103, #10377)
+        private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
         // Thrown by the runtime's task machinery inside third-party transports (Sentry SDK, System.Net.Http) with no client frame (#10094, #10120, #10121, #10153)
         private const string TASK_ALREADY_COMPLETED_MESSAGE = "An attempt was made to transition a task to a final state when it had already completed.";
+
+        // Cleartext http is refused by the player, and such URLs only ever come from scene content (#8080, #10008, #10204, #10276)
+        private const string INSECURE_CONNECTION_MESSAGE = "Insecure connection not allowed";
 
         // The user's disk is full: an environment condition, not a client defect (#10086). Matched by HRESULT first
         // (HRESULT_FROM_WIN32 of ERROR_HANDLE_DISK_FULL and ERROR_DISK_FULL, the codes the runtime attaches on every platform)
@@ -48,6 +58,9 @@ namespace DCL.Diagnostics.Sentry
         private const int HANDLE_DISK_FULL_HRESULT = unchecked((int)0x80070027);
         private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
+
+        // Beyond this many held networking failures, an error storm falls back to the last confirmed connectivity state
+        private const int MAX_HELD_NETWORK_FAILURES = 32;
 
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
@@ -58,10 +71,14 @@ namespace DCL.Diagnostics.Sentry
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
         private readonly PerReportScope.Pool scopesPool;
+        private readonly InternetConnectivityMonitor connectivity;
 
-        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled)
+        private int heldNetworkFailures;
+
+        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled, bool isLocalSceneDevelopment, string? sessionId, InternetConnectivityMonitor connectivity)
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
+            this.connectivity = connectivity;
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
             globalScopeConfigurators = scopeConfigurators;
 
@@ -86,7 +103,7 @@ namespace DCL.Diagnostics.Sentry
             options.TracesSampler = sentrySampler.Execute;
 
             // The single gateway every event passes through, whether it was captured via ReportHub or directly by the SDK's integrations
-            options.SetBeforeSend(BeforeSend);
+            options.SetBeforeSend(@event => BeforeSend(@event, isLocalSceneDevelopment, !connectivity.IsOnline));
 
 #if UNITY_EDITOR
             // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
@@ -113,6 +130,10 @@ namespace DCL.Diagnostics.Sentry
 
             SentrySdk.Init(options);
 
+            // On the SDK's own scope so every event carries it, including those captured by the SDK's integrations and native crashes
+            if (sessionId is { Length: > 0 } launcherSessionId)
+                SentrySdk.ConfigureScope(scope => scope.SetTag("session_id", launcherSessionId));
+
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(SentryReportHandler), EndSessionAndFlush));
         }
 
@@ -130,11 +151,6 @@ namespace DCL.Diagnostics.Sentry
         public void AddIdentityToScope(Scope scope, string wallet)
         {
             scope.SetTag("wallet", wallet);
-        }
-
-        public void AddSessionIdToScope(Scope scope, string sessionId)
-        {
-            scope.SetTag("session_id", sessionId);
         }
 
         public void AddCurrentSceneToScope(Scope scope, SceneShortInfo sceneInfo)
@@ -185,12 +201,47 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
-            SentrySdk.CaptureException(ecsSystemException);
+            if (IsNetworkFailure(ecsSystemException))
+                CaptureWhenOnlineAsync(ecsSystemException, reportData: null).Forget();
+            else
+                Capture(ecsSystemException, reportData: null);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception);
+            if (IsNetworkFailure(exception))
+                CaptureWhenOnlineAsync(exception, reportData).Forget();
+            else
+                Capture(exception, reportData);
+        }
+
+        // A networking failure only says the machine was offline when it was, so it waits for the connectivity probe before being captured or demoted (UNITY-EXPLORER-NQJ)
+        private async UniTaskVoid CaptureWhenOnlineAsync(Exception exception, ReportData? reportData)
+        {
+            try
+            {
+                bool online = Interlocked.Increment(ref heldNetworkFailures) > MAX_HELD_NETWORK_FAILURES // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                    ? connectivity.IsOnline
+                    : await connectivity.RefreshIfStaleAsync();
+
+                if (online)
+                    Capture(exception, reportData);
+                else
+                    Demote(exception.Message);
+            }
+            catch (Exception) { /* reporting it would re-enter this handler */ }
+            finally { Interlocked.Decrement(ref heldNetworkFailures); } // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        }
+
+        private void Capture(Exception exception, ReportData? reportData)
+        {
+            if (reportData == null)
+            {
+                SentrySdk.CaptureException(exception);
+                return;
+            }
+
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData.Value, exception);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
@@ -236,7 +287,7 @@ namespace DCL.Diagnostics.Sentry
         ///     Drops the events the client cannot act on, keeping them as breadcrumbs of the next real report,
         ///     and tags the remaining ones with a category so Sentry can always filter by it.
         /// </summary>
-        internal static SentryEvent? BeforeSend(SentryEvent @event)
+        internal static SentryEvent? BeforeSend(SentryEvent @event, bool isLocalSceneDevelopment = false, bool isOffline = false)
         {
             string? category = @event.Tags.TryGetValue(CATEGORY_TAG, out string? tag) ? tag : null;
 
@@ -245,7 +296,7 @@ namespace DCL.Diagnostics.Sentry
             if (message != null && IsIgnoredNativeMessage(message))
                 return Demote(message);
 
-            if (@event.Exception != null && IsIgnoredException(@event.Exception, category))
+            if (@event.Exception != null && IsIgnoredException(@event.Exception, isLocalSceneDevelopment, isOffline))
                 return Demote(@event.Exception.Message);
 
             if (category == null)
@@ -269,7 +320,7 @@ namespace DCL.Diagnostics.Sentry
             return false;
         }
 
-        private static bool IsIgnoredException(Exception exception, string? category)
+        private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment, bool isOffline)
         {
             switch (exception)
             {
@@ -279,28 +330,53 @@ namespace DCL.Diagnostics.Sentry
                         return false;
 
                     for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
-                        if (!IsIgnoredException(aggregate.InnerExceptions[i], category))
+                        if (!IsIgnoredException(aggregate.InnerExceptions[i], isLocalSceneDevelopment, isOffline))
                             return false;
 
                     return true;
 
-                case IOException:
-                    return exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
-                           || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal);
+                // Networking failures are never a client defect while the machine is offline (UNITY-EXPLORER-NQJ) or in local scene
+                // development, where every endpoint is the creator's own preview server (#10318)
+                case UnityWebRequestException or WebException or SocketException or HttpRequestException when isLocalSceneDevelopment || isOffline:
 
-                case InvalidOperationException:
-                    return exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal);
+                // A gateway or transport failure that outlasted the retry policy is an infrastructure condition the client cannot act on (#7808)
+                case UnityWebRequestException webRequestException when TransientWebRequestFailure.IsTransient(webRequestException.ResponseCode, webRequestException.Message):
+
+                case IOException when exception.HResult is HANDLE_DISK_FULL_HRESULT or DISK_FULL_HRESULT
+                                      || exception.Message.StartsWith(DISK_FULL_MESSAGE_PREFIX, StringComparison.Ordinal):
+
+                case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
+                                                    || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+                    return true;
             }
 
             string? typeName = exception.GetType().FullName;
 
-            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or SCRIPT_INTERRUPTED_EXCEPTION_TYPE)
+            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or SCRIPT_INTERRUPTED_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
-            if (typeName == SCENE_WEBSOCKET_EXCEPTION_TYPE)
-                return category == ReportCategory.JAVASCRIPT;
+            return exception.InnerException != null && IsIgnoredException(exception.InnerException, isLocalSceneDevelopment, isOffline);
+        }
 
-            return exception.InnerException != null && IsIgnoredException(exception.InnerException, category);
+        internal static bool IsNetworkFailure(Exception exception)
+        {
+            switch (exception)
+            {
+                case AggregateException aggregate:
+                    if (aggregate.InnerExceptions.Count == 0)
+                        return false;
+
+                    for (var i = 0; i < aggregate.InnerExceptions.Count; i++)
+                        if (!IsNetworkFailure(aggregate.InnerExceptions[i]))
+                            return false;
+
+                    return true;
+
+                case UnityWebRequestException or WebException or SocketException or HttpRequestException:
+                    return true;
+            }
+
+            return exception.InnerException != null && IsNetworkFailure(exception.InnerException);
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>

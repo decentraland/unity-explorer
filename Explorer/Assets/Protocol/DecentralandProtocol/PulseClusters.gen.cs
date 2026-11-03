@@ -25,14 +25,23 @@ namespace Decentraland.Pulse {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CidkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2VfY2x1c3RlcnMucHJvdG8SEmRl",
-            "Y2VudHJhbGFuZC5wdWxzZSKAAQoRUGVlckNsdXN0ZXJDaGFuZ2USEgoKY2x1",
+            "Y2VudHJhbGFuZC5wdWxzZSKJAgoRUGVlckNsdXN0ZXJDaGFuZ2USEgoKY2x1",
             "c3Rlcl9pZBgBIAEoCRINCgVyZWFsbRgCIAEoCRIPCgdzZXNzaW9uGAMgASgJ",
             "EhkKEWRpc3BsYWNlZF9zZXNzaW9uGAQgASgJEhwKFGRpc3BsYWNlZF9jbHVz",
-            "dGVyX2lkGAUgASgJYgZwcm90bzM="));
+            "dGVyX2lkGAUgASgJEj4KEXBlbmRpbmdfdGFrZW92ZXJzGAcgAygLMiMuZGVj",
+            "ZW50cmFsYW5kLnB1bHNlLlBlbmRpbmdUYWtlb3ZlchIdChB0b2tlbl9ub3Rf",
+            "YmVmb3JlGAggASgESACIAQFCEwoRX3Rva2VuX25vdF9iZWZvcmVKBAgGEAdS",
+            "DXJvb21fcmVjb3ZlcnkiXwoPUGVuZGluZ1Rha2VvdmVyEhMKC3Rha2VvdmVy",
+            "X2lkGAEgASgJEhkKEWRpc3BsYWNlZF9zZXNzaW9uGAIgASgJEhwKFGRpc3Bs",
+            "YWNlZF9jbHVzdGVyX2lkGAMgASgJIj8KEVRha2VvdmVyQ29tcGxldGVkEhMK",
+            "C3Rha2VvdmVyX2lkGAEgASgJEhUKDXJldm9rZV9iZWZvcmUYAiABKARiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PeerClusterChange), global::Decentraland.Pulse.PeerClusterChange.Parser, new[]{ "ClusterId", "Realm", "Session", "DisplacedSession", "DisplacedClusterId" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PeerClusterChange), global::Decentraland.Pulse.PeerClusterChange.Parser, new[]{ "ClusterId", "Realm", "Session", "DisplacedSession", "DisplacedClusterId", "PendingTakeovers", "TokenNotBefore" }, new[]{ "TokenNotBefore" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PendingTakeover), global::Decentraland.Pulse.PendingTakeover.Parser, new[]{ "TakeoverId", "DisplacedSession", "DisplacedClusterId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TakeoverCompleted), global::Decentraland.Pulse.TakeoverCompleted.Parser, new[]{ "TakeoverId", "RevokeBefore" }, null, null, null, null)
           }));
     }
     #endregion
@@ -48,7 +57,7 @@ namespace Decentraland.Pulse {
   /// clusters have no size cap, are realm-partitioned, and carry no transport connection details.
   /// Comms Gatekeeper subscribes here, mints the LiveKit connection string (the ban check is
   /// authority-local to gatekeeper), and re-emits the legacy
-  /// decentraland.kernel.comms.v3.IslandChangedMessage on `engine.peer.{address}.island_changed`,
+  /// decentraland.kernel.comms.v3.IslandChangedMessage on `engine.peer.{address}.island_changed.{session}`,
   /// so the WebSocket Connector and clients stay untouched.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
@@ -59,6 +68,7 @@ namespace Decentraland.Pulse {
   {
     private static readonly pb::MessageParser<PeerClusterChange> _parser = new pb::MessageParser<PeerClusterChange>(() => new PeerClusterChange());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PeerClusterChange> Parser { get { return _parser; } }
@@ -86,11 +96,14 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PeerClusterChange(PeerClusterChange other) : this() {
+      _hasBits0 = other._hasBits0;
       clusterId_ = other.clusterId_;
       realm_ = other.realm_;
       session_ = other.session_;
       displacedSession_ = other.displacedSession_;
       displacedClusterId_ = other.displacedClusterId_;
+      pendingTakeovers_ = other.pendingTakeovers_.Clone();
+      tokenNotBefore_ = other.tokenNotBefore_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -177,6 +190,53 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "pending_takeovers" field.</summary>
+    public const int PendingTakeoversFieldNumber = 7;
+    private static readonly pb::FieldCodec<global::Decentraland.Pulse.PendingTakeover> _repeated_pendingTakeovers_codec
+        = pb::FieldCodec.ForMessage(58, global::Decentraland.Pulse.PendingTakeover.Parser);
+    private readonly pbc::RepeatedField<global::Decentraland.Pulse.PendingTakeover> pendingTakeovers_ = new pbc::RepeatedField<global::Decentraland.Pulse.PendingTakeover>();
+    /// <summary>
+    /// Unfinished takeovers survive notification loss and later ownership changes.
+    /// Gatekeeper must complete every entry before issuing current-session credentials.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::Decentraland.Pulse.PendingTakeover> PendingTakeovers {
+      get { return pendingTakeovers_; }
+    }
+
+    /// <summary>Field number for the "token_not_before" field.</summary>
+    public const int TokenNotBeforeFieldNumber = 8;
+    private readonly static ulong TokenNotBeforeDefaultValue = 0UL;
+
+    private ulong tokenNotBefore_;
+    /// <summary>
+    /// Confirmed revocation floor in whole Unix seconds. Present zero is a first assignment;
+    /// absence means this response cannot authorize credentials (old producer or blocked state).
+    /// Consumers reject uint64 values outside the JavaScript safe-integer range.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong TokenNotBefore {
+      get { if ((_hasBits0 & 1) != 0) { return tokenNotBefore_; } else { return TokenNotBeforeDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        tokenNotBefore_ = value;
+      }
+    }
+    /// <summary>Gets whether the "token_not_before" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTokenNotBefore {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "token_not_before" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTokenNotBefore() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -197,6 +257,8 @@ namespace Decentraland.Pulse {
       if (Session != other.Session) return false;
       if (DisplacedSession != other.DisplacedSession) return false;
       if (DisplacedClusterId != other.DisplacedClusterId) return false;
+      if(!pendingTakeovers_.Equals(other.pendingTakeovers_)) return false;
+      if (TokenNotBefore != other.TokenNotBefore) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -209,6 +271,8 @@ namespace Decentraland.Pulse {
       if (Session.Length != 0) hash ^= Session.GetHashCode();
       if (DisplacedSession.Length != 0) hash ^= DisplacedSession.GetHashCode();
       if (DisplacedClusterId.Length != 0) hash ^= DisplacedClusterId.GetHashCode();
+      hash ^= pendingTakeovers_.GetHashCode();
+      if (HasTokenNotBefore) hash ^= TokenNotBefore.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -247,6 +311,11 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(42);
         output.WriteString(DisplacedClusterId);
       }
+      pendingTakeovers_.WriteTo(output, _repeated_pendingTakeovers_codec);
+      if (HasTokenNotBefore) {
+        output.WriteRawTag(64);
+        output.WriteUInt64(TokenNotBefore);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -277,6 +346,11 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(42);
         output.WriteString(DisplacedClusterId);
       }
+      pendingTakeovers_.WriteTo(ref output, _repeated_pendingTakeovers_codec);
+      if (HasTokenNotBefore) {
+        output.WriteRawTag(64);
+        output.WriteUInt64(TokenNotBefore);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -301,6 +375,10 @@ namespace Decentraland.Pulse {
       }
       if (DisplacedClusterId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(DisplacedClusterId);
+      }
+      size += pendingTakeovers_.CalculateSize(_repeated_pendingTakeovers_codec);
+      if (HasTokenNotBefore) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(TokenNotBefore);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -328,6 +406,10 @@ namespace Decentraland.Pulse {
       }
       if (other.DisplacedClusterId.Length != 0) {
         DisplacedClusterId = other.DisplacedClusterId;
+      }
+      pendingTakeovers_.Add(other.pendingTakeovers_);
+      if (other.HasTokenNotBefore) {
+        TokenNotBefore = other.TokenNotBefore;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -368,6 +450,14 @@ namespace Decentraland.Pulse {
             DisplacedClusterId = input.ReadString();
             break;
           }
+          case 58: {
+            pendingTakeovers_.AddEntriesFrom(input, _repeated_pendingTakeovers_codec);
+            break;
+          }
+          case 64: {
+            TokenNotBefore = input.ReadUInt64();
+            break;
+          }
         }
       }
     #endif
@@ -405,6 +495,529 @@ namespace Decentraland.Pulse {
           }
           case 42: {
             DisplacedClusterId = input.ReadString();
+            break;
+          }
+          case 58: {
+            pendingTakeovers_.AddEntriesFrom(ref input, _repeated_pendingTakeovers_codec);
+            break;
+          }
+          case 64: {
+            TokenNotBefore = input.ReadUInt64();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Retained by Pulse until the matching completion is applied. IDs are globally unique;
+  /// another takeover in the same room receives a new ID. Hints never create new IDs.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class PendingTakeover : pb::IMessage<PendingTakeover>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<PendingTakeover> _parser = new pb::MessageParser<PendingTakeover>(() => new PendingTakeover());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<PendingTakeover> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClustersReflection.Descriptor.MessageTypes[1]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PendingTakeover() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PendingTakeover(PendingTakeover other) : this() {
+      takeoverId_ = other.takeoverId_;
+      displacedSession_ = other.displacedSession_;
+      displacedClusterId_ = other.displacedClusterId_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PendingTakeover Clone() {
+      return new PendingTakeover(this);
+    }
+
+    /// <summary>Field number for the "takeover_id" field.</summary>
+    public const int TakeoverIdFieldNumber = 1;
+    private string takeoverId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TakeoverId {
+      get { return takeoverId_; }
+      set {
+        takeoverId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "displaced_session" field.</summary>
+    public const int DisplacedSessionFieldNumber = 2;
+    private string displacedSession_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string DisplacedSession {
+      get { return displacedSession_; }
+      set {
+        displacedSession_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "displaced_cluster_id" field.</summary>
+    public const int DisplacedClusterIdFieldNumber = 3;
+    private string displacedClusterId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string DisplacedClusterId {
+      get { return displacedClusterId_; }
+      set {
+        displacedClusterId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as PendingTakeover);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(PendingTakeover other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TakeoverId != other.TakeoverId) return false;
+      if (DisplacedSession != other.DisplacedSession) return false;
+      if (DisplacedClusterId != other.DisplacedClusterId) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TakeoverId.Length != 0) hash ^= TakeoverId.GetHashCode();
+      if (DisplacedSession.Length != 0) hash ^= DisplacedSession.GetHashCode();
+      if (DisplacedClusterId.Length != 0) hash ^= DisplacedClusterId.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (TakeoverId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(TakeoverId);
+      }
+      if (DisplacedSession.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(DisplacedSession);
+      }
+      if (DisplacedClusterId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(DisplacedClusterId);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (TakeoverId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(TakeoverId);
+      }
+      if (DisplacedSession.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(DisplacedSession);
+      }
+      if (DisplacedClusterId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(DisplacedClusterId);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (TakeoverId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TakeoverId);
+      }
+      if (DisplacedSession.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(DisplacedSession);
+      }
+      if (DisplacedClusterId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(DisplacedClusterId);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(PendingTakeover other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TakeoverId.Length != 0) {
+        TakeoverId = other.TakeoverId;
+      }
+      if (other.DisplacedSession.Length != 0) {
+        DisplacedSession = other.DisplacedSession;
+      }
+      if (other.DisplacedClusterId.Length != 0) {
+        DisplacedClusterId = other.DisplacedClusterId;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            TakeoverId = input.ReadString();
+            break;
+          }
+          case 18: {
+            DisplacedSession = input.ReadString();
+            break;
+          }
+          case 26: {
+            DisplacedClusterId = input.ReadString();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            TakeoverId = input.ReadString();
+            break;
+          }
+          case 18: {
+            DisplacedSession = input.ReadString();
+            break;
+          }
+          case 26: {
+            DisplacedClusterId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Gatekeeper-only publication on peer.{wallet}.takeover_completed. A duplicate or unknown
+  /// ID has no effect. The effective cutoff must exceed the takeover's prior token floor.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class TakeoverCompleted : pb::IMessage<TakeoverCompleted>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TakeoverCompleted> _parser = new pb::MessageParser<TakeoverCompleted>(() => new TakeoverCompleted());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TakeoverCompleted> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseClustersReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeoverCompleted() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeoverCompleted(TakeoverCompleted other) : this() {
+      takeoverId_ = other.takeoverId_;
+      revokeBefore_ = other.revokeBefore_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeoverCompleted Clone() {
+      return new TakeoverCompleted(this);
+    }
+
+    /// <summary>Field number for the "takeover_id" field.</summary>
+    public const int TakeoverIdFieldNumber = 1;
+    private string takeoverId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string TakeoverId {
+      get { return takeoverId_; }
+      set {
+        takeoverId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "revoke_before" field.</summary>
+    public const int RevokeBeforeFieldNumber = 2;
+    private ulong revokeBefore_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong RevokeBefore {
+      get { return revokeBefore_; }
+      set {
+        revokeBefore_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TakeoverCompleted);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TakeoverCompleted other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TakeoverId != other.TakeoverId) return false;
+      if (RevokeBefore != other.RevokeBefore) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TakeoverId.Length != 0) hash ^= TakeoverId.GetHashCode();
+      if (RevokeBefore != 0UL) hash ^= RevokeBefore.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (TakeoverId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(TakeoverId);
+      }
+      if (RevokeBefore != 0UL) {
+        output.WriteRawTag(16);
+        output.WriteUInt64(RevokeBefore);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (TakeoverId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(TakeoverId);
+      }
+      if (RevokeBefore != 0UL) {
+        output.WriteRawTag(16);
+        output.WriteUInt64(RevokeBefore);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (TakeoverId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(TakeoverId);
+      }
+      if (RevokeBefore != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(RevokeBefore);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TakeoverCompleted other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TakeoverId.Length != 0) {
+        TakeoverId = other.TakeoverId;
+      }
+      if (other.RevokeBefore != 0UL) {
+        RevokeBefore = other.RevokeBefore;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            TakeoverId = input.ReadString();
+            break;
+          }
+          case 16: {
+            RevokeBefore = input.ReadUInt64();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            TakeoverId = input.ReadString();
+            break;
+          }
+          case 16: {
+            RevokeBefore = input.ReadUInt64();
             break;
           }
         }

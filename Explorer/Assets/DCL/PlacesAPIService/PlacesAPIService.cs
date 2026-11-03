@@ -70,7 +70,8 @@ namespace DCL.PlacesAPIService
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
             bool? withLiveEvents = null,
-            bool? onlyPlaces = null)
+            bool? onlyPlaces = null,
+            bool? onlyHighlighted = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -87,12 +88,13 @@ namespace DCL.PlacesAPIService
                 withConnectedUsers: withConnectedUsers,
                 onlySdk7: onlySdk7,
                 withLiveEvents: withLiveEvents,
-                onlyPlaces: onlyPlaces);
+                onlyPlaces: onlyPlaces,
+                onlyHighlighted: onlyHighlighted);
         }
 
         // No pagination on purpose: the featured set is curated and small, so the server's own page holds all of it
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct) =>
-            await client.GetDestinationsAsync(ct, addRealmDetails: true, onlyHighlighted: true);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetHighlightedDestinationsAsync(CancellationToken ct, bool? withConnectedUsers = null) =>
+            await client.GetDestinationsAsync(ct, addRealmDetails: true, onlyHighlighted: true, withConnectedUsers: withConnectedUsers);
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {

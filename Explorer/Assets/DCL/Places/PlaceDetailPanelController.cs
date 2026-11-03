@@ -126,8 +126,8 @@ namespace DCL.Places
         {
             Profile.CompactInfo? creatorProfile = null;
 
-            if (!string.IsNullOrEmpty(inputData.PlaceData.owner))
-                creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
+            if (!string.IsNullOrEmpty(inputData.PlaceData.creator_address))
+                creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.creator_address, ct);
 
             await viewInstance!.SetCreatorAsync(creatorProfile, ct);
         }

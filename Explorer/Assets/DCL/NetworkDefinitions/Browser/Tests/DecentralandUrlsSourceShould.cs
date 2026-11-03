@@ -92,7 +92,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [Test]
         public void ApplyLocalAbOverrideForLocalPreviewSidecar()
         {
-            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the local-ab override (forces on + overrides verbatim)
+            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the local-sidecar override (forces on + overrides verbatim)
             InitializeFeatureFlags(optimizedAssets: false);
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, localAbBaseUrl: "http://127.0.0.1:5147");
 
@@ -475,6 +475,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase(DecentralandUrl.Pulse, "pulse-server." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.ApiRpc, "wss://rpc." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.ChainRpc, "https://rpc." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.CastPresenterService, "https://cast-presenter-service." + CUSTOM_DOMAIN)]
         public void MoveEveryHostOntoTheCustomBaseDomain(DecentralandUrl url, string expected)
         {
             InitializeFeatureFlags(optimizedAssets: false);

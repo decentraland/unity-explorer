@@ -67,3 +67,23 @@
 .unity-base-dropdown__checkmark {
     -unity-background-image-tint-color: rgb(46, 46, 46);
 }
+
+/* SkeletonLoadingElement: the bones' size, corners and colours are the panel's to set; the gradient is twice the bone's
+   width, as in the uGUI SkeletonLoadingView, so it fills the bone whole mid-sweep instead of streaking past */
+.skeleton-loading {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.skeleton-loading__bone {
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.skeleton-loading__shimmer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 200%;
+    background-image: url('/Assets/DCL/Backpack/Textures/GradientLoading.png');
+}

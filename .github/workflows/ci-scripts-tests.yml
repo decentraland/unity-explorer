@@ -6,8 +6,11 @@ name: CI Scripts Tests
 # URL_RE drift guard against ucb-build-links), the unified status comment's
 # upsert script, the no-op-build-run probe that decides whether a Unity
 # Cloud Build run may write that comment and the resolver that says which PR a
-# run reports into, all against a stubbed gh. Cheap and
-# network-free, so it runs on any PR touching these paths.
+# run reports into, all against a stubbed gh, plus the dependency-security-review
+# classifier, whose inline scripts and permission block are executed straight out
+# of the workflow file, and the delta update tool (format, clippy, unit tests and
+# synthetic builds). Cheap, and network-free apart from downloading crates and the
+# pinned HDiffPatch release, so it runs on any PR touching these paths.
 on:
   pull_request:
     paths:
@@ -15,6 +18,14 @@ on:
       - ".github/actions/ci-status-comment/**"
       - ".github/actions/ucb-build-links/**"
       - ".github/workflows/ci-scripts-tests.yml"
+      - ".github/workflows/dependency-security-review.yml"
+      - ".github/prompts/review-instructions.md"
+      - "scripts/ci/**"
+      - "scripts/delta/**"
+      - ".github/actions/delta-tool/**"
+      - ".github/workflows/build-release-delta.yml"
+      - ".github/workflows/s3-latest-release.yml"
+      - ".github/workflows/on-delete-release.yml"
 
 permissions:
   contents: read
@@ -40,3 +51,39 @@ jobs:
 
       - name: Functional tests (resolve-comment-pr.sh, stubbed gh)
         run: bash .github/actions/ci-status-comment/test-resolve-comment-pr.sh
+
+      - name: Unit tests (dependency-security-review inline scripts)
+        run: node --test scripts/ci/dependency-security-review.test.cjs
+
+  # The delta tool (scripts/delta) on Linux and on macOS (BSD file system semantics,
+  # case-insensitive APFS).
+  delta:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: scripts/delta
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/delta
+            .github/actions/delta-tool
+
+      - uses: ./.github/actions/delta-tool
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Lint (clippy pedantic, no unwrap or panic)
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Tests (pinned HDiffPatch)
+        run: |
+          PATH="$("$DELTA" fetch-tools "$RUNNER_TEMP/hdiffpatch"):$PATH"
+          cargo test --locked

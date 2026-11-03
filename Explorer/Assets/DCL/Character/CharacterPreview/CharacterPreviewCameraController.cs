@@ -52,24 +52,24 @@ namespace DCL.CharacterPreview
             }
         }
 
-        private void OnScroll(PointerEventData pointerEventData)
+        private void OnScroll(CharacterPreviewPointerInput input)
         {
             if (!cameraSettings.scrollEnabled) return;
 
-            CalculateFOV(pointerEventData);
+            CalculateFov(input);
         }
 
-        private void OnDrag(PointerEventData pointerEventData)
+        private void OnDrag(CharacterPreviewPointerInput input)
         {
-            if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
+            if (input.Button == PointerEventData.InputButton.Middle) return;
 
-            switch (pointerEventData.button)
+            switch (input.Button)
             {
                 case PointerEventData.InputButton.Right:
                 {
                     if (!cameraSettings.dragEnabled) return;
 
-                    CalculateCameraTargetPosition(pointerEventData);
+                    CalculateCameraTargetPosition(input);
 
                     break;
                 }
@@ -77,19 +77,19 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    CalculateAngularVelocity(pointerEventData);
+                    CalculateAngularVelocity(input);
 
                     break;
                 }
             }
         }
 
-        private void CalculateFOV(PointerEventData pointerEventData)
+        private void CalculateFov(in CharacterPreviewPointerInput input)
         {
             float currentFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = currentFieldOfView;
 
-            float scrollDelta = pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
+            float scrollDelta = input.ScrollDelta.y * cameraSettings.scrollModifier;
             float scrollMagnitude = Mathf.Abs(scrollDelta);
             float scaledScrollDelta = Mathf.Sign(scrollDelta) * Mathf.Pow(scrollMagnitude, SCROLL_DAMPENING_EXP);
 
@@ -119,14 +119,14 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.TargetFOV = newFieldOfView;
         }
 
-        private void CalculateCameraTargetPosition(PointerEventData pointerEventData)
+        private void CalculateCameraTargetPosition(in CharacterPreviewPointerInput input)
         {
             if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
             {
                 Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
                 float dragModifier = UnityEngine.Time.deltaTime * cameraSettings.dragMovementModifier;
 
-                position.y -= pointerEventData.delta.y * dragModifier;
+                position.y -= input.Delta.y * dragModifier;
 
                 if (position.y < cameraSettings.minVerticalOffset) position.y = cameraSettings.minVerticalOffset;
                 else if (position.y > cameraSettings.maxVerticalOffset) position.y = cameraSettings.maxVerticalOffset;
@@ -135,7 +135,7 @@ namespace DCL.CharacterPreview
             }
         }
 
-        private void CalculateAngularVelocity(PointerEventData pointerEventData)
+        private void CalculateAngularVelocity(in CharacterPreviewPointerInput input)
         {
             characterPreviewAvatarContainer.RotationModifier = cameraSettings.rotationModifier;
             characterPreviewAvatarContainer.RotationInertia = cameraSettings.rotationInertia;
@@ -144,7 +144,7 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.LastDragTime = UnityEngine.Time.time;
 
             float angularVelocity = characterPreviewAvatarContainer.AngularVelocity;
-            float targetVelocity = -pointerEventData.delta.x / UnityEngine.Time.deltaTime;
+            float targetVelocity = -input.Delta.x / UnityEngine.Time.deltaTime;
 
             if (cameraSettings.rotationInertia <= 0f)
             {

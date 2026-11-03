@@ -1,3 +1,4 @@
+using Arch.Core;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -24,7 +25,12 @@ namespace DCL.CharacterPreview.Tests
             SetBackingField(settings, nameof(CharacterPreviewSettingsSO.cursorSettings), Array.Empty<CharacterPreviewInputCursorSetting>());
 
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewInputDetector), previewGo.AddComponent<CharacterPreviewInputDetector>());
-            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), previewGo.AddComponent<CharacterPreviewCursorContainer>());
+
+            var cursorContainer = previewGo.AddComponent<CharacterPreviewCursorContainer>();
+            var cursorGo = new GameObject("CursorOverride", typeof(RectTransform));
+            cursorGo.transform.SetParent(previewGo.transform);
+            SetBackingField(cursorContainer, nameof(CharacterPreviewCursorContainer.CursorOverrideImage), cursorGo.AddComponent<Image>());
+            SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewCursorContainer), cursorContainer);
             SetBackingField(previewView, nameof(CharacterPreviewView.CharacterPreviewSettingsSo), settings);
 
             var rawImageGo = new GameObject("RawImage", typeof(RectTransform));
@@ -53,6 +59,12 @@ namespace DCL.CharacterPreview.Tests
             }
 
             throw new MissingFieldException(target.GetType().Name, fieldName);
+        }
+
+        public class TestPreview : CharacterPreviewControllerBase
+        {
+            public TestPreview(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+                : base(view, previewFactory, world, false, characterPreviewEventBus) { }
         }
     }
 }

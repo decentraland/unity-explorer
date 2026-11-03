@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.Browser;
 using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
@@ -64,7 +65,7 @@ namespace DCL.AuthenticationScreenFlow
         private const string EPIC_STORE_INSTALL_SOURCE = "epic";
 
         private readonly ICompositeWeb3Provider web3Authenticator;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -101,7 +102,7 @@ namespace DCL.AuthenticationScreenFlow
         public event Action<string, bool>? OTPVerified;
         public event Action? OTPResend;
         public event Action? ProfileFinalized;
-        public event Action<string, int>? AvatarSelected;
+        public event Action<BodyShape, int>? AvatarSelected;
 
         // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
@@ -110,7 +111,7 @@ namespace DCL.AuthenticationScreenFlow
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider web3Authenticator,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -277,7 +278,7 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
-        internal void RaiseAvatarSelected(string bodyType, int presetSlot) =>
+        internal void RaiseAvatarSelected(BodyShape bodyType, int presetSlot) =>
             AvatarSelected?.Invoke(bodyType, presetSlot);
 
         internal void ReturnToOrigin(int animHash)

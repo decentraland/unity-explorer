@@ -1,5 +1,4 @@
-﻿using DCL.Communities.CommunitiesCard;
-using DCL.Communities.CommunitiesCard.Members;
+﻿using DCL.Communities.CommunitiesCard.Members;
 using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
@@ -21,6 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunityRequestsReceivedGroupView : MonoBehaviour
     {
         private const int REQUESTS_RECEIVED_MEMBER_CARDS_POOL_DEFAULT_CAPACITY = 5;
+
         private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new (0.0f, -26.0f);
 
         public event Action<string>? CommunityButtonClicked;
@@ -91,6 +91,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityId(string id) =>
             CommunityId = id;
+
+        public void SetCompactLayout(bool compact) =>
+            CommunityCardsLayout.Apply(requestReceivedMembersGridContainer.GetComponent<GridLayoutGroup>(), compact);
 
         public void SetTitle(string title) =>
             communityTitle.text = title;

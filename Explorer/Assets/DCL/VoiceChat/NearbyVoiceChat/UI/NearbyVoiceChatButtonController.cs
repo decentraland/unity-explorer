@@ -9,6 +9,7 @@ namespace DCL.VoiceChat.UI
         private const string CALL_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nduring Calls & Streams.";
         private const string SCENE_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nin this scene.";
         private const string SCENE_BAN_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nbecause this scene has\nrestricted access.";
+        private const string GUEST_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nfor guest accounts.";
 
         private readonly NearbyVoiceChatButtonView view;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
@@ -43,6 +44,7 @@ namespace DCL.VoiceChat.UI
             {
                 SuppressionReason.Scene => SCENE_SUPPRESSED_TEXT,
                 SuppressionReason.SceneBan => SCENE_BAN_SUPPRESSED_TEXT,
+                SuppressionReason.Guest => GUEST_SUPPRESSED_TEXT,
                 _ => CALL_SUPPRESSED_TEXT,
             };
 

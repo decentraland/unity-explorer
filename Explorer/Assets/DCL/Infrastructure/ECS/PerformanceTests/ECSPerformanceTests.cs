@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Utils;
 using Arch.System;
 using NUnit.Framework;
 using System.Linq;

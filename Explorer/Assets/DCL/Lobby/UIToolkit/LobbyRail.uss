@@ -2,21 +2,18 @@
     --rail-snap-duration: 0.25s;
     --rail-arrow-fade-duration: 0.15s;
     --rail-dot-duration: 0.2s;
-    --rail-dot-selected-color: rgb(255, 51, 153);
-    --rail-dot-color: rgba(255, 255, 255, 0.4);
+    --rail-dot-selected-color: rgb(255, 45, 85);
+    /* The design's translucent whites and black (see LobbyDocument.uss for the alphas) */
+    --rail-dot-color: var(--lobby-white-20);
+    --rail-dot-hover-color: var(--lobby-white-60);
+    --rail-arrow-color: var(--dcl-color-snow);
+    --rail-arrow-fill: var(--lobby-white-10);
+    --rail-arrow-hover-fill: var(--lobby-white-20);
+    --rail-pill-color: var(--lobby-black-60);
 }
 
 .lobby-rail {
     flex-direction: column;
-}
-
-/* Wider than the rail by an arrow and its gap on each side; the padding keeps the gaps inside the rail, so crossing one to reach an arrow does not drop the hover that shows it */
-.lobby-rail__track {
-    flex-grow: 1;
-    margin-left: -39px;
-    margin-right: -39px;
-    padding-left: 39px;
-    padding-right: 39px;
 }
 
 .lobby-rail__viewport {
@@ -44,40 +41,63 @@
     margin-right: 8px;
 }
 
-.lobby-rail__arrow {
+/* Holds the pill whole: the 32px row of the design's index, 10px under the cards; with its margin the 42px band that the
+   rail heights of LobbyDocument.uss count in */
+.lobby-rail__pager {
+    height: 32px;
+    margin-top: 10px;
+}
+
+.lobby-rail__pager-pill {
     position: absolute;
     top: 50%;
-    width: 31px;
-    height: 40px;
-    translate: 0 -50%;
-    border-radius: 8px;
+    left: 50%;
+    translate: -50% -50%;
+    height: 32px;
+    padding: 0 2px;
+    border-radius: 16px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color var(--rail-arrow-fade-duration) ease-out;
+}
+
+.lobby-rail:hover .lobby-rail__pager-pill {
+    background-color: var(--rail-pill-color);
+}
+
+.lobby-rail__arrow {
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 14px;
     justify-content: center;
     align-items: center;
-    background-color: var(--dcl-color-black-70);
+    background-color: var(--rail-arrow-fill);
     opacity: 0;
-    transition: opacity var(--rail-arrow-fade-duration) ease-out, background-color 0.1s;
+    transition: opacity var(--rail-arrow-fade-duration) ease-out, background-color 0.1s ease-out;
 }
 
 .lobby-rail:hover .lobby-rail__arrow {
     opacity: 1;
 }
 
+.lobby-rail__arrow:hover {
+    background-color: var(--rail-arrow-hover-fill);
+}
+
 .lobby-rail__arrow:active {
-    background-color: var(--dcl-color-black-80);
+    background-color: var(--rail-arrow-fill);
 }
 
-.lobby-rail__arrow--previous {
-    left: 0;
-}
-
-.lobby-rail__arrow--next {
-    right: 0;
-}
-
+/* The sprite is 75x128, so the box keeps its shape at the design's 16px height */
 .lobby-rail__arrow-icon {
-    width: 15px;
-    height: 24px;
+    width: 9.4px;
+    height: 16px;
     background-image: url('/Assets/Textures/Common/ArrowLeft.png');
+    -unity-background-image-tint-color: var(--rail-arrow-color);
 }
 
 .lobby-rail__arrow--next .lobby-rail__arrow-icon {
@@ -85,23 +105,26 @@
 }
 
 .lobby-rail__dots {
-    height: 8px;
-    margin-top: 8px;
+    margin: 0 6px;
     flex-direction: row;
-    justify-content: center;
     align-items: center;
 }
 
 .lobby-rail__dot {
-    width: 8px;
-    height: 8px;
-    margin: 0 2px;
-    border-radius: 4px;
+    width: 14px;
+    height: 14px;
+    margin: 0 4px;
+    border-radius: 7px;
     background-color: var(--rail-dot-color);
     transition: width var(--rail-dot-duration) ease-out, background-color var(--rail-dot-duration) ease-out;
 }
 
-.lobby-rail__dot--selected {
-    width: 24px;
+.lobby-rail__dot:hover {
+    background-color: var(--rail-dot-hover-color);
+}
+
+.lobby-rail__dot--selected,
+.lobby-rail__dot--selected:hover {
+    width: 40px;
     background-color: var(--rail-dot-selected-color);
 }

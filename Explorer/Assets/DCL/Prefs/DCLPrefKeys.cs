@@ -134,5 +134,11 @@ namespace DCL.Prefs
         public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
 
         public const string SETTINGS_LOBBY_ENABLED = "Settings_LobbyEnabled";
+
+        // Stored by display name so reordering the configured presets keeps the choice
+        public const string SETTINGS_LOBBY_STAGE_PRESET = "Settings_LobbyStagePreset";
+
+        // The placements of the lobby widgets on the corner grids, as one JSON string (see LobbyLayoutStorage)
+        public const string LOBBY_LAYOUT = "Lobby_Layout";
     }
 }

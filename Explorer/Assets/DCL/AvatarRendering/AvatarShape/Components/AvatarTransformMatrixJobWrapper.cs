@@ -127,7 +127,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
-            if (DCL.Utility.ExitUtils.IsAboutToQuit)
+            if (ExitUtils.IsAboutToQuit)
             {
                 return;
             }

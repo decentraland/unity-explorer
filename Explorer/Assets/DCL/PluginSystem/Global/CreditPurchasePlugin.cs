@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Arch.Core.World world;
         private readonly IWearableStorage wearableStorage;
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Arch.Core.World world,
             IWearableStorage wearableStorage)

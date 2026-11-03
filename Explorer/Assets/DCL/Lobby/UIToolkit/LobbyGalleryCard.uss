@@ -1,0 +1,54 @@
+:root {
+    --gallery-card-hover-duration: 0.3s;
+}
+
+/* Same footprint as the place card (256x146) but square-cornered, so the photos stand apart from the place and event
+   cards: the photo fills the card with nothing over it; hovering zooms it and outlines the card with the gradient */
+.lobby-gallery-card {
+    width: 256px;
+    height: 146px;
+}
+
+/* The square gradient ring (LobbyGradientOutlineElement, 2px thick) hangs 6px past the body on every side, leaving a 4px
+   gap between it and the photo, and shows only while hovered */
+.lobby-gallery-card__outline {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    opacity: 0;
+    transition: opacity var(--lobby-outline-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__outline {
+    opacity: 1;
+}
+
+.lobby-gallery-card__body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-width: 1px;
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-card-color);
+    overflow: hidden;
+}
+
+.lobby-gallery-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: scale var(--gallery-card-hover-duration) ease-out;
+}
+
+.lobby-gallery-card:hover .lobby-gallery-card__thumbnail {
+    scale: 1.05;
+}

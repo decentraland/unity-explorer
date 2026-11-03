@@ -59,7 +59,8 @@ MonoBehaviour:
   vignette: {fileID: 7100000223}
   propsRoot: {fileID: 7100000201}
   keyLight: {fileID: 7100000212}
-  preset: {fileID: 11400000, guid: 8432a9b8907c42d49bd4b0f72dfd4a00, type: 2}
+  dust: {fileID: 7100000192}
+  preset: {fileID: 11400000, guid: 3d6760cb640ed184fa85b02a099559c7, type: 2}
 --- !u!1 &7100000110
 GameObject:
   m_ObjectHideFlags: 0

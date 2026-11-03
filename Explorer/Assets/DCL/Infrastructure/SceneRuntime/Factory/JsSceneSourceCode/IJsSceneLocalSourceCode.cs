@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using UnityEngine;
 
 namespace SceneRuntime.Factory.JsSceneSourceCode

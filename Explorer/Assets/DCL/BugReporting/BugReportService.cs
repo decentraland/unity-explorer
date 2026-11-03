@@ -11,8 +11,8 @@ using UnityEngine;
 namespace DCL.BugReporting
 {
     /// <summary>
-    ///     Submits one bug report end to end: first the Sentry User Feedback entry carrying the
-    ///     user's first image and the client log, then the Intercom ticket whose description links to it.
+    ///     Submits one bug report end to end: first the Sentry User Feedback entry carrying the client log,
+    ///     then the Intercom ticket that carries the user's images and whose description links to the feedback.
     /// </summary>
     public class BugReportService
     {
@@ -33,15 +33,10 @@ namespace DCL.BugReporting
         /// <returns>The id of the created Intercom ticket.</returns>
         public virtual async UniTask<Result<string>> SubmitAsync(BugReportInput input, CancellationToken ct)
         {
-            // A feedback envelope carries a single attachment, so Sentry gets the first image only.
-            EvidenceImage? firstImage = input.Images is { Count: > 0 } ? input.Images[0] : null;
-
             var feedbackReport = new SentryUserFeedbackReport(
                 $"[{input.IssueType.Label}] {input.Description}",
                 input.ContactEmail,
-                input.UserName,
-                firstImage?.Bytes,
-                firstImage?.ContentType);
+                input.UserName);
 
             Result<string> feedbackLink = await feedbackService.SubmitAsync(feedbackReport, ct);
 

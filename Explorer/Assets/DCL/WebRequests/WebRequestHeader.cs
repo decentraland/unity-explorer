@@ -1,9 +1,13 @@
 using DCL.Diagnostics;
+using System;
 
 namespace DCL.WebRequests
 {
     public readonly struct WebRequestHeader
     {
+        /// <summary>Carries the deep link sign-in secret; its value is never printed.</summary>
+        public const string IDENTITY_VERIFIER = "x-identity-verifier";
+
         public readonly string Name;
         public readonly string Value;
 
@@ -14,7 +18,9 @@ namespace DCL.WebRequests
         }
 
         public override string ToString() =>
-            $"WebRequestHeader({Name}: {Value})";
+            string.Equals(Name, IDENTITY_VERIFIER, StringComparison.OrdinalIgnoreCase)
+                ? $"WebRequestHeader({Name}: <redacted>)"
+                : $"WebRequestHeader({Name}: {Value})";
 
         private static string ValueOrEmpty(string value)
         {

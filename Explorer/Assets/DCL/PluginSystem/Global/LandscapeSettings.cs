@@ -1,9 +1,7 @@
-﻿using DCL.Landscape.Config;
-using DCL.Landscape.Settings;
+﻿using DCL.Landscape.Settings;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {

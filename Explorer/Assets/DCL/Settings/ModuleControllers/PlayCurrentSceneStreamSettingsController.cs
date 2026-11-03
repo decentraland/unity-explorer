@@ -1,9 +1,7 @@
-using DCL.Prefs;
 using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleViews;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Settings.ModuleControllers

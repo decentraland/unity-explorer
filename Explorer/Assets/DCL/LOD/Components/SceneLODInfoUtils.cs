@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DCL.LOD.Components
+﻿namespace DCL.LOD.Components
 {
     public static class SceneLODInfoUtils
     {

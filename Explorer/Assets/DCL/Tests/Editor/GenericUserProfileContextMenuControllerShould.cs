@@ -64,7 +64,7 @@ namespace DCL.Tests.Editor
                 Substitute.For<IVoiceChatOrchestratorActions>(),
                 new UnityAppWebBrowser(Substitute.For<IDecentralandUrlsSource>()),
                 Substitute.For<IDecentralandUrlsSource>(),
-                Substitute.For<ISelfProfile>(),
+                Substitute.For<SelfProfile>(),
                 profileCache,
                 identityCache,
                 new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>()));

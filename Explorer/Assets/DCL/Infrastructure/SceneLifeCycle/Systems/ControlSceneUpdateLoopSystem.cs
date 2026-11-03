@@ -118,7 +118,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!partition.IsDirty) return;
 
-            sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
+            sceneFacade.SetTargetFps(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }
 
         private async UniTaskVoid StartAndUpdateSceneAsync(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)

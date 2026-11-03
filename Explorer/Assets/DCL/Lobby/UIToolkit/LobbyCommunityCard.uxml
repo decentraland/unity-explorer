@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyCommunityCard.uss" />
+    <DCL.Lobby.LobbyCommunityCardElement name="CommunityCard" title="Community Name" members-count="0">
+        <ui:VisualElement name="Thumbnail" class="lobby-community-card__thumbnail" picking-mode="Ignore" />
+        <ui:VisualElement name="Gradient" class="lobby-community-card__gradient" picking-mode="Ignore" />
+        <ui:VisualElement name="Footer" class="lobby-community-card__footer" picking-mode="Ignore">
+            <ui:Label name="Title" text="Community Name" enable-rich-text="false" class="lobby-community-card__title" picking-mode="Ignore" />
+            <ui:VisualElement name="MembersRow" class="lobby-community-card__members-row" picking-mode="Ignore">
+                <ui:VisualElement name="VisibilityIcon" class="lobby-community-card__visibility-icon" picking-mode="Ignore" />
+                <ui:Label name="Visibility" text="Public" class="lobby-community-card__visibility" picking-mode="Ignore" />
+                <ui:VisualElement name="Separator" class="lobby-community-card__separator" picking-mode="Ignore" />
+                <ui:Label name="Members" text="0 Members" class="lobby-community-card__members" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Button name="View" class="lobby-community-card__view">
+            <ui:Label name="ViewText" text="VIEW" class="lobby-community-card__view-text" picking-mode="Ignore" />
+        </ui:Button>
+    </DCL.Lobby.LobbyCommunityCardElement>
+</ui:UXML>

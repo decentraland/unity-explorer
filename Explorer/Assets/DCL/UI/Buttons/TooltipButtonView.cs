@@ -1,5 +1,3 @@
-using DCL.UI.Buttons;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 

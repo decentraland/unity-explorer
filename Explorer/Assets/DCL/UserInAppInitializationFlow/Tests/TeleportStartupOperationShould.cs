@@ -241,6 +241,40 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
+        public void LandsOnTheSavedHomeParcelInsteadOfItsSceneSpawnPoint()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(-4, 1), source: StartParcelSource.Home, landOnParcel: true);
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(-4, 1), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>(), true);
+        }
+
+        [Test]
+        public void LandsOnTheSpawnPointWhenTheManifestSpawnReplacesTheHomeParcel()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            var startParcel = new StartParcel(new Vector2Int(-4, 1), source: StartParcelSource.Home, landOnParcel: true);
+            CreateOperation(startParcel).ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            teleportController.Received(1)
+                .TeleportToSceneSpawnPointAsync(new Vector2Int(5, 7), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>());
+            teleportController.DidNotReceive()
+                .TeleportToSceneSpawnPointAsync(Arg.Any<Vector2Int>(), Arg.Any<AsyncLoadProcessReport>(), Arg.Any<CancellationToken>(), true);
+        }
+
+        [Test]
         public void StartParcelIsConsumedAfterTeleport()
         {
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));

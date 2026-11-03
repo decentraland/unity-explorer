@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Settings.Settings;
 using DCL.SocialService;
-using DCL.Utilities;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
@@ -35,7 +34,7 @@ namespace DCL.Chat
                 PrivateMessagesPrivacy = receiveAllMessages? PrivateMessagePrivacySetting.All : PrivateMessagePrivacySetting.OnlyFriends
             };
 
-            var response = await socialServiceRPCProxy.Module()!
+            var response = await socialServiceRPCProxy.Module()
                                                       .CallUnaryProcedure<UpsertSocialSettingsResponse>("UpsertSocialSettings", payload)
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -49,7 +48,7 @@ namespace DCL.Chat
         {
             await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
-            var response = await socialServiceRPCProxy.Module()!
+            var response = await socialServiceRPCProxy.Module()
                                                       .CallUnaryProcedure<GetSocialSettingsResponse>("GetSocialSettings", new Empty())
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -71,7 +70,7 @@ namespace DCL.Chat
                 User = {users},
             };
 
-            var response = await socialServiceRPCProxy.Module()!
+            var response = await socialServiceRPCProxy.Module()
                                                       .CallUnaryProcedure<GetPrivateMessagesSettingsResponse>("GetPrivateMessagesSettings", payload)
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
-using KtxUnity;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -40,9 +39,23 @@ namespace DCL.WebRequests
         {
             bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !LoopbackUrls.IsLoopbackWebUrl(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
-            UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
+            UnityWebRequest webRequest = textureArguments.DecodeOffMainThread && !useKtx
+                ? NonReadableTextureRequest(requestUrl, textureArguments.TextureType)
+                : UnityWebRequest.Get(requestUrl);
+
+            if (textureArguments.DisableRedirects)
+                webRequest.redirectLimit = 0;
 
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
+        }
+
+        private static UnityWebRequest NonReadableTextureRequest(string url, TextureType textureType)
+        {
+            DownloadedTextureParams parameters = DownloadedTextureParams.Default;
+            parameters.readable = false;
+            parameters.mipmapChain = false;
+            parameters.linearColorSpace = textureType == TextureType.NormalMap;
+            return UnityWebRequestTexture.GetTexture(url, parameters);
         }
 
         public readonly struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
@@ -98,51 +111,12 @@ namespace DCL.WebRequests
                 if (data == null)
                     throw new Exception($"Texture content is empty: {webRequest.url}");
 
-                using var bufferWrapped = new ManagedNativeArray(data);
+                // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear.
+                // readable: true keeps the decoded texture CPU-readable.
+                Texture2D texture = await KtxTextureDecoder.DecodeAsync(data, webRequest.textureType != TextureType.Albedo, wrapMode, filterMode, readable: true, webRequest.url);
 
-                var ktxTexture = new KtxTexture();
-
-                // Open() can throw before allocating native state; keep it outside the try/finally so Dispose only runs once that state exists.
-                ErrorCode openResult;
-
-                try { openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly()); }
-                catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
-                {
-                    // The OS failing to open the native plugin (or resolve a symbol in it) is per-machine-permanent, not transient.
-                    KtxNativeSupport.MarkUnsupported();
-                    throw;
-                }
-
-                try
-                {
-                    if (openResult != ErrorCode.Success)
-                        throw new Exception($"Failed to open ktx texture from data ({openResult}): {webRequest.url}");
-
-                    // readable: true keeps the decoded texture CPU-readable.
-                    var result = await ktxTexture.LoadTexture2D(
-                        webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
-                        readable: true
-                    );
-
-                    if (result.errorCode != ErrorCode.Success)
-                    {
-                        // LoadTexture2D can allocate the Texture2D before failing (e.g. Apply/upload throws); destroy it so it doesn't leak.
-                        UnityObjectUtils.SafeDestroy(result.texture);
-                        throw new Exception($"Failed to load ktx texture from data ({result.errorCode}): {webRequest.url}");
-                    }
-
-                    var finalTex = result.texture;
-
-                    finalTex.wrapMode = wrapMode;
-                    finalTex.filterMode = filterMode;
-                    finalTex.SetDebugName(webRequest.url);
-                    ProfilingCounters.TexturesAmount.Value++;
-                    return finalTex;
-                }
-                finally
-                {
-                    ktxTexture.Dispose();
-                }
+                ProfilingCounters.TexturesAmount.Value++;
+                return texture;
             }
         }
     }

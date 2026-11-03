@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Optimization.ThreadSafePool;
-using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -9,18 +8,17 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
-using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using REnum;
 
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    /// Main-thread only. Not thread-safe.
+    /// Main-thread only. Not thread-safe. What it shows is a <see cref="LivekitVideoMode" />, changed only through the
+    /// transition methods <see cref="Defer" />, <see cref="Follow" />, <see cref="StartComposing" /> and <see cref="StopComposing" />.
     /// </summary>
     public class LivekitPlayer : IDisposable
     {
@@ -40,11 +38,13 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Func<bool> isRoomRunning;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
+        private readonly SlideTextureCache slideCache;
+        private readonly PresentationCompositor compositor;
+        private readonly PresentationUrlPlayer urlPlayer;
         private PlayerState playerState;
-
-        private LivekitAddress? playingAddress;
-
-        private CurrentVideoStreamInfo? cvs;
+        private LivekitVideoMode video = LivekitVideoMode.Closed();
+        private (string? bot, string? metadata) presentationSource;
+        private bool loggedBadMetadata;
 
         private readonly Dictionary<StreamKey, (LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
         private Vector3 audioPosition;
@@ -52,8 +52,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
-        // Set from LiveKit FFI callbacks (off main thread); consumed by EnsureVideoIsPlaying / EnsureAudioIsPlaying
-        // on the main thread. Forces immediate re-discovery so we don't wait for the polling cycle in cases
+        // Set from LiveKit FFI callbacks (off main thread) and from the main thread to rescan on the next update;
+        // consumed by EnsureVideoIsPlaying / EnsureAudioIsPlaying on the main thread. Forces immediate re-discovery so we don't wait for the polling cycle in cases
         // where the streamer was already publishing before we joined (TrackPublication visible, but
         // trackPublication.Track stays null until subscription completes — see LiveKit Streams.ActiveStream).
         private volatile bool pendingVideoRediscovery;
@@ -63,6 +63,7 @@ namespace DCL.SDKComponents.MediaStream
         // across a connection change belongs to the torn-down connection and must be dropped AND evicted
         // from the room's stream cache (see EnsureVideoIsPlaying).
         private volatile bool pendingVideoReset;
+        private volatile bool pendingPresentationRefresh;
 
         public bool MediaOpened =>
             // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
@@ -72,13 +73,19 @@ namespace DCL.SDKComponents.MediaStream
 
         public PlayerState State => playerState;
 
-        public bool IsVideoOpened => cvs.HasValue && cvs.Value.videoStream.Resource.Has;
+        public bool IsVideoOpened => video.IsComposingVideo(out _) || (video.IsLegacyVideo(out LegacyVideo legacy) && legacy.Stream.IsLive);
 
-        // Live LiveKit frames are vertically flipped; the camera-off placeholder is upright.
+        // Live LiveKit frames are vertically flipped; the camera-off placeholder and the presentation composite are upright.
         public Vector2 CurrentTextureScale =>
-            placeholderSource != null && cvs.HasValue && IsCameraVideoMuted(cvs.Value)
+            video.IsComposingVideo(out _) || (placeholderSource != null && video.IsLegacyVideo(out LegacyVideo legacy) && IsCameraVideoMuted(legacy.Stream))
                 ? Vector2.one
                 : new Vector2(1f, -1f);
+
+#if UNITY_INCLUDE_TESTS
+        internal int compositorBlitCount => compositor.blitCount;
+
+        internal float compositorVideoFlip => compositor.videoFlip;
+#endif
 
         private bool isAudioOpened => audioSources.Count > 0;
 
@@ -89,11 +96,15 @@ namespace DCL.SDKComponents.MediaStream
             isRoomRunning()
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
-        public LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource)
+        internal LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource,
+            SlideTextureCache slideCache, Material compositorMaterial, PresentationUrlPlayer urlPlayer)
         {
             this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
             this.placeholderSource = placeholderSource;
+            this.slideCache = slideCache;
+            compositor = new PresentationCompositor(compositorMaterial);
+            this.urlPlayer = urlPlayer;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -104,12 +115,16 @@ namespace DCL.SDKComponents.MediaStream
         public void EnsureVideoIsPlaying()
         {
             if (State != PlayerState.Playing) return;
-            if (playingAddress == null) return;
+            if (video.Requested is not { } requested) return;
 
             // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
             // which would poison the reusable stream cache. Pending flags stay set for reconnect.
             if (!canOpenStreams)
             {
+                if (video.IsComposingVideo(out _))
+                    ReleaseHeldVideoStreams();
+
+                DropPresentation();
                 EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
                 return;
             }
@@ -118,30 +133,43 @@ namespace DCL.SDKComponents.MediaStream
             {
                 pendingVideoReset = false;
 
-                // Evict the stale stream from the room's cache so re-open gets a fresh instance.
-                if (cvs.HasValue)
-                {
-                    room.VideoStreams.Release(cvs.Value.key);
-                    cvs = null;
-                }
+                // Evict the stale streams from the room's cache so re-open gets a fresh instance.
+                ReleaseHeldVideoStreams();
             }
 
             // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
             // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
-            // already handles "look for a better source" safely, and re-allocating cvs while a subscription
+            // already handles "look for a better source" safely, and re-allocating the stream while a subscription
             // is mid-flight can stomp the in-flight Weak<IVideoStream> and stall playback (observed on Windows).
-            pendingVideoRediscovery = false;
+            bool rescan = pendingVideoRediscovery;
 
-            if (IsVideoOpened)
+            if (rescan)
+                pendingVideoRediscovery = false;
+
+            if (pendingPresentationRefresh)
             {
-                TryFollowVideoStreamToActiveSpeaker(playingAddress.Value);
+                pendingPresentationRefresh = false;
+                rescan |= RefreshPresentation(requested);
             }
-            else
+
+            if (video.IsComposingVideo(out ComposingVideo? composing))
             {
-                // target was a specific user that went offline or a current-stream that had no tracks,
-                // the recovery is: fall back to first-available.
-                OpenVideoStream(LivekitAddress.CurrentStream());
+                EnsurePresentationStreams(composing, rescan);
+                UpdateClientVideo(composing);
             }
+            else if (video.IsLegacyVideo(out LegacyVideo legacy))
+            {
+                if (legacy.Stream.IsLive)
+                    TryFollowVideoStreamToActiveSpeaker(legacy);
+                else
+                {
+                    // target was a specific user that went offline or a current-stream that had no tracks,
+                    // the recovery is: fall back to first-available.
+                    OpenVideoStream(legacy.Requested, LivekitAddress.CurrentStream());
+                }
+            }
+            else if (video.IsDeferredVideo(out DeferredVideo deferred))
+                OpenVideoStream(deferred.Requested, deferred.Target);
 
             // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
             // and UpdateVideoTexture (for PBVideoPlayer). Entities with only PBVideoPlayer never enter
@@ -152,7 +180,7 @@ namespace DCL.SDKComponents.MediaStream
         public void EnsureAudioIsPlaying()
         {
             if (State != PlayerState.Playing) return;
-            if (playingAddress == null) return;
+            if (video.IsClosed()) return;
 
             bool forceRediscover = pendingAudioRediscovery;
             if (forceRediscover) pendingAudioRediscovery = false;
@@ -181,39 +209,42 @@ namespace DCL.SDKComponents.MediaStream
         {
             CloseCurrentStream();
             lastAudioScanTime = 0f;
+            Defer(livekitAddress, livekitAddress);
 
-            OpenVideoStream(livekitAddress);
+            if (canOpenStreams)
+            {
+                pendingPresentationRefresh = false;
+                RefreshPresentation(livekitAddress);
+            }
+
+            if (video.IsComposingVideo(out _))
+                pendingVideoRediscovery = true;
+            else
+                OpenVideoStream(livekitAddress, livekitAddress);
+
             OpenMissingAudioStreams();
             playerState = PlayerState.Playing;
         }
 
-        private void OpenVideoStream(LivekitAddress livekitAddress)
+        private void OpenVideoStream(LivekitAddress requested, LivekitAddress target)
         {
             // Room not ready — defer the open; EnsureVideoIsPlaying will retry once connected.
             if (!canOpenStreams)
             {
-                cvs = null;
-                playingAddress = livekitAddress;
+                Defer(requested, target);
                 return;
             }
 
-            StreamKey? streamKey = livekitAddress.Match(
+            StreamKey? streamKey = target.Match(
                 this,
-                onUserStream: static (self, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
+                onUserStream: static (_, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
                 onCurrentStream: static self => self.BestInitialVideoKey()
             );
 
             if (streamKey.HasValue)
-            {
-                Weak<IVideoStream> stream = room.VideoStreams.ActiveStream(streamKey.Value);
-                cvs = CurrentVideoStreamInfo.New(streamKey.Value, stream);
-            }
+                Follow(requested, target, streamKey.Value);
             else
-            {
-                cvs = null;
-            }
-
-            playingAddress = livekitAddress;
+                Defer(requested, target);
         }
 
         private void OpenMissingAudioStreams()
@@ -253,25 +284,24 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private void TryFollowVideoStreamToActiveSpeaker(LivekitAddress address)
+        private void TryFollowVideoStreamToActiveSpeaker(LegacyVideo legacy)
         {
-            if (address.IsUserStream(out _)) return; // if stream dedicated user then don't auto-follow
+            LivekitAddress target = legacy.Target;
 
-            if (cvs?.IsFromPresentationBot() ?? false) return; // already streams high-priority presentation bot
+            if (target.IsUserStream(out _)) return; // if stream dedicated user then don't auto-follow
 
-            StreamKey? targetKey = BestFollowCandidate();
+            if (legacy.Stream.IsFromPresentationBot()) return; // already streams high-priority presentation bot
 
-            // Switch only if the best source actually changed; re-allocating cvs every frame would
+            StreamKey? targetKey = BestFollowCandidate(legacy.Stream);
+
+            // Switch only if the best source actually changed; re-allocating the stream every frame would
             // reset the speaker-hold timer and re-wrap a healthy stream (e.g. while a screen share holds it).
-            if (targetKey != null && cvs?.key.Equals(targetKey.Value) != true)
-            {
-                var currentVideoStream = room.VideoStreams.ActiveStream(targetKey.Value);
-                cvs = CurrentVideoStreamInfo.New(targetKey.Value, currentVideoStream);
-            }
+            if (targetKey != null && !legacy.Stream.Key.Equals(targetKey.Value))
+                Follow(legacy.Requested, legacy.Target, targetKey.Value);
         }
 
         // Pure
-        private StreamKey? BestFollowCandidate()
+        private StreamKey? BestFollowCandidate(VideoStreamInfo current)
         {
             StreamKey? targetKey = PresentationBotVideoKey();
 
@@ -281,15 +311,14 @@ namespace DCL.SDKComponents.MediaStream
             // try pick up another key if presentation bot and screen share are unavailable
             if (targetKey == null)
             {
-                float lastSwitch = cvs?.switchedAtTime ?? 0;
-                float delta = UnityEngine.Time.realtimeSinceStartup - lastSwitch;
+                float delta = UnityEngine.Time.realtimeSinceStartup - current.SwitchedAtTime;
 
                 // attempt to switch only if hold exceeds
                 if (delta > MIN_SPEAKER_HOLD_SECONDS)
                 {
                     foreach (string activeSpeaker in room.ActiveSpeakers)
                     {
-                        if (activeSpeaker == cvs?.fromIdentity)
+                        if (activeSpeaker == current.FromIdentity)
                             break; // we don't need to switch if he is already playing
 
                         targetKey = FindVideoTrackForParticipant(activeSpeaker);
@@ -306,22 +335,8 @@ namespace DCL.SDKComponents.MediaStream
         private StreamKey? BestInitialVideoKey() =>
             PresentationBotVideoKey() ?? FirstScreenShareVideoKey() ?? FirstAvailableTrackSid(TrackKind.KindVideo);
 
-        private StreamKey? FindVideoTrackForParticipant(string identity)
-        {
-            // See: solved https://github.com/decentraland/unity-explorer/issues/3796
-            // room.Participants is thread-safe
-            var participant = room.Participants.RemoteParticipant(identity);
-
-            if (participant == null) return null;
-
-            foreach ((string sid, TrackPublication track) in participant.Tracks)
-            {
-                if (track.Kind == TrackKind.KindVideo)
-                    return new StreamKey(identity, sid);
-            }
-
-            return null;
-        }
+        private StreamKey? FindVideoTrackForParticipant(string identity) =>
+            FindVideoTrack(identity, static track => !IsPresentationVideo(track));
 
         private StreamKey? FirstScreenShareVideoKey()
         {
@@ -335,7 +350,7 @@ namespace DCL.SDKComponents.MediaStream
                 foreach ((string sid, TrackPublication track) in participant.Tracks)
                 {
                     // Skip a paused (muted) share so video falls through to the active speaker until it resumes.
-                    if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare && !track.Muted)
+                    if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare && !track.Muted && !IsPresentationVideo(track))
                         return new StreamKey(identity, sid);
                 }
             }
@@ -356,7 +371,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 foreach ((string sid, TrackPublication value) in participant.Tracks)
                 {
-                    if (value.Kind == kind)
+                    if (value.Kind == kind && !IsPresentationVideo(value))
                     {
                         // Presentation bot always has priority.
                         if (remoteParticipantIdentity.IsPresentationBotIdentity())
@@ -388,6 +403,160 @@ namespace DCL.SDKComponents.MediaStream
             return null;
         }
 
+        private string? ComposingBotIdentity(LivekitAddress requested)
+        {
+            if (requested.IsUserStream(out UserStream userStream))
+                return userStream.Identity.IsPresentationBotIdentity() ? userStream.Identity : null;
+
+            return PresentationBotIdentity();
+        }
+
+        private static bool IsPresentationVideo(TrackPublication track) =>
+            track.Name == LiveKitMediaExtensions.PRESENTATION_VIDEO_TRACK_NAME;
+
+        private bool RefreshPresentation(LivekitAddress requested)
+        {
+            string? bot = ComposingBotIdentity(requested);
+            string? raw = bot == null ? null : room.Participants.RemoteParticipant(bot)?.Metadata;
+
+            if (string.Equals(bot, presentationSource.bot, StringComparison.Ordinal) && string.Equals(raw, presentationSource.metadata, StringComparison.Ordinal))
+                return false;
+
+            presentationSource = (bot, raw);
+            PresentationBotMetadata? metadata = PresentationBotMetadata.Parse(raw);
+
+            if (bot != null && metadata?.slide is { url: { } slideUrl } slide)
+            {
+                if (video.IsComposingVideo(out ComposingVideo? composing))
+                {
+                    if (slideUrl != composing.slideUrl)
+                        urlPlayer.Release();
+
+                    composing.Show(bot, metadata, slide, slideUrl);
+                }
+                else
+                    StartComposing(requested, bot, metadata, slide, slideUrl);
+            }
+            else if (video.IsComposingVideo(out ComposingVideo? composing))
+                StopComposing(composing);
+
+            if (metadata == null && !string.IsNullOrEmpty(raw) && !loggedBadMetadata)
+            {
+                loggedBadMetadata = true;
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, "Presentation bot metadata is unparseable or out of bounds, showing the legacy track");
+            }
+
+            return true;
+        }
+
+        private void DropPresentation()
+        {
+            if (video.IsComposingVideo(out ComposingVideo? composing))
+                StopComposing(composing);
+
+            presentationSource = default;
+            pendingPresentationRefresh = true;
+        }
+
+        private void Defer(LivekitAddress requested, LivekitAddress target) =>
+            SetVideo(LivekitVideoMode.FromDeferredVideo(new DeferredVideo(requested, target)));
+
+        private void Follow(LivekitAddress requested, LivekitAddress target, StreamKey key) =>
+            SetVideo(LivekitVideoMode.FromLegacyVideo(new LegacyVideo(requested, target, VideoStreamInfo.New(key, room.VideoStreams.ActiveStream(key)))));
+
+        private void StartComposing(LivekitAddress requested, string bot, PresentationBotMetadata metadata, PresentationSlide slide, string slideUrl) =>
+            SetVideo(LivekitVideoMode.FromComposingVideo(new ComposingVideo(requested, slideCache.BeginComposing(), bot, metadata, slide, slideUrl)));
+
+        private void StopComposing(ComposingVideo composing) =>
+            Defer(composing.requested, composing.requested);
+
+        private void SetVideo(LivekitVideoMode next)
+        {
+            if (video.IsComposingVideo(out ComposingVideo? composing))
+            {
+                composing.slideLease.Dispose();
+                urlPlayer.Release();
+                compositor.Release();
+            }
+
+            video = next;
+        }
+
+        private void ReleaseHeldVideoStreams()
+        {
+            if (video.IsLegacyVideo(out LegacyVideo legacy))
+            {
+                room.VideoStreams.Release(legacy.Stream.Key);
+                Defer(legacy.Requested, legacy.Target);
+            }
+            else if (video.IsComposingVideo(out ComposingVideo? composing))
+            {
+                ReleaseVideoStream(ref composing.presentationVideo);
+                ReleaseVideoStream(ref composing.presenterCamera);
+            }
+        }
+
+        private void EnsurePresentationStreams(ComposingVideo composing, bool rescan)
+        {
+            if (rescan || IsUnresolved(composing.presentationVideo))
+                composing.presentationVideo = RebindVideoStream(composing.presentationVideo, FindVideoTrack(composing.bot, static track => IsPresentationVideo(track)));
+
+            if (rescan || IsUnresolved(composing.presenterCamera))
+            {
+                string? presenter = composing.presentation.presenterIdentity;
+                composing.presenterCamera = RebindVideoStream(composing.presenterCamera, presenter == null ? null : FindVideoTrack(presenter, static track => track.Source == TrackSource.SourceCamera));
+            }
+        }
+
+        private void UpdateClientVideo(ComposingVideo composing)
+        {
+            PresentationBotMetadata metadata = composing.presentation;
+
+            if (composing.clientVideoUrl != null)
+                urlPlayer.Update(composing.clientVideoUrl, metadata.TargetPositionSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), metadata.IsVideoPlaying(), UnityEngine.Time.realtimeSinceStartup);
+            else
+                urlPlayer.Release();
+        }
+
+        private static bool IsUnresolved(VideoStreamInfo? stream) =>
+            stream is { IsLive: false };
+
+        private StreamKey? FindVideoTrack(string identity, Func<TrackPublication, bool> match)
+        {
+            // See: solved https://github.com/decentraland/unity-explorer/issues/3796
+            // room.Participants is thread-safe
+            var participant = room.Participants.RemoteParticipant(identity);
+
+            if (participant == null) return null;
+
+            foreach ((string sid, TrackPublication track) in participant.Tracks)
+            {
+                if (track.Kind == TrackKind.KindVideo && match(track))
+                    return new StreamKey(identity, sid);
+            }
+
+            return null;
+        }
+
+        private VideoStreamInfo? RebindVideoStream(VideoStreamInfo? held, StreamKey? key)
+        {
+            if (!key.HasValue)
+                return null;
+
+            if (held is { IsLive: true } live && live.Key.Equals(key.Value))
+                return held;
+
+            return VideoStreamInfo.New(key.Value, room.VideoStreams.ActiveStream(key.Value));
+        }
+
+        private void ReleaseVideoStream(ref VideoStreamInfo? stream)
+        {
+            if (!stream.HasValue) return;
+
+            room.VideoStreams.Release(stream.Value.Key);
+            stream = null;
+        }
+
         private void ReleaseAllAudioSources()
         {
             foreach (var (source, _) in audioSources.Values)
@@ -400,10 +569,17 @@ namespace DCL.SDKComponents.MediaStream
             audioSources.Clear();
         }
 
+        /// <summary>
+        ///     Drops every held stream and stops. <see cref="Play" /> resumes the address the player was opened with.
+        /// </summary>
         public void CloseCurrentStream()
         {
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
-            cvs = null;
+            DropPresentation();
+
+            if (video.Requested is { } requested)
+                Defer(requested, requested);
+
             playerState = PlayerState.Stopped;
             ReleaseAllAudioSources();
         }
@@ -413,32 +589,76 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.Playing)
                 return null;
 
-            if (!cvs.HasValue || !cvs.Value.videoStream.Resource.Has)
+            if (video.IsComposingVideo(out ComposingVideo? composing))
+            {
+                if (composing.composedFrame != UnityEngine.Time.frameCount)
+                {
+                    composing.composedTexture = ComposePresentation(composing);
+                    composing.composedFrame = UnityEngine.Time.frameCount;
+                }
+
+                return composing.composedTexture;
+            }
+
+            if (!video.IsLegacyVideo(out LegacyVideo legacy) || !legacy.Stream.IsLive)
                 return null;
 
-            CurrentVideoStreamInfo videoInfo = cvs.Value;
-            return CameraOffPlaceholder(videoInfo) ?? videoInfo.videoStream.Resource.Value.DecodeLastFrame();
+            return CameraOffPlaceholder(legacy.Stream) ?? legacy.Stream.VideoStream.Resource.Value.DecodeLastFrame();
         }
 
-        private Texture? CameraOffPlaceholder(CurrentVideoStreamInfo videoInfo) =>
+        private Texture ComposePresentation(ComposingVideo composing)
+        {
+            PresentationBotMetadata metadata = composing.presentation;
+            PresentationSlide slide = composing.slide;
+            DCL.Utility.Types.EnumResult<Texture2D, SlideState> cachedSlide = slideCache.GetOrRequest(composing.slideUrl, composing.bot);
+
+            if (cachedSlide.Success)
+            {
+                composing.shownSlide = cachedSlide.Value;
+                composing.shownSlideUrl = composing.slideUrl;
+            }
+            else if (composing.shownSlideUrl != null)
+                slideCache.KeepAlive(composing.shownSlideUrl);
+
+            Texture slideTexture = composing.shownSlide != null ? composing.shownSlide : Texture2D.blackTexture;
+            bool showRect = metadata.TryVideoRect(out Vector4 videoRect);
+            bool clientEntry = metadata.IsClientEntry();
+            Texture? videoFrame = !showRect ? null
+                : clientEntry ? urlPlayer.Texture
+                : DecodeLastFrame(composing.presentationVideo);
+
+            Vector4 cameraRect = metadata.CameraRect(slide.width, slide.height);
+            Texture? camera = cameraRect.z > 0f && IsPresenterCameraLive(composing) ? DecodeLastFrame(composing.presenterCamera) : null;
+
+            bool flipVideo = clientEntry && urlPlayer.RequiresCompositorFlip;
+
+            return compositor.Compose(slide.width, slide.height, slideTexture, showRect, videoRect, videoFrame, camera, cameraRect, flipVideo);
+        }
+
+        private static Texture2D? DecodeLastFrame(VideoStreamInfo? stream) =>
+            stream is { IsLive: true } live ? live.VideoStream.Resource.Value.DecodeLastFrame() : null;
+
+        private bool IsPresenterCameraLive(ComposingVideo composing) =>
+            composing.presenterCamera.HasValue && PublicationOf(composing.presenterCamera.Value) is { Muted: false };
+
+        private Texture? CameraOffPlaceholder(VideoStreamInfo videoInfo) =>
             placeholderSource != null && IsCameraVideoMuted(videoInfo)
                 ? placeholderSource.TextureFor(StreamerName(videoInfo))
                 : null;
 
         // Screen-shares are not cameras, so they keep their live frame and never show the placeholder.
-        private bool IsCameraVideoMuted(CurrentVideoStreamInfo videoInfo)
+        private bool IsCameraVideoMuted(VideoStreamInfo videoInfo) =>
+            PublicationOf(videoInfo) is { Muted: true } track && track.Source != TrackSource.SourceScreenshare;
+
+        private TrackPublication? PublicationOf(VideoStreamInfo videoInfo)
         {
-            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
-
-            if (participant == null || !participant.Tracks.TryGetValue(videoInfo.key.sid, out TrackPublication track))
-                return false;
-
-            return track.Source != TrackSource.SourceScreenshare && track.Muted;
+            var participant = room.Participants.RemoteParticipant(videoInfo.FromIdentity);
+            return participant != null && participant.Tracks.TryGetValue(videoInfo.Key.sid, out TrackPublication track) ? track : null;
         }
 
-        private string? StreamerName(CurrentVideoStreamInfo videoInfo)
+        private string? StreamerName(VideoStreamInfo videoInfo)
         {
-            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
+            var participant = room.Participants.RemoteParticipant(videoInfo.FromIdentity);
             return participant == null || string.IsNullOrEmpty(participant.Name) ? null : participant.Name;
         }
 
@@ -458,11 +678,13 @@ namespace DCL.SDKComponents.MediaStream
             room.Participants.UpdatesFromParticipant -= OnRoomParticipantUpdate;
 
             CloseCurrentStream();
+            urlPlayer.Dispose();
+            compositor.Dispose();
         }
 
         // The four handlers below are invoked from LiveKit's FFI thread. The class is otherwise
-        // main-thread only, so the handlers MUST NOT touch any field other than the volatile rediscovery
-        // flags. Consumption happens on the main thread inside EnsureVideoIsPlaying / EnsureAudioIsPlaying.
+        // main-thread only, so the handlers MUST NOT touch any field other than the volatile
+        // pending* flags. Consumption happens on the main thread inside EnsureVideoIsPlaying / EnsureAudioIsPlaying.
         private void OnRoomConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
         {
             if (update is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
@@ -470,6 +692,7 @@ namespace DCL.SDKComponents.MediaStream
                 pendingVideoReset = true;
                 pendingVideoRediscovery = true;
                 pendingAudioRediscovery = true;
+                pendingPresentationRefresh = true;
             }
         }
 
@@ -505,10 +728,17 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OnRoomParticipantUpdate(LKParticipant _, UpdateFromParticipant update)
         {
-            if (update == UpdateFromParticipant.Disconnected)
+            switch (update)
             {
-                pendingVideoRediscovery = true;
-                pendingAudioRediscovery = true;
+                case UpdateFromParticipant.Disconnected:
+                    pendingVideoRediscovery = true;
+                    pendingAudioRediscovery = true;
+                    pendingPresentationRefresh = true;
+                    break;
+                case UpdateFromParticipant.Connected:
+                case UpdateFromParticipant.MetadataChanged:
+                    pendingPresentationRefresh = true;
+                    break;
             }
         }
 
@@ -523,6 +753,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Pause()
         {
             playerState = PlayerState.Paused;
+            urlPlayer.Pause();
 
             // There is no "pause" for a streaming source.
             foreach (var (source, _) in audioSources.Values)
@@ -532,6 +763,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Stop()
         {
             playerState = PlayerState.Stopped;
+            urlPlayer.Release();
 
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();
@@ -540,6 +772,7 @@ namespace DCL.SDKComponents.MediaStream
         public void SetVolume(float target)
         {
             Volume = target;
+            urlPlayer.SetVolume(target);
 
             foreach (var (source, _) in audioSources.Values)
                 source.SetVolume(target);
@@ -555,6 +788,7 @@ namespace DCL.SDKComponents.MediaStream
         public void PlaceAudioAt(Vector3 position)
         {
             audioPosition = position;
+            urlPlayer.PlaceAudioAt(position);
 
             foreach (var (source, _) in audioSources.Values)
                 source.transform.position = position;
@@ -575,41 +809,6 @@ namespace DCL.SDKComponents.MediaStream
                 return source.gameObject.GetComponent<AudioSource>();
 
             return null;
-        }
-
-        private readonly struct CurrentVideoStreamInfo
-        {
-            public readonly StreamKey key;
-            public readonly Weak<IVideoStream> videoStream;
-            public readonly float switchedAtTime;
-
-            public string fromIdentity => key.identity;
-
-            private CurrentVideoStreamInfo(
-                    StreamKey key,
-                    Weak<IVideoStream> videoStream,
-                    float switchedAtTime)
-            {
-                this.key = key;
-                this.videoStream = videoStream;
-                this.switchedAtTime = switchedAtTime;
-            }
-
-            public static CurrentVideoStreamInfo New(
-                    StreamKey key,
-                    Weak<IVideoStream> videoStream)
-            {
-                return new (
-                        key,
-                        videoStream,
-                        UnityEngine.Time.realtimeSinceStartup
-                        );
-            }
-
-            public bool IsFromPresentationBot()
-            {
-                return key.identity.IsPresentationBotIdentity();
-            }
         }
     }
 }

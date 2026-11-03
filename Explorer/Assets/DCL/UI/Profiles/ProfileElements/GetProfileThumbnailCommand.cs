@@ -25,6 +25,13 @@ namespace DCL.UI.ProfileElements
 
         public async UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
         {
+            // A profile without a face snapshot has nothing to look up or download: it shows the fallback right away.
+            if (string.IsNullOrEmpty(faceSnapshotUrl))
+            {
+                SetFallback(property, fallback);
+                return;
+            }
+
             // We don't need to wait (and skip frames) until the property is bound if the data is already cached.
 
             Sprite? cachedSprite = profileRepository.GetProfileThumbnail(faceSnapshotUrl);
@@ -77,8 +84,11 @@ namespace DCL.UI.ProfileElements
                 if (seededPreviousSprite)
                     return;
 
-                property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
+                SetFallback(property, fallback);
             }
         }
+
+        private static void SetFallback(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback) =>
+            property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
     }
 }

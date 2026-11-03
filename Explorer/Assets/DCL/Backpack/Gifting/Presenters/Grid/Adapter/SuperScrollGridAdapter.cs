@@ -3,10 +3,8 @@ using SuperScrollView;
 using System;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
-using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 {

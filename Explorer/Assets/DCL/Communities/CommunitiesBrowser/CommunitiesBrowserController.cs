@@ -36,7 +36,7 @@ using UnityEngine;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserController : ISection, IDisposable
+    public class CommunitiesBrowserController : IHostableSection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
         private const int DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS = 2000;
@@ -51,13 +51,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
 
         private readonly CommunitiesBrowserView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
@@ -87,6 +87,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
         private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MainSection;
         private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.InvitesAndRequestsSection;
 
@@ -98,7 +102,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,
@@ -110,7 +114,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             this.web3IdentityCache = web3IdentityCache;
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
             this.inputBlock = inputBlock;
@@ -262,8 +266,25 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            view.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         private void ViewAllMyCommunitiesResults()
         {
@@ -568,9 +589,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                if (ownProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
                 Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct);
@@ -799,7 +818,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityLeft(string communityId, bool success)
         {
-            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, false, success);
+            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, success, isJoined: false);
         }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
@@ -918,7 +937,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
             }
 
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             orchestrator.StartPrivateCallWithUserId(profile.Address);
         }
 

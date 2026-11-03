@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.Global
             var unityLocalizationSceneTipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
                 settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
-            var tipsProvider = new TipsFromFeatureFlagDecorator(unityLocalizationSceneTipsProvider);
+            var tipsProvider = new TipsFromFeatureFlagDecorator(unityLocalizationSceneTipsProvider, prefab.TipCatalog);
 
             await unityLocalizationSceneTipsProvider.InitializeAsync(ct);
 

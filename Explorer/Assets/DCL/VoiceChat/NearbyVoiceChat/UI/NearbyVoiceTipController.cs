@@ -24,6 +24,7 @@ namespace DCL.VoiceChat.UI
     {
         private readonly NearbyVoiceTipView view;
         private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
+        private readonly NearbyVoiceChatStateModel stateModel;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
 
@@ -43,6 +44,7 @@ namespace DCL.VoiceChat.UI
         {
             this.view = view;
             this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
+            this.stateModel = stateModel;
 
             hasUsedNearbyVoice = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_USED);
             stateSubscription = stateModel.State.Subscribe(OnNearbyVoiceStateChanged);
@@ -82,7 +84,8 @@ namespace DCL.VoiceChat.UI
             try
             {
                 await UniTask.WaitUntil(
-                    () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && coveringViews == 0,
+                    () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && coveringViews == 0
+                          && !stateModel.IsSuppressedBy(SuppressionReason.Guest),
                     cancellationToken: ct);
 
                 // Count the display up front: a user who quits without pressing either button has still seen the tip.

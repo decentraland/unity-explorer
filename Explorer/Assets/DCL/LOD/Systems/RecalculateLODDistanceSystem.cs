@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.CharacterCamera;
 using DCL.LOD.Components;
 using ECS.Abstract;

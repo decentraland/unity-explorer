@@ -89,7 +89,7 @@ namespace DCL.SocialService
                         SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
                                                 + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
 
-                        var webSocketErrorCode = (WebSocketError)e.ErrorCode;
+                        WebSocketError webSocketErrorCode = e.WebSocketErrorCode;
 
                         if (webSocketErrorCode is WebSocketError.Faulted
                             or WebSocketError.ConnectionClosedPrematurely

@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
 using System;
 using System.Threading;

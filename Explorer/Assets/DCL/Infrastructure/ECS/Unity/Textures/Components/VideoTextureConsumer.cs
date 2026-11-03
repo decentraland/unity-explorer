@@ -41,7 +41,7 @@ namespace ECS.Unity.Textures.Components
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
-        ///     we don't use the original texture from AVPro
+        ///     we don't use the original texture from the media player
         /// </summary>
 
         // public Texture2DData Texture { get; private set; }

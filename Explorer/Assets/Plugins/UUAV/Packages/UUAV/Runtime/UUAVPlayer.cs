@@ -13,6 +13,8 @@ namespace UUAV
         private static readonly TimeQuery currentTimeQuery = NativeMethods.uuav_player_current_time;
         private static readonly TimeQuery durationQuery = NativeMethods.uuav_player_duration;
 
+        private const uint MIN_PLANE_DIMENSION = 2;
+
         /// <summary>
         /// M stands for "Managed" mirrors the original MediaInfo and makes it serializable
         /// </summary>
@@ -103,6 +105,10 @@ namespace UUAV
         private long dspFramesReturned;
         private long dspSilencedCallbacks;
 
+        // flipped on the main thread, read on the audio mixer thread
+        private int audioCaptureEnabled;
+        private readonly AudioFrameSnapshot audioCapture = new ();
+
         public string CurrentUrl => url;
 
         // 0 = the runtime never negotiated an output format: every DSP
@@ -171,6 +177,8 @@ namespace UUAV
         public void CloseMedia()
         {
             Check(NativeMethods.uuav_player_close_media(playerId), "close media");
+            ReleaseFrame();
+            SetAudioCaptureEnabled(false);
         }
 
         [ContextMenu(nameof(Play))]
@@ -217,6 +225,42 @@ namespace UUAV
                 NativeMethods.uuav_player_assign_master_clock(playerId, mediaTime),
                 "assign master clock"
             );
+        }
+
+        /// <summary>
+        /// Opt-in copy of every buffer this player's DSP callback produces,
+        /// after it is filled or silenced, for <see cref="TryReadLastAudioFrame"/>.
+        /// A sibling OnAudioFilterRead component does not observe this
+        /// player's output (see AudioTapBehaviour), so this is the only way
+        /// to inspect it. Main thread only; closing the media disables it.
+        /// </summary>
+        public void SetAudioCaptureEnabled(bool enabled)
+        {
+            if (!enabled)
+            {
+                Volatile.Write(ref audioCaptureEnabled, 0);
+                audioCapture.Reset();
+                return;
+            }
+
+            if (Volatile.Read(ref audioCaptureEnabled) == 1)
+            {
+                return;
+            }
+
+            AudioSettings.GetDSPBufferSize(out int bufferLength, out _);
+            int channels = AudioOptions.FromConfig(AudioSettings.GetConfiguration()).Channels;
+            audioCapture.EnsureCapacity(bufferLength * channels);
+            Volatile.Write(ref audioCaptureEnabled, 1);
+        }
+
+        /// <summary>
+        /// Main-thread copy of the latest captured DSP buffer. False when
+        /// capture is disabled or no new buffer arrived since the last read.
+        /// </summary>
+        public bool TryReadLastAudioFrame(Span<float> destination, out int channels, out int sampleCount)
+        {
+            return audioCapture.TryRead(destination, out channels, out sampleCount);
         }
 
         public static UUAVPlayer New()
@@ -328,14 +372,7 @@ namespace UUAV
                 NativeMethods.uuav_player_free(playerId);
             }
 
-            ReleasePlaneViews();
-
-            if (runtimeSurface != null)
-            {
-                runtimeSurface.Release();
-                Destroy(runtimeSurface);
-                runtimeSurface = null;
-            }
+            ReleaseFrame();
 
             if (nv12Material != null)
             {
@@ -345,9 +382,24 @@ namespace UUAV
         }
 
 
+        // audio mixer thread
+        private void OnAudioFilterRead(float[] data, int channels)
+        {
+            FillAudio(data, channels);
+
+            if (Volatile.Read(ref audioCaptureEnabled) == 1)
+            {
+                audioCapture.Write(data, channels);
+            }
+        }
+
+#if UNITY_INCLUDE_TESTS
+        public void OnAudioFilterReadForTests(float[] data, int channels) => OnAudioFilterRead(data, channels);
+#endif
+
         // audio mixer thread. playerId is immutable, safe to read directly;
         // a stale id after uuav_player_free is a native no-op returning 0
-        private void OnAudioFilterRead(float[] data, int channels)
+        private void FillAudio(float[] data, int channels)
         {
             if (playerId == 0 || channels != nativeChannels)
             {
@@ -418,6 +470,11 @@ namespace UUAV
                 return false;
             }
 
+            // native can hand out a texture while still reporting a 0-sized
+            // frame; Unity cannot wrap it, so wait for a real size instead
+            if (IsWrappableSize(size) == false)
+                return false;
+
             // the native texture is recreated on every resolution change,
             // including mid-play adaptive/IDR switches, so pointer + size
             // comparison catches first frame, re-open and mid-stream changes
@@ -432,6 +489,10 @@ namespace UUAV
 
             return yPlane != null;
         }
+
+        // the UV plane is half the Y plane in each dimension
+        internal static bool IsWrappableSize(VideoSize size) =>
+            size.Width >= MIN_PLANE_DIMENSION && size.Height >= MIN_PLANE_DIMENSION;
 
         private void RecreatePlaneViews(IntPtr yTexture, IntPtr uvTexture, VideoSize size)
         {
@@ -500,6 +561,18 @@ namespace UUAV
             GL.sRGBWrite = QualitySettings.activeColorSpace == ColorSpace.Linear;
             Graphics.Blit(null, surface, nv12Material);
             GL.sRGBWrite = previousSRGBWrite;
+        }
+
+        private void ReleaseFrame()
+        {
+            ReleasePlaneViews();
+
+            if (runtimeSurface != null)
+            {
+                runtimeSurface.Release();
+                Destroy(runtimeSurface);
+                runtimeSurface = null;
+            }
         }
 
         private void ReleasePlaneViews()

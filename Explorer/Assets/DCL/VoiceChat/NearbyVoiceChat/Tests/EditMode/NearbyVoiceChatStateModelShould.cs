@@ -286,6 +286,38 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         }
 
         [Test]
+        public void ReportEverySuppressionReasonCurrentlyHeld()
+        {
+            // Arrange — a guest who then walks into a scene that disables nearby voice
+            model.Enable();
+            model.Suppress(SuppressionReason.Guest);
+            model.Suppress(SuppressionReason.Scene);
+
+            // Assert — ActiveSuppression only tracks the latest reason, membership tracks all of them
+            Assert.That(model.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.Scene));
+            Assert.That(model.IsSuppressedBy(SuppressionReason.Guest), Is.True);
+            Assert.That(model.IsSuppressedBy(SuppressionReason.Scene), Is.True);
+            Assert.That(model.IsSuppressedBy(SuppressionReason.Call), Is.False);
+        }
+
+        [Test]
+        public void StopReportingAReasonOnceItResumes()
+        {
+            // Arrange
+            model.Enable();
+            model.Suppress(SuppressionReason.Guest);
+            model.Suppress(SuppressionReason.Scene);
+
+            // Act — the guest upgrades their account while still inside the restricted scene
+            model.Resume(SuppressionReason.Guest);
+
+            // Assert
+            Assert.That(model.IsSuppressedBy(SuppressionReason.Guest), Is.False);
+            Assert.That(model.IsSuppressedBy(SuppressionReason.Scene), Is.True);
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+        }
+
+        [Test]
         public void IgnoreResumeWhenNotSuppressed()
         {
             // Arrange

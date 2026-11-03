@@ -1,4 +1,4 @@
-﻿using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Components;
 using System;
 using UnityEngine;
 
@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Movement
         public double timestamp;
 
         /// <summary>
-        ///     Stored to be able to perform diffs
+        ///     Retained for movement diffs.
         /// </summary>
         public Vector2Int parcel;
 
@@ -28,6 +28,11 @@ namespace DCL.Multiplayer.Movement
         public bool isSliding;
         public bool isStunned;
         public bool isInstant;
+
+        /// <summary>Local-only signal that this pose starts a different peer's movement timeline.</summary>
+        [NonSerialized]
+        public bool resetTimeline;
+
         public bool isEmoting;
 
         public bool isPointingAt;
@@ -54,6 +59,7 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(animState);
             hashCode.Add(velocityTier);
             hashCode.Add(isInstant);
+            hashCode.Add(resetTimeline);
             hashCode.Add(isEmoting);
             hashCode.Add(headIKYawEnabled);
             hashCode.Add(headIKPitchEnabled);
@@ -73,12 +79,13 @@ namespace DCL.Multiplayer.Movement
             && animState.Equals(other.animState)
             && velocityTier == other.velocityTier
             && isInstant == other.isInstant
+            && resetTimeline == other.resetTimeline
             && isEmoting == other.isEmoting
             && headIKYawEnabled == other.headIKYawEnabled
             && headIKPitchEnabled == other.headIKPitchEnabled
             && headYawAndPitch.Equals(other.headYawAndPitch);
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is NetworkMovementMessage other && Equals(other);
     }
 }

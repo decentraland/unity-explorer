@@ -2,11 +2,11 @@ namespace DCL.Profiles.Self
 {
     public interface IProfilePropagation
     {
-        void Propagate(Profile profile);
+        void PropagateIfNewVersion(Profile profile);
 
         public class Dummy : IProfilePropagation
         {
-            public void Propagate(Profile profile) { }
+            public void PropagateIfNewVersion(Profile profile) { }
         }
     }
 }

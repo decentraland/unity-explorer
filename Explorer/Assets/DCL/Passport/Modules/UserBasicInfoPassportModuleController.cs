@@ -23,7 +23,7 @@ namespace DCL.Passport.Modules
         private readonly UserNameElementPresenter userNameElementPresenter;
         private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
         private readonly UserBasicInfoPassportModuleView view;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
@@ -40,7 +40,7 @@ namespace DCL.Passport.Modules
 
         public UserBasicInfoPassportModuleController(
             UserBasicInfoPassportModuleView view,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
@@ -98,9 +98,7 @@ namespace DCL.Passport.Modules
                 view.ClaimNameButton.gameObject.SetActive(false);
                 view.NameColorPickerView.gameObject.SetActive(false);
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                if (ownProfile == null) return;
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile)) return;
 
                 if (ownProfile.UserId == currentProfile?.UserId)
                 {
@@ -143,10 +141,8 @@ namespace DCL.Passport.Modules
             {
                 await mvcManager.ShowAsync(ProfileNameEditorController.IssueCommand(), ct);
 
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-
                 // Re-configure ui
-                if (profile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? profile))
                     Setup(profile);
             }
         }

@@ -6,7 +6,6 @@ using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {

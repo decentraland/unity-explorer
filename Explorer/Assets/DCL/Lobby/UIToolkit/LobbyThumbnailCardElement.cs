@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,6 +20,7 @@ namespace DCL.Lobby
         private readonly string ussLoading;
 
         private VisualElement? thumbnail;
+        private SkeletonLoadingElement? skeleton;
         private Sprite? thumbnailSprite;
 
         public Sprite? Thumbnail
@@ -37,7 +39,14 @@ namespace DCL.Lobby
         public bool IsLoading
         {
             get => ClassListContains(ussLoading);
-            set => EnableInClassList(ussLoading, value);
+
+            set
+            {
+                EnableInClassList(ussLoading, value);
+
+                if (skeleton != null)
+                    LobbyThumbnailSkeleton.SetLoading(skeleton, value);
+            }
         }
 
         protected virtual bool canClick => true;
@@ -60,13 +69,15 @@ namespace DCL.Lobby
                 return;
 
             thumbnail = this.Q<VisualElement>(THUMBNAIL_NAME);
+            skeleton = LobbyThumbnailSkeleton.AddTo(thumbnail);
             ApplyThumbnail(thumbnail);
+            LobbyThumbnailSkeleton.SetLoading(skeleton, IsLoading);
             ResolveChildren();
         }
 
         private void ApplyThumbnail(VisualElement target)
         {
-            target.style.backgroundImage = LobbyCardBackground.From(thumbnailSprite);
+            target.style.backgroundImage = VisualElementsExtensions.CoverBackground(thumbnailSprite);
         }
 
         private void OnClicked()

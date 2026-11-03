@@ -31,6 +31,13 @@ namespace DCL.Friends
         /// </summary>
         public event Action? OnReset;
 
+        /// <summary>
+        ///     Raised when the last held-back update runs its course, status changed or not; a replaced or reset one never counts.
+        /// </summary>
+        public event Action? OnPendingChangesSettled;
+
+        public bool HasPendingChanges => debounceInfo.Count > 0;
+
         public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus,
             bool isConnectivityStatusEnabled)
         {
@@ -148,9 +155,12 @@ namespace DCL.Friends
 
         private async UniTaskVoid DebounceStatusChangeAsync(FriendStatusDebounceInfo info, Action onStatusChange)
         {
+            var ranItsCourse = false;
+
             try
             {
                 await UniTask.Delay(DEBOUNCE_DELAY_MS, cancellationToken: info.CancellationTokenSource.Token);
+                ranItsCourse = true;
 
                 // Check if this is still the latest status change for this friend
                 if (debounceInfo.TryGetValue(info.Profile.UserId, out FriendStatusDebounceInfo currentInfo)
@@ -167,6 +177,9 @@ namespace DCL.Friends
                 {
                     debounceInfo.Remove(info.Profile.UserId);
                     info.CancellationTokenSource.SafeCancelAndDispose();
+
+                    if (ranItsCourse && debounceInfo.Count == 0)
+                        OnPendingChangesSettled?.Invoke();
                 }
             }
         }

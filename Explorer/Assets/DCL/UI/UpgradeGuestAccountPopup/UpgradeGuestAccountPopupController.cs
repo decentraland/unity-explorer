@@ -40,7 +40,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         }
 
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileCache profileCache;
@@ -61,7 +61,7 @@ namespace DCL.UI.UpgradeGuestAccountPopup
         public UpgradeGuestAccountPopupController(
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider compositeWeb3Provider,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             IInputBlock inputBlock,
             IWeb3IdentityCache identityCache,
             IProfileCache profileCache,
@@ -291,15 +291,21 @@ namespace DCL.UI.UpgradeGuestAccountPopup
 
         private async UniTask PromoteProfileAsync(CancellationToken ct)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null || profile.HasConnectedWeb3) return;
+            if (read.IsError(out ProfileReadError readError) && readError is ProfileReadError.FetchFailed or ProfileReadError.NoIdentity)
+                throw new InvalidOperationException($"The profile to promote could not be read: {readError}");
+
+            if (!read.IsOk(out Profile? profile) || profile.HasConnectedWeb3) return;
 
             Profile promotedProfile = new ProfileBuilder().From(profile)
                                                           .WithGuestMode(false)
                                                           .Build();
 
-            await selfProfile.UpdateProfileAsync(promotedProfile, ct);
+            ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(promotedProfile, ct);
+
+            if (deploy.IsFailure(out ProfileDeployError error))
+                throw new InvalidOperationException($"The promoted profile could not be deployed: {error}");
         }
 
         private void ResendOTP() =>

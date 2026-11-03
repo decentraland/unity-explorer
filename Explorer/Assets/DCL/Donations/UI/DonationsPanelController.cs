@@ -9,6 +9,8 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -164,14 +166,18 @@ namespace DCL.Donations.UI
                     baseParcel = donationStatus.baseParcel!.Value;
                 }
 
-                (Profile.CompactInfo? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
-                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet),
+                // A failed lookup opens the panel without the creator profile.
+                (Result<Profile.CompactInfo?> creatorLookup, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
+                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet)
+                                                           .SuppressToResultAsync(),
                         donationsService.GetCurrentBalanceAsync(ct),
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));
 
+                Profile.CompactInfo? creatorProfile = creatorLookup.Success ? creatorLookup.Value : null;
+
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
-                if (creatorProfile == null)
+                if (creatorLookup.Success && creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
 
                 DonationPanelViewModel donationPanelViewModel = new (creatorProfile,

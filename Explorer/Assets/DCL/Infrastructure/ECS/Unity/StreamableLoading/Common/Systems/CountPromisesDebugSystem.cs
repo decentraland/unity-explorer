@@ -5,7 +5,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
 using Unity.Profiling;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems

@@ -1,5 +1,4 @@
 using DCL.DebugUtilities.UIBindings;
-using System;
 
 namespace DCL.Multiplayer.Connections.Systems.Debug
 {

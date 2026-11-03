@@ -11,7 +11,6 @@ using DCL.Passport;
 using DCL.Profiles.Self;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;
@@ -50,7 +49,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -87,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {

@@ -53,6 +53,7 @@ namespace MVC
         // Invoked at once when the hierarchy is already attached, otherwise from the panel update that attaches it
         protected virtual void OnEnable()
         {
+            PanelSpriteLookupTables.Build(panelRenderer.panelSettings);
             panelRenderer.RegisterUIReloadCallback(OnUIReload);
         }
 

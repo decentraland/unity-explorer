@@ -12,20 +12,22 @@ namespace DCL.Navmap
         void Undo();
     }
 
-    public interface INavmapCommand<TParam> : INavmapCommand
+    public interface INavmapCommand<TParam> : INavmapCommand where TParam : struct
     {
-        UniTask ExecuteAsync(AdditionalParams? param, CancellationToken ct);
+        UniTask ExecuteAsync(TParam? param, CancellationToken ct);
     }
 
     public struct AdditionalParams
     {
         public readonly bool IsFromSearchResults;
         public readonly Vector2Int? OriginalParcel;
+        public readonly bool LandOnOriginalParcel;
 
-        public AdditionalParams(bool isFromSearchResults, Vector2Int? originalParcel = null)
+        public AdditionalParams(bool isFromSearchResults, Vector2Int? originalParcel = null, bool landOnOriginalParcel = false)
         {
             this.IsFromSearchResults = isFromSearchResults;
             this.OriginalParcel = originalParcel;
+            this.LandOnOriginalParcel = landOnOriginalParcel;
         }
     }
 }

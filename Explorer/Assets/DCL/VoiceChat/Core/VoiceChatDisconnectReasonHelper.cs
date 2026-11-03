@@ -1,5 +1,4 @@
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 
 namespace DCL.VoiceChat
 {

@@ -1,3 +1,4 @@
+using DCL.UIToolkit.Elements;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -20,19 +21,52 @@ namespace DCL.Lobby.Tests
         }
 
         [Test]
-        public void HideTheSectionWithoutOnlineFriends()
+        public void ShowTheBannerInsteadOfTheRailWithoutOnlineFriends()
         {
             //Act
             friends.Show(section);
             friends.SetCount(0);
 
             //Assert
-            Assert.AreEqual(DisplayStyle.None, section.style.display.value);
-            Assert.AreEqual("0 Online", OnlineCount().text);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.IsFalse(Loading().IsAnimating);
+            Assert.IsFalse(friends.IsLoading);
         }
 
         [Test]
-        public void CountTheOnlineFriendsInTheHeader()
+        public void ShowTheSkeletonUntilTheFirstCount()
+        {
+            //Act
+            friends.Show(section);
+
+            //Assert
+            Assert.IsTrue(friends.IsLoading);
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Loading().style.display.value);
+            Assert.IsTrue(Loading().IsAnimating);
+            Assert.AreEqual(DisplayStyle.None, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+        }
+
+        [Test]
+        public void ShowTheBannerAsSoonAsItTakesASectionWithoutASkeletonOver()
+        {
+            //Arrange
+            section.Remove(Loading());
+
+            //Act
+            friends.Show(section);
+
+            //Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
+        }
+
+        [Test]
+        public void ShowTheSectionWithACardPerOnlineFriend()
         {
             //Arrange
             friends.Show(section);
@@ -42,8 +76,27 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
-            Assert.AreEqual("2 Online", OnlineCount().text);
+            Assert.AreEqual(DisplayStyle.Flex, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Empty().style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Loading().style.display.value);
+            Assert.IsFalse(Loading().IsAnimating);
             Assert.AreEqual(2, Rail().childCount);
+        }
+
+        [Test]
+        public void SwapTheCardsForTheBannerWhenTheLastFriendGoesOffline()
+        {
+            //Arrange
+            friends.Show(section);
+            friends.SetCount(2);
+
+            //Act
+            friends.SetCount(0, rewind: false);
+
+            //Assert
+            Assert.AreEqual(DisplayStyle.Flex, section.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Rail().style.display.value);
+            Assert.AreEqual(DisplayStyle.Flex, Empty().style.display.value);
         }
 
         [Test]
@@ -59,7 +112,10 @@ namespace DCL.Lobby.Tests
 
             //Assert
             Assert.AreEqual(1, Rail().CurrentPage);
-            Assert.AreEqual("6 Online", OnlineCount().text);
+            Assert.AreEqual(6, friends.Count);
+            Assert.AreEqual(9, Rail().childCount, "Cards are cloned once and kept for the next fill");
+            Assert.AreEqual(DisplayStyle.Flex, Card(5).style.display.value);
+            Assert.AreEqual(DisplayStyle.None, Card(6).style.display.value);
         }
 
         [Test]
@@ -85,8 +141,11 @@ namespace DCL.Lobby.Tests
         private LobbyRailElement Rail() =>
             section.Q<LobbyRailElement>();
 
-        private Label OnlineCount() =>
-            section.Q<Label>("OnlineCount");
+        private VisualElement Empty() =>
+            section.Q("Empty");
+
+        private SkeletonLoadingElement Loading() =>
+            section.Q<SkeletonLoadingElement>("Loading");
 
         private LobbyFriendCardElement Card(int index) =>
             (LobbyFriendCardElement)Rail()[index];
@@ -94,7 +153,8 @@ namespace DCL.Lobby.Tests
         private static VisualElement CreateSection()
         {
             var friendsSection = new VisualElement { name = "Friends" };
-            friendsSection.Add(new Label { name = "OnlineCount", text = "0 Online" });
+            friendsSection.Add(new SkeletonLoadingElement { name = "Loading", BoneCount = 4 });
+            friendsSection.Add(new VisualElement { name = "Empty" });
             friendsSection.Add(new LobbyRailElement { name = "Rail", CardsPerPage = 4 });
             return friendsSection;
         }

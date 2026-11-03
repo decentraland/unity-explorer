@@ -65,7 +65,7 @@ namespace DCL.Friends.UI.FriendPanel
             IVoiceChatOrchestrator voiceChatOrchestrator,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile) : base(viewFactory)
+            SelfProfile selfProfile) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
 

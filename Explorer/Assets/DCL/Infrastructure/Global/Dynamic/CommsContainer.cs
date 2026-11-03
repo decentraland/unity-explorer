@@ -261,7 +261,10 @@ namespace Global.Dynamic
                 // TODO: properly branch profile announcements depending on server setup
                 multiplayerContainer.RemoteAnnouncements,
                 multiplayerContainer.RemoveIntentions,
-                MovementInbox
+                MovementInbox,
+                multiplayerContainer.SelfProfile,
+                multiplayerContainer.ProfilePropagation,
+                multiplayerContainer.PulseActivation
             );
 
         public ConnectionStatusPanelPlugin CreateConnectionStatusPanelPlugin(IAssetsProvisioner assetsProvisioner, IAppArgs appArgs) =>

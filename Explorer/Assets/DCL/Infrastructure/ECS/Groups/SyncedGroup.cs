@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using SceneRunner.Scene;
-using Utility.Multithreading;
 
 namespace ECS.Groups
 {

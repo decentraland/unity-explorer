@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
-using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -48,7 +47,7 @@ namespace DCL.CharacterPreview
         private RenderTexture? currentRenderTexture;
         private bool renderTargetSizeDirty;
         private Vector2Int lastScreenSize;
-        public RenderTexture CurrentRenderTexture => currentRenderTexture;
+        public RenderTexture? CurrentRenderTexture => currentRenderTexture;
 
         /// <summary>
         ///     Raised when the render texture is created; a resize keeps the same texture and camera, so it does not raise this.
@@ -130,6 +129,7 @@ namespace DCL.CharacterPreview
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
             containerActive = true;
+            OnContainerActiveChanged(true);
 
             lastScreenSize = new Vector2Int(Screen.width, Screen.height);
             renderTargetSizeDirty = false;
@@ -263,50 +263,49 @@ namespace DCL.CharacterPreview
 
         private void OnPointerUp(PointerEventData pointerEventData)
         {
-            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
-                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
-                inputEventBus.OnPointerUp(pointerEventData);
+            CharacterPreviewPointerInput input = CharacterPreviewPointerInput.From(pointerEventData);
+
+            if (Accepts(input.Button))
+                inputEventBus.OnPointerUp(input);
         }
 
         private void OnPointerDown(PointerEventData pointerEventData)
         {
-            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
-                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
-                inputEventBus.OnPointerDown(pointerEventData);
+            CharacterPreviewPointerInput input = CharacterPreviewPointerInput.From(pointerEventData);
+
+            if (Accepts(input.Button))
+                inputEventBus.OnPointerDown(input);
         }
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            if (zoomEnabled)
-            {
-                inputEventBus.OnScroll(pointerEventData);
+            if (!zoomEnabled) return;
 
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(pointerEventData.scrollDelta.y > 0 ? view.ZoomInAudio : view.ZoomOutAudio);
-            }
+            CharacterPreviewPointerInput input = CharacterPreviewPointerInput.From(pointerEventData);
+            inputEventBus.OnScroll(input);
+
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(input.ScrollDelta.y > 0 ? view.ZoomInAudio : view.ZoomOutAudio);
         }
 
-        private void OnDrag(PointerEventData pointerEventData)
+        private void OnDrag(PointerEventData pointerEventData) =>
+            Drag(CharacterPreviewPointerInput.From(pointerEventData));
+
+        /// <summary>Entry point for input raised by a UI other than the view's own uGUI detector; the same flags apply.</summary>
+        public void Drag(in CharacterPreviewPointerInput input)
         {
-            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
-                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
-            {
-                inputEventBus.OnDrag(pointerEventData);
+            if (!Accepts(input.Button)) return;
 
-                switch (pointerEventData.button)
-                {
-                    case PointerEventData.InputButton.Right when view.EnablePanning:
-                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
-                        break;
-                    case PointerEventData.InputButton.Left when view.EnableRotating:
-                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
-                        break;
-                    case PointerEventData.InputButton.Middle:
-                    default:
-                        ReportHub.LogError(ReportCategory.UI, nameof(InvalidOperationException));
-                        break;
-                }
-            }
+            inputEventBus.OnDrag(input);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(input.Button == PointerEventData.InputButton.Left ? view.RotateAudio : view.VerticalPanAudio);
         }
+
+        private bool Accepts(PointerEventData.InputButton button) =>
+            button switch
+            {
+                PointerEventData.InputButton.Left => view.EnableRotating && rotateEnabled,
+                PointerEventData.InputButton.Right => view.EnablePanning && panEnabled,
+                _ => false,
+            };
 
         public void OnBeforeShow()
         {
@@ -362,6 +361,7 @@ namespace DCL.CharacterPreview
 
             containerActive = false;
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
+            OnContainerActiveChanged(false);
         }
 
         private void OnCharacterPreviewRestored(CharacterPreviewControllerBase characterPreviewController)
@@ -371,6 +371,7 @@ namespace DCL.CharacterPreview
 
             containerActive = true;
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
+            OnContainerActiveChanged(true);
         }
 
         protected void OnModelUpdated()
@@ -504,5 +505,7 @@ namespace DCL.CharacterPreview
         {
             previewController?.SetLightActive(isActive);
         }
+
+        protected virtual void OnContainerActiveChanged(bool isActive) { }
     }
 }

@@ -13,7 +13,7 @@ namespace DCL.Multiplayer.HealthChecks
         class AlwaysFails : IHealthCheck
         {
             public UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct) =>
-                UniTask.FromResult(Result.ErrorResult(nameof(AlwaysFails)))!;
+                UniTask.FromResult(Result.ErrorResult(nameof(AlwaysFails)));
         }
     }
 

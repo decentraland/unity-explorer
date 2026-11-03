@@ -28,11 +28,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [TestCase("https://drive.google.com/file/d/1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk/view",
-            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view")]
+            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view&confirm=t")]
         [TestCase("https://drive.google.com/file/d/1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk/view?usp=sharing",
-            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view")]
+            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view&confirm=t")]
         [TestCase("https://drive.google.com/open?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk",
-            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view")]
+            "https://drive.usercontent.google.com/download?id=1RnLGZwGDLbB6iLPcr6kW8AshzsnuNDTk&export=view&confirm=t")]
         public void ResolveDirectUrl(string input, string expected)
         {
             Assert.That(input.ResolveGoogleDriveDirectUrl(), Is.EqualTo(expected));
