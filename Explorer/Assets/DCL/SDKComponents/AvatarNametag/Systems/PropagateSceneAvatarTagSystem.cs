@@ -245,7 +245,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
                 backgroundColor,
-                pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor)));
+                pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor),
+                pbNametag.MaxDistance));
 
             pbNametag.IsDirty = false;
 

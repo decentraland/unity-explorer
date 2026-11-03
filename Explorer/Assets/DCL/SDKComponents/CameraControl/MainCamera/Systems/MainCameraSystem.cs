@@ -59,6 +59,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             HandleActiveVirtualCameraLookAtChangeQuery(World);
             HandleVirtualCameraChangeQuery(World);
+            SyncNametagMaxDistanceQuery(World);
 
             HandleMainCameraRemovalQuery(World);
             HandleMainCameraEntityDestructionQuery(World);
@@ -124,6 +125,26 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             virtualCameraComponent.lookAtCRDTEntity = pbVirtualCameraLookAtEntity;
             VirtualCameraUtils.ConfigureCameraLookAt(World, entitiesMap, virtualCameraComponent);
+        }
+
+        // Re-read every update: the scene may change the distance while its virtual camera stays active.
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void SyncNametagMaxDistance(Entity entity, in MainCameraComponent mainCameraComponent)
+        {
+            if (entity != cameraEntity
+                || mainCameraComponent.virtualCameraInstance == null
+                || !mainCameraComponent.virtualCameraInstance.enabled
+                || !mainCameraComponent.virtualCameraCRDTEntity.HasValue)
+                return;
+
+            float nametagMaxDistance = entitiesMap.TryGetValue(mainCameraComponent.virtualCameraCRDTEntity.Value, out Entity virtualCameraEntity)
+                                       && World.TryGet(virtualCameraEntity, out PBVirtualCamera? pbVirtualCamera)
+                                       && pbVirtualCamera != null
+                ? pbVirtualCamera.NametagMaxDistance
+                : 0f;
+
+            globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object).SdkNametagMaxDistance = nametagMaxDistance;
         }
 
         [Query]
@@ -193,6 +214,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             else if (cameraComponent.Mode == CameraMode.SdkCamera)
             {
                 cameraComponent.Mode = lastNonSDKCameraMode;
+                cameraComponent.SdkNametagMaxDistance = 0f;
             }
         }
 

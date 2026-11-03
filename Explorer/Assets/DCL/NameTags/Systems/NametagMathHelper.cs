@@ -73,6 +73,25 @@ namespace DCL.Nametags
             return math.saturate(1f - ((distance - fadeStartDistance) / (maxDistance - fadeStartDistance)));
         }
 
+        /// <summary>
+        ///     Picks the first usable distance: the active virtual camera's, then the avatar's, then the default.
+        ///     A non-positive, NaN or infinite value counts as unset.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [BurstCompile]
+        public static float ResolveMaxDistance(float cameraMaxDistance, float avatarMaxDistance, float defaultMaxDistance)
+        {
+            if (IsValidMaxDistance(cameraMaxDistance))
+                return cameraMaxDistance;
+
+            return IsValidMaxDistance(avatarMaxDistance) ? avatarMaxDistance : defaultMaxDistance;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [BurstCompile]
+        public static bool IsValidMaxDistance(float maxDistance) =>
+            math.isfinite(maxDistance) && maxDistance > 0f;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
         public static void CalculateDistance(in float3 cameraPos, in float3 characterPos, out float distance, out float sqrDistance)

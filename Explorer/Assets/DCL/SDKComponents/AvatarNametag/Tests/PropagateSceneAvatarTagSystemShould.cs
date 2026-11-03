@@ -128,6 +128,34 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         }
 
         [Test]
+        public void CarryTheMaxDistanceTheSceneSends()
+        {
+            // Arrange
+            CreateSceneEntity(SpecialEntitiesID.PLAYER_ENTITY, new PBAvatarNametag { Label = "Far", MaxDistance = 120f, IsDirty = true });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
+            Assert.That(plate.MaxDistance, Is.EqualTo(120f));
+        }
+
+        [Test]
+        public void LeaveTheMaxDistanceUnsetWhenTheSceneSendsNone()
+        {
+            // Arrange
+            CreateSceneEntity(SpecialEntitiesID.PLAYER_ENTITY, new PBAvatarNametag { Label = "Near", IsDirty = true });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
+            Assert.That(plate.MaxDistance, Is.EqualTo(0f));
+        }
+
+        [Test]
         public void ResolveRemotePlayerThroughTheParticipantTable()
         {
             // Arrange

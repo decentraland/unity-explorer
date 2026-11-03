@@ -70,9 +70,12 @@ namespace DCL.Nametags
         protected override void Update(float t)
         {
             bool showNameTags = nametagsData.showNameTags;
-            float maxDistance = DEFAULT_MAX_DISTANCE;
 
             CameraComponent cameraComponent = playerCamera.GetCameraComponent(World);
+
+            // A virtual camera's distance covers every tag, but only while it is the camera in use.
+            float cameraMaxDistance = cameraComponent.Mode == CameraMode.SdkCamera ? cameraComponent.SdkNametagMaxDistance : 0f;
+
             float3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
             float fovScaleFactor = NametagMathHelper.CalculateFovScaleFactor(cameraComponent.Camera.fieldOfView, NAMETAG_SCALE_MULTIPLIER);
@@ -85,20 +88,20 @@ namespace DCL.Nametags
             if (showNameTags)
             {
                 // Must run before any tag is added or kept: it sets the cap distance both rely on.
-                CollectNearestTagsQuery(World, cameraComponent, maxDistance, playerPosition);
+                CollectNearestTagsQuery(World, cameraComponent, cameraMaxDistance, playerPosition);
 
-                AddTagForPlayerAvatarsQuery(World, cameraComponent, maxDistance, playerPosition);
-                AddTagForNonPlayerAvatarsQuery(World, cameraComponent, maxDistance, playerPosition);
+                AddTagForPlayerAvatarsQuery(World, cameraComponent, cameraMaxDistance, playerPosition);
+                AddTagForNonPlayerAvatarsQuery(World, cameraComponent, cameraMaxDistance, playerPosition);
 
                 // Holders needed by a scene avatar tag while the name itself is hidden or missing.
                 // SceneAvatarTagComponent is in the archetype, so these iterate nothing until a scene tags someone.
-                AddSceneTagForPlayerAvatarsQuery(World, cameraComponent, maxDistance, playerPosition);
-                AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent, maxDistance, playerPosition);
+                AddSceneTagForPlayerAvatarsQuery(World, cameraComponent, cameraMaxDistance, playerPosition);
+                AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent, cameraMaxDistance, playerPosition);
             }
 
             UpdateOwnTagQuery(World);
-            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags, maxDistance, playerPosition);
-            UpdateSceneTaggedElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags, maxDistance, playerPosition);
+            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags, cameraMaxDistance, playerPosition);
+            UpdateSceneTaggedElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags, cameraMaxDistance, playerPosition);
             ProcessChatBubbleComponentsQuery(World);
             ProcessSceneAvatarTagsQuery(World);
             RemoveOrphanSceneAvatarTagsQuery(World);
@@ -108,11 +111,11 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float maxDistance, [Data] in float3 playerPosition,
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (avatarShape.NameTagHiddenByModifierArea
-                || !CanAddTag(in camera, maxDistance, in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+                || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, e), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
@@ -123,12 +126,12 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float maxDistance, [Data] in float3 playerPosition,
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (avatarShape.NameTagHiddenByModifierArea
                 || string.IsNullOrEmpty(avatarShape.Name)
-                || !CanAddTag(in camera, maxDistance, in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+                || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, e), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
@@ -139,10 +142,10 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float maxDistance, [Data] in float3 playerPosition,
+        private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile, ref SceneAvatarTagComponent sceneTag)
         {
-            if (sceneTag.IsRemoving || !CanAddTag(in camera, maxDistance, in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+            if (sceneTag.IsRemoving || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
@@ -153,10 +156,10 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float maxDistance, [Data] in float3 playerPosition,
+        private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, ref SceneAvatarTagComponent sceneTag)
         {
-            if (sceneTag.IsRemoving || !CanAddTag(in camera, maxDistance, in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+            if (sceneTag.IsRemoving || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
@@ -168,10 +171,11 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void CollectNearestTags([Data] in CameraComponent camera, [Data] in float maxDistance, [Data] in float3 playerPosition,
+        private void CollectNearestTags([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (!IsTagWanted(e, in avatarShape) || !CanShowTag(in camera, maxDistance, e, in avatarShape, in characterTransform, in partitionComponent))
+            if (!IsTagWanted(e, in avatarShape)
+                || !CanShowTag(in camera, GetTagMaxDistance(cameraMaxDistance, e), e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             nearestTagsCap.Add(math.distancesq(playerPosition, characterTransform.Position));
@@ -185,6 +189,19 @@ namespace DCL.Nametags
             ref SceneAvatarTagComponent sceneTag = ref World.TryGetRef<SceneAvatarTagComponent>(e, out bool exists);
             return exists && !sceneTag.IsRemoving;
         }
+
+        private float GetTagMaxDistance(float cameraMaxDistance, Entity e)
+        {
+            ref SceneAvatarTagComponent sceneTag = ref World.TryGetRef<SceneAvatarTagComponent>(e, out bool exists);
+
+            return exists
+                ? GetTagMaxDistance(cameraMaxDistance, in sceneTag)
+                : NametagMathHelper.ResolveMaxDistance(cameraMaxDistance, 0f, DEFAULT_MAX_DISTANCE);
+        }
+
+        // A plate on its way out no longer holds its avatar's distance.
+        private static float GetTagMaxDistance(float cameraMaxDistance, in SceneAvatarTagComponent sceneTag) =>
+            NametagMathHelper.ResolveMaxDistance(cameraMaxDistance, sceneTag.IsRemoving ? 0f : sceneTag.MaxDistance, DEFAULT_MAX_DISTANCE);
 
         private bool CanAddTag(in CameraComponent camera, float maxDistance, in float3 playerPosition, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent) =>
@@ -288,10 +305,13 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(SceneAvatarTagComponent))]
         private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, [Data] in bool showNameTags,
-            [Data] in float maxDistance, [Data] in float3 playerPosition, Entity e,
+            [Data] in float cameraMaxDistance, [Data] in float3 playerPosition, Entity e,
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
+            // No scene avatar tag here, so no avatar distance either.
+            float maxDistance = NametagMathHelper.ResolveMaxDistance(cameraMaxDistance, 0f, DEFAULT_MAX_DISTANCE);
+
             // Without a scene avatar tag the name is the only reason for this holder to exist.
             if (!showNameTags
                 || avatarShape.NameTagHiddenByModifierArea
@@ -308,10 +328,13 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateSceneTaggedElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, [Data] in bool showNameTags,
-            [Data] in float maxDistance, [Data] in float3 playerPosition, Entity e,
+            [Data] in float cameraMaxDistance, [Data] in float3 playerPosition, Entity e,
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape, in SceneAvatarTagComponent sceneTag)
         {
+            // Read before ReleaseTag: its structural change invalidates sceneTag.
+            float maxDistance = GetTagMaxDistance(cameraMaxDistance, in sceneTag);
+
             // A scene avatar may carry no name at all; the plate must not uncover an empty name box.
             bool nameVisible = !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
 

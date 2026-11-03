@@ -20,6 +20,25 @@ namespace DCL.Nametags.Tests
             Assert.That(opacity, Is.EqualTo(expectedOpacity).Within(0.0001f));
         }
 
+        [TestCase(100f, 60f, 100f)]
+        [TestCase(10f, 60f, 10f)]
+        [TestCase(0f, 60f, 60f)]
+        [TestCase(-5f, 60f, 60f)]
+        [TestCase(float.NaN, 60f, 60f)]
+        [TestCase(float.PositiveInfinity, 60f, 60f)]
+        [TestCase(0f, 0f, 40f)]
+        [TestCase(0f, -1f, 40f)]
+        [TestCase(0f, float.NaN, 40f)]
+        [TestCase(float.NaN, float.NaN, 40f)]
+        public void ResolveMaxDistanceByCameraThenAvatarThenDefault(float cameraMaxDistance, float avatarMaxDistance, float expectedMaxDistance)
+        {
+            // Act
+            float maxDistance = NametagMathHelper.ResolveMaxDistance(cameraMaxDistance, avatarMaxDistance, 40f);
+
+            // Assert
+            Assert.That(maxDistance, Is.EqualTo(expectedMaxDistance));
+        }
+
         [Test]
         public void DetectFovScaleFactorChange()
         {

@@ -236,6 +236,56 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
         }
 
         [Test]
+        public void ExposeTheActiveVirtualCameraNametagMaxDistance()
+        {
+            // Arrange
+            PBVirtualCamera pbVirtualCamera = world.Get<PBVirtualCamera>(virtualCameraEntity1);
+            pbVirtualCamera.NametagMaxDistance = 150f;
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            // Act
+            SystemUpdate();
+
+            // Assert
+            Assert.AreEqual(150f, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).SdkNametagMaxDistance);
+
+            // Act: the scene changes the distance while the camera stays active
+            pbVirtualCamera.NametagMaxDistance = 300f;
+            SystemUpdate();
+
+            // Assert
+            Assert.AreEqual(300f, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).SdkNametagMaxDistance);
+
+            // Act: switch to a virtual camera that leaves the distance unset
+            pbMainCameraComponent.VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity2).Id;
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+            SystemUpdate();
+
+            // Assert
+            Assert.AreEqual(0f, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).SdkNametagMaxDistance);
+        }
+
+        [Test]
+        public void ClearTheNametagMaxDistanceWhenTheVirtualCameraIsReleased()
+        {
+            // Arrange
+            world.Get<PBVirtualCamera>(virtualCameraEntity1).NametagMaxDistance = 150f;
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)world.Get<CRDTEntity>(virtualCameraEntity1).Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+            SystemUpdate();
+
+            // Act
+            pbMainCameraComponent.ClearVirtualCameraEntity();
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+            SystemUpdate();
+
+            // Assert
+            Assert.AreNotEqual(CameraMode.SdkCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
+            Assert.AreEqual(0f, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).SdkNametagMaxDistance);
+        }
+
+        [Test]
         public void UpdateOnVirtualCameraLookAtChangeCorrectly()
         {
             sceneStateProvider.IsCurrent.Returns(true);
