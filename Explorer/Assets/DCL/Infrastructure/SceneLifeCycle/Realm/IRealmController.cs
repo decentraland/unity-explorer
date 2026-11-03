@@ -30,8 +30,8 @@ namespace ECS.SceneLifeCycle.Realm
                 //ignore
                 UniTask.CompletedTask;
 
-            public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
-                false;
+            public UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
+                UniTask.FromResult(false);
 
             public void DisposeGlobalWorld()
             {

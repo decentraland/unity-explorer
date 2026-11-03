@@ -32,6 +32,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.InputModifier.Components;
+using DCL.SkyBox.Components;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
@@ -39,6 +40,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Utility.Networking;
 using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
@@ -71,7 +73,7 @@ namespace Global.Tests.PlayMode
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
 
-            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false, sessionId: null);
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false, sessionId: null, new InternetConnectivityMonitor("127.0.0.1"));
 
             var world = World.Create();
             var cameraEntity = world.Create();
@@ -86,6 +88,9 @@ namespace Global.Tests.PlayMode
                 new PlayerMovementNetworkComponent(),
                 new InputModifierComponent(),
                 new CharacterRigidTransform());
+
+            // Stands in for the skybox entity that SkyboxPlugin tags in the real global world
+            world.Create(new SceneSkyboxOverrides());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 

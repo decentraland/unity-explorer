@@ -23,6 +23,12 @@ namespace DCL.Profiles.Self
     {
         private const string FSM_TAG = "SelfProfile";
 
+        /// <summary>How long the login flow waits for the own profile before it shows a connection error.</summary>
+        public static readonly TimeSpan LOGIN_READ_TIMEOUT = TimeSpan.FromSeconds(15);
+
+        /// <summary>Shorter than <see cref="LOGIN_READ_TIMEOUT" />, so a stalled request settles as a failure the next read retries.</summary>
+        internal static readonly TimeSpan FETCH_REQUEST_TIMEOUT = TimeSpan.FromSeconds(10);
+
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly FsmRuntime<SelfProfileModel, SelfProfileMsg, SelfProfileCmd> runtime;
         private readonly CancellationTokenSource drainCts = new ();

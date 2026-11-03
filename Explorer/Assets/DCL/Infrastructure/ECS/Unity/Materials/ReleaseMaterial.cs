@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -41,10 +43,15 @@ namespace ECS.Unity.Materials
             }
 
             // A reloading material still holds the instance from its previous load
-            if (materialComponent.Result)
-                destroyMaterial(in materialComponent.Data, materialComponent.Result);
+            if (materialComponent.Result is { } material)
+            {
+                if (material)
+                    destroyMaterial(in materialComponent.Data, material);
+                else
+                    ReportHub.LogWarning(ReportCategory.MATERIALS, $"Entity {entity} held an already destroyed material, another entity released the same instance");
+            }
 
-            // Drop ownership together with the release, so releasing this component again is a no-op
+            // Detach so a component that outlives its release cannot hand the pooled material to a second owner
             materialComponent.Result = null;
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
 
@@ -67,20 +74,19 @@ namespace ECS.Unity.Materials
             if (forgetLoading)
                 promiseValue.ForgetLoading(world);
 
-            if (promiseValue.LoadingIntention.IsVideoTexture)
+            // The consumer lives on the video player entity, not on this one; the copy carried by the result shares its renderer list
+            if (promiseValue.LoadingIntention.IsVideoTexture
+                && promiseValue.Result is { Asset: { } textureData }
+                && textureData.Asset.IsVideoTextureData(out VideoTextureData videoTextureData))
             {
-                // TODO wrong entity
-                ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
+                VideoTextureConsumer consumer = videoTextureData.Consumer;
 
-                if (hasConsumer)
+                if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+                    consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
+                else if (world.TryGet(entity, out GltfNode gltfNode))
                 {
-                    if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
-                        consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
-                    else if (world.TryGet(entity, out GltfNode gltfNode))
-                    {
-                        foreach (var renderer in gltfNode.Renderers)
-                            consumer.RemoveConsumer(renderer);
-                    }
+                    foreach (var renderer in gltfNode.Renderers)
+                        consumer.RemoveConsumer(renderer);
                 }
             }
 
