@@ -22,7 +22,7 @@ bash Explorer/Assets/DCL/Analyzers/.source/build.sh        # run the tests, buil
 bash Explorer/Assets/DCL/Analyzers/.source/build.sh check  # fail if the committed DLL differs from this source
 ```
 
-The build is deterministic: commit the DLL together with the source change that produced it, and `check` confirms the two match.
+The build is deterministic: commit the DLL together with the source change that produced it, and `check` confirms the two match. CI runs the tests and `check` on every PR touching `Explorer/Assets/DCL/Analyzers/` (`dcl-analyzers-verify.yml`), so a DLL that does not match its source cannot merge. See [`docs/build-and-ci.md` § In-repo Roslyn analyzers](../../../../../docs/build-and-ci.md#in-repo-roslyn-analyzers-dclanalyzers).
 
 - `DCL.Analyzers/` targets `netstandard2.0` and compiles against `Microsoft.CodeAnalysis` 3.8, so the Roslyn shipped with Unity can load it.
 - `DCL.Analyzers.Tests/` compiles small C# samples in memory and asserts which lines are reported (`// expect: DCL0001`).

@@ -17,7 +17,8 @@
 # Environment: UNITY_EDITOR_CONTENTS overrides the Editor install
 #   (default: /Applications/Unity/Hub/Editor/<version>/Unity.app/Contents).
 #
-# Exit codes: 0 no findings, 1 findings, 2 setup error, 3 an assembly failed to compile for another reason.
+# Exit codes: 0 no findings, 1 findings, 2 setup error (including the analyzers failing to load),
+#             3 an assembly failed to compile for another reason.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -89,6 +90,13 @@ export DOTNET="$dotnet" CSC="$csc" WORK="$work"
 cd "$explorer"
 jobs="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 tr '\n' '\0' < "$work/rsps" | xargs -0 -n 1 -P "$jobs" bash -c 'compile_one "$0"'
+
+# The compiler only warns when an analyzer cannot load (CS8034) or throws (AD0001), which would
+# otherwise read as "0 findings"
+if cat "$work"/*.log | grep -E '(CS8034|AD0001).*DCL\.Analyzers' | sort -u >&2; then
+    echo "run-dcl-analyzers: the DCL analyzers did not run (see above; an LFS pointer instead of the DLL?)" >&2
+    exit 2
+fi
 
 cat "$work"/*.log | grep -E "$pattern" | sort -u > "$work/findings" || true
 cat "$work/findings"

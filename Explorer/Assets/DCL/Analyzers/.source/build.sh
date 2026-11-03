@@ -16,6 +16,11 @@ dotnet build "$here/DCL.Analyzers/DCL.Analyzers.csproj" -c Release --nologo -v q
 
 case "${1:-}" in
     check)
+        if head -n1 "$installed" | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+            echo "DCL.Analyzers.dll is a Git LFS pointer, not the DLL - run 'git lfs pull' first" >&2
+            exit 1
+        fi
+
         if cmp -s "$built" "$installed"; then
             echo "DCL.Analyzers.dll matches its source"
         else

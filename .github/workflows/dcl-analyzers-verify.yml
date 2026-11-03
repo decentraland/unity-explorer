@@ -1,0 +1,56 @@
+name: DCL Analyzers Verification
+
+# The in-repo Roslyn analyzers (Explorer/Assets/DCL/Analyzers) ship as a committed DLL that
+# Unity loads into every compile. This rebuilds the DLL from .source/ with the SDK pinned in
+# its global.json and fails if the bytes differ from the committed one, so the DLL cannot
+# drift from the reviewed source, and runs the analyzer tests. Enforcement itself happens in
+# the Unity compile (test.yml and the builds), where DCL rule violations are compile errors.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Explorer/Assets/DCL/Analyzers/**'
+      - '.gitattributes'
+      - '.github/workflows/dcl-analyzers-verify.yml'
+  merge_group: {}
+  push:
+    branches: [dev]
+    paths:
+      - 'Explorer/Assets/DCL/Analyzers/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_DIR: Explorer/Assets/DCL/Analyzers/.source
+  ANALYZER_DLL: Explorer/Assets/DCL/Analyzers/DCL.Analyzers.dll
+
+jobs:
+  verify:
+    name: Verify the analyzer DLL against its source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          persist-credentials: false
+
+      - name: Fetch the analyzer DLL from LFS
+        run: git lfs pull --include "$ANALYZER_DLL"
+
+      - name: Setup .NET (SDK pinned by global.json)
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: ${{ env.SOURCE_DIR }}/global.json
+
+      - name: Run the analyzer tests
+        run: dotnet test "$SOURCE_DIR/DCL.Analyzers.Tests/DCL.Analyzers.Tests.csproj" --nologo
+
+      - name: Committed DLL matches a build of the source
+        run: bash "$SOURCE_DIR/build.sh" check

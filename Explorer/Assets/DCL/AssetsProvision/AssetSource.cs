@@ -35,6 +35,8 @@ namespace AssetManagement
 
     public static class AssetSourceEnumExtensions
     {
+        private const string UNKNOWN = "UNKNOWN";
+
         private static readonly Dictionary<AssetSource, string> CURRENT_SOURCE_STRINGS = new ()
         {
             {
@@ -52,6 +54,6 @@ namespace AssetManagement
         };
 
         public static string ToStringNonAlloc(this AssetSource source) =>
-            CURRENT_SOURCE_STRINGS.TryGetValue(source, out string? value) ? value : source.ToString();
+            CURRENT_SOURCE_STRINGS.TryGetValue(source, out string? value) ? value : UNKNOWN;
     }
 }
