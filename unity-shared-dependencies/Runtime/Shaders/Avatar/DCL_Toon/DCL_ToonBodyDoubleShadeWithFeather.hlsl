@@ -392,6 +392,10 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float Set_Opacity = SATURATE_IF_SDR((_MainTex_var.a+_Tweak_transparency));
         finalRGBA = half4(finalColor,Set_Opacity);
     }
-    
+
+    // Fog is evaluated per fragment from the world position; the vertex factor is the fallback when _FOG_FRAGMENT is off.
+    half fogFactor = InitializeInputDataFog(float4(i.posWorld.xyz, 1.0), i.fogFactor);
+    finalRGBA.rgb = MixFog(finalRGBA.rgb, fogFactor);
+
     return finalRGBA;
 }

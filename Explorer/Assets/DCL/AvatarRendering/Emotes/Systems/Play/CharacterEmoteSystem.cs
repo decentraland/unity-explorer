@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
+using Utility.Arch;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
@@ -438,7 +439,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                             };
 
                             uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                            World.AddOrSet(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
                     else
@@ -474,7 +475,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                             // The duration comes from the masked emote's own clip; a looping emote has no end to report.
                             uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
-                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                            World.AddOrSet(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
 
