@@ -78,7 +78,7 @@ namespace DCL.CharacterPreview
             {
                 ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
                 if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
-                globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
+                globalWorld.AddOrGet(characterPreviewEntity, new DeleteEntityIntention());
             }
 
             StopEmotes();

@@ -35,6 +35,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Networking;
 
 namespace Global.Dynamic
 {
@@ -42,6 +43,7 @@ namespace Global.Dynamic
     {
         private IReportsHandlingSettings reportHandlingSettings = null!;
         private ExplorerSessionInfoWriter? sessionInfoWriter;
+        private InternetConnectivityMonitor? connectivity;
 
         public bool EnableAnalytics => Analytics.Enabled;
         public DiagnosticsContainer DiagnosticsContainer { get; private set; } = null!;
@@ -93,6 +95,7 @@ namespace Global.Dynamic
             base.Dispose();
 
             DiagnosticsContainer.Dispose();
+            connectivity?.Dispose();
 
             if (sessionInfoWriter != null)
             {
@@ -153,7 +156,10 @@ namespace Global.Dynamic
                 bool hasSessionId = applicationParametersParser.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId) && !string.IsNullOrEmpty(sessionId);
 
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment, sessionId);
+
+                // The raw host has no gateway transform or feature-flag dependency, so it stands for "the internet"
+                container.connectivity = new InternetConnectivityMonitor(new Uri(decentralandUrlsSource.Probe(DecentralandUrl.Host)).Host);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment, sessionId, container.connectivity);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 if (container.IdentityCache != null)
@@ -178,7 +184,7 @@ namespace Global.Dynamic
                 container.WebRequestsContainer = webRequestsContainer;
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
-                container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, identityCache, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
@@ -200,6 +206,7 @@ namespace Global.Dynamic
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
+            IWeb3IdentityCache identityCache,
             WebRequestsContainer webRequestsContainer,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
@@ -208,7 +215,7 @@ namespace Global.Dynamic
             DCLVersion dclVersion,
             CancellationToken ct)
         {
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, container.IdentityCache, realmLaunchSettings, debugUtilitiesContainer.Builder, buildData.InstallSource, settingsContainer, dclVersion, ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, realmLaunchSettings, debugUtilitiesContainer.Builder, buildData.InstallSource, settingsContainer, dclVersion, ct);
             container.Analytics = analyticsContainer;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
