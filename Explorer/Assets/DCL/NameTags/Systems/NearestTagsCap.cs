@@ -19,9 +19,20 @@ namespace DCL.Nametags
         /// </summary>
         public float MaxSqrDistance => count < heap.Length ? float.PositiveInfinity : heap[0];
 
+        /// <summary>
+        ///     <see cref="MaxSqrDistance" /> as it was at the last <see cref="NextFrame" />.
+        /// </summary>
+        public float Threshold { get; private set; } = float.PositiveInfinity;
+
         public void Clear()
         {
             count = 0;
+        }
+
+        public void NextFrame()
+        {
+            Threshold = MaxSqrDistance;
+            Clear();
         }
 
         public void Add(float sqrDistance)

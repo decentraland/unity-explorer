@@ -65,6 +65,33 @@ namespace DCL.Nametags.Tests
         }
 
         [Test]
+        public void KeepThePreviousFrameValueAsThreshold()
+        {
+            // Arrange
+            var cap = new NearestTagsCap(2);
+            cap.Add(4f);
+            cap.Add(9f);
+
+            // Act
+            cap.NextFrame();
+            cap.Add(1f);
+
+            // Assert
+            Assert.That(cap.Threshold, Is.EqualTo(9f));
+            Assert.That(cap.MaxSqrDistance, Is.EqualTo(float.PositiveInfinity));
+        }
+
+        [Test]
+        public void StartWithAnUnlimitedThreshold()
+        {
+            // Arrange
+            var cap = new NearestTagsCap(2);
+
+            // Assert
+            Assert.That(cap.Threshold, Is.EqualTo(float.PositiveInfinity));
+        }
+
+        [Test]
         public void MatchSortedSelectionForManyValues()
         {
             // Arrange
