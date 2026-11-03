@@ -171,3 +171,99 @@ window.addEventListener('message', (event) => {
   }
 });
 ```
+
+## Render server (native, CPU)
+
+The same project also builds as a native Linux player that writes transparent PNG stills of wearables and emotes, with no browser and no GPU. It renders through Mesa's llvmpipe (OpenGL on the CPU) inside a virtual X display. The server code only compiles with the `DCL_RENDER_SERVER` define, which only this build sets, so the WebGL build and the `SendMessage` API above are unchanged.
+
+### Requirements
+
+Measured by running the same four jobs (18 stills) under Docker limits. That run was x86_64 emulated on Apple Silicon, so a native x86_64 host should do at least as well.
+
+| | Minimum | Recommended |
+|---|---|---|
+| CPU | 1 x86_64 vCPU | 2 to 4 vCPU, with `LP_NUM_THREADS` set to match |
+| Memory | 1 GB (512 MB is killed at startup, 768 MB after the first job) | 1.5 GB limit per worker |
+| GPU | none | none |
+| Disk | about 500 MB for the image | plus room for the stills |
+| Network | the catalyst (`peer.decentraland.org`, or `.zone` with `env=dev`) | |
+
+Render and encode time per still, leaving out the first still of each item:
+
+| vCPU | Wearable on its own | Emote on the avatar | PNG encode |
+|---|---|---|---|
+| 1 | 560 to 950 ms | 980 to 1,080 ms | about 30 ms |
+| 2 | 290 to 390 ms | 520 to 580 ms | about 30 ms |
+| 4 | 160 to 270 ms | 270 to 350 ms | about 30 ms |
+
+The first still of each new item takes 0.2 to 3 s longer: Mesa compiles each shader the first time it is used and the item's textures are uploaded. The item's second body shape does not pay it again. `MESA_SHADER_CACHE_DIR` on a volume keeps compiled shaders across restarts. An emote still also waits `--settle-frames` (0.5 s by default) before it is drawn.
+
+### Building
+
+1. Install the **Linux Build Support (IL2CPP)** module for the project's Unity version, and make sure Git LFS files are pulled (the avatar rig and the built-in emotes are LFS-tracked).
+2. Build the player: **Decentraland > Build Render Server (Linux)**, or in batch mode:
+   ```bash
+   Unity -batchmode -quit -projectPath avatar-preview-renderer -executeMethod Editor.RenderServerBuild.Build
+   ```
+   The output goes to `Builds/RenderServer/renderer.x86_64` (override with `RENDER_SERVER_OUTPUT`). The Linux player lists Vulkan first and OpenGL second: the player rejects Mesa's CPU Vulkan device, so on a CPU server it runs on Mesa's llvmpipe OpenGL driver. The scripting backend is IL2CPP, because Mono's JIT aborts when the x86_64 image runs emulated on an ARM host. Building on an Apple Silicon Mac uses the `com.unity.sdk.linux-x86_64` and `com.unity.toolchain.macos-arm64-linux` packages; a different build host needs its own toolchain package.
+3. Build the image, from `avatar-preview-renderer/`:
+   ```bash
+   docker build --platform linux/amd64 -f RenderServer/Dockerfile -t avatar-preview-render-server .
+   ```
+
+### From a release
+
+Every renderer release (`avatar-preview-renderer/vX.Y.Z`) also carries `avatar-preview-render-server-vX.Y.Z-linux-x86_64.tar.gz`: the built player plus this folder's `RenderServer/`, ready to build the image anywhere:
+```bash
+mkdir render-server && tar xzf avatar-preview-render-server-vX.Y.Z-linux-x86_64.tar.gz -C render-server
+docker build -f render-server/RenderServer/Dockerfile -t avatar-preview-render-server render-server
+```
+To try a branch, dispatch the **Avatar Preview Render Server** workflow; the package is attached to the run as an artifact.
+
+### Running
+
+Jobs from a file, exiting when done (exit code `1` if any job failed):
+```bash
+docker run --rm -v "$PWD/shots:/data/out" -v "$PWD/jobs.json:/jobs.json:ro" \
+  avatar-preview-render-server --jobs /jobs.json --out /data/out
+```
+
+As a long-running worker, one JSON job per stdin line and one JSON result per stdout line. The Unity log goes to stderr. Unity prints a few lines of its own to stdout while it boots, so read only the lines that start with `{`, or pass `--results <file>` to get the results on their own:
+```bash
+docker run --rm -i -v "$PWD/shots:/data/out" avatar-preview-render-server --serve --out /data/out --max-jobs 500
+```
+
+| Option | Default | |
+|---|---|---|
+| `--serve` / `--jobs <file>` | | Read jobs from stdin, or from a file holding a JSON array or one job per line. |
+| `--out <dir>` | | Required. Each job writes into `<dir>/<id>/`. |
+| `--results <file>` | `/dev/fd/3` | Where the JSON result lines go. A regular file is appended to. The player redirects its own stdout into its log, so outside the image either open file descriptor 3 (e.g. `3>&1`) or pass a file. The image's entrypoint points descriptor 3 at the container's stdout. |
+| `--size` | `1024` | Width and height of every PNG. The image's entrypoint also sizes the virtual screen from `RENDER_SERVER_SIZE`. |
+| `--render-scale` | `1` | URP render scale. `1` draws at the output size; `2` supersamples each still from a render at twice the size, for smoother edges at about 4× the CPU cost. |
+| `--timeout` | `90` | Seconds a single load may take. When exceeded, the process reports the job and exits with code `3`. |
+| `--max-jobs` | `0` | In `--serve`, exit cleanly after this many jobs so a supervisor can recycle the process. `0` never does. |
+| `--settle-frames` | `15` | Frames an emote pose is held before capture, so spring bones come to rest. |
+| `--male-profile` / `--female-profile` | `default2` / `default1` | Profiles used for each body shape. The item is shown on its own, but the body shape still comes from the profile. |
+
+### Jobs
+
+```json
+{ "urn": "urn:decentraland:matic:collections-v2:0x...:0", "yaws": [0, 90, 180, 270] }
+{ "urn": "urn:decentraland:matic:collections-v2:0x...:1", "times": [0.2, 0.5, 0.8] }
+```
+
+- `urn`: required. Wearables and facial features are shot as the item on its own, and emotes worn by the avatar.
+- `id`: names the output folder. Defaults to the urn with unsafe characters replaced by `_`.
+- `yaws`: degrees about the vertical axis. Defaults to `[0, 90, 180, 270]` for wearables and `[0]` for emotes.
+- `pitch`: tilt of the item on its own, clamped like a drag.
+- `times`: emotes only. Fractions (0 to 1) of the emote's length. Defaults to `[0.2, 0.5, 0.8]`.
+- `bodyShapes`: `["male"]`, `["female"]` or both. Left out, both shapes are shot when their representations differ, a single `unisex` set when they are the same files, and only the shapes an item has otherwise.
+- `params`: extra [parameters](#parameters) as a query string, e.g. `"env=dev&glow=on"`. Stills default to a transparent background with no shadow or glow. `mode`, `type`, `profile`, `bodyShape`, `urn`, `base64`, `contract`, `item` and `token` are set by the server and rejected here.
+
+Each still reports `renderMs` (drawing and reading the pixels back) and `encodeMs` (PNG encode and write). Each job reports `loadMs` and `stillsMs`, with the CPU time each used as `loadCpuMs` and `stillsCpuMs`. That CPU time counts every thread, so it can be higher than the wall time.
+
+Files are named `<bodyShape>_yaw<deg>.png` for wearables, and `<bodyShape>_t<percent>.png` for emotes (with `_yaw<deg>` appended when several yaws are requested). Each result line looks like:
+
+```json
+{"id":"...","urn":"...","ok":true,"type":"emote","files":[{"path":"<id>/male_t50.png","bodyShape":"male","yaw":0.0,"pitch":0.0,"time":0.5,"seconds":1.41,"renderMs":307.0,"encodeMs":33.0}],"ms":7138,"loadMs":1126.9,"loadCpuMs":640.0,"stillsMs":5785.6,"stillsCpuMs":8640.0}
+```

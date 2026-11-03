@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Handles autorotation and inertia-based user rotation.
 /// </summary>
-public class DragRotator : MonoBehaviour
+public partial class DragRotator : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
 

@@ -1,0 +1,174 @@
+name: Avatar Preview Render Server
+
+# Builds the native Linux render server (avatar-preview-renderer/README.md § Render server) in Unity
+# Cloud Build, packages it with its Dockerfile, and smoke-tests the image on the runner. The release
+# workflow calls it to attach the package to each renderer release; dispatch it by hand to try a branch.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      commit_sha:
+        required: true
+        type: string
+      release:
+        description: 'Clean, uncached build kept in Unity Cloud, as the release build is.'
+        required: false
+        default: false
+        type: boolean
+  workflow_dispatch:
+  # TEMPORARY: lets the PR that adds this workflow run it before it exists on dev, where dispatch
+  # needs it. Remove before merging.
+  pull_request:
+    types: [labeled, synchronize]
+    paths:
+      - 'avatar-preview-renderer/**'
+      - '.github/workflows/avatar-preview-render-server.yml'
+
+jobs:
+  build:
+    name: Build and smoke-test
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'render-server') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      # Without inputs (dispatch, PR) the version is the commit, like the dev builds.
+      VERSION: ${{ inputs.version || format('dev-{0}', github.event.pull_request.head.sha || github.sha) }}
+      COMMIT_SHA: ${{ inputs.commit_sha || github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ inputs.commit_sha || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12.3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/avatar-preview-renderer/requirements.txt
+
+      # t_linux_render_server is the template target in Unity Cloud: Linux x86_64, scripting define
+      # DCL_RENDER_SERVER. IL2CPP and the graphics APIs come from ProjectSettings.
+      - name: Execute Unity Cloud build
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 180
+          max_attempts: 3
+          retry_on: any
+          retry_wait_seconds: 30
+          on_retry_command: |
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
+          command: |
+            echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
+            python -u scripts/avatar-preview-renderer/build.py
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.AVATAR_PREVIEW_RENDERER_UNITY_CLOUD_PROJECT_ID }}
+          POLL_TIME: 60
+          GLOBAL_TIMEOUT: 10800
+          TARGET: t_linux_render_server
+          REF_NAME: ${{ inputs.release && format('release-{0}', inputs.version) || github.head_ref || github.ref_name }}
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+          BUILD_OPTIONS: ''
+          CLEAN_BUILD: ${{ inputs.release && 'true' || 'false' }}
+          CACHE_STRATEGY: ${{ inputs.release && 'none' || 'library' }}
+          IS_RELEASE_BUILD: ${{ inputs.release && 'true' || 'false' }}
+          PARAM_BUILD_VERSION: ${{ env.VERSION }}
+          PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      - name: Upload cloud logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: avatar-preview-render-server-unity-log
+          path: unity_cloud_log.log
+          if-no-files-found: warn
+
+      - name: Print cloud logs
+        if: always()
+        run: cat unity_cloud_log.log || true
+
+      - name: Cancel Unity Cloud build
+        if: ${{ failure() || cancelled() }}
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.AVATAR_PREVIEW_RENDERER_UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/avatar-preview-renderer/build.py --cancel
+
+      # Lays the player out as the Dockerfile expects it: Builds/RenderServer/renderer.x86_64 next to
+      # RenderServer/. Unity names the executable after the target, and its _Data folder must match.
+      - name: Package build context
+        id: package
+        run: |
+          set -euo pipefail
+          exe=$(find build -maxdepth 1 -name '*.x86_64' -type f | head -1)
+          [ -n "$exe" ] || { echo "::error::No *.x86_64 player in the Cloud Build artifact"; ls -la build; exit 1; }
+          name=$(basename "$exe" .x86_64)
+          if [ "$name" != renderer ]; then
+            mv "build/$name.x86_64" build/renderer.x86_64
+            mv "build/${name}_Data" build/renderer_Data
+          fi
+          chmod +x build/renderer.x86_64
+
+          mkdir -p context/Builds/RenderServer
+          rsync -a --exclude '*_BackUpThisFolder_ButDontShipItWithYourGame' --exclude '*_DoNotShip' \
+            build/ context/Builds/RenderServer/
+          cp -R avatar-preview-renderer/RenderServer context/RenderServer
+
+          package="avatar-preview-render-server-v${VERSION}-linux-x86_64.tar.gz"
+          tar czf "$package" -C context .
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+          echo "Packaged $package ($(du -h "$package" | cut -f1))"
+
+      # The runner is x86_64, so this is the image running natively: one base wearable, checked for a
+      # 1024x1024 RGBA still, with the job's time written to the summary.
+      - name: Smoke-test the image
+        run: |
+          set -euo pipefail
+          docker build -f context/RenderServer/Dockerfile -t avatar-preview-render-server context
+          mkdir -p smoke/out
+          echo '{"id":"smoke","urn":"urn:decentraland:off-chain:base-avatars:blue_bandana","yaws":[0,90]}' > smoke/jobs.ndjson
+          docker run --rm -v "$PWD/smoke:/data" avatar-preview-render-server \
+            --jobs /data/jobs.ndjson --out /data/out --timeout 180 > smoke/results.ndjson 2> smoke/player.log \
+            || { tail -100 smoke/player.log; exit 1; }
+          python3 - <<'EOF'
+          import json, os, struct, sys
+          lines = [l for l in open('smoke/results.ndjson') if l.startswith('{')]
+          if len(lines) != 1:
+              sys.exit(f'Expected 1 result line, got {len(lines)}')
+          result = json.loads(lines[0])
+          if not result['ok'] or len(result['files']) != 2:
+              sys.exit(f'Smoke job failed: {result}')
+          for file in result['files']:
+              header = open(f"smoke/out/{file['path']}", 'rb').read(26)
+              width, height, depth, color = struct.unpack('>IIBB', header[16:26])
+              if (width, height, depth, color) != (1024, 1024, 8, 6):
+                  sys.exit(f"{file['path']} is {width}x{height}, bit depth {depth}, color type {color}")
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(f"Render server smoke test: {len(result['files'])} stills in {result['ms']} ms\n")
+          print(f"OK: {result['files']} in {result['ms']} ms")
+          EOF
+
+      - name: Upload smoke-test output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: avatar-preview-render-server-smoke
+          path: smoke
+          if-no-files-found: ignore
+
+      - name: Upload package
+        uses: actions/upload-artifact@v6
+        with:
+          name: avatar-preview-render-server
+          path: ${{ steps.package.outputs.package }}
+          if-no-files-found: error
