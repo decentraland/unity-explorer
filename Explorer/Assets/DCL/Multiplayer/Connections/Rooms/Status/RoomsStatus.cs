@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
-using LiveKit.Proto;
 using Utility.Ownership;
 using DCL.LiveKit.Public;
 

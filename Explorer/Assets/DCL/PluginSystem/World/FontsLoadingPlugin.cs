@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.World
         {
             fontList = await assetsProvisioner.ProvideMainAssetAsync(settings.FontList, ct);
 
-            fontAssetFactory = new SceneFontAssetsFactory(fontList.Value.Font(DCL.ECSComponents.Font.FSansSerif)
+            fontAssetFactory = new SceneFontAssetsFactory(fontList.Value.Font(ECSComponents.Font.FSansSerif)
                                                            ?? throw new InvalidOperationException("The font list has no FSansSerif font"));
         }
 

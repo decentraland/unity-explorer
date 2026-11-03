@@ -184,15 +184,21 @@ namespace Global.AppArgs
 
         public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
 
-        public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
-        public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
-        public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         /// <summary>
-        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
-        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
-        ///     content base is derived from the realm the client already has.
+        ///     Legacy, ignored: local scene development always serves the scene as asset bundles JIT-converted by
+        ///     the explorer's embedded abgen sidecar, degrading to raw GLTFs on its own when the sidecar cannot
+        ///     install or start. The key stays accepted (see <c>DeepLinkAllowlist</c>) because Creator Hub still
+        ///     forwards <c>local-ab=true</c> into preview deep links, and a non-allowlisted key is shown to the
+        ///     user as a denied parameter.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
+
+        /// <summary>
+        ///     Local scene development only: presence skips the embedded abgen sidecar entirely and loads the
+        ///     scene's raw GLTFs, the way local scene development worked before local asset bundles. Off by
+        ///     default; ignored outside local scene development.
+        /// </summary>
+        public const string LSD_RAW_GLTF = "lsd-raw-gltf";
 
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";

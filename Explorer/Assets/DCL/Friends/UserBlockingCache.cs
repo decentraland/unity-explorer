@@ -1,5 +1,4 @@
 using DCL.Friends.UserBlocking;
-using DCL.Utility;
 using System;
 using System.Collections.Generic;
 

@@ -2,7 +2,6 @@
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using Random = System.Random;
 
 namespace DCL.Landscape.Config
 {

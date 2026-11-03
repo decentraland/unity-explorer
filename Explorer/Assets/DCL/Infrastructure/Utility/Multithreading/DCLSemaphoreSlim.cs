@@ -11,7 +11,7 @@ namespace Utility.Multithreading
     public sealed class DCLSemaphoreSlim
     {
 #if !UNITY_WEBGL
-        private readonly System.Threading.SemaphoreSlim semaphore;
+        private readonly SemaphoreSlim semaphore;
 #else
         private readonly Queue<UniTaskCompletionSource> queue = new();
         private int count;
@@ -29,7 +29,7 @@ namespace Utility.Multithreading
                 throw new ArgumentException("initialCount cannot be greater than maxCount");
 
 #if !UNITY_WEBGL
-            semaphore = new System.Threading.SemaphoreSlim(initialCount, maxCount);
+            semaphore = new SemaphoreSlim(initialCount, maxCount);
 #else
             this.count = initialCount;
             this.maxCount = maxCount;

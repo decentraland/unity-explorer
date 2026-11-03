@@ -1,7 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 using DCL.LOD.Components;
-using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using UnityEngine;
 using UnityEngine.Assertions;

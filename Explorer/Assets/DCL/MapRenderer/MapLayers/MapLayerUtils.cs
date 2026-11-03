@@ -1,5 +1,4 @@
 using DCL.PlacesAPIService;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers

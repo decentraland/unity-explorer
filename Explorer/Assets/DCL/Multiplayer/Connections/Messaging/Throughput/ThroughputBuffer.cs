@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DCL.Multiplayer.Connections.Systems.Throughput
+﻿namespace DCL.Multiplayer.Connections.Systems.Throughput
 {
     public class ThroughputBuffer
     {

@@ -1,6 +1,5 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
 using DG.Tweening;
 using UnityEngine;
 using Utility;

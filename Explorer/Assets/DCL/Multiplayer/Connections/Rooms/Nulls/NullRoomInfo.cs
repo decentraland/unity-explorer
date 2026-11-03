@@ -1,4 +1,3 @@
-using LiveKit.Proto;
 using LiveKit.Rooms.Info;
 using DCL.LiveKit.Public;
 

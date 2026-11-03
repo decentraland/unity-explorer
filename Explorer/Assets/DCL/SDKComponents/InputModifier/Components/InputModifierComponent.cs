@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using Unity.Collections;
 
 namespace DCL.SDKComponents.InputModifier.Components
 {

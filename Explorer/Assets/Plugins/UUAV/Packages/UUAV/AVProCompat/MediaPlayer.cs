@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace UUAV.Compat
@@ -42,6 +43,11 @@ namespace UUAV.Compat
             backend.Tick();
         }
 
+#if UNITY_INCLUDE_TESTS
+        // EditMode never awakes components: tests run it by hand so the facade owns a UUAVPlayer.
+        public void AwakeForTests() => Awake();
+#endif
+
         public bool OpenMedia(string path, bool autoPlay)
         {
             uuavPlayer.OpenMedia(path);
@@ -57,6 +63,19 @@ namespace UUAV.Compat
         public void CloseMedia()
         {
             uuavPlayer.CloseMedia();
+        }
+
+        /// <summary>
+        /// Opt-in snapshot of the player's DSP output for the main thread; see <see cref="UUAVPlayer.SetAudioCaptureEnabled"/>.
+        /// </summary>
+        public void SetAudioCaptureEnabled(bool enabled)
+        {
+            uuavPlayer.SetAudioCaptureEnabled(enabled);
+        }
+
+        public bool TryReadLastAudioFrame(Span<float> destination, out int channels, out int sampleCount)
+        {
+            return uuavPlayer.TryReadLastAudioFrame(destination, out channels, out sampleCount);
         }
     }
 }

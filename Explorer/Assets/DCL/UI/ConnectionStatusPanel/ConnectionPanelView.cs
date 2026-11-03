@@ -8,7 +8,7 @@ namespace DCL.UI.ConnectionStatusPanel
     {
         private const string USS_PANEL_HIDDEN = "connection-panel--hidden";
 
-        private bool visible = false;
+        private bool visible;
         private bool shownOnce;
 
         private readonly VisualElement panelRoot;

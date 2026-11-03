@@ -4,7 +4,6 @@ using DCL.SDKComponents.ParticleSystem.Systems;
 using DCL.WebRequests;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
@@ -31,7 +30,7 @@ namespace DCL.ParticleSystem.Tests
             testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
 
             var sceneData = Substitute.For<ISceneData>();
-            var partitionComponent = Substitute.For<ECS.Prioritization.Components.IPartitionComponent>();
+            var partitionComponent = Substitute.For<IPartitionComponent>();
             materialPool = Substitute.For<IObjectPool<Material>>();
             materialPool.Get().Returns(new Material(Shader.Find("Universal Render Pipeline/Lit")));
 
@@ -323,10 +322,10 @@ namespace DCL.ParticleSystem.Tests
             var pb = new PBParticleSystem
             {
                 IsDirty = true,
-                ColorOverTime = new Decentraland.Common.ColorRange
+                ColorOverTime = new ColorRange
                 {
-                    Start = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f },
-                    End = new Decentraland.Common.Color4 { R = 0f, G = 0f, B = 1f, A = 0f }
+                    Start = new Color4 { R = 1f, G = 0f, B = 0f, A = 1f },
+                    End = new Color4 { R = 0f, G = 0f, B = 1f, A = 0f }
                 }
             };
 

@@ -46,9 +46,9 @@ namespace DCL.Character.CharacterMotion
                 else
                 {
                     // If Animator component is not found or runtimeAnimatorController is null, try accessing animation clips directly
-                    UnityEngine.Animation[] animations = gltfObject.GetComponents<UnityEngine.Animation>();
+                    Animation[] animations = gltfObject.GetComponents<Animation>();
 
-                    foreach (UnityEngine.Animation animation in animations)
+                    foreach (Animation animation in animations)
                     {
                         foreach (AnimationState animState in animation)
                         {

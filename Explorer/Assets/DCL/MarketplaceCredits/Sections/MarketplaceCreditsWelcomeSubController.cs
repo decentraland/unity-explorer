@@ -138,7 +138,6 @@ namespace DCL.MarketplaceCredits.Sections
                     currentCreditsProgramProgress.user.email = email;
                     currentCreditsProgramProgress.user.isEmailConfirmed = false;
                     RedirectToSection(ignoreHasUserStartedProgramFlag: true);
-                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
                 }
                 else if (result.Error!.Value.State == EmailSubscriptionError.HandledError)
                 {

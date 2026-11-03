@@ -110,7 +110,7 @@ namespace DCL.AvatarRendering.Loading.Components
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && TryGetContentHashByKey(THUMBNAIL_DEFAULT_KEY, out string? hash))
                 thumbnailHash = hash!;
 
-            return new URLPath(thumbnailHash!);
+            return new URLPath(thumbnailHash);
         }
 
         URLPath IThumbnailAttachment.GetThumbnail() => GetThumbnail();

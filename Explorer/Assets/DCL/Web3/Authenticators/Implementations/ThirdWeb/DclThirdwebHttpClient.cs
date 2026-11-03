@@ -12,7 +12,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Thirdweb;
-using UnityEngine.Networking;
 
 namespace DCL.Web3.Authenticators
 {

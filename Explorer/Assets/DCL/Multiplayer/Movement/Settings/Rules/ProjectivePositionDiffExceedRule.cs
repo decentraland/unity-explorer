@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.Movement.Settings
             RemotePlayerExtrapolationSettings extSettings = settings.ExtrapolationSettings;
 
             Vector3 extrapolatedVelocity = Extrapolation.DampVelocity(lastNetworkMovementMessage.velocity, t, extSettings.TotalMoveDuration, extSettings.LinearTime);
-            Vector3 projectedPosition = lastNetworkMovementMessage!.position + (extrapolatedVelocity * t);
+            Vector3 projectedPosition = lastNetworkMovementMessage.position + (extrapolatedVelocity * t);
             return Vector3.SqrMagnitude(lastNetworkMovementMessage.position - projectedPosition) > PositionChangeSqrThreshold;
         }
     }

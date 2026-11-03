@@ -8,8 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.Textures;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 

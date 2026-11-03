@@ -19,7 +19,7 @@ namespace DCL.MapRenderer.Tests
     [TestFixture]
     public class MapRendererShould
     {
-        private DCL.MapRenderer.MapRenderer mapRenderer;
+        private MapRenderer mapRenderer;
 
         private Dictionary<MapLayer, IMapLayerController> layers;
 
@@ -43,7 +43,7 @@ namespace DCL.MapRenderer.Tests
                                           Substitute.For<IMapCullingController>(),
                                           Substitute.For<IObjectPool<IMapCameraControllerInternal>>())));
 
-            mapRenderer = new DCL.MapRenderer.MapRenderer(componentsFactory);
+            mapRenderer = new MapRenderer(componentsFactory);
             await mapRenderer.InitializeAsync(CancellationToken.None);
 
             layers = mapRenderer.layersDictionary_Test;

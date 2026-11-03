@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
-using ECS;
 using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.Runtime

@@ -1,4 +1,3 @@
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using MVC;
 using TMPro;

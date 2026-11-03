@@ -2,7 +2,6 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;

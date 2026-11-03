@@ -88,6 +88,10 @@ namespace DCL.Lobby
             base.Dispose();
         }
 
+        // The stage stays on while the container is off, and its directional light would reach the preview on top
+        protected override void OnContainerActiveChanged(bool isActive) =>
+            stage.SetKeyLightActive(isActive);
+
         // The pooled camera can change with every render target, so the stage is pointed at the current one each time
         private void FitStage()
         {
