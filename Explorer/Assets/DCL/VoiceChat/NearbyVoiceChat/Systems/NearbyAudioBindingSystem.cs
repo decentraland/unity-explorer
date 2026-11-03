@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
@@ -11,6 +12,7 @@ using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
@@ -24,6 +26,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudibleRangeSystem))]
     [UpdateBefore(typeof(NearbyAudioPositionSystem))]
+    [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyAudioBindingSystem : BaseUnityLoopSystem
     {
         internal const int MAX_CREATIONS_PER_FRAME = 10;
@@ -79,7 +82,19 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                 if (!bindings.Contains(key))
                 {
-                    Weak<AudioStream> stream = registry.GetActiveStream(key);
+                    Weak<AudioStream> stream;
+
+                    // The LiveKit SDK throws when the FFI does not open the stream: the failure stays scoped to this stream,
+                    // which is left unbound and retried next frame.
+                    try
+                    {
+                        stream = registry.GetActiveStream(key);
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogException(e, GetReportData());
+                        continue;
+                    }
 
                     // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
                     if (!stream.Resource.Has) continue;
