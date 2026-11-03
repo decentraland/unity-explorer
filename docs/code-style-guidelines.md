@@ -271,6 +271,7 @@ Dictionary members that throw on a duplicate or missing key surface in Sentry as
   - Duplicate is expected: `TryAdd` and ignore the result, or `map[k] = v` if the latest value should win.
   - Missing key on read: `TryGetValue` with an explicit miss branch (early return, log or fallback).
 - Exemptions: `#pragma warning disable DCL0001` (or `DCL0002`) around the line, with the reason on the same line, only at serialization or third-party boundaries. The `Add` method and indexer getter of a type that itself implements a dictionary interface are exempt automatically, since forwarding there implements the same contract.
+- To list the findings without the Editor, run `bash scripts/lint/run-dcl-analyzers.sh [Assembly ...]`. It needs Unity to have compiled the project once.
 - The rules are warnings while the existing call sites are migrated ([#10563](https://github.com/decentraland/unity-explorer/issues/10563)) and are excluded from the lint ratchet until then; they become compile errors once the count reaches zero.
 
 ### Whitespaces
