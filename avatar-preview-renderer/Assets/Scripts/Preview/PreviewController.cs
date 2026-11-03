@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,7 +88,11 @@ namespace Preview
         // than the one under the avatar's feet.
         private void ShowWearableView(bool showWearable)
         {
-            previewCameraController.ShowMarketplaceWearable(showWearable);
+            previewCameraController.ShowWearable(showWearable, PreviewConfiguration.Instance.Mode);
+
+            avatarLoader.gameObject.SetActive(!showWearable);
+            wearableLoader.gameObject.SetActive(showWearable);
+            glowCatcher.SetActive(!showWearable && PreviewConfiguration.Instance.Glow);
 
             // One 20-unit plane spans both subjects, which sit 5 apart, so the avatar's shadow drifts
             // into the item view once zoomed out. Nothing there casts, so the plane goes with the view.
@@ -108,6 +114,27 @@ namespace Preview
 
             ShowWearableView(false);
             avatarRotator.ResetRotation();
+        }
+
+        public void ChangeCameraPosition(Vector3 delta)
+        {
+            StopAutomaticRotation();
+            previewCameraController.ChangeCameraPosition(delta);
+        }
+
+        public void SetCameraTarget(Vector3 target)
+        {
+            StopAutomaticRotation();
+            previewCameraController.SetCameraTarget(target);
+        }
+
+        private void StopAutomaticRotation()
+        {
+            if (PreviewConfiguration.Instance.Mode is not (PreviewMode.Builder or PreviewMode.Marketplace))
+                throw new InvalidOperationException("Camera controls require builder or marketplace mode.");
+
+            avatarRotator.StopMotion();
+            wearableRotator.StopMotion();
         }
 
         public void SetSpringBonesParams(SpringBones.SpringBonesParamsPayload payload) =>
@@ -165,6 +192,8 @@ namespace Preview
                 // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
                 var config = PreviewConfiguration.Instance;
 
+                avatarLoader.gameObject.SetActive(true);
+                wearableLoader.gameObject.SetActive(config.Mode is PreviewMode.Builder or PreviewMode.Marketplace);
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
                 avatarRotator.ResetRotation();
@@ -226,13 +255,14 @@ namespace Preview
                             await LoadForProfile(config.Profile, config.Emote);
                             break;
                         case PreviewMode.Builder:
-                            await LoadForBuilder(config.BodyShape,
+                            hasWearableOverride = await LoadForBuilder(config.BodyShape,
                                 config.EyeColor,
                                 config.HairColor,
                                 config.SkinColor,
                                 config.Urns.ToArray(),
                                 config.Emote,
-                                config.Base64);
+                                config.Base64,
+                                config.Type == PreviewViewType.Wearable);
                             break;
                         case PreviewMode.Jesus:
                             showingAvatar = true;
@@ -246,7 +276,11 @@ namespace Preview
                 catch (Exception e)
                 {
                     JSBridge.NativeCalls.OnError(e.Message);
-                    throw;
+                    if (_shouldReload) continue;
+
+                    _loading = false;
+                    previewUIPresenter.ShowLoader(false);
+                    return;
                 }
 
                 // Wait for 1 frame for animation to kick in before measuring bounds for the framing below
@@ -275,16 +309,26 @@ namespace Preview
                 else if (config.Mode is PreviewMode.Builder)
                 {
                     avatarRotator.DragSpeed = 2f;
+                    if (hasWearableOverride)
+                    {
+                        previewCameraController.FitWearableView(wearableLoader.transform);
+                        ShowWearableView(true);
+                    }
+                    else
+                    {
+                        wearableLoader.gameObject.SetActive(false);
+                    }
                 }
 
                 avatarRotator.enabled = true;
                 wearableRotator.enabled = true;
                 avatarRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                wearableRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace;
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
                 previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
                 previewUIPresenter.EnablePan(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
-                previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
+                previewUIPresenter.EnableSwitcher(config.Mode == PreviewMode.Marketplace && hasWearableOverride && !config.DisableSwitcher);
                 previewUIPresenter.EnableAudioControls(hasEmoteAudio);
             } while (_shouldReload);
 
@@ -303,15 +347,16 @@ namespace Preview
             JSBridge.NativeCalls.OnLoadComplete();
         }
 
-        private async Awaitable LoadForBuilder(string bodyShapeName,
+        private async Awaitable<bool> LoadForBuilder(string? bodyShapeName,
             Color? eyeColor,
             Color? hairColor,
             Color? skinColor,
             string[] urns,
             string emoteName,
-            List<byte[]> base64)
+            List<byte[]> base64,
+            bool showItemAlone)
         {
-            var bodyShape = bodyShapeName.Equals(WearablesConstants.BODY_SHAPE_FEMALE, StringComparison.OrdinalIgnoreCase)
+            var bodyShape = string.Equals(bodyShapeName, WearablesConstants.BODY_SHAPE_FEMALE, StringComparison.OrdinalIgnoreCase)
                 ? BodyShape.Female
                 : BodyShape.Male;
 
@@ -340,6 +385,17 @@ namespace Preview
             // plays it with nothing to download. NOTE LoadForProfile does not short-circuit.
             var emoteEntity = base64Emote ?? (emoteName == "idle" ? null : EntityDefinition.FromEmbeddedEmote(emoteName, true));
 
+            EntityDefinition? itemAlone = null;
+            if (showItemAlone)
+            {
+                if (base64Entities.Length != 1 || base64Emote != null)
+                    throw new InvalidOperationException("Builder item-only view requires exactly one local wearable definition.");
+
+                itemAlone = base64Entities[0];
+                if (!itemAlone.HasRepresentation(bodyShape))
+                    throw new InvalidOperationException($"The local wearable has no {bodyShape} representation.");
+            }
+
             await avatarLoader.LoadAvatar(bodyShape,
                 wearableEntities,
                 emoteEntity,
@@ -350,6 +406,13 @@ namespace Preview
             {
                 avatarLoader.HideFacialFeatures();
             }
+
+            if (itemAlone != null)
+                await wearableLoader.LoadWearable(itemAlone, bodyShape, colors, avatarLoader.GetIdlePose());
+            else
+                wearableLoader.Cleanup();
+
+            return itemAlone != null;
         }
 
         private async Awaitable<(bool emoteOverride, bool emoteOverrideAudio, bool validRepresentation,

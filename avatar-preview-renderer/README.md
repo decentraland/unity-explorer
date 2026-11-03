@@ -36,7 +36,7 @@ The renderer can run in five different modes, depending on its usage: Marketplac
   * `fist-pump`
   * `head-explode`
 * `urn`: An URN address of a wearable or emote to load. It will override any existing wearable in the same category already present on the profile that has been loaded. Can be included multiple times in `marketplace` and `builder` mode to load multiple wearables.
-* `type`: Which view to open in. Only used in `marketplace` mode, and only when a single wearable is being previewed (an emote or several urns at once can only be shown on the avatar). If omitted, the view the user last switched to is used. Possible values:
+* `type`: Which view to open in. In `marketplace` mode, applies to a single wearable; if omitted, the last selected view is used. In `builder` mode, defaults to `avatar`; `wearable` requires exactly one local base64 wearable definition with a representation for the requested body shape. Other URNs can supply its worn outfit but are not shown in the isolated view. Emote or multi-definition item-only requests report an error. Possible values:
   * `wearable` - the item on its own
   * `avatar` - the item worn by the avatar
 * `disableSwitcher`: Hides the avatar / item switcher, so the view stays as it was requested. Only used in `marketplace` mode. Default is `false`.
@@ -102,6 +102,7 @@ Depending on the mode, not all parameters are used. These are the valid paramete
   * Multiple urn parameters may be used to load several wearables. The categories of the wearables must be unique (e.g. two urns cannot both be for "upper_body")
 * `emote`
 * `base64`
+* `type` (optional; the Builder item-only view has no switcher)
 
 ### Configurator
 * `username`
@@ -134,7 +135,7 @@ unityInstance.SendMessage('JSBridge', 'SetEmote', 'clap');
 unityInstance.SendMessage('JSBridge', 'SetSkinColor', 'ff0000');
 ```
 
-Every call of this function will trigger a reload of the entire avatar.
+Call `SendMessage('JSBridge', 'Reload')` after changing configuration. Camera and playback commands apply immediately without a reload.
 For a full list of available functions check [JSBridge](Assets/Scripts/JSBridge.cs).
 
 ### Special cases
@@ -142,6 +143,24 @@ For a full list of available functions check [JSBridge](Assets/Scripts/JSBridge.
 * `SetUrns`
   * The input should be either a single URN or a list of urns separated by commas.
   * Example: `unityInstance.SendMessage('JSBridge', 'SetUrns', 'urn:decentraland:off-chain:base-avatars:kilt,urn:decentraland:off-chain:base-avatars:full_beard,urn:decentraland:off-chain:base-avatars:blue_bandana');`
+
+## Camera controls
+
+After loading in `builder` or `marketplace` mode, the existing wearable-preview scene controller methods are supported:
+
+| Scene controller | Unity message | Values |
+| --- | --- | --- |
+| `changeCameraPosition({ alpha, beta, radius })` | `SetCameraPosition` | Comma-separated azimuth delta, inclination delta (radians), distance delta (world units) |
+| `panCamera({ x, y, z })` | `SetOffset` | Comma-separated absolute orbit target in world space; unspecified components are zero |
+| `changeZoom(delta)` | `SetZoom` | Distance delta toward the target; positive zooms in |
+
+Camera changes stop automatic subject rotation and inertia; mouse dragging still works. The first command preserves the current lens and starts an orbit around a point on the current view axis. Subsequent angle/distance commands are relative, matching the wrapper's existing API. Inclination stops short of the poles and distance stays positive. Reload resets the camera and normal rotation behavior. Values use decimal points regardless of the browser locale.
+
+```javascript
+unityInstance.SendMessage('JSBridge', 'SetCameraPosition', '1.5707963,0,0');
+unityInstance.SendMessage('JSBridge', 'SetCameraPosition', '0,-0.5235988,0');
+unityInstance.SendMessage('JSBridge', 'SetZoom', '0.5');
+```
 
 ## Taking screenshots
 
@@ -171,3 +190,16 @@ window.addEventListener('message', (event) => {
   }
 });
 ```
+
+## Camera regression tests
+
+Run the Edit Mode tests with the editor version in `ProjectSettings/ProjectVersion.txt`:
+
+```sh
+"/Applications/Unity/Hub/Editor/6000.5.9f1/Unity.app/Contents/MacOS/Unity" \
+  -batchmode -nographics -projectPath avatar-preview-renderer \
+  -runTests -testPlatform EditMode -testFilter Preview.Tests.CameraControlsTests \
+  -testResults /tmp/preview-camera-tests.xml -logFile /tmp/preview-camera-tests.log
+```
+
+These tests invoke the scene's bridge methods by their web message names and verify camera transforms, without entering Play Mode or downloading an avatar. Camera movement and locale-independent values fail against a build without the handlers. Web captures must also be checked for avatar/item visibility and paused-pose stability.

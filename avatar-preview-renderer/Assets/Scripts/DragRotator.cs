@@ -129,6 +129,14 @@ public class DragRotator : MonoBehaviour
         }
     }
 
+    public void StopMotion()
+    {
+        _horizontalVel = 0f;
+        _verticalVel = 0f;
+        _targetRotation = null;
+        EnableAutoRotate = false;
+    }
+
     public void ResetRotation()
     {
         _yaw = 0f;
