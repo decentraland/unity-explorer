@@ -277,14 +277,11 @@ impl SegmentServer {
         send_daemon.start(
             async_runtime.handle().clone(),
             move |failure: SendFailure<'_>| {
-                let message = match failure {
-                    SendFailure::WillRetry(e) => {
-                        format!("Error executing send loop (will retry): {:#?}", e)
-                    }
-                    SendFailure::WillDrop(e) => {
-                        format!("Error executing send loop (will drop): {:#?}", e)
-                    }
+                let (outcome, e) = match failure {
+                    SendFailure::WillRetry(e) => ("will retry", e),
+                    SendFailure::WillDrop(e) => ("will drop", e),
                 };
+                let message = format!("Error executing send loop ({outcome}): {e:#?}");
                 daemon_event_input.try_enqueue_error(message);
             },
         );
