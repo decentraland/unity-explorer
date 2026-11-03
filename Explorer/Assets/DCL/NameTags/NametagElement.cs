@@ -54,6 +54,16 @@ namespace DCL.Nametags
         /// we use this to avoid recalculating transparency and scale when distance hasn't changed.
         /// </summary>
         public float LastSqrDistance { get; set; }
+
+        /// <summary>
+        /// Camera fov scale factor the scale was last calculated with; a fov change alone must rescale the tag.
+        /// </summary>
+        public float LastFovScaleFactor { get; set; }
+
+        /// <summary>
+        /// Max distance the opacity was last calculated with; a max distance change alone must refade the tag.
+        /// </summary>
+        public float LastMaxDistance { get; set; }
         public string? ProfileID { get; set; }
         public int ProfileVersion { get; set; }
 

@@ -10,8 +10,9 @@ namespace DCL.Nametags
         private static readonly float3 FORWARD = new (0f, 0f, 1f);
         private static readonly float3 UP = new (0f, 1f, 0f);
         private static readonly float3 ONE = new (1f, 1f, 1f);
-        private const float DISTANCE_CHANGE_THRESHOLD = 0.0001f;
+        private const float CHANGE_THRESHOLD = 0.0001f;
         private const float HALF_DEGREES_TO_RADIANS = 0.5f * math.PI / 180f;
+        private const float FADE_START_RATIO = 0.5f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
@@ -53,7 +54,23 @@ namespace DCL.Nametags
         public static bool HasDistanceChanged(in float3 cameraPos, in float3 characterPos, float lastSqrDistance)
         {
             float newSqrDistance = math.distancesq(cameraPos, characterPos);
-            return math.abs(newSqrDistance - lastSqrDistance) >= DISTANCE_CHANGE_THRESHOLD;
+            return HasChanged(newSqrDistance, lastSqrDistance);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [BurstCompile]
+        public static bool HasChanged(float value, float lastValue) =>
+            math.abs(value - lastValue) >= CHANGE_THRESHOLD;
+
+        /// <summary>
+        ///     Fully opaque up to half of the max distance, then fades out linearly to zero at the max distance.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [BurstCompile]
+        public static float CalculateOpacity(float distance, float maxDistance)
+        {
+            float fadeStartDistance = maxDistance * FADE_START_RATIO;
+            return math.saturate(1f - ((distance - fadeStartDistance) / (maxDistance - fadeStartDistance)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
