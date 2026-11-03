@@ -21,9 +21,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private new enum State { Waiting, Success, Failed }
+        private enum TransferState { Waiting, Success, Failed }
 
-        private State currentState;
+        private TransferState currentState;
 
         private readonly IEventBus eventBus;
         private readonly UnityAppWebBrowser webBrowser;
@@ -78,7 +78,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.ItemCategoryBackground.color = inputData.style.flapColor;
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
 
-                SetViewState(State.Waiting);
+                SetViewState(TransferState.Waiting);
                 SetPhase(GiftTransferPhase.WaitingForWallet, giftTransferRequestCommand.GetWaitingMessage());
             }
 
@@ -177,7 +177,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnSuccess()
         {
-            currentState = State.Success;
+            currentState = TransferState.Success;
             delayCts.SafeCancelAndDispose();
             RequestClose();
 
@@ -187,7 +187,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void OnFailure()
         {
-            currentState = State.Failed;
+            currentState = TransferState.Failed;
             delayCts.SafeCancelAndDispose();
 
             RequestClose();
@@ -216,14 +216,14 @@ namespace DCL.Backpack.Gifting.Presenters
             }
         }
 
-        private void SetViewState(State newState)
+        private void SetViewState(TransferState newState)
         {
             currentState = newState;
             if (viewInstance == null) return;
 
             switch (newState)
             {
-                case State.Waiting:
+                case TransferState.Waiting:
                     viewInstance.TitleLabel.text = GiftingTextIds.PREPARING_GIFT_TITLE;
                     viewInstance.StatusContainer.SetActive(true);
 
@@ -236,7 +236,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void SetPhase(GiftTransferPhase phase, string? msg)
         {
-            if (viewInstance == null || currentState != State.Waiting) return;
+            if (viewInstance == null || currentState != TransferState.Waiting) return;
             viewInstance.StatusText.text = msg ?? GiftingTextIds.DEFAULT_STATUS_MESSAGE;
         }
 
