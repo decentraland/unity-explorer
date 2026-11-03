@@ -114,7 +114,7 @@ namespace DCL.Nametags
         private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
-            if (avatarShape.NameTagHiddenByModifierArea
+            if (!IsNameWanted(in avatarShape)
                 || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, e), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
@@ -129,8 +129,7 @@ namespace DCL.Nametags
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (avatarShape.NameTagHiddenByModifierArea
-                || string.IsNullOrEmpty(avatarShape.Name)
+            if (!IsNameWanted(in avatarShape)
                 || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, e), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
@@ -145,12 +144,12 @@ namespace DCL.Nametags
         private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile, ref SceneAvatarTagComponent sceneTag)
         {
-            if (sceneTag.IsRemoving || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+            if (!IsTagWanted(in avatarShape, in sceneTag) || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
             sceneTag.IsDirty = true;
-            AddNameTag(e, in avatarShape, nameVisible: !avatarShape.NameTagHiddenByModifierArea, profile);
+            AddNameTag(e, in avatarShape, nameVisible: IsNameWanted(in avatarShape), profile);
         }
 
         [Query]
@@ -159,15 +158,15 @@ namespace DCL.Nametags
         private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float cameraMaxDistance, [Data] in float3 playerPosition,
             Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, ref SceneAvatarTagComponent sceneTag)
         {
-            if (sceneTag.IsRemoving || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
+            if (!IsTagWanted(in avatarShape, in sceneTag) || !CanAddTag(in camera, GetTagMaxDistance(cameraMaxDistance, in sceneTag), in playerPosition, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
             sceneTag.IsDirty = true;
-            AddNameTag(e, in avatarShape, nameVisible: !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name));
+            AddNameTag(e, in avatarShape, nameVisible: IsNameWanted(in avatarShape));
         }
 
-        // Mirrors the add and keep conditions of the tag queries, so only tags that can actually be shown take a cap slot.
+        // Shares IsTagWanted and CanShowTag with the add and keep queries, so only tags that can actually be shown take a cap slot.
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
@@ -181,13 +180,18 @@ namespace DCL.Nametags
             nearestTagsCap.Add(math.distancesq(playerPosition, characterTransform.Position));
         }
 
+        // A missing name must not show an empty name box, for players and scene avatars alike.
+        private static bool IsNameWanted(in AvatarShapeComponent avatarShape) =>
+            !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
+
+        // A plate on its way out keeps the holder only while the name still needs it.
+        private static bool IsTagWanted(in AvatarShapeComponent avatarShape, in SceneAvatarTagComponent sceneTag) =>
+            IsNameWanted(in avatarShape) || !sceneTag.IsRemoving;
+
         private bool IsTagWanted(Entity e, in AvatarShapeComponent avatarShape)
         {
-            if (!avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name))
-                return true;
-
             ref SceneAvatarTagComponent sceneTag = ref World.TryGetRef<SceneAvatarTagComponent>(e, out bool exists);
-            return exists && !sceneTag.IsRemoving;
+            return exists ? IsTagWanted(in avatarShape, in sceneTag) : IsNameWanted(in avatarShape);
         }
 
         private float GetTagMaxDistance(float cameraMaxDistance, Entity e)
@@ -314,7 +318,7 @@ namespace DCL.Nametags
 
             // Without a scene avatar tag the name is the only reason for this holder to exist.
             if (!showNameTags
-                || avatarShape.NameTagHiddenByModifierArea
+                || !IsNameWanted(in avatarShape)
                 || ShouldCullTag(in camera, maxDistance, e, in avatarShape, in characterTransform, in partitionComponent)
                 || IsBeyondTagsCap(in playerPosition, in characterTransform))
             {
@@ -335,12 +339,11 @@ namespace DCL.Nametags
             // Read before ReleaseTag: its structural change invalidates sceneTag.
             float maxDistance = GetTagMaxDistance(cameraMaxDistance, in sceneTag);
 
-            // A scene avatar may carry no name at all; the plate must not uncover an empty name box.
-            bool nameVisible = !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
+            bool nameVisible = IsNameWanted(in avatarShape);
 
             // The nametags toggle takes the plate down with the name; a modifier area hides the name only.
             if (!showNameTags
-                || (!nameVisible && sceneTag.IsRemoving)
+                || !IsTagWanted(in avatarShape, in sceneTag)
                 || ShouldCullTag(in camera, maxDistance, e, in avatarShape, in characterTransform, in partitionComponent)
                 || IsBeyondTagsCap(in playerPosition, in characterTransform))
             {
