@@ -522,6 +522,7 @@ MonoBehaviour:
   <WarningNotification>k__BackingField: {fileID: 6667610896396879065}
   <pointerDetectionArea>k__BackingField: {fileID: 2527603276159390384}
   <sidebarLayoutElement>k__BackingField: {fileID: 3900643109725378707}
+  <uiLayoutGroup>k__BackingField: {fileID: 1150865578934161588}
   <sidebarDetectionArea>k__BackingField: {fileID: 5658050912149109760}
 --- !u!1001 &866923318198541087
 PrefabInstance:
@@ -3928,7 +3929,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6669985993524740419, guid: ff613379c6a17084ab0f59655c4330c9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.000091552734
+      value: 0.00062561035
       objectReference: {fileID: 0}
     - target: {fileID: 6805236353520171800, guid: ff613379c6a17084ab0f59655c4330c9, type: 3}
       propertyPath: m_SizeDelta.x
