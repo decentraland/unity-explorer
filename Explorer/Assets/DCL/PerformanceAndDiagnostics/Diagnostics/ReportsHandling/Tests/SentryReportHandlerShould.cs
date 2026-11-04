@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics.Sentry;
+using Microsoft.ClearScript;
 using NUnit.Framework;
 using Sentry;
 using System;
@@ -133,6 +134,14 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropScriptInterruptionsEvenWhenUnobservedTaskWrapsThem()
+        {
+            var @event = new SentryEvent(new AggregateException(new ScriptInterruptedException("Script execution interrupted by host")));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void DropInsecureConnectionRefusals()
         {
             var @event = new SentryEvent(new InvalidOperationException("Insecure connection not allowed"));
@@ -144,6 +153,24 @@ namespace DCL.Diagnostics.Tests
         public void KeepOtherInvalidOperations()
         {
             var @event = new SentryEvent(new InvalidOperationException("Collection was modified"));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void DropUnreachableThirdwebBundler()
+        {
+            var @event = new SentryEvent(new Exception("Bundler Request Failed. Error: 0 - "));
+            @event.SetTag("category", ReportCategory.AUTHENTICATION);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepThirdwebBundlerFailuresWithAStatus()
+        {
+            var @event = new SentryEvent(new Exception("Bundler Request Failed. Error: 500 - {\"error\":\"internal\"}"));
+            @event.SetTag("category", ReportCategory.AUTHENTICATION);
 
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }

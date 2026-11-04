@@ -40,6 +40,9 @@ namespace DCL.Diagnostics.Sentry
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
+        // Interruptions of scene engines; not a ScriptEngineException subtype, so matched separately (#10194)
+        private const string SCRIPT_INTERRUPTED_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptInterruptedException";
+
         // A websocket dropped by the remote end is a backend condition the client cannot act on (#10103, #10377)
         private const string WEBSOCKET_EXCEPTION_TYPE = "Utility.Networking.WebSocketException";
 
@@ -55,6 +58,9 @@ namespace DCL.Diagnostics.Sentry
         private const int HANDLE_DISK_FULL_HRESULT = unchecked((int)0x80070027);
         private const int DISK_FULL_HRESULT = unchecked((int)0x80070070);
         private const string DISK_FULL_MESSAGE_PREFIX = "Disk full";
+
+        // Status 0 means Thirdweb's bundler request got no HTTP answer at all: the player's network, not a client defect (#7713, #10570)
+        private const string THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE = "Bundler Request Failed. Error: 0 - ";
 
         // Beyond this many held networking failures, an error storm falls back to the last confirmed connectivity state
         private const int MAX_HELD_NETWORK_FAILURES = 32;
@@ -347,9 +353,13 @@ namespace DCL.Diagnostics.Sentry
                     return true;
             }
 
+            // Thirdweb raises its bundler failures as a plain Exception
+            if (exception.GetType() == typeof(Exception) && exception.Message.StartsWith(THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE, StringComparison.Ordinal))
+                return true;
+
             string? typeName = exception.GetType().FullName;
 
-            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
+            if (typeName is SCRIPT_ENGINE_EXCEPTION_TYPE or SCRIPT_INTERRUPTED_EXCEPTION_TYPE or WEBSOCKET_EXCEPTION_TYPE)
                 return true;
 
             return exception.InnerException != null && IsIgnoredException(exception.InnerException, isLocalSceneDevelopment, isOffline);
