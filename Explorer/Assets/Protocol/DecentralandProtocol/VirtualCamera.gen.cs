@@ -27,17 +27,16 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdmlydHVhbF9jYW1lcmEu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo6ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9jYW1lcmFfdHJhbnNpdGlvbi5w",
-            "cm90byKFAgoPUEJWaXJ0dWFsQ2FtZXJhElUKEmRlZmF1bHRfdHJhbnNpdGlv",
+            "cm90byLJAQoPUEJWaXJ0dWFsQ2FtZXJhElUKEmRlZmF1bHRfdHJhbnNpdGlv",
             "bhgBIAEoCzI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24u",
             "Q2FtZXJhVHJhbnNpdGlvbkgAiAEBEhsKDmxvb2tfYXRfZW50aXR5GAIgASgN",
-            "SAGIAQESEAoDZm92GAMgASgCSAKIAQESIQoUbmFtZXRhZ19tYXhfZGlzdGFu",
-            "Y2UYBCABKAJIA4gBAUIVChNfZGVmYXVsdF90cmFuc2l0aW9uQhEKD19sb29r",
-            "X2F0X2VudGl0eUIGCgRfZm92QhcKFV9uYW1ldGFnX21heF9kaXN0YW5jZUIU",
-            "qgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "SAGIAQESEAoDZm92GAMgASgCSAKIAQFCFQoTX2RlZmF1bHRfdHJhbnNpdGlv",
+            "bkIRCg9fbG9va19hdF9lbnRpdHlCBgoEX2ZvdkIUqgIRRENMLkVDU0NvbXBv",
+            "bmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.CameraTransitionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity", "Fov", "NametagMaxDistance" }, new[]{ "DefaultTransition", "LookAtEntity", "Fov", "NametagMaxDistance" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBVirtualCamera), global::DCL.ECSComponents.PBVirtualCamera.Parser, new[]{ "DefaultTransition", "LookAtEntity", "Fov" }, new[]{ "DefaultTransition", "LookAtEntity", "Fov" }, null, null, null)
           }));
     }
     #endregion
@@ -51,9 +50,6 @@ namespace DCL.ECSComponents {
   /// * The lookAtEntity defines to which entity the Camera has to look at constantly (independent from 
   /// the holding entity transform).
   /// * The fov defines the Field of View of the virtual camera
-  /// * The nametag_max_distance defines the distance in meters from the camera beyond which nametags
-  /// are hidden, while this virtual camera is active. It applies to all nametags (players, NPCs and
-  /// scene plates) and takes priority over AvatarNametag.max_distance.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBVirtualCamera : pb::IMessage<PBVirtualCamera>
@@ -95,7 +91,6 @@ namespace DCL.ECSComponents {
       defaultTransition_ = other.defaultTransition_ != null ? other.defaultTransition_.Clone() : null;
       lookAtEntity_ = other.lookAtEntity_;
       fov_ = other.fov_;
-      nametagMaxDistance_ = other.nametagMaxDistance_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -174,36 +169,6 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~2;
     }
 
-    /// <summary>Field number for the "nametag_max_distance" field.</summary>
-    public const int NametagMaxDistanceFieldNumber = 4;
-    private readonly static float NametagMaxDistanceDefaultValue = 0F;
-
-    private float nametagMaxDistance_;
-    /// <summary>
-    /// default: 40 m; &lt;= 0 or NaN = unset
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float NametagMaxDistance {
-      get { if ((_hasBits0 & 4) != 0) { return nametagMaxDistance_; } else { return NametagMaxDistanceDefaultValue; } }
-      set {
-        _hasBits0 |= 4;
-        nametagMaxDistance_ = value;
-      }
-    }
-    /// <summary>Gets whether the "nametag_max_distance" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasNametagMaxDistance {
-      get { return (_hasBits0 & 4) != 0; }
-    }
-    /// <summary>Clears the value of the "nametag_max_distance" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearNametagMaxDistance() {
-      _hasBits0 &= ~4;
-    }
-
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -222,7 +187,6 @@ namespace DCL.ECSComponents {
       if (!object.Equals(DefaultTransition, other.DefaultTransition)) return false;
       if (LookAtEntity != other.LookAtEntity) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Fov, other.Fov)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(NametagMaxDistance, other.NametagMaxDistance)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -233,7 +197,6 @@ namespace DCL.ECSComponents {
       if (defaultTransition_ != null) hash ^= DefaultTransition.GetHashCode();
       if (HasLookAtEntity) hash ^= LookAtEntity.GetHashCode();
       if (HasFov) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Fov);
-      if (HasNametagMaxDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(NametagMaxDistance);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -264,10 +227,6 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(29);
         output.WriteFloat(Fov);
       }
-      if (HasNametagMaxDistance) {
-        output.WriteRawTag(37);
-        output.WriteFloat(NametagMaxDistance);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -290,10 +249,6 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(29);
         output.WriteFloat(Fov);
       }
-      if (HasNametagMaxDistance) {
-        output.WriteRawTag(37);
-        output.WriteFloat(NametagMaxDistance);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -311,9 +266,6 @@ namespace DCL.ECSComponents {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(LookAtEntity);
       }
       if (HasFov) {
-        size += 1 + 4;
-      }
-      if (HasNametagMaxDistance) {
         size += 1 + 4;
       }
       if (_unknownFields != null) {
@@ -339,9 +291,6 @@ namespace DCL.ECSComponents {
       }
       if (other.HasFov) {
         Fov = other.Fov;
-      }
-      if (other.HasNametagMaxDistance) {
-        NametagMaxDistance = other.NametagMaxDistance;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -377,10 +326,6 @@ namespace DCL.ECSComponents {
             Fov = input.ReadFloat();
             break;
           }
-          case 37: {
-            NametagMaxDistance = input.ReadFloat();
-            break;
-          }
         }
       }
     #endif
@@ -413,10 +358,6 @@ namespace DCL.ECSComponents {
           }
           case 29: {
             Fov = input.ReadFloat();
-            break;
-          }
-          case 37: {
-            NametagMaxDistance = input.ReadFloat();
             break;
           }
         }

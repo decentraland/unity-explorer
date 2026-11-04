@@ -64,33 +64,19 @@ namespace DCL.Nametags
 
         /// <summary>
         ///     Fully opaque up to half of the max distance, then fades out linearly to zero at the max distance.
+        ///     An infinite max distance never fades.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
         public static float CalculateOpacity(float distance, float maxDistance)
         {
+            // Infinity minus infinity is NaN, so the fade formula cannot handle it.
+            if (math.isinf(maxDistance))
+                return 1f;
+
             float fadeStartDistance = maxDistance * FADE_START_RATIO;
             return math.saturate(1f - ((distance - fadeStartDistance) / (maxDistance - fadeStartDistance)));
         }
-
-        /// <summary>
-        ///     Picks the first usable distance: the active virtual camera's, then the avatar's, then the default.
-        ///     A non-positive, NaN or infinite value counts as unset.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
-        public static float ResolveMaxDistance(float cameraMaxDistance, float avatarMaxDistance, float defaultMaxDistance)
-        {
-            if (IsValidMaxDistance(cameraMaxDistance))
-                return cameraMaxDistance;
-
-            return IsValidMaxDistance(avatarMaxDistance) ? avatarMaxDistance : defaultMaxDistance;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
-        public static bool IsValidMaxDistance(float maxDistance) =>
-            math.isfinite(maxDistance) && maxDistance > 0f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]

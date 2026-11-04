@@ -29,21 +29,15 @@ namespace DCL.Nametags
         /// </summary>
         public readonly Color BorderColor;
 
-        /// <summary>
-        ///     The scene's raw max distance for this avatar's whole nametag; zero when the scene left it unset.
-        /// </summary>
-        public readonly float MaxDistance;
-
         public bool IsDirty;
         public bool IsRemoving;
 
-        public SceneAvatarTagComponent(string text, Color textColor, Color backgroundColor, Color borderColor, float maxDistance)
+        public SceneAvatarTagComponent(string text, Color textColor, Color backgroundColor, Color borderColor)
         {
             Text = text;
             TextColor = textColor;
             BackgroundColor = backgroundColor;
             BorderColor = borderColor;
-            MaxDistance = maxDistance;
 
             IsDirty = true;
             IsRemoving = false;

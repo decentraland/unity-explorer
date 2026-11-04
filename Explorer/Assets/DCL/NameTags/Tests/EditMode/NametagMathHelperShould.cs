@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Unity.Mathematics;
 
 namespace DCL.Nametags.Tests
 {
@@ -11,6 +12,8 @@ namespace DCL.Nametags.Tests
         [TestCase(50f, 40f, 0f)]
         [TestCase(100f, 200f, 1f)]
         [TestCase(150f, 200f, 0.5f)]
+        [TestCase(0f, float.PositiveInfinity, 1f)]
+        [TestCase(10000f, float.PositiveInfinity, 1f)]
         public void FadeOutFromHalfOfMaxDistance(float distance, float maxDistance, float expectedOpacity)
         {
             // Act
@@ -20,23 +23,31 @@ namespace DCL.Nametags.Tests
             Assert.That(opacity, Is.EqualTo(expectedOpacity).Within(0.0001f));
         }
 
-        [TestCase(100f, 60f, 100f)]
-        [TestCase(10f, 60f, 10f)]
-        [TestCase(0f, 60f, 60f)]
-        [TestCase(-5f, 60f, 60f)]
-        [TestCase(float.NaN, 60f, 60f)]
-        [TestCase(float.PositiveInfinity, 60f, 60f)]
-        [TestCase(0f, 0f, 40f)]
-        [TestCase(0f, -1f, 40f)]
-        [TestCase(0f, float.NaN, 40f)]
-        [TestCase(float.NaN, float.NaN, 40f)]
-        public void ResolveMaxDistanceByCameraThenAvatarThenDefault(float cameraMaxDistance, float avatarMaxDistance, float expectedMaxDistance)
+        [Test]
+        public void NeverPutTagOutOfRangeWithInfiniteMaxDistance()
         {
+            // Arrange
+            float maxDistance = float.PositiveInfinity;
+
             // Act
-            float maxDistance = NametagMathHelper.ResolveMaxDistance(cameraMaxDistance, avatarMaxDistance, 40f);
+            bool outOfRange = NametagMathHelper.IsOutOfRenderRange(new float3(0f, 0f, 0f), new float3(100000f, 0f, 0f), maxDistance * maxDistance, 4f);
 
             // Assert
-            Assert.That(maxDistance, Is.EqualTo(expectedMaxDistance));
+            Assert.That(outOfRange, Is.False);
+        }
+
+        [Test]
+        public void DetectMaxDistanceChangeToAndFromInfinity()
+        {
+            // Act
+            bool toInfinity = NametagMathHelper.HasChanged(float.PositiveInfinity, 40f);
+            bool fromInfinity = NametagMathHelper.HasChanged(40f, float.PositiveInfinity);
+            bool unchanged = NametagMathHelper.HasChanged(float.PositiveInfinity, float.PositiveInfinity);
+
+            // Assert
+            Assert.That(toInfinity, Is.True);
+            Assert.That(fromInfinity, Is.True);
+            Assert.That(unchanged, Is.False);
         }
 
         [Test]

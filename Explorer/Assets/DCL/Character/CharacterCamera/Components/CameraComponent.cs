@@ -26,12 +26,6 @@ namespace DCL.CharacterCamera
         public bool IsDirty;
         public bool IsTransitioningToFirstPerson;
 
-        /// <summary>
-        ///     The active SDK virtual camera's raw nametag max distance; zero when it is unset.
-        ///     Meaningful only while <see cref="Mode" /> is <see cref="CameraMode.SdkCamera" />.
-        /// </summary>
-        public float SdkNametagMaxDistance;
-
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;

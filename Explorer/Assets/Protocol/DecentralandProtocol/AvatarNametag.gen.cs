@@ -26,18 +26,17 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX25hbWV0YWcu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxogZGVjZW50cmFs",
-            "YW5kL2NvbW1vbi9jb2xvcnMucHJvdG8irQIKD1BCQXZhdGFyTmFtZXRhZxIN",
+            "YW5kL2NvbW1vbi9jb2xvcnMucHJvdG8igQIKD1BCQXZhdGFyTmFtZXRhZxIN",
             "CgVsYWJlbBgBIAEoCRI1CgtsYWJlbF9jb2xvchgCIAEoCzIbLmRlY2VudHJh",
             "bGFuZC5jb21tb24uQ29sb3IzSACIAQESOgoQYmFja2dyb3VuZF9jb2xvchgD",
             "IAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3IzSAGIAQESNgoMYm9y",
             "ZGVyX2NvbG9yGAQgASgLMhsuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNI",
-            "AogBARIZCgxtYXhfZGlzdGFuY2UYBSABKAJIA4gBAUIOCgxfbGFiZWxfY29s",
-            "b3JCEwoRX2JhY2tncm91bmRfY29sb3JCDwoNX2JvcmRlcl9jb2xvckIPCg1f",
-            "bWF4X2Rpc3RhbmNlQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "AogBAUIOCgxfbGFiZWxfY29sb3JCEwoRX2JhY2tncm91bmRfY29sb3JCDwoN",
+            "X2JvcmRlcl9jb2xvckIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarNametag), global::DCL.ECSComponents.PBAvatarNametag.Parser, new[]{ "Label", "LabelColor", "BackgroundColor", "BorderColor", "MaxDistance" }, new[]{ "LabelColor", "BackgroundColor", "BorderColor", "MaxDistance" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarNametag), global::DCL.ECSComponents.PBAvatarNametag.Parser, new[]{ "Label", "LabelColor", "BackgroundColor", "BorderColor" }, new[]{ "LabelColor", "BackgroundColor", "BorderColor" }, null, null, null)
           }));
     }
     #endregion
@@ -68,7 +67,6 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBAvatarNametag> _parser = new pb::MessageParser<PBAvatarNametag>(() => new PBAvatarNametag());
     private pb::UnknownFieldSet _unknownFields;
-    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBAvatarNametag> Parser { get { return _parser; } }
@@ -96,12 +94,10 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBAvatarNametag(PBAvatarNametag other) : this() {
-      _hasBits0 = other._hasBits0;
       label_ = other.label_;
       labelColor_ = other.labelColor_ != null ? other.labelColor_.Clone() : null;
       backgroundColor_ = other.backgroundColor_ != null ? other.backgroundColor_.Clone() : null;
       borderColor_ = other.borderColor_ != null ? other.borderColor_.Clone() : null;
-      maxDistance_ = other.maxDistance_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -173,38 +169,6 @@ namespace DCL.ECSComponents {
       }
     }
 
-    /// <summary>Field number for the "max_distance" field.</summary>
-    public const int MaxDistanceFieldNumber = 5;
-    private readonly static float MaxDistanceDefaultValue = 0F;
-
-    private float maxDistance_;
-    /// <summary>
-    /// Distance in meters from the camera beyond which this avatar's whole nametag (label and plate)
-    /// is hidden. An active VirtualCamera's nametag_max_distance takes priority over this field.
-    /// (default: 40 m; &lt;= 0 or NaN = unset)
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float MaxDistance {
-      get { if ((_hasBits0 & 1) != 0) { return maxDistance_; } else { return MaxDistanceDefaultValue; } }
-      set {
-        _hasBits0 |= 1;
-        maxDistance_ = value;
-      }
-    }
-    /// <summary>Gets whether the "max_distance" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasMaxDistance {
-      get { return (_hasBits0 & 1) != 0; }
-    }
-    /// <summary>Clears the value of the "max_distance" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearMaxDistance() {
-      _hasBits0 &= ~1;
-    }
-
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -224,7 +188,6 @@ namespace DCL.ECSComponents {
       if (!object.Equals(LabelColor, other.LabelColor)) return false;
       if (!object.Equals(BackgroundColor, other.BackgroundColor)) return false;
       if (!object.Equals(BorderColor, other.BorderColor)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxDistance, other.MaxDistance)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -236,7 +199,6 @@ namespace DCL.ECSComponents {
       if (labelColor_ != null) hash ^= LabelColor.GetHashCode();
       if (backgroundColor_ != null) hash ^= BackgroundColor.GetHashCode();
       if (borderColor_ != null) hash ^= BorderColor.GetHashCode();
-      if (HasMaxDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxDistance);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -271,10 +233,6 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(34);
         output.WriteMessage(BorderColor);
       }
-      if (HasMaxDistance) {
-        output.WriteRawTag(45);
-        output.WriteFloat(MaxDistance);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -301,10 +259,6 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(34);
         output.WriteMessage(BorderColor);
       }
-      if (HasMaxDistance) {
-        output.WriteRawTag(45);
-        output.WriteFloat(MaxDistance);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -326,9 +280,6 @@ namespace DCL.ECSComponents {
       }
       if (borderColor_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(BorderColor);
-      }
-      if (HasMaxDistance) {
-        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -362,9 +313,6 @@ namespace DCL.ECSComponents {
           BorderColor = new global::Decentraland.Common.Color3();
         }
         BorderColor.MergeFrom(other.BorderColor);
-      }
-      if (other.HasMaxDistance) {
-        MaxDistance = other.MaxDistance;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -410,10 +358,6 @@ namespace DCL.ECSComponents {
             input.ReadMessage(BorderColor);
             break;
           }
-          case 45: {
-            MaxDistance = input.ReadFloat();
-            break;
-          }
         }
       }
     #endif
@@ -456,10 +400,6 @@ namespace DCL.ECSComponents {
               BorderColor = new global::Decentraland.Common.Color3();
             }
             input.ReadMessage(BorderColor);
-            break;
-          }
-          case 45: {
-            MaxDistance = input.ReadFloat();
             break;
           }
         }
