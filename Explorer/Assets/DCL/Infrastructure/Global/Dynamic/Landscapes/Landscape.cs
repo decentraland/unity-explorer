@@ -7,6 +7,7 @@ using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,20 +23,22 @@ namespace Global.Dynamic.Landscapes
         private readonly IGlobalRealmController realmController;
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
+        private readonly SingleSceneMode singleSceneMode;
         private readonly bool landscapeEnabled;
         public readonly Transform Root;
         public Action<ITerrain>? TerrainLoaded;
 
-        public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
+        public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, SingleSceneMode singleSceneMode, bool landscapeEnabled)
         {
             this.realmController = realmController;
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
+            this.singleSceneMode = singleSceneMode;
             this.landscapeEnabled = landscapeEnabled;
             Root = new GameObject(nameof(Landscape)).transform;
         }
 
-        public ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
+        public ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() && !singleSceneMode.IsActive ? genesisTerrain : worldsTerrain;
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -44,6 +47,14 @@ namespace Global.Dynamic.Landscapes
 
             if (landscapeEnabled == false)
                 return EnumResult<LandscapeError>.ErrorResult(LandscapeError.LandscapeDisabled);
+
+            if (realmController.RealmData.IsGenesis() && singleSceneMode.IsActive)
+            {
+                genesisTerrain.Hide();
+                worldsTerrain.Hide();
+                landscapeLoadReport.SetProgress(1f);
+                return EnumResult<LandscapeError>.SuccessResult();
+            }
 
             if (realmController.RealmData.IsGenesis())
             {
@@ -79,6 +90,23 @@ namespace Global.Dynamic.Landscapes
 
             TerrainLoaded?.Invoke(CurrentTerrain);
             return EnumResult<LandscapeError>.SuccessResult();
+        }
+
+        public void GenerateSingleSceneTerrain(IReadOnlyList<Vector2Int> parcels)
+        {
+            if (!landscapeEnabled || !worldsTerrain.IsInitialized || parcels.Count == 0) return;
+
+            genesisTerrain.Hide();
+
+            using (var ownedParcels = new NativeHashSet<int2>(parcels.Count, AllocatorManager.Persistent))
+            {
+                for (var i = 0; i < parcels.Count; i++)
+                    ownedParcels.Add(parcels[i].ToInt2());
+
+                worldsTerrain.GenerateTerrain(ownedParcels);
+            }
+
+            TerrainLoaded?.Invoke(worldsTerrain);
         }
 
         public float GetHeight(float x, float z)

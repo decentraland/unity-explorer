@@ -5,6 +5,7 @@ using DCL.Audio;
 using DCL.Audio.Systems;
 using DCL.Landscape;
 using ECS;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly WorldTerrainGenerator worldTerrainGenerator;
         private readonly AudioMixerVolumesController mixerVolumesController;
         private readonly IRealmData realmData;
+        private readonly SingleSceneMode singleSceneMode;
 
         private ProvidedInstance<UIAudioPlaybackController> uiAudioPlaybackController;
         private ProvidedInstance<WorldAudioPlaybackController> worldAudioPlaybackController;
@@ -30,7 +32,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             bool enableLandscape,
             AudioMixerVolumesController mixerVolumesController,
-            IRealmData realmData)
+            IRealmData realmData,
+            SingleSceneMode singleSceneMode)
         {
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
@@ -38,6 +41,7 @@ namespace DCL.PluginSystem.Global
             this.enableLandscape = enableLandscape;
             this.mixerVolumesController = mixerVolumesController;
             this.realmData = realmData;
+            this.singleSceneMode = singleSceneMode;
         }
 
         public void Dispose()
@@ -50,7 +54,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             if (enableLandscape)
-                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, worldTerrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value, realmData);
+                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, worldTerrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value, realmData, singleSceneMode);
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)

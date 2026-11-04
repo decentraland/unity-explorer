@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.SceneLifeCycle.Systems;
 using Utility;
 
@@ -17,14 +18,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly SingleSceneMode singleSceneMode;
 
         internal StartSplittingByRingsSystem(
             World world,
             IRealmPartitionSettings realmPartitionSettings,
-            ParcelMathJobifiedHelper parcelMathJobifiedHelper) : base(world)
+            ParcelMathJobifiedHelper parcelMathJobifiedHelper,
+            SingleSceneMode singleSceneMode) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
+            this.singleSceneMode = singleSceneMode;
         }
 
         protected override void OnDispose()
@@ -56,11 +60,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         private void StartSplitting([Data] in ProcessedScenePointers processedScenePointers, ref CameraSamplingData cameraSamplingData)
         {
-            if (cameraSamplingData.IsDirty)
-                parcelMathJobifiedHelper.StartParcelsRingSplit(
-                    cameraSamplingData.Parcel.ToInt2(),
-                    realmPartitionSettings.MaxLoadingDistanceInParcels,
-                    processedScenePointers.Value);
+            if (!cameraSamplingData.IsDirty) return;
+
+            if (singleSceneMode.IsActive)
+            {
+                if (singleSceneMode.HasAnchor)
+                    parcelMathJobifiedHelper.StartSingleParcelSplit(singleSceneMode.AnchorParcel.ToInt2(), processedScenePointers.Value);
+
+                return;
+            }
+
+            parcelMathJobifiedHelper.StartParcelsRingSplit(
+                cameraSamplingData.Parcel.ToInt2(),
+                realmPartitionSettings.MaxLoadingDistanceInParcels,
+                processedScenePointers.Value);
         }
     }
 }

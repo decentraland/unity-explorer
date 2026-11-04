@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.Global
 
             DebugViewCurrentSceneSystem.InjectToWorld(ref builder, debugContainerBuilder, scenesCache, realmData);
 
-            PerfSampler.Configure(profiler);
+            PerfSampler.Configure(profiler, scenesCache);
 
             if (appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
             {

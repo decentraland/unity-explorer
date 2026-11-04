@@ -65,7 +65,7 @@ namespace DCL.LOD.Systems
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
-            container.roadsPresence = new RoadsPresence(realmData, gpuInstancingService);
+            container.roadsPresence = new RoadsPresence(realmData, gpuInstancingService, staticContainer.SingleSceneMode);
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
@@ -88,7 +88,8 @@ namespace DCL.LOD.Systems
                     staticContainer.SceneReadinessReportQueue,
                     roadAssetPool,
                     gpuInstancingService,
-                    debugBuilder);
+                    debugBuilder,
+                    staticContainer.SingleSceneMode);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
                 LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;

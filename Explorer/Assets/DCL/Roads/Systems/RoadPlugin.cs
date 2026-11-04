@@ -10,6 +10,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.Roads.Settings;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SingleScene;
 using UnityEngine;
 
 namespace DCL.Roads.Systems
@@ -27,9 +28,11 @@ namespace DCL.Roads.Systems
         private readonly RoadAssetsPool roadAssetPool;
         private readonly GPUInstancingService gpuInstancingService;
         private readonly bool enableGPUInstancing;
+        private readonly SingleSceneMode singleSceneMode;
 
         public RoadPlugin(IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, RoadAssetsPool roadAssetPool, GPUInstancingService gpuInstancingService, IDebugContainerBuilder debugBuilder)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, RoadAssetsPool roadAssetPool, GPUInstancingService gpuInstancingService, IDebugContainerBuilder debugBuilder,
+            SingleSceneMode singleSceneMode)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -39,12 +42,13 @@ namespace DCL.Roads.Systems
             this.roadAssetPool = roadAssetPool;
             this.gpuInstancingService = gpuInstancingService;
             this.debugBuilder = debugBuilder;
+            this.singleSceneMode = singleSceneMode;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             DebugGPUInstancingSystem.InjectToWorld(ref builder, debugBuilder, gpuInstancingService);
-            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, roadAssetPool, sceneReadinessReportQueue, scenesCache);
+            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, roadAssetPool, sceneReadinessReportQueue, scenesCache, singleSceneMode);
         }
 
         public void Dispose()

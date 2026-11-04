@@ -242,6 +242,7 @@ namespace Global.Dynamic
                 playerEntity);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
+            realmContainer.TeleportController.Landscape = terrainContainer.Landscape;
 
             // One fetch of the dev server’s entity id, shared by both transports: the gatekeeper scene room
             // keys its room on it and Pulse derives its realm from it, so two instances would double the start-up requests.
@@ -593,7 +594,7 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     userBlockingCache,
                     includeBannedUsersFromScene),
-                uiShellContainer.CreateMainUIPlugin(includeFriends),
+                uiShellContainer.CreateMainUIPlugin(includeFriends, staticContainer.SingleSceneMode, staticContainer.ScenesCache),
                 profileContainer.CreateProfilePlugin(staticContainer),
                 mapRendererContainer.CreatePlugin(),
                 new SidebarPlugin(
@@ -697,6 +698,7 @@ namespace Global.Dynamic
                     userBlockingCache,
                     profileContainer.ProfileChangesBus,
                     staticContainer.SceneLoadingLimit,
+                    staticContainer.SingleSceneMode,
                     uiShellContainer.MainUIView.WarningNotification,
                     profileContainer.ProfileRepositoryWrapper,
                     upscaleController,
@@ -759,7 +761,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 multiplayerContainer.CreatePlugin(staticContainer, assetsProvisioner, debugBuilder, commsContainer, dynamicSettings.MultiplayerDebugSettings, appArgs),
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData, staticContainer.SingleSceneMode),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
                     assetsProvisioner,

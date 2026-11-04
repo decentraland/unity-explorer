@@ -21,7 +21,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugBuilder) =>
             new (staticContainer.RealmData, GenesisTerrain, WorldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer, landscapeEnabled,
-                (Landscape)Landscape);
+                (Landscape)Landscape, staticContainer.SingleSceneMode);
 
         public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
         {
@@ -30,7 +30,7 @@ namespace Global.Dynamic
 
             return new TerrainContainer
             {
-                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape),
+                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, staticContainer.SingleSceneMode, enableLandscape),
                 GenesisTerrain = genesisTerrain,
                 WorldsTerrain = worldsTerrain,
                 landscapeEnabled = enableLandscape,

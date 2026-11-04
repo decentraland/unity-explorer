@@ -1,6 +1,7 @@
 ﻿using DCL.Rendering.GPUInstancing;
 using DCL.Roads.Settings;
 using ECS;
+using ECS.SceneLifeCycle.SingleScene;
 using System;
 
 namespace DCL.Roads
@@ -9,13 +10,15 @@ namespace DCL.Roads
     {
         private readonly GPUInstancingService gpuInstancingService;
         private readonly RealmData realmData;
+        private readonly SingleSceneMode singleSceneMode;
 
         private RoadSettingsAsset roadSettingsAsset;
 
-        public RoadsPresence(RealmData realmData, GPUInstancingService gpuInstancingService)
+        public RoadsPresence(RealmData realmData, GPUInstancingService gpuInstancingService, SingleSceneMode singleSceneMode)
         {
             this.gpuInstancingService = gpuInstancingService;
             this.realmData = realmData;
+            this.singleSceneMode = singleSceneMode;
         }
 
         public void Initialize(RoadSettingsAsset roadSettingsAsset)
@@ -31,7 +34,7 @@ namespace DCL.Roads
 
         private void SwitchRoadsInstancedRendering(RealmKind realmKind)
         {
-            if (realmKind == RealmKind.GenesisCity)
+            if (realmKind == RealmKind.GenesisCity && !singleSceneMode.IsActive)
                 gpuInstancingService.AddToIndirect(roadSettingsAsset.IndirectLODGroups);
             else
                 gpuInstancingService.Remove(roadSettingsAsset.IndirectLODGroups);

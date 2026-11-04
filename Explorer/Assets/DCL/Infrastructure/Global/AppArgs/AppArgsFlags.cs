@@ -11,6 +11,8 @@ namespace Global.AppArgs
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
         public const string SKIP_MINIMUM_SPECS_SCREEN = "skip-minimum-specs-screen";
 
+        public const string FORCE_SINGLE_SCENE_MODE = "force-single-scene-mode";
+
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";

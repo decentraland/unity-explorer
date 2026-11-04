@@ -18,6 +18,8 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.SingleScene;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using System;
@@ -93,8 +95,8 @@ namespace Global.Dynamic
                 new ((await assetsProvisioner.ProvideMainAssetAsync(texture, ct)).Value, hotspot);
         }
 
-        public MainUIPlugin CreateMainUIPlugin(bool includeFriends) =>
-            new (MvcManager, MainUIView, includeFriends);
+        public MainUIPlugin CreateMainUIPlugin(bool includeFriends, SingleSceneMode singleSceneMode, IScenesCache scenesCache) =>
+            new (MvcManager, MainUIView, includeFriends, singleSceneMode, scenesCache);
 
         public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler, IReactiveProperty<bool> currentSceneUiOnly) =>
             new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager, currentSceneUiOnly);

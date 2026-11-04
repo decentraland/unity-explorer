@@ -8,6 +8,7 @@ using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
 using ECS;
+using ECS.SceneLifeCycle.SingleScene;
 using ECS.Prioritization;
 using GPUInstancerPro;
 using System.Threading;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
+        private readonly SingleSceneMode singleSceneMode;
 
         private RealmPartitionSettingsAsset realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
@@ -47,7 +49,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer,
             bool enableLandscape,
-            Landscape landscape)
+            Landscape landscape,
+            SingleSceneMode singleSceneMode)
         {
             this.realmData = realmData;
             this.assetsProvisioner = assetsProvisioner;
@@ -57,6 +60,7 @@ namespace DCL.PluginSystem.Global
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
             this.landscape = landscape;
+            this.singleSceneMode = singleSceneMode;
 
             // gpuiWrapper = new GPUIWrapper();
         }
@@ -74,7 +78,7 @@ namespace DCL.PluginSystem.Global
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
-            floor = new SatelliteFloor(realmData, landscapeData.Value);
+            floor = new SatelliteFloor(realmData, landscapeData.Value, singleSceneMode.IsActive);
 
             if (!enableLandscape) return;
 
