@@ -8,6 +8,7 @@ on:
 jobs:
   handle-pr-closure:
     name: Clean Up Unity Cloud Target
+    # Pinned: setup-python has no 3.12.3 build for ubuntu-26.04 (ubuntu-latest). Revert once python-version moves to '3.12'.
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository

@@ -122,6 +122,7 @@ jobs:
 
   build:
     name: Build
+    # Pinned: setup-python has no 3.12.3 build for ubuntu-26.04 (ubuntu-latest). Revert once python-version moves to '3.12'.
     runs-on: ubuntu-24.04
     needs: prepare
     timeout-minutes: 360
