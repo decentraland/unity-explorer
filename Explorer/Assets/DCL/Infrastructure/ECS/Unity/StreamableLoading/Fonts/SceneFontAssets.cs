@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using Utility;
+using FontStyles = TMPro.FontStyles;
 
 namespace ECS.StreamableLoading.Fonts
 {
@@ -12,9 +13,6 @@ namespace ECS.StreamableLoading.Fonts
         ///     does not pre-fill. A page is atlasWidth x atlasHeight Alpha8 bytes: 1 MB at 1024², up to 16 MB at the 4096² that bundles may use.
         /// </summary>
         internal const int MAX_ATLAS_PAGES = 4;
-
-        // Main thread only
-        private static readonly uint[] SINGLE_UNICODE = new uint[1];
 
         private readonly Material textMeshProMaterial;
 
@@ -41,17 +39,8 @@ namespace ECS.StreamableLoading.Fonts
 
             for (var i = 0; i < text.Length && font.atlasTextureCount < MAX_ATLAS_PAGES; i++)
             {
-                if (!char.IsSurrogatePair(text, i))
-                {
-                    font.HasCharacter(text[i], tryAddCharacter: true);
-                    continue;
-                }
-
-                SINGLE_UNICODE[0] = (uint)char.ConvertToUtf32(text, i);
-                i++;
-
-                if (!font.HasCharacter((int)SINGLE_UNICODE[0]))
-                    font.TryAddCharacters(SINGLE_UNICODE);
+                uint unicode = char.IsSurrogatePair(text, i) ? (uint)char.ConvertToUtf32(text, i++) : text[i];
+                TMP_FontAssetUtilities.GetCharacterFromFontAsset(unicode, font, false, FontStyles.Normal, FontWeight.Regular, out _);
             }
 
             font.isMultiAtlasTexturesEnabled = false;

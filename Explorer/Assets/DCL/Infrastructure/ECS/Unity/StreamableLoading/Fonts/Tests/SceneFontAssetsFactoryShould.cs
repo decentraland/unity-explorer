@@ -108,6 +108,25 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
+        public void AddGlyphsOutsideTheBasicPlane()
+        {
+            // Arrange
+            assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUiToolkit);
+
+            // Act: a non-BMP character, then a lone high surrogate at the end
+            assets.AddTextMeshProGlyphs("A\U0001F600\uD83D");
+            assets.AddUiToolkitGlyphs("A\U0001F600\uD83D");
+
+            // Assert
+            Assert.That(bundledTextMeshPro.HasCharacter('A'), Is.True);
+            Assert.That(bundledUiToolkit.HasCharacter('A'), Is.True);
+            Assert.That(bundledTextMeshPro.atlasTextureCount, Is.EqualTo(1));
+            Assert.That(bundledUiToolkit.atlasTextureCount, Is.EqualTo(1));
+            Assert.That(bundledTextMeshPro.isMultiAtlasTexturesEnabled, Is.False);
+            Assert.That(bundledUiToolkit.isMultiAtlasTexturesEnabled, Is.False);
+        }
+
+        [Test]
         public void NotAddAtlasPagesWhenTheTextIsLaidOut()
         {
             // Arrange

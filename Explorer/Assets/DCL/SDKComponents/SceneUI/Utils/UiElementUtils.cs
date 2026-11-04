@@ -243,19 +243,19 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, SceneFontAssets? customFont)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, SceneFontAssets? customFontAssets)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
-            customFont?.AddUiToolkitGlyphs(model.Value);
+            customFontAssets?.AddUiToolkitGlyphs(model.Value);
             labelToSetup.text = model.Value;
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
 
-            SetFont(labelToSetup, model.GetFont(), in styleFontDefinitions, customFont?.UIToolkitFont);
+            SetFont(labelToSetup, model.GetFont(), in styleFontDefinitions, customFontAssets?.UIToolkitFont);
 
             labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
