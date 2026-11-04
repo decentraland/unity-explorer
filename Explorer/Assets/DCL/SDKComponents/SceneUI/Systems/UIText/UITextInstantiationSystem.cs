@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
             uiTextComponent.FontRequest.Update(World, sceneData, sdkModel.FontSrc, scenePartition);
 
-            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions, uiTextComponent.FontRequest.Assets?.UIToolkitFont);
+            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions, uiTextComponent.FontRequest.Assets);
             sdkModel.IsDirty = false;
         }
 
@@ -74,6 +74,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [All(typeof(PBUiText))]
         [None(typeof(DeleteEntityIntention))]
         private void ApplyLoadedFont(ref UITextComponent uiTextComponent) =>
-            UiElementUtils.ApplyLoadedCustomFont(World, ref uiTextComponent.FontRequest, uiTextComponent.Label);
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiTextComponent.FontRequest, uiTextComponent.Label)?.AddUIToolkitGlyphs(uiTextComponent.Label.text);
     }
 }

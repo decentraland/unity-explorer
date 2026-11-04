@@ -243,18 +243,19 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, FontAsset? customFont)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, SceneFontAssets? customFont)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
+            customFont?.AddUIToolkitGlyphs(model.Value);
             labelToSetup.text = model.Value;
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
 
-            SetFont(labelToSetup, model.GetFont(), in styleFontDefinitions, customFont);
+            SetFont(labelToSetup, model.GetFont(), in styleFontDefinitions, customFont?.UIToolkitFont);
 
             labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
@@ -284,6 +285,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
+            inputToSetup.FontRequest.Assets?.AddInputGlyphs(inputToSetup);
 
             inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             inputToSetup.TextField.SetEnabled(!model.Disabled);
@@ -300,6 +302,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
+            dropdownToSetup.FontRequest.Assets?.AddDropdownGlyphs(dropdownField, model.EmptyLabel);
 
             int selectedIndex = model.GetSelectedIndex();
             if (selectedIndex != dropdownToSetup.LastIndexSetByScene)
@@ -342,10 +345,28 @@ namespace DCL.SDKComponents.SceneUI.Utils
         private static void ClearCustomFont(VisualElement element) =>
             element.style.unityFontDefinition = new StyleFontDefinition(StyleKeyword.Null);
 
-        public static void ApplyLoadedCustomFont(World world, ref SceneFontRequest request, VisualElement element)
+        /// <returns>The font assets applied to <paramref name="element" />, or null when no font was applied this call.</returns>
+        public static SceneFontAssets? ApplyLoadedCustomFont(World world, ref SceneFontRequest request, VisualElement element)
         {
-            if (request.TryConsume(world) && request.Assets != null)
-                element.style.unityFontDefinition = new StyleFontDefinition(request.Assets.UIToolkitFont);
+            if (!request.TryConsume(world) || request.Assets == null)
+                return null;
+
+            element.style.unityFontDefinition = new StyleFontDefinition(request.Assets.UIToolkitFont);
+            return request.Assets;
+        }
+
+        public static void AddInputGlyphs(this SceneFontAssets assets, UIInputComponent input)
+        {
+            assets.AddUIToolkitGlyphs(input.TextField.value);
+            assets.AddUIToolkitGlyphs(input.Placeholder.PlaceholderText);
+        }
+
+        public static void AddDropdownGlyphs(this SceneFontAssets assets, DropdownField dropdownField, string emptyLabel)
+        {
+            for (var i = 0; i < dropdownField.choices.Count; i++)
+                assets.AddUIToolkitGlyphs(dropdownField.choices[i]);
+
+            assets.AddUIToolkitGlyphs(emptyLabel);
         }
 
         public static void ReleaseCustomFont(World world, ref SceneFontRequest request, VisualElement element)

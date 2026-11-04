@@ -27,9 +27,9 @@ namespace ECS.StreamableLoading.Fonts
             Material material = CreateMaterial(assetName, textMeshPro);
             textMeshPro.material = material;
             textMeshPro.fallbackFontAssetTable = new List<TMP_FontAsset> { referenceFont };
-            var assets = new SceneFontAssets(textMeshPro, uiToolkit, material);
-            assets.LimitAtlasPages();
-            return assets;
+            textMeshPro.isMultiAtlasTexturesEnabled = false;
+            uiToolkit.isMultiAtlasTexturesEnabled = false;
+            return new SceneFontAssets(textMeshPro, uiToolkit, material);
         }
 
         private Material CreateMaterial(string name, TMP_FontAsset asset)

@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             LoadFontSystem.InjectToWorld(ref builder, fontsCache, fontAssetFactory, tryUnlistedBundles);
-            LimitFontAtlasPagesSystem.InjectToWorld(ref builder, fontsCache);
         }
 
         [Serializable]

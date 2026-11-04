@@ -1,10 +1,8 @@
 using ECS.TestSuite;
 using NUnit.Framework;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
-using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Fonts.Tests
 {
@@ -76,38 +74,52 @@ namespace ECS.StreamableLoading.Fonts.Tests
         }
 
         [Test]
-        public void LetBothFontsAddAtlasPages()
+        public void KeepMultiAtlasOffAtRest()
         {
             // Arrange
-            bundledTextMeshPro.isMultiAtlasTexturesEnabled = false;
-            bundledUIToolkit.isMultiAtlasTexturesEnabled = false;
+            bundledTextMeshPro.isMultiAtlasTexturesEnabled = true;
+            bundledUIToolkit.isMultiAtlasTexturesEnabled = true;
 
             // Act
             assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
-
-            // Assert
-            Assert.That(bundledTextMeshPro.isMultiAtlasTexturesEnabled, Is.True);
-            Assert.That(bundledUIToolkit.isMultiAtlasTexturesEnabled, Is.True);
-        }
-
-        [Test]
-        public void StopAddingAtlasPagesOnceAFontReachesTheCap()
-        {
-            // Arrange
-            assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
-            int textMeshProAdded = GrowToTheCap(c => bundledTextMeshPro.TryAddCharacters(c), () => bundledTextMeshPro.atlasTextureCount);
-            int uiToolkitAdded = GrowToTheCap(c => bundledUIToolkit.TryAddCharacters(c), () => bundledUIToolkit.atlasTextureCount);
-
-            // Act
-            assets.LimitAtlasPages();
-            bundledTextMeshPro.TryAddCharacters(GLYPHS.Substring(textMeshProAdded));
-            bundledUIToolkit.TryAddCharacters(GLYPHS.Substring(uiToolkitAdded));
+            assets.AddTextMeshProGlyphs(GLYPHS);
+            assets.AddUIToolkitGlyphs(GLYPHS);
 
             // Assert
             Assert.That(bundledTextMeshPro.isMultiAtlasTexturesEnabled, Is.False);
             Assert.That(bundledUIToolkit.isMultiAtlasTexturesEnabled, Is.False);
+        }
+
+        [Test]
+        public void AddAtlasPagesForTheGlyphsOfATextUpToTheCap()
+        {
+            // Arrange
+            assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
+
+            // Act
+            assets.AddTextMeshProGlyphs(GLYPHS);
+            assets.AddUIToolkitGlyphs(GLYPHS);
+
+            // Assert
             Assert.That(bundledTextMeshPro.atlasTextureCount, Is.EqualTo(SceneFontAssets.MAX_ATLAS_PAGES));
             Assert.That(bundledUIToolkit.atlasTextureCount, Is.EqualTo(SceneFontAssets.MAX_ATLAS_PAGES));
+            Assert.That(bundledTextMeshPro.HasCharacter(GLYPHS[0]), Is.True);
+            Assert.That(bundledUIToolkit.HasCharacter(GLYPHS[0]), Is.True);
+        }
+
+        [Test]
+        public void NotAddAtlasPagesWhenTheTextIsLaidOut()
+        {
+            // Arrange
+            assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
+
+            // Act: layout adds all the missing glyphs of a text in one batch
+            bundledTextMeshPro.TryAddCharacters(GLYPHS);
+            bundledUIToolkit.TryAddCharacters(GLYPHS);
+
+            // Assert
+            Assert.That(bundledTextMeshPro.atlasTextureCount, Is.EqualTo(1));
+            Assert.That(bundledUIToolkit.atlasTextureCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -116,19 +128,19 @@ namespace ECS.StreamableLoading.Fonts.Tests
             // Arrange
             assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
             Material material = assets.TextMeshProFont.material;
-            bundledTextMeshPro.TryAddCharacters("A");
-            bundledUIToolkit.TryAddCharacters("A");
+            assets.AddTextMeshProGlyphs("A");
+            assets.AddUIToolkitGlyphs("A");
 
             // Act
             assets.Destroy();
             assets = null;
 
             // Assert
+            Assert.That(bundledTextMeshPro.HasCharacter('A'), Is.True);
+            Assert.That(bundledUIToolkit.HasCharacter('A'), Is.True);
             Assert.That(material == null, Is.True);
             Assert.That(bundledTextMeshPro != null, Is.True);
             Assert.That(bundledUIToolkit != null, Is.True);
-            Assert.That(bundledTextMeshPro.HasCharacter('A'), Is.True);
-            Assert.That(bundledUIToolkit.HasCharacter('A'), Is.True);
         }
 
         [Test]
@@ -136,8 +148,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
         {
             // Arrange
             assets = factory.AdoptBundled(ASSET_NAME, bundledTextMeshPro, bundledUIToolkit);
-            GrowToTheCap(c => bundledTextMeshPro.TryAddCharacters(c), () => bundledTextMeshPro.atlasTextureCount);
-            GrowToTheCap(c => bundledUIToolkit.TryAddCharacters(c), () => bundledUIToolkit.atlasTextureCount);
+            assets.AddTextMeshProGlyphs(GLYPHS);
+            assets.AddUIToolkitGlyphs(GLYPHS);
             Texture2D[] textMeshProPages = (Texture2D[])bundledTextMeshPro.atlasTextures.Clone();
             Texture2D[] uiToolkitPages = (Texture2D[])bundledUIToolkit.atlasTextures.Clone();
 
@@ -148,27 +160,8 @@ namespace ECS.StreamableLoading.Fonts.Tests
             // Assert
             AssertOnlyTheFirstPageIsLeft(textMeshProPages, bundledTextMeshPro.atlasTextures, bundledTextMeshPro.atlasTextureCount);
             AssertOnlyTheFirstPageIsLeft(uiToolkitPages, bundledUIToolkit.atlasTextures, bundledUIToolkit.atlasTextureCount);
-
-            Assert.That(LoadFontSystem.FindDefect(bundledTextMeshPro.atlasTextures, bundledTextMeshPro.atlasWidth, bundledTextMeshPro.atlasHeight, bundledTextMeshPro.sourceFontFile), Is.Null);
-            Assert.That(LoadFontSystem.FindDefect(bundledUIToolkit.atlasTextures, bundledUIToolkit.atlasWidth, bundledUIToolkit.atlasHeight, bundledUIToolkit.sourceFontFile), Is.Null);
-        }
-
-        /// <summary>
-        ///     Adds the glyphs one at a time, so that each addition opens at most one page, until the font holds
-        ///     <see cref="SceneFontAssets.MAX_ATLAS_PAGES" /> pages. Returns how many glyphs it added.
-        /// </summary>
-        private static int GrowToTheCap(Func<string, bool> tryAddCharacters, Func<int> atlasTextureCount)
-        {
-            var added = 0;
-
-            while (atlasTextureCount() < SceneFontAssets.MAX_ATLAS_PAGES)
-            {
-                Assert.That(added, Is.LessThan(GLYPHS.Length), "The glyphs ran out before the font reached the page cap");
-                tryAddCharacters(GLYPHS[added].ToString());
-                added++;
-            }
-
-            return added;
+            Assert.That(bundledTextMeshPro.atlasWidth, Is.EqualTo(BUNDLED_ATLAS_SIZE));
+            Assert.That(bundledUIToolkit.atlasWidth, Is.EqualTo(BUNDLED_ATLAS_SIZE));
         }
 
         private static void AssertOnlyTheFirstPageIsLeft(Texture2D[] pagesBefore, Texture2D[] pagesAfter, int atlasTextureCount)

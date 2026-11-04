@@ -9,9 +9,12 @@ namespace ECS.StreamableLoading.Fonts
     {
         /// <summary>
         ///     The atlas pages each font asset may reach: the bundled page plus the pages it adds at runtime for the glyphs the bundle
-        ///     does not pre-fill. A 1024x1024 Alpha8 page is 1 MB.
+        ///     does not pre-fill. A page is atlasWidth x atlasHeight Alpha8 bytes: 1 MB at 1024², up to 16 MB at the 4096² that bundles may use.
         /// </summary>
         internal const int MAX_ATLAS_PAGES = 4;
+
+        // Main thread only
+        private static readonly uint[] SINGLE_UNICODE = new uint[1];
 
         private readonly Material textMeshProMaterial;
 
@@ -27,21 +30,56 @@ namespace ECS.StreamableLoading.Fonts
         }
 
         /// <summary>
-        ///     Lets each font asset add atlas pages only while it holds fewer than <see cref="MAX_ATLAS_PAGES" />.
-        ///     A font asset adds its pages while text is laid out, which this cannot interrupt, so it holds at most
-        ///     <see cref="MAX_ATLAS_PAGES" /> - 1 pages plus the pages for the new glyphs laid out between two calls.
+        ///     Adds the glyphs of <paramref name="text" /> that <see cref="TextMeshProFont" /> misses, one at a time, opening a new atlas page
+        ///     only while it holds fewer than <see cref="MAX_ATLAS_PAGES" />. Multi-atlas stays off otherwise, so laying the text out
+        ///     never opens a page.
         /// </summary>
-        public void LimitAtlasPages()
+        public void AddTextMeshProGlyphs(string text)
         {
-            TextMeshProFont.isMultiAtlasTexturesEnabled = TextMeshProFont.atlasTextureCount < MAX_ATLAS_PAGES;
-            UIToolkitFont.isMultiAtlasTexturesEnabled = UIToolkitFont.atlasTextureCount < MAX_ATLAS_PAGES;
+            TMP_FontAsset font = TextMeshProFont;
+            font.isMultiAtlasTexturesEnabled = true;
+
+            for (var i = 0; i < text.Length && font.atlasTextureCount < MAX_ATLAS_PAGES; i++)
+            {
+                if (!char.IsSurrogatePair(text, i))
+                {
+                    font.HasCharacter(text[i], tryAddCharacter: true);
+                    continue;
+                }
+
+                SINGLE_UNICODE[0] = (uint)char.ConvertToUtf32(text, i);
+                i++;
+
+                if (!font.HasCharacter((int)SINGLE_UNICODE[0]))
+                    font.TryAddCharacters(SINGLE_UNICODE);
+            }
+
+            font.isMultiAtlasTexturesEnabled = false;
+        }
+
+        /// <summary>
+        ///     Adds the glyphs of <paramref name="text" /> that <see cref="UIToolkitFont" /> misses, one at a time, opening a new atlas page
+        ///     only while it holds fewer than <see cref="MAX_ATLAS_PAGES" />. Multi-atlas stays off otherwise, so laying the text out
+        ///     never opens a page.
+        /// </summary>
+        public void AddUIToolkitGlyphs(string text)
+        {
+            FontAsset font = UIToolkitFont;
+            font.isMultiAtlasTexturesEnabled = true;
+
+            for (var i = 0; i < text.Length && font.atlasTextureCount < MAX_ATLAS_PAGES; i++)
+            {
+                uint unicode = char.IsSurrogatePair(text, i) ? (uint)char.ConvertToUtf32(text, i++) : text[i];
+                font.HasCharacter(unicode, tryAddCharacter: true);
+            }
+
+            font.isMultiAtlasTexturesEnabled = false;
         }
 
         public void Destroy()
         {
-            // The font assets belong to their bundle, so they are kept, but the pages they added at runtime are not part of it.
-            // Clearing a grown asset destroys those pages and leaves it with its first page only, emptied of the glyphs the bundle
-            // pre-filled. The null checks skip the assets Unity has already destroyed on quit.
+            // Pages added at runtime are not part of the bundle; clearing destroys them. It also drops the bundled pre-fill,
+            // which the next adoption of the still-cached bundle rebuilds at runtime.
             if (TextMeshProFont != null && TextMeshProFont.atlasTextureCount > 1)
                 TextMeshProFont.ClearFontAssetData();
 
