@@ -31,10 +31,39 @@ public class DragRotator : MonoBehaviour
     // in, and a tilt held only as a quaternion cannot be clamped.
     private float _yaw;
     private float _pitch;
+    private bool _inputEnabled = true;
 
+    // Where a reset returns to: the page's starting camera, as a turn and a tilt.
+    private float _startYaw;
+    private float _startPitch;
+
+    public bool AllowHorizontal { get; set; } = true;
     public bool AllowVertical { get; set; } = true;
     public bool EnableAutoRotate { get; set; } = true;
+
+    /// <summary>
+    /// False ignores drags altogether and drops the inertia of one under way, for a static camera.
+    /// Auto-rotate is gated separately.
+    /// </summary>
+    public bool InputEnabled
+    {
+        get => _inputEnabled;
+        set
+        {
+            _inputEnabled = value;
+            if (value) return;
+
+            _horizontalVel = 0f;
+            _verticalVel = 0f;
+        }
+    }
+
     public float DragSpeed { get => dragSpeed; set => dragSpeed = value; }
+
+    /// <summary>
+    /// Idle turntable speed in degrees per second.
+    /// </summary>
+    public float AutoRotateSpeed { get => autoRotateSpeed; set => autoRotateSpeed = value; }
 
     private Quaternion? _targetRotation;
 
@@ -45,9 +74,25 @@ public class DragRotator : MonoBehaviour
 
     public void OnDrag(Vector2 drag, float deltaTime)
     {
-        _horizontalVel += -drag.x * dragSpeed * deltaTime;
-        _verticalVel += -drag.y * dragSpeed * deltaTime;
+        if (!InputEnabled) return;
+
+        if (AllowHorizontal) _horizontalVel += -drag.x * dragSpeed * deltaTime;
+        if (AllowVertical) _verticalVel += -drag.y * dragSpeed * deltaTime;
         _lastDragTime = Time.time;
+    }
+
+    /// <summary>
+    /// Turns the subject by the given angles at once, as an app's camera call does. Counts as a drag,
+    /// so auto-rotate waits before taking over again.
+    /// </summary>
+    public void Rotate(float yawDegrees, float pitchDegrees)
+    {
+        if (AllowHorizontal) _yaw += yawDegrees;
+        if (AllowVertical) _pitch = Mathf.Clamp(_pitch + pitchDegrees, -maxPitch, maxPitch);
+        _lastDragTime = Time.time;
+        _targetRotation = null;
+
+        ApplyRotation();
     }
 
     private void Update()
@@ -70,8 +115,9 @@ public class DragRotator : MonoBehaviour
         _horizontalVel *= Mathf.Pow(inertiaDamp, dt);
         _verticalVel *= Mathf.Pow(inertiaDamp, dt);
 
-        // Velocity rotation
-        _yaw += _horizontalVel;
+        // Velocity rotation; a lock set mid-flick drops the inertia, so unlocking later does not resume it
+        if (AllowHorizontal) _yaw += _horizontalVel;
+        else _horizontalVel = 0f;
 
         if (AllowVertical)
         {
@@ -81,13 +127,18 @@ public class DragRotator : MonoBehaviour
             // Drop inertia at the stop, or a flick keeps "arriving" after the subject has visibly stopped.
             if (!Mathf.Approximately(_pitch, tilted)) _verticalVel = 0f;
         }
+        else
+        {
+            _verticalVel = 0f;
+        }
 
         // Auto rotation
         if (Time.time - _lastDragTime > autoRotateDelay && EnableAutoRotate)
         {
             // Levelling rides with auto-rotate only: a self-spinning view is presenting a canonical
-            // framing, while one tilted by hand is being inspected and should not spring back.
-            _pitch = Mathf.Lerp(_pitch, 0f, returnSpeed * dt);
+            // framing, while one tilted by hand is being inspected and should not spring back. It
+            // levels to the page's starting tilt, not past it.
+            _pitch = Mathf.Lerp(_pitch, _startPitch, returnSpeed * dt);
             _yaw += autoRotateSpeed * dt;
         }
 
@@ -129,10 +180,22 @@ public class DragRotator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets the turn and tilt a reset returns to, and goes there now. The axis locks do not apply: they
+    /// hold the view where it starts.
+    /// </summary>
+    public void SetStartRotation(float yawDegrees, float pitchDegrees)
+    {
+        _startYaw = yawDegrees;
+        _startPitch = Mathf.Clamp(pitchDegrees, -maxPitch, maxPitch);
+
+        ResetRotation();
+    }
+
     public void ResetRotation()
     {
-        _yaw = 0f;
-        _pitch = 0f;
+        _yaw = _startYaw;
+        _pitch = _startPitch;
         _horizontalVel = 0;
         _verticalVel = 0;
         _lastDragTime = 0;
@@ -140,6 +203,6 @@ public class DragRotator : MonoBehaviour
         // An in-flight LookAtCamera would otherwise keep lerping straight over the reset.
         _targetRotation = null;
 
-        transform.rotation = _initialRotation;
+        ApplyRotation();
     }
 }
