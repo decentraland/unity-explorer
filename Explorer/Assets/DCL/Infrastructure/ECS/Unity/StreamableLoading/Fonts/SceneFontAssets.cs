@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.Fonts
         ///     only while it holds fewer than <see cref="MAX_ATLAS_PAGES" />. Multi-atlas stays off otherwise, so laying the text out
         ///     never opens a page.
         /// </summary>
-        public void AddUIToolkitGlyphs(string text)
+        public void AddUiToolkitGlyphs(string text)
         {
             FontAsset font = UIToolkitFont;
             font.isMultiAtlasTexturesEnabled = true;

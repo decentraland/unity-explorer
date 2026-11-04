@@ -74,6 +74,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [All(typeof(PBUiText))]
         [None(typeof(DeleteEntityIntention))]
         private void ApplyLoadedFont(ref UITextComponent uiTextComponent) =>
-            UiElementUtils.ApplyLoadedCustomFont(World, ref uiTextComponent.FontRequest, uiTextComponent.Label)?.AddUIToolkitGlyphs(uiTextComponent.Label.text);
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiTextComponent.FontRequest, uiTextComponent.Label)?.AddUiToolkitGlyphs(uiTextComponent.Label.text);
     }
 }

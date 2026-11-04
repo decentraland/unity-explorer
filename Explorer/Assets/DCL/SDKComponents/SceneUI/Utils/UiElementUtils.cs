@@ -249,7 +249,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
-            customFont?.AddUIToolkitGlyphs(model.Value);
+            customFont?.AddUiToolkitGlyphs(model.Value);
             labelToSetup.text = model.Value;
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
@@ -357,16 +357,16 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void AddInputGlyphs(this SceneFontAssets assets, UIInputComponent input)
         {
-            assets.AddUIToolkitGlyphs(input.TextField.value);
-            assets.AddUIToolkitGlyphs(input.Placeholder.PlaceholderText);
+            assets.AddUiToolkitGlyphs(input.TextField.value);
+            assets.AddUiToolkitGlyphs(input.Placeholder.PlaceholderText);
         }
 
         public static void AddDropdownGlyphs(this SceneFontAssets assets, DropdownField dropdownField, string emptyLabel)
         {
             for (var i = 0; i < dropdownField.choices.Count; i++)
-                assets.AddUIToolkitGlyphs(dropdownField.choices[i]);
+                assets.AddUiToolkitGlyphs(dropdownField.choices[i]);
 
-            assets.AddUIToolkitGlyphs(emptyLabel);
+            assets.AddUiToolkitGlyphs(emptyLabel);
         }
 
         public static void ReleaseCustomFont(World world, ref SceneFontRequest request, VisualElement element)
