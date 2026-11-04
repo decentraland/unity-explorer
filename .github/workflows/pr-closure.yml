@@ -8,7 +8,7 @@ on:
 jobs:
   handle-pr-closure:
     name: Clean Up Unity Cloud Target
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
