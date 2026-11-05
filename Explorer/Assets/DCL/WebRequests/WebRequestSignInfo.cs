@@ -22,10 +22,15 @@ namespace DCL.WebRequests
         public static WebRequestSignInfo NewFromUrl(string url, ulong unixTimestamp, string method) =>
             NewFromRaw(string.Empty, url, unixTimestamp, method);
 
+        /// <summary>
+        ///     Builds the ADR-44 payload the auth chain is signed over: method and path lowercased,
+        ///     timestamp and metadata verbatim.
+        /// </summary>
         public static WebRequestSignInfo NewFromRaw(string rawToSign, string url, ulong unixTimestamp, string method)
         {
             string path = new Uri(url).AbsolutePath;
-            string payload = $"{method}:{path}:{unixTimestamp}:{(string.IsNullOrEmpty(rawToSign) ? "{}" : rawToSign)}".ToLowerInvariant();
+            string metadata = string.IsNullOrEmpty(rawToSign) ? "{}" : rawToSign;
+            string payload = $"{method.ToLowerInvariant()}:{path.ToLowerInvariant()}:{unixTimestamp}:{metadata}";
             return new WebRequestSignInfo(payload);
         }
 
