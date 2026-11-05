@@ -31,8 +31,8 @@ namespace ECS.Unity.Materials.Tests
     {
         private const int ATTEMPTS_COUNT = 5;
 
-        private ISceneData sceneData;
-        private DestroyMaterial destroyMaterial;
+        private ISceneData sceneData = null!;
+        private DestroyMaterial destroyMaterial = null!;
 
         private static string tex1 => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
@@ -92,6 +92,22 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsFalse(materialComponent.Data.IsPbrMaterial);
 
             AssertBasicMaterial(basic, materialComponent);
+        }
+
+        [Test]
+        public void TreatEmptyTextureUnionAsNoTexture()
+        {
+            PBMaterial material = CreatePBRMaterial1();
+            material.Pbr.AlphaTexture = new TextureUnion();
+
+            Entity e = world.Create(material, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
+            Assert.IsFalse(materialComponent.Data.Textures.AlphaTexture.HasValue);
+            Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
+            AssertTexturePromise(materialComponent.AlbedoTexPromise, tex1);
         }
 
         private static void AssertBasicMaterial(PBMaterial expected, MaterialComponent actual)
@@ -235,7 +251,7 @@ namespace ECS.Unity.Materials.Tests
         private void AssertTexturePromise(in AssetPromise<TextureData, GetTextureIntention>? promise, string src)
         {
             Assert.That(promise.HasValue, Is.True);
-            AssetPromise<TextureData, GetTextureIntention> promiseValue = promise.Value;
+            AssetPromise<TextureData, GetTextureIntention> promiseValue = promise!.Value;
 
             Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
@@ -309,7 +325,7 @@ namespace ECS.Unity.Materials.Tests
             return material;
         }
 
-        private static void AssertTextureComponent(TextureUnion expected, TextureComponent? actualNullable)
+        private static void AssertTextureComponent(TextureUnion? expected, TextureComponent? actualNullable)
         {
             if (expected == null)
             {
@@ -319,7 +335,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsNotNull(actualNullable);
 
-            TextureComponent actual = actualNullable.Value;
+            TextureComponent actual = actualNullable!.Value;
 
             Assert.AreEqual(expected.Texture.Src, actual.Src);
             Assert.AreEqual(expected.Texture.WrapMode.ToUnityWrapMode(), actual.WrapMode);
