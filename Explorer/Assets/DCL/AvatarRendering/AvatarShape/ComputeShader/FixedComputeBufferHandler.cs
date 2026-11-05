@@ -26,8 +26,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private readonly List<Slice> rentedRegionsSortedTemp;
 
-        internal IReadOnlyCollection<Slice> RentedRegions => rentedRegions;
-        internal IReadOnlyList<Slice> FreeRegions => freeRegions;
+        public IReadOnlyCollection<Slice> RentedRegions => rentedRegions;
+        public IReadOnlyList<Slice> FreeRegions => freeRegions;
 
         public FixedComputeBufferHandler(int elementsCount, int stride, int defragmentationThreshold = DEFRAGMENTATION_THRESHOLD)
         {
@@ -97,40 +97,29 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 return;
             }
 
-            if (freeRegions.Count == 0)
-            {
-                freeRegions.Add(slice);
-                return;
-            }
+            int i;
 
-            // Find the position for the slice in the list
-            for (var i = 0; i < freeRegions.Count; i++)
-            {
-                Slice freeRegion = freeRegions[i];
-
-                if (slice.StartIndex < freeRegion.StartIndex)
-                {
-                    freeRegions.Insert(i, slice);
-
-                    // Try to merge with the previous region
-                    MergePreviousSlice(slice, ref i);
-
-                    // Try to merge with the next region
-                    MergeNextSlice(slice, i);
-
+            for (i = 0; i < freeRegions.Count; i++)
+                if (freeRegions[i].StartIndex >= slice.StartIndex)
                     break;
-                }
-            }
+
+            freeRegions.Insert(i, slice);
+
+            MergePreviousSlice(slice, ref i);
+            MergeNextSlice(i);
         }
 
-        private void MergeNextSlice(Slice slice, int i)
+        private void MergeNextSlice(int i)
         {
             if (i >= freeRegions.Count - 1) return;
+
+            // freeRegions[i] rather than the released slice: MergePreviousSlice may have already widened it.
+            Slice region = freeRegions[i];
             Slice nextRegion = freeRegions[i + 1];
 
-            if (slice.StartIndex + slice.Length == nextRegion.StartIndex)
+            if (region.StartIndex + region.Length == nextRegion.StartIndex)
             {
-                freeRegions[i] = new Slice(slice.StartIndex, slice.Length + nextRegion.Length);
+                freeRegions[i] = new Slice(region.StartIndex, region.Length + nextRegion.Length);
                 freeRegions.RemoveAt(i + 1);
             }
         }

@@ -174,6 +174,68 @@ mergeInto(LibraryManager.library, {
       '*'
     )
   },
+  OnEmoteEvent: function (eventIndex, time) {
+    // Same order as EmotePlaybackEvent in C#; the index travels so the per-frame report marshals no string.
+    const event = ['play', 'playing', 'pause', 'loop', 'end'][eventIndex]
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'emote-event',
+          payload: { event: event, time: time },
+        },
+      },
+      '*'
+    )
+  },
+  OnMetrics: function (jsonPtr) {
+    const metrics = JSON.parse(UTF8ToString(jsonPtr))
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'metrics',
+          payload: metrics,
+        },
+      },
+      '*'
+    )
+  },
+  OnRequestFailed: function (requestPtr, reasonPtr) {
+    const request = UTF8ToString(requestPtr)
+    const reason = UTF8ToString(reasonPtr)
+    const targetWindow = (() => {
+      try {
+        return window.self !== window.top ? window : window.parent
+      } catch (e) {
+        return window.parent
+      }
+    })()
+    targetWindow.postMessage(
+      {
+        type: 'unity-renderer',
+        payload: {
+          type: 'request-failed',
+          payload: { request: request, reason: reason },
+        },
+      },
+      '*'
+    )
+  },
   PreloadURLs: function(strPtr) {
     const csv = UTF8ToString(strPtr);
     const urls = csv.split(',');

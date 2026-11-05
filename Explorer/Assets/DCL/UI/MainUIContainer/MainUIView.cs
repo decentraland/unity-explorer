@@ -23,6 +23,7 @@ namespace DCL.UI.MainUI
         [field: SerializeField] public WarningNotificationView WarningNotification { get; private set; }
         [field: SerializeField] internal PointerDetectionArea pointerDetectionArea { get; private set; }
         [field: SerializeField] internal LayoutElement sidebarLayoutElement { get; private set; }
+        [field: SerializeField] internal HorizontalLayoutGroup uiLayoutGroup { get; private set; }
         [field: SerializeField] internal GameObject sidebarDetectionArea { get; private set; }
     }
 }
