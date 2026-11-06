@@ -18,6 +18,7 @@ using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using MVC;
@@ -58,6 +59,8 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly EmotePlayer emotePlayer;
         private readonly bool localSceneDevelopment;
+        private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -93,8 +96,12 @@ namespace DCL.PluginSystem.Global
             EntitiesAnalytics entitiesAnalytics,
             IEventBus emotesEventBus,
             ITrimmedEmoteStorage trimmedEmoteStorage,
-            EmotePlayer emotePlayer)
+            EmotePlayer emotePlayer,
+            bool useLocalAssetBundles,
+            AbgenConversionMetrics abgenConversionMetrics)
         {
+            this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.emotePlayer = emotePlayer;
             this.messageBus = messageBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -129,7 +136,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
+            FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage, abgenConversionMetrics);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
@@ -148,7 +155,7 @@ namespace DCL.PluginSystem.Global
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
-            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY);
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY, useLocalAssetBundles);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

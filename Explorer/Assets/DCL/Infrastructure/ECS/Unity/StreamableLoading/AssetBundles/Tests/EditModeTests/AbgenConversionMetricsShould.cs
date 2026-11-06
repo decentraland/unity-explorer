@@ -49,5 +49,22 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.AreEqual(1, metrics.Failed);
             Assert.AreEqual(0, metrics.InFlight);
         }
+
+        [Test]
+        public void AskForPerFileWarningOnlyUntilSessionDegradesToRawGltf()
+        {
+            // Arrange
+            var metrics = new AbgenConversionMetrics();
+
+            // Act
+            bool warnBeforeDegrade = metrics.OnFellBackToRawGltf("models/tree.glb", "bundle missing");
+            metrics.OnRawGltfFallback("server died");
+            bool warnAfterDegrade = metrics.OnFellBackToRawGltf("models/rock.glb", "bundle missing");
+
+            // Assert
+            Assert.IsTrue(warnBeforeDegrade);
+            Assert.IsFalse(warnAfterDegrade);
+            Assert.AreEqual(2, metrics.Failed);
+        }
     }
 }
