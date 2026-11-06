@@ -81,8 +81,8 @@ namespace ECS.StreamableLoading.GLTF
                 var gltFastSettings = new ImportSettings
                 {
                     NodeNameMethod = NameImportMethod.OriginalUnique,
-                    AnisotropicFilterLevel = 0,
-                    GenerateMipMaps = false,
+                    AnisotropicFilterLevel = 1,
+                    GenerateMipMaps = true,
                     AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy,
                 };
 
