@@ -18,14 +18,13 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     ///     Initialize() seeds PlayerSceneCRDTEntity and SDKProfile onto PersistentEntities.Player before the JS
     ///     runtime starts, so that <see cref="WritePlayerIdentityDataSystem" />, <see cref="WriteSDKAvatarBaseSystem" />,
     ///     and <see cref="WriteAvatarEquippedDataSystem" /> can flush CRDT messages in their own Initialize().
-    ///     Update() keeps the SDKProfile in sync when Profile.IsDirty — unlike
+    ///     Update() keeps the SDKProfile in sync when Profile.IsDirty or the Profile is replaced — unlike
     ///     <see cref="PlayerProfileDataPropagationSystem" /> which only targets the assigned scene
     ///     and which skips the local player entirely (filtered by PlayerComponent).
     ///     It also mirrors <see cref="TalkingComponent" /> into <see cref="SDKTalking" />,
     ///     adding <see cref="SDKTalking" /> only once <see cref="TalkingComponent" /> exists.
     ///     Runs in SyncedPreRenderingSystemGroup before the writer systems so SDKProfile
-    ///     is up-to-date when they flush CRDT. Profile.IsDirty is guaranteed to be set
-    ///     (set in PresentationSystemGroup, reset later in the same PreRenderingSystemGroup).
+    ///     is up-to-date when they flush CRDT.
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(WritePlayerIdentityDataSystem))]
@@ -54,21 +53,26 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         public override void Initialize()
         {
-            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
-                return;
+            ref Profile profile = ref globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool exists);
 
-            Entity playerEntity = persistentEntities.Player;
-            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)));
-
-            characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
+            if (exists)
+                Seed(profile);
         }
 
         protected override void Update(float t)
         {
-            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
+            ref Profile profile = ref globalWorld.TryGetRef<Profile>(localPlayerEntity, out bool profileExists);
+
+            if (!profileExists)
                 return;
 
-            if (profile!.IsDirty)
+            // No SDKProfile means Initialize ran before the local profile existed.
+            // A replaced Profile instance is caught even when its IsDirty is already reset.
+            ref SDKProfile sdkProfile = ref World.TryGetRef<SDKProfile>(persistentEntities.Player, out bool seeded);
+
+            if (!seeded)
+                Seed(profile);
+            else if (profile.IsDirty || !sdkProfile.IsCopyOf(profile))
                 characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
 
             if (!globalWorld.TryGet(localPlayerEntity, out TalkingComponent talking))
@@ -80,6 +84,14 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 sdkTalking.Set(talking.IsTalking);
             else
                 World.Add(persistentEntities.Player, new SDKTalking(talking.IsTalking));
+        }
+
+        private void Seed(Profile profile)
+        {
+            Entity playerEntity = persistentEntities.Player;
+            World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), localPlayerEntity));
+
+            characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, playerEntity);
         }
     }
 }

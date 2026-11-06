@@ -220,18 +220,21 @@ public struct PlayerCRDTEntity : IDirtyMarker
 
 ### PlayerSceneCRDTEntity (scene world)
 
-Lives on scene-world entities that represent a player. Holds the CRDT entity ID needed for writing data back to the scene runtime:
+Lives on scene-world entities that represent a player. Holds the CRDT entity ID needed for writing data back to the scene runtime, and the player's global-world entity:
 
 ```csharp
 /// Dedicated to the scene world
 public struct PlayerSceneCRDTEntity : IDirtyMarker
 {
     public readonly CRDTEntity CRDTEntity;
+    public readonly Entity GlobalEntity;
+
     public bool IsDirty { get; set; }
 
-    public PlayerSceneCRDTEntity(CRDTEntity crdtEntity)
+    public PlayerSceneCRDTEntity(CRDTEntity crdtEntity, Entity globalEntity)
     {
         CRDTEntity = crdtEntity;
+        GlobalEntity = globalEntity;
         IsDirty = true;
     }
 }

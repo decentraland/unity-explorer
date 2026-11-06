@@ -241,7 +241,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void WriteTalkingOnceSceneEntityGetsProfileAfterAssignment()
         {
             // Arrange: assigned to a scene entity that has no profile yet
-            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM));
+            Entity sceneEntity = sceneWorld.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, Entity.Null));
             var playerCRDTEntity = new PlayerCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
             playerCRDTEntity.AssignToScene(scene, sceneEntity);
             world.Create(new IsActivelySpeakingTag(), playerCRDTEntity);
@@ -299,7 +299,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             sdkProfile.OverrideWith(profile);
             sdkProfile.IsDirty = false;
 
-            return sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity), sdkProfile);
+            return sceneWorld.Create(new PlayerSceneCRDTEntity(crdtEntity, Entity.Null), sdkProfile);
         }
 
         private void Tick()
