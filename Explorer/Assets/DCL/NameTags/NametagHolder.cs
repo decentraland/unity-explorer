@@ -24,6 +24,9 @@ namespace DCL.Nametags
 
                 nametag.NameVisible = true;
                 nametag.DebugText = null;
+
+                // Zero never matches a live value, so the next owner recalculates scale and opacity.
+                nametag.LastSqrDistance = nametag.LastFovScaleFactor = nametag.LastMaxDistance = 0;
             }
         }
 
