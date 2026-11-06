@@ -13,9 +13,12 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
@@ -396,6 +399,35 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             }
         }
 
+        [Test]
+        public void StreamThatFailsToOpenDoesNotBlockOtherStreams()
+        {
+            const string WALLET = "wallet-alice";
+            CreateStreamingAvatar(WALLET, "sid-1", "sid-2");
+            registry.FailToOpen(WALLET, "sid-1");
+            registry.SeedActiveStream(WALLET, "sid-2");
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(NullReferenceException)));
+
+            Assert.DoesNotThrow(() => system.Update(0));
+            Assert.That(CountAudioEntities(), Is.EqualTo(1));
+            Assert.That(GetSingleAudioComponent().Key, Is.EqualTo(new StreamKey(WALLET, "sid-2")));
+        }
+
+        [Test]
+        public void StreamThatFailedToOpenIsRetriedNextFrame()
+        {
+            const string WALLET = "wallet-alice";
+            CreateStreamingAvatar(WALLET, "sid-1");
+            registry.FailToOpen(WALLET, "sid-1");
+            LogAssert.Expect(LogType.Exception, new Regex(nameof(NullReferenceException)));
+
+            system.Update(0);
+            registry.SeedActiveStream(WALLET, "sid-1");
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(1));
+        }
+
         // ── Helpers ─────────────────────────────────────────────────
 
         private int CountAudioEntities() =>
@@ -445,10 +477,12 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // so this fake only seeds the resolve step + the unsubscribed-race window.
             private readonly Dictionary<StreamKey, Owned<AudioStream>> streamsByKey = new ();
             private readonly HashSet<StreamKey> unsubscribed = new ();
+            private readonly HashSet<StreamKey> failingToOpen = new ();
 
             public void SeedActiveStream(string walletId, string sid)
             {
                 var key = new StreamKey(walletId, sid);
+                failingToOpen.Remove(key);
                 if (!streamsByKey.ContainsKey(key))
                     streamsByKey[key] = new Owned<AudioStream>(null!);
             }
@@ -466,12 +500,20 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                     streamsByKey[key] = new Owned<AudioStream>(null!);
             }
 
+            /// <summary>
+            /// Simulates the LiveKit SDK throwing from <see cref="GetActiveStream"/> when the FFI does not open the stream.
+            /// </summary>
+            public void FailToOpen(string walletId, string sid) =>
+                failingToOpen.Add(new StreamKey(walletId, sid));
+
             public bool HasAudioStream(string walletId) => false;
 
             public string[]? GetAudioSidsArray(string walletId) => null;
 
             public Weak<AudioStream> GetActiveStream(StreamKey key)
             {
+                if (failingToOpen.Contains(key)) throw new NullReferenceException();
+
                 if (unsubscribed.Contains(key)) return Weak<AudioStream>.Null;
 
                 return streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
