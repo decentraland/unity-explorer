@@ -106,7 +106,7 @@ namespace DCL.MapRenderer.Culling
                 return;
 
             TrackedState<T> state = new TrackedState<T>(obj, listener);
-            trackedObjs.Add(obj, state);
+            trackedObjs[obj] = state;
             SetTrackedStateDirty(state);
         }
 

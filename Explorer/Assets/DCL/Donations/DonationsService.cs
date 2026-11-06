@@ -262,7 +262,13 @@ namespace DCL.Donations
                                                           ReportCategory.DONATIONS)
                                                      .CreateFromJson<Dictionary<string, Dictionary<string, decimal>>>(WRJsonParser.Newtonsoft);
 
-            lastManaRate = response["decentraland"]["usd"];
+            if (!response.TryGetValue("decentraland", out Dictionary<string, decimal>? manaPrices) || !manaPrices.TryGetValue("usd", out decimal manaRate))
+            {
+                ReportHub.LogError(ReportCategory.DONATIONS, "MANA price response has no decentraland.usd entry, keeping the previous rate");
+                return lastManaRate;
+            }
+
+            lastManaRate = manaRate;
             lastManaRateQueryTime = DateTime.UtcNow;
 
             return lastManaRate;

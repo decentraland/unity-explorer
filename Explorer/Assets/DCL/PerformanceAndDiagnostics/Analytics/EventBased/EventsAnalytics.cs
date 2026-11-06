@@ -69,7 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnEventCardClicked(EventDTO eventInfo)
         {
             JObject payload = GetEventJObject(eventInfo);
-            payload.Add("source", source);
+            payload["source"] = source;
 
             analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, payload);
         }

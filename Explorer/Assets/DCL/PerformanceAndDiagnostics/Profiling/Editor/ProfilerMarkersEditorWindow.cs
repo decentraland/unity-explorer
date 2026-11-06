@@ -122,9 +122,9 @@ namespace DCL.Profiling.Editor
 
             foreach (string category in categories)
             {
-                if (!selectedCategories.Contains(category)) continue;
+                if (!selectedCategories.Contains(category) || !groupedStats.TryGetValue(category, out List<ProfilerRecorderDescription> descriptions)) continue;
 
-                foreach (ProfilerRecorderDescription description in groupedStats[category])
+                foreach (ProfilerRecorderDescription description in descriptions)
                 {
                     if (!selectedFlags.Contains(description.Flags.ToString())) continue;
                     if (!string.IsNullOrEmpty(searchString) && !description.Name.ToLower().Contains(searchString.ToLower())) continue;
@@ -174,13 +174,14 @@ namespace DCL.Profiling.Editor
                 string category = statDescription.Category.Name;
                 var flag = statDescription.Flags.ToString();
 
-                if (!groupedStats.ContainsKey(category))
+                if (!groupedStats.TryGetValue(category, out List<ProfilerRecorderDescription> descriptions))
                 {
-                    groupedStats[category] = new List<ProfilerRecorderDescription>();
+                    descriptions = new List<ProfilerRecorderDescription>();
+                    groupedStats[category] = descriptions;
                     categories.Add(category);
                 }
 
-                groupedStats[category].Add(statDescription);
+                descriptions.Add(statDescription);
 
                 if (!flags.Contains(flag))
                     flags.Add(flag);
@@ -207,14 +208,17 @@ namespace DCL.Profiling.Editor
 
                 string category = statDescription.Category.Name;
 
-                if (!groupedStats.ContainsKey(category))
-                    groupedStats[category] = new List<string>();
+                if (!groupedStats.TryGetValue(category, out List<string> stats))
+                {
+                    stats = new List<string>();
+                    groupedStats[category] = stats;
+                }
 
-                groupedStats[category].Add($"{statDescription.Name} | <{statDescription.Flags.ToString()}>");
+                stats.Add($"{statDescription.Name} | <{statDescription.Flags.ToString()}>");
             }
 
-            foreach (string category in groupedStats.Keys)
-            foreach (string stat in groupedStats[category])
+            foreach ((string category, List<string> stats) in groupedStats)
+            foreach (string stat in stats)
                 Debug.Log($"[{category.ToUpper()}] | {stat}");
         }
     }

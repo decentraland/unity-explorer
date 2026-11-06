@@ -218,7 +218,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                     var position = coordsUtils.CoordsToPosition(centerParcel);
 
                     marker.SetData(placeInfo.title, position, placeInfo);
-                    markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
+                    markers[centerParcel] = marker;
 
                     if (isEnabled)
                         mapCullingController.StartTracking(marker, this);

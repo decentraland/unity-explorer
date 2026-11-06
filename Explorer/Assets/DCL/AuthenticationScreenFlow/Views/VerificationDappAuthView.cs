@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.Utility.Extensions;
 using MVC;
@@ -91,7 +92,16 @@ namespace DCL.AuthenticationScreenFlow
         {
             verificationCountdownCancellationToken = verificationCountdownCancellationToken.SafeRestart();
 
-            countdownLabelParameter ??= (StringVariable)countdown.StringReference["time"];
+            if (countdownLabelParameter == null)
+            {
+                if (!countdown.StringReference.TryGetValue("time", out IVariable variable))
+                {
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, "Localized countdown has no 'time' variable");
+                    return;
+                }
+
+                countdownLabelParameter = (StringVariable)variable;
+            }
 
             do
             {

@@ -25,7 +25,7 @@ namespace DCL.Input.Utils
 
             if (!selectables.ContainsKey(gameObject) && gameObject.TryGetComponent(out PanelEventHandler eventHandler))
             {
-                uiToolkitPanel.Add(gameObject, eventHandler);
+                uiToolkitPanel[gameObject] = eventHandler;
                 return IsInteractable(eventHandler, pointerPosition);
             }
 
@@ -62,7 +62,7 @@ namespace DCL.Input.Utils
                 return selectable;
 
             gameObject.TryGetComponent(out selectable);
-            selectables.Add(gameObject, selectable);
+            selectables[gameObject] = selectable;
             return selectable;
         }
     }

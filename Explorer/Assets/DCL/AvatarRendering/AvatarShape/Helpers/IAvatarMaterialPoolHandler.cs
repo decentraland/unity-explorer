@@ -5,7 +5,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
     public interface IAvatarMaterialPoolHandler
     {
-        PoolMaterialSetup GetMaterialPool(int shaderName);
+        bool TryGetMaterialPool(int shaderName, out PoolMaterialSetup setup);
         IReadOnlyCollection<PoolMaterialSetup> GetAllMaterialsPools();
         void Release(AvatarCustomSkinningComponent.MaterialSetup materialSetup);
     }

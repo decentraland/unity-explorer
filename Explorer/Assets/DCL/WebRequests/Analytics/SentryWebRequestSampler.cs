@@ -29,7 +29,11 @@ namespace DCL.WebRequests.Analytics
         {
             samplingContextPool = new ThreadSafeObjectPool<Dictionary<string, object>>(
                 () => new Dictionary<string, object>(1) { [SAMPLE_KEY] = new SamplingContext() },
-                actionOnRelease: d => ((SamplingContext)d[SAMPLE_KEY]).TransactionName = null,
+                actionOnRelease: d =>
+                {
+                    if (d.TryGetValue(SAMPLE_KEY, out object? ctx) && ctx is SamplingContext samplingContext)
+                        samplingContext.TransactionName = null;
+                },
                 defaultCapacity: maxConcurrency,
                 maxSize: maxConcurrency * 2,
                 collectionCheck: PoolConstants.CHECK_COLLECTIONS
@@ -42,7 +46,15 @@ namespace DCL.WebRequests.Analytics
         public (PooledObject<Dictionary<string, object>> sentryContextObj, SamplingContext samplingContext) PoolContext(out Dictionary<string, object> raw)
         {
             PooledObject<Dictionary<string, object>> pooled = samplingContextPool.Get(out raw);
-            return (pooled, (SamplingContext)raw[SAMPLE_KEY]);
+
+            if (!raw.TryGetValue(SAMPLE_KEY, out object? ctx) || ctx is not SamplingContext samplingContext)
+            {
+                ReportHub.LogError(ReportCategory.GENERIC_WEB_REQUEST, $"Pooled Sentry sampling context lost its {SAMPLE_KEY} entry, recreating it");
+                samplingContext = new SamplingContext();
+                raw[SAMPLE_KEY] = samplingContext;
+            }
+
+            return (pooled, samplingContext);
         }
 
         public double? Execute(TransactionSamplingContext transactionSamplingContext)

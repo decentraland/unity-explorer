@@ -62,14 +62,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 Option<Profile> known = selfProfile.CurrentProfileSnapshot.KnownProfile;
 
                 if (known.Has)
-                    jsonObject.Add("message_id", ChatUtils.GetId(known.Value.UserId.Value, timestamp));
+                    jsonObject["message_id"] = ChatUtils.GetId(known.Value.UserId.Value, timestamp);
             }
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
-                jsonObject.Add("receiver_id", channel.Id.Id);
+                jsonObject["receiver_id"] = channel.Id.Id;
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
-                jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
+                jsonObject["community_id"] = ChatChannel.GetCommunityIdFromChannelId(channel.Id);
 
             analytics.Track(AnalyticsEvents.Ui.MESSAGE_SENT, jsonObject);
         }

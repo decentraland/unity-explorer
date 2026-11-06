@@ -72,10 +72,15 @@ namespace DCL.Passport.Modules.Badges
                 break;
             }
 
-            if (!InstantiatedBadgeDetailCards.ContainsKey(badge.data.category.ToLower()))
-                InstantiatedBadgeDetailCards.Add(badge.data.category.ToLower(), new List<BadgeDetailCard_PassportFieldView>());
+            string categoryKey = badge.data.category.ToLower();
 
-            InstantiatedBadgeDetailCards[badge.data.category.ToLower()].Add(badgeDetailCard);
+            if (!InstantiatedBadgeDetailCards.TryGetValue(categoryKey, out List<BadgeDetailCard_PassportFieldView>? cardsInCategory))
+            {
+                cardsInCategory = new List<BadgeDetailCard_PassportFieldView>();
+                InstantiatedBadgeDetailCards[categoryKey] = cardsInCategory;
+            }
+
+            cardsInCategory.Add(badgeDetailCard);
         }
 
         public void SelectBadgeCard(BadgeDetailCard_PassportFieldView badgeDetailCard, bool isOwnProfile)

@@ -120,9 +120,19 @@ namespace DCL.Character.Plugin
                 this.exposedTransform = exposedTransform;
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
-                sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
-                mainCameraPool = componentPoolsRegistry.GetReferenceTypePool<PBMainCamera>();
-                pointerLockPool = componentPoolsRegistry.GetReferenceTypePool<PBPointerLock>();
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<SDKTransform>? sdkTransform))
+                    throw new InvalidOperationException($"No component pool registered for {nameof(SDKTransform)}");
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PBMainCamera>? mainCamera))
+                    throw new InvalidOperationException($"No component pool registered for {nameof(PBMainCamera)}");
+
+                if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PBPointerLock>? pointerLock))
+                    throw new InvalidOperationException($"No component pool registered for {nameof(PBPointerLock)}");
+
+                sdkTransformPool = sdkTransform;
+                mainCameraPool = mainCamera;
+                pointerLockPool = pointerLock;
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)

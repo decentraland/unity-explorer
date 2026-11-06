@@ -84,7 +84,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     continue;
                 }
 
-                result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
+                bool added = result.versions.TryAdd(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
                 {
                     mac = new AssetBundlesVersions.VersionInfo
                     {
@@ -95,6 +95,9 @@ namespace ECS.StreamableLoading.AssetBundles
                         version = element.versions.assets.windows.version, buildDate = element.versions.assets.windows.buildDate
                     }
                 });
+
+                if (!added)
+                    ReportHub.LogError(reportCategory, $"Received a duplicate pointer {element.pointers[0]} from the AB registry versions endpoint");
             }
 
             return result;

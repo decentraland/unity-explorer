@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
 using System;
@@ -64,8 +65,14 @@ namespace DCL.WebRequests.Dumper
 
             foreach ((Type type, Func<RequestMetricBase> ctor) in trackedMetrics)
             {
+                if (!MetricsRegistry.Indices.TryGetValue(type, out int metricIndex))
+                {
+                    ReportHub.LogError(ReportCategory.DEBUG, $"Metric {type.Name} is not listed in {nameof(MetricsRegistry)}, it will not be dumped");
+                    continue;
+                }
+
                 var recorder = new RequestMetricRecorder(ctor());
-                WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.Indices[type]] = recorder;
+                WebRequestsDumper.Instance.activeMetrics[metricIndex] = recorder;
                 AddFlatMetric(recorder);
             }
         }

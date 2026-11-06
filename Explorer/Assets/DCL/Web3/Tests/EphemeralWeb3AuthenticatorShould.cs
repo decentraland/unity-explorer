@@ -45,10 +45,11 @@ namespace DCL.Web3.Tests
             IWeb3Identity identity = Login();
 
             // Assert
-            AuthLink ephemeral = identity.AuthChain.Get(AuthLinkType.ECDSA_EPHEMERAL);
+            Assert.That(identity.AuthChain.TryGet(AuthLinkType.ECDSA_EPHEMERAL, out AuthLink ephemeral), Is.True);
+            Assert.That(identity.AuthChain.TryGet(AuthLinkType.SIGNER, out AuthLink signer), Is.True);
             string recovered = MESSAGE_SIGNER.EncodeUTF8AndEcRecover(ephemeral.payload, ephemeral.signature);
 
-            Assert.That(recovered, Is.EqualTo(identity.AuthChain.Get(AuthLinkType.SIGNER).payload).IgnoreCase);
+            Assert.That(recovered, Is.EqualTo(signer.payload).IgnoreCase);
             Assert.That(recovered, Is.EqualTo(identity.Address.ToString()).IgnoreCase);
         }
 
@@ -59,7 +60,9 @@ namespace DCL.Web3.Tests
             IWeb3Identity identity = Login();
 
             // Assert
-            Assert.That(identity.AuthChain.Get(AuthLinkType.ECDSA_EPHEMERAL).payload,
+            Assert.That(identity.AuthChain.TryGet(AuthLinkType.ECDSA_EPHEMERAL, out AuthLink ephemeral), Is.True);
+
+            Assert.That(ephemeral.payload,
                 Does.Contain(identity.EphemeralAccount.Address.OriginalFormat).IgnoreCase);
         }
 
@@ -74,7 +77,7 @@ namespace DCL.Web3.Tests
             using AuthChain signed = identity.Sign(ENTITY_ID);
 
             // Assert
-            AuthLink entity = signed.Get(AuthLinkType.ECDSA_SIGNED_ENTITY);
+            Assert.That(signed.TryGet(AuthLinkType.ECDSA_SIGNED_ENTITY, out AuthLink entity), Is.True);
             string recovered = MESSAGE_SIGNER.EncodeUTF8AndEcRecover(entity.payload, entity.signature);
 
             Assert.That(recovered, Is.EqualTo(identity.EphemeralAccount.Address.ToString()).IgnoreCase);

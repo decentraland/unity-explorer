@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Optimization.Pools;
 using Global.AppArgs;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -40,8 +41,12 @@ namespace DCL.CharacterPreview
             CharacterPreviewCameraSettings cameraSettings,
             Vector3 position)
         {
-            characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
-            transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
+            if (characterPreviewComponentPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out characterPreviewComponentPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(CharacterPreviewAvatarContainer)}");
+
+            if (transformPool == null && !componentPoolsRegistry.TryGetReferenceTypePool(out transformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get()!;
             container.Initialize(targetTexture, position);
             return new CharacterPreviewController(world, renderImage, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool, appArgs);

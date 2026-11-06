@@ -67,23 +67,37 @@ namespace DCL.Input.Component
             for (var i = 0; i < VALUES.Count; i++)
             {
                 Kind kind = VALUES[i];
-                inputBlockCounters.Add(kind, EnumUtils.HasFlag(active, kind) ? 0 : 1);
+                inputBlockCounters[kind] = EnumUtils.HasFlag(active, kind) ? 0 : 1;
             }
         }
 
         public void BlockInput(Kind kind)
         {
-            inputBlockCounters[kind] += 1;
-            ReportHub.Log(ReportCategory.INPUT, $"Block {kind} - {inputBlockCounters[kind]}");
+            if (!inputBlockCounters.TryGetValue(kind, out int counter))
+            {
+                ReportHub.LogError(ReportCategory.INPUT, $"Cannot block input {kind}: it is not a single input map kind");
+                return;
+            }
 
-            if (inputBlockCounters[kind] == 1) { Active &= ~kind; }
+            counter += 1;
+            inputBlockCounters[kind] = counter;
+            ReportHub.Log(ReportCategory.INPUT, $"Block {kind} - {counter}");
+
+            if (counter == 1) { Active &= ~kind; }
         }
 
         public void UnblockInput(Kind kind)
         {
-            inputBlockCounters[kind] -= 1;
-            ReportHub.Log(ReportCategory.INPUT, $"Unblock {kind} - {inputBlockCounters[kind]}");
-            switch (inputBlockCounters[kind])
+            if (!inputBlockCounters.TryGetValue(kind, out int counter))
+            {
+                ReportHub.LogError(ReportCategory.INPUT, $"Cannot unblock input {kind}: it is not a single input map kind");
+                return;
+            }
+
+            counter -= 1;
+            inputBlockCounters[kind] = counter;
+            ReportHub.Log(ReportCategory.INPUT, $"Unblock {kind} - {counter}");
+            switch (counter)
             {
                 case 0:
                     Active |= kind;

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DG.Tweening;
@@ -39,7 +40,13 @@ namespace DCL.Minimap
 
                 GameObject restrictionsObject = Object.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
                 restrictionsObject.SetActive(false);
-                restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
+                if (!restrictionsTexts.TryGetValue(restriction, out string restrictionText))
+                {
+                    ReportHub.LogError(ReportCategory.UI, $"Scene restriction {restriction} has no toast text");
+                    restrictionText = restriction.ToString();
+                }
+
+                restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionText);
                 restrictionsObject.name = restriction.ToString();
                 restrictionsGameObjects[restriction] = restrictionsObject;
             }
@@ -70,14 +77,17 @@ namespace DCL.Minimap
 
         private void ManageSceneRestrictions(SceneRestriction sceneRestriction)
         {
-            int currentRestrictionCounter = restrictionsRegistry[sceneRestriction.Type];
+            restrictionsRegistry.TryGetValue(sceneRestriction.Type, out int currentRestrictionCounter);
 
             currentRestrictionCounter += sceneRestriction.Action == SceneRestrictionsAction.Applied ? 1 : -1;
             currentRestrictionCounter = Mathf.Clamp(currentRestrictionCounter, 0, int.MaxValue);
 
             restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;
 
-            restrictionsGameObjects[sceneRestriction.Type].SetActive(currentRestrictionCounter > 0);
+            if (restrictionsGameObjects.TryGetValue(sceneRestriction.Type, out GameObject restrictionObject))
+                restrictionObject.SetActive(currentRestrictionCounter > 0);
+            else
+                ReportHub.LogError(ReportCategory.UI, $"Scene restriction {sceneRestriction.Type} has no toast object");
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.SceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);

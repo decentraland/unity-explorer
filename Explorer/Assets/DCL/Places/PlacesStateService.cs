@@ -58,10 +58,9 @@ namespace DCL.Places
 
         public void RefreshFriendsData()
         {
-            var placeIds = new List<PlaceId>(CurrentPlaces.Keys);
-            foreach (PlaceId placeId in placeIds)
+            var entries = new List<KeyValuePair<PlaceId, PlaceInfoWithConnectedFriends>>(CurrentPlaces);
+            foreach ((PlaceId placeId, PlaceInfoWithConnectedFriends existing) in entries)
             {
-                var existing = CurrentPlaces[placeId];
                 var place = existing.PlaceInfo;
                 List<Profile.CompactInfo> friendsConnectedToPlace = new();
                 if (place.connected_addresses != null)
@@ -75,10 +74,9 @@ namespace DCL.Places
 
         public void RefreshLiveEventsData()
         {
-            var placeIds = new List<PlaceId>(CurrentPlaces.Keys);
-            foreach (PlaceId placeId in placeIds)
+            var entries = new List<KeyValuePair<PlaceId, PlaceInfoWithConnectedFriends>>(CurrentPlaces);
+            foreach ((PlaceId placeId, PlaceInfoWithConnectedFriends existing) in entries)
             {
-                var existing = CurrentPlaces[placeId];
                 TryGetLiveEventByPlaceId(placeId, out EventDTO? liveEvent);
                 CurrentPlaces[placeId] = new PlaceInfoWithConnectedFriends(existing.PlaceInfo, existing.ConnectedFriends, liveEvent);
             }

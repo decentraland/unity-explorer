@@ -25,7 +25,7 @@ using DCL.VoiceChat;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -132,7 +132,7 @@ namespace DCL.ExplorePanel
             ExploreSections sectionToShow = parameter.IsSectionProvided ? parameter.Section : lastShownSection;
 
             if (sectionToShow != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
 
             ShowSection(sectionToShow);
 
@@ -188,7 +188,12 @@ namespace DCL.ExplorePanel
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            tabsBySections = viewInstance!.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+            ExplorePanelTabSelectorMapping[] tabSelectorMappings = viewInstance!.TabSelectorMappedViews;
+            tabsBySections = new Dictionary<ExploreSections, TabSelectorView>(tabSelectorMappings.Length);
+
+            foreach (ExplorePanelTabSelectorMapping mapping in tabSelectorMappings)
+                if (!tabsBySections.TryAdd(mapping.Section, mapping.TabSelectorViews))
+                    ReportHub.LogError(ReportCategory.UI, $"Explore panel maps the section {mapping.Section} to more than one tab, the first one is kept");
 
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
@@ -244,7 +249,7 @@ namespace DCL.ExplorePanel
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == sectionToShow, tab, section, true);
-                sectionSelectorController.SetAnimationState(section == sectionToShow, tabsBySections[section]);
+                sectionSelectorController.SetAnimationState(section == sectionToShow, tab);
             }
 
             if (inputData.BackpackSection != null)
@@ -285,7 +290,7 @@ namespace DCL.ExplorePanel
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
             if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
@@ -294,7 +299,12 @@ namespace DCL.ExplorePanel
             if (!isOn) return;
 
             if (shownSection == lastShownSection)
-                exploreSections[lastShownSection].Activate();
+            {
+                if (exploreSections.TryGetValue(lastShownSection, out ISection? section))
+                    section.Activate();
+                else
+                    ReportHub.LogError(ReportCategory.UI, $"Explore panel has no section registered for {lastShownSection}");
+            }
 
             lastShownSection = shownSection;
         }
@@ -317,7 +327,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.CameraReel)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.CameraReel);
             }
             else
@@ -338,7 +348,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Navmap)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Navmap);
             }
             else
@@ -349,7 +359,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Settings)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Settings);
             }
             else
@@ -362,7 +372,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Communities)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Communities);
             }
             else
@@ -375,7 +385,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Places)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Places);
             }
             else
@@ -388,7 +398,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Events)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Events);
             }
             else
@@ -399,7 +409,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Backpack)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                StopLastShownSectionAnimation();
                 ShowSection(ExploreSections.Backpack);
             }
             else
@@ -408,7 +418,25 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            ToggleSection(true, tabsBySections[section], section, true);
+            if (!TryGetTab(section, out TabSelectorView? tab))
+                return;
+
+            ToggleSection(true, tab, section, true);
+        }
+
+        private void StopLastShownSectionAnimation()
+        {
+            if (TryGetTab(lastShownSection, out TabSelectorView? tab))
+                sectionSelectorController.SetAnimationState(false, tab);
+        }
+
+        private bool TryGetTab(ExploreSections section, [NotNullWhen(true)] out TabSelectorView? tab)
+        {
+            if (tabsBySections.TryGetValue(section, out tab))
+                return true;
+
+            ReportHub.LogError(ReportCategory.UI, $"Explore panel has no tab mapped for the section {section}");
+            return false;
         }
 
         protected override void OnViewClose()

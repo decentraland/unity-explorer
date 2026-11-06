@@ -17,7 +17,13 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
 
         public IReadOnlyDictionary<NftFrameType, FrameRef> FramePrefabs()
         {
-            return pairs.ToDictionary(e => e.nftFrameType, e => e.prefab.EnsureNotNull());
+            var map = new Dictionary<NftFrameType, FrameRef>(pairs.Count);
+
+            foreach (Pair pair in pairs)
+                if (!map.TryAdd(pair.nftFrameType, pair.prefab.EnsureNotNull()))
+                    ReportHub.LogError(ReportCategory.ASSETS_PROVISION, $"NftShapeSettings contains more than one prefab for frame type {pair.nftFrameType}, keeping the first one");
+
+            return map;
         }
 
         public FrameRef DefaultFrame() =>

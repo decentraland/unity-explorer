@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
@@ -38,7 +39,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
             CustomiseElement(view, index);
-            view.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
+
+            if (thumbnailContextMenuActions.TryGetValue(friendProfile.UserId, out Action? thumbnailAction))
+                view.ConfigureThumbnailClickData(thumbnailAction);
+            else
+                ReportHub.LogError(ReportCategory.FRIENDS, $"No thumbnail context menu action registered for {friendProfile.UserId}");
 
             if (index >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync(loopListView).Forget();

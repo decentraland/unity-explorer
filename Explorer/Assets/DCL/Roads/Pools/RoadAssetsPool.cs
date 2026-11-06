@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS;
@@ -55,7 +56,8 @@ namespace DCL.LOD
                         t => t.gameObject.SetActive(true), t => t.gameObject.SetActive(false), actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
                         defaultCapacity: poolCapacity);
 
-                roadAssetPoolDictionary.Add(gameObject.name, roadAssetPool);
+                if (!roadAssetPoolDictionary.TryAdd(gameObject.name, roadAssetPool))
+                    ReportHub.LogError(ReportCategory.ROADS, $"Duplicate road prefab name {gameObject.name}, only the first one is pooled");
             }
 
             // Pool pre-warming
@@ -76,9 +78,9 @@ namespace DCL.LOD
         /// If the pool is full before calling this method, it will grow instantiating more road assets by an amount that depends on the number of elements in the pool.
         /// </summary>
         /// <param name="key">The name of the pool from which to obtain the instance. It matches the name of the prefab used in the pool.</param>
-        /// <param name="roadAsset">The obtained instance.</param>
+        /// <param name="roadAsset">The obtained instance; an instance of the default road when the pool does not exist, or null when the default pool does not exist either.</param>
         /// <returns>True if the pool exists; False otherwise.</returns>
-        public bool Get(string key, out Transform roadAsset)
+        public bool Get(string key, out Transform? roadAsset)
         {
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
             {
@@ -111,7 +113,14 @@ namespace DCL.LOD
                 return true;
             }
 
-            roadAsset = roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Get();
+            if (roadAssetPoolDictionary.TryGetValue(DEFAULT_ROAD_KEY, out IObjectPool<Transform> defaultPool))
+            {
+                roadAsset = defaultPool.Get();
+                return false;
+            }
+
+            ReportHub.LogError(ReportCategory.ROADS, $"Neither the road pool {key} nor the default road pool {DEFAULT_ROAD_KEY} exists");
+            roadAsset = null;
             return false;
         }
 
@@ -124,8 +133,13 @@ namespace DCL.LOD
         {
             if (roadAssetPoolDictionary.TryGetValue(key, out IObjectPool<Transform> roadAssetPool))
                 roadAssetPool.Release(asset);
+            else if (roadAssetPoolDictionary.TryGetValue(DEFAULT_ROAD_KEY, out IObjectPool<Transform> defaultPool))
+                defaultPool.Release(asset);
             else
-                roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
+            {
+                ReportHub.LogError(ReportCategory.ROADS, $"Default road pool {DEFAULT_ROAD_KEY} is missing, destroying {key} instead of pooling it");
+                UnityObjectUtils.SafeDestroyGameObject(asset);
+            }
         }
 
         // Called by the CacheCleaner

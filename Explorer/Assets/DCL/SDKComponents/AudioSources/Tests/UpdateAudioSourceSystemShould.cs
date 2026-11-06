@@ -47,7 +47,12 @@ namespace DCL.SDKComponents.AudioSources.Tests
             IComponentPoolsRegistry poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
             IComponentPool<AudioSource> audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
 
-            poolsRegistry.GetReferenceTypePool<AudioSource>().Returns(audioSourcesPool);
+            poolsRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<AudioSource>?>())
+                         .Returns(x =>
+                          {
+                              x[0] = audioSourcesPool;
+                              return true;
+                          });
             audioSourcesPool.Get().Returns(new GameObject().AddComponent<AudioSource>());
 
             IPerformanceBudget budgetProvider = Substitute.For<IPerformanceBudget>();

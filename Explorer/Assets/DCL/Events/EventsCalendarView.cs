@@ -1,4 +1,5 @@
 ﻿using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -211,6 +212,7 @@ namespace DCL.Events
         public void ClearAllEvents()
         {
             currentEventsIds.Clear();
+            currentOccupancies.Clear();
 
             foreach (var eventList in eventsLists)
                 eventList.eventsLoopList.SetListItemCount(0, false);
@@ -218,6 +220,8 @@ namespace DCL.Events
 
         public void ClearEventsForDay(int eventsListIndex)
         {
+            currentOccupancies.Remove(eventsListIndex);
+
             if (!currentEventsIds.Remove(eventsListIndex))
                 return;
 
@@ -307,18 +311,18 @@ namespace DCL.Events
 
         public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
-            currentEventsIds.Remove(eventsListIndex);
-            currentEventsIds.Add(eventsListIndex, new List<EventId?>());
+            var eventIds = new List<EventId?>();
+            currentEventsIds[eventsListIndex] = eventIds;
 
             foreach (EventDTO eventInfo in events)
             {
                 Option<EventId> eventId = EventId.New(eventInfo.id);
-                currentEventsIds[eventsListIndex].Add(eventId.Has ? eventId.Value : null);
+                eventIds.Add(eventId.Has ? eventId.Value : null);
             }
 
-            FillWithEmptyCards(events, eventsListIndex);
+            FillWithEmptyCards(events, eventIds, eventsListIndex);
 
-            eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(currentEventsIds[eventsListIndex].Count, resetPos);
+            eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(eventIds.Count, resetPos);
             eventsLists[eventsListIndex].eventsLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
@@ -333,10 +337,17 @@ namespace DCL.Events
             }
         }
 
-        private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
+        private LoopListViewItem2? SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
-            EventId? eventId = currentEventsIds[eventsListIndex][eventIndex];
+
+            if (!currentEventsIds.TryGetValue(eventsListIndex, out List<EventId?>? eventIds))
+            {
+                ReportHub.LogError(ReportCategory.EVENTS, $"Events list {eventsListIndex} requested card {eventIndex} but has no events set");
+                return null;
+            }
+
+            EventId? eventId = eventIds[eventIndex];
             var eventData = eventId != null ? eventsStateService.GetEventDataById(eventId) : null;
             int itemPrefabIndex = GetCardPrefabIndex(eventData);
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
@@ -373,7 +384,7 @@ namespace DCL.Events
             item.GetComponent<EventCardSmallView>() != null ? EVENT_CARD_SMALL_PREFAB_INDEX :
             EVENT_CARD_EMPTY_PREFAB_INDEX;
 
-        private void FillWithEmptyCards(IReadOnlyList<EventDTO> events, int eventsListIndex)
+        private void FillWithEmptyCards(IReadOnlyList<EventDTO> events, List<EventId?> eventIds, int eventsListIndex)
         {
             var columnOccupancyValue = 0f;
 
@@ -401,15 +412,18 @@ namespace DCL.Events
                                      };
 
             for (var i = 0; i < numberOfEmptyCards; i++)
-                currentEventsIds[eventsListIndex].Add(null);
+                eventIds.Add(null);
         }
 
         private void OnEventsScrollValueChanged(int eventsListIndex)
         {
-            bool scrollIsNotAtTheTop = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition < 0.99f && currentOccupancies[eventsListIndex] > 1.5f;
+            // A column whose events are not set yet has no occupancy and shows no arrows
+            bool isScrollable = currentOccupancies.TryGetValue(eventsListIndex, out float occupancy) && occupancy > 1.5f;
+
+            bool scrollIsNotAtTheTop = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition < 0.99f && isScrollable;
             eventsLists[eventsListIndex].moreEventsArrowUpButton.gameObject.SetActive(scrollIsNotAtTheTop);
 
-            bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f;
+            bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && isScrollable;
             eventsLists[eventsListIndex].moreEventsArrowDownButton.gameObject.SetActive(scrollIsNotAtTheBottom);
         }
 

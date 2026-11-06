@@ -39,10 +39,15 @@ namespace DCL.AvatarRendering.DemoScripts
             if (!wearable.IsCompatibleWithBodyShape(BodyShape))
                 return;
 
-            if (!wearablesDictionary.ContainsKey(wearable.GetCategory()))
-                wearablesDictionary[wearable.GetCategory()] = new List<URN>();
+            string category = wearable.GetCategory();
 
-            wearablesDictionary[wearable.GetCategory()].Add(wearable.GetUrn());
+            if (!wearablesDictionary.TryGetValue(category, out List<URN>? urns))
+            {
+                urns = new List<URN>();
+                wearablesDictionary[category] = urns;
+            }
+
+            urns.Add(wearable.GetUrn());
         }
     }
 }

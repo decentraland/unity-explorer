@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.Optimization.Pools
@@ -11,18 +12,19 @@ namespace DCL.Optimization.Pools
     /// </summary>
     public interface IComponentPoolsRegistry : IDisposable
     {
+        /// <summary>
+        ///     Gets the pool registered for <paramref name="type" />. Returns false when no pool is registered for that type
+        /// </summary>
         bool TryGetPool(Type type, out IComponentPool componentPool);
 
         bool TryGetPool<T>(out IComponentPool componentPool);
 
         /// <summary>
-        ///     Get the message pool of the reference type. Pool must be registered in advance
+        ///     Gets the pool registered for <typeparamref name="T" />. Returns false when no pool is registered for <typeparamref name="T" />,
+        ///     including when the pool registered for that type is not an <see cref="IComponentPool{T}" />
         /// </summary>
         /// <typeparam name="T">Any reference type</typeparam>
-        /// <returns></returns>
-        IComponentPool<T> GetReferenceTypePool<T>() where T: class;
-
-        IComponentPool GetPool(Type type);
+        bool TryGetReferenceTypePool<T>([MaybeNullWhen(false)] out IComponentPool<T> pool) where T: class;
 
         GameObjectPool<T> AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024, Action<T> onGet = null) where T: Component;
 

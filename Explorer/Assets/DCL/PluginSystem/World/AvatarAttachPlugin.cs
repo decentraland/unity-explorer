@@ -8,6 +8,7 @@ using DCL.SDKComponents.AvatarAttach.Systems;
 using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -43,7 +44,10 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<Transform>(), persistentEntities.SceneRoot);
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, transformPool, persistentEntities.SceneRoot);
 
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
 

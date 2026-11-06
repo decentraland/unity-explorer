@@ -53,10 +53,13 @@ namespace DCL.Rendering.GPUInstancing.Utils
 
                     (Material mat, Transform parent) key = (mat, rend.transform.parent);
 
-                    if (!combineDict.ContainsKey(key))
-                        combineDict[key] = new CombinedLodsBuilder(mat, rend, subMeshIndex);
+                    if (!combineDict.TryGetValue(key, out CombinedLodsBuilder builder))
+                    {
+                        builder = new CombinedLodsBuilder(mat, rend, subMeshIndex);
+                        combineDict[key] = builder;
+                    }
 
-                    combineDict[key].AddCombineInstance(ci);
+                    builder.AddCombineInstance(ci);
 
                     RefRenderers.Add(rend);
                 }

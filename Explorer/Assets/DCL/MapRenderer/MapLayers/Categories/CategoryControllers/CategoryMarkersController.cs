@@ -132,7 +132,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
                 marker.SetData(placeInfo.title, position, placeInfo, new EventDTO());
                 marker.SetCategorySprite(categoryImage);
-                markers.Add(placeInfo.base_position_processed, marker);
+                markers[placeInfo.base_position_processed] = marker;
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if (isEnabled)

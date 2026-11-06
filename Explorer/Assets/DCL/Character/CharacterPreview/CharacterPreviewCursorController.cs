@@ -25,7 +25,9 @@ namespace DCL.CharacterPreview
             for (var index = 0; index < cursorSettings.Length; index++)
             {
                 CharacterPreviewInputCursorSetting cursorSetting = cursorSettings[index];
-                cursorReplacementSprites.Add(cursorSetting.inputAction, cursorSetting.cursorSprite);
+
+                if (!cursorReplacementSprites.TryAdd(cursorSetting.inputAction, cursorSetting.cursorSprite))
+                    ReportHub.LogError(ReportCategory.UI, $"Duplicate character preview cursor setting for {cursorSetting.inputAction}");
             }
 
             inputEventBus.OnPointerUpEvent += OnPointerUp;

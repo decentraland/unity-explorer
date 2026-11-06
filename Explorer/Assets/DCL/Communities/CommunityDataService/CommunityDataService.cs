@@ -185,7 +185,7 @@ namespace DCL.Communities
                 var response = result.Value;
 
                 var channelId = ChatChannel.NewCommunityChannelId(response.data.id);
-                communities.Add(channelId, new GetUserCommunitiesData.CommunityData(response.data.id,
+                communities[channelId] = new GetUserCommunitiesData.CommunityData(response.data.id,
                     response.data.thumbnailUrl,
                     response.data.name,
                     response.data.description,
@@ -194,7 +194,7 @@ namespace DCL.Communities
                     response.data.role,
                     response.data.ownerAddress,
                     response.data.membersCount,
-                    response.data.voiceChatStatus));
+                    response.data.voiceChatStatus);
 
                 if (joinedCommunityIds.Add(response.data.id))
                     CommunityJoined?.Invoke(response.data.id);

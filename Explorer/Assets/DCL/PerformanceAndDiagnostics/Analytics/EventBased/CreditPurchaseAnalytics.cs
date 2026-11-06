@@ -45,8 +45,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnModalOpened(ShopListingDto listing, string source)
         {
             JObject props = BuildItemProps(listing);
-            props.Add("source", source);
-            props.Add("price_credits", listing.priceCredits);
+            props["source"] = source;
+            props["price_credits"] = listing.priceCredits;
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_STARTED_CHECKOUT, props);
         }
 
@@ -55,7 +55,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             JObject props = BuildItemProps(listing);
 
             if (missingCredits >= 0)
-                props.Add("missing_credits", missingCredits);
+                props["missing_credits"] = missingCredits;
 
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_BUY_CREDITS_PROMPTED, props);
         }
@@ -74,7 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             AddQuoteProps(props, quote);
 
             // Web-parity reconciliation shape (single-item purchase, so value == item price).
-            props.Add("items", new JArray
+            props["items"] = new JArray
             {
                 new JObject
                 {
@@ -83,38 +83,38 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     { "token_id", listing.tokenId },
                     { "price_usd", priceUsd },
                 },
-            });
+            };
 
-            props.Add("value_credits", quote.Credits);
-            props.Add("value_usd", priceUsd);
-            props.Add("tx_hash", txHash);
-            props.Add("duration_sec", durationSec);
+            props["value_credits"] = quote.Credits;
+            props["value_usd"] = priceUsd;
+            props["tx_hash"] = txHash;
+            props["duration_sec"] = durationSec;
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_COMPLETED_PURCHASE, props);
         }
 
         private void OnPurchaseFailed(ShopListingDto listing, string step, string errorCode, string errorDetail)
         {
             JObject props = BuildItemProps(listing);
-            props.Add("step", step);
-            props.Add("error_code", errorCode);
-            props.Add("error_detail", errorDetail);
-            props.Add("price_credits", listing.priceCredits);
+            props["step"] = step;
+            props["error_code"] = errorCode;
+            props["error_detail"] = errorDetail;
+            props["price_credits"] = listing.priceCredits;
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_PURCHASE_FAILED, props);
         }
 
         private void OnPurchaseCancelled(ShopListingDto listing, string stage)
         {
             JObject props = BuildItemProps(listing);
-            props.Add("stage", stage);
-            props.Add("price_credits", listing.priceCredits);
+            props["stage"] = stage;
+            props["price_credits"] = listing.priceCredits;
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_PURCHASE_CANCELLED, props);
         }
 
         private void OnNavigationClicked(ShopListingDto listing, string destination, string stage)
         {
             JObject props = BuildItemProps(listing);
-            props.Add("destination", destination);
-            props.Add("stage", stage);
+            props["destination"] = destination;
+            props["stage"] = stage;
 
             // The marketplace destination opens an external browser right after this and the app
             // may lose focus; a batched event could be lost.
@@ -153,9 +153,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private static void AddQuoteProps(JObject props, in CreditsPurchaseQuote quote)
         {
-            props.Add("price_credits", quote.Credits);
-            props.Add("price_usd", quote.UsdCents / 100.0);
-            props.Add("is_live_rate", quote.IsLiveRatePrice);
+            props["price_credits"] = quote.Credits;
+            props["price_usd"] = quote.UsdCents / 100.0;
+            props["is_live_rate"] = quote.IsLiveRatePrice;
         }
     }
 }

@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal void AddToInternalCache(IWearable wearable)
         {
-            wearablesCache.Add(wearable.GetUrn(), wearable);
+            wearablesCache[wearable.GetUrn()] = wearable;
         }
 
         public void Set(URN urn, IWearable element)
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             lock (lockObject)
             {
-                wearablesCache.Add(urn, wearable);
+                wearablesCache[urn] = wearable;
 
                 if (qualifiedForUnloading)
                     cacheKeysDictionary[urn] =

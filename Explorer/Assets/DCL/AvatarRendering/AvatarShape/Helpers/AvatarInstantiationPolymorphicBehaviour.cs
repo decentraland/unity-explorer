@@ -37,7 +37,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             {
                 case WearableType.FacialFeature:
 
-                    var texturesSet = facialFeaturesTextures.Value[category];
+                    if (!facialFeaturesTextures.Value.TryGetValue(category, out Dictionary<int, Texture>? texturesSet))
+                    {
+                        ReportHub.LogError(ReportCategory.WEARABLE, $"Facial feature textures are missing for category {category} of wearable {resultWearable.GetUrn()}");
+                        return null;
+                    }
+
                     texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = ((AttachmentTextureAsset)mainAsset).Texture;
 
                     // Mask is optional
