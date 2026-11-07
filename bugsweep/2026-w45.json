@@ -69,9 +69,9 @@
     },
     {
       "number": 10590,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "b33a7121d62c8fcd1a61e69614ca233b2ef8c742",
+      "note": "ref taken after all structural changes; SituationalReactionPresenter uses IExposedCameraData.OutputCamera threaded from DynamicWorldContainer"
     },
     {
       "number": 10598,
