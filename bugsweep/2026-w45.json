@@ -27,9 +27,9 @@
     },
     {
       "number": 10309,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "client gaps confirmed (the #8834 profile reset was lost in the Pulse merge 68eb470ba; RemoteProfiles.Reset has no caller; Pulse peers are purged only on a successful teleport), but a blanket reset was what #9041 did and it was reverted without a recorded reason; needs a Pulse-owner decision on cleanup for peers teleporting with us, and #10343 rewrites the same path"
     },
     {
       "number": 10596,
