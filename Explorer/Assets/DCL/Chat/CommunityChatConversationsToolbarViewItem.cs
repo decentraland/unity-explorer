@@ -35,6 +35,9 @@ namespace DCL.Chat
         {
             base.Start();
             removeButton.gameObject.SetActive(true);
+
+            // Unity runs Start after SetupCommunityUpdates on a freshly instantiated item, and base.Start hides the indicator
+            connectionStatusIndicatorContainer.SetActive(communityActiveCallState is { Value: true });
         }
 
         public void SetupCommunityUpdates(IReadonlyReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> communityCallId)

@@ -102,7 +102,9 @@ namespace DCL.MapRenderer.MapCameraController
         private Vector2Int ClampTextureResolution(Vector2Int desiredRes)
         {
             float factor = Mathf.Min(1, MAX_TEXTURE_SIZE / (float) Mathf.Max(desiredRes.x, desiredRes.y));
-            return Vector2Int.FloorToInt((Vector2) desiredRes * factor);
+
+            // A render texture needs at least one pixel per axis, and callers size it from layout that can still be empty when renting
+            return Vector2Int.Max(Vector2Int.one, Vector2Int.FloorToInt((Vector2) desiredRes * factor));
         }
 
         public float GetVerticalSizeInLocalUnits() =>

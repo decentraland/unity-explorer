@@ -87,6 +87,20 @@ namespace DCL.MapRenderer.Tests.ConsumerUtils
         }
 
         [Test]
+        public void NotResizeWhileRectCoversNoScreenPixels()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            root.transform.localScale = Vector3.zero;
+            PumpLateUpdate();
+
+            root.transform.localScale = Vector3.one;
+            PumpLateUpdate();
+
+            cameraController.DidNotReceive().ResizeTexture(Arg.Any<Vector2Int>());
+        }
+
+        [Test]
         public void NotResizeAfterDeactivate()
         {
             LogAssert.ignoreFailingMessages = true;

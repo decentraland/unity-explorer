@@ -247,11 +247,8 @@ namespace DCL.Multiplayer.Movement
             OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.Resync);
 
-            resyncMessage.Message.Resync = new ResyncRequest
-            {
-                SubjectId = subjectId,
-                KnownSeq = knownSequence,
-            };
+            resyncMessage.Message.Resync.SubjectId = subjectId;
+            resyncMessage.Message.Resync.KnownSeq = knownSequence;
 
             pulseService.Send(resyncMessage);
 

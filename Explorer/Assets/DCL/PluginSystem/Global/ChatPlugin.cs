@@ -29,6 +29,7 @@ using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using DCL.Audio;
+using DCL.CharacterCamera;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatReactions.Core;
@@ -99,6 +100,7 @@ namespace DCL.PluginSystem.Global
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
+        private readonly IExposedCameraData exposedCameraData;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private ChatCommandRegistry? commandRegistry;
@@ -145,6 +147,7 @@ namespace DCL.PluginSystem.Global
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
+            IExposedCameraData exposedCameraData,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -184,6 +187,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
+            this.exposedCameraData = exposedCameraData;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -400,7 +404,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileCache,
                 inputBlock,
-                mvcManager
+                mvcManager,
+                exposedCameraData
             );
 
             pluginScope.Add(chatPanelPresenter);

@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.AssetsProvision;
+using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
@@ -189,7 +190,8 @@ namespace Global.Dynamic
             IFriendsService? friendsService,
             CommunityDataService communitiesDataService,
             World globalWorld,
-            Entity playerEntity) =>
+            Entity playerEntity,
+            IExposedCameraData exposedCameraData) =>
             new (
                 uiShellContainer.MvcManager,
                 menusAccessFacade,
@@ -229,6 +231,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
+                exposedCameraData,
                 CurrentChannelService);
 
         public void Dispose()
