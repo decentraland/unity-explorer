@@ -33,9 +33,9 @@
     },
     {
       "number": 10596,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "9426ccf5ba68e50161e79551ca59739ffb797e8b",
+      "note": "reuse loop bounded by the list count; extra positions get new sources"
     },
     {
       "number": 10606,
