@@ -123,9 +123,9 @@
     },
     {
       "number": 10623,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "ce286a5d751705f2d934bfedb52d2309f5f4d80e",
+      "note": "SetIsCurrent ignored once the scene is Disposed; SceneFacadeShould extended"
     },
     {
       "number": 10620,
