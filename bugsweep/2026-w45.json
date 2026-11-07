@@ -87,9 +87,9 @@
     },
     {
       "number": 10609,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "e35e2455cea7384a1d55747738d74ac052ff0683",
+      "note": "TimeoutException with the self-profile prefix filtered at the Sentry gateway; tests added"
     },
     {
       "number": 10581,
