@@ -129,9 +129,9 @@
     },
     {
       "number": 10620,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "client works as designed: /goto crowd takes the top entry of archipelago hot-scenes, and the live response lists Genesis Plaza first (8 users vs 4 for the next); excluding Genesis Plaza is a product decision"
     },
     {
       "number": 10604,
