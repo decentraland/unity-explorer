@@ -1,5 +1,5 @@
 {
-  "status": "pr-open",
+  "status": "done",
   "prUrl": "https://github.com/decentraland/unity-explorer/pull/10579",
   "requester": "U0ADNDHL1T7",
   "originChannel": "C0BB9H2CS5D",
@@ -184,5 +184,6 @@
       "commit": null,
       "note": "fixed on dev by #10569 (MultiThreadSync lock stuck after timeout), merged 2026-10-30 after v0.193.0 was cut; the Sentry reopen is from v0.193 and older builds"
     }
-  ]
+  ],
+  "note": "PR #10579 merged into dev on 2026-11-03; closed out by the 2026-w45 sweep"
 }
