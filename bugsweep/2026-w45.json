@@ -21,9 +21,9 @@
     },
     {
       "number": 10599,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "702efce1d4f988db547fb363e1dbf0284c8c66cc",
+      "note": "thresholds cached in a static readonly dictionary"
     },
     {
       "number": 10309,
