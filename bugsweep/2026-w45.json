@@ -93,9 +93,9 @@
     },
     {
       "number": 10581,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "12d9afacfbaf252dca9ffce2972d91377ca5e417",
+      "note": "DTO without category finalizes as failed through the existing failed-pointer path; HasCategory tested"
     },
     {
       "number": 10611,
