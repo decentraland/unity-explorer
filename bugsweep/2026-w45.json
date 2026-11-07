@@ -117,9 +117,9 @@
     },
     {
       "number": 10622,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "no reliable path to the NRE from the code (a pooled Transform destroyed under a live entity); the most likely cause, scene worlds disposed twice so one Transform gets two owners, was fixed by #10565 (merged 2026-11-02, in v0.195.0-alpha); filter Sentry R08 by release before reworking. #7550 was closed without a code fix"
     },
     {
       "number": 10623,
