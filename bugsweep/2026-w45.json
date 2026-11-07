@@ -57,9 +57,9 @@
     },
     {
       "number": 10586,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "no cause in the repo: ClosedCommunityChats_{address} lives in persistentDataPath/userdata_{slot}.json, which is not version-keyed, and nothing deletes it; likely the launcher rewriting userdata on update, or the new build claiming a different prefs slot. Needs QA to capture userdata_*.json and *.claim before and after an update"
     },
     {
       "number": 10618,
