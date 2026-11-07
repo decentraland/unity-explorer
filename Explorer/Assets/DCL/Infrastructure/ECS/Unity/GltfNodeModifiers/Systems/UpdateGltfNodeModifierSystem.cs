@@ -45,17 +45,21 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             gltfNodeModifiers.IsDirty = false;
 
+            // Adding GltfNode to or removing PBMaterial from the container moves it to another archetype and invalidates the refs;
+            // the component holds only readonly references, so working on a copy is equivalent
+            Components.GltfNodeModifiers modifiers = nodeModifiers;
+
             if (gltfNodeModifiers.Modifiers.Count == 0)
             {
-                CleanupAllGltfNodeEntities(entity, ref nodeModifiers);
+                CleanupAllGltfNodeEntities(entity, ref modifiers);
                 return;
             }
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))
-                UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref nodeModifiers, result.Asset!, partitionComponent);
+                UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref modifiers, result.Asset!, partitionComponent);
             else
-                UpdateIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref nodeModifiers, partitionComponent, result.Asset!);
+                UpdateIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref modifiers, partitionComponent, result.Asset!);
         }
 
         /// <summary>
