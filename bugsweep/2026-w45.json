@@ -111,9 +111,9 @@
     },
     {
       "number": 10615,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "572160a88699d6f4a4ee4bef7a4e5b01d51c58e3",
+      "note": "zero-pixel layout ignored by the provider; ClampTextureResolution floors at 1px; tests added"
     },
     {
       "number": 10622,
