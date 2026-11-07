@@ -45,9 +45,9 @@
     },
     {
       "number": 10597,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "b0ceba4a4f412f79736a189343d96ff908971b72",
+      "note": "stray break removed; owners requested once; overwriting insert"
     },
     {
       "number": 10582,
