@@ -63,9 +63,9 @@
     },
     {
       "number": 10618,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "the switch works but only gates the 2D floating emojis in the chat panel (SituationalSimulationLoop.UIReactionsEnabled); in-world bursts follow the chat-bubbles dropdown and per-message reactions only the feature flag. What it should also hide is a product decision. Side bug: SettingsMenuConfiguration.asset has defaultIsOn: 0 while ChatSettingsAsset defaults to true, so new users start with reactions off"
     },
     {
       "number": 10590,
