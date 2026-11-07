@@ -99,9 +99,9 @@
     },
     {
       "number": 10611,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "cannot determine what is null: the innermost frame is a managed null check in AttachmentAssetUtility.InstantiateOrGetCached, and every reference there is non-null by construction in the code (original asset checked, cache keys non-null, instance from Object.Instantiate); needs a symbolicated line or breadcrumbs"
     },
     {
       "number": 10617,
