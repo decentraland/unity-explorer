@@ -81,9 +81,9 @@
     },
     {
       "number": 10608,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "a 400 'will drop' from the analytics proxy is a permanent rejection reported on purpose (#10560 split WillRetry/WillDrop to surface data loss), so filtering it would hide real event loss; the native message carries no response body or event name (adding them needs a native rebuild), so the rejected row cannot be identified from the client; check the proxy's logs (R19: 75 events, all v0.195.0 on Windows at startup, likely queued rows draining)"
     },
     {
       "number": 10609,
