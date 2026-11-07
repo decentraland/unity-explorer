@@ -15,9 +15,9 @@
     },
     {
       "number": 10595,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "dcbdae8ddc7a4e84b4f1a05dc50257863cf3f0a0",
+      "note": "pools created with their real payload types; callers fill pooled payloads; ClientMessagePoolShould added"
     },
     {
       "number": 10599,
