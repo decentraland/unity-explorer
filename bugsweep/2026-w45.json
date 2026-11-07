@@ -105,9 +105,9 @@
     },
     {
       "number": 10617,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "59d16bb02653882a360767dc1011e5f79a6cb779",
+      "note": "cleanup and update take GltfNodeModifiers by value so no ref survives the container's archetype move (medium confidence)"
     },
     {
       "number": 10615,
