@@ -135,9 +135,9 @@
     },
     {
       "number": 10604,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "already fixed on dev by #10605 (merged 2026-11-04, in v0.195.0-alpha): ProfilePictureView size went from 30x30 to 42x42 to match the other sidebar slots; needs QA to re-check on that build"
     },
     {
       "number": 10563,
