@@ -75,9 +75,9 @@
     },
     {
       "number": 10598,
-      "status": "pending",
-      "commit": null,
-      "note": ""
+      "status": "fixed",
+      "commit": "7c16912ca356a946f877d18989083839ef5bf1ec",
+      "note": "order-independent PendingOperations under CURRENT; anon id string, rejected ops and Identify pool also fixed; PendingOperationsShould added"
     },
     {
       "number": 10608,
