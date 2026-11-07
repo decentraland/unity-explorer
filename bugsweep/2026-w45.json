@@ -39,9 +39,9 @@
     },
     {
       "number": 10606,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": ""
+      "note": "root cause in UUAV native Rust: playback/unit.rs select_streams takes the mp3's attached cover-art (AV_DISPOSITION_ATTACHED_PIC, mjpeg) as the video track, and the hardware-only decoder rejects it; the fix (skip attached_pic streams in select_streams) needs a native rebuild of both platforms and a relocked uuav-binaries.lock.json, which a sweep commit cannot produce"
     },
     {
       "number": 10597,
