@@ -1,0 +1,197 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-10-31T12:02:06Z",
+ "collectedAt": "2026-11-07T12:02:14Z",
+ "groups": [],
+ "issues": [
+  {
+   "number": 10594,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10595,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10599,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10309,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10596,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10606,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10597,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10582,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10586,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10618,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10590,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10598,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10608,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10609,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10581,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10611,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10617,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10615,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10622,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10623,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10620,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10604,
+   "status": "pending",
+   "commit": null,
+   "note": ""
+  },
+  {
+   "number": 10563,
+   "status": "skipped",
+   "commit": null,
+   "note": "in flight: open team PR https://github.com/decentraland/unity-explorer/pull/10593 closes it"
+  },
+  {
+   "number": 10583,
+   "status": "skipped",
+   "commit": null,
+   "note": "feature request (suggestion) with open product/design questions; not a bug for the sweep"
+  },
+  {
+   "number": 10592,
+   "status": "skipped",
+   "commit": null,
+   "note": "lint tooling that touches CI workflow files and first needs team agreement on the rule list"
+  },
+  {
+   "number": 10591,
+   "status": "skipped",
+   "commit": null,
+   "note": "build tooling: port of Roslyn analyzers plus CI workflow and committed DLL drift check; too large for a sweep fix"
+  },
+  {
+   "number": 10587,
+   "status": "skipped",
+   "commit": null,
+   "note": "environment-specific (Windows low-integrity process from Downloads); the causal link to LiveKit is an unverified hypothesis and the underlying connect error is not in the logs"
+  },
+  {
+   "number": 10580,
+   "status": "skipped",
+   "commit": null,
+   "note": "native EXCEPTION_ACCESS_VIOLATION inside Arch's JaggedArray/Bucket with no managed caller frames visible; may be the entity corruption #10565 guards against, cannot be traced from this payload"
+  },
+  {
+   "number": 10616,
+   "status": "skipped",
+   "commit": null,
+   "note": "NullReferenceException with no managed frames (MoveNext only); nothing identifies the code path"
+  },
+  {
+   "number": 10381,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed on dev by #10565 (merged 2026-11-02); Sentry reopened it within a day, consistent with builds predating the fix; verify on a build that contains it before reworking"
+  },
+  {
+   "number": 10194,
+   "status": "skipped",
+   "commit": null,
+   "note": "fixed on dev by #10365 (merged 2026-11-03, drops ScriptInterruptedException from Sentry); Sentry reopened it a day later, consistent with builds predating the fix; verify on a build that contains it"
+  }
+ ]
+}
