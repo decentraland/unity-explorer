@@ -104,12 +104,17 @@ namespace CrdtEcsBridge.RestrictedActions
             }
         }
 
-        public void TryTeleportTo(Vector2Int coords)
+        public void TryTeleportTo(TeleportDestination destination)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            TeleportAsync(coords).Forget();
+            // A realm destination goes through the change-realm consent prompt, carrying the optional parcel.
+            destination.Match(
+                this,
+                static (self, parcel) => self.TeleportAsync(parcel).Forget(),
+                static (self, realm) => self.ChangeRealmAsync(string.Empty, realm.Realm, realm.Parcel).Forget()
+            );
         }
 
         public bool TryChangeRealm(string message, string realm)
@@ -164,10 +169,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryStopEmote()
+        public bool TryStopEmote()
         {
             if (!sceneStateProvider.IsCurrent)
-                return;
+                return false;
 
             // Stop full-body emote on global world
             globalWorldActions.StopEmote();
@@ -179,6 +184,8 @@ namespace CrdtEcsBridge.RestrictedActions
                 masked.EmoteUrn = default; // Permanent stop — don't replay on re-entry
                 sceneWorld.Set(scenePlayerEntity, masked);
             }
+
+            return true;
         }
 
         private void TriggerMaskedEmoteOnSceneWorld(CommunicationData.URLHelpers.URN urn, AvatarEmoteMask mask)
@@ -211,10 +218,12 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public int TryOpenExplorerUi(int ui)
+        public async UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, CancellationToken ct)
         {
+            // Every rejection below returns before the first await, so only an accepted request pays for
+            // the hop to the main thread.
             if (!sceneStateProvider.IsCurrent)
-                return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
+                return OpenExplorerUiResult.RejectedNotCurrentScene;
 
             // Accept only calls made within USER_GESTURE_WINDOW_TICKS of the last recorded pointer gesture.
             // The "== 0" guard is not redundant: 0 means "no input was ever recorded".
@@ -223,22 +232,22 @@ namespace CrdtEcsBridge.RestrictedActions
             if (lastUserInputTick == 0 || lastUserInputTick + USER_GESTURE_WINDOW_TICKS < sceneStateProvider.TickNumber)
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
-                return (int)OpenExplorerUiResult.RejectedNoUserGesture;
+                return OpenExplorerUiResult.RejectedNoUserGesture;
             }
 
-            if (!TryMapExplorerUi((ExplorerUi)ui, out ExploreSections section, out FeatureId? gatingFeature))
+            if (!TryMapExplorerUi(ui, out ExploreSections section, out FeatureId? gatingFeature))
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: unsupported ui value '{ui}'");
-                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+                return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
             if (gatingFeature.HasValue && !FeaturesRegistry.Instance.IsEnabled(gatingFeature.Value))
             {
                 ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: feature '{gatingFeature.Value}' is disabled");
-                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+                return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            return (int)explorerUiActions.OpenSection((ExplorerUi)ui, section);
+            return await explorerUiActions.OpenSectionAsync(ui, section, requestId, ct);
         }
 
         public void Dispose() { }
@@ -279,10 +288,10 @@ namespace CrdtEcsBridge.RestrictedActions
             await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
         }
 
-        private async UniTask ChangeRealmAsync(string message, string realm)
+        private async UniTask ChangeRealmAsync(string message, string realm, Vector2Int? position = null)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm, position)));
         }
 
         private async UniTask OpenNftDialogAsync(string chain, string contractAddress, string tokenId)
@@ -343,6 +352,8 @@ namespace CrdtEcsBridge.RestrictedActions
                     gatingFeature = FeatureId.Discover;
                     return true;
                 default:
+                    // EuItemPurchase falls here on purpose: the explorer has no purchase flow, so the scene
+                    // is told that the feature is unavailable.
                     section = default(ExploreSections);
                     gatingFeature = null;
                     return false;

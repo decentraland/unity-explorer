@@ -1,33 +1,39 @@
-﻿using DCL.WebRequests.Dumper;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
     public static class MetricsRegistry
     {
-        public static readonly Type[] TYPES = AppDomain.CurrentDomain.GetAssemblies()
-                                                       .SelectMany(GetTypesSafely)
-                                                       .Where(type => typeof(RequestMetricBase).IsAssignableFrom(type) && !type.IsAbstract && !type.IsGenericType
-                                                                      && type != typeof(RequestMetricRecorder))
-                                                       .ToArray();
+        public static Type[] Types { get; private set; } = Array.Empty<Type>();
 
-        public static readonly Dictionary<Type, int> INDICES = TYPES.Select((i, r) => (i, r)).ToDictionary(s => s.i, s => s.r);
+        public static Dictionary<Type, int> Indices { get; private set; } = new (0);
 
-        /// <summary>
-        ///     Safely gets types from an assembly, handling ReflectionTypeLoadException
-        ///     which can occur when some types have unresolvable dependencies.
-        /// </summary>
-        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
+        public static void Initialize()
         {
-            try { return assembly.GetTypes(); }
-            catch (ReflectionTypeLoadException ex)
+            if (Types.Length > 0)
+                return;
+
+            // Fix ANR: Removed a reflection scan over all assemblies. Just select types we care manually.
+            Types = new[]
             {
-                // Return only the types that were successfully loaded (non-null)
-                return ex.Types.Where(t => t != null);
-            }
+                typeof(ActiveCounter),
+                typeof(Total),
+                typeof(TotalFailed),
+                typeof(BandwidthDown),
+                typeof(BandwidthUp),
+                typeof(ServeTimeSmallFileAverage),
+                typeof(ServeTimePerMBAverage),
+                typeof(FillRateAverage),
+                typeof(TimeToFirstByteAverage),
+            };
+
+            var indices = new Dictionary<Type, int>(Types.Length);
+
+            for (var i = 0; i < Types.Length; i++)
+                indices[Types[i]] = i;
+
+            Indices = indices;
         }
     }
 }

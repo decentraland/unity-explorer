@@ -150,7 +150,7 @@ namespace DCL.MapRenderer.ConsumerUtils
             dragBehavior = new MapCameraDragBehavior(rectTransform, data);
         }
 
-        public void Activate(Camera hudCamera, RenderTexture renderTexture, IMapCameraController mapCameraController)
+        public void Activate(Camera? hudCamera, RenderTexture renderTexture, IMapCameraController mapCameraController)
         {
             interactivityController = mapCameraController.GetInteractivityController();
             highlightEnabled = interactivityController.HighlightEnabled;

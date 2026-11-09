@@ -1,0 +1,484 @@
+/* Layout of the lobby at 1920x1080: the 50px side margins of the uGUI lobby (LobbyUI.prefab) and the vertical anchors of the
+   design, the top grids 24px under the top bar and the bottom ones 26px off the bottom edge. The widgets keep their content
+   10px inside their cells sideways, so the grids sit that much further out for the content to land on the margins */
+:root {
+    --lobby-margin: 50px;
+    --lobby-widget-inset: 10px;
+    --lobby-grid-margin: 40px;
+    --lobby-grid-top: 97px;
+    --lobby-bottom-margin: 26px;
+    --lobby-card-color: rgba(20, 20, 26, 0.9);
+    --lobby-card-radius: 16px;
+    /* The panel blends in linear light, where a translucent white reads far brighter over the dark stage, and a translucent
+       black far lighter, than the same alpha does in the design tool; these are the alphas that look like the design's
+       10%, 20%, 40%, 60%, 70% and 80% whites and its 40% and 60% blacks, used wherever the design names one */
+    --lobby-white-2: rgba(255, 255, 255, 0.004);
+    --lobby-white-1: rgba(255, 255, 255, 0.01);
+    --lobby-white-10: rgba(255, 255, 255, 0.025);
+    --lobby-white-20: rgba(255, 255, 255, 0.055);
+    --lobby-white-40: rgba(255, 255, 255, 0.14);
+    --lobby-white-60: rgba(255, 255, 255, 0.3);
+    --lobby-white-70: rgba(255, 255, 255, 0.46);
+    --lobby-white-80: rgba(255, 255, 255, 0.61);
+    --lobby-black-40: rgba(0, 0, 0, 0.67);
+    --lobby-black-60: rgba(0, 0, 0, 0.85);
+    /* Not compensated like the alphas above: the outline of the top bar buttons was tuned in-engine */
+    --lobby-white-5: rgba(255, 255, 255, 0.05);
+    /* The 1px line just inside the edge of every entry, the design's 10% white */
+    --lobby-card-border-color: var(--lobby-white-10);
+    --lobby-title-color: white;
+    --lobby-subtitle-color: rgb(207, 205, 212);
+    --lobby-grip-color: rgb(113, 107, 124);
+    --lobby-jump-in-color: rgb(255, 45, 85);
+    --lobby-jump-in-hover-color: rgb(255, 77, 111);
+    --lobby-jump-in-pressed-color: rgb(200, 35, 67);
+    --lobby-view-all-arrow-color: rgb(204, 29, 44);
+    --lobby-thumbnail-fade-duration: 0.3s;
+    --lobby-outline-duration: 0.2s;
+    /* The uGUI drop shadows: 9-sliced sprites authored at twice the size, drawn at half scale with the slices of their import settings */
+    --lobby-button-shadow-image: url('/Assets/Textures/Common/Container12Shadow4.png');
+    --lobby-card-shadow-image: url('/Assets/Textures/Common/Container24Shadow10.png');
+}
+
+.lobby {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Drawn with the sprite's 9-slice border: a 140px soft fade, a stretched middle and a 42px opaque strip along the bottom edge */
+.lobby__gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 338px;
+    background-image: url('/Assets/Textures/ExplorePanel/GradientBanner.png');
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Darkens the stage and the figure under the whole screen while the layout is edited (see LobbyLayoutEditor.uss): the
+   design's 60% black */
+.lobby__overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    background-color: var(--lobby-black-60);
+}
+
+/* Same footprint as the hit area button of the uGUI lobby: 440x820, centred and 60px down */
+.lobby__avatar-hit-area {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 440px;
+    height: 820px;
+    margin-left: -220px;
+    margin-top: -350px;
+}
+
+/* Left and top follow the pointer; the translate centres it on the pointer vertically */
+.lobby__avatar-tooltip {
+    position: absolute;
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.95);
+    translate: 0 -50%;
+}
+
+.lobby__avatar-tooltip-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    background-image: url('/Assets/Textures/UI/Interaction/icon-mouse-left.png');
+}
+
+.lobby__avatar-tooltip-label {
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
+/* Name of a hovered friend picture; left and top follow the pointer, the translate centres it vertically */
+.lobby__friend-tooltip {
+    position: absolute;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.95);
+    translate: 0 -50%;
+}
+
+.lobby__friend-tooltip-label {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-center;
+    color: var(--lobby-title-color);
+}
+
+/* 0.6 of the 52px sprite, as the uGUI previews scale their cursor Image; the translate centres it on the pointer */
+.lobby__avatar-drag-cursor {
+    position: absolute;
+    width: 31.2px;
+    height: 31.2px;
+    translate: -50% -50%;
+    background-image: url('/Assets/DCL/Backpack/Textures/CursorRotate.png');
+}
+
+/* The grids size themselves from their cells; each one is pinned to its corner */
+.lobby__grid--top-left {
+    left: var(--lobby-grid-margin);
+    top: var(--lobby-grid-top);
+}
+
+.lobby__grid--top-right {
+    right: var(--lobby-grid-margin);
+    top: var(--lobby-grid-top);
+}
+
+.lobby__grid--bottom-left {
+    left: var(--lobby-grid-margin);
+    bottom: var(--lobby-bottom-margin);
+}
+
+.lobby__grid--bottom-right {
+    right: var(--lobby-grid-margin);
+    bottom: var(--lobby-bottom-margin);
+}
+
+/* A widget section is placed by LobbyWidgetHost: its left, top, width and height are inline, from its cell and its span.
+   The inset keeps the content off the edges of the cells, which the edit-mode frame runs along, so the content has to
+   fit the cells less the inset (the title rows and the rails below add up to the span). The two-row widgets fill their
+   cells to the last pixel, so the inset is 5px at the top and none at the bottom, as in the design */
+.lobby__widget {
+    position: absolute;
+    padding: 5px var(--lobby-widget-inset) 0;
+}
+
+/* The four-column sections show two cards in the room of the seven-column ones' three: the cards of both fill their row,
+   so they are narrower in the four-column ones (441px holds two, 790px holds three, 11px apart) */
+.lobby__widget--narrow .lobby-place-card,
+.lobby__widget--narrow .lobby-community-card,
+.lobby__widget--narrow .lobby-gallery-card {
+    width: 215px;
+}
+
+.lobby__unplaced-widgets {
+    display: none;
+}
+
+/* The title row of a section */
+.lobby__section-header {
+    height: 32px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.lobby__section-title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 32px;
+    font-size: 22px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}
+
+/* The vertical gaps of each section follow the design: the title 10px over the live card and 5px over the place cards */
+.lobby__section-header--live {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.lobby__section-header--upcoming {
+    margin-bottom: 8px;
+}
+
+.lobby__section-header--places {
+    margin-bottom: 5px;
+}
+
+.lobby__section-header--friends {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* The friends title is followed by how many are online, so it takes only its own width */
+.lobby__section-header--friends .lobby__section-title {
+    flex-grow: 0;
+}
+
+.lobby__section-count {
+    flex-shrink: 0;
+    height: 32px;
+    margin-left: 12px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    color: var(--lobby-white-80);
+}
+
+/* USS has no text underline, so the hover one is the bottom border of the label */
+.lobby__view-all {
+    flex-shrink: 0;
+    height: 32px;
+    margin: 0;
+    padding: 0 0 0 14px;
+    border-width: 0;
+    border-radius: 12px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* The theme tints a hovered or pressed button */
+.lobby__view-all:hover,
+.lobby__view-all:active {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.lobby__view-all-label {
+    margin: 0;
+    padding: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    color: var(--dcl-color-snow);
+}
+
+.lobby__view-all:hover .lobby__view-all-label {
+    border-bottom-color: var(--dcl-color-snow);
+}
+
+/* The sprite is 75x128, drawn at the design's 7x12 chevron in the middle of its box */
+.lobby__view-all-icon {
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    background-image: url('/Assets/Textures/Common/ArrowRight.png');
+    background-size: 7px 12px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--lobby-view-all-arrow-color);
+}
+
+/* The welcome line is the one title of the design's own size: 30px in a 60px row over the hero card */
+.lobby__welcome-title {
+    height: 60px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 30px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}
+
+/* A rail is as wide as one page of cards, so the next page never shows at its edge, and as tall as its cards plus the 42px
+   pager band of LobbyRail.uss */
+
+/* A pixel short of the design's 440px, which four 103px cards cannot share into whole-pixel gaps */
+.lobby__friends-rail {
+    width: 439px;
+    height: 159px;
+}
+
+.lobby__friends-rail .lobby-rail__card {
+    margin-right: 9px;
+}
+
+.lobby__live-events-rail {
+    width: 326px;
+    height: 241px;
+}
+
+/* The viewport bleeds as far as the live cards' shadow (6px sideways, 10px down) so it clips at the shadow's edge instead of the
+   card's; the padding keeps the cards in place and tells the rail how much of the viewport the cards have (see LobbyRailElement) */
+.lobby__live-events-rail .lobby-rail__viewport {
+    margin: 0 -6px -10px;
+    padding: 0 6px 10px;
+}
+
+.lobby__live-events-rail .lobby-rail__content {
+    left: 6px;
+}
+
+/* With the title band it fills the two rows of its section, so its pager sits two pixels closer than the others' */
+.lobby__upcoming-events-rail {
+    width: 326px;
+    height: 179px;
+}
+
+.lobby__upcoming-events-rail .lobby-rail__pager {
+    margin-top: 8px;
+}
+
+/* With the title band it fills the two rows of its section; the communities and gallery rails share the metrics as their
+   cards are the size of the place cards */
+.lobby__places-rail,
+.lobby__communities-rail,
+.lobby__gallery-rail {
+    width: 790px;
+    height: 188px;
+}
+
+.lobby__places-rail--4x2,
+.lobby__communities-rail--4x2,
+.lobby__gallery-rail--4x2 {
+    width: 441px;
+}
+
+.lobby__places-rail .lobby-rail__card,
+.lobby__communities-rail .lobby-rail__card,
+.lobby__gallery-rail .lobby-rail__card {
+    margin-right: 11px;
+}
+
+/* The viewport bleeds the 6px the hover outline of the photos hangs out on every side (see LobbyGalleryCard.uss), so the
+   outline shows whole instead of clipping at the cards' edges; the padding keeps the cards in place */
+.lobby__gallery-rail .lobby-rail__viewport {
+    margin: -6px;
+    padding: 6px;
+}
+
+.lobby__gallery-rail .lobby-rail__content {
+    left: 6px;
+    top: 6px;
+    bottom: 6px;
+}
+
+/* The skeleton a section shows until its first fill (see LobbyCardRail): as wide as its rail and as tall as one card, so it
+   leaves the pager band clear, with a bone the footprint of each card of the first page, in the palette of the banners */
+.lobby-skeleton {
+    flex-shrink: 0;
+}
+
+.lobby-skeleton .skeleton-loading__bone {
+    border-width: 1.5px;
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-black-60);
+}
+
+/* The sprite fades in and out on its own, so the tint has to be well above the border's white to read over the bone */
+.lobby-skeleton .skeleton-loading__shimmer {
+    -unity-background-image-tint-color: var(--lobby-white-40);
+}
+
+.lobby__friends .lobby-skeleton {
+    width: 439px;
+    height: 117px;
+}
+
+.lobby__friends .skeleton-loading__bone {
+    width: 103px;
+    height: 117px;
+    border-radius: 12px;
+}
+
+.lobby__communities .lobby-skeleton,
+.lobby__gallery .lobby-skeleton {
+    width: 790px;
+    height: 146px;
+}
+
+.lobby__communities .skeleton-loading__bone,
+.lobby__gallery .skeleton-loading__bone {
+    width: 256px;
+    height: 146px;
+    border-radius: var(--lobby-card-radius);
+}
+
+/* The photos are square-cornered (see LobbyGalleryCard.uss) */
+.lobby__gallery .skeleton-loading__bone {
+    border-radius: 0;
+}
+
+.lobby__widget--narrow .lobby-skeleton {
+    width: 441px;
+}
+
+.lobby__widget--narrow .skeleton-loading__bone {
+    width: 215px;
+}
+
+/* The shimmer a card's picture wears while loading (LobbyThumbnailSkeleton): its bone is the card colour made opaque, so
+   the default picture under it stays out of sight, and it fades out over the loaded picture rather than letting it pop up */
+.lobby-thumbnail-skeleton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity var(--lobby-thumbnail-fade-duration) ease-out;
+}
+
+.lobby-thumbnail-skeleton--shown {
+    opacity: 1;
+    transition: opacity 0s;
+}
+
+.lobby-thumbnail-skeleton .skeleton-loading__bone {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(20, 20, 26);
+}
+
+.lobby-thumbnail-skeleton .skeleton-loading__shimmer {
+    -unity-background-image-tint-color: var(--lobby-white-40);
+}
+
+/* The recent row has no dots: its cards are padded by the pager band of the rail so both rows line up along the bottom.
+   The negative margin swallows the trailing gap of the last card, which would otherwise squeeze the cards narrower */
+.lobby__places-row {
+    flex-direction: row;
+    height: 146px;
+    margin-right: -11px;
+    margin-bottom: 42px;
+}
+
+.lobby__places-row > .lobby-place-card {
+    margin-right: 11px;
+}
+
+/* The pill sits at the bottom of the row with the inset under it, as it has at its sides, and the question over it */
+.lobby__goto {
+    padding-bottom: var(--lobby-widget-inset);
+    justify-content: flex-end;
+}
+
+.lobby__goto-title {
+    height: 20px;
+    margin: 0 10px 10px 0;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--lobby-title-color);
+}

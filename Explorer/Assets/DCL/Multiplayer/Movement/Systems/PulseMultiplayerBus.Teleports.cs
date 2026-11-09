@@ -64,17 +64,19 @@ namespace DCL.Multiplayer.Movement
             // A same-tick-range realm change is not re-announced with PlayerLeft, so the removal happens here
             if (teleport.Realm != pulseRealm.Value)
             {
-                peerIdCache.Remove(teleport.SubjectId);
-                removeIntentions.Enqueue(wallet);
-                PurgeQueues(teleport.SubjectId);
+                RemovePeerRegistration(teleport.SubjectId);
                 return;
             }
 
             // Refreshing the realm is what keeps a co-teleporting peer (no PlayerJoined re-announcement) out of the purge
-            peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm);
+            peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm, out _);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
             TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);
+
+            if (peerIdCache.GetWalletInRealm(teleport.SubjectId, pulseRealm.Value, out _) != PeerIdCache.LookupResult.Found)
+                return;
+
             Inbox(movementMessage, wallet);
         }
     }

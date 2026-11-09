@@ -23,6 +23,8 @@ namespace UUAV.Tests
         private readonly string fixturesDirectory;
         private readonly Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
         private readonly object cacheGate = new object();
+        private readonly Dictionary<string, int> requestCounts = new Dictionary<string, int>();
+        private readonly object requestGate = new object();
         private volatile bool disposed;
 
         public FixtureServer(string fixturesDirectory)
@@ -45,6 +47,27 @@ namespace UUAV.Tests
         public string UrlFor(string fixtureName)
         {
             return $"http://127.0.0.1:{Port}/{fixtureName}";
+        }
+
+        /// <summary>
+        /// How many requests named a fixture starting with <paramref name="fixtureNamePrefix"/>,
+        /// whether or not it exists. Lets a test tell which HLS variant the demuxer keeps fetching.
+        /// </summary>
+        public int RequestCount(string fixtureNamePrefix)
+        {
+            var total = 0;
+            lock (requestGate)
+            {
+                foreach (KeyValuePair<string, int> entry in requestCounts)
+                {
+                    if (entry.Key.StartsWith(fixtureNamePrefix, StringComparison.Ordinal))
+                    {
+                        total += entry.Value;
+                    }
+                }
+            }
+
+            return total;
         }
 
         /// <summary>
@@ -131,7 +154,9 @@ namespace UUAV.Tests
             }
 
             bool headOnly = parts[0] == "HEAD";
-            byte[]? content = Load(Uri.UnescapeDataString(parts[1].TrimStart('/')));
+            string fixtureName = Uri.UnescapeDataString(parts[1].TrimStart('/'));
+            CountRequest(fixtureName);
+            byte[]? content = Load(fixtureName);
             if (content == null)
             {
                 WriteResponse(stream, "404 Not Found", Array.Empty<byte>(), 0, 0, 0, headOnly);
@@ -143,6 +168,15 @@ namespace UUAV.Tests
             bool partial = rangeHeader != null && TryParseRange(rangeHeader, content.Length, ref start, ref end);
             string status = partial ? "206 Partial Content" : "200 OK";
             WriteResponse(stream, status, content, start, end, content.Length, headOnly);
+        }
+
+        private void CountRequest(string fixtureName)
+        {
+            lock (requestGate)
+            {
+                requestCounts.TryGetValue(fixtureName, out int count);
+                requestCounts[fixtureName] = count + 1;
+            }
         }
 
         private byte[]? Load(string fixtureName)

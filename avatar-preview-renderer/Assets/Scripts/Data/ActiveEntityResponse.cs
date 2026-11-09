@@ -44,6 +44,10 @@ namespace Data
                 public string[] removesDefaultHiding = Array.Empty<string>();
                 public bool loop; // For emotes only
                 public SpringBonesDto springBones;
+
+                // A social emote's clips, ADR-287; absent on any other emote.
+                public StartAnimation startAnimation;
+                public OutcomeGroup[] outcomes;
             }
             
             [Serializable]

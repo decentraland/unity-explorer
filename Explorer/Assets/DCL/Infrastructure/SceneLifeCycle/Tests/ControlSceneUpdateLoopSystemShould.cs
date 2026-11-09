@@ -155,7 +155,7 @@ namespace DCL.SceneLifeCycle.Tests
 
             system.Update(0f);
 
-            scene.Received(1).SetTargetFPS(15);
+            scene.Received(1).SetTargetFps(15);
         }
 
         [Test]

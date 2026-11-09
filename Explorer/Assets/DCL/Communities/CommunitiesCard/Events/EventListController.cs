@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly string createEventFormat;
 
-        private CommunityData? communityData = null;
+        private CommunityData? communityData;
         private CancellationTokenSource eventCardOperationsCts = new ();
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
@@ -153,7 +153,6 @@ namespace DCL.Communities.CommunitiesCard.Events
                 realmNavigator.TryChangeRealmAsync(
                     URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
                     eventCardOperationsCts.Token,
-                    default,
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else

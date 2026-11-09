@@ -7,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -43,7 +42,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private Button cancelInviteButton { get; set; } = null!;
 
         private bool canUnHover = true;
-        private bool isUserCard = false;
+        private bool isUserCard;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.Members;
 
         public ICommunityMemberData? UserProfile { get; protected set; }

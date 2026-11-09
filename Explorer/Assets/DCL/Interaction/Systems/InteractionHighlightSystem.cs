@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
 
         private void AddOrUpdateHighlight(in Entity entity, bool isAtDistance)
         {
-            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
+            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 
@@ -102,7 +102,7 @@ namespace DCL.Interaction.Systems
 
         private void RemoveHighlight(in Entity entity)
         {
-            using var scope = ListPool<Renderer>.Get(out var renderers)!;
+            using var scope = ListPool<Renderer>.Get(out var renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 

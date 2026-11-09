@@ -1,0 +1,179 @@
+:root {
+    --upcoming-event-card-hover-duration: 0.2s;
+}
+
+.lobby-upcoming-event-card {
+    width: 326px;
+    height: 139px;
+    border-width: 1px;
+    border-radius: var(--lobby-card-radius);
+    border-color: var(--lobby-card-border-color);
+    background-color: var(--lobby-black-60);
+    overflow: hidden;
+}
+
+/* Clips the zooming picture so the panel's rounded corners keep their size */
+.lobby-upcoming-event-card__thumbnail-frame {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 136px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.lobby-upcoming-event-card__thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/Assets/Textures/ExplorePanel/DefaultImagePlace.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: scale var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__thumbnail {
+    scale: 1.05;
+}
+
+.lobby-upcoming-event-card__info {
+    position: absolute;
+    left: 20px;
+    top: 31px;
+    width: 148px;
+}
+
+.lobby-upcoming-event-card__texts {
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__texts {
+    translate: 0 -13px;
+}
+
+.lobby-upcoming-event-card__title {
+    height: 19px;
+    font-size: 16px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lobby-upcoming-event-card__host-row {
+    height: 14px;
+    margin-top: 2px;
+    flex-direction: row;
+    align-items: center;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__host-row {
+    opacity: 0;
+}
+
+.lobby-upcoming-event-card__host-prefix,
+.lobby-upcoming-event-card__host {
+    font-size: 13px;
+    -unity-font-definition: var(--dcl-font-inter-regular);
+    -unity-text-align: middle-left;
+    color: var(--lobby-white-70);
+    white-space: nowrap;
+}
+
+.lobby-upcoming-event-card__host-prefix {
+    margin-right: 3px;
+}
+
+.lobby-upcoming-event-card__host {
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Only as wide as its text, so the tint does not stretch across the column */
+.lobby-upcoming-event-card__schedule {
+    margin-top: 14px;
+    height: 24px;
+    align-self: flex-start;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 4px;
+    border-radius: 6px;
+    background-color: var(--lobby-white-10);
+    transition: translate var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__schedule {
+    translate: 0 -33px;
+}
+
+.lobby-upcoming-event-card__schedule-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    background-image: url('/Assets/Textures/Common/TimeIcn.png');
+}
+
+.lobby-upcoming-event-card__schedule-text {
+    font-size: 14px;
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+    -unity-text-align: middle-left;
+    color: var(--dcl-color-snow);
+}
+
+/* Invisible until the card is hovered, which any pointer over them is, so their invisible state never takes a click meant for the card */
+.lobby-upcoming-event-card__actions {
+    position: absolute;
+    left: 20px;
+    bottom: 19px;
+    flex-direction: row;
+    opacity: 0;
+    transition: opacity var(--upcoming-event-card-hover-duration) ease-out;
+}
+
+.lobby-upcoming-event-card:hover .lobby-upcoming-event-card__actions {
+    opacity: 1;
+}
+
+.lobby-upcoming-event-card__action {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background-color: var(--lobby-white-10);
+    transition: background-color 0.1s;
+}
+
+.lobby-upcoming-event-card__action:hover {
+    background-color: var(--lobby-white-20);
+}
+
+.lobby-upcoming-event-card__action-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOff.png');
+}
+
+.lobby-upcoming-event-card--interested .lobby-upcoming-event-card__action-icon--interested {
+    background-image: url('/Assets/Textures/ExplorePanel/ReminderOn.png');
+}
+
+.lobby-upcoming-event-card__action-icon--calendar {
+    background-image: url('/Assets/Textures/ExplorePanel/AddToCalendarIcn.png');
+}
+
+.lobby-upcoming-event-card__action-icon--share {
+    background-image: url('/Assets/Textures/Common/ShareIcn.png');
+}

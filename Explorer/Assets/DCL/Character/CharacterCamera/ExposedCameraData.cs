@@ -18,6 +18,7 @@ namespace DCL.CharacterCamera
         public CanBeDirty<bool> PointerIsLocked;
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
         public CumulativePointerDelta AccumulatedPointerDelta;
+        public Vector2 PointerScreenPosition;
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
         public CameraMode CameraMode { get; set; }
@@ -27,5 +28,6 @@ namespace DCL.CharacterCamera
         CanBeDirty<CameraType> IExposedCameraData.CameraType => CameraType;
         CanBeDirty<bool> IExposedCameraData.PointerIsLocked => PointerIsLocked;
         CumulativePointerDelta IExposedCameraData.AccumulatedPointerDelta => AccumulatedPointerDelta;
+        Vector2 IExposedCameraData.PointerScreenPosition => PointerScreenPosition;
     }
 }

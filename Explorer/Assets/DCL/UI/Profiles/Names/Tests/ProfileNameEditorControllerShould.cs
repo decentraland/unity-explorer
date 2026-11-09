@@ -4,7 +4,9 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using ECS.TestSuite;
+using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEditor;
@@ -42,10 +44,12 @@ namespace DCL.UI.ProfileNames.Tests
             controller = new ProfileNameEditorController(
                 () => view,
                 new UnityAppWebBrowser(Substitute.For<IDecentralandUrlsSource>()),
-                Substitute.For<ISelfProfile>(),
+                Substitute.For<SelfProfile>(),
                 Substitute.For<INftNamesProvider>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                new ProfileChangesBus());
+                new ProfileChangesBus(),
+                Substitute.For<IMVCManager>(),
+                Substitute.For<IWeb3IdentityCache>());
         }
 
         [TearDown]

@@ -1,7 +1,5 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
 using DG.Tweening;
 using UnityEngine;
 using Utility;
@@ -51,7 +49,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		public void SetZoom(float baseScale, float baseZoom, float zoom)
 		{
 			currentBaseScale = baseScale;
-			currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+			currentNewScale = MarkerHelper.ScaleForZoom(baseScale, baseZoom, zoom);
 			markerObject.SetScale(currentNewScale);
 		}
 

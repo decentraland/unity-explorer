@@ -32,10 +32,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 this.kernel = kernel;
             }
 
-            public bool TryGetBones(out ComputeBuffer bones)
+            public readonly bool TryGetBones(out ComputeBuffer bonesBuffer)
             {
-                bones = this.bones;
-                return bones != null;
+                bonesBuffer = bones;
+                return bonesBuffer != null;
             }
 
             public void AssignBuffer(ComputeSkinningBufferContainer container)
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 computeSkinningBufferContainer = container;
             }
 
-            public void DisposeBuffers()
+            public readonly void DisposeBuffers()
             {
                 computeSkinningBufferContainer?.Dispose();
                 bones.Dispose();
@@ -137,7 +137,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// Changes the Fading Position parameter of all the materials of the meshes that form the avatar, including facial features.
         /// This parameter is used for computing the transparency of the avatar regarding the distance of the camera to it.
         /// </summary>
-        /// <param name="position">The reference position used for computing the distance from the avatar to the camera.</param>
+        /// <param name="distance">The distance from the camera to the avatar, written to the fading distance material parameter.</param>
         public readonly void SetFadingDistance(float distance)
         {
             for (int i = 0; i < materials.Count; ++i)
@@ -148,6 +148,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
+            // Dispose released the bones buffer and returned the compute shader to its pool: writing the bones into
+            // the released buffer throws from the native side, and the pooled shader may already drive another avatar.
+            if (disposed)
+            {
+                return Result.ErrorResult("ComputeSkinning error: the skinning component is disposed");
+            }
+
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
                 return Result.ErrorResult("Attempt to process an invalid avatar");

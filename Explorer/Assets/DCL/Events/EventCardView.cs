@@ -204,6 +204,15 @@ namespace DCL.Events
             }
         }
 
+        /// <summary>
+        ///     Overrides the schedule text derived by <see cref="Configure" />.
+        /// </summary>
+        public void SetDateText(string text)
+        {
+            if (eventDate != null)
+                eventDate.text = text;
+        }
+
         public void UpdateInterestedButtonState(bool isInterested)
         {
             currentEventInfo.attending = isInterested;

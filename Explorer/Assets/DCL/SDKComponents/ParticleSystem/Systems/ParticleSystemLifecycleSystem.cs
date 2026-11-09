@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using Utility;
@@ -31,7 +32,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
-        [None(typeof(ParticleSystemComponent))]
+        [None(typeof(ParticleSystemComponent), typeof(DeleteEntityIntention))]
         private void CreateParticleSystem(in Entity entity, ref PBParticleSystem pbParticleSystem, in TransformComponent transform)
         {
             if (!sceneStateProvider.IsCurrent) return;

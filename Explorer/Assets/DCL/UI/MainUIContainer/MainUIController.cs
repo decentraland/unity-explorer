@@ -8,6 +8,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.UI.MainUI
@@ -22,12 +23,14 @@ namespace DCL.UI.MainUI
 
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
+        private readonly TweenCallback syncSidebarPadding;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar = false;
+        private bool autoHideSidebar;
+        private int shownSidebarPaddingLeft;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -40,12 +43,15 @@ namespace DCL.UI.MainUI
         {
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
+
+            syncSidebarPadding = SyncSidebarPadding;
         }
 
         protected override void OnViewInstantiated()
         {
+            shownSidebarPaddingLeft = viewInstance.uiLayoutGroup.padding.left;
             viewInstance.SidebarView.BlockStatusChanged += OnSidebarBlockStatusChanged;
-            viewInstance.SidebarView.AutohideStatusChanged += OnSidebarAutohideStatusChanged;
+            viewInstance.SidebarView.SidebarConfigPanelView.AutoHideToggle.onValueChanged.AddListener(OnSidebarAutohideStatusChanged);
             viewInstance!.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
@@ -136,7 +142,19 @@ namespace DCL.UI.MainUI
         }
 
         private async UniTask AnimateWidthAsync(float width, CancellationToken ct) =>
-            await viewInstance.sidebarLayoutElement.DOPreferredSize(new Vector2(width, 1f), SIDEBAR_ANIMATION_TIME).ToUniTask(cancellationToken: ct);
+            await viewInstance.sidebarLayoutElement.DOPreferredSize(new Vector2(width, 1f), SIDEBAR_ANIMATION_TIME)
+                              .OnUpdate(syncSidebarPadding)
+                              .ToUniTask(cancellationToken: ct);
+
+        private void SyncSidebarPadding()
+        {
+            int padding = Mathf.RoundToInt(shownSidebarPaddingLeft * viewInstance.sidebarLayoutElement.preferredWidth / SHOW_SIDEBAR_LAYOUT_WIDTH);
+
+            if (viewInstance.uiLayoutGroup.padding.left == padding) return;
+
+            viewInstance.uiLayoutGroup.padding.left = padding;
+            LayoutRebuilder.MarkLayoutForRebuild((RectTransform)viewInstance.uiLayoutGroup.transform);
+        }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);

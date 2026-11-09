@@ -21,6 +21,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         protected override void Update(float t)
         {
             ResetSDKProfileQuery(World);
+            ResetSDKTalkingQuery(World);
             ResetSceneCRDTEntityQuery(World);
             ResetAvatarEmoteCommandComponentQuery(World);
         }
@@ -29,6 +30,12 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         private void ResetSDKProfile(ref SDKProfile sdkProfile)
         {
             sdkProfile.IsDirty = false;
+        }
+
+        [Query]
+        private void ResetSDKTalking(ref SDKTalking talking)
+        {
+            talking.IsDirty = false;
         }
 
         [Query]

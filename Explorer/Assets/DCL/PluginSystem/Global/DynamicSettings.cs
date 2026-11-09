@@ -1,12 +1,10 @@
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
-using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.UI;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;

@@ -64,6 +64,24 @@ namespace DCL.FeatureFlags.Tests
         }
 
         [Test]
+        public void GetTextPayloadWhateverTheVariantName()
+        {
+            bool get = configuration.TryGetTextPayload("text-ff", out string? text);
+            Assert.IsTrue(get);
+            Assert.AreEqual("100", text);
+        }
+
+        [TestCase("enabled-ff-1")]
+        [TestCase("json-ff")]
+        [TestCase("non-existing-feature")]
+        public void DontGetTextPayloadWithoutAStringPayload(string id)
+        {
+            bool get = configuration.TryGetTextPayload(id, out string? text);
+            Assert.IsFalse(get);
+            Assert.IsNull(text);
+        }
+
+        [Test]
         public void GetJsonPayload()
         {
             bool get = configuration.TryGetJsonPayload("json-ff", "users",

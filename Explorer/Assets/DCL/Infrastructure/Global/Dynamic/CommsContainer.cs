@@ -119,8 +119,8 @@ namespace Global.Dynamic
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
-            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(localSceneEntityIdSource).WithLog();
+            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource, identityCache).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(localSceneEntityIdSource, identityCache).WithLog();
 
             Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
                 ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
@@ -261,7 +261,10 @@ namespace Global.Dynamic
                 // TODO: properly branch profile announcements depending on server setup
                 multiplayerContainer.RemoteAnnouncements,
                 multiplayerContainer.RemoveIntentions,
-                MovementInbox
+                MovementInbox,
+                multiplayerContainer.SelfProfile,
+                multiplayerContainer.ProfilePropagation,
+                multiplayerContainer.PulseActivation
             );
 
         public ConnectionStatusPanelPlugin CreateConnectionStatusPanelPlugin(IAssetsProvisioner assetsProvisioner, IAppArgs appArgs) =>

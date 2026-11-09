@@ -274,7 +274,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             //We mark it as Defer because, down the line, the entity wont be deleted.
             //Either the LOD or the SceneFacade will be removed, but the Entity with the
             //SceneDefinitionComponent should persist
-            World.Add(entity, new DeleteEntityIntention { DeferDeletion = true });
+            World.AddOrGet(entity, new DeleteEntityIntention { DeferDeletion = true });
         }
 
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,

@@ -111,13 +111,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 Assert.IsNotNull(data);
 
                 var expectedFriends = new List<string>();
-                foreach (string addr in e.connected_addresses)
+                foreach (string addr in e.connected_addresses!)
                     if (NaiveFriend(friends, addr, out Profile.CompactInfo m))
-                        expectedFriends.Add(m.UserId);
+                        expectedFriends.Add(m.UserId!);
 
                 var actualFriends = new List<string>();
                 foreach (Profile.CompactInfo f in data!.FriendsConnectedToPlace)
-                    actualFriends.Add(f.UserId);
+                    actualFriends.Add(f.UserId!);
 
                 CollectionAssert.AreEqual(expectedFriends, actualFriends, $"friend set mismatch for {e.id}");
                 Assert.AreEqual(NaiveCommunity(communities, e.community_id), data.CommunityInfo?.id, $"community mismatch for {e.id}");

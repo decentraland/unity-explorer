@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;

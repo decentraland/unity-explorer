@@ -16,6 +16,9 @@ MonoBehaviour:
   - id: all
     name: All
     icon: {fileID: 21300000, guid: 5de7f7dfc0d3342fa8c123973e9c3925, type: 3}
+  - id: featured
+    name: Featured
+    icon: {fileID: 21300000, guid: fa81cce24934c437db205d4b216b9e43, type: 3}
   - id: social
     name: Social
     icon: {fileID: 21300000, guid: eab679ad39a8248519287117b76da3d4, type: 3}

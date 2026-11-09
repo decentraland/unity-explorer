@@ -11,6 +11,8 @@ using ECS.Groups;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CRDT;
 using Plugins.NativeAudioAnalysis;
+using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -25,6 +27,9 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
+        // Main-thread copy of the frame under analysis, sized to one DSP callback so the producers never block on it.
+        private float[] frameScratch;
+
         internal AudioAnalysisSystem(
             World world, 
             IPerformanceBudget frameTimeBudgetProvider,
@@ -33,6 +38,13 @@ namespace DCL.SDKComponents.AudioSources
         {
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            frameScratch = new float[LastAudioFrameBuffer.OutputFrameLength()];
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
+        }
+
+        protected override void OnDispose()
+        {
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
         }
 
         protected override void Update(float t)
@@ -48,7 +60,7 @@ namespace DCL.SDKComponents.AudioSources
             ref PBAudioAnalysis sdkComponent
         )
         {
-            // Skip players whose AVPro object was destroyed; UpdateMediaPlayerSystem tears them down.
+            // Skip players whose MediaPlayer object was destroyed.
             if (!mediaPlayerComponent.MediaPlayer.IsValid) return;
 
             HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);
@@ -72,14 +84,13 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
-            ThreadSafeLastAudioFrameReadFilter output = null!;
-            if (component.TryAttachLastAudioFrameReadFilterOrUseExisting(out output) == false) 
+            if (!component.TryAttachAudioFrameBuffer())
             {
-                ReportHub.LogError(GetReportCategory(), "Cannot attach LastAudioFrameReadFilter");
+                ReportHub.LogError(GetReportCategory(), "Cannot attach the audio frame buffer");
                 return;
             }
 
-            if (output!.TryConsume(out float[]? data, out int outChannels, out int outSampleRate)) 
+            if (component.TryConsumeAudioFrame(frameScratch, out _, out int sampleCount))
             {
                 AnalysisResultMode mode = sdkComponent.Mode switch
                 {
@@ -91,7 +102,7 @@ namespace DCL.SDKComponents.AudioSources
 
                 unsafe 
                 {
-                    AudioAnalysis result = NativeMethods.AnalyzeAudioBuffer(data!, outSampleRate, mode, amplitudeGain, bandsGain);
+                    AudioAnalysis result = NativeMethods.AnalyzeAudioBuffer(frameScratch.AsSpan(0, sampleCount), AudioSettings.outputSampleRate, mode, amplitudeGain, bandsGain);
 
                     sdkComponent.Amplitude = result.amplitude;
 
@@ -107,8 +118,16 @@ namespace DCL.SDKComponents.AudioSources
                 }
 
                 sdkComponent.IsDirty = false;
-                ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
+                ecsToCRDTWriter.PutMessage(sdkComponent, entity);
             }
+        }
+
+        private void OnAudioConfigurationChanged(bool _)
+        {
+            int frameLength = LastAudioFrameBuffer.OutputFrameLength();
+
+            if (frameScratch.Length != frameLength)
+                frameScratch = new float[frameLength];
         }
     }
 }

@@ -14,18 +14,13 @@ namespace DCL.Diagnostics.Sentry
     ///     Sends user-authored bug reports to Sentry User Feedback
     ///     (https://docs.sentry.io/product/user-feedback/) through the hub initialized by
     ///     <see cref="SentryReportHandler" />, and returns a deep link to the created entry.
+    ///     The report travels as a feedback envelope only: it captures no event of its own, so it never opens a Sentry issue.
     /// </summary>
     public class SentryUserFeedbackService
     {
-        private const string LOG_EVENT_MESSAGE = "Bug report log attachment";
         private const string LOG_CONTENT_TYPE = "text/plain";
-        private const string JPG_CONTENT_TYPE = "image/jpeg";
-        private const string PNG_CONTENT_TYPE = "image/png";
-        private const string JPG_FILE_NAME = "screenshot.jpg";
-        private const string PNG_FILE_NAME = "screenshot.png";
         private const string CATEGORY_TAG_VALUE = "FEEDBACK";
         private const int LOG_TAIL_MAX_BYTES = 64 * 1024;
-        private const int IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
         private static readonly TimeSpan FLUSH_TIMEOUT = TimeSpan.FromSeconds(5);
 
@@ -34,7 +29,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly Action<Scope>? externalConfigureScope;
 
         /// <param name="feedbackUrlTemplate">Deep link into the Sentry feedback UI, with {0} standing for the feedback event id.</param>
-        /// <param name="configureScope">Optional enrichment applied to the feedback and log events, e.g. wallet and scene tags.</param>
+        /// <param name="configureScope">Optional enrichment applied to the feedback, e.g. wallet and scene tags.</param>
         public SentryUserFeedbackService(string feedbackUrlTemplate, Action<Scope>? configureScope = null)
         {
             this.feedbackUrlTemplate = feedbackUrlTemplate;
@@ -53,28 +48,20 @@ namespace DCL.Diagnostics.Sentry
             if (string.IsNullOrWhiteSpace(report.Message))
                 return Result<string>.ErrorResult("The report message is empty");
 
-            if (report.Image is { Length: > IMAGE_MAX_BYTES })
-                return Result<string>.ErrorResult($"The image exceeds {IMAGE_MAX_BYTES / (1024 * 1024)}MB");
-
-            // A feedback envelope keeps a single attachment, so the log travels on an associated event of its own.
-            SentryId logEventId = CaptureLogEvent();
-
+            // A feedback envelope keeps a single attachment: the client log tail.
             SentryHint? hint = null;
+            (string fileName, byte[] bytes)? logTail = ReadLogTail(LOG_TAIL_MAX_BYTES);
 
-            if (report.Image != null)
+            if (logTail != null)
             {
-                string contentType = report.ImageContentType ?? JPG_CONTENT_TYPE;
                 hint = new SentryHint();
-                hint.AddAttachment(report.Image, contentType == PNG_CONTENT_TYPE ? PNG_FILE_NAME : JPG_FILE_NAME, AttachmentType.Default, contentType);
+                hint.AddAttachment(logTail.Value.bytes, logTail.Value.fileName, AttachmentType.Default, LOG_CONTENT_TYPE);
             }
 
             var feedback = new SentryFeedback(
                 report.Message,
                 NullIfEmpty(report.ContactEmail),
-                NullIfEmpty(report.UserName),
-                replayId: null,
-                url: null,
-                associatedEventId: logEventId == SentryId.Empty ? null : logEventId);
+                NullIfEmpty(report.UserName));
 
             // HubAdapter instead of the Sentry.Unity facade: only it hands back the event id the deep link needs.
             SentryId feedbackId = HubAdapter.Instance.CaptureFeedback(feedback, out CaptureFeedbackResult result, configureScopeCached, hint);
@@ -86,20 +73,6 @@ namespace DCL.Diagnostics.Sentry
             await FlushAsync();
 
             return Result<string>.SuccessResult(string.Format(feedbackUrlTemplate, feedbackId));
-        }
-
-        private SentryId CaptureLogEvent()
-        {
-            (string fileName, byte[] bytes)? tail = ReadLogTail(LOG_TAIL_MAX_BYTES);
-
-            if (tail == null)
-                return SentryId.Empty;
-
-            return SentrySdk.CaptureMessage(LOG_EVENT_MESSAGE, scope =>
-            {
-                configureScopeCached(scope);
-                scope.AddAttachment(tail.Value.bytes, tail.Value.fileName, AttachmentType.Default, LOG_CONTENT_TYPE);
-            });
         }
 
         private void ConfigureScope(Scope scope)

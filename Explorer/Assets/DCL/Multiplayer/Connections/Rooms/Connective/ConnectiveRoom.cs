@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.Credentials;
 using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -303,7 +302,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
+            // Gatekeeper with Pulse Authority evicts duplicated peers with ParticipantRemoved reason
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity or LKDisconnectReason.ParticipantRemoved && isDuplicateIdentityStopFeatureEnabled)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();

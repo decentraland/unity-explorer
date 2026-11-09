@@ -34,7 +34,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
-using Utility.UIToolkit;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -75,7 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
-        private Transform? poolParent = null;
+        private Transform? poolParent;
 
         private IObjectPool<NametagHolder> nametagHolderPool = null!;
         private TextureArrayContainer textureArrayContainer;

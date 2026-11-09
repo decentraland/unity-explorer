@@ -17,7 +17,8 @@ namespace DCL.MapRenderer.MapCameraController
 
         Camera Camera { get; }
 
-        void Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers);
+        /// <summary>Prepares a pooled camera for a new rent; only the renter's <see cref="IMapCameraController.Release" /> takes effect afterwards.</summary>
+        void Initialize(IMapActivityOwner owner, Vector2Int textureResolution, Vector2Int zoomValuesInParcels, MapLayer layers);
 
         void SetActive(bool active);
 

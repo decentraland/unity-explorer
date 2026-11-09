@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using System;
 using System.Buffers;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests.CustomDownloadHandlers
@@ -9,7 +8,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
     public class PartialDownloadHandler : DownloadHandlerScript
     {
         private readonly ArrayPool<byte> buffersPool;
-        private int bufferPointer = 0;
+        private int bufferPointer;
         public byte[]? PartialData;
         public int DownloadedSize;
 
@@ -23,7 +22,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             // Try to apply new PartialData buffer if contentLength is available
             if (PartialData == null && contentLength > 0)
             {
-                var target = (int)Math.Min(contentLength, (ulong)PartialDownloadingRange.CHUNK_SIZE);
+                var target = (int)Math.Min(contentLength, PartialDownloadingRange.CHUNK_SIZE);
 
                 if (target > 0)
                     PartialData = buffersPool.Rent(target);

@@ -65,7 +65,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             cancellationTokenSource?.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
-            mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(new AuthenticationScreenController.Params(false))).Forget();
         }
     }
 }

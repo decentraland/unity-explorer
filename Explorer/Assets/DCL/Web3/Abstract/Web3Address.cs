@@ -9,6 +9,9 @@ namespace DCL.Web3
         // ETH wallet address constants
         public const int ETH_ADDRESS_LENGTH = 42; // "0x" + 40 hex characters
 
+        private const int SHORT_HEAD_LENGTH = 5;
+        private const int SHORT_TAIL_LENGTH = 5;
+
         public readonly string OriginalFormat;
         private readonly string address;
 
@@ -47,6 +50,10 @@ namespace DCL.Web3
         /// </summary>
         public static Web3Address? FromUntrusted(string? address) =>
             IsValidWalletAddress(address) ? new Web3Address(address) : null;
+
+        /// <summary>The head and tail of the address, "0x123...abcde", as the UI shows wallets.</summary>
+        public static string Shorten(string address) =>
+            address.Length > SHORT_HEAD_LENGTH + SHORT_TAIL_LENGTH ? $"{address[..SHORT_HEAD_LENGTH]}...{address[^SHORT_TAIL_LENGTH..]}" : address;
 
         public override string ToString() =>
             address;

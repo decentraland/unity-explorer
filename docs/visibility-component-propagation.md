@@ -1,6 +1,6 @@
 # Visibility Component Propagation
 
-The SDK contains a component called VisibilityComponent (manual usage [here](https://docs.decentraland.org/creator/scenes-sdk7/3d-content-essentials/shape-components#make-invisible), protocol [here](https://github.com/decentraland/protocol/blob/experimental/proto/decentraland/sdk/components/visibility_component.proto)), that component allows creators to toggle the visibility of a specific Entity in its scene.
+The SDK contains a component called VisibilityComponent (manual usage [here](https://docs.decentraland.org/creator/scenes-sdk7/3d-content-essentials/shape-components#make-invisible), protocol [here](https://github.com/decentraland/protocol/blob/main/proto/decentraland/sdk/components/visibility_component.proto)), that component allows creators to toggle the visibility of a specific Entity in its scene.
 
 Since the introduction of the `PropagateToChildren` property for that component, certain rules start to apply in regards to visibility propagation.
 

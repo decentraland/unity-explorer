@@ -14,7 +14,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
@@ -305,6 +304,7 @@ namespace DCL.UI
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
+                { "source", "community_members_context_menu" },
             });
 
         private void OnDemoteSpeakerClicked(string walletId)

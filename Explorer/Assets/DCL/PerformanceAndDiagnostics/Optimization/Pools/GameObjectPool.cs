@@ -113,7 +113,12 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(ParentContainer, false);
+            Transform transform = component.transform;
+            transform.SetParent(ParentContainer, false);
+
+            // Released instances don't carry the previous owner's local transform
+            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            transform.localScale = Vector3.one;
         }
     }
 }

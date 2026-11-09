@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
@@ -29,16 +28,13 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
-        private readonly ISelfProfile selfProfile;
-        private readonly IProfileCache profileCache;
+        private readonly SelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly World world;
-        private readonly Entity playerEntity;
         private readonly IOwnedNftFilter ownedNftFilter;
         private CancellationTokenSource? publishProfileCts;
 
@@ -46,13 +42,10 @@ namespace DCL.Backpack
             IBackpackEventBus backpackEventBus,
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
-            ISelfProfile selfProfile,
-            IProfileCache profileCache,
+            SelfProfile selfProfile,
             IEmoteStorage emoteStorage,
             IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
-            World world,
-            Entity playerEntity,
             IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileChangesBus profileChangesBus,
@@ -63,7 +56,6 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
-            this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
 
@@ -83,8 +75,6 @@ namespace DCL.Backpack
             web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
 
-            this.world = world;
-            this.playerEntity = playerEntity;
             this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileChangesBus = profileChangesBus;
@@ -193,72 +183,72 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
+            // Set once the equipped look is announced ahead of the deployment, so a failed deployment can put the committed one back
+            Profile? profileToRevertTo = null;
+
             try
             {
-                bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                            && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
+                ProfileReadResult read = await selfProfile.ProfileAsync(ct);
 
-                if (!publishProfileChange)
+                if (!read.IsOk(out Profile? oldProfile))
                 {
-                    Profile? oldProfile = await selfProfile.ProfileAsync(ct);
-
-                    if (oldProfile == null)
-                    {
+                    if (!read.IsCancelled)
                         ShowErrorNotificationAsync(ct).Forget();
-                        return;
-                    }
-
-                    var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-
-                    Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
-                        equippedWearables,
-                        forceRenderList,
-                        emoteStorage,
-                        wearableStorage,
-                        ownedNftFilter);
-
-                    // Skip publishing the same profile
-                    if (newProfile.IsSameProfile(oldProfile))
-                    {
-                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
-                        return;
-                    }
-
-                    profileCache.Set(newProfile.UserId, newProfile);
-                    UpdateAvatarInWorld(newProfile);
-                    profileChangesBus.PushUpdate(newProfile);
 
                     return;
                 }
 
-                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+
+                // The version is bumped by whoever commits the profile, so here it still matches the one it is compared against
+                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
+                    equippedWearables,
+                    forceRenderList,
+                    emoteStorage,
+                    wearableStorage,
+                    ownedNftFilter,
+                    incrementVersion: false);
+
+                // Skip publishing the same profile
+                if (newProfile.IsSameProfile(oldProfile))
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    return;
+                }
+
+                // The equipped look is final here, so it is announced ahead of the slow deployment; a copy is pushed because the commit mutates newProfile
+                profileChangesBus.PushUpdate(new ProfileBuilder().From(newProfile).WithVersion(newProfile.Version + 1).Build());
+                profileToRevertTo = oldProfile;
+
+                // A previewed look is local only: it may hold wearables or emotes the user does not own.
+                bool localOnly = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS) || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
+                ProfileDeployResult deploy = await selfProfile.DeployProfileAsync(newProfile, ct, localOnly);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
-                if (updatedProfile != null)
+                if (deploy.IsOk(out Profile? updatedProfile))
+                {
                     profileChangesBus.PushUpdate(updatedProfile);
+                    backpackEventBus.SendAvatarChanged();
+                }
+                else if (deploy.IsError(out ProfileDeployError error) && error != ProfileDeployError.Cancelled)
+                {
+                    profileChangesBus.PushUpdate(oldProfile);
+
+                    if (error == ProfileDeployError.NothingChanged)
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+                    else if (error == ProfileDeployError.DeployFailed)
+                        ShowErrorNotificationAsync(ct).Forget();
+                }
             }
             catch (OperationCanceledException) { }
-            catch (IdenticalProfileUpdateException)
-            {
-                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
-            }
             catch (Exception e)
             {
+                if (profileToRevertTo != null)
+                    profileChangesBus.PushUpdate(profileToRevertTo);
+
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 ShowErrorNotificationAsync(ct).Forget();
             }
-        }
-
-        private void UpdateAvatarInWorld(Profile profile)
-        {
-            profile.IsDirty = true;
-
-            bool found = world.Has<Profile>(playerEntity);
-
-            if (found)
-                world.Set(playerEntity, profile);
-            else
-                world.Add(playerEntity, profile);
         }
 
         private async UniTask ShowErrorNotificationAsync(CancellationToken ct)

@@ -15,18 +15,6 @@ namespace DCL.Translation
         public const string PROFILE = "profile";
     }
 
-    public static class GenesisCityData
-    {
-        private const int MIN_COORD = -150;
-        private const int MAX_COORD = 150;
-
-        public static bool IsInsideBounds(int x, int y)
-        {
-            return x >= MIN_COORD && x <= MAX_COORD && y >= MIN_COORD && y <= MAX_COORD;
-        }
-    }
-
-
     [TestFixture]
     public class HyperlinkTextFormatterShould
     {

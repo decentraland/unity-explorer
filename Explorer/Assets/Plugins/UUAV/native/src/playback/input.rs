@@ -79,8 +79,16 @@ impl Input {
         self.fmt
     }
 
-    pub(super) fn find_best_stream(&self, media_type: ff::AVMediaType) -> c_int {
-        unsafe { ff::av_find_best_stream(self.fmt, media_type, -1, -1, ptr::null_mut(), 0) }
+    pub(super) fn nb_streams(&self) -> c_int {
+        c_int::try_from(unsafe { (*self.fmt).nb_streams }).unwrap_or(c_int::MAX)
+    }
+
+    /// Index of the best stream of `media_type`, negative when there is
+    /// none. With `related >= 0` the search is confined to the program of
+    /// that stream (an HLS variant); a media without programs searches all
+    /// streams regardless.
+    pub(super) fn find_best_stream(&self, media_type: ff::AVMediaType, related: c_int) -> c_int {
+        unsafe { ff::av_find_best_stream(self.fmt, media_type, -1, related, ptr::null_mut(), 0) }
     }
 
     /// SAFETY: the streams belong to the context, which outlives the view
@@ -161,6 +169,61 @@ mod tests {
             !msg.contains("no such file"),
             "file: must be blocked before the filesystem, got: {msg}"
         );
+        Ok(())
+    }
+
+    /// A format context with two programs (HLS variants), each carrying one
+    /// video and one audio stream. Nothing is opened: the layout is built
+    /// through the public muxing-side API, so no I/O is involved.
+    ///
+    /// Per program: (video bitrate, audio bitrate).
+    fn two_programs(input_bitrates: [(i64, i64); 2]) -> Result<Input> {
+        let fmt = unsafe { ff::avformat_alloc_context() };
+        anyhow::ensure!(!fmt.is_null(), "avformat_alloc_context failed");
+        let input = Input {
+            fmt,
+            _cancel: cancel(),
+        };
+
+        for (program_id, (video_bitrate, audio_bitrate)) in (0..).zip(input_bitrates) {
+            let program = unsafe { ff::av_new_program(fmt, program_id) };
+            anyhow::ensure!(!program.is_null(), "av_new_program failed");
+
+            for (codec_type, bitrate) in [
+                (ff::AVMediaType::AVMEDIA_TYPE_VIDEO, video_bitrate),
+                (ff::AVMediaType::AVMEDIA_TYPE_AUDIO, audio_bitrate),
+            ] {
+                let stream = unsafe { ff::avformat_new_stream(fmt, ptr::null()) };
+                anyhow::ensure!(!stream.is_null(), "avformat_new_stream failed");
+                unsafe {
+                    let par = (*stream).codecpar;
+                    (*par).codec_type = codec_type;
+                    (*par).bit_rate = bitrate;
+                    // av_find_best_stream skips audio without a layout
+                    (*par).ch_layout.nb_channels = 2;
+                    (*par).sample_rate = 48_000;
+                    ff::av_program_add_stream_index(fmt, program_id, (*stream).index as u32);
+                }
+            }
+        }
+        Ok(input)
+    }
+
+    #[test]
+    fn related_search_stays_in_the_video_stream_program() -> Result<()> {
+        // program 0: best video, weaker audio; program 1: weaker video,
+        // best audio. Streams are laid out as [v0, a1, v2, a3].
+        let input = two_programs([(2_000_000, 64_000), (1_000_000, 128_000)])?;
+
+        let video = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_VIDEO, -1);
+        assert_eq!(video, 0, "highest-bitrate video");
+
+        let unrelated = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, -1);
+        assert_eq!(unrelated, 3, "an unrelated search crosses programs");
+
+        let related = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, video);
+        assert_eq!(related, 1, "a related search stays in the video's program");
+        assert_eq!(input.nb_streams(), 4);
         Ok(())
     }
 

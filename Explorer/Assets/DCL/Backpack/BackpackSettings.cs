@@ -1,4 +1,3 @@
-using DCL.AssetsProvision;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -38,6 +37,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public AssetReferenceSprite DeleteOutfitIcon { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceGameObject BackpackModalPrefab { get; private set; } = null!;
 
     }
 }

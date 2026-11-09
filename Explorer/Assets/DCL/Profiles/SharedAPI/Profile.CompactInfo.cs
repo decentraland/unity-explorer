@@ -81,7 +81,7 @@ namespace DCL.Profiles
                 this.name = name;
                 UpdateUserId(userId);
                 HasClaimedName = hasClaimedName;
-                FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? default(URLAddress) : URLAddress.FromString(faceUrl);
+                FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? URLAddress.EMPTY : URLAddress.FromString(faceUrl);
                 this.claimedNameColor = claimedNameColor;
             }
 
@@ -272,7 +272,6 @@ namespace DCL.Profiles
             public override bool Equals(object? obj)
             {
                 if (obj is null) return false;
-                if (ReferenceEquals(this, obj)) return true;
                 if (obj.GetType() != GetType()) return false;
                 return Equals((CompactInfo)obj);
             }

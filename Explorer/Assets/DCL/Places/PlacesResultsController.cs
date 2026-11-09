@@ -13,9 +13,10 @@ using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -44,12 +45,12 @@ namespace DCL.Places
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
-        private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
@@ -68,7 +69,7 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -77,7 +78,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             HttpEventsApiService eventsApiService,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            IWeb3IdentityCache identityCache)
         {
             this.view = view;
             this.placesController = placesController;
@@ -89,7 +91,7 @@ namespace DCL.Places
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
-            this.worldPermissionsService = worldPermissionsService;
+            this.identityCache = identityCache;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.ExplorePlacesClicked += OnExplorePlacesClicked;
@@ -139,8 +141,16 @@ namespace DCL.Places
         private void OnExplorePlacesClicked() =>
             placesController.OpenSection(PlacesSection.Browse, force: true, resetCategory: true);
 
-        private void GetANameClicked() =>
+        private void GetANameClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.NameClaim)));
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
+        }
 
         private void TryLoadMorePlaces()
         {
@@ -288,15 +298,19 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.Browse:
+                    bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
+                    bool onlyFeatured = currentFilters.IsBrowsingFeatured;
+
                     placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.Browse ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.Browse && !onlyFeatured ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              category: isSearching || onlyFeatured ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
                                                               onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY,
-                                                              withLiveEvents: true)
+                                                              withLiveEvents: true,
+                                                              onlyHighlighted: onlyFeatured ? true : null)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.Favorites:
@@ -309,10 +323,20 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MyPlaces:
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-                    if (ownProfile == null) return;
+                    ProfileReadResult ownRead = await selfProfile.ProfileAsync(ct);
+
+                    if (ownRead.IsCancelled)
+                        return;
+
+                    if (!ownRead.IsOk(out Profile? ownProfile))
+                    {
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                        EndPlacesGridLoading(pageNumber);
+                        return;
+                    }
+
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
-                                                              ownerAddress: ownProfile.UserId,
+                                                              ownerAddress: ownProfile.UserId.Value,
                                                               ct: ct,
                                                               withConnectedUsers: true,
                                                               onlySdk7: false,
@@ -320,14 +344,8 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RecentlyVisited:
-                    var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
-                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
-
-                    // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
-                    PlacesData.PlacesAPIResponse sortedPlacesResponse = GetRecentlyVisitedPlacesSorted(placesByIdResult, recentlyVisitedPlacesIds);
-                    placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(sortedPlacesResponse)
-                                                .SuppressToResultAsync(ReportCategory.PLACES);
+                    placesResult = await placesAPIService.GetRecentlyVisitedDestinationsAsync(ct, withConnectedUsers: true)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
 
                     break;
                 default:
@@ -343,6 +361,7 @@ namespace DCL.Places
             if (!placesResult.Success)
             {
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
+                EndPlacesGridLoading(pageNumber);
                 return;
             }
 
@@ -379,29 +398,16 @@ namespace DCL.Places
 
             currentPlacesTotalAmount = placesResult.Value.Total;
 
+            EndPlacesGridLoading(pageNumber);
+        }
+
+        private void EndPlacesGridLoading(int pageNumber)
+        {
             if (pageNumber == 0)
                 view.SetPlacesGridAsLoading(false);
 
             view.SetPlacesGridLoadingMoreActive(false);
-
             isPlacesGridLoadingItems = false;
-        }
-
-        private static PlacesData.PlacesAPIResponse GetRecentlyVisitedPlacesSorted(Result<PlacesData.IPlacesAPIResponse> placesResult, List<string> sortedPlacesIds)
-        {
-            PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
-
-            if (!placesResult.Success)
-                return sortedPlacesResponse;
-
-            var placesById = placesResult.Value.Data.ToDictionary(p => p.id);
-            foreach (string placeId in sortedPlacesIds)
-                if (placesById.TryGetValue(placeId, out var placeInfo))
-                    sortedPlacesResponse.data.Add(placeInfo);
-
-            sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
-
-            return sortedPlacesResponse;
         }
 
         private void UnloadPlaces()

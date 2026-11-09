@@ -1,4 +1,3 @@
-using Global.Dynamic;
 using NUnit.Framework;
 
 namespace Global.Dynamic.Tests

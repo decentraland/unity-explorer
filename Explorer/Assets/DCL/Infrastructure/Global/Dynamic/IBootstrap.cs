@@ -14,7 +14,6 @@ using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using Global.Versioning;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -53,7 +52,7 @@ namespace Global.Dynamic
             PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
+        public UniTask InitializeFeatureFlagsAsync(IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
 
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
@@ -64,7 +63,7 @@ namespace Global.Dynamic
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
-        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache, IWeb3IdentityCache identityCache);
 
         void InitializeFeaturesRegistry();
     }

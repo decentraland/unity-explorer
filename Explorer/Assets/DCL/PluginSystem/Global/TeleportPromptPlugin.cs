@@ -6,7 +6,6 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.PlacesAPIService;
 using DCL.TeleportPrompt;
-using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using DCL.UI;

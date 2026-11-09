@@ -11,6 +11,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
@@ -37,29 +38,32 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
-        [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
+        [All(typeof(DeleteEntityIntention))]
         private void DereferenceParentingOfDeletedEntity(in Entity entity, ref TransformComponent transformComponentToBeDeleted)
         {
-            Entity parent = transformComponentToBeDeleted.Parent;
-
-            if (!World.IsAlive(parent)) return;
-
-            var parentTransform = World!.TryGetRef<TransformComponent>(parent, out bool exists);
-
-            if (exists && parentTransform.Children.Remove(entity) == false)
-                ReportHub.LogError(
-                    GetReportData(),
-                    $"Entity {entity} is not a child of its parent {parent}"
-                );
+            RemoveFromParent(in transformComponentToBeDeleted, entity);
         }
 
         [Query]
-        [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
-        private void OrphanChildrenOfDeletedEntity(ref TransformComponent transformComponentToBeDeleted)
+        [All(typeof(DeleteEntityIntention))]
+        private void OrphanChildrenOfDeletedEntity(in Entity entity, in CRDTEntity crdtEntity, ref TransformComponent transformComponentToBeDeleted)
         {
             foreach (Entity childEntity in transformComponentToBeDeleted.Children)
             {
-                ref TransformComponent transformComponent = ref World!.Get<TransformComponent>(childEntity);
+                // Arch ignores the entity version, so a stale id can resolve to a dead slot or to an unrelated recycled entity
+                if (!World.IsAlive(childEntity))
+                {
+                    ReportStaleChild(entity, crdtEntity, childEntity, false, false, Entity.Null);
+                    continue;
+                }
+
+                ref TransformComponent transformComponent = ref World.TryGetRef<TransformComponent>(childEntity, out bool hasTransform);
+
+                if (!hasTransform || transformComponent.Parent != entity)
+                {
+                    ReportStaleChild(entity, crdtEntity, childEntity, true, hasTransform, hasTransform ? transformComponent.Parent : Entity.Null);
+                    continue;
+                }
 
                 SetNewChild(
                     ref transformComponent,
@@ -81,17 +85,13 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (!sdkTransform.IsDirty) return;
 
-            Entity parentReference = sceneRoot;
+            // A parent the scene never materialized in this world falls back to the scene root
+            if (!entitiesMap.TryGetValue(sdkTransform.ParentId, out Entity parentReference))
+                parentReference = sceneRoot;
 
-            if (entitiesMap.TryGetValue(sdkTransform.ParentId, out Entity newParentEntity))
-            {
-                parentReference = newParentEntity;
+            if (transformComponent.Parent == parentReference) return;
 
-                //We have to remove the child from the old parent
-                if (transformComponent.Parent != parentReference)
-                    RemoveFromParent(transformComponent, entity);
-            }
-
+            RemoveFromParent(in transformComponent, entity);
             SetNewChild(ref transformComponent, entity, crdtEntity, parentReference, sdkTransform.ParentId);
         }
 
@@ -103,7 +103,8 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to a dead entity parent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to a dead entity parent, falling back to the scene root");
+                AssignToSceneRoot(ref childComponent, childEntityReference);
                 return;
             }
 
@@ -111,17 +112,39 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!success)
             {
-                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
+                ReportHub.LogError(GetReportData(), $"Trying to parent entity {childEntityReference} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent, falling back to the scene root");
+                AssignToSceneRoot(ref childComponent, childEntityReference);
                 return;
             }
 
             childComponent.AssignParent(childEntityReference, parentEntity, in parentComponent);
         }
 
-        private void RemoveFromParent(TransformComponent childComponent, Entity childEntityReference)
+        // Keeps Parent and the parent's Children consistent when the requested parent cannot be used
+        private void AssignToSceneRoot(ref TransformComponent childComponent, Entity childEntityReference)
         {
-            if (World.IsAlive(childComponent.Parent))
-                World.Get<TransformComponent>(childComponent.Parent).Children.Remove(childEntityReference);
+            if (childComponent.Parent == sceneRoot)
+                return;
+
+            childComponent.AssignParent(childEntityReference, sceneRoot, in World.Get<TransformComponent>(sceneRoot));
+        }
+
+        private void RemoveFromParent(in TransformComponent childComponent, Entity childEntityReference)
+        {
+            if (!World.IsAlive(childComponent.Parent)) return;
+
+            ref TransformComponent parentComponent = ref World.TryGetRef<TransformComponent>(childComponent.Parent, out bool exists);
+
+            if (exists && !parentComponent.Children.Remove(childEntityReference))
+                ReportHub.LogError(GetReportData(), $"Entity {childEntityReference} is not a child of its parent {childComponent.Parent}");
+        }
+
+        [Conditional("UNITY_EDITOR")]
+        [Conditional("DEVELOPMENT_BUILD")]
+        private void ReportStaleChild(Entity deletedEntity, CRDTEntity deletedCrdtEntity, Entity childEntity, bool childIsAlive, bool childHasTransform, Entity childParent)
+        {
+            ReportHub.LogWarning(GetReportData(),
+                $"Deleted entity {deletedEntity} ({deletedCrdtEntity}) lists {childEntity} as a child but it is not one anymore: alive={childIsAlive}, hasTransform={childHasTransform}, parent={childParent}");
         }
     }
 }

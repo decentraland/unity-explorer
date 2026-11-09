@@ -109,9 +109,14 @@ namespace DCL.Input.Systems
         }
 
         [Query]
-        private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
+        private void UpdateCursor(in Entity entity, ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
-            Vector2 mousePos = mouseDevice.position.value;
+            SyntheticCursorOverride syntheticCursor = World.TryGet(entity, out SyntheticCursorOverride installed) ? installed : SyntheticCursorOverride.Inactive;
+
+            Vector2 mousePos = syntheticCursor.TryGetPointerPosition(out Vector2 syntheticPointer)
+                ? syntheticPointer
+                : mouseDevice.position.value;
+
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
 
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
@@ -139,7 +144,7 @@ namespace DCL.Input.Systems
 
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
             UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
-            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
+            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos, syntheticCursor.SuppressOsWarp);
         }
 
         [Query]
@@ -205,6 +210,7 @@ namespace DCL.Input.Systems
                     if (isHoveringAnInteractable)
                         cursorStyle = CursorStyle.Interaction;
 
+                    // Only the first hit can take a click.
                     for (var i = 0; i < raycastResults.Count; i++)
                     {
                         GameObject? obj = raycastResults[i].gameObject;
@@ -212,12 +218,9 @@ namespace DCL.Input.Systems
                         if (obj == null)
                             continue;
 
-                        bool isInteractable = interactionCache.IsInteractable(obj, cursorComponent.Position);
+                        if (interactionCache.IsInteractable(obj, cursorComponent.Position))
+                            cursorStyle = CursorStyle.Interaction;
 
-                        if (!isInteractable)
-                            continue;
-
-                        cursorStyle = CursorStyle.Interaction;
                         break;
                     }
 
@@ -235,9 +238,6 @@ namespace DCL.Input.Systems
             crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SdkCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
         }
 
-        // We check if the gameObject is interactable or not, at least once.
-        // For UI Elements we do a PickAll and check its results by using the same logic
-        // we have to check if we can avoid doing a PickAll every frame, it seems that its not slow at least
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
@@ -332,7 +332,7 @@ namespace DCL.Input.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
+        private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos, bool suppressOsWarp)
         {
             bool isPanning = cursorComponent.CursorState == CursorState.Panning;
 
@@ -342,7 +342,9 @@ namespace DCL.Input.Systems
                 pos.x = pos.x / Screen.width * 100f;
                 pos.y = pos.y / Screen.height * 100f;
                 crosshairCanvas.SetPosition(pos);
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!suppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 crosshairCanvas.ResetPosition();
@@ -360,7 +362,9 @@ namespace DCL.Input.Systems
                 // Todo: extract the +1 to sensitivity settings for controllers
                 float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
                 cursorComponent.Position += controllerDelta * fastCursor;
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!suppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 cursorComponent.Position = mousePos;

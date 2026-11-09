@@ -17,6 +17,7 @@ use crate::video_output::{VideoOutput, VideoTextureView};
 use crate::{AudioOptionsView, ErrorCallback, MediaInfo, UUAVState, VideoSize};
 use std::mem;
 use std::os::raw::c_int;
+use std::sync::Arc;
 
 static NETWORK_INIT: Once = Once::new();
 
@@ -43,6 +44,10 @@ pub(crate) struct UnitControls {
     pub(crate) looping: ControlConsume<bool>,
     /// Desired playback rate, in media seconds per wall second.
     pub(crate) rate: ControlConsume<f64>,
+    /// Coalescing seek command; the playback thread services it. Shared
+    /// with the player so a target requested while the media was still
+    /// opening is applied before the first packet is read.
+    pub(crate) seek: Arc<AtomicSeekSlot>,
 }
 
 /// Playback of a single url: the shared state the engine-facing threads
@@ -53,8 +58,6 @@ pub(crate) struct UnitControls {
 pub(crate) struct PlaybackUnit {
     url: String,
     cancel: ReadOnlyCancelToken,
-    /// Coalescing seek command; the playback thread services it.
-    seek: AtomicSeekSlot,
     controls: UnitControls,
     /// Playback state and media clock, as one atomic snapshot.
     transport: AtomicTransport,
@@ -78,6 +81,32 @@ pub(crate) struct PlaybackUnit {
     /// Engine device the presentation output is created on.
     device: HwDevice,
     error_callback: ErrorCallback,
+}
+
+/// Picks the video and audio streams to play, each negative when absent.
+/// Audio comes from the video's own program when that program has any
+/// (an HLS variant carries its own audio; mixing programs would make the
+/// demuxer fetch two variants), and from anywhere otherwise.
+fn select_streams(input: &Input) -> (c_int, c_int) {
+    let video_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_VIDEO, -1);
+    let mut audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, video_index);
+    if audio_index < 0 && video_index >= 0 {
+        audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO, -1);
+    }
+    (video_index, audio_index)
+}
+
+/// Drops every stream but the selected ones at the demuxer, before the
+/// first packet is read: an HLS master playlist otherwise keeps
+/// downloading and demuxing every variant for the whole playback.
+fn discard_unselected_streams(input: &Input, video_index: c_int, audio_index: c_int) {
+    for index in 0..input.nb_streams() {
+        if index != video_index && index != audio_index {
+            input
+                .stream_at(index)
+                .set_discard(ff::AVDiscard::AVDISCARD_ALL);
+        }
+    }
 }
 
 /// Fills the video half of `info` from the probed stream's parameters.
@@ -141,11 +170,11 @@ impl PlaybackUnit {
         });
 
         let input = Input::open(cancel.clone(), &url, protocol_whitelist)?;
-        let video_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_VIDEO);
-        let audio_index = input.find_best_stream(ff::AVMediaType::AVMEDIA_TYPE_AUDIO);
+        let (video_index, audio_index) = select_streams(&input);
         if video_index < 0 && audio_index < 0 {
             return Err(anyhow!("media has no playable video or audio stream"));
         }
+        discard_unselected_streams(&input, video_index, audio_index);
 
         let media_info = {
             let mut media_info = MediaInfo::empty();
@@ -204,7 +233,6 @@ impl PlaybackUnit {
             video_size,
             media_info,
             cancel,
-            seek: AtomicSeekSlot::new(),
             controls,
             transport: AtomicTransport::new(),
             audio: audio_reader,
@@ -275,7 +303,7 @@ impl PlaybackUnit {
                 applied_rate = rate;
             }
 
-            if let Some(target) = self.seek.take() {
+            if let Some(target) = self.controls.seek.take() {
                 if unrouted {
                     // belongs to the pre-seek position
                     packet.unref();
@@ -462,15 +490,13 @@ impl PlaybackUnit {
             PlaybackState::Ready | PlaybackState::Paused => {}
             PlaybackState::Playing => return,
             PlaybackState::Ended => {
-                // restart from the beginning
-                self.seek.request(0.0);
+                // restart from the beginning, unless a seek already picked
+                // the position: play and seek land back-to-back, and the
+                // slot is serviced after this in the same loop iteration
+                self.controls.seek.request_if_empty(0.0);
             }
         }
         self.transport.play();
-    }
-
-    pub(crate) fn seek_intent(&self, time: f64) {
-        self.seek.request(time.max(0.0));
     }
 
     pub(crate) const fn duration(&self) -> Option<f64> {

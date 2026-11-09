@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using ECS;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;

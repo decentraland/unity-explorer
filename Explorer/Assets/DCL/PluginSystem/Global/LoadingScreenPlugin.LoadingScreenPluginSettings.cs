@@ -2,7 +2,6 @@ using DCL.AssetsProvision;
 using DCL.SceneLoadingScreens;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {

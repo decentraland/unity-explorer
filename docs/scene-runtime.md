@@ -137,7 +137,8 @@ Apart from initiating Unity's web requests the scene lifecycle is thread agnosti
 
 The scene itself is represented by `ISceneFacade`. It has the following capabilities:
 - `StartUpdateLoop`
-- `SetTargetFPS`: the update frequency of JS Scene is controlled from C#
+- `SetTargetFps`: the update frequency of JS Scene is controlled from C# — `ControlSceneUpdateLoopSystem` sets it from the scene's partition bucket (`RealmPartitionSettings.fpsBuckets`, with `behindFps` for scenes behind the camera)
+- `SetIsCurrent`: the scene the player stands in ignores the partition FPS and ticks at most once per rendered frame, so it follows the application's frame rate; a tick that outlasts its frame starts the next one immediately. With VSync off and no FPS limit it is capped at the monitor refresh rate. Portable experiences are always flagged current but keep the partition FPS
 - `DisposeAsync`
 
 When the scene is created its life cycle is controlled by `ECS`. `ISceneFacade` is added as a component to the entity representing the scene.

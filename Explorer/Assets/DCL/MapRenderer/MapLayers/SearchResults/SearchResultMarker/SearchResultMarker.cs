@@ -4,7 +4,6 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.PlacesAPIService;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -63,7 +62,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             if (currentBaseScale != 0)
             {
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                poolableBehavior.OnBecameVisible().SetScale(currentBaseScale, currentNewScale);
                 ToggleSelection(isSelectedPin);
             }
         }
@@ -77,7 +76,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
             currentBaseScale = baseScale;
-            currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+            currentNewScale = MarkerHelper.ScaleForZoom(baseScale, baseZoom, zoom);
 
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);

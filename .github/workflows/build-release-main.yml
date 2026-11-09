@@ -59,3 +59,18 @@ jobs:
       install_source: ${{ matrix.install_source }}
       tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit
+
+  # Per-file binary patches into this release (docs/delta-updates.md). A failed delta job never
+  # fails this run; a cancelled or lost one does, and then no draft release is created.
+  delta:
+    name: Delta Patches
+    needs: [get-info, build]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-release-delta.yml
+    with:
+      tag: ${{ needs.get-info.outputs.tag_version }}
+    secrets:
+      EXPLORER_TEAM_AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+      EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+      EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}

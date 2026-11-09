@@ -140,6 +140,12 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithGuestMode(bool isGuest)
+        {
+            hasConnectedWeb3 = !isGuest;
+            return this;
+        }
+
         public Profile Build()
         {
             Option<UserId> id = UserId.New(userId);
@@ -172,7 +178,10 @@ namespace DCL.Profiles
             profile.GetCompact().HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.GetCompact().UserNameColor = userNameColor;
-            profile.ClaimedNameColor = claimedNameColor;
+
+            // Only a claimed name carries a color.
+            if (hasClaimedName)
+                profile.ClaimedNameColor = claimedNameColor;
 
             if (wearables != null)
                 foreach (URN urn in wearables)

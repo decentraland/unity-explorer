@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public async Task StartListeningForConnectionStringAsync_ShouldContinueOnErrorAsync([Values(IArchipelagoLiveConnection.ResponseError.MessageError)]
             IArchipelagoLiveConnection.ResponseError error)
         {
-            var onNewConnection = Substitute.For<Action<string>>();
+            var onNewConnection = Substitute.For<Action<string, string>>();
 
             var cts = new CancellationTokenSource();
 
@@ -56,7 +56,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
 
                 signFlow.StartListeningForConnectionStringAsync(onNewConnection, cts.Token).Forget();
 
-                onNewConnection.DidNotReceive().Invoke(Arg.Any<string>());
+                onNewConnection.DidNotReceive().Invoke(Arg.Any<string>(), Arg.Any<string>());
 
                 var successPacket = new ServerPacket
                 {
@@ -81,7 +81,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
 
                 await Task.Delay(500);
 
-                onNewConnection.Received().Invoke(Arg.Is<string>(s => s == successPacket.IslandChanged.ConnStr));
+                onNewConnection.Received().Invoke(
+                    Arg.Is<string>(s => s == successPacket.IslandChanged.IslandId),
+                    Arg.Is<string>(s => s == successPacket.IslandChanged.ConnStr));
             }
             finally
             {

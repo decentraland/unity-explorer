@@ -31,6 +31,9 @@ namespace DCL.ExplorePanel
         public Button CloseButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public Button LobbyButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public CreditsPanelView CreditsPanelView { get; private set; } = null!;
 
         [field: SerializeField]

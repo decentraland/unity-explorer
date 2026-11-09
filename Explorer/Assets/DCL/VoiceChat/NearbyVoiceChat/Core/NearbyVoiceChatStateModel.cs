@@ -23,6 +23,8 @@ namespace DCL.VoiceChat.Nearby
         Scene,
         /// <summary>Local player is banned from the current scene.</summary>
         SceneBan,
+        /// <summary>The session belongs to a guest, who cannot take part in Nearby voice.</summary>
+        Guest,
     }
 
     public enum NearbyVoiceActivation
@@ -51,7 +53,6 @@ namespace DCL.VoiceChat.Nearby
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
-        ///     Updated from <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>.
         ///     Written on the LiveKit event thread, read on the Unity main thread — volatile ensures visibility.
         /// </summary>
         private volatile bool isLocalSpeaking;
@@ -132,6 +133,9 @@ namespace DCL.VoiceChat.Nearby
             if (state.Value == NearbyVoiceChatState.Suppressed)
                 SetState(preBlockedState);
         }
+
+        public bool IsSuppressedBy(SuppressionReason reason) =>
+            suppressionReasons.Contains(reason);
 
         private bool TryResetToRemainedSuppression(ReactiveProperty<SuppressionReason?> active)
         {

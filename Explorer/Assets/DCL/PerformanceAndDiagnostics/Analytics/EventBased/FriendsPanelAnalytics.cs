@@ -41,6 +41,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 {"receiver_id", targetAddress},
                 {"friend_position", parcel.ToString()},
+                {"source", "friends_panel"},
             });
     }
 }

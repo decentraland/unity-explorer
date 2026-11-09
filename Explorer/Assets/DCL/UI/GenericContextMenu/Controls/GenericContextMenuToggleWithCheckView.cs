@@ -28,7 +28,7 @@ namespace DCL.UI.Controls
 
         public void Configure(ToggleWithCheckContextMenuControlSettings settings, bool initialValue)
         {
-            textComponent.SetText(settings!.toggleText);
+            textComponent.SetText(settings.toggleText);
             toggleComponent.group = settings.toggleGroup;
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;

@@ -16,6 +16,7 @@ using PortableExperiences.Controller;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.AdaptationLayerHelper;
 using SceneRuntime.Apis.Modules.CommsApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
@@ -101,6 +102,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterAdaptationLayerHelper(webRequestController, sceneData);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider, exceptionsHandler, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
@@ -142,6 +144,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterAdaptationLayerHelper(webRequestController, sceneData);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider, exceptionsHandler, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
@@ -168,6 +171,11 @@ namespace SceneRuntime
         private static void RegisterSceneApi(this ISceneRuntime sceneRuntime, ISceneApi api)
         {
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api, sceneRuntime.isDisposingTokenSource));
+        }
+
+        private static void RegisterAdaptationLayerHelper(this ISceneRuntime sceneRuntime, IWebRequestController webRequestController, ISceneData sceneData)
+        {
+            sceneRuntime.Register("UnityAdaptationLayerHelper", new AdaptationLayerHelperWrapper(webRequestController, sceneData, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneCommunicationPipe sceneCommunicationPipe, ISceneData sceneData, ISceneExceptionsHandler sceneExceptionsHandler)

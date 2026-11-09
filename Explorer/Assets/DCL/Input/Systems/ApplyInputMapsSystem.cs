@@ -65,6 +65,9 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.VoiceChat:
                             SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
+                        case InputMapComponent.Kind.Submit:
+                            SetActionEnabled(isActive, DCLInput.Instance.UI.Submit);
+                            break;
                     }
                 }
             }
@@ -76,6 +79,14 @@ namespace DCL.Input.Systems
 
             if (enabled) map.Enable();
             else map.Disable();
+        }
+
+        private static void SetActionEnabled(bool enabled, InputAction action)
+        {
+            if (action.enabled == enabled) return;
+
+            if (enabled) action.Enable();
+            else action.Disable();
         }
     }
 }

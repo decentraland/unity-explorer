@@ -186,7 +186,8 @@ concurrency:
   # Only cancel an in-flight build when the new event will actually produce a new useful build.
   # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
   # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
-  # Build Gate falsely green.
+  # Build Gate falsely green. Events raised by github-actions[bot] never build (see prebuild.if),
+  # so they never cancel either.
   cancel-in-progress: >-
     ${{
       github.event_name == 'push' ||
@@ -194,6 +195,7 @@ concurrency:
       github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
+        github.actor != 'github-actions[bot]' &&
         (
           github.event.action == 'opened' ||
           github.event.action == 'reopened' ||
@@ -225,7 +227,10 @@ jobs:
       statuses: write
       pull-requests: read
     timeout-minutes: 20
-    # Skip when PR has 'perf_test' label (only performance tests should run)
+    # Skip when PR has 'perf_test' label (only performance tests should run).
+    # Skip pull_request events raised by GITHUB_TOKEN (release and sync PRs):
+    # their runs fire no workflow_run, so no result would reach the PR comment.
+    # github.actor keeps the bot across manual approval and re-run.
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
         (github.ref == 'refs/heads/dev') ||
@@ -233,6 +238,7 @@ jobs:
         (github.event_name == 'workflow_dispatch') ||
         (
           github.event_name == 'pull_request' &&
+          github.actor != 'github-actions[bot]' &&
           (
             (
               (github.event.action == 'opened' ||
@@ -563,7 +569,8 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    # Pinned: setup-python has no 3.12.3 build for ubuntu-26.04 (ubuntu-latest). Revert once python-version moves to '3.12'.
+    runs-on: ubuntu-24.04
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
     # contents: read — checkout + the size-budget step's GET /releases/latest.
@@ -588,7 +595,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
@@ -618,7 +625,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60
+          POLL_TIME: 30
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
           LOG_STALL_THRESHOLD: 900
@@ -793,9 +800,6 @@ jobs:
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
           fi
-
-      - name: Install jq
-        run: sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Enforce artifact size budget
         id: size_check
@@ -972,11 +976,29 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          TARGET: ${{ matrix.target }}
         run: |
+          # A new launcher zip invalidates the delta patch set made for the previous zip of this
+          # tag and platform (docs/delta-updates.md): remove it before the zip is replaced and
+          # again after, so a manifest a concurrent run published during the upload is not kept.
+          # Epic zips have no patches, and a zip of one platform says nothing about the other.
+          DELTA_PREFIX="s3://$EXPLORER_TEAM_S3_BUCKET/$DESTINATION_PATH/delta/$TARGET/"
+          REPLACES_PATCHES=false
+          if [ "$IS_RELEASE_BUILD" = "true" ] && [ "$INSTALL_SOURCE" = "launcher" ]; then
+            REPLACES_PATCHES=true
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+          if [ "$REPLACES_PATCHES" = "true" ]; then
+            aws s3 rm --recursive --only-show-errors "$DELTA_PREFIX"
+          fi
 
       - name: Print S3 upload URL
         run: |
@@ -1077,7 +1099,8 @@ jobs:
           prebuild_result='${{ needs.prebuild.result }}'
 
           # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
-          # event, a draft without 'force-build', or the 'perf_test' label). That's a deliberate
+          # event, a draft without 'force-build', the 'perf_test' label, or a pull_request event
+          # raised by github-actions[bot]). That's a deliberate
           # "don't build this event" decision, not a failure, so there is nothing to gate.
           if [ "$prebuild_result" = "skipped" ]; then
             echo "Gate not applicable (prebuild skipped — no build for this event). Passing."

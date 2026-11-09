@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Lobby/UIToolkit/LobbyFriendCard.uss" />
+    <DCL.Lobby.LobbyFriendCardElement name="FriendCard" user-name="User Name" wallet-tag="#0000" online-status="Online" location="Locating…">
+        <ui:VisualElement name="Picture" class="lobby-friend-card__picture" picking-mode="Ignore" />
+        <ui:VisualElement name="OnlineIndicator" class="lobby-friend-card__online" picking-mode="Ignore" />
+        <ui:VisualElement name="UserName" class="lobby-friend-card__user-name" picking-mode="Ignore">
+            <ui:Label name="Name" text="User Name" enable-rich-text="false" class="lobby-friend-card__name" picking-mode="Ignore" />
+            <ui:Label name="WalletTag" text="#0000" class="lobby-friend-card__wallet-tag" picking-mode="Ignore" />
+            <ui:VisualElement name="VerifiedMark" class="lobby-friend-card__verified" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Location" class="lobby-friend-card__location" picking-mode="Ignore">
+            <ui:VisualElement name="LocationIcon" class="lobby-friend-card__location-icon" picking-mode="Ignore" />
+            <ui:Label name="LocationText" text="Locating…" enable-rich-text="false" class="lobby-friend-card__location-text" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:Button name="Join" class="lobby-friend-card__join">
+            <ui:Label name="JoinText" text="JOIN" class="lobby-friend-card__join-text" picking-mode="Ignore" />
+            <ui:VisualElement name="JoinIcon" class="lobby-friend-card__join-icon" picking-mode="Ignore" />
+        </ui:Button>
+    </DCL.Lobby.LobbyFriendCardElement>
+</ui:UXML>

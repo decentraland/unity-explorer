@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: LobbyStage_Floor
+  m_Shader: {fileID: 4800000, guid: c0b9a94fc0d9417d2d171ed4dbf643ae, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: b6bd6d10f321d8a498880fc2cbfe24a5, type: 3}
+        m_Scale: {x: 12, y: 12}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BlendEnd: 4.54
+    - _BlendHardness: 0.18
+    - _BlendStart: 3.14
+    - _SpotRadius: -0.67
+    - _SpotSoftness: 0.26
+    m_Colors:
+    - _BaseColor: {r: 0.7407711, g: 0.6084906, b: 0.8113208, a: 1}
+    - _BlendAxis: {r: 0, g: 0, b: -1, a: 0}
+    - _SpotColor: {r: 0.9716981, g: 0.7147973, b: 0.36209506, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

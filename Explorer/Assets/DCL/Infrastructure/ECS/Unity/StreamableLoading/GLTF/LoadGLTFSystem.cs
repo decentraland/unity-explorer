@@ -96,7 +96,7 @@ namespace ECS.StreamableLoading.GLTF
                 }
 
                 // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
-                rootContainer = new GameObject(gltfImport.GetSceneName(0));
+                rootContainer = new GameObject($"{GLTFData.NAME_PREFIX}{gltfImport.GetSceneName(0)}");
 
                 // Let the upper layer decide what to do with the root
                 rootContainer.SetActive(false);

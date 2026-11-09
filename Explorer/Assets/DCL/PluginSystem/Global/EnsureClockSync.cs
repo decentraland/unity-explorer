@@ -41,6 +41,12 @@ namespace DCL.PluginSystem.Global
 
                 if (!IsDesync()) return;
 
+                // The monotonic anchor stops while the OS sleeps, so a pre-sleep sample trails server time after wake without the user's clock being wrong.
+                realmClock.Invalidate();
+                await TryProbeServerTimeAsync(ct);
+
+                if (!IsDesync()) return;
+
                 response = await requestUserAction(ct);
             }
         }

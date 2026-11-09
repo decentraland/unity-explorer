@@ -14,11 +14,14 @@ namespace DCL.Notifications.NotificationsMenu
         [field: SerializeField]
         public LoopListView2 LoopList { get; private set; }
 
+        /// <summary>
+        ///     Unread badge of the button that opens the panel; optional.
+        /// </summary>
         [field: SerializeField]
-        public TMP_Text unreadNotificationCounterText { get; private set; } = null!;
+        public TMP_Text? unreadNotificationCounterText { get; private set; }
 
         [field: SerializeField]
-        public GameObject notificationIndicator { get; private set; }
+        public GameObject? notificationIndicator { get; private set; }
 
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; } = null!;

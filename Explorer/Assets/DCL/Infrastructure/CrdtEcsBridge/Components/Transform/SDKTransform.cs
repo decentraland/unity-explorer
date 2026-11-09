@@ -51,6 +51,6 @@ namespace CrdtEcsBridge.Components.Transform
 
         [NotNull]
         public override string ToString() =>
-            $"({nameof(SDKTransform)} {nameof(ParentId)}: {ParentId}; {nameof(Position)} {Position}; {nameof(Rotation)} {Rotation}; {nameof(Scale)}: {Scale}; {nameof(IsDirty)} {IsDirty})";
+            $"({nameof(SDKTransform)} {nameof(ParentId)}: {ParentId}; {nameof(Position)}: {Position}; {nameof(Rotation)}: {Rotation}; {nameof(Scale)}: {Scale}; {nameof(IsDirty)} {IsDirty})";
     }
 }

@@ -1,4 +1,8 @@
 using CodeLess.Attributes;
+using DCL.Chat.History;
+using DCL.ChatArea;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3.Identities;
 using MVC;
 
 namespace DCL.Chat
@@ -8,12 +12,21 @@ namespace DCL.Chat
     {
         private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IChatHistory chatHistory;
 
-        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager)
+        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager, IWeb3IdentityCache identityCache, IChatHistory chatHistory)
         {
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
+            this.chatHistory = chatHistory;
         }
+
+        /// <summary>
+        ///     True while the chat area is up: from the first world load until a logout.
+        /// </summary>
+        public bool IsUserInWorld => mvcManager.IsShowing<ChatMainSharedAreaView, ControllerNoData>();
 
         /// <summary>
         /// Closes all Views, focuses the Chat and then sends an event to Open a Private Conversation with the user with the defined <paramref name="id"/>
@@ -21,6 +34,15 @@ namespace DCL.Chat
         /// <param name="id"> The id or walletId of the user to open a conversation with</param>
         public void OpenPrivateConversationWithUserId(string id)
         {
+            if (!IsUserInWorld) return;
+
+            // A guest can answer a conversation someone else started, but cannot start one
+            if (identityCache.IsGuest() && !chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(id)))
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.DirectMessage)));
+                return;
+            }
+
             CloseAllViewsAndFocusChat();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(id);
         }
@@ -28,10 +50,13 @@ namespace DCL.Chat
         /// <summary>
         /// Closes all not PERSISTENT views and sends an event to focus the chat.
         /// </summary>
-        public void CloseAllViewsAndFocusChat()
+        public bool CloseAllViewsAndFocusChat()
         {
+            if (!IsUserInWorld) return false;
+
             mvcManager.CloseAllNonPersistentViews();
             chatEventBus.RaiseFocusRequestedEvent();
+            return true;
         }
 
         /// <summary>
@@ -40,7 +65,8 @@ namespace DCL.Chat
         /// <param name="communityId"> The id of the community to open a conversation with</param>
         public void OpenCommunityConversationWithId(string communityId)
         {
-            CloseAllViewsAndFocusChat();
+            if (!CloseAllViewsAndFocusChat()) return;
+
             chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityId);
         }
     }

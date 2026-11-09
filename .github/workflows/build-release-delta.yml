@@ -1,0 +1,210 @@
+# build-release-delta.yml
+---
+name: Release Delta Patches
+
+# Generates per-file HDiffPatch patches from each of the last N published releases
+# into <tag>, plus their manifest, and uploads them next to the release zip:
+#   releases/<tag>/delta/<platform>/manifest.json
+#   releases/<tag>/delta/<platform>/from/<base tag>/<build id>/<path>.hdiff
+# The delta tool (scripts/delta, `delta --help`) runs a state machine over a run document;
+# each step below resumes it and drains it to the named state, so the step borders only give
+# timeouts and elapsed times. A failing base is dropped; the others still ship.
+# Design: docs/delta-updates.md
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag the patches lead to (e.g. v0.187.0-alpha)'
+        required: true
+        type: string
+      base_count:
+        description: 'How many previous published releases get a patch set'
+        required: false
+        type: number
+        default: 4
+    secrets:
+      EXPLORER_TEAM_AWS_ACCESS_KEY_ID:
+        required: true
+      EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY:
+        required: true
+      EXPLORER_TEAM_S3_BUCKET:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag the patches lead to (e.g. v0.187.0-alpha). Must not be published yet.'
+        required: true
+        type: string
+      base_count:
+        description: 'How many previous published releases get a patch set'
+        required: false
+        type: number
+        default: 4
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-delta-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag }}
+  RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+
+jobs:
+  plan:
+    name: Pick base releases
+    runs-on: ubuntu-latest
+    # Above the sum of the step timeouts (25), with headroom for runner setup and the post steps.
+    timeout-minutes: 40
+    # A delta failure must never block the release.
+    continue-on-error: true
+    outputs:
+      bases: ${{ steps.bases.outputs.bases }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/delta
+            .github/actions/delta-tool
+
+      - uses: ./.github/actions/delta-tool
+        timeout-minutes: 10
+
+      # Patches are immutable once the release is published.
+      - name: Refuse a published or invalid tag
+        timeout-minutes: 5
+        run: '"$DELTA" check-unpublished "$TAG"'
+
+      - name: Pick base releases
+        id: bases
+        timeout-minutes: 5
+        env:
+          BASE_COUNT: ${{ inputs.base_count }}
+        run: |
+          set -euo pipefail
+          BASES="$("$DELTA" pick-bases "$BASE_COUNT" "$TAG")"
+          echo "Bases for $TAG: $BASES"
+          echo "bases=$BASES" >> "$GITHUB_OUTPUT"
+
+  delta:
+    name: Delta (${{ matrix.platform }})
+    needs: plan
+    # `bases` is empty when the plan job failed (e.g. published tag), `[]` when there is nothing to diff against.
+    if: needs.plan.outputs.bases != '' && needs.plan.outputs.bases != '[]'
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Epic builds are not delta-updated: the Epic store ships its own updates.
+          - platform: windows64
+            runner: ubuntu-latest
+            zip: Decentraland_windows64.zip
+          - platform: macos
+            runner: macos-latest
+            zip: Decentraland_macos.zip
+    runs-on: ${{ matrix.runner }}
+    # Above the sum of the step timeouts (285 on windows64, checkout, summary and artifact upload
+    # included), with headroom for runner setup and the post steps (cache save): a hung step
+    # fails (absorbed by continue-on-error) instead of cancelling the job.
+    timeout-minutes: 300
+    # The bucket credentials and GH_TOKEN are set only on the steps that talk to S3 and recheck
+    # the release, as environment variables the tool reads itself; they never appear on a
+    # command line or reach the steps that run HDiffPatch on archive content.
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      ZIP: ${{ matrix.zip }}
+      BASES: ${{ needs.plan.outputs.bases }}
+    steps:
+      - uses: actions/checkout@v6
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/delta
+            .github/actions/delta-tool
+
+      - uses: ./.github/actions/delta-tool
+        timeout-minutes: 10
+
+      - name: Install HDiffPatch (pinned)
+        timeout-minutes: 5
+        run: '"$DELTA" fetch-tools "$RUNNER_TEMP/hdiffpatch" >> "$GITHUB_PATH"'
+
+      # The uploader runs with the bucket's write credentials, so it is installed from the
+      # committed lockfile, not resolved fresh by npx.
+      - name: Install the CDN uploader (locked)
+        timeout-minutes: 5
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix scripts/delta/uploader
+          echo "CDN_UPLOADER=$PWD/scripts/delta/uploader/node_modules/.bin/cdn-uploader" >> "$GITHUB_ENV"
+
+      - name: Create the run document
+        timeout-minutes: 5
+        run: |
+          echo "RUN=$RUNNER_TEMP/delta/run.json" >> "$GITHUB_ENV"
+          "$DELTA" create-run "$RUNNER_TEMP/delta/run.json" --tag "$TAG" --platform "$PLATFORM" --zip "$ZIP" \
+            --bucket-prefix "$RELEASES_PATH" --bases "$BASES" --work "$RUNNER_TEMP/delta/work"
+
+      # Each `run` resumes the document and drains the machine until the named state: the step
+      # borders give per-phase timeouts and elapsed times, the machine does not know about them.
+      - name: Remove stale patches, download the zips
+        timeout-minutes: 25
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
+        run: '"$DELTA" run "$RUN" --until Downloaded'
+
+      - name: Extract and scan the builds
+        timeout-minutes: 40
+        run: '"$DELTA" run "$RUN" --until Scanned'
+
+      - name: Encode the patch sets
+        timeout-minutes: 90
+        run: '"$DELTA" run "$RUN" --until Encoded'
+
+      - name: Replay the patch sets like the launcher
+        timeout-minutes: 40
+        run: '"$DELTA" run "$RUN" --until Verified'
+
+      - name: Prepare the upload
+        timeout-minutes: 15
+        run: '"$DELTA" run "$RUN" --until Prepared'
+
+      # The recheck before the upload runs in the same invocation as the upload, so it cannot
+      # go stale between steps.
+      - name: Recheck the release, upload the patches, recheck, publish the manifest
+        timeout-minutes: 30
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
+        run: '"$DELTA" run "$RUN"'
+
+      - name: Write job summary
+        if: always() && env.RUN != ''
+        timeout-minutes: 5
+        run: '[ ! -f "$RUN" ] || "$DELTA" summary "$RUN" >> "$GITHUB_STEP_SUMMARY"'
+
+      - name: Keep the run document
+        if: always() && env.RUN != ''
+        timeout-minutes: 5
+        uses: actions/upload-artifact@v6
+        with:
+          name: delta-run-${{ matrix.platform }}
+          path: ${{ env.RUN }}
+          if-no-files-found: ignore
+          retention-days: 14

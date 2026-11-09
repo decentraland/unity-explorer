@@ -27,6 +27,7 @@ namespace DCL.Passport.Modules.Creations
         private const int EMPTY_ITEMS_POOL_DEFAULT_CAPACITY = (GRID_ITEMS_PER_ROW - 1) * 2;
         private const string WEARABLE_CATEGORY = "wearable";
         private const string EMOTE_CATEGORY = "emote";
+        private const float THUMBNAIL_PIXELS_PER_UNIT = 100f;
 
         private readonly CreationsDetailsPassportModuleView view;
         private readonly IWebRequestController webRequestController;
@@ -336,7 +337,7 @@ namespace DCL.Passport.Modules.Creations
 
                 loadedThumbnails.Add(textureRef.Value);
                 Texture2D texture = textureRef.Value.Texture;
-                itemView.EquippedItemThumbnail.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                itemView.EquippedItemThumbnail.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, THUMBNAIL_PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

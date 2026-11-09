@@ -17,17 +17,11 @@ namespace DCL.CharacterCamera.Systems
     public partial class PrepareExposedCameraDataSystem : BaseUnityLoopSystem
     {
         private readonly CinemachineBrain cinemachineBrain;
-        private InputAction pointerDelta;
+        private readonly InputAction pointerDelta;
 
         internal PrepareExposedCameraDataSystem(World world, CinemachineBrain cinemachineBrain) : base(world)
         {
             this.cinemachineBrain = cinemachineBrain;
-        }
-
-        public override void Initialize()
-        {
-            base.Initialize();
-
             pointerDelta = DCLInput.Instance.Camera.Delta;
         }
 
@@ -42,6 +36,8 @@ namespace DCL.CharacterCamera.Systems
             exposedCameraData.CameraMode = cameraComponent.Mode;
             exposedCameraData.CameraType.Value = cameraComponent.Mode.ToSDKCameraType();
             exposedCameraData.PointerIsLocked.Value = cursorComponent.CursorState != CursorState.Free;
+
+            exposedCameraData.PointerScreenPosition = cursorComponent.Position;
 
             // Accumulated every render frame regardless of lock state: scene-tick-throttled consumers
             // diff two snapshots, so no intermediate frame motion is lost and unconsumed motion is harmless.

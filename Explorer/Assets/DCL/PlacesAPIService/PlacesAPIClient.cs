@@ -286,7 +286,10 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+
+            // The worlds endpoint identifies a world by its name, which is the only id the destinations endpoint resolves for worlds;
+            // the places endpoint answers with the world's places-table uuid instead, which destinations silently drops
+            urlBuilder.AppendDomain(URLDomain.FromString(baseWorldsURL));
             urlBuilder.AppendParameter(new URLParameter("positions", coord));
             urlBuilder.AppendParameter(new URLParameter("names", realmName));
             URLAddress url = urlBuilder.Build();

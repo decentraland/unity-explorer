@@ -1,9 +1,10 @@
 using DCL.ECSComponents;
-using DCL.AvProSwitch;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Plugins.NativeAudioAnalysis;
+using UUAV.Compat;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -55,6 +56,8 @@ namespace DCL.SDKComponents.MediaStream
         public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
 
         /// <summary>
+        ///     Filter-chain fallback for players that only expose an AudioSource (LiveKit).
+        ///     URL players capture their own DSP output instead; see <see cref="UUAV.Compat.MediaPlayer.SetAudioCaptureEnabled" />.
         ///     Use ThreadSafeLastAudioFrameReadFilter because it has to be attached to the same GameObject.
         ///     But GameObject is owned by AudioSource MonoBehavour in practice, and gets repooled with it.
         ///     To avoid LifeCycle complications ThreadSafeLastAudioFrameReadFilter is referenced directly and owned by AudioSourceComponent.
@@ -150,32 +153,47 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        public bool TryAttachAudioFrameBuffer()
         {
+            if (MediaPlayer.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+            {
+                urlMediaPlayer.MediaPlayer.SetAudioCaptureEnabled(true);
+                return true;
+            }
+
             AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 
             if (audioSource == null)
-            {
-                output = null;
                 return false;
-            }
 
-            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
+            lastAudioFrameReadFilter.Attach(audioSource);
+            return true;
         }
 
-        public void EnsureLastAudioFrameReadFilterIsRemoved() 
+        public bool TryConsumeAudioFrame(Span<float> destination, out int channels, out int sampleCount)
         {
-            lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
+            if (MediaPlayer.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+                return urlMediaPlayer.MediaPlayer.TryReadLastAudioFrame(destination, out channels, out sampleCount);
+
+            return lastAudioFrameReadFilter.TryConsume(destination, out channels, out sampleCount);
         }
 
+        public void DetachAudioFrameBuffer()
+        {
+            lastAudioFrameReadFilter.Detach();
+
+            // The pooled player outlives this component: stop capturing so the next owner starts clean.
+            if (MediaPlayer.IsValid && MediaPlayer.IsUrlMediaPlayer(out UrlMediaPlayer? urlMediaPlayer))
+                urlMediaPlayer.MediaPlayer.SetAudioCaptureEnabled(false);
+        }
 
         public void Dispose()
         {
             State = VideoState.VsNone;
             HasFailed = false;
             isFrozen = false;
+            DetachAudioFrameBuffer();
             MediaPlayer.Dispose(MediaAddress);
-            EnsureLastAudioFrameReadFilterIsRemoved();
             Cts.SafeCancelAndDispose();
         }
 

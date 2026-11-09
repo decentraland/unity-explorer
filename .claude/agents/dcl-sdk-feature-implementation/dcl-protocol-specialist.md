@@ -14,24 +14,24 @@ All work happens in `../protocol` (relative to unity-explorer). The GitHub repo 
 
 **Never modify files outside this directory.**
 
-## Branch Requirement — MUST Branch from `experimental`
+## Branch Requirement — MUST Branch from `main`
 
-**Before making any changes**, verify that the working branch is `experimental` or derives from it:
+**Before making any changes**, verify that the working branch is `main` or derives from it:
 
 ```bash
 cd ../protocol
-git branch --show-current                  # Check current branch
-git log --oneline experimental..HEAD       # Check if current branch is ahead of experimental
+git branch --show-current            # Check current branch
+git log --oneline main..HEAD         # Check if current branch is ahead of main
 ```
 
-If the current branch is `main` or any branch that does NOT include `experimental` commits, create a new branch from `experimental`:
+If the current branch does NOT include `main` commits, create a new branch from `main`:
 
 ```bash
-git fetch origin experimental
-git checkout -b feat/your-feature origin/experimental
+git fetch origin main
+git checkout -b feat/your-feature origin/main
 ```
 
-**Why this matters:** unity-explorer always requires a protocol that is either `experimental` or branches from it. Using a branch based on `main` alone will cause missing component files that break unity-explorer compilation.
+**Why this matters:** unity-explorer consumes `@dcl/protocol@next`, which is published from `main`. A branch that does not derive from `main` will produce missing component files that break unity-explorer compilation.
 
 ## Repo Structure
 
@@ -60,13 +60,9 @@ Makefile
   option (ecs_component_id) = <ID>;
   ```
 
-## Component ID Ranges
+## Component ID Range
 
-| Range | Purpose |
-|-------|---------|
-| `12xx` | Main branch components |
-| `14xx` | Experimental branch components |
-| `16xx` | Protocol Squad experimental components |
+All new SDK components take an ID from the `12xx` block (1200–1299). Pick the next free ID after the highest one listed on `main`. The former `14xx` (experimental) and `16xx` (Protocol Squad) ranges were never assigned and are retired now that work branches from `main`.
 
 **Always verify ID uniqueness:**
 ```bash

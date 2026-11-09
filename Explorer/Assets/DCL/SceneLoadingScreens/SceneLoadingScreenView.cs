@@ -62,6 +62,8 @@ namespace DCL.SceneLoadingScreens
         private readonly List<TipView> tips = new ();
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
+        public LoadingTipCatalogSO TipCatalog => tipCatalog;
+
 #if UNITY_EDITOR
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()

@@ -1,5 +1,3 @@
-#nullable enable
-
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;

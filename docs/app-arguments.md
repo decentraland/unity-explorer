@@ -147,7 +147,7 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ### `realm`
 **Type:** String (URL)
-**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://). A launch that names a destination (this flag or [`position`](#position)) skips the startup lobby and loads straight into it once authentication, if any is needed, completes; a `decentraland://` link and the command line behave the same. An unreachable realm keeps the current one.
 
 **Usage:**
 ```bash
@@ -181,43 +181,20 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
-### `lsd-use-remote-ab`
+### `lsd-raw-gltf`
 **Type:** Bool (presence flag)
-**Description:** Enables the use of remote asset bundles during local scene development (LSD). By default, local scene development relies on locally converted assets; with this flag the explorer can instead fetch already-deployed asset bundles from a remote content server. Only takes effect when local scene development is active (`--local-scene true` together with a valid `--realm` URL). Pair it with either `--lsd-remote-ab-world` or `--lsd-remote-ab-server` to choose where the remote asset bundles are sourced from.
+**Description:** Local scene development only. Skips the embedded [abgen sidecar](abgen-sidecar.md) and loads the scene's raw GLTFs instead of local asset bundles — the way local scene development worked before. Off by default: without it, and with the `alfa-lsd-forced-ab` feature flag on, the scene is served as JIT-converted asset bundles, degrading to raw GLTFs on its own only when the sidecar cannot be installed or started or no manifest can be produced. Ignored outside local scene development.
 
 **Usage:**
 ```bash
---lsd-use-remote-ab
-```
-
----
-
-### `lsd-remote-ab-world`
-**Type:** String (world name)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), sources them from a specific deployed **world**. The value is the world name to pull the asset bundles from. Setting this flag implicitly selects the `World` content server, so it takes precedence over `--lsd-remote-ab-server`. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-world my-world.dcl.eth
-```
-
----
-
-### `lsd-remote-ab-server`
-**Type:** String (`Genesis`, `Goerli`, case-insensitive)
-**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), selects which deployed environment the asset bundles are sourced from — `Genesis` (Genesis City) or `Goerli` (Goerli Plaza). `World` is also accepted, but to target a world you should use `--lsd-remote-ab-world` instead, since it sets the world name as well. Invalid values are ignored. Only effective during local scene development.
-
-**Usage:**
-```bash
---lsd-remote-ab-server Genesis
---lsd-remote-ab-server Goerli
+--lsd-raw-gltf
 ```
 
 ---
 
 ### `position`
 **Type:** String (coordinates)
-**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates.
+**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates. Like [`realm`](#realm), naming it skips the startup lobby: the client lands on the parcel right after authentication, whether the flag came from a `decentraland://` link or the command line.
 
 **Usage:**
 ```bash
@@ -250,6 +227,20 @@ Only affects player builds — the Editor always behaves as if the flag were set
 
 ---
 
+### `ephemeral-guest-account`
+**Type:** Boolean (`true` / `false`)
+**Description:** Overrides the `alfa-ephemeral-guest-account` feature flag: enabled, "play as guest" generates the account on the device; disabled, it uses the ThirdWeb guest wallet.
+
+Enabling it requires [`--debug`](#debug); `--ephemeral-guest-account false` disables it in any build.
+
+**Usage:**
+```bash
+--debug --ephemeral-guest-account true
+--ephemeral-guest-account false
+```
+
+---
+
 ## Avatar & Profile Flags
 
 ### `self-force-emotes`
@@ -263,6 +254,25 @@ Only works for PUBLISHED elements (thus having a URN that identifies them).
 **Usage:**
 ```bash
 --self-force-emotes emote1,emote2,emote3
+```
+
+---
+
+### `self-force-wearables`
+**Type:** String
+**Description:** Renders specific wearables on your own avatar without owning them. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0x9251f5c79923bc80e5dd8fc6d0c9fa02953aa622:0`).
+
+The wearables are visible only to you, and are **never deployed**. While the flag is set the client does not persist your profile at all — backpack saves, name changes and passport edits all take effect locally for the session and are discarded on relaunch, the same way `self-preview-wearables` already suppresses backpack publishing. Relaunch without the flag to go back to your real avatar.
+
+Do not use it on a brand-new account: a first profile has to be deployed to exist, and the flag blocks that.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+In the editor the same set can be filled from the inspector instead, via `DebugSettings.wearablesToAddToUserProfile` (like `emotesToAddToUserProfile`). The set is fixed at startup either way.
+
+**Usage:**
+```bash
+--self-force-wearables wearable1,wearable2
 ```
 
 ---
@@ -496,6 +506,17 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `feature-flags-user-id`
+**Type:** String
+**Description:** Overrides the identity feature flags are evaluated against (the `X-Address-Hash` header), replacing the anonymous id the client would otherwise resolve. Use it to reproduce the flags a specific user sees, or to force a particular A/B bucket. The value is not persisted, so it applies only to the launch that passes it. See [Feature Flags](feature-flags.md#which-identity-is-sent).
+
+**Usage:**
+```bash
+--feature-flags-user-id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
+```
+
+---
+
 ## Analytics Flags
 
 ### `session_id`
@@ -516,6 +537,17 @@ decentraland://?force-open-backpack=true
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `campaign_anon_user_id`
+**Type:** String
+**Description:** Anonymous user ID forwarded by the launcher from the website, so explorer analytics can be joined to the campaign funnel that originated the install. Also used as the feature-flags evaluation identity (`X-Address-Hash`), which keeps A/B bucketing stable from the first pre-login session — see [Feature Flags](feature-flags.md#which-identity-is-sent). Emitted as the `campaign_anon_user_id` analytics trait only when present.
+
+**Usage:**
+```bash
+--campaign_anon_user_id 8f4c2d1e-9a7b-4c3d-8e2f-1a2b3c4d5e6f
 ```
 
 ---
@@ -556,6 +588,7 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 - Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
 - Flags can be combined in a single command line invocation.
 - Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
+- A launch naming a destination through `realm` or `position` skips the startup lobby and lands directly in it. A link reaching a running client that is still on the startup lobby or the auth screen replaces the startup destination (a realm outside the allowlist first asks for consent); the lobby closes once no other panel covers it. An unreachable realm keeps the current one, and a world you cannot enter falls back to Genesis. With the lobby feature off, a link opened on the "Welcome back" step is applied when you click "Jump into World".
 - The `debug` flag is automatically added when running in Unity Editor.
 - Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
 

@@ -11,12 +11,12 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 {
     public class CreateCommunityCommand
     {
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
         private readonly IMVCManager mvcManager;
 
-        public CreateCommunityCommand(ISelfProfile selfProfile, INftNamesProvider nftNamesProvider, IMVCManager mvcManager, ISpriteCache spriteCache)
+        public CreateCommunityCommand(SelfProfile selfProfile, INftNamesProvider nftNamesProvider, IMVCManager mvcManager, ISpriteCache spriteCache)
         {
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
@@ -32,9 +32,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
             async UniTaskVoid CreateCommunityAsync()
             {
                 var canCreate = false;
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                if (ownProfile != null)
+                if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                 {
                     INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1, ct);
                     canCreate = names.TotalAmount > 0;

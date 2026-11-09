@@ -19,11 +19,13 @@ using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using Utility;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -34,7 +36,7 @@ using UnityEngine;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserController : ISection, IDisposable
+    public class CommunitiesBrowserController : IHostableSection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
         private const int DEEP_LINK_COMMUNITY_NOTIFICATION_DELAY_MS = 2000;
@@ -49,12 +51,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
 
         private readonly CommunitiesBrowserView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
-        private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly SelfProfile selfProfile;
         private readonly ISpriteCache spriteCache;
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
@@ -84,6 +87,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
+
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
         private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MainSection;
         private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.InvitesAndRequestsSection;
 
@@ -95,17 +102,19 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
             UnityAppWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3IdentityCache web3IdentityCache)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
             this.inputBlock = inputBlock;
@@ -257,8 +266,25 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            view.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         private void ViewAllMyCommunitiesResults()
         {
@@ -376,7 +402,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 return 0;
             }
 
-            List<KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>> requestsReceivedCommunities = new ();
+            List<KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>>> requestsReceivedCommunities = new ();
             var totalAmountOfRequests = 0;
             if (myCommunitiesResult.Value.data.results.Length > 0)
             {
@@ -396,7 +422,7 @@ namespace DCL.Communities.CommunitiesBrowser
                             break;
 
                         requestsReceivedCommunities.Add(
-                            new KeyValuePair<GetUserCommunitiesData.CommunityData, ICommunityMemberData[]>(
+                            new KeyValuePair<GetUserCommunitiesData.CommunityData, IReadOnlyList<ICommunityMemberData>>(
                                 myCommunityData,
                                 communityRequestsReceived.Success ? communityRequestsReceived.Value.members : Array.Empty<ICommunityMemberData>()));
 
@@ -539,21 +565,31 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinCommunity(CommunitiesBrowserEvents.CommunityJoinedClickedEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             joinCommunityCts = joinCommunityCts.SafeRestart();
             commandsLibrary.JoinCommunityCommand.Execute(evt.CommunityId, joinCommunityCts.Token);
         }
 
         private void RequestToJoinCommunity(CommunitiesBrowserEvents.RequestedToJoinCommunityEvent evt)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             requestToJoinCommunityCts = requestToJoinCommunityCts.SafeRestart();
             RequestToJoinCommunityAsync(requestToJoinCommunityCts.Token).Forget();
             return;
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                if (ownProfile == null)
+                if (!(await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
                     return;
 
                 Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct);
@@ -647,6 +683,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void CreateCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Communities)));
+                return;
+            }
+
             openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
             commandsLibrary.CreateCommunityCommand.Execute(openCommunityCreationCts.Token);
         }
@@ -776,7 +818,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityLeft(string communityId, bool success)
         {
-            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, false, success);
+            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, success, isJoined: false);
         }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
@@ -889,7 +931,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCallUser(ICommunityMemberData profile)
         {
-            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Voice)));
+                return;
+            }
+
+            if (!ChatOpener.Instance.CloseAllViewsAndFocusChat()) return;
+
             orchestrator.StartPrivateCallWithUserId(profile.Address);
         }
 

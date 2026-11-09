@@ -23,7 +23,7 @@ surfaces the client adopts directly, so the frame path stays on the GPU.
 
 The helper fetches its own media: FFmpeg's ordinary `http`/`https` protocols
 run inside it, gated by the protocol whitelist the client passes at init. TLS
-terminates in the helper against the platform stack (SecureTransport on macOS,
+terminates in the helper (mbedTLS statically linked into the macOS FFmpeg,
 Schannel in the Windows FFmpeg build). The sandbox therefore allows outbound
 network and is deny-default about most everything else.
 
@@ -85,16 +85,14 @@ in the client watches the connection, respawns the helper and restores every
 player's state — URL, position, rate, looping — so a decoder crash degrades to
 a stutter rather than a session loss.
 
-**The AVPro-shaped surface belongs once, on the Explorer side — today it
-exists twice.** Scene code talks to an AVPro-shaped player, and a runtime
-switch picks the backend behind it (`Explorer/Assets/DCL/AvProSwitch/`:
-`MediaPlayer`, `AvProBackend`, `UuavBackend`). The UUAV package still carries
-a second copy of that shape (`Packages/UUAV/AVProCompat/`), and `UuavBackend`
-currently drives it, so the UUAV path runs two facades deep and the enums are
-duplicated. A facade per backend reads as symmetry but buys nothing: it
-duplicates every enum, adds a conversion at each boundary, and gives a bug two
-places to hide — which is why the package-side copy is slated to be collapsed
-into `UuavBackend`, leaving the shape defined once next to the switch.
+**The player-facing surface is the compat facade, and it is scaffolding.**
+The Explorer's media systems (`DCL.SDKComponents.MediaStream`) talk straight to
+`Packages/UUAV/AVProCompat/` (`MediaPlayer`, `IMediaControl`, `IMediaInfo`,
+`ITextureProducer`). That facade mirrors AVPro's shape, which buys nothing with
+a single backend. It is tracked for collapse in
+[#10441](https://github.com/decentraland/unity-explorer/issues/10441), so the
+media systems drive `UUAVPlayer` through a surface that states only what UUAV
+actually does.
 
 ## Where to look
 

@@ -9,9 +9,7 @@ using DCL.Web3.Identities;
 using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Collections.Generic;
-using SceneRunner.Scene;
 using Unity.Mathematics;
-using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
@@ -63,7 +61,6 @@ namespace Global.Dynamic
         public bool EnableLandscape { get; init; }
         public bool EnableLOD { get; init; }
         public bool EnableAnalytics { get; init; }
-        public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
 
         /// <summary>
@@ -71,13 +68,5 @@ namespace Global.Dynamic
         ///     Prevents the world manifest spawn coordinate from overriding the developer's configured start position.
         /// </summary>
         public bool EditorPositionOverrideActive { get; init; }
-    }
-
-
-    public struct HybridSceneParams
-    {
-        public bool EnableHybridScene { get; set; }
-        public HybridSceneContentServer HybridSceneContentServer { get; set; }
-        public string World { get; init; }
     }
 }

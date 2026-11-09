@@ -178,6 +178,24 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
+        public void SwitchStateFromFreeToThirdPerson()
+        {
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.Free;
+            world.Set(entity, component);
+
+            system.Update(1);
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
+
+            world.Set(entity, new CameraInput { SwitchState = true });
+            system.Update(1);
+
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+            Assert.That(inputMap.GetInputMapComponent(world).Active.HasFlag(InputMapComponent.Kind.Player), Is.True);
+        }
+
+        [Test]
         public void IgnoreCameraModeInputIfDisabled()
         {
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
@@ -386,7 +404,7 @@ namespace DCL.Character.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Add(entity, new DCL.InWorldCamera.InWorldCameraComponent());
+            world.Add(entity, new InWorldCamera.InWorldCameraComponent());
             world.Set(entity, new CameraInput { ZoomIn = true });
 
             system.Update(1);
@@ -397,7 +415,7 @@ namespace DCL.Character.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Remove<DCL.InWorldCamera.InWorldCameraComponent>(entity);
+            world.Remove<InWorldCamera.InWorldCameraComponent>(entity);
 
             system.Update(1);
 

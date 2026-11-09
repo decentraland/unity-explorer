@@ -61,6 +61,7 @@ namespace DCL.LOD.Systems
             IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
             GPUInstancingService gpuInstancingService,
+            IDecentralandUrlsSource decentralandUrlsSource,
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
@@ -103,7 +104,7 @@ namespace DCL.LOD.Systems
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     textureArrayContainerFactory, c.lodSettingsAsset.Value,
                     staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS,
-                    staticContainer.GltfContainerAssetsCache);
+                    staticContainer.GltfContainerAssetsCache, decentralandUrlsSource);
 
                 return UniTask.CompletedTask;
             });

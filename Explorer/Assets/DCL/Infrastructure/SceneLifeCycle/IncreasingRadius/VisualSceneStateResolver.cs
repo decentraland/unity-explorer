@@ -1,5 +1,4 @@
 ﻿using DCL.SceneRunner.Scene;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -24,10 +23,6 @@ namespace DCL.LOD
             //Anything else keeps the legacy always-full-scene behavior
             if (scenesAreFixed && (!sceneDefinitionComponent.IsSDK7 || !issDescriptor.SupportsDescriptor()))
                 return VisualSceneState.ShowingScene;
-
-            //For SDK6 scenes, we just show lod0
-            if (!sceneDefinitionComponent.IsSDK7)
-                return VisualSceneState.ShowingLod;
 
             int isSceneLoaded = currentVisualSceneState == VisualSceneState.ShowingScene
                 ? unloadTolerance

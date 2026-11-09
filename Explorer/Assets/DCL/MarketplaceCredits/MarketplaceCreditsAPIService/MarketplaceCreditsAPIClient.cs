@@ -22,7 +22,6 @@ namespace DCL.MarketplaceCredits
 
         private static readonly JsonSerializerSettings OMIT_NULLS = new () { NullValueHandling = NullValueHandling.Ignore };
 
-        public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
         public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
         private readonly IWebRequestController webRequestController;
@@ -73,7 +72,6 @@ namespace DCL.MarketplaceCredits
                 string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail)
                 && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
-            OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
         }
 

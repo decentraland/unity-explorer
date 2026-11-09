@@ -8,9 +8,9 @@ namespace DCL.RealmNavigation.TeleportOperations
     public class PrewarmRoadAssetPoolsTeleportOperation : TeleportOperationBase
     {
         private readonly IRealmController realmController;
-        private readonly RoadAssetsPool roadAssetsPool;
+        private readonly IRoadAssetPool roadAssetsPool;
 
-        public PrewarmRoadAssetPoolsTeleportOperation(IRealmController realmController, RoadAssetsPool roadAssetsPool)
+        public PrewarmRoadAssetPoolsTeleportOperation(IRealmController realmController, IRoadAssetPool roadAssetsPool)
         {
             this.roadAssetsPool = roadAssetsPool;
             this.realmController = realmController;
@@ -18,7 +18,8 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            if(!realmController.RealmData.ScenesAreFixed) // Is Genesis
+            // A competing realm change can leave RealmData unconfigured here, where ScenesAreFixed throws, and prewarming is optional (#10031).
+            if (realmController.RealmData.Configured && !realmController.RealmData.ScenesAreFixed) // Is Genesis
                 roadAssetsPool.Prewarm();
 
             return UniTask.CompletedTask;

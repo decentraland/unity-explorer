@@ -135,7 +135,7 @@ namespace DCL.WebRequests.Dumper.Editor
                 Label metricValue = element.Q<Label>("Value");
 
                 // Do aggregation
-                metricName.text = MetricsRegistry.TYPES[i].Name;
+                metricName.text = MetricsRegistry.Types[i].Name;
 
                 RequestMetricRecorder metric = activeMetrics[i];
 

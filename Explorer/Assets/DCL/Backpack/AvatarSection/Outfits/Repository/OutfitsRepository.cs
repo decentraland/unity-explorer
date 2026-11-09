@@ -35,7 +35,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly ISelfProfile selfProfile;
+        private readonly SelfProfile selfProfile;
 
         private readonly Dictionary<int, OutfitItem> committed = new ();
         private ulong lastPublishTimestampInSeconds;
@@ -43,7 +43,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider,
-            ISelfProfile selfProfile)
+            SelfProfile selfProfile)
         {
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.nftNamesProvider = nftNamesProvider;
@@ -147,8 +147,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private async UniTask PublishAsync(Dictionary<int, OutfitItem> snapshot, CancellationToken ct)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
-            if (profile == null)
+            ProfileReadResult read = await selfProfile.ProfileAsync(ct);
+
+            if (read.IsCancelled)
+                throw new OperationCanceledException(ct);
+
+            if (!read.IsOk(out Profile? profile))
                 throw new InvalidOperationException("Cannot publish outfits, self profile is not loaded.");
 
             if (string.IsNullOrEmpty(profile.UserId))

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using DCL.LiveKit.Public;

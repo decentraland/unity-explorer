@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Utility;
+using Utility.Primitives;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.LOD.Tests
@@ -40,6 +42,8 @@ namespace DCL.LOD.Tests
 
         private static GltfContainerTestResources? sharedResources;
         private static StreamableLoadingResult<AssetBundleData> sharedAB;
+
+        private readonly List<Material> createdMaterials = new ();
 
         private TrackingGltfCache cache = null!;
         private SceneDefinitionComponent sceneDefinition;
@@ -68,6 +72,14 @@ namespace DCL.LOD.Tests
             };
 
             sceneDefinition = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+        }
+
+        protected override void OnTearDown()
+        {
+            foreach (Material material in createdMaterials)
+                UnityEngine.Object.DestroyImmediate(material);
+
+            createdMaterials.Clear();
         }
 
         [OneTimeTearDown]
@@ -106,7 +118,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(lod.AllAssetsInstantiated(), Is.True);
             Assert.That(cache.Outstanding(HASH_A), Is.EqualTo(1));
@@ -132,7 +144,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Entity helper = FindHelperEntity();
             Assert.That(helper, Is.Not.EqualTo(Entity.Null), "Update must spawn one helper entity per descriptor asset");
@@ -160,7 +172,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
             DeliverResult(FindHelperEntity(), abResult);
             system.Update(0);
 
@@ -186,7 +198,7 @@ namespace DCL.LOD.Tests
             descriptor.MarkResolved(new[] { NewDescriptorEntry("MISSING_HASH") });
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
-            system!.Update(0);
+            system.Update(0);
 
             var failure = new StreamableLoadingResult<AssetBundleData>(
                 ReportData.UNSPECIFIED,
@@ -226,7 +238,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(lod.AllAssetsInstantiated(), Is.True);
 
@@ -258,7 +270,7 @@ namespace DCL.LOD.Tests
 
             InitialSceneStateLOD lod = CreateLODEntity(descriptor);
 
-            system!.Update(0);
+            system.Update(0);
             Assert.That(renderer.forceRenderingOff, Is.True);
 
             lod.Dispose(world);
@@ -282,7 +294,7 @@ namespace DCL.LOD.Tests
             Assert.That(descriptor.TryReserveBridgeSlot(HASH), Is.False, "Capacity is 1 — second reserve must fail");
 
             CreateLODEntity(descriptor);
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(descriptor.TryReserveBridgeSlot(HASH), Is.True,
                 "Cache hit must call TryReleaseBridgeSlot so the slot is reusable");
@@ -296,6 +308,35 @@ namespace DCL.LOD.Tests
 
             world.Create(lodInfo, sceneDefinition, descriptor);
             return lodInfo.InitialSceneStateLOD;
+        }
+
+        [Test]
+        public void ClipAssetsToTheSceneVolumeLikeTheRuntimeDoes()
+        {
+            const string HASH = "CLIPPED";
+
+            GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
+            Material material = renderer.sharedMaterial;
+            cache.Stash(HASH, asset);
+
+            var descriptor = ISSDescriptor.CreateUninitialized();
+            descriptor.MarkResolved(new[] { NewDescriptorEntry(HASH) });
+
+            InitialSceneStateLOD lod = CreateLODEntity(descriptor);
+
+            system.Update(0);
+
+            ParcelMathHelper.SceneCircumscribedPlanes planes = sceneDefinition.SceneGeometry.CircumscribedPlanes;
+            Vector4 verticalClipping = material.GetVector(Shader.PropertyToID("_VerticalClipping"));
+
+            Assert.That(material.GetVector(Shader.PropertyToID("_PlaneClipping")),
+                Is.EqualTo(new Vector4(planes.MinX, planes.MaxX, planes.MinZ, planes.MaxZ)),
+                "LOD_0 materials must clip to the scene's circumscribed planes");
+
+            Assert.That(verticalClipping.y, Is.EqualTo(sceneDefinition.SceneGeometry.Height),
+                "LOD_0 materials must clip to the scene height");
+
+            lod.Dispose(world);
         }
 
         private Entity FindHelperEntity()
@@ -329,10 +370,19 @@ namespace DCL.LOD.Tests
         private static GltfContainerAsset MakeFakeGltf(string label) =>
             GltfContainerAsset.Create(new GameObject($"fake_{label}"), IStreamableRefCountData.Null.INSTANCE);
 
-        private static GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
+        /// <summary>
+        ///     Gives the renderer a material, like a converted LOD renderer carries. A bare
+        ///     <see cref="MeshRenderer" /> exposes a single empty material slot instead.
+        /// </summary>
+        private GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
         {
             var go = new GameObject($"fake_{label}");
             renderer = go.AddComponent<MeshRenderer>();
+
+            Material material = DefaultMaterial.New();
+            createdMaterials.Add(material);
+            renderer.sharedMaterial = material;
+
             GltfContainerAsset asset = GltfContainerAsset.Create(go, IStreamableRefCountData.Null.INSTANCE);
             asset.Renderers.Add(renderer);
             return asset;

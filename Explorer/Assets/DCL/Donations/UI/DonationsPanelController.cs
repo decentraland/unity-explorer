@@ -9,7 +9,9 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.Web3.Authenticators;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -38,7 +40,7 @@ namespace DCL.Donations.UI
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
-        private readonly ICompositeWeb3Provider web3Provider;
+        private readonly IWeb3IdentityCache identityCache;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -53,7 +55,7 @@ namespace DCL.Donations.UI
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IInputBlock inputBlock,
-            ICompositeWeb3Provider web3Provider,
+            IWeb3IdentityCache identityCache,
             decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -64,7 +66,7 @@ namespace DCL.Donations.UI
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.inputBlock = inputBlock;
-            this.web3Provider = web3Provider;
+            this.identityCache = identityCache;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -107,7 +109,7 @@ namespace DCL.Donations.UI
         {
             try
             {
-                viewInstance!.ShowLoading(viewModel, amount, web3Provider.IsThirdWebOTP);
+                viewInstance!.ShowLoading(viewModel, amount, identityCache.IsThirdWebAccount());
 
                 bool success = await donationsService.SendDonationAsync(viewModel.SceneCreatorAddress, amount, panelLifecycleCts.Token);
 
@@ -164,14 +166,18 @@ namespace DCL.Donations.UI
                     baseParcel = donationStatus.baseParcel!.Value;
                 }
 
-                (Profile.CompactInfo? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
-                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet),
+                // A failed lookup opens the panel without the creator profile.
+                (Result<Profile.CompactInfo?> creatorLookup, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
+                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet)
+                                                           .SuppressToResultAsync(),
                         donationsService.GetCurrentBalanceAsync(ct),
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));
 
+                Profile.CompactInfo? creatorProfile = creatorLookup.Success ? creatorLookup.Value : null;
+
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
-                if (creatorProfile == null)
+                if (creatorLookup.Success && creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
 
                 DonationPanelViewModel donationPanelViewModel = new (creatorProfile,

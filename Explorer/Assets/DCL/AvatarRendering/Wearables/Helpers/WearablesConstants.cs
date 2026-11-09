@@ -1,5 +1,3 @@
-#nullable enable
-
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using Decentraland.Common;

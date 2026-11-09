@@ -16,9 +16,12 @@ set -euo pipefail
 
 # FFmpeg release in lockstep with ffmpeg-sys-next in Cargo.toml
 FFMPEG_TAG="n8.1"
+# mbedTLS LTS line, linked statically into libavformat as the TLS backend
+MBEDTLS_TAG="mbedtls-3.6.7"
 
 NATIVE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SRC_DIR="$NATIVE_DIR/.ffmpeg-src"
+MBEDTLS_SRC_DIR="$NATIVE_DIR/.mbedtls-src"
 BUILD_DIR="$NATIVE_DIR/.ffmpeg-build"
 PREFIX="$NATIVE_DIR/.third_party/ffmpeg"
 PREFIX_X86="$BUILD_DIR/prefix-x86_64"
@@ -35,9 +38,15 @@ if ! command -v nasm > /dev/null; then
     exit 1
 fi
 
-# configure resolves libxml2 (below) exclusively through pkg-config
+# configure resolves libxml2 and mbedtls (below) exclusively through pkg-config
 if ! command -v pkg-config > /dev/null; then
     echo "error: pkg-config not found; install it with 'brew install pkg-config'" >&2
+    exit 1
+fi
+
+# mbedTLS builds with CMake
+if ! command -v cmake > /dev/null; then
+    echo "error: cmake not found; install it with 'brew install cmake'" >&2
     exit 1
 fi
 
@@ -48,19 +57,27 @@ if [[ ! -d "$SRC_DIR" ]]; then
     git clone --depth 1 --branch "$FFMPEG_TAG" https://github.com/FFmpeg/FFmpeg.git "$SRC_DIR"
 fi
 
+# the framework submodule is a hard CMake prerequisite even with tests off
+if [[ ! -d "$MBEDTLS_SRC_DIR" ]]; then
+    git clone --depth 1 --recurse-submodules --shallow-submodules --branch "$MBEDTLS_TAG" \
+        https://github.com/Mbed-TLS/mbedtls.git "$MBEDTLS_SRC_DIR"
+fi
+
 # out-of-tree builds refuse to configure over a stale in-tree configuration
 [[ -f "$SRC_DIR/config.h" ]] && make -C "$SRC_DIR" distclean
 
 # wipe previous outputs so a thin prefix from an older run can't leak through
 rm -rf "$PREFIX" "$BUILD_DIR"
 
-# securetransport is the schannel analog: https support with zero extra
-# dylibs. If a future FFmpeg drops it, switch to --enable-openssl (adds a
-# homebrew openssl runtime dependency). Run from $BUILD_DIR: even --help
-# drops an ffbuild/ dir into the cwd, which Unity would import from native/.
+# TLS backend: mbedTLS, statically linked into libavformat, so https still
+# ships zero extra dylibs. Apple's SecureTransport (the previous backend) is
+# deprecated and failed every handshake with errSSLBadCert (-9808) for some
+# macOS 14 users from inside the sandboxed helper; mbedTLS talks to no OS
+# trust service at all. Run from $BUILD_DIR: even --help drops an ffbuild/
+# dir into the cwd, which Unity would import from native/.
 mkdir -p "$BUILD_DIR"
-if ! (cd "$BUILD_DIR" && "$SRC_DIR/configure" --help | grep -q securetransport); then
-    echo "error: this FFmpeg has no --enable-securetransport; use --enable-openssl instead" >&2
+if ! (cd "$BUILD_DIR" && "$SRC_DIR/configure" --help | grep mbedtls > /dev/null); then
+    echo "error: this FFmpeg has no --enable-mbedtls" >&2
     exit 1
 fi
 
@@ -91,7 +108,9 @@ Cflags: -I$SDKROOT/usr/include/libxml2 -I$SDKROOT/usr/include
 EOF
 export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
-# LGPL is the default (no --enable-gpl). Do NOT disable avdevice/avfilter:
+# LGPL is the default (no --enable-gpl); --enable-version3 lifts it to
+# LGPL-3.0, which configure demands for the Apache-2.0 mbedTLS and which the
+# BtbN Windows build already carries. Do NOT disable avdevice/avfilter:
 # ffmpeg-sys-next's default features link all seven libraries.
 #
 # --disable-xlib / --disable-libxcb: both are X11 screen-grab indev/outdevs
@@ -100,13 +119,42 @@ export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH
 # every dylib ends up hard-linked to /opt/homebrew/opt/libx11/.../libX11.6.dylib
 # - a path absent on clean machines, so the helper fails dyld load there.
 # Disabling both keeps the shipped dylibs free of any Homebrew absolute path.
+# --disable-sdl2 for the same reason: the sdl outdev (ffplay's window) is
+# autodetected from a Homebrew sdl2 and links its dylib.
+#
+# --pkg-config-flags=--static: mbedtls.pc lists mbedx509/mbedcrypto under
+# Requires.private, which pkg-config only expands with --static; without it
+# configure's link probe (and libavformat's link) misses both archives.
+build_mbedtls() {
+    local arch="$1" prefix="$2"
+
+    cmake -S "$MBEDTLS_SRC_DIR" -B "$BUILD_DIR/mbedtls-$arch" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_OSX_ARCHITECTURES="$arch" \
+        -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+        -DCMAKE_INSTALL_PREFIX="$prefix" \
+        -DENABLE_PROGRAMS=OFF \
+        -DENABLE_TESTING=OFF \
+        -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
+        -DUSE_STATIC_MBEDTLS_LIBRARY=ON \
+        -DMBEDTLS_FATAL_WARNINGS=OFF
+    cmake --build "$BUILD_DIR/mbedtls-$arch" -j"$(sysctl -n hw.ncpu)"
+    cmake --install "$BUILD_DIR/mbedtls-$arch"
+}
+
 build_arch() {
     local arch="$1" prefix="$2"
     shift 2
 
+    # static archives only: nothing from this prefix ships, it is consumed
+    # by the libavformat link below
+    local mbedtls_prefix="$BUILD_DIR/mbedtls-$arch/prefix"
+    build_mbedtls "$arch" "$mbedtls_prefix"
+
     mkdir -p "$BUILD_DIR/$arch"
     cd "$BUILD_DIR/$arch"
 
+    PKG_CONFIG_PATH="$mbedtls_prefix/lib/pkgconfig:$PKG_CONFIG_PATH" \
     "$SRC_DIR/configure" \
         --prefix="$prefix" \
         --install-name-dir='@rpath' \
@@ -117,9 +165,12 @@ build_arch() {
         --disable-doc \
         --disable-xlib \
         --disable-libxcb \
+        --disable-sdl2 \
         --enable-videotoolbox \
-        --enable-securetransport \
+        --enable-version3 \
+        --enable-mbedtls \
         --enable-libxml2 \
+        --pkg-config-flags=--static \
         "$@"
 
     make -j"$(sysctl -n hw.ncpu)"
@@ -175,3 +226,18 @@ if [[ "$leaked" -ne 0 ]]; then
     exit 1
 fi
 echo "All dylibs are free of build-host absolute paths."
+
+# regression gate: TLS must come from the statically linked mbedTLS, never
+# from SecureTransport again. make install strips local symbols, so the
+# positive check looks for a log string tls_mbedtls.c emits. No grep -q:
+# under pipefail an early exit turns the producer's SIGPIPE into a failure.
+avformat="$(ls "$PREFIX"/lib/libavformat.*.*.*.dylib)"
+if nm -u "$avformat" | grep '_SSLHandshake' > /dev/null; then
+    echo "error: libavformat still imports SecureTransport" >&2
+    exit 1
+fi
+if ! strings -a "$avformat" | grep 'mbedtls_ssl_config_defaults' > /dev/null; then
+    echo "error: libavformat did not link mbedTLS" >&2
+    exit 1
+fi
+echo "TLS backend: mbedTLS $MBEDTLS_TAG (static), no SecureTransport import."

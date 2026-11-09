@@ -41,7 +41,7 @@ namespace ECS.Unity.Textures.Components
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
-        ///     we don't use the original texture from AVPro
+        ///     we don't use the original texture from the media player
         /// </summary>
 
         // public Texture2DData Texture { get; private set; }
@@ -58,7 +58,11 @@ namespace ECS.Unity.Textures.Components
 
         public void Dispose()
         {
-            videoTexturesPool.Release(Texture);
+            // On application exit Unity destroys the render texture before the world is finalized;
+            // a destroyed texture must not go back to the pool where the release callback would touch its native side
+            if (Texture != null)
+                videoTexturesPool.Release(Texture);
+
             renderers.Clear();
         }
 

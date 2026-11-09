@@ -39,16 +39,6 @@ MonoBehaviour:
   m_SpriteAtlasTexture: {fileID: 2800000, guid: 54e56bc5c2fab4d2f9a7abce8387975d, type: 3}
   m_SpriteCharacterTable:
   - m_ElementType: 2
-    m_Unicode: 169
-    m_GlyphIndex: 0
-    m_Scale: 1
-    m_Name: 00a9
-  - m_ElementType: 2
-    m_Unicode: 174
-    m_GlyphIndex: 1
-    m_Scale: 1
-    m_Name: 00ae
-  - m_ElementType: 2
     m_Unicode: 127183
     m_GlyphIndex: 2
     m_Scale: 1
@@ -16724,11 +16714,6 @@ MonoBehaviour:
     m_Scale: 1
     m_Name: 1faf8_1f3ff
   - m_ElementType: 2
-    m_Unicode: 42
-    m_GlyphIndex: 3337
-    m_Scale: 1
-    m_Name: 002a
-  - m_ElementType: 2
     m_Unicode: 45031651
     m_GlyphIndex: 3338
     m_Scale: 1
@@ -16783,11 +16768,6 @@ MonoBehaviour:
     m_GlyphIndex: 3348
     m_Scale: 1
     m_Name: 21aa
-  - m_ElementType: 2
-    m_Unicode: 35
-    m_GlyphIndex: 3349
-    m_Scale: 1
-    m_Name: 0023
   - m_ElementType: 2
     m_Unicode: 37691619
     m_GlyphIndex: 3350
@@ -17169,100 +17149,50 @@ MonoBehaviour:
     m_Scale: 1
     m_Name: 27bf
   - m_ElementType: 2
-    m_Unicode: 48
-    m_GlyphIndex: 3426
-    m_Scale: 1
-    m_Name: 0030
-  - m_ElementType: 2
     m_Unicode: 51323107
     m_GlyphIndex: 3427
     m_Scale: 1
     m_Name: 0030_20e3
-  - m_ElementType: 2
-    m_Unicode: 49
-    m_GlyphIndex: 3428
-    m_Scale: 1
-    m_Name: 0031
   - m_ElementType: 2
     m_Unicode: 52371683
     m_GlyphIndex: 3429
     m_Scale: 1
     m_Name: 0031_20e3
   - m_ElementType: 2
-    m_Unicode: 50
-    m_GlyphIndex: 3430
-    m_Scale: 1
-    m_Name: 0032
-  - m_ElementType: 2
     m_Unicode: 53420259
     m_GlyphIndex: 3431
     m_Scale: 1
     m_Name: 0032_20e3
-  - m_ElementType: 2
-    m_Unicode: 51
-    m_GlyphIndex: 3432
-    m_Scale: 1
-    m_Name: 0033
   - m_ElementType: 2
     m_Unicode: 54468835
     m_GlyphIndex: 3433
     m_Scale: 1
     m_Name: 0033_20e3
   - m_ElementType: 2
-    m_Unicode: 52
-    m_GlyphIndex: 3434
-    m_Scale: 1
-    m_Name: 0034
-  - m_ElementType: 2
     m_Unicode: 55517411
     m_GlyphIndex: 3435
     m_Scale: 1
     m_Name: 0034_20e3
-  - m_ElementType: 2
-    m_Unicode: 53
-    m_GlyphIndex: 3436
-    m_Scale: 1
-    m_Name: 0035
   - m_ElementType: 2
     m_Unicode: 56565987
     m_GlyphIndex: 3437
     m_Scale: 1
     m_Name: 0035_20e3
   - m_ElementType: 2
-    m_Unicode: 54
-    m_GlyphIndex: 3438
-    m_Scale: 1
-    m_Name: 0036
-  - m_ElementType: 2
     m_Unicode: 57614563
     m_GlyphIndex: 3439
     m_Scale: 1
     m_Name: 0036_20e3
-  - m_ElementType: 2
-    m_Unicode: 55
-    m_GlyphIndex: 3440
-    m_Scale: 1
-    m_Name: 0037
   - m_ElementType: 2
     m_Unicode: 58663139
     m_GlyphIndex: 3441
     m_Scale: 1
     m_Name: 0037_20e3
   - m_ElementType: 2
-    m_Unicode: 56
-    m_GlyphIndex: 3442
-    m_Scale: 1
-    m_Name: 0038
-  - m_ElementType: 2
     m_Unicode: 59711715
     m_GlyphIndex: 3443
     m_Scale: 1
     m_Name: 0038_20e3
-  - m_ElementType: 2
-    m_Unicode: 57
-    m_GlyphIndex: 3444
-    m_Scale: 1
-    m_Name: 0039
   - m_ElementType: 2
     m_Unicode: 60760291
     m_GlyphIndex: 3445
@@ -17918,6 +17848,26 @@ MonoBehaviour:
     m_GlyphIndex: 3575
     m_Scale: 1
     m_Name: fe82b
+  - m_ElementType: 2
+    m_Unicode: 65038
+    m_GlyphIndex: 3576
+    m_Scale: 1
+    m_Name: fe0e
+  - m_ElementType: 2
+    m_Unicode: 65039
+    m_GlyphIndex: 3576
+    m_Scale: 1
+    m_Name: fe0f
+  - m_ElementType: 2
+    m_Unicode: 8205
+    m_GlyphIndex: 3576
+    m_Scale: 1
+    m_Name: 200d
+  - m_ElementType: 2
+    m_Unicode: 9873
+    m_GlyphIndex: 226
+    m_Scale: 1
+    m_Name: 2691
   m_SpriteGlyphTable:
   - m_Index: 0
     m_Metrics:
@@ -75131,6 +75081,22 @@ MonoBehaviour:
       m_Y: 256
       m_Width: 32
       m_Height: 32
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 0}
+  - m_Index: 3576
+    m_Metrics:
+      m_Width: 0
+      m_Height: 0
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 0
+      m_HorizontalAdvance: 0
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 0
+      m_Width: 0
+      m_Height: 0
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0

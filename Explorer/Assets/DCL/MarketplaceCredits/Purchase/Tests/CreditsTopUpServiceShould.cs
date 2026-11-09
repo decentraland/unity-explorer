@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.MarketplaceCredits.Purchase.TopUp;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -33,7 +32,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void SetUp()
         {
             creditsApiClient = Substitute.For<MarketplaceCreditsAPIClient>(null, null);
-            webBrowser = Substitute.For<UnityAppWebBrowser>((IDecentralandUrlsSource)null!, null);
+            webBrowser = Substitute.For<UnityAppWebBrowser>(null!, null);
             identityCache = Substitute.For<IWeb3IdentityCache>();
 
             IWeb3Identity identity = Substitute.For<IWeb3Identity>();

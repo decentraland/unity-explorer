@@ -53,6 +53,13 @@ namespace DCL.CharacterCamera
         /// </summary>
         CumulativePointerDelta AccumulatedPointerDelta { get; }
 
+        /// <summary>
+        ///     The pointer position in Unity screen coordinates (bottom-left origin). Taken from the cursor pipeline,
+        ///     not from the mouse device, so it also tracks a gamepad or automation pointer and survives a disabled
+        ///     Camera action map.
+        /// </summary>
+        Vector2 PointerScreenPosition { get; }
+
         ObjectProxy<Entity> CameraEntityProxy { get; }
 
         CanBeDirty<Vector3> IExposedTransform.Position => WorldPosition;
@@ -66,7 +73,8 @@ namespace DCL.CharacterCamera
             public CanBeDirty<Quaternion> WorldRotation { get; }
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
-            public CumulativePointerDelta AccumulatedPointerDelta { get; }
+            public CumulativePointerDelta AccumulatedPointerDelta => default;
+            public Vector2 PointerScreenPosition => default;
 
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
@@ -95,7 +103,8 @@ namespace DCL.CharacterCamera
             public CanBeDirty<Quaternion> WorldRotation { get; }
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
-            public CumulativePointerDelta AccumulatedPointerDelta { get; }
+            public CumulativePointerDelta AccumulatedPointerDelta => default;
+            public Vector2 PointerScreenPosition => default;
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
             public CameraMode CameraMode { get; set; }

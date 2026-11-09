@@ -8,7 +8,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Utilities;
 using ECS;
 using ECS.TestSuite;
 using LiveKit.Rooms;

@@ -44,6 +44,7 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -180,7 +181,9 @@ namespace SceneRunner
                     return Result<SceneInstanceDependencies>.ErrorResult($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
             }
             else
-                sceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+                // SHA-256: 18e63cfc2a6913bbed658bde0bf4ca2af60336be2b4cd07806b00948662f12c9
+                // Build provenance: StreamingAssets/Js/sdk6-adapter.provenance.json
+                sceneCodeUrl = URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/sdk6-adapter.min.js");
 
             return Result<SceneInstanceDependencies>.SuccessResult(
                 new SceneInstanceDependencies(sceneCodeUrl, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory));
@@ -188,11 +191,13 @@ namespace SceneRunner
 
         public void Dispose()
         {
-            // The order can make a difference here
+            // The order can make a difference here.
+            // The synchronizer goes first: it flags itself disposed, so a buffer the scene thread is still about to apply
+            // is discarded instead of reaching the world that is torn down right after
+            CRDTWorldSynchronizer.Dispose();
             ECSWorldFacade.Dispose();
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
-            CRDTWorldSynchronizer.Dispose();
             PoolsProvider.Dispose();
             CRDTMemoryAllocator.Dispose();
 
@@ -262,7 +267,7 @@ namespace SceneRunner
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),

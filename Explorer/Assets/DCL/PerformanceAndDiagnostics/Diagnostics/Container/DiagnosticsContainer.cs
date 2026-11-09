@@ -3,6 +3,7 @@ using DCL.UI.DebugMenu.MessageBus;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Networking;
 
 namespace DCL.Diagnostics
 {
@@ -40,7 +41,7 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, params IReportHandler[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool isLocalSceneDevelopment, string? sessionId, InternetConnectivityMonitor connectivity, params IReportHandler[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
@@ -61,7 +62,7 @@ namespace DCL.Diagnostics
                 if (isLocalSceneDevelopment)
                     sentryMatrix = new CategoryExclusionMatrix(sentryMatrix, ReportCategory.JAVASCRIPT);
 
-                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled));
+                handlers.Add(sentryReportHandler = new SentryReportHandler(sentryMatrix, sentrySampler = new SentrySampler(), settings.DebounceEnabled, isLocalSceneDevelopment, sessionId, connectivity));
             }
 
             var logger = new ReportHubLogger(handlers);
@@ -124,10 +125,12 @@ namespace DCL.Diagnostics
                     ReportCategory.PORTABLE_EXPERIENCE,
                     ReportCategory.EMOTE,
                     ReportCategory.MCP,
+                    ReportCategory.SYNTHETIC_INPUT,
                 }, logType: false);
 
             entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
             entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.MCP, Severity = LogType.Log });
+            entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.SYNTHETIC_INPUT, Severity = LogType.Log });
 
             jsOnlyMatrix.entries = entries;
             return new SceneDebugConsoleReportHandler(jsOnlyMatrix, sceneDebugConsoleMessageBus, false);

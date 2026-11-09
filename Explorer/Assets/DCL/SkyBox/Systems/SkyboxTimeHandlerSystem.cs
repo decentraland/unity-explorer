@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private readonly Entity rootEntity;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        private SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
+        internal SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
             ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.skyboxSettings = skyboxSettings;
@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void SetSDKSettings(ref PBSkyboxTime sdkSkyboxTime)
         {
-            skyboxSettings.CurrentSDKControlledScene = sceneInfo.BaseParcel;
+            skyboxSettings.CurrentSDKControlledScene = sceneInfo;
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void ResetSDKControlled()
         {
-            if (skyboxSettings.CurrentSDKControlledScene == sceneInfo.BaseParcel)
+            if (skyboxSettings.IsSDKControlledBy(sceneInfo))
                 skyboxSettings.CurrentSDKControlledScene = null;
         }
     }

@@ -7,7 +7,11 @@
     {
         internal const int ATLAS = 1;
         internal const int SATELLITE_ATLAS = 2;
-        internal const int HOME_POINT = 3;
+
+        // Orders 3 to 8 belong to the streamed satellite levels 3 to 8, so that finer levels draw over coarser levels.
+        internal const int SATELLITE_DETAIL_BASE_LEVEL = 3;
+
+        // Order 9 belongs to the edge patches in MapRendererConfiguration.prefab. The patches hide the satellite image outside the city.
         internal const int COLD_USER_MARKERS = 10;
         internal const int HOT_USER_MARKERS = 11;
         internal const int SEARCH_RESULTS = 12;

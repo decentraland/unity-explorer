@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            // Skip players whose AVPro object was destroyed; UpdateMediaPlayerSystem tears them down.
+            // Skip players whose MediaPlayer object was destroyed.
             if (!mediaPlayer.MediaPlayer.IsValid) return;
 
             VideoState state = GetVideoStateForPropagation(mediaPlayer);

@@ -7,7 +7,12 @@ using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
+using ECS.Unity.Materials;
+using ECS.Unity.Materials.Components;
+using ECS.Unity.Materials.Systems;
+using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Primitives;
@@ -17,13 +22,14 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 {
     public class CleanupGltfNodeModifierSystemShould : UnitySystemTestBase<CleanupGltfNodeModifierSystem>
     {
-        private GameObject rootGameObject;
-        private GameObject childGameObject;
-        private MeshRenderer rootRenderer;
-        private MeshRenderer childRenderer;
-        private Material originalRootMaterial;
-        private Material originalChildMaterial;
-        private Material testMaterial;
+        private GameObject rootGameObject = null!;
+        private GameObject childGameObject = null!;
+        private MeshRenderer rootRenderer = null!;
+        private MeshRenderer childRenderer = null!;
+        private Material originalRootMaterial = null!;
+        private Material originalChildMaterial = null!;
+        private Material testMaterial = null!;
+        private Material secondTestMaterial = null!;
 
         [SetUp]
         public void SetUp()
@@ -41,6 +47,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             originalRootMaterial = DefaultMaterial.New();
             originalChildMaterial = DefaultMaterial.New();
             testMaterial = DefaultMaterial.New();
+            secondTestMaterial = DefaultMaterial.New();
 
             rootRenderer.sharedMaterial = originalRootMaterial;
             childRenderer.sharedMaterial = originalChildMaterial;
@@ -60,6 +67,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             if (testMaterial != null)
                 Object.DestroyImmediate(testMaterial);
+
+            if (secondTestMaterial != null)
+                Object.DestroyImmediate(secondTestMaterial);
         }
 
         [Test]
@@ -94,7 +104,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Remove PBGltfNodeModifiers to trigger HandleComponentRemoval query
@@ -137,7 +147,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Act - Add DeleteEntityIntention to trigger HandleEntityDestruction query
@@ -183,7 +193,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.yellow), PartitionComponent.TOP_PRIORITY);
 
             // Update the GltfNodeEntities dictionary properly
-            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
+            ref var nodeModifiersRef = ref world.TryGetRef<Components.GltfNodeModifiers>(entity, out _);
             nodeModifiersRef.GltfNodeEntities.Add(childEntity, gltfNode.Path!);
 
             // Simulate GltfContainerComponent change event
@@ -200,6 +210,72 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Assert
             Assert.That(world.Has<GltfNode>(childEntity), Is.True);
             Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should be removed by system
+        }
+
+        [Test]
+        public void ReleaseDeferredNodeMaterialsAfterContainersAreDestroyed()
+        {
+            // Arrange
+            var destroyMaterial = Substitute.For<DestroyMaterial>();
+            var resetMaterialSystem = new ResetMaterialSystem(world, destroyMaterial, Substitute.For<ISceneData>());
+
+            Entity firstContainer = CreateContainerWithMaterialOverride(rootRenderer, originalRootMaterial, testMaterial, out Entity firstNode);
+            Entity secondContainer = CreateContainerWithMaterialOverride(childRenderer, originalChildMaterial, secondTestMaterial, out Entity secondNode);
+
+            // Act
+            world.Add(firstContainer, new DeleteEntityIntention());
+            world.Add(secondContainer, new DeleteEntityIntention());
+            system.Update(0);
+            world.Destroy(firstContainer);
+            world.Destroy(secondContainer);
+
+            Assert.DoesNotThrow(() => resetMaterialSystem.Update(0));
+
+            // Assert
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), testMaterial);
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), secondTestMaterial);
+            Assert.That(world.IsAlive(firstNode), Is.False);
+            Assert.That(world.IsAlive(secondNode), Is.False);
+            Assert.That(rootRenderer.sharedMaterial, Is.EqualTo(originalRootMaterial));
+            Assert.That(childRenderer.sharedMaterial, Is.EqualTo(originalChildMaterial));
+        }
+
+        [Test]
+        public void KeepModifiersWhenContainerFinishesLoading()
+        {
+            // Arrange
+            var eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1);
+            var cleanupSystem = new CleanupGltfNodeModifierSystem(world, eventBuffer);
+
+            Entity container = CreateContainerWithMaterialOverride(childRenderer, originalChildMaterial, testMaterial, out Entity nodeEntity);
+            var gltfContainerComponent = new GltfContainerComponent { State = LoadingState.Finished };
+            world.Add(container, gltfContainerComponent, new PBGltfContainer());
+
+            // Act
+            eventBuffer.Add(container, gltfContainerComponent);
+            cleanupSystem.Update(0);
+
+            // Assert
+            Assert.That(world.Has<Components.GltfNodeModifiers>(container), Is.True);
+            Assert.That(world.Has<PBMaterial>(nodeEntity), Is.True);
+            Assert.That(childRenderer.sharedMaterial, Is.EqualTo(testMaterial));
+        }
+
+        private Entity CreateContainerWithMaterialOverride(Renderer renderer, Material originalMaterial, Material nodeMaterial, out Entity nodeEntity)
+        {
+            Entity container = world.Create(
+                new PBGltfNodeModifiers { Modifiers = { new PBGltfNodeModifiers.Types.GltfNodeModifier { Path = "Child", Material = CreatePbrMaterial(Color.blue) } } },
+                new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material> { { renderer, originalMaterial } }),
+                PartitionComponent.TOP_PRIORITY);
+
+            renderer.sharedMaterial = nodeMaterial;
+
+            var gltfNode = new GltfNode(new[] { renderer }, container, "Child");
+            nodeEntity = world.Create(gltfNode, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY,
+                new MaterialComponent { Status = StreamableLoading.LifeCycle.Applied, Result = nodeMaterial });
+
+            world.Get<Components.GltfNodeModifiers>(container).GltfNodeEntities.Add(nodeEntity, gltfNode.Path!);
+            return container;
         }
 
         private static PBMaterial CreatePbrMaterial(Color color) =>

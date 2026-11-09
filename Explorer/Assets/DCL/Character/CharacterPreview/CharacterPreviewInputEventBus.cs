@@ -1,29 +1,28 @@
-﻿using System;
-using UnityEngine.EventSystems;
+using System;
 
 namespace DCL.CharacterPreview
 {
     public class CharacterPreviewInputEventBus
     {
-        public event Action<PointerEventData> OnDraggingEvent;
-        public event Action<PointerEventData> OnScrollEvent;
-        public event Action<PointerEventData> OnPointerUpEvent;
-        public event Action<PointerEventData> OnPointerDownEvent;
-        public event Action<AvatarWearableCategoryEnum> OnChangePreviewFocusEvent;
+        public event Action<CharacterPreviewPointerInput>? OnDraggingEvent;
+        public event Action<CharacterPreviewPointerInput>? OnScrollEvent;
+        public event Action<CharacterPreviewPointerInput>? OnPointerUpEvent;
+        public event Action<CharacterPreviewPointerInput>? OnPointerDownEvent;
+        public event Action<AvatarWearableCategoryEnum>? OnChangePreviewFocusEvent;
 
-        public void OnDrag(PointerEventData eventData) =>
-            OnDraggingEvent?.Invoke(eventData);
+        public void OnDrag(in CharacterPreviewPointerInput input) =>
+            OnDraggingEvent?.Invoke(input);
 
-        public void OnScroll(PointerEventData eventData) =>
-            OnScrollEvent?.Invoke(eventData);
+        public void OnScroll(in CharacterPreviewPointerInput input) =>
+            OnScrollEvent?.Invoke(input);
 
         public void OnChangePreviewFocus(AvatarWearableCategoryEnum category) =>
             OnChangePreviewFocusEvent?.Invoke(category);
 
-        public void OnPointerUp(PointerEventData pointerEventData) =>
-            OnPointerUpEvent?.Invoke(pointerEventData);
+        public void OnPointerUp(in CharacterPreviewPointerInput input) =>
+            OnPointerUpEvent?.Invoke(input);
 
-        public void OnPointerDown(PointerEventData pointerEventData) =>
-            OnPointerDownEvent?.Invoke(pointerEventData);
+        public void OnPointerDown(in CharacterPreviewPointerInput input) =>
+            OnPointerDownEvent?.Invoke(input);
     }
 }

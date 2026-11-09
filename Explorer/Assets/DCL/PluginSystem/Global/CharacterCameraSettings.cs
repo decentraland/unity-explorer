@@ -4,7 +4,6 @@ using DCL.CharacterCamera.Settings;
 using DCL.Settings.Settings;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {

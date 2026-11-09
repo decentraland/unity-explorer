@@ -133,6 +133,11 @@
         public const string TEXTURES = nameof(TEXTURES);
 
         /// <summary>
+        ///     Fonts that scenes load through `font_src`
+        /// </summary>
+        public const string SDK_FONTS = nameof(SDK_FONTS);
+
+        /// <summary>
         ///     Everything related to GLTF
         /// </summary>
         public const string GLTF_CONTAINER = nameof(GLTF_CONTAINER);
@@ -183,6 +188,11 @@
         ///     Input
         /// </summary>
         public const string INPUT = nameof(INPUT);
+
+        /// <summary>
+        ///     Synthetic input simulation layer shared by automation drivers (MCP server, AltTester probes)
+        /// </summary>
+        public const string SYNTHETIC_INPUT = nameof(SYNTHETIC_INPUT);
 
         /// <summary>
         ///     Avatar rendering

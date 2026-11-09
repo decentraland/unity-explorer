@@ -35,7 +35,9 @@ namespace DCL.Profiles
             var uniqueEmotes = new URN[profile.Avatar.Emotes.Count];
             ConvertEquippedEmotesIntoUniqueUrns();
 
-            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
+            // The body shape slot is empty while the identity is being switched (the equipped set is cleared before the profile is), so the profile's own shape stays
+            IWearable? equippedBodyShape = equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE);
+            BodyShape bodyShape = equippedBodyShape != null ? BodyShape.FromStringSafe(equippedBodyShape.GetUrn()) : profile.Avatar.BodyShape;
 
             ProfileBuilder builder = PROFILE_BUILDER.From(profile)
                 .WithBodyShape(bodyShape)

@@ -8,7 +8,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using DCL.SceneRunner.Scene;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;

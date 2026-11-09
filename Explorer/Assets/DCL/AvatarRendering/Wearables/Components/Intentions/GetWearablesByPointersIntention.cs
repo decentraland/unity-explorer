@@ -19,6 +19,11 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public readonly List<URN> Pointers;
 
         /// <summary>
+        ///     Resolves as soon as every DTO is loaded, without loading the wearables' assets
+        /// </summary>
+        public readonly bool DtoOnly;
+
+        /// <summary>
         ///     How many pointers were missing when resolution began
         /// </summary>
         public int MissingPointersCount;
@@ -28,9 +33,10 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         /// </summary>
         public long ResolvedWearablesIndices;
 
-        public GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.All)
+        public GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.All, bool dtoOnly = false)
         {
             Pointers = pointers;
+            DtoOnly = dtoOnly;
             BodyShape = bodyShape;
             HideWearablesResolution = new HideWearablesResolution(forceRender);
             PermittedSources = permittedSources;

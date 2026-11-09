@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -8,9 +9,15 @@ using DCL.Input;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using System;
@@ -62,10 +69,13 @@ namespace Global.Dynamic
             return await uiShellContainer.InitializeContainerAsync<UIShellContainer, Settings>(settingsContainer, ct, async c =>
             {
                 CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(c.settings.CursorSettings, ct)).Value;
-                ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
-                ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
 
-                c.Cursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
+                c.Cursor = new DCLCursor(
+                    await ProvideCursorAsync(cursorSettings.NormalCursor, cursorSettings.NormalCursorHotspot),
+                    await ProvideCursorAsync(cursorSettings.InteractionCursor, cursorSettings.InteractionCursorHotspot),
+                    await ProvideCursorAsync(cursorSettings.GrabCursor, cursorSettings.GrabCursorHotspot),
+                    await ProvideCursorAsync(cursorSettings.DraggingCursor, cursorSettings.DraggingCursorHotspot),
+                    await ProvideCursorAsync(cursorSettings.NotAllowedCursor, cursorSettings.NotAllowedCursorHotspot));
 
                 PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(c.settings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
                 c.MainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(c.settings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
@@ -78,19 +88,23 @@ namespace Global.Dynamic
 
                 c.PassportBridge = new MVCPassportBridge(c.MvcManager);
             });
+
+            async UniTask<CursorTexture> ProvideCursorAsync(AssetReferenceTexture2D texture, Vector2 hotspot) =>
+                new ((await assetsProvisioner.ProvideMainAssetAsync(texture, ct)).Value, hotspot);
         }
 
         public MainUIPlugin CreateMainUIPlugin(bool includeFriends) =>
             new (MvcManager, MainUIView, includeFriends);
 
-        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler) =>
-            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager);
+        public InputPlugin CreateInputPlugin(IAssetsProvisioner assetsProvisioner, EmoteWheelShortcutHandler emoteWheelShortcutHandler, IReactiveProperty<bool> currentSceneUiOnly) =>
+            new (Cursor, EventSystem, assetsProvisioner, emoteWheelShortcutHandler, MvcManager, currentSceneUiOnly);
 
         public ErrorPopupPlugin CreateErrorPopupPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (MvcManager, assetsProvisioner);
 
-        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner) =>
-            new (assetsProvisioner, MvcManager, ClipboardManager);
+        public GenericPopupsPlugin CreateGenericPopupsPlugin(IAssetsProvisioner assetsProvisioner, ICompositeWeb3Provider compositeWeb3Provider, SelfProfile selfProfile, IInputBlock inputBlock,
+            IWeb3IdentityCache identityCache, IProfileCache profileCache, IUserInAppInitializationFlow userInAppInitializationFlow, World world, Entity playerEntity) =>
+            new (assetsProvisioner, MvcManager, ClipboardManager, compositeWeb3Provider, selfProfile, inputBlock, identityCache, profileCache, userInAppInitializationFlow, world, playerEntity);
 
         public ColorPickerPlugin CreateColorPickerPlugin(IAssetsProvisioner assetsProvisioner) =>
             new (assetsProvisioner, MvcManager);

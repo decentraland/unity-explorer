@@ -7,7 +7,8 @@ namespace DCL.ApplicationGuards
 {
     public class LivekitHealthGuardController : ControllerBase<LivekitHealthGuardView>
     {
-        public override CanvasOrdering.SortingLayer Layer { get; }
+        // Overlay draws above the splash screen, which is still up while the guard blocks the bootstrap
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public LivekitHealthGuardController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 

@@ -31,7 +31,8 @@ struct VertexOutput
     float3 bitangentDir : TEXCOORD3;
     float4 positionCS : TEXCOORD4;
     float3 positionWS : TEXCOORD5;
-
+    half fogFactor : TEXCOORD6;
+    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -40,10 +41,11 @@ VertexOutput vert (VertexInput v)
     VertexOutput o = (VertexOutput)0;
 
     UNITY_SETUP_INSTANCE_ID(v);
+    UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv0 = v.texcoord0;
-    float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
+    float4 objPos = mul ( UNITY_MATRIX_M, float4(0,0,0,1) );
     float2 Set_UV0 = o.uv0;
     float4 _Outline_Sampler_var = float4(1,1,1,1);//tex2Dlod(_Outline_Sampler,float4(TRANSFORM_TEX(Set_UV0, _Outline_Sampler),0.0,0));
     //v.2.0.4.3 baked Normal Texture for Outline
@@ -51,11 +53,11 @@ VertexOutput vert (VertexInput v)
     #ifdef _DCL_COMPUTE_SKINNING
     o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz);
     float4 skinnedTangent = _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].tangent;
-    o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
+    o.tangentDir = normalize( mul( UNITY_MATRIX_M, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
     o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * skinnedTangent.w);
     #else
     o.normalDir = UnityObjectToWorldNormal(v.normal);
-    o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
+    o.tangentDir = normalize( mul( UNITY_MATRIX_M, float4( v.tangent.xyz, 0.0 ) ).xyz );
     o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
     #endif
     
@@ -102,6 +104,7 @@ VertexOutput vert (VertexInput v)
     o.pos.z = o.pos.z + fOffset_Z * _ClipCameraPos.z;
     o.positionCS = TransformWorldToHClip(positionWS);
     o.positionWS = positionWS;
+    o.fogFactor = ComputeFogFactor(o.positionCS.z);
     return o;
 }
 
@@ -122,7 +125,7 @@ float4 frag(VertexOutput i) : SV_Target
     //     return float4(1.0f, 1.0f, 1.0f, 1.0f);  // but nothing should be drawn except Z value as colormask is set to 0
     // }
     //_Color = _BaseColor;
-    float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
+    float4 objPos = mul ( UNITY_MATRIX_M, float4(0,0,0,1) );
     //v.2.0.9
     float3 envLightSource_GradientEquator = unity_AmbientEquator.rgb >0.05 ? unity_AmbientEquator.rgb : half3(0.05,0.05,0.05);
     float3 envLightSource_SkyboxIntensity = max(ShadeSH9(half4(0.0,0.0,0.0,1.0)),ShadeSH9(half4(0.0,-1.0,0.0,1.0))).rgb;
@@ -155,6 +158,8 @@ float4 frag(VertexOutput i) : SV_Target
         float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
         clip(Set_MainTexAlpha - 0.5);
         float4 Set_Outline_Color = float4(_Is_BlendBaseColor_var,Set_Clipping);//lerp( float4(_Is_BlendBaseColor_var,Set_Clipping), float4((_OutlineTex_var.rgb*_Outline_Color.rgb*lightColor),Set_Clipping), _Is_OutlineTex );
+        half fogFactor = InitializeInputDataFog(float4(i.positionWS, 1.0), i.fogFactor);
+        Set_Outline_Color.rgb = MixFog(Set_Outline_Color.rgb, fogFactor);
         return Set_Outline_Color;
     //#endif
 }

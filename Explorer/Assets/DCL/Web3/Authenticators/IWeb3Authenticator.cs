@@ -24,6 +24,9 @@ namespace DCL.Web3.Authenticators
         FORTMATIC = 7,
         COINBASE = 8,
         WALLETCONNECT = 9,
+        GUEST = 10,
+        TOKEN_FILE = 11,
+        EPHEMERAL_GUEST = 12,
     }
 
     public readonly struct LoginPayload
@@ -42,5 +45,11 @@ namespace DCL.Web3.Authenticators
 
         public static LoginPayload ForDappFlow(LoginMethod method) =>
             new (method);
+
+        public static LoginPayload ForGuestFlow() =>
+            new (LoginMethod.GUEST);
+
+        public static LoginPayload ForEphemeralGuestFlow() =>
+            new (LoginMethod.EPHEMERAL_GUEST);
     }
 }

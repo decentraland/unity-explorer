@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
@@ -151,12 +150,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             float3x2 fromJob = jobWrapper.RemoteAvatarsWorldBounds[index];
             Bounds expected = AvatarCustomSkinningComponent.NewWithLocalBounds(localBounds).ToWorldBounds(avatarBase.transform);
 
-            Assert.That((float)fromJob.c0.x, Is.EqualTo(expected.center.x).Within(TOLERANCE));
-            Assert.That((float)fromJob.c0.y, Is.EqualTo(expected.center.y).Within(TOLERANCE));
-            Assert.That((float)fromJob.c0.z, Is.EqualTo(expected.center.z).Within(TOLERANCE));
-            Assert.That((float)fromJob.c1.x, Is.EqualTo(expected.extents.x).Within(TOLERANCE));
-            Assert.That((float)fromJob.c1.y, Is.EqualTo(expected.extents.y).Within(TOLERANCE));
-            Assert.That((float)fromJob.c1.z, Is.EqualTo(expected.extents.z).Within(TOLERANCE));
+            Assert.That(fromJob.c0.x, Is.EqualTo(expected.center.x).Within(TOLERANCE));
+            Assert.That(fromJob.c0.y, Is.EqualTo(expected.center.y).Within(TOLERANCE));
+            Assert.That(fromJob.c0.z, Is.EqualTo(expected.center.z).Within(TOLERANCE));
+            Assert.That(fromJob.c1.x, Is.EqualTo(expected.extents.x).Within(TOLERANCE));
+            Assert.That(fromJob.c1.y, Is.EqualTo(expected.extents.y).Within(TOLERANCE));
+            Assert.That(fromJob.c1.z, Is.EqualTo(expected.extents.z).Within(TOLERANCE));
         }
 
         /// <summary>
@@ -171,7 +170,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private void RunFrame()
         {
             jobWrapper.ScheduleBoneMatrixCalculation();
-            system!.Update(0);
+            system.Update(0);
         }
 
         /// <summary>

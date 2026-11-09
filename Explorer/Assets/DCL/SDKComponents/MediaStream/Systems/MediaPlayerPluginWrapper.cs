@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
-using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;

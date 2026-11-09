@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.SkyBox;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
@@ -20,20 +21,20 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
-using DCL.Web3;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.Minimap.Settings;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
-using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using LiveKit.Rooms.Participants;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -53,7 +54,6 @@ namespace DCL.Minimap
         {
             { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
         };
-        private const float ANIMATION_TIME = 0.2f;
         private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 10;
 
         private readonly IMapRenderer mapRenderer;
@@ -71,13 +71,13 @@ namespace DCL.Minimap
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
         private readonly IRoomHub roomHub;
+        private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IDonationsService donationsService;
         private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
-        private SideMenuPresenter? sideMenuPresenter;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private CancellationTokenSource favoriteCancellationToken = new ();
@@ -86,10 +86,12 @@ namespace DCL.Minimap
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
+        private SkyboxTimePresenter? skyboxTimePresenter;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
+        private int lastOnlineUsersCount = -1;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -112,12 +114,13 @@ namespace DCL.Minimap
             IChatMessagesBus chatMessagesBus,
             ReloadSceneChatCommand reloadSceneCommand,
             IRoomHub roomHub,
+            SkyboxSettingsAsset skyboxSettings,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
             MinimapContextMenuSettings minimapContextMenuSettings,
             IDonationsService donationsService)
-                : base(() => minimapView)
+            : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -133,6 +136,7 @@ namespace DCL.Minimap
             this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
             this.roomHub = roomHub;
+            this.skyboxSettings = skyboxSettings;
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
@@ -148,7 +152,6 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             placesApiCts.SafeCancelAndDispose();
-            sideMenuPresenter?.Dispose();
             disposeCts.Cancel();
             favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
@@ -156,6 +159,11 @@ namespace DCL.Minimap
             realmNavigator.NavigationExecuted -= OnNavigationExecuted;
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
+
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnRoomParticipantUpdated;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnRoomParticipantUpdated;
+            roomHub.IslandRoom().ConnectionStateChanged -= OnRoomConnectionStateChanged;
+            roomHub.SceneRoom().Room().ConnectionStateChanged -= OnRoomConnectionStateChanged;
 
             if (includeBannedUsersFromScene)
             {
@@ -166,6 +174,7 @@ namespace DCL.Minimap
             }
 
             sceneRestrictionsController?.Dispose();
+            skyboxTimePresenter?.Dispose();
 
             if (viewInstance == null) return;
 
@@ -206,13 +215,9 @@ namespace DCL.Minimap
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(OnMinimapRendererButtonClicked);
-            viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
             viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
 
-            viewInstance.sideMenuCanvasGroup.alpha = 0;
-            viewInstance.sideMenuCanvasGroup.gameObject.SetActive(false);
-            sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmData.IsGenesis());
             realmData.RealmType.OnUpdate += OnRealmChanged;
@@ -234,12 +239,69 @@ namespace DCL.Minimap
             EvaluateDonateToCreatorButton(donationsService.DonationsEnabledCurrentScene.Value);
             viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
+            viewInstance.skyboxButton.onClick.AddListener(ToggleSkyboxWidget);
+            viewInstance.skyboxButton.SetSelected(false);
+            viewInstance.SetSkyboxWidgetVisible(false);
+
+            skyboxTimePresenter = new SkyboxTimePresenter(viewInstance.timeProgressionToggle, viewInstance.timeSlider,
+                viewInstance.timeText, viewInstance.skyboxCanvasGroup, skyboxSettings, sceneRestrictionBusController);
+
+            RefreshOnlineUsersCount();
+
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnRoomParticipantUpdated;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnRoomParticipantUpdated;
+            roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChanged;
+            roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChanged;
+
             if (includeBannedUsersFromScene)
             {
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomConnected += HideOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideOwnPlayerBannedMark;
             }
+        }
+
+        private void ToggleSkyboxWidget()
+        {
+            bool show = !viewInstance!.skyboxButton.IsSelected;
+
+            viewInstance.skyboxButton.SetSelected(show);
+            viewInstance.SetSkyboxWidgetVisible(show);
+        }
+
+        private void OnRoomParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
+        {
+            if (update is not (UpdateFromParticipant.Connected or UpdateFromParticipant.Disconnected)) return;
+
+            RefreshOnlineUsersCountOnMainThread();
+        }
+
+        private void OnRoomConnectionStateChanged(LKConnectionState connectionState) =>
+            RefreshOnlineUsersCountOnMainThread();
+
+        private void RefreshOnlineUsersCountOnMainThread()
+        {
+            // LiveKit raises participant and connection callbacks from its own thread.
+            RefreshOnMainThreadAsync().Forget();
+            return;
+
+            async UniTaskVoid RefreshOnMainThreadAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                RefreshOnlineUsersCount();
+            }
+        }
+
+        private void RefreshOnlineUsersCount()
+        {
+            if (viewInstance == null) return;
+
+            int count = roomHub.ParticipantsCount();
+
+            if (count == lastOnlineUsersCount) return;
+
+            lastOnlineUsersCount = count;
+            viewInstance.onlineUsersText.SetText("{0}", count);
         }
 
         private void OnMinimapRendererButtonClicked()
@@ -250,14 +312,9 @@ namespace DCL.Minimap
         private void SetInitialHomeToggleValue()
         {
             bool isHome;
-            if (realmData.ScenesAreFixed)
-            {
-                string? homeWorldName = homePlaceEventBus.CurrentHomeWorldName;
-                if (string.IsNullOrEmpty(homeWorldName))
-                    homeWorldName = HomeMarkerController.DeserializeWorldName();
 
-                isHome = string.Equals(homeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
-            }
+            if (realmData.ScenesAreFixed)
+                isHome = string.Equals(homePlaceEventBus.CurrentHomeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
             else
             {
                 PlacesData.PlaceInfo? place = GetPlaceCoveringHome();
@@ -277,6 +334,7 @@ namespace DCL.Minimap
         private void ShowContextMenu()
         {
             SetInitialHomeToggleValue();
+
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
@@ -289,7 +347,7 @@ namespace DCL.Minimap
                 if (realmData.ScenesAreFixed)
                     homePlaceEventBus.SetAsHome(realmData.RealmName);
                 else
-                    homePlaceEventBus.SetAsHome(ResolveHomeParcel());
+                    homePlaceEventBus.SetAsHome(previousParcelPosition);
             }
             else
                 homePlaceEventBus.UnsetHome();
@@ -297,15 +355,6 @@ namespace DCL.Minimap
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
-        }
-
-        private Vector2Int ResolveHomeParcel()
-        {
-            PlacesData.PlaceInfo? place = GetPlaceCoveringHome();
-
-            return place != null && VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int basePosition)
-                ? basePosition
-                : previousParcelPosition;
         }
 
         private void OnFavoriteButtonClicked(bool value)
@@ -329,6 +378,7 @@ namespace DCL.Minimap
                         viewInstance!.favoriteButton.SetButtonState(false, false);
                         return;
                     }
+
                     await placesAPIService.SetPlaceFavoriteAsync(info.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
@@ -350,43 +400,20 @@ namespace DCL.Minimap
                 ? $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?realm={realmData.RealmName}&position={previousParcelPosition.x},{previousParcelPosition.y}"
                 : $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}";
 
-            systemClipboard.Set(link + ReferrerQuery());
+            systemClipboard.Set(ShareLinkUtilities.WithReferrer(link));
         }
 
-        private static string ReferrerQuery()
-        {
-            if (ViewDependencies.CurrentIdentity is not { } identity)
-                return string.Empty;
+        private void ExpandMinimap() =>
+            SetMapExpanded(true);
 
-            return $"&referrer={identity.Address.ToString()}";
-        }
+        private void CollapseMinimap() =>
+            SetMapExpanded(false);
 
-        private void ExpandMinimap()
+        private void SetMapExpanded(bool isExpanded)
         {
-            viewInstance!.collapseMinimapButton.gameObject.SetActive(true);
-            viewInstance.expandMinimapButton.gameObject.SetActive(false);
-            viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
-            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = true;
-        }
-
-        private void CollapseMinimap()
-        {
-            viewInstance!.collapseMinimapButton.gameObject.SetActive(false);
-            viewInstance.expandMinimapButton.gameObject.SetActive(true);
-            viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
-            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = false;
-        }
-
-        private void OpenSideMenu()
-        {
-            if (viewInstance!.sideMenuCanvasGroup.gameObject.activeInHierarchy) { viewInstance.sideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.sideMenuCanvasGroup.gameObject.gameObject.SetActive(false)); }
-            else
-            {
-                viewInstance.sideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
-                viewInstance.sideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
-            }
+            viewInstance!.mapRoot.SetActive(isExpanded);
+            viewInstance.collapseMinimapButton.gameObject.SetActive(isExpanded);
+            viewInstance.expandMinimapButton.gameObject.SetActive(!isExpanded);
         }
 
         private void ShowPinInMinimapEdge(IPinMarker pinMarker)
@@ -424,6 +451,9 @@ namespace DCL.Minimap
                     new Vector2Int(viewInstance.mapRendererVisibleParcels, viewInstance.mapRendererVisibleParcels)
                 ));
 
+                // The minimap always renders the satellite layer, whatever the navmap's filter left the shared flag at.
+                mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
@@ -454,14 +484,15 @@ namespace DCL.Minimap
 
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RefreshPlaceInfoUIAsync(previousParcelPosition, placesApiCts.Token).Forget();
+            RefreshPlaceInfoUiAsync(previousParcelPosition, placesApiCts.Token).Forget();
         }
 
         private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = playerPosition.ToParcel();
+
             bool realmNameChanged = realmData.Configured
-                && !string.Equals(previousRealmName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
+                                    && !string.Equals(previousRealmName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
 
             if (previousParcelPosition == playerParcelPosition && !realmNameChanged)
                 return;
@@ -474,7 +505,7 @@ namespace DCL.Minimap
 
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
+            RefreshPlaceInfoUiAsync(playerParcelPosition, placesApiCts.Token).Forget();
 
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
@@ -482,13 +513,14 @@ namespace DCL.Minimap
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
         }
 
-        private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
+        private async UniTaskVoid RefreshPlaceInfoUiAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
             if (realmData.ScenesAreFixed)
             {
                 PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(parcelPosition, realmData.RealmName, ct);
+
                 if (worldInfo != null)
                 {
                     viewInstance!.placeNameText.text = worldInfo.title;
@@ -535,14 +567,8 @@ namespace DCL.Minimap
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
             catch (OperationCanceledException) { }
-            catch (NotAPlaceException notAPlaceException)
-            {
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
-            }
-            catch (Exception exception)
-            {
-                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-            }
+            catch (NotAPlaceException notAPlaceException) { ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}"); }
+            catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST); }
 
             return null;
         }
@@ -551,19 +577,10 @@ namespace DCL.Minimap
         {
             await realmData.WaitConfiguredAsync();
 
-            try
-            {
-                return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
-            }
-            catch (OperationCanceledException _) { }
-            catch (NotAPlaceException notAPlaceException)
-            {
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}");
-            }
-            catch (Exception exception)
-            {
-                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-            }
+            try { return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct); }
+            catch (OperationCanceledException) { }
+            catch (NotAPlaceException notAPlaceException) { ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}"); }
+            catch (Exception exception) { ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST); }
 
             return null;
         }
@@ -575,16 +592,13 @@ namespace DCL.Minimap
 
             ToggleObjects(isGenesisModeActivated);
             ConfigureContextualButton(isGenesisModeActivated);
-            SetAnimatorController(isGenesisModeActivated);
         }
 
         private void ToggleObjects(bool isGenesisModeActivated)
         {
-            foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
-                go.SetActive(isGenesisModeActivated);
-
-            foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
-                go.SetActive(!isGenesisModeActivated);
+            viewInstance!.SetWorldsSectionVisible(!isGenesisModeActivated);
+            SetMapExpanded(isGenesisModeActivated);
+            viewInstance.SetMapResizingAllowed(isGenesisModeActivated);
         }
 
         private void ConfigureContextualButton(bool isGenesisModeActivated)
@@ -636,14 +650,6 @@ namespace DCL.Minimap
             chatMessagesBus.SendWithUtcNowTimestamp(
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.Minimap
             );
-
-        private void SetAnimatorController(bool isGenesisModeActivated)
-        {
-            viewInstance!.minimapAnimator.runtimeAnimatorController =
-                isGenesisModeActivated
-                    ? viewInstance.genesisCityAnimatorController
-                    : viewInstance.worldsAnimatorController;
-        }
 
         private void ShowOwnPlayerBannedMark()
         {

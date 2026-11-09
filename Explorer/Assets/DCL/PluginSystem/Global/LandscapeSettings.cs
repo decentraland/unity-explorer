@@ -1,9 +1,7 @@
-﻿using DCL.Landscape.Config;
-using DCL.Landscape.Settings;
+﻿using DCL.Landscape.Settings;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -13,6 +11,7 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(LandscapeSettings))] [field: Space]
         [field: SerializeField] public RealmPartitionSettingsAsset realmPartitionSettings;
         [field: SerializeField] public LandscapeDataRef landscapeData;
+        [field: SerializeField] public GpuiShaderBindingsRef gpuiShaderBindings;
 
     }
 }

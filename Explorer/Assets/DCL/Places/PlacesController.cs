@@ -10,14 +10,14 @@ using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using UnityEngine;
 
 namespace DCL.Places
 {
-    public class PlacesController : ISection, IDisposable
+    public class PlacesController : IHostableSection, IPlacesSectionOpener, IDisposable
     {
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
@@ -25,8 +25,12 @@ namespace DCL.Places
         public PlacesResultsController PlacesResultsController { get; }
         public PlacesCardSocialActionsController PlaceCardActionsController { get; }
 
+        public RectTransform? CurrentHost => view.transform.parent as RectTransform;
+
+        public bool IsAtHome => CurrentHost == homeHost;
+
         private readonly PlacesView view;
-        private readonly RectTransform rectTransform;
+        private readonly RectTransform homeHost;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
@@ -40,7 +44,7 @@ namespace DCL.Places
             IPlacesAPIService placesAPIService,
             PlaceCategoriesSO placesCategories,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile,
+            SelfProfile selfProfile,
             UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -49,10 +53,11 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             IWorldPermissionsService worldPermissionsService,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            IWeb3IdentityCache identityCache)
         {
             this.view = view;
-            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            homeHost = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.placesCategories = placesCategories;
             this.inputBlock = inputBlock;
@@ -60,7 +65,8 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
-                friendsService, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
+                friendsService, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService,
+                identityCache);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -109,8 +115,25 @@ namespace DCL.Places
         public void ResetAnimator() =>
             view.ResetAnimator();
 
+        // The slot rather than the view, which may sit under another host at the time.
         public RectTransform GetRectTransform() =>
-            rectTransform;
+            homeHost;
+
+        public void AttachTo(RectTransform host)
+        {
+            var viewRect = (RectTransform)view.transform;
+
+            // The previous host may still be showing the view, so it is deactivated there first.
+            if (isSectionActivated && viewRect.parent != host)
+                Deactivate();
+
+            if (!SectionHosting.MoveUnder(viewRect, host)) return;
+
+            view.SetCompactLayout(host != homeHost);
+        }
+
+        public void AttachToHome() =>
+            AttachTo(homeHost);
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
@@ -118,9 +141,13 @@ namespace DCL.Places
             view.OpenSection(section, force, invokeEvent, cleanSearch, resetCategory);
         }
 
+        void IPlacesSectionOpener.OpenSection(PlacesSection section) =>
+            OpenSection(section);
+
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
             view.SetFiltersVisible(newFilters.Section == PlacesSection.Browse);
+            view.SetFiltersInteractable(!newFilters.IsBrowsingFeatured);
             view.SetCategoriesVisible(newFilters.Section == PlacesSection.Browse && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }

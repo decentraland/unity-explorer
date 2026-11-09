@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c3d55383a43e86b45058c0bd01c53fe, type: 3}
+  m_Name: GameNight
+  m_EditorClassIdentifier: 
+  <Backdrop>k__BackingField: {fileID: 2800000, guid: 49201b3a898341d43be03b1f3a08b99d, type: 3}
+  <BlendScreenHeight>k__BackingField: 0.44
+  <BlendDepth>k__BackingField: 4.85
+  <BlendHardness>k__BackingField: 0.45
+  <ImageBelowBlend>k__BackingField: 0.462
+  <FloorColor>k__BackingField: {r: 0.5620616, g: 0.39529192, b: 0.5943396, a: 1}
+  <SpotColor>k__BackingField: {r: 0.3427882, g: 0.20638172, b: 0.3845504, a: 1}
+  <MistColor>k__BackingField: {r: 0.39440963, g: 0.25913987, b: 0.4358238, a: 0.7882353}
+  <ColorSampleBand>k__BackingField: 0.15
+  <LightRotation>k__BackingField: {x: 45, y: 120, z: 0}
+  <LightColor>k__BackingField: {r: 0.9767497, g: 0.8254717, b: 1, a: 1}
+  <LightIntensity>k__BackingField: 2
+  <VignetteMaskCenter>k__BackingField: {x: 0.5, y: 0.55}
+  <VignetteMaskRadii>k__BackingField: {x: 0.3, y: 0.5, z: 0.3}
+  <VignetteMaskSoftness>k__BackingField: 0.5
+  <Props>k__BackingField: []

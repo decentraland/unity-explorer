@@ -48,6 +48,9 @@ namespace Utility
             }
         }
 
+        public override string ToString() =>
+            value.ToString();
+
         public static implicit operator T(CanBeDirty<T> canBeDirty) =>
             canBeDirty.Value;
     }

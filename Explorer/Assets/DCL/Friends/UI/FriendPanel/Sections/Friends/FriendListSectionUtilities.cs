@@ -54,7 +54,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     realmNavigator.TryChangeRealmAsync(
                         URLDomain.FromString(worldUrl),
                         ct,
-                        default,
                         isWorld: true,
                         allowsSpawnPointerOverride: true).Forget();
                 }

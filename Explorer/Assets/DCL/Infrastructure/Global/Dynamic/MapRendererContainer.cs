@@ -73,7 +73,8 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     web3IdentityCache,
                     homePlaceEventBus,
-                    eventBus));
+                    eventBus,
+                    staticContainer.BytesDiskCache));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

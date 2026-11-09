@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Utils;
 using Decentraland.Terrain;
 using GPUInstancerPro;
+using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -9,15 +10,22 @@ namespace DCL.Landscape.Settings
 {
     public class LandscapeData : ScriptableObject
     {
-        public Action<float>? OnDetailDistanceChanged;
+        // ReSharper disable InconsistentNaming
+        public Transform mapChunk = null!;
+        public TerrainGenerationData terrainData = null!;
+        public TerrainGenerationData worldsTerrainData = null!;
+        // ReSharper restore InconsistentNaming
 
-        public Transform mapChunk;
-        public TerrainGenerationData terrainData;
-        public TerrainGenerationData worldsTerrainData;
+        [SerializeField] private float detailDistanceValue = 200;
+
+        [field: SerializeField] public Material? GroundMaterial { get; private set; }
+        [field: SerializeField] public int GroundInstanceCapacity { get; set; }
+        [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
+        [field: SerializeField] [field: EnumIndexedArray(typeof(GroundMeshPiece))]
+        public Mesh?[] GroundMeshes { get; private set; } = null!;
 
         [field: SerializeField] public GPUIProfile TreesProfile { get; private set; } = null!;
 
-        [SerializeField] private float detailDistanceValue = 200;
         public float DetailDistance
         {
             get => detailDistanceValue;
@@ -29,9 +37,13 @@ namespace DCL.Landscape.Settings
 
                 detailDistanceValue = value;
                 ApplyDetailDistanceToTrees(value);
-                OnDetailDistanceChanged?.Invoke(value);
             }
         }
+
+        public bool RenderGround { get; set; } = true;
+        public bool RenderTrees { get; set; } = true;
+        public bool RenderGrass { get; set; } = true;
+        public bool ShowSatelliteFloor { get; set; } = true;
 
         private void ApplyDetailDistanceToTrees(float distance)
         {
@@ -45,22 +57,11 @@ namespace DCL.Landscape.Settings
                 ApplyDetailDistanceToTrees(detailDistanceValue);
         }
 
-        public bool RenderGround { get; set; } = true;
-        public bool RenderTrees { get; set; } = true;
-        public bool RenderGrass { get; set; } = true;
-        public bool ShowSatelliteFloor { get; set; } = true;
-        [field: SerializeField] public Material? GroundMaterial { get; private set; }
-        [field: SerializeField] public int GroundInstanceCapacity { get; set; }
-        [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
-
-        [field: SerializeField] [field: EnumIndexedArray(typeof(GroundMeshPiece))]
-        public Mesh?[] GroundMeshes { get; private set; } = null!;
-
         private enum GroundMeshPiece
         {
-            Middle,
-            Edge,
-            Corner,
+            [UsedImplicitly] Middle,
+            [UsedImplicitly] Edge,
+            [UsedImplicitly] Corner,
         }
     }
 
@@ -68,5 +69,11 @@ namespace DCL.Landscape.Settings
     public class LandscapeDataRef : AssetReferenceT<LandscapeData>
     {
         public LandscapeDataRef(string guid) : base(guid) { }
+    }
+
+    [Serializable]
+    public class GpuiShaderBindingsRef : AssetReferenceT<GPUIShaderBindings>
+    {
+        public GpuiShaderBindingsRef(string guid) : base(guid) { }
     }
 }

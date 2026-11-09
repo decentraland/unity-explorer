@@ -8,6 +8,7 @@ using DCL.Donations;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Minimap;
+using DCL.SkyBox;
 using DCL.Minimap.Settings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -116,6 +117,7 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 reloadSceneCommand,
                 roomHub,
+                settings.SkyboxSettingsAsset,
                 loadingStatus,
                 includeBannedUsersFromScene,
                 homePlaceEventBus,
@@ -132,6 +134,7 @@ namespace DCL.PluginSystem.Global
         public class MinimapPluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public MinimapContextMenuSettings MinimapContextMenuSettings = null!;
+            [field: SerializeField] public SkyboxSettingsAsset SkyboxSettingsAsset = null!;
         }
     }
 }

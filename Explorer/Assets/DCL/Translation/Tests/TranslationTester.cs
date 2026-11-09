@@ -10,7 +10,6 @@ using DCL.Translation.Service;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
 using DCL.Utilities;
-using UnityEngine;
 
 namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
 {

@@ -16,7 +16,6 @@ namespace DCL.RuntimeDeepLink
 {
     public class DeepLinkHandle : IDeepLinkHandle
     {
-        private readonly StartParcel startParcel;
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
@@ -26,10 +25,9 @@ namespace DCL.RuntimeDeepLink
         private readonly IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly bool routeNavigationDeepLinks;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IMVCManager mvcManager, ILoadingStatus loadingStatus, ReactiveProperty<string?> deeplinkSigninIdentityId,
+        public DeepLinkHandle(ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IMVCManager mvcManager, ILoadingStatus loadingStatus, ReactiveProperty<string?> deeplinkSigninIdentityId,
             IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId, bool routeNavigationDeepLinks)
         {
-            this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
@@ -91,13 +89,7 @@ namespace DCL.RuntimeDeepLink
             }
             else if (position.HasValue)
             {
-                var parcel = position.Value;
-
-                if (startParcel.IsConsumed())
-                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token, spawnPointName).Forget();
-                else
-                    startParcel.Assign(parcel, spawnPointName);
-
+                chatTeleporter.TeleportToParcelAsync(position.Value, false, token, spawnPointName).Forget();
                 handled = true;
             }
 

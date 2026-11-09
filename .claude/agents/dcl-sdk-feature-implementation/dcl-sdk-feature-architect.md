@@ -38,7 +38,7 @@ Do NOT proceed until the user confirms. Repo paths may differ between machines.
 Example format:
 ```
 Implementation Plan:
-1. [Sequential] dcl-protocol-specialist — create proto file, ensure branch is from `experimental`
+1. [Sequential] dcl-protocol-specialist — create proto file, ensure branch is from `main`
 2. [Parallel]   dcl-sdk-specialist + dcl-explorer-specialist — SDK TypeScript + Unity C# (independent repos)
 3. [Sequential] dcl-test-scene-specialist — test scene (depends on SDK build from step 2)
 4. [Architect]  Cross-layer verification checklist
@@ -53,7 +53,7 @@ Show the plan to the user and Wait for user confirmation before executing.
 ### Phase 1: Protocol (sequential — everything depends on this)
 Spawn `dcl-protocol-specialist` to create/modify `.proto` files.
 
-**CRITICAL: Always instruct the protocol specialist to verify that the working branch is `experimental` or branched from it.** Unity-explorer always requires a protocol that is either `experimental` or derives from it. The specialist must check and, if needed, branch from `experimental` before making any changes.
+**CRITICAL: Always instruct the protocol specialist to verify that the working branch is `main` or branched from it.** Unity-explorer consumes `@dcl/protocol@next`, which is published from `main`. The specialist must check and, if needed, branch from `main` before making any changes.
 
 Wait for completion before proceeding.
 
@@ -76,7 +76,7 @@ Cross-layer compatibility checks (see checklist below).
 When delegating to a specialist, always include:
 
 1. **What to implement** — component name, fields, behavior
-2. **Protocol package source** — PR test URL or `@experimental`
+2. **Protocol package source** — PR test URL or `@next`
 3. **Branch name** — use consistent branch names across all 4 repos (e.g., `feat/your-feature`)
 4. **Cross-repo dependencies** — what's been done in other repos, package URLs
 5. **Verification commands** — what to run to confirm success
@@ -133,30 +133,26 @@ After all specialists complete, verify:
 ### Step 1: Merge Protocol PR first
 The protocol defines the schema that both SDK and Explorer depend on.
 
-### Step 2: Sync experimental branch (if needed)
-- If protocol was merged to `main`: the `experimental` branch must sync the new changes before step 3
-- If protocol was merged to `experimental`: proceed directly to step 3
-
-### Step 3: Update downstream PRs
-Update both `js-sdk-toolchain` and `unity-explorer` PRs to use the published `@dcl/protocol@experimental` package (NOT the PR test package URL).
+### Step 2: Update downstream PRs
+Update both `js-sdk-toolchain` and `unity-explorer` PRs to use the published `@dcl/protocol@next` package (NOT the PR test package URL).
 
 **js-sdk-toolchain:**
 ```bash
-npm install @dcl/protocol@experimental
+npm install @dcl/protocol@next
 make install && make build
 ```
 
 **unity-explorer:**
 ```bash
 cd scripts
-npm install @dcl/protocol@experimental
+npm install @dcl/protocol@next
 npm run build-protocol
 ```
 
-### Step 4: Merge SDK and Explorer
+### Step 3: Merge SDK and Explorer
 `js-sdk-toolchain` and `unity-explorer` can be merged in any order — they don't depend on each other.
 
-### Step 5: Merge test scene last
+### Step 4: Merge test scene last
 The test scene PR depends on the published SDK package.
 
 ## Cross-Repo Package Linking
@@ -187,7 +183,7 @@ cd ../sdk7-test-scenes/scenes/<x>,<y>-<scene-name>
 npm install ../../js-sdk-toolchain/packages/@dcl/sdk
 ```
 
-Local linking is ideal for rapid iteration before PRs are created. **Before merging**, all repos must switch to published `@experimental` packages (see PR Merge Order).
+Local linking is ideal for rapid iteration before PRs are created. **Before merging**, all repos must switch to published `@next` packages (see PR Merge Order).
 
 ### Option B: GitHub Bot Test Packages (CI-verified, closer to production)
 
@@ -199,11 +195,11 @@ After each PR is created, a GitHub Bot comments with a test package URL:
 Use these for cross-repo testing during development:
 1. Protocol PR package → install in SDK and Explorer for testing
 2. SDK PR package → install in test scene for testing
-3. Before merging → replace all test packages with published `@experimental` versions
+3. Before merging → replace all test packages with published `@next` versions
 
 ### Mixing strategies
 
-You can use local linking during development and switch to PR packages for final verification. The key rule is: **before merging any downstream PR, it must point to published `@experimental` packages, not local paths or PR test URLs.**
+You can use local linking during development and switch to PR packages for final verification. The key rule is: **before merging any downstream PR, it must point to published `@next` packages, not local paths or PR test URLs.**
 
 ## Git Rules
 

@@ -6,7 +6,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
 using Unity.Mathematics;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
