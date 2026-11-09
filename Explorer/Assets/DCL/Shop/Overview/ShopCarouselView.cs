@@ -30,6 +30,7 @@ namespace DCL.Shop
         [field: SerializeField] public float SelectedDotWidth { get; private set; } = 24f;
         [field: SerializeField] public float NonSelectedDotWidth { get; private set; } = 8f;
         [field: SerializeField] public float CardWidth { get; private set; } = 232f;
+        [field: SerializeField] public int MaxVisibleCards { get; private set; } = 7;
         [field: SerializeField] public SkeletonLoadingView? Skeleton { get; private set; }
         [field: SerializeField] public GameObject ControlsRoot { get; private set; } = null!;
 
@@ -125,7 +126,7 @@ namespace DCL.Shop
         {
             float spacing = TrackLayout.spacing;
             float viewportWidth = Viewport.rect.width;
-            CardsPerPage = Mathf.Max(1, Mathf.FloorToInt((viewportWidth + spacing) / (CardWidth + spacing)));
+            CardsPerPage = Mathf.Clamp(Mathf.FloorToInt((viewportWidth + spacing) / (CardWidth + spacing)), 1, Mathf.Max(1, MaxVisibleCards));
             PageCount = ItemCount == 0 ? 0 : Mathf.CeilToInt(ItemCount / (float)CardsPerPage);
             RebuildDots();
         }

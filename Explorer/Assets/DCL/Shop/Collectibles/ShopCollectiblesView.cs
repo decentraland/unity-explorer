@@ -55,6 +55,8 @@ namespace DCL.Shop
         private CancellationTokenSource? searchCts;
         private int itemCount;
         private bool gridInitialized;
+        private int baseLeftPadding;
+        private int baseRightPadding;
 
         public bool IsSearchBarFocused => SearchBar.inputField.isFocused;
 
@@ -87,6 +89,12 @@ namespace DCL.Shop
             BackToOverviewButton.onClick.AddListener(() => BackToOverviewClicked?.Invoke());
         }
 
+        private void OnEnable()
+        {
+            if (gridInitialized)
+                RecalculateColumns();
+        }
+
         private void OnDestroy() =>
             searchCts.SafeCancelAndDispose();
 
@@ -103,6 +111,8 @@ namespace DCL.Shop
 
             modelAt = modelAtIndex;
             bindCard = bind;
+            baseLeftPadding = Grid.Padding.left;
+            baseRightPadding = Grid.Padding.right;
             Grid.InitGridView(0, OnGetItem);
             Grid.ScrollRect.SetScrollSensitivityBasedOnPlatform();
             gridInitialized = true;
@@ -253,20 +263,36 @@ namespace DCL.Shop
 
         private void RecalculateColumns()
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform);
-            float viewportWidth = Grid.ViewPortWidth;
+            // The grid viewport stretches across this anchor-driven rect, so its width is valid even before the layout pass runs
+            float viewportWidth = ((RectTransform)transform).rect.width;
 
             if (viewportWidth <= 0f)
                 return;
 
-            float usable = viewportWidth - Grid.Padding.left - Grid.Padding.right + Grid.ItemPadding.x;
+            float usable = viewportWidth - baseLeftPadding - baseRightPadding + Grid.ItemPadding.x;
             int columns = Mathf.Clamp(Mathf.FloorToInt(usable / (Grid.ItemSize.x + Grid.ItemPadding.x)), MIN_COLUMNS, MAX_COLUMNS);
 
-            if (columns == CurrentColumns)
+            if (columns != CurrentColumns)
+            {
+                CurrentColumns = columns;
+                Grid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, columns);
+            }
+
+            CenterColumns(viewportWidth, columns);
+        }
+
+        private void CenterColumns(float viewportWidth, int columns)
+        {
+            float columnsWidth = (columns * (Grid.ItemSize.x + Grid.ItemPadding.x)) - Grid.ItemPadding.x;
+            int spare = Mathf.Max(0, Mathf.FloorToInt(viewportWidth - baseLeftPadding - baseRightPadding - columnsWidth));
+            int left = baseLeftPadding + (spare / 2);
+            int right = baseRightPadding + (spare - (spare / 2));
+            RectOffset padding = Grid.Padding;
+
+            if (padding.left == left && padding.right == right)
                 return;
 
-            CurrentColumns = columns;
-            Grid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, columns);
+            Grid.SetPadding(new RectOffset(left, right, padding.top, padding.bottom));
         }
 
         private void OnSearchValueChanged(string text)
