@@ -256,8 +256,6 @@ namespace SceneRunner
                         sceneCodeIsRunning.Reset();
                     }
 
-                    SceneStateProvider.TickNumber++;
-
                     MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately

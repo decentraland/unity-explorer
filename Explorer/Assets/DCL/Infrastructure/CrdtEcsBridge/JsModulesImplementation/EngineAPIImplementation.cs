@@ -8,6 +8,7 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
 using DCL.Profiling;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
@@ -36,6 +37,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
+        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly MultiThreadSync multiThreadSync;
         private readonly MultiThreadSync.Owner syncOwner;
@@ -57,6 +59,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
+            ISceneStateProvider sceneStateProvider,
             MultiThreadSync multiThreadSync,
             MultiThreadSync.Owner syncOwner,
             SceneRuntimeMetrics metrics)
@@ -72,6 +75,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.syncOwner = syncOwner;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
+            this.sceneStateProvider = sceneStateProvider;
             this.metrics = metrics;
 
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
@@ -184,10 +188,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             worldSyncBufferSampler.End();
 
-            PoolableByteArray outgoingMessages = ApplySyncCommandBuffer(worldSyncBuffer, returnData, capturing);
+            List<OutgoingCRDTMessagesProvider.PendingMessage>? outgoingMessages = ApplySyncCommandBuffer(worldSyncBuffer, returnData, capturing);
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            return outgoingMessages;
+            return outgoingMessages != null ? SerializeOutgoingCRDTMessages(outgoingMessages, capturing) : PoolableByteArray.EMPTY;
         }
 
         public PoolableByteArray CrdtGetState()
@@ -239,7 +243,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
 
-        private PoolableByteArray SerializeOutgoingCRDTMessages(bool capturing)
+        private PoolableByteArray SerializeOutgoingCRDTMessages(List<OutgoingCRDTMessagesProvider.PendingMessage> pendingMessages, bool capturing)
         {
             try
             {
@@ -249,7 +253,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 PoolableByteArray serializationBufferPoolable;
 
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock(pendingMessages, processPendingMessage))
                 {
                     serializationBufferPoolable =
                         sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.PayloadLength);
@@ -340,10 +344,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         /// <summary>
-        ///     Applies the scene's messages to the world and serializes the outgoing messages under the same world
-        ///     lock, so one frame's results are never split across two scene ticks.
+        ///     Applies the scene's messages to the world and, under the same world lock, takes the pending outgoing
+        ///     messages and advances the scene tick. The batch therefore holds whole frames, and every result written
+        ///     after it carries a newer tick than any result inside it.
         /// </summary>
-        private PoolableByteArray ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool returnData, bool capturing)
+        /// <returns>The outgoing messages to serialize, or null when none were requested or the apply failed</returns>
+        private List<OutgoingCRDTMessagesProvider.PendingMessage>? ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool returnData, bool capturing)
         {
             // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
             // abort only on a throw before delegation (e.g. mutex acquisition)
@@ -366,7 +372,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 if (capturing)
                     metrics.Traffic.AddApplyTime(Stopwatch.GetTimestamp() - applyStart);
 
-                PoolableByteArray outgoingMessages = returnData ? SerializeOutgoingCRDTMessages(capturing) : PoolableByteArray.EMPTY;
+                List<OutgoingCRDTMessagesProvider.PendingMessage>? outgoingMessages = null;
+
+                if (returnData)
+                {
+                    outgoingMessages = outgoingCrtdMessagesProvider.TakePendingMessages();
+                    sceneStateProvider.TickNumber++;
+                }
 
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
@@ -380,7 +392,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
 
                 exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
-                return PoolableByteArray.EMPTY;
+                return null;
             }
         }
 
