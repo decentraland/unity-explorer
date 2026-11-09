@@ -19,11 +19,16 @@ namespace DCL.Shop
         Name,
     }
 
-    public class ShopCollectiblesFilters
+    /// <summary>
+    ///     The query state of one grid section; the item category is fixed per section and survives every reset.
+    /// </summary>
+    public class ShopGridFilters
     {
         private static readonly Comparison<string> CANONICAL_RARITY_ORDER = static (a, b) => CanonicalRarityIndex(a).CompareTo(CanonicalRarityIndex(b));
 
-        public string Category = ShopCategoryTree.ALL;
+        private readonly string fixedCategory;
+
+        public string Category;
         public string? SubCategoryKey;
         public readonly List<string> Rarities = new ();
         public int? MinPriceCredits;
@@ -45,9 +50,15 @@ namespace DCL.Shop
 
         public bool HasPriceRange => MinPriceCredits.HasValue || MaxPriceCredits.HasValue;
 
+        public ShopGridFilters(string category = ShopCategoryTree.ALL)
+        {
+            fixedCategory = category;
+            Category = category;
+        }
+
         public void Reset()
         {
-            Category = ShopCategoryTree.ALL;
+            Category = fixedCategory;
             SubCategoryKey = null;
             Rarities.Clear();
             MinPriceCredits = null;

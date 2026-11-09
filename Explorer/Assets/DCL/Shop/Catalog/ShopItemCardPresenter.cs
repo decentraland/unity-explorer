@@ -15,6 +15,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Shop
 {
@@ -30,7 +31,7 @@ namespace DCL.Shop
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWearableStylingCatalog styling;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly ShopCreatorNameCache creatorNames;
+        private readonly ShopCreatorCache creators;
 
         public bool PurchasesEnabled { get; set; }
 
@@ -45,7 +46,7 @@ namespace DCL.Shop
             IWeb3IdentityCache identityCache,
             IWearableStylingCatalog styling,
             ThumbnailLoader thumbnailLoader,
-            ShopCreatorNameCache creatorNames)
+            ShopCreatorCache creators)
         {
             this.cart = cart;
             this.buyHandler = buyHandler;
@@ -55,13 +56,13 @@ namespace DCL.Shop
             this.identityCache = identityCache;
             this.styling = styling;
             this.thumbnailLoader = thumbnailLoader;
-            this.creatorNames = creatorNames;
+            this.creators = creators;
         }
 
         public void Bind(ShopItemCardView card, ShopItemCardModel model, long nowUnixSeconds)
         {
             GiftItemStyleSnapshot style = StyleOf(model);
-            card.Bind(model, creatorNames.GetDisplayName(model.Creator), style, thumbnailLoader, ActionsFor(model), IsInCart(model), IsCartFull(model), nowUnixSeconds);
+            card.Bind(model, creators.GetDisplayName(model.Creator), creators.GetThumbnail(model.Creator), style, thumbnailLoader, ActionsFor(model), IsInCart(model), IsCartFull(model), nowUnixSeconds);
         }
 
         public void RefreshCartState(ShopItemCardView card)
@@ -98,20 +99,25 @@ namespace DCL.Shop
             return cart.TryGet(lineId, out ShopCartLine? line) && line!.Quantity >= line.StockCap;
         }
 
-        public async UniTask AddToCartAsync(ShopItemCardView card, ShopCartSource source, CancellationToken ct)
+        public UniTask AddToCartAsync(ShopItemCardView card, ShopCartSource source, CancellationToken ct) =>
+            card.Model == null || card.IsResolving
+                ? UniTask.CompletedTask
+                : AddToCartAsync(card.Model, source, card.SetResolving, ct);
+
+        public UniTask BuyAsync(ShopItemCardView card, string source, CancellationToken ct) =>
+            card.Model == null || card.IsResolving
+                ? UniTask.CompletedTask
+                : BuyAsync(card.Model, card.Thumbnail.ImageSprite, source, card.SetResolving, ct);
+
+        public async UniTask AddToCartAsync(ShopItemCardModel model, ShopCartSource source, Action<bool> setResolving, CancellationToken ct)
         {
-            ShopItemCardModel? model = card.Model;
-
-            if (model == null || card.IsResolving)
-                return;
-
-            card.SetResolving(true);
+            setResolving(true);
             ShopListingDto? listing = await ResolveListingAsync(model, ct);
 
             if (ct.IsCancellationRequested)
                 return;
 
-            card.SetResolving(false);
+            setResolving(false);
 
             if (listing == null || listing.priceCredits <= 0 || (listing.IsPrimary() && listing.available <= 0))
             {
@@ -122,20 +128,15 @@ namespace DCL.Shop
             cart.Add(listing, source);
         }
 
-        public async UniTask BuyAsync(ShopItemCardView card, string source, CancellationToken ct)
+        public async UniTask BuyAsync(ShopItemCardModel model, Sprite? thumbnail, string source, Action<bool> setResolving, CancellationToken ct)
         {
-            ShopItemCardModel? model = card.Model;
-
-            if (model == null || card.IsResolving)
-                return;
-
-            card.SetResolving(true);
+            setResolving(true);
             ShopListingDto? listing = await ResolveListingAsync(model, ct);
 
             if (ct.IsCancellationRequested)
                 return;
 
-            card.SetResolving(false);
+            setResolving(false);
             string itemUrl = ItemUrl(model);
 
             if (listing == null)
@@ -145,7 +146,7 @@ namespace DCL.Shop
             }
 
             GiftItemStyleSnapshot style = StyleOf(model);
-            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(model.Name, model.Rarity, card.Thumbnail.ImageSprite, style.rarityBackground, style.flapColor, style.categoryIcon);
+            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(model.Name, model.Rarity, thumbnail, style.rarityBackground, style.flapColor, style.categoryIcon);
             await buyHandler.HandleBuyClickAsync(listing, model.Urn, itemUrl, visuals, source, ct);
         }
 

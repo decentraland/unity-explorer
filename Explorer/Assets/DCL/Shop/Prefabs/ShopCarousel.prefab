@@ -119,7 +119,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -112, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &528349782384915214
 CanvasGroup:
@@ -319,8 +319,9 @@ MonoBehaviour:
   <NonSelectedDotColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.35}
   <SelectedDotWidth>k__BackingField: 24
   <NonSelectedDotWidth>k__BackingField: 8
-  <CardWidth>k__BackingField: 232
-  <MaxVisibleCards>k__BackingField: 7
+  <RootLayout>k__BackingField: {fileID: 1025960345150647664}
+  <Body>k__BackingField: {fileID: 190151315093464526}
+  <GhostRow>k__BackingField: {fileID: 817022682551678195}
   <Skeleton>k__BackingField: {fileID: 3903491791464805771}
   <ControlsRoot>k__BackingField: {fileID: 1439317554064716529}
 --- !u!1 &758979273571917294
@@ -1381,9 +1382,9 @@ RectTransform:
   - {fileID: 4460762034990573120}
   m_Father: {fileID: 4231110983363714281}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 20, y: -222}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 20, y: -18}
   m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &440269826103890057
@@ -2070,7 +2071,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -112, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1232765543249152273
 MonoBehaviour:
@@ -2133,9 +2134,9 @@ RectTransform:
   - {fileID: 4164045796546217061}
   m_Father: {fileID: 4231110983363714281}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -20, y: -222}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -20, y: -18}
   m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &417684671809590823

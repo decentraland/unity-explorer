@@ -20,7 +20,7 @@ namespace DCL.Passport.Modules.Creations
         public string? urn;
         public string? rarity;
         public bool isOnSale;
-        public int priceCredits;
+        public long priceCredits;
         public MarketplaceCatalogItemData? data;
     }
 

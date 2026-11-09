@@ -28,7 +28,7 @@ namespace DCL.MarketplaceCredits.Purchase
         // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees these fields.
         // `available` is serialized by the server as a number OR a string, which Newtonsoft coerces either way.
 #pragma warning disable UAC1001
-        public int? priceCredits;
+        public long? priceCredits;
         public int? available;
 #pragma warning restore UAC1001
     }
@@ -45,6 +45,7 @@ namespace DCL.MarketplaceCredits.Purchase
     public class CatalogWearableDataDto
     {
         public string? category;
+        public string? description;
         public string[]? bodyShapes;
 
 #pragma warning disable UAC1001
@@ -56,6 +57,7 @@ namespace DCL.MarketplaceCredits.Purchase
     public class CatalogEmoteDataDto
     {
         public string? category;
+        public string? description;
 
 #pragma warning disable UAC1001
         public bool? loop;
@@ -82,6 +84,9 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public static string? WearableCategory(this CatalogItemDto item) =>
             item.data?.wearable?.category ?? item.data?.emote?.category;
+
+        public static string? Description(this CatalogItemDto item) =>
+            item.data?.wearable?.description ?? item.data?.emote?.description;
 
         public static bool IsSmart(this CatalogItemDto item) =>
             item.data?.wearable?.isSmart == true;

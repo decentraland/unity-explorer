@@ -1,8 +1,13 @@
+using Cysharp.Threading.Tasks;
+using DCL.CharacterPreview;
 using DCL.UI;
+using DCL.UI.Credits;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Shop
 {
@@ -10,38 +15,67 @@ namespace DCL.Shop
     {
         private const string BADGE_OVERFLOW = "99+";
         private const int BADGE_MAX = 99;
+        private const int SEARCH_DEBOUNCE_MS = 500;
 
         [field: Header("Header")]
-        [field: SerializeField] public ButtonWithSelectableStateView OverviewTab { get; private set; } = null!;
-        [field: SerializeField] public ButtonWithSelectableStateView CollectiblesTab { get; private set; } = null!;
+        [field: SerializeField] public SectionTab[] SectionTabs { get; private set; } = Array.Empty<SectionTab>();
+        [field: SerializeField] public SearchBarView SearchBar { get; private set; } = null!;
+        [field: SerializeField] public DropdownView SortDropdown { get; private set; } = null!;
+        [field: SerializeField] public CreditsPanelView CreditsPanel { get; private set; } = null!;
         [field: SerializeField] public Button CartButton { get; private set; } = null!;
         [field: SerializeField] public GameObject CartBadge { get; private set; } = null!;
         [field: SerializeField] public TMP_Text CartBadgeText { get; private set; } = null!;
-        [field: SerializeField] public Button BuyCreditsButton { get; private set; } = null!;
 
-        [field: Header("Pages")]
+        [field: Header("Columns")]
+        [field: SerializeField] public CharacterPreviewView CharacterPreview { get; private set; } = null!;
+        [field: SerializeField] public RectTransform Main { get; private set; } = null!;
+        [field: SerializeField] public ShopItemPanelView ItemPanel { get; private set; } = null!;
+        [field: SerializeField] public float ItemPanelInset { get; private set; } = 398f;
+
+        [field: Header("Sections")]
         [field: SerializeField] public ShopOverviewView OverviewView { get; private set; } = null!;
-        [field: SerializeField] public GameObject CollectiblesPageRoot { get; private set; } = null!;
-        [field: SerializeField] public ShopCollectiblesView CollectiblesView { get; private set; } = null!;
-        [field: SerializeField] public ShopFiltersView FiltersView { get; private set; } = null!;
+        [field: SerializeField] public ShopGridSectionView WearablesView { get; private set; } = null!;
+        [field: SerializeField] public ShopGridSectionView EmotesView { get; private set; } = null!;
+        [field: SerializeField] public GameObject NamesRoot { get; private set; } = null!;
+        [field: SerializeField] public GameObject LandsRoot { get; private set; } = null!;
+        [field: SerializeField] public GameObject FavoritesRoot { get; private set; } = null!;
 
         [field: Header("Animators")]
         [field: SerializeField] public Animator PanelAnimator { get; private set; } = null!;
         [field: SerializeField] public Animator HeaderAnimator { get; private set; } = null!;
 
-        public bool IsSearchBarFocused => CollectiblesView.IsSearchBarFocused;
+        private CancellationTokenSource? searchCts;
+        private float mainRightInset;
 
-        public event Action<ShopPage>? PageTabClicked;
+        public bool IsSearchBarFocused => SearchBar.inputField.isFocused;
+
+        public event Action<ShopSection>? SectionTabClicked;
         public event Action? CartButtonClicked;
-        public event Action? BuyCreditsClicked;
+        public event Action? SearchBarSelected;
+        public event Action? SearchBarDeselected;
+        public event Action<string>? SearchChanged;
+        public event Action<ShopSortOption>? SortChanged;
 
         private void Awake()
         {
-            OverviewTab.Button.onClick.AddListener(() => PageTabClicked?.Invoke(ShopPage.Overview));
-            CollectiblesTab.Button.onClick.AddListener(() => PageTabClicked?.Invoke(ShopPage.Collectibles));
+            foreach (SectionTab tab in SectionTabs)
+            {
+                ShopSection section = tab.Section;
+                tab.Tab.Button.onClick.AddListener(() => SectionTabClicked?.Invoke(section));
+            }
+
             CartButton.onClick.AddListener(() => CartButtonClicked?.Invoke());
-            BuyCreditsButton.onClick.AddListener(() => BuyCreditsClicked?.Invoke());
+            SearchBar.inputField.onValueChanged.AddListener(OnSearchValueChanged);
+            SearchBar.inputField.onSubmit.AddListener(OnSearchSubmitted);
+            SearchBar.clearSearchButton.onClick.AddListener(OnSearchCleared);
+            SearchBar.inputField.onSelect.AddListener(_ => SearchBarSelected?.Invoke());
+            SearchBar.inputField.onDeselect.AddListener(_ => SearchBarDeselected?.Invoke());
+            SortDropdown.Dropdown.onValueChanged.AddListener(index => SortChanged?.Invoke((ShopSortOption)index));
+            mainRightInset = -Main.offsetMax.x;
         }
+
+        private void OnDestroy() =>
+            searchCts.SafeCancelAndDispose();
 
         public void SetViewActive(bool isActive) =>
             gameObject.SetActive(isActive);
@@ -60,12 +94,41 @@ namespace DCL.Shop
             HeaderAnimator.Update(0);
         }
 
-        public void ShowPage(ShopPage page)
+        /// <summary>
+        ///     Selects the tab and shows the empty roots; the overview and grid sections are shown by their controllers.
+        /// </summary>
+        public void ShowSection(ShopSection section)
         {
-            OverviewView.gameObject.SetActive(page == ShopPage.Overview);
-            CollectiblesPageRoot.SetActive(page == ShopPage.Collectibles);
-            OverviewTab.SetSelected(page == ShopPage.Overview);
-            CollectiblesTab.SetSelected(page == ShopPage.Collectibles);
+            foreach (SectionTab tab in SectionTabs)
+                tab.Tab.SetSelected(tab.Section == section);
+
+            NamesRoot.SetActive(section == ShopSection.Names);
+            LandsRoot.SetActive(section == ShopSection.Lands);
+            FavoritesRoot.SetActive(section == ShopSection.Favorites);
+        }
+
+        public void SetItemPanelOpen(bool open)
+        {
+            ItemPanel.gameObject.SetActive(open);
+            Main.offsetMax = new Vector2(-(mainRightInset + (open ? ItemPanelInset : 0f)), Main.offsetMax.y);
+        }
+
+        public void SetSearchAndSortVisible(bool visible)
+        {
+            SearchBar.gameObject.SetActive(visible);
+            SortDropdown.gameObject.SetActive(visible);
+        }
+
+        public void SetSort(ShopSortOption sort) =>
+            SortDropdown.Dropdown.SetValueWithoutNotify((int)sort);
+
+        /// <summary>Sets the search text without raising SearchChanged.</summary>
+        public void SetSearchText(string text)
+        {
+            searchCts.SafeCancelAndDispose();
+            searchCts = null;
+            SearchBar.inputField.SetTextWithoutNotify(text);
+            SearchBar.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(text));
         }
 
         public void SetCartBadge(int units)
@@ -77,7 +140,39 @@ namespace DCL.Shop
         public void SetCartButtonVisible(bool visible) =>
             CartButton.gameObject.SetActive(visible);
 
-        public void SetBuyCreditsVisible(bool visible) =>
-            BuyCreditsButton.gameObject.SetActive(visible);
+        private void OnSearchValueChanged(string text)
+        {
+            SearchBar.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(text));
+            searchCts = searchCts.SafeRestart();
+            DebounceSearchAsync(text, searchCts.Token).Forget();
+        }
+
+        private void OnSearchSubmitted(string text)
+        {
+            searchCts.SafeCancelAndDispose();
+            searchCts = null;
+            SearchChanged?.Invoke(text);
+        }
+
+        private void OnSearchCleared()
+        {
+            SetSearchText(string.Empty);
+            SearchChanged?.Invoke(string.Empty);
+        }
+
+        private async UniTaskVoid DebounceSearchAsync(string text, CancellationToken ct)
+        {
+            if (await UniTask.Delay(SEARCH_DEBOUNCE_MS, cancellationToken: ct).SuppressCancellationThrow())
+                return;
+
+            SearchChanged?.Invoke(text);
+        }
+
+        [Serializable]
+        public struct SectionTab
+        {
+            public ShopSection Section;
+            public ButtonWithSelectableStateView Tab;
+        }
     }
 }

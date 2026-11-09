@@ -10,7 +10,7 @@ namespace DCL.Shop
         public readonly IReadOnlyList<ShopItemCardModel> ResolvedItems;
 
         public readonly int MissingCount;
-        public readonly int TotalCredits;
+        public readonly long TotalCredits;
         public readonly string? ThumbnailUrl;
         public readonly Color GradientFrom;
         public readonly Color GradientTo;
@@ -28,7 +28,7 @@ namespace DCL.Shop
             GradientFrom = gradientFrom;
             GradientTo = gradientTo;
 
-            var total = 0;
+            var total = 0L;
 
             foreach (ShopItemCardModel item in resolvedItems)
                 total += item.PriceCredits;
@@ -57,9 +57,9 @@ namespace DCL.Shop
         public readonly int SkippedUnavailable;
         public readonly int SkippedInCart;
         public readonly int SkippedOwn;
-        public readonly int TotalCredits;
+        public readonly long TotalCredits;
 
-        public ShopOutfitAddResult(string outfitId, int added, int skippedUnavailable, int skippedInCart, int skippedOwn, int totalCredits)
+        public ShopOutfitAddResult(string outfitId, int added, int skippedUnavailable, int skippedInCart, int skippedOwn, long totalCredits)
         {
             OutfitId = outfitId;
             Added = added;

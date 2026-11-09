@@ -56,7 +56,7 @@ namespace DCL.Passport.Modules
         private readonly Action<URN> onEmoteClicked;
         private readonly Action onWearableClicked;
         private readonly List<(EquippedItemPassportFieldView view, string urn)> primaryListingCandidates = new ();
-        private readonly Dictionary<string, int> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, long> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource? getEquippedItemsCts;
 
@@ -328,7 +328,7 @@ namespace DCL.Passport.Modules
 
                 foreach ((EquippedItemPassportFieldView itemView, string urn) in primaryListingCandidates)
                 {
-                    bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out int priceCredits);
+                    bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out long priceCredits);
                     itemView.BuyButtonSection.SetActive(isOnPrimarySale);
                     itemView.ViewButton.gameObject.SetActive(!isOnPrimarySale);
                     itemView.OnSaleFlap.gameObject.SetActive(isOnPrimarySale);

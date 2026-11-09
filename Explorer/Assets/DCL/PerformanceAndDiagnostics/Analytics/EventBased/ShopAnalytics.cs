@@ -23,9 +23,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             shopController = explorePanelController.ShopController;
 
             explorePanelController.ShopOpenedFromStartMenu += OnShopOpenedFromStartMenu;
-            shopController.PageViewed += OnPageViewed;
-            shopController.CollectiblesController.Searched += OnSearched;
-            shopController.CollectiblesController.FilterApplied += OnFilterApplied;
+            shopController.SectionViewed += OnSectionViewed;
+            shopController.WearablesController.Searched += OnSearched;
+            shopController.WearablesController.FilterApplied += OnFilterApplied;
+            shopController.EmotesController.Searched += OnSearched;
+            shopController.EmotesController.FilterApplied += OnFilterApplied;
             shopController.OverviewController.OutfitAddedToCart += OnOutfitAddedToCart;
             shopController.Cart.ItemAdded += OnItemAddedToCart;
             shopController.Cart.ItemRemoved += OnItemRemovedFromCart;
@@ -34,9 +36,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         public void Dispose()
         {
             explorePanelController.ShopOpenedFromStartMenu -= OnShopOpenedFromStartMenu;
-            shopController.PageViewed -= OnPageViewed;
-            shopController.CollectiblesController.Searched -= OnSearched;
-            shopController.CollectiblesController.FilterApplied -= OnFilterApplied;
+            shopController.SectionViewed -= OnSectionViewed;
+            shopController.WearablesController.Searched -= OnSearched;
+            shopController.WearablesController.FilterApplied -= OnFilterApplied;
+            shopController.EmotesController.Searched -= OnSearched;
+            shopController.EmotesController.FilterApplied -= OnFilterApplied;
             shopController.OverviewController.OutfitAddedToCart -= OnOutfitAddedToCart;
             shopController.Cart.ItemAdded -= OnItemAddedToCart;
             shopController.Cart.ItemRemoved -= OnItemRemovedFromCart;
@@ -45,10 +49,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnShopOpenedFromStartMenu() =>
             analytics.Track(AnalyticsEvents.Shop.SHOP_SECTION_OPENED, WithPlatform(new JObject { { "source", "start_menu" } }));
 
-        private void OnPageViewed(ShopPage page) =>
+        private void OnSectionViewed(ShopSection section) =>
             analytics.Track(AnalyticsEvents.Shop.SHOP_VIEWED_PAGE, WithPlatform(new JObject
             {
-                { "page", page == ShopPage.Overview ? AnalyticsEvents.Shop.PAGE_OVERVIEW : AnalyticsEvents.Shop.PAGE_ASSETS },
+                { "page", PageOf(section) },
             }));
 
         private void OnSearched(string query, int resultCount) =>
@@ -58,7 +62,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "result_count", resultCount },
             }));
 
-        private void OnFilterApplied(ShopCollectiblesFilters filters, int resultCount)
+        private void OnFilterApplied(ShopGridFilters filters, int resultCount)
         {
             var rarities = new JArray();
 
@@ -121,6 +125,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "items_skipped_own", result.SkippedOwn },
                 { "total_credits", result.TotalCredits },
             }));
+
+        private static string PageOf(ShopSection section) =>
+            section switch
+            {
+                ShopSection.Wearables => AnalyticsEvents.Shop.PAGE_WEARABLES,
+                ShopSection.Emotes => AnalyticsEvents.Shop.PAGE_EMOTES,
+                ShopSection.Names => AnalyticsEvents.Shop.PAGE_NAMES,
+                ShopSection.Lands => AnalyticsEvents.Shop.PAGE_LANDS,
+                ShopSection.Favorites => AnalyticsEvents.Shop.PAGE_FAVORITES,
+                _ => AnalyticsEvents.Shop.PAGE_OVERVIEW,
+            };
 
         private static JObject WithPlatform(JObject props)
         {

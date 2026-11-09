@@ -177,6 +177,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
         private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
+        private ICreditsPanelController shopCreditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
 
@@ -370,6 +371,7 @@ namespace DCL.PluginSystem.Global
             backpackModalController?.Dispose();
             exploreSectionModalController?.Dispose();
             creditsPanelController.Dispose();
+            shopCreditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -601,10 +603,11 @@ namespace DCL.PluginSystem.Global
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
                 eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
-            (NFTColorsSO shopRarityColors, NftTypeIconSO shopRarityBackgrounds, NftTypeIconSO shopCategoryIcons) = await UniTask.WhenAll(
+            (NFTColorsSO shopRarityColors, NftTypeIconSO shopRarityBackgrounds, NftTypeIconSO shopCategoryIcons, NftTypeIconSO shopRarityInfoPanelBackgrounds) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCategoryIconsMapping, ct));
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityInfoPanelBackgroundsMapping, ct));
 
             var shopStyling = new WearableStylingCatalog(shopRarityColors, shopRarityBackgrounds, shopCategoryIcons);
             var shopThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
@@ -613,7 +616,11 @@ namespace DCL.PluginSystem.Global
             ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
 
             shopController = new ShopController(shopView, cursor, inputBlock, mvcManager, marketplaceShopAPIClient, shopCart, creditsPurchaseService, cartCheckoutService,
-                shopBuyHandler, shopStyling, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache, OpenBuyCreditsAsync);
+                shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
+                characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile, wearablesProvider, emoteProvider, OpenBuyCreditsAsync);
+
+            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(shopView.CreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct,
+                openTopUpPanel: shopController.OpenBuyCredits);
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
@@ -854,6 +861,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> ShopRarityColorMappings { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopRarityBackgroundsMapping { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopCategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopRarityInfoPanelBackgroundsMapping { get; private set; } = null!;
         }
     }
 }

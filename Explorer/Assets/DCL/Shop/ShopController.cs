@@ -1,6 +1,12 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -9,8 +15,10 @@ using DCL.Input.Component;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.MarketplaceCredits.Purchase.Cart.UI;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
@@ -34,23 +42,31 @@ namespace DCL.Shop
         private readonly ICreditsPurchaseService purchaseService;
         private readonly ICreditsCartCheckoutService cartCheckoutService;
         private readonly ShopCatalogService catalog;
+        private readonly ShopCreatorCache creators;
         private readonly ShopItemCardPresenter presenter;
         private readonly Func<CancellationToken, UniTask> openBuyCreditsAsync;
 
         private CancellationTokenSource? countdownCts;
         private CancellationTokenSource? modalCts;
         private bool isSectionActivated;
-        private bool isPageShown;
+        private bool isSectionShown;
+        private bool isItemPanelOpen;
 
         public ShopOverviewController OverviewController { get; }
 
-        public ShopCollectiblesController CollectiblesController { get; }
+        public ShopGridSectionController WearablesController { get; }
+
+        public ShopGridSectionController EmotesController { get; }
+
+        public ShopCharacterPreviewController Preview { get; }
+
+        public ShopItemPanelController ItemPanel { get; }
 
         public ShopCart Cart { get; }
 
-        public ShopPage CurrentPage { get; private set; }
+        public ShopSection CurrentSection { get; private set; }
 
-        public event Action<ShopPage>? PageViewed;
+        public event Action<ShopSection>? SectionViewed;
 
         public ShopController(
             ShopView view,
@@ -63,11 +79,19 @@ namespace DCL.Shop
             ICreditsCartCheckoutService cartCheckoutService,
             CreditPurchaseBuyHandler buyHandler,
             IWearableStylingCatalog styling,
+            NftTypeIconSO rarityInfoPanelBackgrounds,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache identityCache,
+            ICharacterPreviewFactory characterPreviewFactory,
+            World world,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IWearableStorage wearableStorage,
+            SelfProfile selfProfile,
+            IWearablesProvider wearablesProvider,
+            IEmoteProvider emoteProvider,
             Func<CancellationToken, UniTask> openBuyCreditsAsync)
         {
             this.view = view;
@@ -81,40 +105,65 @@ namespace DCL.Shop
             Cart = cart;
 
             catalog = new ShopCatalogService(api);
-            var creatorNames = new ShopCreatorNameCache(profileRepositoryWrapper);
-            presenter = new ShopItemCardPresenter(cart, buyHandler, api, webBrowser, urlsSource, identityCache, styling, thumbnailLoader, creatorNames);
-            OverviewController = new ShopOverviewController(view.OverviewView, catalog, presenter, creatorNames, thumbnailLoader, api, cart);
-            CollectiblesController = new ShopCollectiblesController(view.CollectiblesView, view.FiltersView, api, presenter, creatorNames, styling);
+            creators = new ShopCreatorCache(profileRepositoryWrapper);
+            presenter = new ShopItemCardPresenter(cart, buyHandler, api, webBrowser, urlsSource, identityCache, styling, thumbnailLoader, creators);
+            OverviewController = new ShopOverviewController(view.OverviewView, catalog, presenter, creators, thumbnailLoader, api, cart);
+            WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, styling, ShopCategoryTree.WEARABLE);
+            EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, styling, ShopCategoryTree.EMOTE);
+            Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);
+            ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider);
 
-            view.PageTabClicked += OpenPage;
+            view.SectionTabClicked += ShowSection;
             view.CartButtonClicked += OnCartButtonClicked;
-            view.BuyCreditsClicked += OnBuyCreditsClicked;
-            view.CollectiblesView.SearchBarSelected += DisableShortcutsInput;
-            view.CollectiblesView.SearchBarDeselected += RestoreShortcutsInput;
-            OverviewController.ViewAllClicked += OnViewAllClicked;
-            CollectiblesController.BackToOverviewClicked += OnBackToOverviewClicked;
+            view.SearchBarSelected += DisableShortcutsInput;
+            view.SearchBarDeselected += RestoreShortcutsInput;
+            view.SearchChanged += OnSearchChanged;
+            view.SortChanged += OnSortChanged;
+            OverviewController.ViewAllClicked += OnBrowseClicked;
+            OverviewController.ItemClicked += OpenItem;
+            WearablesController.BrowseClicked += OnBrowseClicked;
+            WearablesController.ItemClicked += OnGridItemClicked;
+            EmotesController.BrowseClicked += OnBrowseClicked;
+            EmotesController.ItemClicked += OnGridItemClicked;
+            ItemPanel.CloseClicked += CloseItem;
+            ItemPanel.WearableResolved += Preview.TryOnWearable;
+            ItemPanel.WearableUnavailable += Preview.RestoreOwnAvatar;
 
             cart.Changed += OnCartChanged;
             purchaseService.StateChanged += OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted += OnCartCheckoutCompleted;
+
+            view.SetItemPanelOpen(false);
         }
 
         public void Dispose()
         {
-            view.PageTabClicked -= OpenPage;
+            view.SectionTabClicked -= ShowSection;
             view.CartButtonClicked -= OnCartButtonClicked;
-            view.BuyCreditsClicked -= OnBuyCreditsClicked;
-            view.CollectiblesView.SearchBarSelected -= DisableShortcutsInput;
-            view.CollectiblesView.SearchBarDeselected -= RestoreShortcutsInput;
-            OverviewController.ViewAllClicked -= OnViewAllClicked;
-            CollectiblesController.BackToOverviewClicked -= OnBackToOverviewClicked;
+            view.SearchBarSelected -= DisableShortcutsInput;
+            view.SearchBarDeselected -= RestoreShortcutsInput;
+            view.SearchChanged -= OnSearchChanged;
+            view.SortChanged -= OnSortChanged;
+            OverviewController.ViewAllClicked -= OnBrowseClicked;
+            OverviewController.ItemClicked -= OpenItem;
+            WearablesController.BrowseClicked -= OnBrowseClicked;
+            WearablesController.ItemClicked -= OnGridItemClicked;
+            EmotesController.BrowseClicked -= OnBrowseClicked;
+            EmotesController.ItemClicked -= OnGridItemClicked;
+            ItemPanel.CloseClicked -= CloseItem;
+            ItemPanel.WearableResolved -= Preview.TryOnWearable;
+            ItemPanel.WearableUnavailable -= Preview.RestoreOwnAvatar;
 
             Cart.Changed -= OnCartChanged;
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted -= OnCartCheckoutCompleted;
 
             OverviewController.Dispose();
-            CollectiblesController.Dispose();
+            WearablesController.Dispose();
+            EmotesController.Dispose();
+            ItemPanel.Dispose();
+            Preview.Dispose();
+            creators.Dispose();
             countdownCts.SafeCancelAndDispose();
             modalCts.SafeCancelAndDispose();
         }
@@ -132,12 +181,13 @@ namespace DCL.Shop
 
             view.SetViewActive(true);
             view.SetCartButtonVisible(purchasesEnabled);
-            view.SetBuyCreditsVisible(FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits) && userAllowed);
             view.SetCartBadge(Cart.TotalUnits);
 
-            CollectiblesController.ResetFilters();
-            isPageShown = false;
-            OpenPage(ShopPage.Overview);
+            WearablesController.ResetFilters();
+            EmotesController.ResetFilters();
+            isSectionShown = false;
+            Preview.Show();
+            ShowSection(ShopSection.All);
             cursor.Unlock();
 
             countdownCts = countdownCts.SafeRestart();
@@ -150,9 +200,12 @@ namespace DCL.Shop
                 RestoreShortcutsInput();
 
             isSectionActivated = false;
-            isPageShown = false;
+            isSectionShown = false;
+            CloseItemPanel(restoreAvatar: false);
+            Preview.Hide();
             OverviewController.Deactivate();
-            CollectiblesController.Deactivate();
+            WearablesController.Deactivate();
+            EmotesController.Deactivate();
             countdownCts.SafeCancelAndDispose();
             view.SetViewActive(false);
         }
@@ -166,36 +219,125 @@ namespace DCL.Shop
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void OpenPage(ShopPage page)
+        public void ShowSection(ShopSection section)
         {
-            if (isPageShown && page == CurrentPage)
+            if (isSectionShown && section == CurrentSection)
                 return;
 
-            if (isPageShown)
+            if (isSectionShown)
             {
-                if (CurrentPage == ShopPage.Overview)
-                    OverviewController.Deactivate();
-                else
-                    CollectiblesController.Deactivate();
+                CloseItem();
+                OverviewController.Deactivate();
+                GridFor(CurrentSection)?.Deactivate();
             }
 
-            CurrentPage = page;
-            isPageShown = true;
-            view.ShowPage(page);
+            CurrentSection = section;
+            isSectionShown = true;
+            view.ShowSection(section);
 
-            if (page == ShopPage.Overview)
+            ShopGridSectionController? grid = GridFor(section);
+            view.SetSearchAndSortVisible(grid != null);
+
+            if (grid != null)
+            {
+                view.SetSearchText(grid.Filters.SearchText);
+                view.SetSort(grid.Filters.Sort);
+                grid.Activate();
+            }
+            else if (section == ShopSection.All)
                 OverviewController.Activate();
-            else
-                CollectiblesController.Activate();
 
-            PageViewed?.Invoke(page);
+            SectionViewed?.Invoke(section);
         }
 
-        private void OnViewAllClicked() =>
-            OpenPage(ShopPage.Collectibles);
+        /// <summary>
+        ///     Opens the right-side panel for the item and dresses the preview with it.
+        /// </summary>
+        public void OpenItem(ShopItemCardModel model, ShopCartSource source)
+        {
+            if (!isItemPanelOpen)
+            {
+                isItemPanelOpen = true;
+                view.SetItemPanelOpen(true);
+                SetCompact(true);
+            }
 
-        private void OnBackToOverviewClicked() =>
-            OpenPage(ShopPage.Overview);
+            bool wasPlayingEmote = ItemPanel.Model?.IsEmote == true;
+            ItemPanel.Show(model, source, BuySourceFor(source), Preview.BodyShape);
+            OverviewController.SetSelected(model.Key);
+            WearablesController.SetSelected(model.Key);
+            EmotesController.SetSelected(model.Key);
+
+            // A wearable dresses the avatar once its entity resolves (see WearableResolved); until then an emote must not keep playing
+            if (model.IsEmote)
+                Preview.TryOnEmote(model.Urn);
+            else if (wasPlayingEmote)
+                Preview.RestoreOwnAvatar();
+        }
+
+        public void CloseItem() =>
+            CloseItemPanel(restoreAvatar: true);
+
+        /// <summary>
+        ///     Opens the shop's buy-credits flow; the header credits pill points here.
+        /// </summary>
+        public void OpenBuyCredits()
+        {
+            modalCts = modalCts.SafeRestart();
+            OpenBuyCreditsAsync(modalCts.Token).Forget();
+        }
+
+        private ShopGridSectionController? GridFor(ShopSection section) =>
+            section switch
+            {
+                ShopSection.Wearables => WearablesController,
+                ShopSection.Emotes => EmotesController,
+                _ => null,
+            };
+
+        private void CloseItemPanel(bool restoreAvatar)
+        {
+            if (!isItemPanelOpen)
+                return;
+
+            isItemPanelOpen = false;
+            ItemPanel.Hide();
+            view.SetItemPanelOpen(false);
+            SetCompact(false);
+            OverviewController.SetSelected(null);
+            WearablesController.SetSelected(null);
+            EmotesController.SetSelected(null);
+
+            if (restoreAvatar)
+                Preview.RestoreOwnAvatar();
+        }
+
+        private void SetCompact(bool compact)
+        {
+            OverviewController.SetCompact(compact);
+            WearablesController.SetCompact(compact);
+            EmotesController.SetCompact(compact);
+        }
+
+        private static string BuySourceFor(ShopCartSource source) =>
+            source switch
+            {
+                ShopCartSource.Trending => CreditPurchaseModalControllerParams.SOURCE_SHOP_TRENDING,
+                ShopCartSource.NewCreations => CreditPurchaseModalControllerParams.SOURCE_SHOP_NEW_CREATIONS,
+                _ => CreditPurchaseModalControllerParams.SOURCE_SHOP_GRID,
+            };
+
+        private void OnGridItemClicked(ShopItemCardModel model) =>
+            OpenItem(model, ShopCartSource.Grid);
+
+        private void OnBrowseClicked() =>
+            ShowSection(ShopSection.Wearables);
+
+        private void OnSearchChanged(string text) =>
+            GridFor(CurrentSection)?.SetSearch(text);
+
+        private void OnSortChanged(ShopSortOption sort) =>
+            GridFor(CurrentSection)?.SetSort(sort);
 
         private void OnCartChanged()
         {
@@ -204,10 +346,9 @@ namespace DCL.Shop
             if (!isSectionActivated)
                 return;
 
-            if (CurrentPage == ShopPage.Overview)
-                OverviewController.RefreshCartState();
-            else
-                CollectiblesController.RefreshCartState();
+            OverviewController.RefreshCartState();
+            GridFor(CurrentSection)?.RefreshCartState();
+            ItemPanel.RefreshCartState();
         }
 
         private void OnPurchaseStateChanged(CreditsPurchaseState state)
@@ -229,22 +370,14 @@ namespace DCL.Shop
             if (!isSectionActivated)
                 return;
 
-            if (CurrentPage == ShopPage.Overview)
-                OverviewController.Reload();
-            else
-                CollectiblesController.Reload();
+            OverviewController.Reload();
+            GridFor(CurrentSection)?.Reload();
         }
 
         private void OnCartButtonClicked()
         {
             modalCts = modalCts.SafeRestart();
             ShowCartAsync(modalCts.Token).Forget();
-        }
-
-        private void OnBuyCreditsClicked()
-        {
-            modalCts = modalCts.SafeRestart();
-            OpenBuyCreditsAsync(modalCts.Token).Forget();
         }
 
         private async UniTaskVoid ShowCartAsync(CancellationToken ct)
@@ -275,11 +408,8 @@ namespace DCL.Shop
                     return;
 
                 long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                if (CurrentPage == ShopPage.Overview)
-                    OverviewController.RefreshCountdowns(now);
-                else
-                    CollectiblesController.RefreshCountdowns(now);
+                OverviewController.RefreshCountdowns(now);
+                GridFor(CurrentSection)?.RefreshCountdowns(now);
             }
         }
 

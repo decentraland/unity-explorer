@@ -26,7 +26,7 @@ namespace DCL.Shop
         private readonly ShopOverviewView view;
         private readonly ShopCatalogService catalog;
         private readonly ShopItemCardPresenter cards;
-        private readonly ShopCreatorNameCache creatorNames;
+        private readonly ShopCreatorCache creatorNames;
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly MarketplaceShopAPIClient api;
         private readonly ShopCart cart;
@@ -39,15 +39,17 @@ namespace DCL.Shop
         private bool isActive;
         private bool trendingEmpty;
         private bool newCreationsEmpty;
+        private string? selectedKey;
 
         public event Action<ShopOutfitAddResult>? OutfitAddedToCart;
         public event Action? ViewAllClicked;
+        public event Action<ShopItemCardModel, ShopCartSource>? ItemClicked;
 
         public ShopOverviewController(
             ShopOverviewView view,
             ShopCatalogService catalog,
             ShopItemCardPresenter cards,
-            ShopCreatorNameCache creatorNames,
+            ShopCreatorCache creatorNames,
             ThumbnailLoader thumbnailLoader,
             MarketplaceShopAPIClient api,
             ShopCart cart)
@@ -62,7 +64,7 @@ namespace DCL.Shop
 
             view.ItemAddToCartClicked += OnItemAddToCartClicked;
             view.ItemBuyClicked += OnItemBuyClicked;
-            view.ItemViewClicked += OnItemViewClicked;
+            view.ItemClicked += OnItemClicked;
             view.OutfitAddClicked += OnOutfitAddClicked;
             view.ViewAllClicked += OnViewAllClicked;
         }
@@ -71,7 +73,7 @@ namespace DCL.Shop
         {
             view.ItemAddToCartClicked -= OnItemAddToCartClicked;
             view.ItemBuyClicked -= OnItemBuyClicked;
-            view.ItemViewClicked -= OnItemViewClicked;
+            view.ItemClicked -= OnItemClicked;
             view.OutfitAddClicked -= OnOutfitAddClicked;
             view.ViewAllClicked -= OnViewAllClicked;
             loadCts.SafeCancelAndDispose();
@@ -105,6 +107,17 @@ namespace DCL.Shop
             actionsCts = actionsCts.SafeRestart();
             view.SetEmptyVisible(false);
             LoadAllAsync(loadCts.Token).Forget();
+        }
+
+        public void SetCompact(bool compact) =>
+            view.SetCompact(compact);
+
+        public void SetSelected(string? key)
+        {
+            selectedKey = key;
+
+            foreach (ShopItemCardView card in view.ActiveItemCards)
+                card.SetSelected(card.Model != null && card.Model.Key == key);
         }
 
         public void RefreshCartState()
@@ -163,7 +176,11 @@ namespace DCL.Shop
             long now = NowUnixSeconds();
 
             foreach (ShopItemCardModel model in models)
-                cards.Bind(view.RentItemCard(row), model, now);
+            {
+                ShopItemCardView card = view.RentItemCard(row);
+                cards.Bind(card, model, now);
+                card.SetSelected(model.Key == selectedKey);
+            }
 
             row.SetItemCount(models.Count);
             row.SetLoading(false);
@@ -267,10 +284,10 @@ namespace DCL.Shop
             cards.BuyAsync(card, source, actionsCts.Token).Forget();
         }
 
-        private void OnItemViewClicked(ShopItemCardView card)
+        private void OnItemClicked(ShopItemCardView card)
         {
             if (card.Model != null)
-                cards.View(card.Model);
+                ItemClicked?.Invoke(card.Model, IsTrendingCard(card) ? ShopCartSource.Trending : ShopCartSource.NewCreations);
         }
 
         private void OnOutfitAddClicked(ShopOutfitCardView card)

@@ -6,7 +6,7 @@ namespace DCL.Shop
     {
         public const int PAGE_SIZE = 48;
 
-        public static ShopCatalogQuery ToQuery(ShopCollectiblesFilters filters, int skip)
+        public static ShopCatalogQuery ToQuery(ShopGridFilters filters, int skip)
         {
             var query = new ShopCatalogQuery
             {

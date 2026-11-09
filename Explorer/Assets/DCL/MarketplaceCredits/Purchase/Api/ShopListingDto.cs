@@ -21,7 +21,7 @@ namespace DCL.MarketplaceCredits.Purchase
         public string category = null!;
         public string? wearableCategory;
         public string creator = null!;
-        public int priceCredits;
+        public long priceCredits;
         public string? manaWei;
         public int available;
         public string network = null!;
@@ -32,7 +32,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
         // Newtonsoft-deserialized wire DTO (CreateFromJson with WRJsonParser.Newtonsoft); Unity serialization never sees these fields.
 #pragma warning disable UAC1001
-        public int? compareAtCredits;
+        public long? compareAtCredits;
         public long? saleEndsAt;
         public bool? isSmart;
         public int? listingCount;

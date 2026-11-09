@@ -48,7 +48,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             }
         }
 
-        public int TotalCredits => Listing.priceCredits * Quantity;
+        public long TotalCredits => Listing.priceCredits * Quantity;
 
         internal ShopCartLine(ShopListingDto listing, ShopCartSource source, string? outfitId)
         {

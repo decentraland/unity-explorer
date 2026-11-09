@@ -74,12 +74,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public event Action<string, int, int>? CartOpened;
+        public event Action<string, int, long>? CartOpened;
         public event Action<int, int, bool>? CheckoutStarted;
         public event Action<CartCheckoutResult>? CheckoutCompleted;
         public event Action<CartCheckoutResult, string, string>? CheckoutFailed;
         public event Action<CartCheckoutResult, string>? CheckoutCancelled;
-        public event Action<int, int, int>? BuyCreditsPrompted;
+        public event Action<long, int, long>? BuyCreditsPrompted;
         public event Action<ShopCartLine>? LineRemoved;
 
         public ShopCartModalController(
@@ -433,8 +433,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                     RefreshBalanceAsync(lifeCts?.Token ?? CancellationToken.None).Forget();
                     break;
                 case CartCheckoutOutcome.InsufficientCredits:
-                    int needed = review?.LiveTotalCredits ?? cart.TotalCredits;
-                    int shortfall = result.MissingCredits >= 0 ? result.MissingCredits : Math.Max(1, needed - Math.Max(0, balanceCredits));
+                    long needed = review?.LiveTotalCredits ?? cart.TotalCredits;
+                    long shortfall = result.MissingCredits >= 0 ? result.MissingCredits : Math.Max(1L, needed - Math.Max(0, balanceCredits));
 
                     if (reportAnalytics)
                         BuyCreditsPrompted?.Invoke(needed, balanceCredits, shortfall);
@@ -473,7 +473,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             UpdateSignatureBadge(reviewed.GroupCount);
         }
 
-        private void ShowInsufficientCredits(int shortfall)
+        private void ShowInsufficientCredits(long shortfall)
         {
             SetUiState(ModalState.InsufficientCredits);
 

@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
+// Optional serialized references: Unity writes the backing field, so the private setter has no caller
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.Shop
 {
     public class ShopCarouselView : MonoBehaviour
@@ -15,6 +17,7 @@ namespace DCL.Shop
         private const int DOTS_POOL_CAPACITY = 6;
         private const float PAGE_TWEEN_DURATION = 0.3f;
         private const float DOTS_ANIMATION_DURATION = 0.3f;
+        private const float MIN_SPACING = 8f;
 
         [field: SerializeField] public TMP_Text Title { get; private set; } = null!;
         [field: SerializeField] public Button? ViewAllButton { get; private set; }
@@ -29,16 +32,23 @@ namespace DCL.Shop
         [field: SerializeField] public Color NonSelectedDotColor { get; private set; } = new (0f, 0f, 0f, 0.5f);
         [field: SerializeField] public float SelectedDotWidth { get; private set; } = 24f;
         [field: SerializeField] public float NonSelectedDotWidth { get; private set; } = 8f;
-        [field: SerializeField] public float CardWidth { get; private set; } = 232f;
-        [field: SerializeField] public int MaxVisibleCards { get; private set; } = 7;
         [field: SerializeField] public SkeletonLoadingView? Skeleton { get; private set; }
         [field: SerializeField] public GameObject ControlsRoot { get; private set; } = null!;
+        [field: SerializeField] public LayoutElement RootLayout { get; private set; } = null!;
+        [field: SerializeField] public RectTransform Body { get; private set; } = null!;
+        [field: SerializeField] public RectTransform GhostRow { get; private set; } = null!;
 
         private readonly List<Button> dots = new ();
         private IObjectPool<Button> dotsPool = null!;
         private Tweener? trackTween;
+        private float chromeHeight;
+        private float bodyPadding;
+        private bool metricsCaptured;
+        private bool viewportDirty;
 
         public int ItemCount { get; private set; }
+
+        public float CardWidth { get; private set; } = 232f;
 
         public int CardsPerPage { get; private set; } = 1;
 
@@ -69,13 +79,21 @@ namespace DCL.Shop
         private void OnDisable() =>
             trackTween?.Kill();
 
-        private void OnRectTransformDimensionsChange()
+        private void LateUpdate()
         {
-            if (!isActiveAndEnabled || ItemCount == 0)
+            if (!viewportDirty)
                 return;
 
+            viewportDirty = false;
             Recalculate();
             GoToPage(CurrentPage, animate: false);
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            // Runs inside the canvas layout pass, where toggling the dots or dirtying the track layout is not allowed: applied in LateUpdate
+            if (isActiveAndEnabled && ItemCount > 0)
+                viewportDirty = true;
         }
 
         public void SetLoading(bool loading)
@@ -89,6 +107,34 @@ namespace DCL.Shop
             }
 
             ControlsRoot.SetActive(!loading);
+        }
+
+        /// <summary>
+        ///     Sizes the row for its cards: the cards per page always fill the viewport, so the spacing stretches to fit.
+        /// </summary>
+        public void Configure(float cardWidth, float cardHeight, int cardsPerPage)
+        {
+            CaptureMetrics();
+            CardWidth = cardWidth;
+            CardsPerPage = Mathf.Max(1, cardsPerPage);
+
+            float bodyHeight = cardHeight + bodyPadding;
+            Body.sizeDelta = new Vector2(Body.sizeDelta.x, bodyHeight);
+            RootLayout.preferredHeight = bodyHeight + chromeHeight;
+            ((RectTransform)transform).sizeDelta = new Vector2(((RectTransform)transform).sizeDelta.x, bodyHeight + chromeHeight);
+
+            for (var i = 0; i < GhostRow.childCount; i++)
+            {
+                var ghost = (RectTransform)GhostRow.GetChild(i);
+                ghost.sizeDelta = new Vector2(cardWidth, cardHeight);
+                ghost.gameObject.SetActive(i < CardsPerPage);
+            }
+
+            if (GhostRow.TryGetComponent(out HorizontalLayoutGroup ghostLayout))
+                ghostLayout.spacing = Spacing();
+
+            Recalculate();
+            GoToPage(CurrentPage, animate: false);
         }
 
         public void SetItemCount(int count)
@@ -122,13 +168,33 @@ namespace DCL.Shop
             PageChanged?.Invoke(CurrentPage);
         }
 
+        // The prefab is laid out for one card size; the row keeps the same head, dots and hover margins around any other
+        private void CaptureMetrics()
+        {
+            if (metricsCaptured)
+                return;
+
+            metricsCaptured = true;
+            var root = (RectTransform)transform;
+            float ghostHeight = GhostRow.childCount > 0 ? ((RectTransform)GhostRow.GetChild(0)).sizeDelta.y : Body.sizeDelta.y;
+            chromeHeight = root.sizeDelta.y - Body.sizeDelta.y;
+            bodyPadding = Body.sizeDelta.y - ghostHeight;
+        }
+
         private void Recalculate()
         {
-            float spacing = TrackLayout.spacing;
-            float viewportWidth = Viewport.rect.width;
-            CardsPerPage = Mathf.Clamp(Mathf.FloorToInt((viewportWidth + spacing) / (CardWidth + spacing)), 1, Mathf.Max(1, MaxVisibleCards));
+            TrackLayout.spacing = Spacing();
             PageCount = ItemCount == 0 ? 0 : Mathf.CeilToInt(ItemCount / (float)CardsPerPage);
             RebuildDots();
+        }
+
+        private float Spacing()
+        {
+            if (CardsPerPage <= 1)
+                return MIN_SPACING;
+
+            float viewportWidth = Viewport.rect.width;
+            return Mathf.Max(MIN_SPACING, (viewportWidth - (CardsPerPage * CardWidth)) / (CardsPerPage - 1));
         }
 
         private void RebuildDots()

@@ -1,8 +1,9 @@
 using DCL.Audio;
 using DCL.Backpack.Gifting.Views;
 using DCL.Communities;
-using DCL.MarketplaceCredits.Purchase;
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -12,6 +13,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
+// Optional serialized references: Unity writes the backing field, so the private setter has no caller
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.Shop
 {
     [Flags]
@@ -23,7 +26,7 @@ namespace DCL.Shop
         Buy = 4,
     }
 
-    public class ShopItemCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ShopItemCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         private const float HOVER_SCALE = 1.025f;
         private const float HOVER_DURATION = 0.15f;
@@ -40,6 +43,7 @@ namespace DCL.Shop
         [field: Header("Texts")]
         [field: SerializeField] public TMP_Text NameText { get; private set; } = null!;
         [field: SerializeField] public TMP_Text CreatorText { get; private set; } = null!;
+        [field: SerializeField] public ProfilePictureView CreatorPicture { get; private set; } = null!;
 
         [field: Header("Price")]
         [field: SerializeField] public GameObject PriceContainer { get; private set; } = null!;
@@ -53,25 +57,19 @@ namespace DCL.Shop
         [field: SerializeField] public TMP_Text SaleBadgeText { get; private set; } = null!;
 
         [field: Header("Chips")]
-        [field: SerializeField] public CanvasGroup ChipsGroup { get; private set; } = null!;
         [field: SerializeField] public Image RarityChipBackground { get; private set; } = null!;
         [field: SerializeField] public TMP_Text RarityChipText { get; private set; } = null!;
-        [field: SerializeField] public GameObject SmartChip { get; private set; } = null!;
-        [field: SerializeField] public GameObject CategoryChip { get; private set; } = null!;
+        [field: SerializeField] public GameObject CategoryFlap { get; private set; } = null!;
+        [field: SerializeField] public Image CategoryFlapBackground { get; private set; } = null!;
         [field: SerializeField] public Image CategoryIcon { get; private set; } = null!;
-        [field: SerializeField] public GameObject GenderChip { get; private set; } = null!;
-        [field: SerializeField] public Image GenderIcon { get; private set; } = null!;
-        [field: SerializeField] public Sprite? MaleIcon { get; private set; }
-        [field: SerializeField] public Sprite? FemaleIcon { get; private set; }
-        [field: SerializeField] public Sprite? UnisexIcon { get; private set; }
+        [field: SerializeField] public GameObject SelectedOutline { get; private set; } = null!;
 
         [field: Header("Actions")]
+        [field: SerializeField] public CanvasGroup DetailsGroup { get; private set; } = null!;
         [field: SerializeField] public CanvasGroup ActionsGroup { get; private set; } = null!;
         [field: SerializeField] public Button AddToCartButton { get; private set; } = null!;
         [field: SerializeField] public TMP_Text AddToCartText { get; private set; } = null!;
         [field: SerializeField] public Button BuyButton { get; private set; } = null!;
-        [field: SerializeField] public Button ViewButton { get; private set; } = null!;
-        [field: SerializeField] public Button ViewIconButton { get; private set; } = null!;
         [field: SerializeField] public GameObject ResolvingSpinner { get; private set; } = null!;
 
         [field: Header("Audio")]
@@ -80,11 +78,11 @@ namespace DCL.Shop
 
         public Action<ShopItemCardView>? AddToCartClicked;
         public Action<ShopItemCardView>? BuyClicked;
-        public Action<ShopItemCardView>? ViewClicked;
+        public Action<ShopItemCardView>? Clicked;
 
         private Tweener? scaleTween;
-        private Tweener? chipsTween;
         private Tweener? actionsTween;
+        private Tweener? detailsTween;
         private CancellationTokenSource? loadingThumbnailCts;
         private ShopCardActions actions;
         private bool cartFull;
@@ -93,16 +91,19 @@ namespace DCL.Shop
 
         public bool IsResolving { get; private set; }
 
+        private bool hasHoverActions => (actions & (ShopCardActions.AddToCart | ShopCardActions.Buy)) != 0;
+
         private void Awake()
         {
             AddToCartButton.onClick.AddListener(() => OnActionClicked(AddToCartClicked));
             BuyButton.onClick.AddListener(() => OnActionClicked(BuyClicked));
-            ViewButton.onClick.AddListener(() => OnActionClicked(ViewClicked));
-            ViewIconButton.onClick.AddListener(() => OnActionClicked(ViewClicked));
         }
 
         private void OnEnable() =>
             ResetHoverVisuals();
+
+        private void OnDestroy() =>
+            CreatorPicture.Dispose();
 
         private void OnDisable()
         {
@@ -111,27 +112,27 @@ namespace DCL.Shop
             ResetHoverVisuals();
         }
 
-        public void Bind(ShopItemCardModel model, string creatorName, in GiftItemStyleSnapshot style, ThumbnailLoader thumbnailLoader,
-            ShopCardActions cardActions, bool inCart, bool isCartFull, long nowUnixSeconds)
+        public void Bind(ShopItemCardModel model, string creatorName, IReactiveProperty<ProfileThumbnailViewModel> creatorThumbnail, in GiftItemStyleSnapshot style,
+            ThumbnailLoader thumbnailLoader,            ShopCardActions cardActions, bool inCart, bool isCartFull, long nowUnixSeconds)
         {
             Model = model;
             IsResolving = false;
 
             NameText.text = model.Name;
             CreatorText.text = creatorName;
+            CreatorPicture.Bind(creatorThumbnail);
 
             if (style.rarityBackground != null)
                 RarityBackground.sprite = style.rarityBackground;
 
             RarityChipBackground.color = style.flapColor;
-            RarityChipText.text = model.Rarity;
-            CategoryChip.SetActive(style.categoryIcon != null);
+            RarityChipText.text = model.Rarity.ToUpperInvariant();
+            CategoryFlap.SetActive(style.categoryIcon != null);
+            CategoryFlapBackground.color = style.flapColor;
 
             if (style.categoryIcon != null)
                 CategoryIcon.sprite = style.categoryIcon;
 
-            SmartChip.SetActive(model.IsSmart);
-            BindGender(model.Gender);
             RefreshSaleCountdown(nowUnixSeconds);
 
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
@@ -139,11 +140,15 @@ namespace DCL.Shop
 
             SetActions(cardActions);
             SetCartState(inCart, isCartFull);
+            SelectedOutline.SetActive(false);
             ResolvingSpinner.SetActive(false);
         }
 
         public void SetCreatorName(string creatorName) =>
             CreatorText.text = creatorName;
+
+        public void SetSelected(bool selected) =>
+            SelectedOutline.SetActive(selected);
 
         public void SetCartState(bool inCart, bool isCartFull)
         {
@@ -192,7 +197,7 @@ namespace DCL.Shop
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (actions == ShopCardActions.None)
+            if (!hasHoverActions)
                 return;
 
             if (HoverAudio != null)
@@ -204,31 +209,19 @@ namespace DCL.Shop
         public void OnPointerExit(PointerEventData eventData) =>
             AnimateHover(false);
 
-        private void BindGender(string? gender)
+        public void OnPointerClick(PointerEventData eventData)
         {
-            Sprite? icon = gender switch
-            {
-                CatalogItemDtoExtensions.GENDER_MALE => MaleIcon,
-                CatalogItemDtoExtensions.GENDER_FEMALE => FemaleIcon,
-                CatalogItemDtoExtensions.GENDER_UNISEX => UnisexIcon,
-                _ => null,
-            };
+            if (eventData.button != PointerEventData.InputButton.Left || eventData.dragging)
+                return;
 
-            GenderChip.SetActive(icon != null);
-
-            if (icon != null)
-                GenderIcon.sprite = icon;
+            OnActionClicked(Clicked);
         }
 
         private void SetActions(ShopCardActions cardActions)
         {
             actions = cardActions;
-            bool viewOnly = cardActions == ShopCardActions.View;
-
             AddToCartButton.gameObject.SetActive((cardActions & ShopCardActions.AddToCart) != 0);
             BuyButton.gameObject.SetActive((cardActions & ShopCardActions.Buy) != 0);
-            ViewButton.gameObject.SetActive(viewOnly);
-            ViewIconButton.gameObject.SetActive(!viewOnly && (cardActions & ShopCardActions.View) != 0);
         }
 
         private void OnActionClicked(Action<ShopItemCardView>? action)
@@ -244,20 +237,18 @@ namespace DCL.Shop
             KillTweens();
 
             scaleTween = ScaleRoot.DOScale(hovered ? HOVER_SCALE : 1f, HOVER_DURATION).SetEase(Ease.OutQuad);
-            chipsTween = ChipsGroup.DOFade(hovered ? 0f : 1f, HOVER_DURATION).SetEase(Ease.OutQuad);
             actionsTween = ActionsGroup.DOFade(hovered ? 1f : 0f, HOVER_DURATION).SetEase(Ease.OutQuad);
+            detailsTween = DetailsGroup.DOFade(hovered ? 0f : 1f, HOVER_DURATION).SetEase(Ease.OutQuad);
 
             ActionsGroup.blocksRaycasts = hovered;
             ActionsGroup.interactable = hovered;
-            ChipsGroup.blocksRaycasts = !hovered;
         }
 
         private void ResetHoverVisuals()
         {
             KillTweens();
             ScaleRoot.localScale = Vector3.one;
-            ChipsGroup.alpha = 1f;
-            ChipsGroup.blocksRaycasts = true;
+            DetailsGroup.alpha = 1f;
             ActionsGroup.alpha = 0f;
             ActionsGroup.blocksRaycasts = false;
             ActionsGroup.interactable = false;
@@ -266,8 +257,8 @@ namespace DCL.Shop
         private void KillTweens()
         {
             scaleTween?.Kill();
-            chipsTween?.Kill();
             actionsTween?.Kill();
+            detailsTween?.Kill();
         }
     }
 }

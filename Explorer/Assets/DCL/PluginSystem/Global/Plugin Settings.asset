@@ -631,6 +631,12 @@ MonoBehaviour:
           m_SubObjectType:
           m_SubObjectGUID:
           m_EditorAssetChanged: 0
+        <ShopRarityInfoPanelBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
         <ExploreSectionModalPrefab>k__BackingField:
           m_AssetGUID: 2f632a9f636549a2b1d4b833b1a6b5df
           m_SubObjectName:

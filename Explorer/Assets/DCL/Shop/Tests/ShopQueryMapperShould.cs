@@ -9,7 +9,7 @@ namespace DCL.Shop.Tests
         public void UseTheUnifiedFeedWithThePriceRangeWhenOnSale()
         {
             // Arrange
-            var filters = new ShopCollectiblesFilters { Category = ShopCategoryTree.WEARABLE, SubCategoryKey = "Head", MinPriceCredits = 5, MaxPriceCredits = 50, Smart = true, Sort = ShopSortOption.Cheapest };
+            var filters = new ShopGridFilters(ShopCategoryTree.WEARABLE) { SubCategoryKey = "Head", MinPriceCredits = 5, MaxPriceCredits = 50, Smart = true, Sort = ShopSortOption.Cheapest };
             filters.ToggleRarity("mythic");
             filters.ToggleRarity("common");
 
@@ -34,8 +34,8 @@ namespace DCL.Shop.Tests
         public void UseTheCatalogFeedWithoutPricesForAllAndNotForSale()
         {
             // Arrange
-            var all = new ShopCollectiblesFilters { ExplicitStatus = ShopStatusFilter.All, MinPriceCredits = 5, Category = ShopCategoryTree.EMOTE, SubCategoryKey = "Dance" };
-            var notForSale = new ShopCollectiblesFilters { ExplicitStatus = ShopStatusFilter.NotForSale };
+            var all = new ShopGridFilters(ShopCategoryTree.EMOTE) { ExplicitStatus = ShopStatusFilter.All, MinPriceCredits = 5, SubCategoryKey = "Dance" };
+            var notForSale = new ShopGridFilters { ExplicitStatus = ShopStatusFilter.NotForSale };
 
             // Act
             ShopCatalogQuery allQuery = ShopQueryMapper.ToQuery(all, 0);
@@ -54,7 +54,7 @@ namespace DCL.Shop.Tests
         public void DefaultTheStatusToAllWhileSearchingUnlessPicked()
         {
             // Arrange
-            var filters = new ShopCollectiblesFilters { SearchText = " hat " };
+            var filters = new ShopGridFilters { SearchText = " hat " };
 
             // Act
             ShopStatusFilter whileSearching = filters.EffectiveStatus;
@@ -63,7 +63,7 @@ namespace DCL.Shop.Tests
             filters.SearchText = string.Empty;
             filters.ExplicitStatus = null;
             ShopStatusFilter idle = filters.EffectiveStatus;
-            ShopCatalogQuery query = ShopQueryMapper.ToQuery(new ShopCollectiblesFilters { SearchText = " hat " }, 0);
+            ShopCatalogQuery query = ShopQueryMapper.ToQuery(new ShopGridFilters { SearchText = " hat " }, 0);
 
             // Assert
             Assert.AreEqual(ShopStatusFilter.All, whileSearching);

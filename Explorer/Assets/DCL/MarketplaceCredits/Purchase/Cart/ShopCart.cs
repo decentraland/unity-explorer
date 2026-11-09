@@ -24,7 +24,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
         public int TotalUnits { get; private set; }
 
-        public int TotalCredits { get; private set; }
+        public long TotalCredits { get; private set; }
 
         public event Action? Changed;
 
@@ -168,7 +168,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         private void RecomputeTotals()
         {
             var units = 0;
-            var credits = 0;
+            var credits = 0L;
 
             foreach (ShopCartLine line in lines)
             {

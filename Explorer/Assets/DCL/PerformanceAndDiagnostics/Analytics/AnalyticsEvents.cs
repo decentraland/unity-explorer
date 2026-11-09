@@ -271,7 +271,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string SHOP_REMOVED_FROM_CART = "Shop Removed From Cart";
             public const string SHOP_OUTFIT_ADDED_TO_CART = "Shop Outfit Added To Cart";
             public const string PAGE_OVERVIEW = "overview";
-            public const string PAGE_ASSETS = "assets";
+            public const string PAGE_WEARABLES = "wearables";
+            public const string PAGE_EMOTES = "emotes";
+            public const string PAGE_NAMES = "names";
+            public const string PAGE_LANDS = "lands";
+            public const string PAGE_FAVORITES = "favorites";
 
             // Client-only moments with no web counterpart.
             public const string SHOP_SECTION_OPENED = "shop_section_opened";

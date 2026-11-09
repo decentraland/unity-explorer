@@ -77,6 +77,7 @@ namespace DCL.UI.Sidebar
         private readonly VolumeBus volumeBus;
         private readonly List<AudioSliderBinder> audioSliderBinders = new ();
         private readonly bool isCameraReelFeatureEnabled;
+        private readonly bool isInGameShopEnabled;
 
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
@@ -130,6 +131,7 @@ namespace DCL.UI.Sidebar
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
+            isInGameShopEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.InGameShop);
 
             this.chatEventBus = chatEventBus;
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
@@ -572,8 +574,14 @@ namespace DCL.UI.Sidebar
         private void OnDiscoverButtonClicked() =>
             ToggleSubMenu<DiscoverMenuView>(viewInstance!.DiscoverButton);
 
-        private void OnShopButtonClicked() =>
-            ToggleSubMenu<ShopMenuView>(viewInstance!.ShopButton);
+        private void OnShopButtonClicked()
+        {
+            // The popup with the web links stays as the fallback while the in-client shop section is hidden
+            if (isInGameShopEnabled)
+                OpenExplorePanelInSection(ExploreSections.Shop);
+            else
+                ToggleSubMenu<ShopMenuView>(viewInstance!.ShopButton);
+        }
 
         private void OnSettingsButtonClicked() =>
             ToggleSubMenu<SystemMenuView>(viewInstance!.SettingsButton);

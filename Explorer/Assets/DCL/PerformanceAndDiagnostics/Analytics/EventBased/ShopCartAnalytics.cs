@@ -44,7 +44,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             controller.BuyCreditsPrompted -= OnBuyCreditsPrompted;
         }
 
-        private void OnCartOpened(string source, int cartSize, int cartCredits) =>
+        private void OnCartOpened(string source, int cartSize, long cartCredits) =>
             analytics.Track(AnalyticsEvents.Shop.SHOP_CART_OPENED, WithPlatform(new JObject
             {
                 { "source", source },
@@ -128,7 +128,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnCheckoutCancelled(CartCheckoutResult result, string step) =>
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_PURCHASE_CANCELLED, WithPlatform(FailureProps(result, step, CreditPurchaseModalController.MapAnalyticsErrorCode(result.FirstError))));
 
-        private void OnBuyCreditsPrompted(int creditsNeeded, int creditsBalance, int shortfall) =>
+        private void OnBuyCreditsPrompted(long creditsNeeded, int creditsBalance, long shortfall) =>
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_BUY_CREDITS_PROMPTED, WithPlatform(new JObject
             {
                 { "from", BUY_CREDITS_FROM },

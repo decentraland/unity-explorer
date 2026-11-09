@@ -15,22 +15,17 @@ using Utility;
 
 namespace DCL.Shop
 {
-    public class ShopCollectiblesController : IDisposable
+    /// <summary>
+    ///     One paged grid of a single item category (wearables or emotes); search and sort come from the shop header.
+    /// </summary>
+    public class ShopGridSectionController : IDisposable
     {
         private const string LOAD_ERROR_MESSAGE = "There was an error loading the shop. Please try again.";
-        private const string CHIP_PRICE = "price";
-        private const string CHIP_SMART = "smart";
-        private const string CHIP_STATUS = "status";
-        private const string CHIP_SMART_LABEL = "Smart";
-        private const string CHIP_PRICE_FORMAT = "Price: {0} - {1}";
-        private const string CHIP_PRICE_MIN_FORMAT = "Price: from {0}";
-        private const string CHIP_PRICE_MAX_FORMAT = "Price: up to {0}";
 
-        private readonly ShopCollectiblesView view;
-        private readonly ShopFiltersView filtersView;
+        private readonly ShopGridSectionView view;
         private readonly MarketplaceShopAPIClient api;
         private readonly ShopItemCardPresenter cards;
-        private readonly ShopCreatorNameCache creatorNames;
+        private readonly ShopCreatorCache creatorNames;
         private readonly List<ShopItemCardModel> models = new ();
         private readonly HashSet<string> modelKeys = new ();
         private readonly List<string> creatorsScratch = new ();
@@ -49,71 +44,56 @@ namespace DCL.Shop
         private int nextSkip;
         private string? lastSearchedQuery;
         private string? lastFilterSignature;
+        private string? selectedKey;
 
-        public ShopCollectiblesFilters Filters { get; } = new ();
+        public ShopGridFilters Filters { get; }
 
         public event Action<string, int>? Searched;
-        public event Action<ShopCollectiblesFilters, int>? FilterApplied;
-        public event Action? BackToOverviewClicked;
+        public event Action<ShopGridFilters, int>? FilterApplied;
+        public event Action? BrowseClicked;
+        public event Action<ShopItemCardModel>? ItemClicked;
 
-        public ShopCollectiblesController(
-            ShopCollectiblesView view,
-            ShopFiltersView filtersView,
+        public ShopGridSectionController(
+            ShopGridSectionView view,
             MarketplaceShopAPIClient api,
             ShopItemCardPresenter cards,
-            ShopCreatorNameCache creatorNames,
-            IWearableStylingCatalog styling)
+            ShopCreatorCache creatorNames,
+            IWearableStylingCatalog styling,
+            string category)
         {
             this.view = view;
-            this.filtersView = filtersView;
             this.api = api;
             this.cards = cards;
             this.creatorNames = creatorNames;
+            Filters = new ShopGridFilters(category);
 
-            filtersView.CategoryIconResolver = styling.GetCategoryIcon;
-            filtersView.RarityColorResolver = styling.GetRarityFlapColor;
+            view.CategoryChips?.Initialize(styling.GetCategoryIcon);
             view.InitializeGrid(ModelAt, BindCard);
 
-            view.SearchChanged += OnSearchChanged;
-            view.SortChanged += OnSortChanged;
-            view.ChipRemoveClicked += OnChipRemoveClicked;
-            view.ClearAllClicked += OnClearAllClicked;
             view.GridNearEnd += RequestNextPage;
             view.RetryClicked += RequestFirstPage;
-            view.BackToOverviewClicked += OnBackToOverviewClicked;
+            view.BrowseClicked += OnBrowseClicked;
             view.CardAddToCartClicked += OnCardAddToCartClicked;
             view.CardBuyClicked += OnCardBuyClicked;
-            view.CardViewClicked += OnCardViewClicked;
+            view.CardClicked += OnCardClicked;
 
-            filtersView.CategorySelected += OnCategorySelected;
-            filtersView.SubCategorySelected += OnSubCategorySelected;
-            filtersView.RarityToggled += OnRarityToggled;
-            filtersView.PriceRangeChanged += OnPriceRangeChanged;
-            filtersView.StatusChanged += OnStatusChanged;
-            filtersView.SmartChanged += OnSmartChanged;
+            if (view.CategoryChips != null)
+                view.CategoryChips.Selected += OnSubCategorySelected;
 
             cards.ListingResolved += OnListingResolved;
         }
 
         public void Dispose()
         {
-            view.SearchChanged -= OnSearchChanged;
-            view.SortChanged -= OnSortChanged;
-            view.ChipRemoveClicked -= OnChipRemoveClicked;
-            view.ClearAllClicked -= OnClearAllClicked;
             view.GridNearEnd -= RequestNextPage;
             view.RetryClicked -= RequestFirstPage;
-            view.BackToOverviewClicked -= OnBackToOverviewClicked;
+            view.BrowseClicked -= OnBrowseClicked;
             view.CardAddToCartClicked -= OnCardAddToCartClicked;
             view.CardBuyClicked -= OnCardBuyClicked;
-            view.CardViewClicked -= OnCardViewClicked;
+            view.CardClicked -= OnCardClicked;
 
-            filtersView.CategorySelected -= OnCategorySelected;
-            filtersView.SubCategorySelected -= OnSubCategorySelected;
-            filtersView.RarityToggled -= OnRarityToggled;
-            filtersView.PriceRangeChanged -= OnPriceRangeChanged;
-            filtersView.StatusChanged -= OnStatusChanged;
-            filtersView.SmartChanged -= OnSmartChanged;
+            if (view.CategoryChips != null)
+                view.CategoryChips.Selected -= OnSubCategorySelected;
 
             cards.ListingResolved -= OnListingResolved;
 
@@ -126,9 +106,10 @@ namespace DCL.Shop
         public void Activate()
         {
             isActive = true;
+            view.gameObject.SetActive(true);
             lifeCts = lifeCts.SafeRestart();
             actionsCts = actionsCts.SafeRestartLinked(lifeCts.Token);
-            ApplyFiltersToViews();
+            view.CategoryChips?.SetSelected(Filters.SubCategoryKey);
             RequestFirstPage();
         }
 
@@ -142,6 +123,7 @@ namespace DCL.Shop
             isLoadingPage = false;
             view.SetRefreshing(false);
             view.SetLoadingMore(false);
+            view.gameObject.SetActive(false);
         }
 
         public void ResetFilters()
@@ -149,7 +131,34 @@ namespace DCL.Shop
             Filters.Reset();
             lastSearchedQuery = null;
             lastFilterSignature = null;
-            ApplyFiltersToViews();
+            view.CategoryChips?.SetSelected(null);
+        }
+
+        public void SetSearch(string text)
+        {
+            if (Filters.SearchText == text)
+                return;
+
+            Filters.SearchText = text;
+            RequestFirstPage();
+        }
+
+        public void SetSort(ShopSortOption sort)
+        {
+            if (Filters.Sort == sort)
+                return;
+
+            Filters.Sort = sort;
+            RequestFirstPage();
+        }
+
+        public void SetCompact(bool compact) =>
+            view.SetColumns(compact ? ShopGridSectionView.COMPACT_COLUMNS : ShopGridSectionView.DEFAULT_COLUMNS);
+
+        public void SetSelected(string? key)
+        {
+            selectedKey = key;
+            view.ForEachShownCard(card => card.SetSelected(card.Model != null && card.Model.Key == selectedKey));
         }
 
         public void Reload()
@@ -170,13 +179,10 @@ namespace DCL.Shop
         private ShopItemCardModel? ModelAt(int index) =>
             index >= 0 && index < models.Count ? models[index] : null;
 
-        private void BindCard(ShopItemCardView card, ShopItemCardModel model) =>
-            cards.Bind(card, model, NowUnixSeconds());
-
-        private void OnAnyFilterChanged()
+        private void BindCard(ShopItemCardView card, ShopItemCardModel model)
         {
-            ApplyChips();
-            RequestFirstPage();
+            cards.Bind(card, model, NowUnixSeconds());
+            card.SetSelected(model.Key == selectedKey);
         }
 
         private void RequestFirstPage()
@@ -279,7 +285,6 @@ namespace DCL.Shop
             view.SetError(false);
             view.SetEmpty(models.Count == 0, searchQuery);
             view.SetGridVisible(models.Count > 0);
-            view.SetCounter(total, searchQuery);
             view.SetItemCount(models.Count, resetPosition: firstPage);
 
             if (firstPage)
@@ -355,156 +360,14 @@ namespace DCL.Shop
             });
         }
 
-        private void ApplyFiltersToViews()
-        {
-            filtersView.ApplyState(Filters);
-            view.SetSort(Filters.Sort);
-            view.SetSearchText(Filters.SearchText);
-            ApplyChips();
-        }
-
-        private void ApplyChips()
-        {
-            view.ClearChips();
-            var any = false;
-
-            if (Filters.HasPriceRange)
-            {
-                view.AddChip(CHIP_PRICE, PriceChipLabel());
-                any = true;
-            }
-
-            foreach (string rarity in Filters.Rarities)
-            {
-                view.AddChip(rarity, Capitalize(rarity));
-                any = true;
-            }
-
-            if (Filters.Smart)
-            {
-                view.AddChip(CHIP_SMART, CHIP_SMART_LABEL);
-                any = true;
-            }
-
-            if (Filters.IsStatusChipVisible)
-            {
-                view.AddChip(CHIP_STATUS, StatusLabel(Filters.EffectiveStatus));
-                any = true;
-            }
-
-            view.SetClearAllVisible(any);
-        }
-
-        private string PriceChipLabel()
-        {
-            if (Filters.MinPriceCredits.HasValue && Filters.MaxPriceCredits.HasValue)
-                return string.Format(CHIP_PRICE_FORMAT, Filters.MinPriceCredits.Value, Filters.MaxPriceCredits.Value);
-
-            return Filters.MinPriceCredits.HasValue
-                ? string.Format(CHIP_PRICE_MIN_FORMAT, Filters.MinPriceCredits.Value)
-                : string.Format(CHIP_PRICE_MAX_FORMAT, Filters.MaxPriceCredits!.Value);
-        }
-
-        private static string StatusLabel(ShopStatusFilter status) =>
-            status switch
-            {
-                ShopStatusFilter.All => "All",
-                ShopStatusFilter.NotForSale => "Not for sale",
-                _ => "On sale",
-            };
-
-        private static string Capitalize(string value) =>
-            value.Length == 0 ? value : char.ToUpperInvariant(value[0]) + value.Substring(1);
-
-        private void OnSearchChanged(string text)
-        {
-            Filters.SearchText = text;
-            filtersView.ApplyState(Filters);
-            OnAnyFilterChanged();
-        }
-
-        private void OnSortChanged(ShopSortOption sort)
-        {
-            Filters.Sort = sort;
-            OnAnyFilterChanged();
-        }
-
-        private void OnCategorySelected(string category)
-        {
-            Filters.Category = category;
-            Filters.SubCategoryKey = null;
-            OnAnyFilterChanged();
-        }
-
         private void OnSubCategorySelected(string? subCategoryKey)
         {
             Filters.SubCategoryKey = subCategoryKey;
-            OnAnyFilterChanged();
+            RequestFirstPage();
         }
 
-        private void OnRarityToggled(string rarity, bool isOn)
-        {
-            bool contains = Filters.Rarities.Contains(rarity);
-
-            if (isOn == contains)
-                return;
-
-            Filters.ToggleRarity(rarity);
-            OnAnyFilterChanged();
-        }
-
-        private void OnPriceRangeChanged(int? min, int? max)
-        {
-            Filters.MinPriceCredits = min;
-            Filters.MaxPriceCredits = max;
-            OnAnyFilterChanged();
-        }
-
-        private void OnStatusChanged(ShopStatusFilter status)
-        {
-            Filters.ExplicitStatus = status;
-            OnAnyFilterChanged();
-        }
-
-        private void OnSmartChanged(bool isOn)
-        {
-            Filters.Smart = isOn;
-            OnAnyFilterChanged();
-        }
-
-        private void OnChipRemoveClicked(ShopFilterChipView chip)
-        {
-            switch (chip.Key)
-            {
-                case CHIP_PRICE:
-                    Filters.MinPriceCredits = null;
-                    Filters.MaxPriceCredits = null;
-                    break;
-                case CHIP_SMART:
-                    Filters.Smart = false;
-                    break;
-                case CHIP_STATUS:
-                    Filters.ExplicitStatus = null;
-                    break;
-                default:
-                    Filters.Rarities.Remove(chip.Key);
-                    break;
-            }
-
-            filtersView.ApplyState(Filters);
-            OnAnyFilterChanged();
-        }
-
-        private void OnClearAllClicked()
-        {
-            Filters.ClearFilters();
-            filtersView.ApplyState(Filters);
-            view.SetSort(Filters.Sort);
-            OnAnyFilterChanged();
-        }
-
-        private void OnBackToOverviewClicked() =>
-            BackToOverviewClicked?.Invoke();
+        private void OnBrowseClicked() =>
+            BrowseClicked?.Invoke();
 
         private void OnCardAddToCartClicked(ShopItemCardView card)
         {
@@ -518,10 +381,10 @@ namespace DCL.Shop
                 cards.BuyAsync(card, CreditPurchaseModalControllerParams.SOURCE_SHOP_GRID, actionsCts.Token).Forget();
         }
 
-        private void OnCardViewClicked(ShopItemCardView card)
+        private void OnCardClicked(ShopItemCardView card)
         {
             if (card.Model != null)
-                cards.View(card.Model);
+                ItemClicked?.Invoke(card.Model);
         }
 
         private void OnListingResolved(ShopItemCardModel model, ShopListingDto listing)

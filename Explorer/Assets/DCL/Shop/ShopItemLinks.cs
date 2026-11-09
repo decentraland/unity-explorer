@@ -5,9 +5,17 @@ namespace DCL.Shop
 {
     public static class ShopItemLinks
     {
+        private const int MATIC_CHAIN_ID = 137;
         private const int AMOY_CHAIN_ID = 80002;
         private const string NETWORK_AMOY = "amoy";
         private const string NETWORK_MATIC = "matic";
+
+        /// <summary>
+        ///     Only Polygon collections (v2) have URNs derived from the contract and item id; Ethereum collections (v1)
+        ///     use named URNs that must be read from the marketplace item.
+        /// </summary>
+        public static bool HasDerivableUrn(int chainId) =>
+            chainId is MATIC_CHAIN_ID or AMOY_CHAIN_ID;
 
         public static string BuildItemUrl(IDecentralandUrlsSource urlsSource, string contractAddress, string itemId) =>
             $"{urlsSource.Url(DecentralandUrl.ShopLink)}/item/{contractAddress}/{itemId}?utm_source=client";

@@ -23,11 +23,11 @@ namespace DCL.Shop
         public readonly string Rarity;
         public readonly string Category;
         public readonly string? WearableCategory;
-        public readonly int PriceCredits;
+        public readonly long PriceCredits;
         public readonly int? Available;
         public readonly bool IsSmart;
         public readonly string? Gender;
-        public readonly int? CompareAtCredits;
+        public readonly long? CompareAtCredits;
         public readonly long? SaleEndsAtUnixSeconds;
         public readonly int ChainId;
         public readonly string Urn;
@@ -39,8 +39,8 @@ namespace DCL.Shop
         public bool IsNotForSale => PriceCredits <= 0 || Available == 0;
 
         private ShopItemCardModel(string key, string contractAddress, string? itemId, string? tokenId, string name, string creator, string thumbnailUrl,
-            string rarity, string category, string? wearableCategory, int priceCredits, int? available, bool isSmart, string? gender,
-            int? compareAtCredits, long? saleEndsAtUnixSeconds, int chainId, string urn, bool hasCreatorMint, ShopListingDto? listing)
+            string rarity, string category, string? wearableCategory, long priceCredits, int? available, bool isSmart, string? gender,
+            long? compareAtCredits, long? saleEndsAtUnixSeconds, int chainId, string urn, bool hasCreatorMint, ShopListingDto? listing)
         {
             Key = key;
             ContractAddress = contractAddress;

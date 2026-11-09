@@ -93,6 +93,18 @@ namespace DCL.Shop
             }),
         };
 
+        /// <summary>The wearable sub-categories offered as chips above the wearables grid, in display order.</summary>
+        public static readonly IReadOnlyList<Node> WEARABLE_CHIPS = new[]
+        {
+            new Node("Head", "Head", WearableCategories.Categories.HEAD, System.Array.Empty<Node>()),
+            Leaf("Upper Body", WearableCategories.Categories.UPPER_BODY),
+            Leaf("Handwear", WearableCategories.Categories.HANDS_WEAR),
+            Leaf("Lower Body", WearableCategories.Categories.LOWER_BODY),
+            Leaf("Feet", WearableCategories.Categories.FEET),
+            new Node("Accessories", "Accessories", WearableCategories.Categories.EYEWEAR, System.Array.Empty<Node>()),
+            Leaf("Skins", WearableCategories.Categories.SKIN),
+        };
+
         public static bool TryGetSubCategoryLabel(string key, out string label)
         {
             foreach (Node top in TOP)

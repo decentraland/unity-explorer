@@ -10,6 +10,10 @@ namespace DCL.Shop
     {
         private const int ITEM_CARDS_POOL_CAPACITY = 24;
         private const int OUTFIT_CARDS_POOL_CAPACITY = 12;
+        private const int OUTFITS_PER_PAGE = 4;
+        private const int OUTFITS_PER_PAGE_COMPACT = 3;
+        private const int ITEMS_PER_PAGE = 6;
+        private const int ITEMS_PER_PAGE_COMPACT = 4;
 
         [field: SerializeField] public ScrollRect Scroll { get; private set; } = null!;
         [field: SerializeField] public ShopCarouselView TrendingCarousel { get; private set; } = null!;
@@ -31,7 +35,7 @@ namespace DCL.Shop
 
         public event Action<ShopItemCardView>? ItemAddToCartClicked;
         public event Action<ShopItemCardView>? ItemBuyClicked;
-        public event Action<ShopItemCardView>? ItemViewClicked;
+        public event Action<ShopItemCardView>? ItemClicked;
         public event Action<ShopOutfitCardView>? OutfitAddClicked;
         public event Action? ViewAllClicked;
 
@@ -56,6 +60,7 @@ namespace DCL.Shop
             TrendingCarousel.ViewAllClicked += OnViewAllClicked;
             NewCreationsCarousel.ViewAllClicked += OnViewAllClicked;
             EmptyBrowseButton.onClick.AddListener(OnViewAllClicked);
+            SetCompact(false);
         }
 
         private void OnDestroy()
@@ -112,6 +117,18 @@ namespace DCL.Shop
             ReleaseOutfitCards();
         }
 
+        /// <summary>
+        ///     Fewer cards per page while the item panel takes the right side of the section.
+        /// </summary>
+        public void SetCompact(bool compact)
+        {
+            Vector2 outfitSize = ((RectTransform)OutfitCardPrefab.transform).sizeDelta;
+            Vector2 itemSize = ((RectTransform)ItemCardPrefab.transform).sizeDelta;
+            OutfitsRow.Configure(outfitSize.x, outfitSize.y, compact ? OUTFITS_PER_PAGE_COMPACT : OUTFITS_PER_PAGE);
+            TrendingCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE);
+            NewCreationsCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE);
+        }
+
         public void SetEmptyVisible(bool visible) =>
             EmptyContainer.SetActive(visible);
 
@@ -123,7 +140,7 @@ namespace DCL.Shop
             ShopItemCardView card = Instantiate(ItemCardPrefab, transform);
             card.AddToCartClicked = c => ItemAddToCartClicked?.Invoke(c);
             card.BuyClicked = c => ItemBuyClicked?.Invoke(c);
-            card.ViewClicked = c => ItemViewClicked?.Invoke(c);
+            card.Clicked = c => ItemClicked?.Invoke(c);
             return card;
         }
 

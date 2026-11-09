@@ -1,29 +1,59 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace DCL.Shop
 {
-
-    public class ShopCreatorNameCache
+    /// <summary>
+    ///     Display names and profile pictures of item creators, keyed by wallet address. A creator without a profile
+    ///     shows the shortened wallet and the default picture.
+    /// </summary>
+    public class ShopCreatorCache : IDisposable
     {
         private readonly ProfileRepositoryWrapper profiles;
         private readonly Dictionary<string, string> namesByAddress = new (StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ReactiveProperty<ProfileThumbnailViewModel>> thumbnailsByAddress = new (StringComparer.OrdinalIgnoreCase);
         private readonly List<string> pending = new ();
+        private readonly CancellationTokenSource thumbnailsCts = new ();
 
-        public ShopCreatorNameCache(ProfileRepositoryWrapper profiles)
+        public ShopCreatorCache(ProfileRepositoryWrapper profiles)
         {
             this.profiles = profiles;
         }
 
+        public void Dispose()
+        {
+            thumbnailsCts.SafeCancelAndDispose();
+
+            foreach (ReactiveProperty<ProfileThumbnailViewModel> thumbnail in thumbnailsByAddress.Values)
+                thumbnail.ClearSubscriptionsList();
+        }
+
         public string GetDisplayName(string address) =>
             namesByAddress.TryGetValue(address, out string? name) ? name : ShortenWallet(address);
+
+        /// <summary>
+        ///     The picture of a creator, shared by every card showing it; it loads once the address is resolved.
+        /// </summary>
+        public IReactiveProperty<ProfileThumbnailViewModel> GetThumbnail(string address)
+        {
+            if (!thumbnailsByAddress.TryGetValue(address, out ReactiveProperty<ProfileThumbnailViewModel>? thumbnail))
+            {
+                thumbnail = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+                thumbnailsByAddress[address] = thumbnail;
+            }
+
+            return thumbnail;
+        }
 
         public async UniTask<bool> ResolveAsync(IReadOnlyList<string> addresses, CancellationToken ct)
         {
@@ -61,13 +91,21 @@ namespace DCL.Shop
 
                     namesByAddress[address] = profile.ValidatedName;
                     changed = true;
+
+                    IReactiveProperty<ProfileThumbnailViewModel> thumbnail = GetThumbnail(address);
+                    thumbnail.SetColor(profile.UserNameColor);
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, thumbnailsCts.Token).SuppressToResultAsync(ReportCategory.UI).Forget();
                 }
             }
 
             foreach (string address in batch)
             {
-                if (!namesByAddress.ContainsKey(address))
-                    namesByAddress[address] = ShortenWallet(address);
+                if (namesByAddress.ContainsKey(address))
+                    continue;
+
+                namesByAddress[address] = ShortenWallet(address);
+                IReactiveProperty<ProfileThumbnailViewModel> thumbnail = GetThumbnail(address);
+                thumbnail.UpdateValue(ProfileThumbnailViewModel.Error(thumbnail.Value.ProfileColor));
             }
 
             return changed;
