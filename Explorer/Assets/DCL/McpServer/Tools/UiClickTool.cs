@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.LowLevel;
+using EventCallback = UnityEngine.UIElements.EventCallback<UnityEngine.UIElements.PointerDownEvent>;
 using VisualElement = UnityEngine.UIElements.VisualElement;
 
 namespace DCL.McpServer.Tools
@@ -82,23 +83,31 @@ namespace DCL.McpServer.Tools
 
         /// <summary>
         ///     A successful gesture only means the device states were injected, so the element is watched for
-        ///     the pointer event it should have observed.
+        ///     the pointer event it should have observed. The scene system drains the element's queued events every
+        ///     frame, so the observation is a callback of its own rather than a look at the queue.
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {
             Rect imageRect = SdkImageRect(element);
-            UiActionResult result = await RunDeviceClickAsync(UiScreenGeometry.ImageToScreenPoint(imageRect.center), imageRect, button, timeoutSec, ct);
+            VisualElement target = element.Transform.Transform;
 
-            if (!result.Ok)
-                return result;
+            var observed = false;
+            EventCallback observe = _ => observed = true;
+            target.RegisterCallback(observe);
 
-            bool observed = element.Transform.PointerEventTriggered != null;
+            UiActionResult result;
 
-            for (var frame = 0; !observed && frame < SDK_DEVICE_OBSERVE_FRAMES; frame++)
+            try
             {
-                await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                observed = element.Transform.PointerEventTriggered != null;
+                result = await RunDeviceClickAsync(UiScreenGeometry.ImageToScreenPoint(imageRect.center), imageRect, button, timeoutSec, ct);
+
+                if (!result.Ok)
+                    return result;
+
+                for (var frame = 0; !observed && frame < SDK_DEVICE_OBSERVE_FRAMES; frame++)
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
             }
+            finally { target.UnregisterCallback(observe); }
 
             result.Info = observed
                 ? "the element observed the device pointer event"

@@ -17,7 +17,7 @@ namespace DCL.SyntheticInput.UiSimulation
     /// </summary>
     public class UiInteractionSimulator
     {
-        // The scene system is throttled, so one drain can take many frames.
+        // The drain runs every frame, but a paused or frozen scene world never drains.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
         private readonly EventSystem eventSystem;
@@ -157,9 +157,9 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
-        ///     consumed the previous one. Always yields at least one frame, so consecutive events land on separate
-        ///     frames. A null owner has no slot to wait on.
+        ///     Waits until the scene system wrote the element's queued pointer events, so each event is observed as
+        ///     delivered before the next is sent. Always yields at least one frame, so consecutive events land on
+        ///     separate frames. A null owner has no queue to wait on.
         /// </summary>
         private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
         {
@@ -170,10 +170,10 @@ namespace DCL.SyntheticInput.UiSimulation
 
             var frames = 0;
 
-            while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
+            while (slotOwner.PendingPointerEvents.Count > 0 && frames++ < MAX_SDK_DRAIN_FRAMES)
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            return slotOwner.PointerEventTriggered == null;
+            return slotOwner.PendingPointerEvents.Count == 0;
         }
 
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)

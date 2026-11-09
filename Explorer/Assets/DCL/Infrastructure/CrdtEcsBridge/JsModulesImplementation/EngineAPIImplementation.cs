@@ -184,10 +184,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             worldSyncBufferSampler.End();
 
-            ApplySyncCommandBuffer(worldSyncBuffer, capturing);
+            PoolableByteArray outgoingMessages = ApplySyncCommandBuffer(worldSyncBuffer, returnData, capturing);
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            return returnData ? SerializeOutgoingCRDTMessages(capturing) : PoolableByteArray.EMPTY;
+            return outgoingMessages;
         }
 
         public PoolableByteArray CrdtGetState()
@@ -341,7 +341,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
 
-        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool capturing)
+        /// <summary>
+        ///     Applies the scene's messages to the world and, while still holding the world lock, serializes the
+        ///     outgoing messages. The main thread writes outgoing messages only while it holds that lock, so a batch
+        ///     taken under it contains whole frames: a frame's results are never split across two scene ticks.
+        /// </summary>
+        private PoolableByteArray ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool returnData, bool capturing)
         {
             // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
             // abort only on a throw before delegation (e.g. mutex acquisition)
@@ -364,9 +369,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 if (capturing)
                     metrics.Traffic.AddApplyTime(Stopwatch.GetTimestamp() - applyStart);
 
+                PoolableByteArray outgoingMessages = returnData ? SerializeOutgoingCRDTMessages(capturing) : PoolableByteArray.EMPTY;
+
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
                 systemGroupsUpdateGate.Open();
+
+                return outgoingMessages;
             }
             catch (Exception e)
             {
@@ -374,6 +383,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
 
                 exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
+                return PoolableByteArray.EMPTY;
             }
         }
 

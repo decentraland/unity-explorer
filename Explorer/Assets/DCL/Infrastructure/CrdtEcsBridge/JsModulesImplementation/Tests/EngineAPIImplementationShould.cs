@@ -24,24 +24,23 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
     {
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private IInstancePoolsProvider instancePoolsProvider;
-        private ICRDTProtocol crdtProtocol;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private ISharedPoolsProvider sharedPoolsProvider = null!;
+        private IInstancePoolsProvider instancePoolsProvider = null!;
+        private ICRDTProtocol crdtProtocol = null!;
+        private ICRDTDeserializer crdtDeserializer = null!;
+        private ICRDTWorldSynchronizer crdtWorldSynchronizer = null!;
+        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider = null!;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = null!;
 
-        private EngineAPIImplementation engineAPIImplementation;
+        private EngineAPIImplementation engineAPIImplementation = null!;
         private SceneRuntimeMetrics metrics = null!;
 
-        private List<CRDTMessage> crdtMessages;
-        private List<ProcessedCRDTMessage> outgoingMessages;
-        private List<ProcessedCRDTMessage> crdtStateMessages;
+        private List<CRDTMessage> crdtMessages = null!;
+        private List<ProcessedCRDTMessage> outgoingMessages = null!;
+        private List<ProcessedCRDTMessage> crdtStateMessages = null!;
 
-        private IWorldSyncCommandBuffer worldSyncCommandBuffer;
-        private Mutex mutex;
+        private IWorldSyncCommandBuffer worldSyncCommandBuffer = null!;
+        private Mutex mutex = null!;
 
         [SetUp]
         public void SetUp()
@@ -74,7 +73,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>(), instancePoolsProvider = Substitute.For<IInstancePoolsProvider>(),
                 crdtProtocol = Substitute.For<ICRDTProtocol>(),
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
-                crdtSerializer = new CRDTSerializer(),
+                new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
@@ -194,14 +193,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 }
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
-                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
 
+                // Outgoing messages are serialized under the world lock, right after the buffer is applied,
+                // so a batch never splits one frame's results across two scene ticks
+                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncCommandBuffer);
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>());
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
 
                 // can't check Serialize, can't mock `Span<byte>`
-                // Apply will be called asynchronously
-                // crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
+                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
             });
         }
 
