@@ -15,10 +15,8 @@ using UnityEngine.UIElements;
 namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 {
     /// <summary>
-    ///     Keeps the UI Toolkit pointer callbacks of a UI element in sync with its <see cref="PBPointerEvents" />.
-    ///     The callbacks queue events on <see cref="UITransformComponent.PendingPointerEvents" />; the queue is written to the
-    ///     scene every frame by <c>WritePointerEventResultsSystem</c>, together with the world and global pointer results,
-    ///     so a UI event never gets a later tick than the global event of the same press.
+    ///     Keeps the UI Toolkit pointer callbacks of a UI element in sync with its <see cref="PBPointerEvents" />;
+    ///     the callbacks queue events on <see cref="UITransformComponent.PendingPointerEvents" />.
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UITransformUpdateSystem))]

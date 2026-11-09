@@ -83,8 +83,7 @@ namespace DCL.McpServer.Tools
 
         /// <summary>
         ///     A successful gesture only means the device states were injected, so the element is watched for
-        ///     the pointer event it should have observed. The scene system drains the element's queued events every
-        ///     frame, so the observation is a callback of its own rather than a look at the queue.
+        ///     the pointer down it should have observed.
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
         {

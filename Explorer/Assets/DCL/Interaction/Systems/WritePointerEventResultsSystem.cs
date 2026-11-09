@@ -23,9 +23,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     ///     Writes the results of the pointer events in the scene world: raycast hits on world entities, pointer events
     ///     UI Toolkit dispatched on scene UI elements, and the global events of the frame.
     ///     <para>
-    ///         Every result of a frame is written here, in one pass, with one tick number: the SDK treats a result whose
-    ///         timestamp is not newer than the previous batch as already seen, so a UI press written a frame later than
-    ///         the global press of the same tick would be dropped by the scene.
+    ///         Every result of a frame is written here in one pass with one tick number, so the world, UI and global
+    ///         results of the same press share a timestamp.
     ///     </para>
     ///     <para>
     ///         Must be executed after <see cref="Interaction.Systems.ProcessPointerEventsSystem" />. As they exist in different worlds we must attach them to different
@@ -63,14 +62,17 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
-            if (!sceneStateProvider.IsCurrent) return;
-
             // The scene thread advances the tick concurrently: read it once so every result of this frame shares it.
             uint tick = sceneStateProvider.TickNumber;
 
+            // UI events are written regardless of the scene being current: an event that stayed queued while the scene
+            // was not current would otherwise be delivered later as a fresh user gesture.
+            WriteUiResultsQuery(World!, tick);
+
+            if (!sceneStateProvider.IsCurrent) return;
+
             var messageSent = false;
             WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, tick, ref messageSent);
-            WriteUiResultsQuery(World!, tick);
 
             if (!messageSent)
                 WriteGlobalEvents(tick);
@@ -126,9 +128,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private void WriteUiResults([Data] uint tick, ref PBPointerEvents pbPointerEvents, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
             List<PointerEventType> pendingEvents = uiTransformComponent.PendingPointerEvents;
-
-            if (pendingEvents.Count == 0)
-                return;
 
             for (var i = 0; i < pendingEvents.Count; i++)
             {

@@ -339,12 +339,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
         }
 
-        // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
-
         /// <summary>
-        ///     Applies the scene's messages to the world and, while still holding the world lock, serializes the
-        ///     outgoing messages. The main thread writes outgoing messages only while it holds that lock, so a batch
-        ///     taken under it contains whole frames: a frame's results are never split across two scene ticks.
+        ///     Applies the scene's messages to the world and serializes the outgoing messages under the same world
+        ///     lock, so one frame's results are never split across two scene ticks.
         /// </summary>
         private PoolableByteArray ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer, bool returnData, bool capturing)
         {

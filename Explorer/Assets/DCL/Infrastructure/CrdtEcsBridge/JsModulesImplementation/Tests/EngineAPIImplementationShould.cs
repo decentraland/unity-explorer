@@ -30,6 +30,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private ICRDTDeserializer crdtDeserializer = null!;
         private ICRDTWorldSynchronizer crdtWorldSynchronizer = null!;
         private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider = null!;
+        private ISystemGroupsUpdateGate systemGroupsUpdateGate = null!;
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = null!;
 
         private EngineAPIImplementation engineAPIImplementation = null!;
@@ -76,7 +77,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
-                Substitute.For<ISystemGroupsUpdateGate>(),
+                systemGroupsUpdateGate = Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
                 new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"),
                 metrics = new SceneRuntimeMetrics());
@@ -194,11 +195,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
 
-                // Outgoing messages are serialized under the world lock, right after the buffer is applied,
-                // so a batch never splits one frame's results across two scene ticks
                 crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncCommandBuffer);
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>());
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
+
+                // Open is the last call inside the world lock
+                systemGroupsUpdateGate.Open();
 
                 // can't check Serialize, can't mock `Span<byte>`
                 instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
