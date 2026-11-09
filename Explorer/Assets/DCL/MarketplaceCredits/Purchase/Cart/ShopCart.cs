@@ -64,7 +64,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         ///     Adds one unit. An existing primary line is bumped up to its stock, an existing secondary line is left
         ///     alone; both keep their original source. Returns false when nothing changed.
         /// </summary>
-        public bool Add(ShopListingDto listing, ShopCartSource source, string? outfitId = null)
+        public bool Add(ShopListingDto listing, ShopCartSource source, string? outfitId = null, string? creatorName = null)
         {
             AdoptOwnerIfUnclaimed();
 
@@ -82,7 +82,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 return true;
             }
 
-            var line = new ShopCartLine(listing, source, outfitId);
+            var line = new ShopCartLine(listing, source, outfitId, creatorName);
             lines.Add(line);
             linesById[id] = line;
             RecomputeTotals();

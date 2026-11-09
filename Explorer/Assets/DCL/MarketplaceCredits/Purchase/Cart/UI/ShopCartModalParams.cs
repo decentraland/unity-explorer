@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 {
     public readonly struct ShopCartModalParams
@@ -7,9 +9,13 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
         public readonly string Source;
 
-        public ShopCartModalParams(string source)
+        /// <summary>World-space bottom-right corner of the control that opened the cart; the popup hangs under it.</summary>
+        public readonly Vector3 AnchorBottomRight;
+
+        public ShopCartModalParams(string source, Vector3 anchorBottomRight)
         {
             Source = source;
+            AnchorBottomRight = anchorBottomRight;
         }
     }
 }

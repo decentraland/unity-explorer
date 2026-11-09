@@ -32,6 +32,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         public readonly ShopCartSource Source;
         public readonly string? OutfitId;
 
+        /// <summary>The creator's display name as resolved when the line was added; null when the caller had none.</summary>
+        public readonly string? CreatorName;
+
         public int Quantity { get; internal set; }
 
         public bool IsPrimary => Listing.IsPrimary();
@@ -50,12 +53,13 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
         public long TotalCredits => Listing.priceCredits * Quantity;
 
-        internal ShopCartLine(ShopListingDto listing, ShopCartSource source, string? outfitId)
+        internal ShopCartLine(ShopListingDto listing, ShopCartSource source, string? outfitId, string? creatorName)
         {
             Id = listing.CartLineId();
             Listing = listing;
             Source = source;
             OutfitId = outfitId;
+            CreatorName = creatorName;
             Quantity = 1;
         }
     }

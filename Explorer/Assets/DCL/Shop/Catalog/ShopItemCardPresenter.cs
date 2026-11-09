@@ -125,7 +125,7 @@ namespace DCL.Shop
                 return;
             }
 
-            cart.Add(listing, source);
+            cart.Add(listing, source, creatorName: creators.GetDisplayName(model.Creator));
         }
 
         public async UniTask BuyAsync(ShopItemCardModel model, Sprite? thumbnail, string source, Action<bool> setResolving, CancellationToken ct)

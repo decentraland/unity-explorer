@@ -107,6 +107,15 @@ namespace DCL.Shop
             FavoritesRoot.SetActive(section == ShopSection.Favorites);
         }
 
+        public void SetSectionTabVisible(ShopSection section, bool visible)
+        {
+            foreach (SectionTab tab in SectionTabs)
+            {
+                if (tab.Section == section)
+                    tab.Tab.gameObject.SetActive(visible);
+            }
+        }
+
         public void SetItemPanelOpen(bool open)
         {
             ItemPanel.gameObject.SetActive(open);

@@ -20,11 +20,11 @@ namespace DCL.Shop
         private const string EMPTY_FILTERS_TEXT = "No items match these filters.";
 
         [field: Header("Grid")]
-        [field: SerializeField] public ShopCategoryChipsView? CategoryChips { get; private set; }
+        [field: SerializeField] public ShopCategoryDropdownView? CategoryDropdown { get; private set; }
         [field: SerializeField] public LoopGridView Grid { get; private set; } = null!;
         [field: SerializeField] public SkeletonLoadingView GridSkeleton { get; private set; } = null!;
+        [field: SerializeField] public GridLayoutGroup GhostGrid { get; private set; } = null!;
         [field: SerializeField] public GameObject LoadingMoreSpinner { get; private set; } = null!;
-        [field: SerializeField] public GameObject RefreshingSpinner { get; private set; } = null!;
 
         [field: Header("States")]
         [field: SerializeField] public GameObject EmptyContainer { get; private set; } = null!;
@@ -37,8 +37,6 @@ namespace DCL.Shop
         private Action<ShopItemCardView, ShopItemCardModel>? bindCard;
         private int itemCount;
         private bool gridInitialized;
-        private int baseLeftPadding;
-        private int baseRightPadding;
 
         public int CurrentColumns { get; private set; } = DEFAULT_COLUMNS;
 
@@ -55,18 +53,6 @@ namespace DCL.Shop
             BrowseButton.onClick.AddListener(() => BrowseClicked?.Invoke());
         }
 
-        private void OnEnable()
-        {
-            if (gridInitialized)
-                CenterColumns();
-        }
-
-        private void OnRectTransformDimensionsChange()
-        {
-            if (gridInitialized && isActiveAndEnabled)
-                CenterColumns();
-        }
-
         public void InitializeGrid(Func<int, ShopItemCardModel?> modelAtIndex, Action<ShopItemCardView, ShopItemCardModel> bind)
         {
             if (gridInitialized)
@@ -74,8 +60,6 @@ namespace DCL.Shop
 
             modelAt = modelAtIndex;
             bindCard = bind;
-            baseLeftPadding = Grid.Padding.left;
-            baseRightPadding = Grid.Padding.right;
             Grid.InitGridView(0, OnGetItem);
             Grid.ScrollRect.SetScrollSensitivityBasedOnPlatform();
             gridInitialized = true;
@@ -83,7 +67,8 @@ namespace DCL.Shop
         }
 
         /// <summary>
-        ///     The column count is decided by the layout around the grid (the item panel takes space away), not by the width.
+        ///     The column count is decided by the layout around the grid (the item panel takes space away), not by the width;
+        ///     the columns keep the grid's left padding, so fewer columns never move the ones that stay.
         /// </summary>
         public void SetColumns(int columns)
         {
@@ -122,22 +107,18 @@ namespace DCL.Shop
             }
         }
 
-        public void SetFirstLoadSkeleton(bool on)
+        /// <summary>
+        ///     Shows the card-sized ghost grid in place of the items while a first page loads; the skeleton view fades the grid itself.
+        /// </summary>
+        public void SetLoadingPage(bool on)
         {
-            if (on)
-                GridSkeleton.ShowLoading();
-            else
-                GridSkeleton.HideLoading();
-        }
-
-        public void SetRefreshing(bool on)
-        {
-            RefreshingSpinner.SetActive(on);
-
             if (!on)
+            {
+                GridSkeleton.HideLoading();
                 return;
+            }
 
-            Grid.gameObject.SetActive(false);
+            GridSkeleton.ShowLoading();
             EmptyContainer.SetActive(false);
             ErrorContainer.SetActive(false);
         }
@@ -196,27 +177,7 @@ namespace DCL.Shop
         private void ApplyColumns()
         {
             Grid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, CurrentColumns);
-            CenterColumns();
-        }
-
-        private void CenterColumns()
-        {
-            // The grid viewport stretches across this anchor-driven rect, so its width is valid even before the layout pass runs
-            float viewportWidth = ((RectTransform)transform).rect.width;
-
-            if (viewportWidth <= 0f)
-                return;
-
-            float columnsWidth = (CurrentColumns * (Grid.ItemSize.x + Grid.ItemPadding.x)) - Grid.ItemPadding.x;
-            int spare = Mathf.Max(0, Mathf.FloorToInt(viewportWidth - baseLeftPadding - baseRightPadding - columnsWidth));
-            int left = baseLeftPadding + (spare / 2);
-            int right = baseRightPadding + (spare - (spare / 2));
-            RectOffset padding = Grid.Padding;
-
-            if (padding.left == left && padding.right == right)
-                return;
-
-            Grid.SetPadding(new RectOffset(left, right, padding.top, padding.bottom));
+            GhostGrid.constraintCount = CurrentColumns;
         }
     }
 }

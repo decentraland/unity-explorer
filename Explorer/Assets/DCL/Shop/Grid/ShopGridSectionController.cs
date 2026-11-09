@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Backpack.Gifting.Styling;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
@@ -38,7 +37,6 @@ namespace DCL.Shop
         private bool isActive;
         private bool isLoadingPage;
         private bool hasMore;
-        private bool firstLoadDone;
         private bool anySaleOnPage;
         private int total;
         private int nextSkip;
@@ -58,7 +56,6 @@ namespace DCL.Shop
             MarketplaceShopAPIClient api,
             ShopItemCardPresenter cards,
             ShopCreatorCache creatorNames,
-            IWearableStylingCatalog styling,
             string category)
         {
             this.view = view;
@@ -67,7 +64,7 @@ namespace DCL.Shop
             this.creatorNames = creatorNames;
             Filters = new ShopGridFilters(category);
 
-            view.CategoryChips?.Initialize(styling.GetCategoryIcon);
+            view.CategoryDropdown?.Initialize();
             view.InitializeGrid(ModelAt, BindCard);
 
             view.GridNearEnd += RequestNextPage;
@@ -77,8 +74,8 @@ namespace DCL.Shop
             view.CardBuyClicked += OnCardBuyClicked;
             view.CardClicked += OnCardClicked;
 
-            if (view.CategoryChips != null)
-                view.CategoryChips.Selected += OnSubCategorySelected;
+            if (view.CategoryDropdown != null)
+                view.CategoryDropdown.Selected += OnSubCategorySelected;
 
             cards.ListingResolved += OnListingResolved;
         }
@@ -92,8 +89,8 @@ namespace DCL.Shop
             view.CardBuyClicked -= OnCardBuyClicked;
             view.CardClicked -= OnCardClicked;
 
-            if (view.CategoryChips != null)
-                view.CategoryChips.Selected -= OnSubCategorySelected;
+            if (view.CategoryDropdown != null)
+                view.CategoryDropdown.Selected -= OnSubCategorySelected;
 
             cards.ListingResolved -= OnListingResolved;
 
@@ -109,7 +106,7 @@ namespace DCL.Shop
             view.gameObject.SetActive(true);
             lifeCts = lifeCts.SafeRestart();
             actionsCts = actionsCts.SafeRestartLinked(lifeCts.Token);
-            view.CategoryChips?.SetSelected(Filters.SubCategoryKey);
+            view.CategoryDropdown?.SetSelected(Filters.SubCategoryKey);
             RequestFirstPage();
         }
 
@@ -121,7 +118,7 @@ namespace DCL.Shop
             actionsCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
             isLoadingPage = false;
-            view.SetRefreshing(false);
+            view.SetLoadingPage(false);
             view.SetLoadingMore(false);
             view.gameObject.SetActive(false);
         }
@@ -131,7 +128,7 @@ namespace DCL.Shop
             Filters.Reset();
             lastSearchedQuery = null;
             lastFilterSignature = null;
-            view.CategoryChips?.SetSelected(null);
+            view.CategoryDropdown?.SetSelected(null);
         }
 
         public void SetSearch(string text)
@@ -208,12 +205,7 @@ namespace DCL.Shop
             bool firstPage = skip == 0;
 
             if (firstPage)
-            {
-                if (!firstLoadDone && models.Count == 0)
-                    view.SetFirstLoadSkeleton(true);
-                else
-                    view.SetRefreshing(true);
-            }
+                view.SetLoadingPage(true);
             else
                 view.SetLoadingMore(true);
 
@@ -276,11 +268,9 @@ namespace DCL.Shop
             total = totalCount;
             nextSkip = skip + query.First;
             hasMore = models.Count < total && page.Count > 0;
-            firstLoadDone = true;
             isLoadingPage = false;
 
-            view.SetFirstLoadSkeleton(false);
-            view.SetRefreshing(false);
+            view.SetLoadingPage(false);
             view.SetLoadingMore(false);
             view.SetError(false);
             view.SetEmpty(models.Count == 0, searchQuery);
@@ -299,8 +289,7 @@ namespace DCL.Shop
         private void OnPageFailed(bool firstPage)
         {
             isLoadingPage = false;
-            view.SetFirstLoadSkeleton(false);
-            view.SetRefreshing(false);
+            view.SetLoadingPage(false);
             view.SetLoadingMore(false);
 
             if (firstPage && models.Count == 0)

@@ -33,8 +33,13 @@ namespace DCL.Shop
     public class ShopController : ISection, IDisposable
     {
         private const int COUNTDOWN_TICK_MS = 1000;
+        private const int BOTTOM_RIGHT_CORNER = 3;
+
+        // Hidden until those sections ship; the tabs stay in the prefab so they only need removing from this list
+        private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Names, ShopSection.Lands, ShopSection.Favorites };
 
         private readonly ShopView view;
+        private readonly Vector3[] cornersCache = new Vector3[4];
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
@@ -108,8 +113,8 @@ namespace DCL.Shop
             creators = new ShopCreatorCache(profileRepositoryWrapper);
             presenter = new ShopItemCardPresenter(cart, buyHandler, api, webBrowser, urlsSource, identityCache, styling, thumbnailLoader, creators);
             OverviewController = new ShopOverviewController(view.OverviewView, catalog, presenter, creators, thumbnailLoader, api, cart);
-            WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, styling, ShopCategoryTree.WEARABLE);
-            EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, styling, ShopCategoryTree.EMOTE);
+            WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, ShopCategoryTree.WEARABLE);
+            EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, ShopCategoryTree.EMOTE);
             Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);
             ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider);
 
@@ -134,6 +139,9 @@ namespace DCL.Shop
             cartCheckoutService.CheckoutCompleted += OnCartCheckoutCompleted;
 
             view.SetItemPanelOpen(false);
+
+            foreach (ShopSection section in UNRELEASED_SECTIONS)
+                view.SetSectionTabVisible(section, false);
         }
 
         public void Dispose()
@@ -222,6 +230,9 @@ namespace DCL.Shop
         public void ShowSection(ShopSection section)
         {
             if (isSectionShown && section == CurrentSection)
+                return;
+
+            if (Array.IndexOf(UNRELEASED_SECTIONS, section) >= 0)
                 return;
 
             if (isSectionShown)
@@ -382,7 +393,10 @@ namespace DCL.Shop
 
         private async UniTaskVoid ShowCartAsync(CancellationToken ct)
         {
-            try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(new ShopCartModalParams(ShopCartModalParams.SOURCE_SHOP_HEADER)), ct); }
+            ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
+            var parameter = new ShopCartModalParams(ShopCartModalParams.SOURCE_SHOP_HEADER, cornersCache[BOTTOM_RIGHT_CORNER]);
+
+            try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct); }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {

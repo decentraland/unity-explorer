@@ -33,6 +33,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             Failed,
         }
 
+        private const float ANCHOR_GAP = 8f;
+        private const string TITLE_FORMAT = "Your Cart ({0})";
         private const string ITEM_COUNT_SINGULAR = "1 item";
         private const string ITEM_COUNT_FORMAT = "{0} items";
         private const string CONFIRMATIONS_FORMAT = "{0} confirmations needed";
@@ -143,6 +145,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
         }
 
+        protected override void OnBeforeViewShow() =>
+            viewInstance!.PositionBelow(inputData.AnchorBottomRight, ANCHOR_GAP);
+
         protected override void OnViewShow()
         {
             lifeCts = lifeCts.SafeRestart();
@@ -238,7 +243,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             viewInstance.EmptyState.SetActive(cart.Count == 0);
             viewInstance.CheckoutButton.interactable = cart.Count > 0;
-            viewInstance.ItemCountText.text = cart.TotalUnits == 1 ? ITEM_COUNT_SINGULAR : string.Format(ITEM_COUNT_FORMAT, cart.TotalUnits);
+            viewInstance.TitleText.text = string.Format(TITLE_FORMAT, cart.TotalUnits);
             viewInstance.TotalCreditsText.text = cart.TotalCredits.ToString();
         }
 
@@ -550,8 +555,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             if (identity == null)
                 return;
 
-            viewInstance?.BalanceLoadingSpinner.SetActive(true);
-
             try
             {
                 UserCreditsResponse credits = await creditsApiClient.GetUserCreditsAsync(identity.Address, ct);
@@ -560,18 +563,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                     return;
 
                 balanceCredits = credits.usd.credits;
-
-                if (viewInstance != null)
-                {
-                    viewInstance.BalanceCreditsText.text = balanceCredits.ToString();
-                    viewInstance.BalanceLoadingSpinner.SetActive(false);
-                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Cart balance load failed: {e.Message}");
-                viewInstance?.BalanceLoadingSpinner.SetActive(false);
             }
         }
 
@@ -593,7 +589,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
             viewInstance.PartialFailureStateContainer.SetActive(newState == ModalState.PartialFailure);
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
-            viewInstance.BuyCreditsButton.gameObject.SetActive(newState is ModalState.Lines or ModalState.ConfirmChanges or ModalState.InsufficientCredits);
+            viewInstance.BuyCreditsButton.gameObject.SetActive(newState is ModalState.ConfirmChanges or ModalState.InsufficientCredits);
             viewInstance.CheckoutButton.interactable = newState == ModalState.Lines && cart.Count > 0;
 
             if (newState is not (ModalState.ConfirmChanges or ModalState.Processing))

@@ -193,8 +193,8 @@ namespace DCL.Shop
             if (CardsPerPage <= 1)
                 return MIN_SPACING;
 
-            float viewportWidth = Viewport.rect.width;
-            return Mathf.Max(MIN_SPACING, (viewportWidth - (CardsPerPage * CardWidth)) / (CardsPerPage - 1));
+            float rowWidth = Viewport.rect.width - TrackLayout.padding.horizontal;
+            return Mathf.Max(MIN_SPACING, (rowWidth - (CardsPerPage * CardWidth)) / (CardsPerPage - 1));
         }
 
         private void RebuildDots()

@@ -367,7 +367,7 @@ namespace DCL.Shop
                 if (listing == null || listing.priceCredits <= 0 || (listing.IsPrimary() && listing.available <= 0))
                     continue;
 
-                if (cart.Add(listing, ShopCartSource.Outfit, model.Id))
+                if (cart.Add(listing, ShopCartSource.Outfit, model.Id, creatorNames.GetDisplayName(listing.creator)))
                     added++;
             }
 
