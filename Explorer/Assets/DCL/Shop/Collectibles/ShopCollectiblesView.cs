@@ -158,6 +158,13 @@ namespace DCL.Shop
             RefreshingSpinner.SetActive(on);
             ResultCounterSkeleton.SetActive(on);
             ResultCounter.gameObject.SetActive(!on);
+
+            if (!on)
+                return;
+
+            Grid.gameObject.SetActive(false);
+            EmptyContainer.SetActive(false);
+            ErrorContainer.SetActive(false);
         }
 
         public void SetLoadingMore(bool on) =>

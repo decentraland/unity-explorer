@@ -303,6 +303,8 @@ namespace DCL.Shop
                 view.SetGridVisible(false);
                 view.SetError(true);
             }
+            else if (firstPage)
+                view.SetGridVisible(true);
 
             NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LOAD_ERROR_MESSAGE));
         }
