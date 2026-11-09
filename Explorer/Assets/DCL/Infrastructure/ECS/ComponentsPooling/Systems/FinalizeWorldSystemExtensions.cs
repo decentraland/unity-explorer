@@ -1,5 +1,3 @@
-#nullable enable
-
 using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;

@@ -16,7 +16,7 @@ use segment::{
     message::{BatchMessage, User},
     queue::{
         event_queue::{CombinedAnalyticsEventQueue, EnqueError},
-        event_send_daemon::AnalyticsEventSendDaemon,
+        event_send_daemon::{AnalyticsEventSendDaemon, SendFailure},
     },
     Client, HttpClient,
 };
@@ -274,10 +274,17 @@ impl SegmentServer {
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
 
         let daemon_event_input = event_input.clone();
-        send_daemon.start(async_runtime.handle().clone(), move |message: &str| {
-            let message = String::from(message);
-            daemon_event_input.try_enqueue_error(message);
-        });
+        send_daemon.start(
+            async_runtime.handle().clone(),
+            move |failure: SendFailure<'_>| {
+                let (outcome, e) = match failure {
+                    SendFailure::WillRetry(e) => ("will retry", e),
+                    SendFailure::WillDrop(e) => ("will drop", e),
+                };
+                let message = format!("Error executing send loop ({outcome}): {e:#?}");
+                daemon_event_input.try_enqueue_error(message);
+            },
+        );
 
         let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
 

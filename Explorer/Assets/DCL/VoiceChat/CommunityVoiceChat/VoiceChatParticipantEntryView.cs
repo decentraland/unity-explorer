@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DG.Tweening;
 using System;
 using System.Threading;

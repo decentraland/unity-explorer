@@ -4,7 +4,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {

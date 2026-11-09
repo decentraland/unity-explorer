@@ -1,8 +1,6 @@
 using DCL.Audio;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Profiles;
 using DCL.UI;
-using DCL.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using TMPro;

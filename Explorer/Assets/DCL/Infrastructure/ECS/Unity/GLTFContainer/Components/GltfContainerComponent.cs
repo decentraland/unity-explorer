@@ -4,7 +4,6 @@ using DCL.ECSComponents;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Components

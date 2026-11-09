@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;

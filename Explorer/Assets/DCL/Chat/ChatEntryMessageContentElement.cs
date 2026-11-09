@@ -1,4 +1,3 @@
-using DCL.UI.HyperlinkHandler;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

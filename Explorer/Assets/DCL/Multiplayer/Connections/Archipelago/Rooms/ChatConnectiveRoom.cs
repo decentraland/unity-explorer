@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Utility.Types;
 using DCL.WebRequests;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
 using System;
 using System.Threading;

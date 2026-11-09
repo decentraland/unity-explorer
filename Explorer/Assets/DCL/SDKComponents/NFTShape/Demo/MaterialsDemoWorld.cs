@@ -5,7 +5,6 @@ using CRDT;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.MediaStream;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;

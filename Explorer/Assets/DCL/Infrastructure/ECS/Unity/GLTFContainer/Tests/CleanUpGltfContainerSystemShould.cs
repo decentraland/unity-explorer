@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.Ipfs;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -17,7 +16,6 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Primitives;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {

@@ -119,7 +119,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             Entity cameraEntity = cameraEntityProxy.Object;
 
-            if (globalWorld.Has<InWorldCameraComponent>(cameraEntity))
+            if (globalWorld.Has<InWorldCameraComponent>(cameraEntity) && !globalWorld.Has<ToggleInWorldCameraRequest>(cameraEntity))
                 globalWorld.Add(cameraEntity, new ToggleInWorldCameraRequest { IsEnable = false, TargetCameraMode = targetCameraMode });
 
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);

@@ -17,6 +17,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -214,6 +215,27 @@ namespace DCL.Profiles.Tests
             profileRepository.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default, default, default, default, default);
             Assert.That(inbox.Sent, Is.Empty);
         }
+
+        [UnityTest]
+        public IEnumerator ReportAFetchFailureWhenTheRequestStalls() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                AnyGet().Returns(call => UniTask.Never<ProfileTier?>(call.Arg<CancellationToken>()));
+
+                // Act
+                executor.Execute(SelfProfileCmd.FromFetch(ALICE), inbox);
+
+                float deadline = UnityEngine.Time.realtimeSinceStartup + (float)SelfProfile.FETCH_REQUEST_TIMEOUT.TotalSeconds + 1.5f;
+
+                while (inbox.Sent.Count == 0 && UnityEngine.Time.realtimeSinceStartup < deadline)
+                    await UniTask.Yield();
+
+                // Assert
+                Assert.That(SingleSent().IsFetchFailed(out FetchFailed msg), Is.True, "a stalled request must settle, or the model stays Fetching");
+                Assert.That(msg.Failure.Exception, Is.TypeOf<TimeoutException>());
+                LogAssert.NoUnexpectedReceived();
+            });
 
         [Test]
         public void FillAnEmptyEmoteWheelWithTheBaseEmotes()
@@ -532,7 +554,24 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void FillAnEmptyEmoteWheelOfTheSavedProfileWithTheBaseEmotes()
+        public void FillAnEmptyEmoteWheelDeployedOverAMissingProfileWithTheBaseEmotes()
+        {
+            // Arrange
+            Profile sent = NewProfile(ALICE, 1);
+            Profile saved = NewProfile(ALICE, 1);
+            AnyGet().Returns(UniTask.FromResult<ProfileTier?>(saved));
+
+            // Act
+            executor.Execute(SelfProfileCmd.FromDeploy(new DeployCmd(ALICE, sent, sent.Version, fillEmptyEmoteWheel: true)), inbox);
+
+            // Assert
+            Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
+            Assert.That(msg.Saved.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
+            Assert.That(saved.Avatar.Emotes[0].IsNullOrEmpty(), Is.True, "the cached instance is left as saved");
+        }
+
+        [Test]
+        public void KeepTheEmptyEmoteWheelAnExistingProfileDeployed()
         {
             // Arrange
             Profile sent = NewProfile(ALICE, 4);
@@ -544,8 +583,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(SingleSent().IsDeploySucceeded(out DeploySucceeded msg), Is.True);
-            Assert.That(msg.Saved.Avatar.Emotes[0], Is.EqualTo(BASE_EMOTE));
-            Assert.That(saved.Avatar.Emotes[0].IsNullOrEmpty(), Is.True, "the cached instance is left as saved");
+            Assert.That(msg.Saved.Avatar.IsEmotesWheelEmpty(), Is.True, "an unequipped wheel is the owner's choice");
         }
 
         [Test]

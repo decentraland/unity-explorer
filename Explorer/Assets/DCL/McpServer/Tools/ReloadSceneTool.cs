@@ -11,6 +11,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Arch;
 
 namespace DCL.McpServer.Tools
 {
@@ -107,8 +108,8 @@ namespace DCL.McpServer.Tools
             finally
             {
                 await UniTask.SwitchToMainThread();
-                world.Remove<StopCharacterMotion>(playerEntity);
-                world.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
+                world.TryRemove<StopCharacterMotion>(playerEntity);
+                world.TryRemove<PauseSkyboxTimeUpdate>(skyboxEntity);
             }
 
             float remainingSec = Mathf.Max(0f, timeoutSec - (UnityEngine.Time.realtimeSinceStartup - start));

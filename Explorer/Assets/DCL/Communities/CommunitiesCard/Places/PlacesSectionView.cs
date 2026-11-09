@@ -16,7 +16,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;

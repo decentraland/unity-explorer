@@ -16,6 +16,7 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
+using Utility.Arch;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -133,7 +134,7 @@ namespace DCL.InWorldCamera.Systems
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
             hudController.Hide();
-            World.Add(camera, new ToggleUIRequest()
+            World.AddOrSet(camera, new ToggleUIRequest()
             {
                 Enable = true,
                 Except = hudController
@@ -165,7 +166,7 @@ namespace DCL.InWorldCamera.Systems
 
             hudController.Show();
 
-            World.Add(camera, new ToggleUIRequest
+            World.AddOrSet(camera, new ToggleUIRequest
             {
                 Enable = false,
                 Except = hudController

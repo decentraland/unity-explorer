@@ -1,30 +1,35 @@
-# Local asset bundles via the abgen sidecar (`--local-ab`)
+# Local asset bundles via the abgen sidecar
 
-**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.21.0 · **Status:** editor E2E green
-on Windows (v16, Unity 6000.4.0f1); macOS player verified end-to-end; Windows player pending re-test
-after the CPU-encoder pin.
+**Pinned:** abgen v0.21.0 · **Gated** by the `alfa-lsd-forced-ab` feature flag, read at startup
+(off or unreachable means raw GLTFs and no sidecar); no Editor switch, no opt-in argument (Creator
+Hub's legacy `local-ab=true` is accepted and ignored); `--lsd-raw-gltf` is the opt-out and skips the
+sidecar entirely · **Guarantee:** every scene-model failure — install, launch, manifest, a single
+file, the server dying later — degrades to raw GLTFs and is reported on the AB tab. If the server
+dies mid-session, wearables, emotes and LODs stay unavailable until relaunch.
 
 ## Architecture
 
 `AbgenSidecar` (Global/Dynamic) runs the abgen JIT server as a supervised localhost child on
 abgen's **default bind** (`127.0.0.1:5147`) — the endpoint is deliberately not exported, because
 abgen's `HTTP_SERVER_HOST`/`HTTP_SERVER_PORT` are generic names that would leak into every child
-process spawned afterwards; a second `--local-ab` instance loses the port and its scene degrades
+process spawned afterwards; a second local-scene instance loses the port and its scene degrades
 to raw GLTFs. Everything else is env-configured (preview content server as `ABGEN_CATALYST_URL`,
 `ABGEN_UPSTREAM_AB_CDN` read-through, `ABGEN_JIT_CONTENT_DIGEST=1` so edits reconvert under the
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`,
 and `ABGEN_GPU_BACKEND=off` — see below), health-checked, restarted up to 3× on unexpected exit.
 
 The lifecycle is owned end to end by `MainSceneLoader` and is deliberately **serial where it
-matters**: in local scene development with `--local-ab`,
+matters**: in local scene development with local asset bundles on (the default),
 **`AbgenSidecarBootstrap`** is constructed and its `StartAsync` *awaited under the splash screen,
 before the URL sources are built*. It resolves the realm directly from the launch settings (LSD is
 only entered with a web-scheme realm param or the editor's Localhost preset), downloads the pinned
 binary when absent (`EnsurePinnedBinaryAsync` — the AB panel is auto-opened so the wait is
 visible), creates the sidecar (`TryCreate`), launches it and polls it to health (`StartAsync`).
 Only when it returns `true` — the server is provably serving — is its base URL passed into the URL
-sources as the optimized-assets override; on `false` the override is simply never set and the
-session is byte-for-byte production, with no correction step anywhere. The whole-scene warm-up
+sources as the optimized-assets override; on `false` the override is never set and
+`BootstrapContainer.UseLocalAssetBundles` is false for everything built afterwards, so the session
+is wired for raw GLTFs (manual LSD manifest, GLTF lane) — every failure path inside `StartAsync`
+records its reason on `AbgenConversionMetrics` (`OnRawGltfFallback`) on the way out. The whole-scene warm-up
 then runs in the background (`WarmUpTask`), overlapping the rest of boot. The child is killed on
 dispose (`MainSceneLoader.Shutdown()`, registered as a quit-cleanup candidate). In every other
 mode no sidecar object is ever constructed.
@@ -83,9 +88,35 @@ first manifest request, and a failure is cached for the session (`IrrecoverableF
 (which is what starts scene loading), so the first manifest request lands on converted bundles
 rather than a server mid-conversion; the warm-up's outcome carries no signal (a healthy server
 JIT-converts per request regardless), and the task is pre-completed when the server never came
-up. First run therefore enters the world with bundles already served; outside LSD + `--local-ab`
-no sidecar exists and boot is unaffected. Both waits — the serial health launch and this hold —
+up. First run therefore enters the world with bundles already served; outside LSD no sidecar
+exists and boot is unaffected. Both waits — the serial health launch and this hold —
 are absorbed under the splash screen, before the authentication screen.
+
+## Degrading to raw GLTFs
+
+The scene must load whatever happens to the sidecar, so every failure has a raw-GLTF answer:
+
+- **Server never comes up** (no release for the platform, download or checksum failure, launch
+  that never answers, port held by a foreign or mismatched server): `AbgenSidecarBootstrap`
+  records the reason and `MainSceneLoader` passes `useLocalAssetBundles: false` into
+  `BootstrapContainer` — everything built afterwards is wired for raw GLTFs.
+- **Scene manifest cannot be fetched** from a healthy server: `LoadSceneDefinition(List)System`
+  leaves the manifest `FAILED`, `PrepareGltfAssetLoadingSystem` routes every container of the scene
+  to the raw-GLTF lane (whole-scene degrade, no per-asset round trips), and the reason is recorded.
+- **A single bundle fails** (the converter skipped the file, the bundle has no GameObject, or the
+  server died after the manifest was served): `CreateGltfAssetFromAssetBundleSystem`, built with
+  `rawGltfFallback` in LSD, re-issues the request as a `GetGLTFIntention` on the same promise
+  entity — the bundle lane's intention and result are dropped and a fresh `StreamableLoadingState`
+  is installed so deferred loading admits it like any new request. The file shows as `FAILED` on the
+  AB tab.
+- **Server dies mid-session** and supervision gives up (3 restarts): the dead port makes every
+  bundle request fail fast, the per-file fallback above loads the scene's raw files, and the reason
+  is recorded. Wearables, emotes, LODs and registry lookups still resolve to the dead port and have
+  no fallback; they stay unavailable until relaunch.
+
+The recorded reason is `AbgenConversionMetrics.RawGltfFallbackReason`: the AB tab's summary leads
+with `RAW GLTFs — <reason>`, the tab opens itself, never auto-closes while degraded, and the
+sidebar AB button stays lit until the tab has been looked at.
 
 ## Visibility
 

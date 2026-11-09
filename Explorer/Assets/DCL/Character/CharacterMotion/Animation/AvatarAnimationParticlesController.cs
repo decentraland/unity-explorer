@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Serialization;
 using UnityEngine.VFX;
-using Utility;
 
 namespace DCL.CharacterMotion.Animation
 {

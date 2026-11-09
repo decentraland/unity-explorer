@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Models;

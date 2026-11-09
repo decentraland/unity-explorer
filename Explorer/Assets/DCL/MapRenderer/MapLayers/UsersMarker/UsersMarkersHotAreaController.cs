@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterPreview.Components;

@@ -29,6 +29,8 @@ user-invocable: false
 
 **Exception:** serialized JSON DTO fields keep their wire-format casing — see *Serialized JSON DTOs* below.
 
+**Names state what the code knows or decides, never what it assumes happens elsewhere.** A flag, field or parameter is named for the fact it holds or the behaviour it switches, not for an outcome some other layer may or may not produce. `DeployCmd.CreatesProfile` overstated what the client can know (it cannot tell whether a deploy creates the profile; it only knows the last fetch found none) and became `WasLastProfileMissing`; once the condition grew beyond "missing", it was renamed after the behaviour it controls, `FillEmptyEmoteWheel`. When the meaning of a value changes, rename it with its doc comment and the tests that mention it.
+
 **Namespaces are domain names, not folder paths** — never suppress a folder-namespace mismatch with `// ReSharper disable once CheckNamespace`; fix the namespace or leave the warning visible. Full rule: `docs/code-style-guidelines.md` § Namespaces.
 
 ## Member Ordering
@@ -298,6 +300,21 @@ Runtime bool flags do not count as "debug-only" — the branch still compiles an
 ### 6. Retry loops without a termination condition
 
 A loop that re-queues unresolved items will spin forever when the upstream source consistently returns nothing. Always have a "give up" predicate — max attempts, a known-bad sentinel, or a timeout.
+
+The same goes for scans over a collection: termination must be evident from the loop header, not something the reader has to prove. Put the bound in a `for` header and leave the search predicate to a `break`, rather than a `while` whose condition mixes the bound with the predicate and an increment buried in the body.
+
+```csharp
+// WRONG — terminates, but the reader has to check that every path increments i
+var i = 0;
+while (i < freeRegions.Count && freeRegions[i].StartIndex < slice.StartIndex)
+    i++;
+
+// RIGHT — bounded by construction
+int i;
+for (i = 0; i < freeRegions.Count; i++)
+    if (freeRegions[i].StartIndex >= slice.StartIndex)
+        break;
+```
 
 ### 7. Extracting when you should merge
 

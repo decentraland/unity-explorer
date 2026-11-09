@@ -42,6 +42,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isLocalSceneDevelopment;
         private readonly bool useLocalAssetBundles;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
@@ -55,12 +56,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, EntitiesAnalytics entitiesAnalytics)
+            AbgenConversionMetrics abgenConversionMetrics, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, EntitiesAnalytics entitiesAnalytics)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.useLocalAssetBundles = useLocalAssetBundles;
+            this.abgenConversionMetrics = abgenConversionMetrics;
             this.entitiesAnalytics = entitiesAnalytics;
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
@@ -146,6 +148,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
             //from the local asset-bundle server; failures there are expected (whole-scene raw-GLTF degrade).
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: isLocalSceneDevelopment);
+
+            if (useLocalAssetBundles && sceneEntityDefinition.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+                abgenConversionMetrics.OnSceneManifestUnavailable();
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.

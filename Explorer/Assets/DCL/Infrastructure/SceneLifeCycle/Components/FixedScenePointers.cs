@@ -2,7 +2,6 @@ using System;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using Ipfs;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.Components

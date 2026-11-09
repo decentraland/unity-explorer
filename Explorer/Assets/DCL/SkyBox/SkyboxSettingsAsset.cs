@@ -29,6 +29,7 @@ namespace DCL.SkyBox
 
         public SkyboxRenderControllerRef SkyboxRenderControllerPrefab = null!;
         public Material SkyboxMaterial = null!;
+        public Material PanoramicSkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
         [Tooltip("Alternative looks, loaded only when needed: picked by name through the skybox look preset feature flag, or from the debug panel dropdown. The default look is the prefab's own preset and is not listed here.")]

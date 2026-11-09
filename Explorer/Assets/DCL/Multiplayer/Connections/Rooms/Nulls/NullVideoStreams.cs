@@ -3,7 +3,6 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Nulls

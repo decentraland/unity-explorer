@@ -22,7 +22,7 @@ namespace DCL.Profiles
         public static Option<UserId> New(string? raw) =>
             string.IsNullOrWhiteSpace(raw)
                 ? Option<UserId>.None
-                : Option<UserId>.Some(new UserId(raw!));
+                : Option<UserId>.Some(new UserId(raw));
 
         /// <summary>
         ///     Carries the lowercase form of the wallet address; <see cref="Option{T}.None" /> when the address is empty

@@ -10,7 +10,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;

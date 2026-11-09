@@ -404,7 +404,7 @@ namespace DCL.Character.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Add(entity, new DCL.InWorldCamera.InWorldCameraComponent());
+            world.Add(entity, new InWorldCamera.InWorldCameraComponent());
             world.Set(entity, new CameraInput { ZoomIn = true });
 
             system.Update(1);
@@ -415,7 +415,7 @@ namespace DCL.Character.CharacterCamera.Tests
             Assert.That(component.Mode, Is.EqualTo(CameraMode.ThirdPerson));
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
-            world.Remove<DCL.InWorldCamera.InWorldCameraComponent>(entity);
+            world.Remove<InWorldCamera.InWorldCameraComponent>(entity);
 
             system.Update(1);
 
