@@ -16,7 +16,6 @@ namespace DCL.Shop
         private const int MAX_DOTS = 6;
         private const int DOTS_POOL_CAPACITY = 6;
         private const float PAGE_TWEEN_DURATION = 0.3f;
-        private const float DOTS_ANIMATION_DURATION = 0.3f;
         private const float MIN_SPACING = 8f;
 
         [field: SerializeField] public TMP_Text Title { get; private set; } = null!;
@@ -28,10 +27,7 @@ namespace DCL.Shop
         [field: SerializeField] public Button RightArrow { get; private set; } = null!;
         [field: SerializeField] public Transform DotsContainer { get; private set; } = null!;
         [field: SerializeField] public Button DotPrefab { get; private set; } = null!;
-        [field: SerializeField] public Color SelectedDotColor { get; private set; } = Color.white;
-        [field: SerializeField] public Color NonSelectedDotColor { get; private set; } = new (0f, 0f, 0f, 0.5f);
-        [field: SerializeField] public float SelectedDotWidth { get; private set; } = 24f;
-        [field: SerializeField] public float NonSelectedDotWidth { get; private set; } = 8f;
+        [field: SerializeField] public RectTransform SelectedDot { get; private set; } = null!;
         [field: SerializeField] public SkeletonLoadingView? Skeleton { get; private set; }
         [field: SerializeField] public GameObject ControlsRoot { get; private set; } = null!;
         [field: SerializeField] public LayoutElement RootLayout { get; private set; } = null!;
@@ -225,9 +221,16 @@ namespace DCL.Shop
             DotsContainer.gameObject.SetActive(paged);
 
             int selectedDot = DotForPage(CurrentPage);
+            bool hasSelectedDot = selectedDot < dots.Count;
 
+            // The selected page shows its own object in the slot of the dot it replaces
             for (var i = 0; i < dots.Count; i++)
-                AnimateDot(dots[i], i == selectedDot);
+                dots[i].gameObject.SetActive(i != selectedDot);
+
+            SelectedDot.gameObject.SetActive(hasSelectedDot);
+
+            if (hasSelectedDot)
+                SelectedDot.SetSiblingIndex(dots[selectedDot].transform.GetSiblingIndex());
         }
 
         private int DotForPage(int page) =>
@@ -235,19 +238,6 @@ namespace DCL.Shop
 
         private int PageForDot(int dotIndex) =>
             PageCount <= MAX_DOTS ? dotIndex : Mathf.RoundToInt(dotIndex * (PageCount - 1) / (float)(MAX_DOTS - 1));
-
-        private void AnimateDot(Button dot, bool isSelected)
-        {
-            dot.image.color = isSelected ? SelectedDotColor : NonSelectedDotColor;
-            var rectTransform = (RectTransform)dot.transform;
-
-            DOTween.To(
-                        () => rectTransform.rect.width,
-                        width => rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width),
-                        isSelected ? SelectedDotWidth : NonSelectedDotWidth,
-                        DOTS_ANIMATION_DURATION)
-                   .SetEase(Ease.OutCubic);
-        }
 
         private Button InstantiateDot() =>
             Instantiate(DotPrefab, DotsContainer);
