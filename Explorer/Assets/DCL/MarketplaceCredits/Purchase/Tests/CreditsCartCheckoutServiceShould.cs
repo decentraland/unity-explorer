@@ -59,6 +59,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private ICreditsPurchaseService quoteService = null!;
         private IWeb3IdentityCache identityCache = null!;
         private CancellationTokenSource warmUpCts = null!;
+        private CancellationTokenSource uiCts = null!;
         private ShopCart cart = null!;
         private CreditsCartCheckoutService service = null!;
 
@@ -102,6 +103,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
             warmUpCts = new CancellationTokenSource();
+            uiCts = new CancellationTokenSource();
 
             cart = new ShopCart(identityCache);
             cart.Add(TradeListing(), ShopCartSource.Grid);
@@ -120,6 +122,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             cart.Dispose();
             warmUpCts.Cancel();
             warmUpCts.Dispose();
+            uiCts.Dispose();
             FeatureFlagsConfiguration.Reset();
         }
 
@@ -228,6 +231,55 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task RejectASecondCheckoutWithoutTouchingTheRunningOne()
+        {
+            // Arrange: the first checkout is held while its first group settles.
+            var settlementGate = new UniTaskCompletionSource<SettlementOutcome>();
+
+            settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+                            .Returns(settlementGate.Task);
+
+            CartReview review = await ReviewAsync();
+            UniTask<CartCheckoutResult> running = service.CheckoutAsync(review, CancellationToken.None);
+            var completions = 0;
+            service.CheckoutCompleted += _ => completions++;
+
+            // Act
+            CartCheckoutResult rejected = await service.CheckoutAsync(review, CancellationToken.None);
+
+            // Assert: the second call failed on its own and the first is still settling.
+            Assert.AreEqual(CartCheckoutOutcome.Failed, rejected.Outcome);
+            Assert.IsTrue(service.IsCheckoutInFlight);
+            Assert.IsNull(service.LastResult);
+            Assert.AreEqual(CartCheckoutStage.WaitingSettlement, service.CurrentProgress.Stage);
+            Assert.AreEqual(0, completions);
+
+            settlementGate.TrySetResult(SettlementOutcome.Confirmed);
+            CartCheckoutResult result = await running;
+
+            Assert.AreEqual(CartCheckoutOutcome.Completed, result.Outcome);
+            Assert.AreEqual(1, completions);
+        }
+
+        [Test]
+        public async Task KeepTheUnitsAddedToALineAfterItWasReviewed()
+        {
+            // Arrange: one more unit of an already reviewed mint is added before the checkout settles.
+            CartReview review = await ReviewAsync();
+            Assert.IsTrue(cart.Add(MintListing(MINT_COLLECTION_A, "1"), ShopCartSource.Grid));
+
+            // Act
+            CartCheckoutResult result = await service.CheckoutAsync(review, CancellationToken.None);
+
+            // Assert: the four reviewed units were bought and the late one is still in the cart.
+            Assert.AreEqual(CartCheckoutOutcome.Completed, result.Outcome);
+            Assert.AreEqual(4, result.BoughtUnits.Count);
+            Assert.AreEqual(1, cart.Count);
+            Assert.AreEqual(1, cart.TotalUnits);
+            Assert.IsTrue(cart.Contains(MintListing(MINT_COLLECTION_A, "1")));
+        }
+
+        [Test]
         public async Task KeepTheSettledGroupAndReleaseOnlyTheRejectedOne()
         {
             // Arrange: the second signature (the store group, floored at nonce 6) is refused by the buyer.
@@ -274,8 +326,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task FinishEverySignedGroupWhenTheBuyerClosesDuringSettlement()
         {
             // Arrange: the buyer closes the modal while the first group is settling.
-            using var uiCts = new CancellationTokenSource();
-
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
                             .Returns(_ =>
                              {
@@ -320,8 +370,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task ReleaseTheCreditWhenTheBuyerClosesDuringAuthorization()
         {
             // Arrange: the buyer closes the modal while the first group is being authorized; the response still arrives.
-            using var uiCts = new CancellationTokenSource();
-
             creditsAPIClient.AuthorizeUsdCreditGroupAsync(Arg.Any<IReadOnlyList<CheckoutLine>>(), Arg.Any<CancellationToken>())
                             .Returns(call =>
                              {
@@ -348,7 +396,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             LogAssert.Expect(LogType.Exception, "Exception: boom");
 
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
-                         .Returns<UniTask<RelayResult>>(_ => throw new Exception("boom"));
+                         .Returns(_ => throw new Exception("boom"));
 
             // Act
             CartReview review = await ReviewAsync();

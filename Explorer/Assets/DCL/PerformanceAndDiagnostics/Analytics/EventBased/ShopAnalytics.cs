@@ -10,7 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     /// <summary>The shop section funnel: page views, searches, filters and cart additions, named like the web shop's events.</summary>
     public class ShopAnalytics : IDisposable
     {
-        private const double USD_PER_CREDIT = 0.1;
+        internal const double USD_PER_CREDIT = 0.1;
 
         private readonly IAnalyticsController analytics;
         private readonly ExplorePanelController explorePanelController;

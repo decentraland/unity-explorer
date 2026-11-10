@@ -77,8 +77,14 @@ namespace DCL.Shop
             try
             {
                 T value = await fetch(timeoutCts.Token);
-                slot.Value = value;
-                slot.FetchedAtUtc = DateTime.UtcNow;
+
+                // A slot cleared while this fetch was running must not be refilled with what was read before the clear.
+                if (slot.InFlight == completion)
+                {
+                    slot.Value = value;
+                    slot.FetchedAtUtc = DateTime.UtcNow;
+                }
+
                 completion.TrySetResult(value);
             }
             catch (OperationCanceledException)
@@ -91,7 +97,8 @@ namespace DCL.Shop
             }
             finally
             {
-                slot.InFlight = null;
+                if (slot.InFlight == completion)
+                    slot.InFlight = null;
             }
         }
 
@@ -217,6 +224,7 @@ namespace DCL.Shop
             {
                 Value = null;
                 FetchedAtUtc = DateTime.MinValue;
+                InFlight = null;
             }
         }
     }

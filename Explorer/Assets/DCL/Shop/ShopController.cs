@@ -49,7 +49,7 @@ namespace DCL.Shop
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly ICreditsPurchaseService purchaseService;
-        private readonly ICreditsCartCheckoutService cartCheckoutService;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
         private readonly ShopCatalogService catalog;
         private readonly ShopCreatorCache creators;
         private readonly ShopItemCardPresenter presenter;
@@ -91,7 +91,7 @@ namespace DCL.Shop
             MarketplaceShopAPIClient api,
             ShopCart cart,
             ICreditsPurchaseService purchaseService,
-            ICreditsCartCheckoutService cartCheckoutService,
+            CreditsCartCheckoutService cartCheckoutService,
             NameClaimService nameClaimService,
             CreditPurchaseBuyHandler buyHandler,
             IWearableStylingCatalog styling,

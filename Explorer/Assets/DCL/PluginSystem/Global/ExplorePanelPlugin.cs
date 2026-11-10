@@ -164,7 +164,7 @@ namespace DCL.PluginSystem.Global
         private readonly ShopCart shopCart;
         private readonly ICreditsPurchaseService creditsPurchaseService;
         private readonly NameClaimService nameClaimService;
-        private readonly ICreditsCartCheckoutService cartCheckoutService;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
         private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
@@ -275,7 +275,7 @@ namespace DCL.PluginSystem.Global
             MarketplaceShopAPIClient marketplaceShopAPIClient,
             ShopCart shopCart,
             ICreditsPurchaseService creditsPurchaseService,
-            ICreditsCartCheckoutService cartCheckoutService,
+            CreditsCartCheckoutService cartCheckoutService,
             NameClaimService nameClaimService,
             LobbyStagePresetSetting lobbyStagePresetSetting
             )
@@ -623,8 +623,9 @@ namespace DCL.PluginSystem.Global
                 nameClaimService, shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
                 characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile, wearablesProvider, emoteProvider, OpenBuyCreditsAsync);
 
-            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(shopView.CreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct,
-                openTopUpPanel: shopController.OpenBuyCredits);
+            EnableShopCreditsPanelAsync(shopView.CreditsPanel, shopController.OpenBuyCredits, ct)
+               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+               .Forget();
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
@@ -715,6 +716,11 @@ namespace DCL.PluginSystem.Global
         private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
         {
             creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
+        }
+
+        private async UniTask EnableShopCreditsPanelAsync(CreditsPanelView view, Action openBuyCredits, CancellationToken ct)
+        {
+            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct, openBuyCredits);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)

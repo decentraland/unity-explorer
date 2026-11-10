@@ -263,7 +263,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public static class Shop
         {
-            // Names and page ids shared with the web shop's Segment funnel (design/SHOP_TRACKING_SPEC.md).
+            // Names and page ids shared with the web shop's Segment funnel.
             public const string SHOP_VIEWED_PAGE = "Shop Viewed Page";
             public const string SHOP_SEARCHED = "Shop Searched";
             public const string SHOP_APPLIED_FILTER = "Shop Applied Filter";

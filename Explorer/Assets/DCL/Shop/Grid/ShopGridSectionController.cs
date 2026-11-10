@@ -292,13 +292,18 @@ namespace DCL.Shop
             view.SetLoadingPage(false);
             view.SetLoadingMore(false);
 
-            if (firstPage && models.Count == 0)
+            // The items on screen belong to the previous query, and paging on from them would mix the two.
+            if (firstPage)
             {
+                models.Clear();
+                modelKeys.Clear();
+                hasMore = false;
+                anySaleOnPage = false;
+                view.SetEmpty(false, null);
+                view.SetItemCount(0, resetPosition: true);
                 view.SetGridVisible(false);
                 view.SetError(true);
             }
-            else if (firstPage)
-                view.SetGridVisible(true);
 
             NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LOAD_ERROR_MESSAGE));
         }

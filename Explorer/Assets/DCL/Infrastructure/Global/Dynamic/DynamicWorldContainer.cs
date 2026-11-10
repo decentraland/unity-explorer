@@ -95,6 +95,9 @@ namespace Global.Dynamic
         private readonly ChatContainer chatContainer;
         private readonly UpscalingController upscalingController;
         private readonly LobbyStagePresetCatalog lobbyStagePresetCatalog;
+        private readonly ShopCart shopCart;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
 
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
@@ -140,7 +143,10 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer,
             VoiceChatContainer voiceChatContainer,
             UpscalingController upscalingController,
-            LobbyStagePresetCatalog lobbyStagePresetCatalog)
+            LobbyStagePresetCatalog lobbyStagePresetCatalog,
+            ShopCart shopCart,
+            CreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -160,11 +166,17 @@ namespace Global.Dynamic
             this.voiceChatContainer = voiceChatContainer;
             this.upscalingController = upscalingController;
             this.lobbyStagePresetCatalog = lobbyStagePresetCatalog;
+            this.shopCart = shopCart;
+            this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
+            cartCheckoutService.Dispose();
+            shopCart.Dispose();
+            nameClaimService.Dispose();
             lobbyStagePresetCatalog.Dispose();
             upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
@@ -499,7 +511,7 @@ namespace Global.Dynamic
 
             var shopCart = new ShopCart(identityCache);
 
-            ICreditsCartCheckoutService cartCheckoutService = new CreditsCartCheckoutService(
+            var cartCheckoutService = new CreditsCartCheckoutService(
                 shopCart,
                 creditsPurchaseService,
                 marketplaceShopApiClient,
@@ -1203,7 +1215,10 @@ namespace Global.Dynamic
                 communitiesContainer,
                 voiceChatContainer,
                 upscaleController,
-                lobbyStagePresetCatalog
+                lobbyStagePresetCatalog,
+                shopCart,
+                cartCheckoutService,
+                nameClaimService
             );
 
             // Init itself

@@ -17,7 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 {
     /// <summary>
     ///     The cart popup: the lines with their quantities, the live total against the balance, and the checkout
-    ///     that reviews, reserves, signs and settles the whole cart through <see cref="ICreditsCartCheckoutService" />.
+    ///     that reviews, reserves, signs and settles the whole cart through <see cref="CreditsCartCheckoutService" />.
     /// </summary>
     public class ShopCartModalController : ControllerBase<ShopCartModalView, ShopCartModalParams>
     {
@@ -55,7 +55,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         private static readonly TimeSpan REVIEW_TTL = TimeSpan.FromSeconds(120);
 
         private readonly ShopCart cart;
-        private readonly ICreditsCartCheckoutService checkoutService;
+        private readonly CreditsCartCheckoutService checkoutService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ISpriteCache spriteCache;
@@ -71,6 +71,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         private CancellationTokenSource? thumbnailsCts;
         private CartReview? review;
         private int balanceCredits = -1;
+        private bool awaitingOwnCheckout;
 
         public ShopCart Cart => cart;
 
@@ -87,7 +88,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         public ShopCartModalController(
             ViewFactoryMethod viewFactory,
             ShopCart cart,
-            ICreditsCartCheckoutService checkoutService,
+            CreditsCartCheckoutService checkoutService,
             MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
             ISpriteCache spriteCache,
@@ -155,7 +156,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             cart.Changed += OnCartChanged;
             checkoutService.StateChanged += OnCheckoutProgress;
-            checkoutService.CheckoutCompleted += OnCheckoutCompletedElsewhere;
+            checkoutService.CheckoutCompleted += OnCheckoutCompleted;
 
             CartOpened?.Invoke(inputData.Source, cart.TotalUnits, cart.TotalCredits);
 
@@ -168,7 +169,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             {
                 CartCheckoutResult pending = checkoutService.LastResult;
                 checkoutService.AcknowledgeResult();
-                ShowResult(pending, reportAnalytics: false);
+                ShowResult(pending);
             }
             else
                 ShowLines();
@@ -202,7 +203,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         {
             cart.Changed -= OnCartChanged;
             checkoutService.StateChanged -= OnCheckoutProgress;
-            checkoutService.CheckoutCompleted -= OnCheckoutCompletedElsewhere;
+            checkoutService.CheckoutCompleted -= OnCheckoutCompleted;
         }
 
         private ShopCartLineView CreateLineView()
@@ -283,6 +284,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 case ModalState.Lines:
                     RenderLines();
                     break;
+                case ModalState.Reviewing:
                 case ModalState.ConfirmChanges:
                 case ModalState.InsufficientCredits:
                     // A changed basket invalidates the review it was based on.
@@ -332,9 +334,10 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         {
             SetUiState(ModalState.Reviewing);
 
-            CartReviewResult reviewResult = await checkoutService.ReviewAsync(cart.Lines, ct);
+            // The cart can be edited while the review is running, so it works on a copy and is dropped if that happened.
+            CartReviewResult reviewResult = await checkoutService.ReviewAsync(new List<ShopCartLine>(cart.Lines), ct);
 
-            if (ct.IsCancellationRequested)
+            if (ct.IsCancellationRequested || currentState != ModalState.Reviewing)
                 return;
 
             if (!reviewResult.Success)
@@ -380,52 +383,81 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             SetUiState(ModalState.Processing);
             NativeWindowManager.RequestTemporaryWindowMode();
+            awaitingOwnCheckout = true;
 
             try
             {
                 CartCheckoutResult result = await checkoutService.CheckoutAsync(reviewed, ct);
-                ShowResult(result, reportAnalytics: true);
+                ReportResult(result);
+
+                // A popup closed during the checkout leaves the result on the service for the next time it opens.
+                if (ct.IsCancellationRequested)
+                    return;
+
+                checkoutService.AcknowledgeResult();
+                ShowResult(result);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                ShowFailure("Something went wrong. Please try again.", allowRetry: true);
+
+                if (!ct.IsCancellationRequested)
+                    ShowFailure("Something went wrong. Please try again.", allowRetry: true);
             }
             finally
             {
+                awaitingOwnCheckout = false;
                 NativeWindowManager.ReleaseTemporaryWindowMode();
             }
         }
 
-        // A checkout that was still running when the modal was reopened finishes through the service event.
-        private void OnCheckoutCompletedElsewhere(CartCheckoutResult result)
+        // Renders a checkout this modal session did not start: one that was still running when the modal was reopened.
+        private void OnCheckoutCompleted(CartCheckoutResult result)
         {
-            if (currentState != ModalState.Processing)
+            if (currentState != ModalState.Processing || awaitingOwnCheckout)
                 return;
 
             checkoutService.AcknowledgeResult();
-            ShowResult(result, reportAnalytics: false);
+            ShowResult(result);
         }
 
-        private void ShowResult(CartCheckoutResult result, bool reportAnalytics)
+        private void ReportResult(CartCheckoutResult result)
         {
             switch (result.Outcome)
             {
                 case CartCheckoutOutcome.Completed:
-                    if (reportAnalytics)
-                        CheckoutCompleted?.Invoke(result);
+                case CartCheckoutOutcome.PartiallyCompleted:
+                    CheckoutCompleted?.Invoke(result);
+                    break;
+                case CartCheckoutOutcome.InsufficientCredits:
+                    long needed = review?.LiveTotalCredits ?? cart.TotalCredits;
+                    BuyCreditsPrompted?.Invoke(needed, balanceCredits, ShortfallOf(result, needed));
+                    break;
+                case CartCheckoutOutcome.Cancelled:
+                    CheckoutCancelled?.Invoke(result, MapAnalyticsStep(result.FailedAtStage));
+                    break;
+                default:
+                    CheckoutFailed?.Invoke(result, MapAnalyticsStep(result.FailedAtStage), CreditPurchaseModalController.MapAnalyticsErrorCode(result.FirstError));
+                    break;
+            }
+        }
 
+        private long ShortfallOf(CartCheckoutResult result, long needed) =>
+            result.MissingCredits >= 0 ? result.MissingCredits : Math.Max(1L, needed - Math.Max(0, balanceCredits));
+
+        private void ShowResult(CartCheckoutResult result)
+        {
+            switch (result.Outcome)
+            {
+                case CartCheckoutOutcome.Completed:
                     SetUiState(ModalState.Success);
 
                     if (viewInstance != null)
                         viewInstance.SuccessSummaryText.text = string.Format(SUCCESS_SUMMARY_FORMAT, FormatItemCount(result.BoughtUnits.Count));
 
-                    RefreshBalanceAsync(lifeCts?.Token ?? CancellationToken.None).Forget();
+                    RefreshBalance();
                     break;
                 case CartCheckoutOutcome.PartiallyCompleted:
-                    if (reportAnalytics)
-                        CheckoutCompleted?.Invoke(result);
-
                     SetUiState(ModalState.PartialFailure);
 
                     if (viewInstance != null)
@@ -435,27 +467,15 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                         viewInstance.PartialSummaryText.text = string.Format(PARTIAL_SUMMARY_FORMAT, result.BoughtUnits.Count, total, reason);
                     }
 
-                    RefreshBalanceAsync(lifeCts?.Token ?? CancellationToken.None).Forget();
+                    RefreshBalance();
                     break;
                 case CartCheckoutOutcome.InsufficientCredits:
-                    long needed = review?.LiveTotalCredits ?? cart.TotalCredits;
-                    long shortfall = result.MissingCredits >= 0 ? result.MissingCredits : Math.Max(1L, needed - Math.Max(0, balanceCredits));
-
-                    if (reportAnalytics)
-                        BuyCreditsPrompted?.Invoke(needed, balanceCredits, shortfall);
-
-                    ShowInsufficientCredits(shortfall);
+                    ShowInsufficientCredits(ShortfallOf(result, review?.LiveTotalCredits ?? cart.TotalCredits));
                     break;
                 case CartCheckoutOutcome.Cancelled:
-                    if (reportAnalytics)
-                        CheckoutCancelled?.Invoke(result, MapAnalyticsStep(result.FailedAtStage));
-
                     ShowLines();
                     break;
                 default:
-                    if (reportAnalytics)
-                        CheckoutFailed?.Invoke(result, MapAnalyticsStep(result.FailedAtStage), CreditPurchaseModalController.MapAnalyticsErrorCode(result.FirstError));
-
                     ShowFailure(result.HasPendingSettlement ? PENDING_SETTLEMENT_COPY : ErrorCopy(result.FirstError), allowRetry: !result.HasPendingSettlement);
                     break;
             }
@@ -571,8 +591,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             }
         }
 
-        private UniTask RefreshBalanceAsync(CancellationToken ct) =>
-            LoadBalanceAsync(ct);
+        private void RefreshBalance()
+        {
+            if (lifeCts != null)
+                LoadBalanceAsync(lifeCts.Token).Forget();
+        }
 
         private void SetUiState(ModalState newState)
         {

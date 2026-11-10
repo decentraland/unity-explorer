@@ -237,6 +237,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CollectionAssert.AreEqual(
                 new[] { CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.Authorizing, CreditsPurchaseState.Signing, CreditsPurchaseState.WaitingSettlement, CreditsPurchaseState.Success },
                 recordedStates);
+            await creditsAPIClient.Received(1).ReportIntentSubmissionAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), TX_HASH, Arg.Any<CancellationToken>());
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
 
@@ -246,7 +247,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Arrange: a dead oracle must not stop a USD-pegged quote — its price needs no rate. Thrown lazily
             // so the never-consumed exception task cannot surface as an unobserved UniTask error.
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-                             .Returns<UniTask<ManaUsdRate>>(_ => throw new InvalidOperationException("stale"));
+                             .Returns(_ => throw new InvalidOperationException("stale"));
 
             // Act
             CreditsQuoteResult result = await service.QuoteAsync(TradeListing(), CancellationToken.None);

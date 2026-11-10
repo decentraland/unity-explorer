@@ -135,7 +135,11 @@ namespace DCL.Shop
         public void RefreshCountdowns(long nowUnixSeconds)
         {
             foreach (ShopItemCardView card in view.ActiveItemCards)
-                card.RefreshSaleCountdown(nowUnixSeconds);
+            {
+                // A card without a compare-at price has no sale state that could change over time.
+                if (card.Model is { CompareAtCredits: not null })
+                    card.RefreshSaleCountdown(nowUnixSeconds);
+            }
         }
 
         private async UniTask LoadAllAsync(CancellationToken ct)

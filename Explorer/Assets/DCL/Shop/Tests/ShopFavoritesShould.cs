@@ -159,6 +159,24 @@ namespace DCL.Shop.Tests
         }
 
         [Test]
+        public void KeepAToggleStillBeingSentWhenTheListIsReadAgain()
+        {
+            // Arrange: the toggle is still being sent when a reload answers without it.
+            var sendGate = new UniTaskCompletionSource();
+            api.SetFavoriteAsync(KEY_1, true, Arg.Any<CancellationToken>()).Returns(sendGate.Task);
+            api.GetFavoriteIdsAsync(Arg.Any<CancellationToken>()).Returns(_ => UniTask.FromResult(new List<string> { KEY_2 }));
+
+            // Act
+            favorites.Toggle(Item("1"), ShopCartSource.Grid);
+            favorites.Reload();
+
+            // Assert
+            Assert.IsTrue(favorites.IsFavorite(KEY_1));
+            Assert.AreEqual(new[] { KEY_1, KEY_2 }, favorites.Ids);
+            sendGate.TrySetResult();
+        }
+
+        [Test]
         public void ForgetTheListWhenTheAccountChanges()
         {
             // Arrange

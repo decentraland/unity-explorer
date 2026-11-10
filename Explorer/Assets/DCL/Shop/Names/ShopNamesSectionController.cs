@@ -30,6 +30,7 @@ namespace DCL.Shop
         private const string TAKEN_TEXT = "This NAME is taken. Choose another NAME or make an offer to the owner.";
         private const string TOO_SHORT_TEXT = "NAMEs need at least {0} characters.";
         private const string CLAIMED_NOTIFICATION = "{0} is now your NAME!";
+        private const string NOT_REGISTERED_NOTIFICATION = "The payment went through but {0} could not be registered. Please contact support.";
         private const string NAMES_BROWSE_PATH = "/names/browse?search=";
 
         private readonly ShopNamesSectionView view;
@@ -216,6 +217,9 @@ namespace DCL.Shop
 
         private void OnClaimCompleted(string name, NameClaimResult result)
         {
+            if (result.Error == NameClaimError.NotRegistered)
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(string.Format(NOT_REGISTERED_NOTIFICATION, name)));
+
             if (result.Status != NameClaimStatus.Registered)
                 return;
 

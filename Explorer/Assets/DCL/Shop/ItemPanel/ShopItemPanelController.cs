@@ -98,6 +98,7 @@ namespace DCL.Shop
             favorites.Loaded -= OnFavoritesLoaded;
             detailsCts.SafeCancelAndDispose();
             actionsCts.SafeCancelAndDispose();
+            creatorCts.SafeCancelAndDispose();
         }
 
         public void Show(ShopItemCardModel model, ShopCartSource source, string buySourceName, BodyShape bodyShape)

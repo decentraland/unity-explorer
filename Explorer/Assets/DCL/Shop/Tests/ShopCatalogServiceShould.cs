@@ -79,6 +79,33 @@ namespace DCL.Shop.Tests
         }
 
         [Test]
+        public async Task NotCacheAFetchThatWasInvalidatedWhileInFlight()
+        {
+            // Arrange: the first fetch is still running when the cache is invalidated.
+            var staleGate = new UniTaskCompletionSource<ShopListingDto[]>();
+            var calls = 0;
+
+            api.GetTrendingAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+               .Returns(_ => ++calls == 1 ? staleGate.Task : UniTask.FromResult(new[] { Listing("1"), Listing("2") }));
+
+            var service = new ShopCatalogService(api, TimeSpan.FromMinutes(5));
+
+            // Act
+            UniTask<IReadOnlyList<ShopItemCardModel>> stale = service.GetTrendingAsync(CancellationToken.None);
+            service.Invalidate();
+            IReadOnlyList<ShopItemCardModel> fresh = await service.GetTrendingAsync(CancellationToken.None);
+            staleGate.TrySetResult(new[] { Listing("1") });
+            IReadOnlyList<ShopItemCardModel> staleResult = await stale;
+            IReadOnlyList<ShopItemCardModel> cached = await service.GetTrendingAsync(CancellationToken.None);
+
+            // Assert: the invalidated fetch answered its own caller but did not replace the fresh rows.
+            Assert.AreEqual(1, staleResult.Count);
+            Assert.AreEqual(2, fresh.Count);
+            Assert.AreSame(fresh, cached);
+            Assert.AreEqual(2, calls);
+        }
+
+        [Test]
         public async Task NotCacheAFailedFetch()
         {
             // Arrange

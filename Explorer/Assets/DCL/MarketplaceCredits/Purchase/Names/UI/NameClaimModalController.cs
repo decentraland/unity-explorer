@@ -229,9 +229,28 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         {
             SetUiState(ModalState.Claiming);
             NativeWindowManager.RequestTemporaryWindowMode();
+            var windowModeHeld = true;
+
+            // The window mode is only needed for the wallet signature, not for the settlement and bridge waits after it.
+            void ReleaseWindowModeOnceSigned(NameClaimStage stage)
+            {
+                if (!windowModeHeld || stage is NameClaimStage.Preparing or NameClaimStage.Signing)
+                    return;
+
+                windowModeHeld = false;
+                NativeWindowManager.ReleaseTemporaryWindowMode();
+            }
+
+            claimService.StageChanged += ReleaseWindowModeOnceSigned;
 
             try { await claimService.ClaimAsync(inputData.Name, quote, ct); }
-            finally { NativeWindowManager.ReleaseTemporaryWindowMode(); }
+            finally
+            {
+                claimService.StageChanged -= ReleaseWindowModeOnceSigned;
+
+                if (windowModeHeld)
+                    NativeWindowManager.ReleaseTemporaryWindowMode();
+            }
         }
 
         private void OnClaimCompleted(string name, NameClaimResult result)

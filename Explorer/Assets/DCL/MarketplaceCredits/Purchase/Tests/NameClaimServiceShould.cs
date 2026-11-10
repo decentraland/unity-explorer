@@ -275,11 +275,27 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
-        public async Task ReportPendingWithoutFollowingTheBridgeWhenThePaymentDidNotSettle()
+        public async Task FollowTheBridgeWhenTheSettlementWaitRunsOutWithAKnownTransaction()
         {
-            // Arrange
+            // Arrange: the payment was broadcast but its receipt did not arrive in time.
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(SettlementOutcome.Pending));
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimStatus.Registered, result.Status);
+            await bridgeStatusPoller.Received(1).WaitForFillAsync(TX_HASH, Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ReportPendingWithoutFollowingTheBridgeWhenTheBroadcastIsAmbiguous()
+        {
+            // Arrange: the relayer never answered, so there is no transaction hash to follow.
+            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "timeout")));
 
             // Act
             NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);

@@ -11,7 +11,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     /// <summary>The cart checkout funnel, shaped like the web shop's purchase events so both clients reconcile in one warehouse.</summary>
     public class ShopCartAnalytics : IDisposable
     {
-        private const double USD_PER_CREDIT = 0.1;
         private const string CHECKOUT_SOURCE_CART = "cart";
         private const string PURCHASE_TYPE_PRIMARY = "item";
         private const string PURCHASE_TYPE_RESALE = "nft_resale";
@@ -58,7 +57,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "checkout_source", CHECKOUT_SOURCE_CART },
                 { "cart_size", cartSize },
                 { "cart_value_credits", cartCredits },
-                { "cart_value_usd", cartCredits * USD_PER_CREDIT },
+                { "cart_value_usd", cartCredits * ShopAnalytics.USD_PER_CREDIT },
                 { "has_sufficient_credits", hasSufficientCredits },
             }));
 
@@ -88,7 +87,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     { "item_id", listing.itemId },
                     { "contract_address", listing.contractAddress },
                     { "token_id", listing.tokenId },
-                    { "price_usd", unit.UnitCredits * USD_PER_CREDIT },
+                    { "price_usd", unit.UnitCredits * ShopAnalytics.USD_PER_CREDIT },
                     { "category", listing.category },
                     { "is_smart", listing.isSmart == true },
                     { "source", ShopCartSources.ToWire(unit.Line.Source) },
@@ -110,7 +109,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             {
                 { "items", items },
                 { "value_credits", valueCredits },
-                { "value_usd", valueCredits * USD_PER_CREDIT },
+                { "value_usd", valueCredits * ShopAnalytics.USD_PER_CREDIT },
                 { "purchase_type", anyPrimary ? PURCHASE_TYPE_PRIMARY : PURCHASE_TYPE_RESALE },
                 { "is_primary", anyPrimary },
                 { "outfit_ids", outfitIdsArray },
@@ -149,7 +148,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "step", step },
                 { "error_code", errorCode },
                 { "error_detail", CreditPurchaseModalController.MapAnalyticsErrorDetail(result.FirstError) },
-                { "value_usd", unboughtCredits * USD_PER_CREDIT },
+                { "value_usd", unboughtCredits * ShopAnalytics.USD_PER_CREDIT },
                 { "cart_size", result.UnboughtUnits.Count + result.BoughtUnits.Count },
                 { "partial", result.Outcome == CartCheckoutOutcome.PartiallyCompleted },
                 { "held_credits", result.HasPendingSettlement },

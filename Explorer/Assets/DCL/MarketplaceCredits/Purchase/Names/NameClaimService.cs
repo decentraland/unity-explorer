@@ -291,10 +291,11 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
             UseCreditsOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
 
-            if (outcome.Error == CreditsPurchaseError.SettlementPending)
+            // Without a transaction hash there is nothing to look the bridge deposit up by.
+            if (outcome.Error == CreditsPurchaseError.SettlementPending && string.IsNullOrEmpty(outcome.TxHash))
                 return new NameClaimResult(NameClaimStatus.Pending, message: outcome.Message);
 
-            if (!outcome.Success)
+            if (!outcome.Success && outcome.Error != CreditsPurchaseError.SettlementPending)
                 return NameClaimResult.Failed(MapPaymentError(outcome.Error), outcome.Message);
 
             SetStage(NameClaimStage.Registering);

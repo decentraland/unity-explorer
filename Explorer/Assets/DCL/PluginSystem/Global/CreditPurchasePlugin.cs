@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly IWearableStorage wearableStorage;
         private readonly ShopCart shopCart;
-        private readonly ICreditsCartCheckoutService cartCheckoutService;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
         private readonly NameClaimService nameClaimService;
         private readonly IWebRequestController webRequestController;
 
@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             IWearableStorage wearableStorage,
             ShopCart shopCart,
-            ICreditsCartCheckoutService cartCheckoutService,
+            CreditsCartCheckoutService cartCheckoutService,
             NameClaimService nameClaimService,
             IWebRequestController webRequestController)
         {
@@ -102,9 +102,6 @@ namespace DCL.PluginSystem.Global
             creditsTopUpModalController?.Dispose();
             creditsTopUpService?.Dispose();
             nameClaimModalController?.Dispose();
-            nameClaimService.Dispose();
-            cartCheckoutService.Dispose();
-            shopCart.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

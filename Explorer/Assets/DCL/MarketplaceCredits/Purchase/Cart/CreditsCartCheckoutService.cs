@@ -12,11 +12,11 @@ using Utility;
 namespace DCL.MarketplaceCredits.Purchase.Cart
 {
     /// <summary>
-    ///     Port of the web shop's cart checkout (Server/shop/app/src/lib/cart-checkout.ts + pages/Cart.tsx charge):
-    ///     review every line live, group units by the transaction that settles them, reserve one credit per group,
-    ///     then sign and settle the groups one at a time.
+    ///     Reviews every cart line against its live listing, groups the units by the transaction that settles them
+    ///     (one per marketplace contract, one for all CollectionStore mints), reserves one credit per group,
+    ///     then signs and settles the groups one at a time.
     /// </summary>
-    public class CreditsCartCheckoutService : ICreditsCartCheckoutService
+    public class CreditsCartCheckoutService : IDisposable
     {
         private const int CENTS_PER_CREDIT = 10;
         private static readonly TimeSpan RELEASE_INTENT_TIMEOUT = TimeSpan.FromSeconds(15);
@@ -34,6 +34,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         private readonly CancellationTokenSource lifetimeCts = new ();
 
         public event Action<CartCheckoutProgress>? StateChanged;
+
+        /// <summary>Raised for every terminal result, bought or not.</summary>
         public event Action<CartCheckoutResult>? CheckoutCompleted;
 
         public bool IsCheckoutInFlight { get; private set; }
@@ -73,6 +75,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         public void AcknowledgeResult() =>
             LastResult = null;
 
+        /// <summary>Reads only: nothing is reserved. Never throws for a single bad row.</summary>
         public async UniTask<CartReviewResult> ReviewAsync(IReadOnlyList<ShopCartLine> lines, CancellationToken ct)
         {
             if (!isFeatureEnabled || !creditsFeatureAccess.IsUserAllowed())
@@ -127,6 +130,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return CartReviewResult.Ok(new CartReview(buyable, dropped, totalCredits, totalCents, units, groupKeys.Count, orderChanged, DateTime.UtcNow));
         }
 
+        /// <summary>
+        ///     uiCt is honoured only while the credits are being reserved, where it releases all of them; once the
+        ///     first group is being signed every group runs to a terminal state on the service's own lifetime.
+        ///     A call made while another checkout is running is rejected without touching that checkout's state.
+        /// </summary>
         public async UniTask<CartCheckoutResult> CheckoutAsync(CartReview review, CancellationToken uiCt)
         {
             if (!isFeatureEnabled || !creditsFeatureAccess.IsUserAllowed())
@@ -141,7 +149,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 return Finish(EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.ListingNotAvailable, "Nothing in the cart can be bought"));
 
             if (IsCheckoutInFlight)
-                return Finish(EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.UnknownError, "A checkout is already in progress"));
+                return EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.UnknownError, "A checkout is already in progress");
 
             IsCheckoutInFlight = true;
 
@@ -254,7 +262,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 }
                 catch (OperationCanceledException)
                 {
-                    // Only a cancellation before the signature is rethrown, and the group's credit is released by then.
+                    // The group was never signed, so it is recorded as released and cancelled.
                     group.Released = true;
                     group.Error = CreditsPurchaseError.Cancelled;
                     firstError = CreditsPurchaseError.Cancelled;
@@ -417,7 +425,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return groups;
         }
 
-        // Web `purchaseGroupKey`: what gets authorized together is exactly what gets submitted together.
+        // What gets authorized together is exactly what gets submitted together.
         private static string GroupKeyOf(in CreditsPurchaseQuote quote, ShopListingDto listing) =>
             quote.Kind == CreditsListingKind.StoreMint
                 ? $"store:{listing.chainId}"
@@ -644,8 +652,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 }
             }
 
-            if (boughtLineIds.Count > 0)
-                cart.RemoveAll(boughtLineIds);
+            if (boughtUnits.Count > 0)
+                cart.RemoveBought(boughtUnits);
 
             return new CartCheckoutResult(outcome, groupOutcomes, boughtLineIds, boughtUnits, unboughtUnits, settledHashes, pending, firstError, message, missingCredits, failedAt);
         }
@@ -696,7 +704,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 ChainId = chainId;
             }
 
-            // One CheckoutLine per unit (web checkoutLineFor): the price, the trade when there is one, and the item
+            // One CheckoutLine per unit: the price, the trade when there is one, and the item
             // pair whenever it is known so the purchase history can name the line.
             public IReadOnlyList<CheckoutLine> BuildCheckoutLines()
             {

@@ -103,32 +103,43 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return true;
         }
 
-        /// <summary>Removes every listed line at once; raises ItemRemoved per line and Changed once.</summary>
-        public int RemoveAll(IReadOnlyList<string> lineIds)
+        /// <summary>
+        ///     Takes one unit off its line per bought unit and removes a line that reaches zero, so units added to a
+        ///     line after it was reviewed stay in the cart. Raises ItemRemoved per removed line and Changed once.
+        /// </summary>
+        public void RemoveBought(IReadOnlyList<ReviewedCartLine> boughtUnits)
         {
             removedScratch.Clear();
+            var changed = false;
 
-            foreach (string lineId in lineIds)
+            foreach (ReviewedCartLine unit in boughtUnits)
             {
-                if (!linesById.Remove(lineId, out ShopCartLine? line))
+                if (!linesById.TryGetValue(unit.Line.Id, out ShopCartLine? line))
                     continue;
 
+                changed = true;
+
+                if (line.Quantity > 1)
+                {
+                    line.Quantity--;
+                    continue;
+                }
+
+                linesById.Remove(line.Id);
                 lines.Remove(line);
                 removedScratch.Add(line);
             }
 
-            if (removedScratch.Count == 0)
-                return 0;
+            if (!changed)
+                return;
 
             RecomputeTotals();
 
             foreach (ShopCartLine line in removedScratch)
                 ItemRemoved?.Invoke(line);
 
-            Changed?.Invoke();
-            int removed = removedScratch.Count;
             removedScratch.Clear();
-            return removed;
+            Changed?.Invoke();
         }
 
         /// <summary>Primary lines only; clamped to 1..StockCap. Removal is a separate, explicit action.</summary>

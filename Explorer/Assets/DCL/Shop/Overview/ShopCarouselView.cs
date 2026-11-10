@@ -203,11 +203,7 @@ namespace DCL.Shop
 
             for (var i = 0; i < dotCount; i++)
             {
-                Button dot = dotsPool.Get();
-                int dotIndex = i;
-                dot.onClick.RemoveAllListeners();
-                dot.onClick.AddListener(() => GoToPage(PageForDot(dotIndex)));
-                dots.Add(dot);
+                dots.Add(dotsPool.Get());
             }
         }
 
@@ -234,7 +230,19 @@ namespace DCL.Shop
         private int PageForDot(int dotIndex) =>
             PageCount <= MAX_DOTS ? dotIndex : Mathf.RoundToInt(dotIndex * (PageCount - 1) / (float)(MAX_DOTS - 1));
 
-        private Button InstantiateDot() =>
-            Instantiate(DotPrefab, DotsContainer);
+        private Button InstantiateDot()
+        {
+            Button dot = Instantiate(DotPrefab, DotsContainer);
+            dot.onClick.AddListener(() => OnDotClicked(dot));
+            return dot;
+        }
+
+        private void OnDotClicked(Button dot)
+        {
+            int dotIndex = dots.IndexOf(dot);
+
+            if (dotIndex >= 0)
+                GoToPage(PageForDot(dotIndex));
+        }
     }
 }

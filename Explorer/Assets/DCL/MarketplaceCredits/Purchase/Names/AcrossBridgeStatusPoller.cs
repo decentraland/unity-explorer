@@ -65,13 +65,14 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 catch (Exception e)
                 {
                     // A deposit that is not indexed yet answers with an error: keep polling.
-                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Across status for {originTxHash} not available yet: {e.Message}");
+                    ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Across status for {originTxHash} not available yet: {e.Message}");
                 }
 
                 if (await UniTask.Delay(POLL_INTERVAL, cancellationToken: ct).SuppressCancellationThrow())
                     return AcrossFillOutcome.Unknown;
             }
 
+            ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Across status for {originTxHash} was still unresolved after {MAX_ATTEMPTS} attempts");
             return AcrossFillOutcome.Unknown;
         }
 
@@ -96,7 +97,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             return null;
         }
 
-        // Server schema: Across GET /deposit/status (Server/shop/app/src/lib/names.ts pollAcrossNameStatus).
+        // Server schema: Across GET /deposit/status.
         private class AcrossDepositStatus
         {
             public string? status;

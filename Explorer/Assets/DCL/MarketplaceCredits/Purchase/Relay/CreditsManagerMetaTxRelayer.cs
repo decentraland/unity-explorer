@@ -44,6 +44,7 @@ namespace DCL.MarketplaceCredits.Purchase
     {
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const string ETH_CALL_METHOD = "eth_call";
+        private const int HTTP_INTERNAL_SERVER_ERROR = 500;
 
         private readonly IEthereumApi ethereumApi;
         private readonly IWebRequestController webRequestController;
@@ -149,7 +150,7 @@ namespace DCL.MarketplaceCredits.Purchase
             }
             catch (UnityWebRequestException e)
             {
-                if (e.ResponseCode > 0)
+                if (IsProvenRejection(e.ResponseCode))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: $"Relayer {e.ResponseCode}: {e.Text}");
 
                 return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
@@ -160,6 +161,13 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
             }
         }
+
+        /// <summary>
+        ///     Only a 4xx proves the relayer refused the transaction. A 5xx can come from a gateway, or from the relayer
+        ///     after it already submitted, and no response code at all means the request may still have been received.
+        /// </summary>
+        internal static bool IsProvenRejection(long responseCode) =>
+            responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
 
         private async UniTask<BigInteger> GetNonceAsync(string buyer, CancellationToken ct)
         {

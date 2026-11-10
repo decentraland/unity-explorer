@@ -128,9 +128,10 @@ namespace DCL.Shop
 
             foreach (KeyValuePair<string, RecentToggle> toggle in recentToggles)
             {
-                if (toggle.Value.Sequence > sequenceAtStart)
+                // A toggle still being sent may not be in the reply yet either.
+                if (toggle.Value.Sequence > sequenceAtStart || sending.ContainsKey(toggle.Key))
                     Apply(toggle.Key, toggle.Value.Favorite);
-                else if (!sending.ContainsKey(toggle.Key))
+                else
                     staleTogglesScratch.Add(toggle.Key);
             }
 

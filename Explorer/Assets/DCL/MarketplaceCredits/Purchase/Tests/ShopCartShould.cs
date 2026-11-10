@@ -125,26 +125,32 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
-        public void RemoveOnlyTheListedLinesAndReportThem()
+        public void RemoveOnlyTheBoughtUnitsAndReportTheEmptiedLines()
         {
-            // Arrange
+            // Arrange: line 1 holds three units, lines 2 and 3 one each.
+            cart.Add(Primary("1"), ShopCartSource.Grid);
+            cart.Add(Primary("1"), ShopCartSource.Grid);
             cart.Add(Primary("1"), ShopCartSource.Grid);
             cart.Add(Primary("2"), ShopCartSource.Grid);
             cart.Add(Primary("3"), ShopCartSource.Grid);
+            var first = new ReviewedCartLine(cart.Lines[0], default(CreditsPurchaseQuote), 2);
+            var third = new ReviewedCartLine(cart.Lines[2], default(CreditsPurchaseQuote), 1);
             var removed = 0;
             var changed = 0;
             cart.ItemRemoved += _ => removed++;
             cart.Changed += () => changed++;
 
-            // Act
-            int count = cart.RemoveAll(new[] { $"{COLLECTION}-1", $"{COLLECTION}-3", $"{COLLECTION}-missing" });
+            // Act: two units of line 1 and the only unit of line 3 were bought.
+            cart.RemoveBought(new[] { first, first, third });
 
             // Assert
-            Assert.AreEqual(2, count);
-            Assert.AreEqual(2, removed);
+            Assert.AreEqual(1, removed);
             Assert.AreEqual(1, changed);
-            Assert.AreEqual(1, cart.Count);
-            Assert.AreEqual($"{COLLECTION}-2", cart.Lines[0].Id);
+            Assert.AreEqual(2, cart.Count);
+            Assert.AreEqual($"{COLLECTION}-1", cart.Lines[0].Id);
+            Assert.AreEqual(1, cart.Lines[0].Quantity);
+            Assert.AreEqual($"{COLLECTION}-2", cart.Lines[1].Id);
+            Assert.AreEqual(2, cart.TotalUnits);
         }
 
         [Test]
