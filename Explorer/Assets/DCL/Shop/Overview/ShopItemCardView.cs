@@ -30,6 +30,9 @@ namespace DCL.Shop
     {
         private const float HOVER_SCALE = 1.025f;
         private const float HOVER_DURATION = 0.15f;
+        private const float ADDED_PUNCH_SCALE = 0.35f;
+        private const float ADDED_PUNCH_DURATION = 0.3f;
+        private const float IN_CART_HIGHLIGHT = 0.2f;
 
         [field: SerializeField] public RectTransform ScaleRoot { get; private set; } = null!;
 
@@ -66,6 +69,9 @@ namespace DCL.Shop
         [field: SerializeField] public CanvasGroup DetailsGroup { get; private set; } = null!;
         [field: SerializeField] public CanvasGroup ActionsGroup { get; private set; } = null!;
         [field: SerializeField] public Button AddToCartButton { get; private set; } = null!;
+        [field: SerializeField] public Image AddToCartIcon { get; private set; } = null!;
+        [field: SerializeField] public Sprite InCartIcon { get; private set; } = null!;
+        [field: SerializeField] public Color InCartColor { get; private set; } = new (0.18f, 0.72f, 0.42f, 1f);
         [field: SerializeField] public Button BuyButton { get; private set; } = null!;
         [field: SerializeField] public GameObject ResolvingSpinner { get; private set; } = null!;
 
@@ -80,9 +86,14 @@ namespace DCL.Shop
         private Tweener? scaleTween;
         private Tweener? actionsTween;
         private Tweener? detailsTween;
+        private Tweener? addedTween;
         private CancellationTokenSource? loadingThumbnailCts;
         private ShopCardActions actions;
-        private bool cartFull;
+        private bool inCart;
+        private bool cartLookCaptured;
+        private Sprite? addToCartSprite;
+        private ColorBlock addToCartColors;
+        private ColorBlock inCartColors;
 
         public ShopItemCardModel? Model { get; private set; }
 
@@ -110,7 +121,7 @@ namespace DCL.Shop
         }
 
         public void Bind(ShopItemCardModel model, string creatorName, IReactiveProperty<ProfileThumbnailViewModel> creatorThumbnail, in GiftItemStyleSnapshot style,
-            ThumbnailLoader thumbnailLoader,            ShopCardActions cardActions, bool isCartFull, long nowUnixSeconds)
+            ThumbnailLoader thumbnailLoader,            ShopCardActions cardActions, bool isInCart, long nowUnixSeconds)
         {
             Model = model;
             IsResolving = false;
@@ -136,7 +147,8 @@ namespace DCL.Shop
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(model.ThumbnailUrl, Thumbnail, DefaultThumbnail, loadingThumbnailCts.Token, false).Forget();
 
             SetActions(cardActions);
-            SetCartState(isCartFull);
+            ResetAddedPunch();
+            ApplyCartState(isInCart);
             SelectedOutline.SetActive(false);
             ResolvingSpinner.SetActive(false);
         }
@@ -147,17 +159,23 @@ namespace DCL.Shop
         public void SetSelected(bool selected) =>
             SelectedOutline.SetActive(selected);
 
-        public void SetCartState(bool isCartFull)
+        public void SetCartState(bool isInCart)
         {
-            cartFull = isCartFull;
-            AddToCartButton.interactable = !isCartFull && !IsResolving;
+            bool added = isInCart && !inCart;
+            ApplyCartState(isInCart);
+
+            if (!added)
+                return;
+
+            ResetAddedPunch();
+            addedTween = AddToCartIcon.transform.DOPunchScale(new Vector3(ADDED_PUNCH_SCALE, ADDED_PUNCH_SCALE, 0f), ADDED_PUNCH_DURATION);
         }
 
         public void SetResolving(bool resolving)
         {
             IsResolving = resolving;
             ResolvingSpinner.SetActive(resolving);
-            AddToCartButton.interactable = !resolving && !cartFull;
+            AddToCartButton.interactable = !resolving;
             BuyButton.interactable = !resolving;
         }
 
@@ -220,6 +238,39 @@ namespace DCL.Shop
             BuyButton.gameObject.SetActive((cardActions & ShopCardActions.Buy) != 0);
         }
 
+        private void ApplyCartState(bool isInCart)
+        {
+            CaptureCartLook();
+
+            inCart = isInCart;
+            AddToCartIcon.sprite = isInCart ? InCartIcon : addToCartSprite;
+            AddToCartButton.colors = isInCart ? inCartColors : addToCartColors;
+            AddToCartButton.interactable = !IsResolving;
+        }
+
+        private void CaptureCartLook()
+        {
+            if (cartLookCaptured)
+                return;
+
+            cartLookCaptured = true;
+            addToCartSprite = AddToCartIcon.sprite;
+            addToCartColors = AddToCartButton.colors;
+
+            inCartColors = addToCartColors;
+            inCartColors.normalColor = InCartColor;
+            inCartColors.highlightedColor = Color.Lerp(InCartColor, Color.white, IN_CART_HIGHLIGHT);
+            inCartColors.pressedColor = InCartColor;
+            inCartColors.selectedColor = InCartColor;
+            inCartColors.disabledColor = InCartColor;
+        }
+
+        private void ResetAddedPunch()
+        {
+            addedTween?.Kill();
+            AddToCartIcon.transform.localScale = Vector3.one;
+        }
+
         private void OnActionClicked(Action<ShopItemCardView>? action)
         {
             if (ClickAudio != null)
@@ -243,6 +294,7 @@ namespace DCL.Shop
         private void ResetHoverVisuals()
         {
             KillTweens();
+            ResetAddedPunch();
             ScaleRoot.localScale = Vector3.one;
             DetailsGroup.alpha = 1f;
             ActionsGroup.alpha = 0f;

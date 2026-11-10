@@ -1,7 +1,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits.Purchase.Cart.UI
@@ -10,7 +9,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
     ///     One pooled cart row. The click callbacks are plain Action fields assigned once when the row is created,
     ///     so rebinding never churns listeners.
     /// </summary>
-    public class ShopCartLineView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ShopCartLineView : MonoBehaviour
     {
         [field: SerializeField] public Image Thumbnail { get; private set; } = null!;
         [field: SerializeField] public Image RarityBackground { get; private set; } = null!;
@@ -41,7 +40,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             BoundLineId = line.Id;
             NameText.text = line.Listing.name;
             CreatorText.text = line.CreatorName ?? string.Empty;
-            RemoveButton.gameObject.SetActive(false);
             PriceCreditsText.text = line.TotalCredits.ToString();
             QuantityText.text = line.Quantity.ToString();
             QuantityStepper.SetActive(line.IsPrimary);
@@ -64,12 +62,5 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
         public void Unbind() =>
             BoundLineId = null;
-
-        // The remove action only shows while the row is hovered
-        public void OnPointerEnter(PointerEventData eventData) =>
-            RemoveButton.gameObject.SetActive(true);
-
-        public void OnPointerExit(PointerEventData eventData) =>
-            RemoveButton.gameObject.SetActive(false);
     }
 }

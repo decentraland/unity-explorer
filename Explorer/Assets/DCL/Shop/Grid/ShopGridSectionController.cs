@@ -361,7 +361,7 @@ namespace DCL.Shop
         private void OnCardAddToCartClicked(ShopItemCardView card)
         {
             if (actionsCts != null)
-                cards.AddToCartAsync(card, ShopCartSource.Grid, actionsCts.Token).Forget();
+                cards.ToggleCartAsync(card, ShopCartSource.Grid, actionsCts.Token).Forget();
         }
 
         private void OnCardBuyClicked(ShopItemCardView card)

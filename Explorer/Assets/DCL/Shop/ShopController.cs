@@ -147,6 +147,7 @@ namespace DCL.Shop
             ItemPanel.WearableUnavailable += Preview.RestoreOwnAvatar;
 
             cart.Changed += OnCartChanged;
+            cart.ItemAdded += OnCartItemAdded;
             purchaseService.StateChanged += OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted += OnCartCheckoutCompleted;
 
@@ -178,6 +179,7 @@ namespace DCL.Shop
             ItemPanel.WearableUnavailable -= Preview.RestoreOwnAvatar;
 
             Cart.Changed -= OnCartChanged;
+            Cart.ItemAdded -= OnCartItemAdded;
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted -= OnCartCheckoutCompleted;
 
@@ -400,6 +402,9 @@ namespace DCL.Shop
             SectionFor(CurrentSection)?.RefreshCartState();
             ItemPanel.RefreshCartState();
         }
+
+        private void OnCartItemAdded(ShopCartLine line, ShopCartSource source) =>
+            view.PlayCartBump();
 
         private void OnPurchaseStateChanged(CreditsPurchaseState state)
         {

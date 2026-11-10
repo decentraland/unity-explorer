@@ -62,13 +62,13 @@ namespace DCL.Shop
         public void Bind(ShopItemCardView card, ShopItemCardModel model, long nowUnixSeconds)
         {
             GiftItemStyleSnapshot style = StyleOf(model);
-            card.Bind(model, creators.GetDisplayName(model.Creator), creators.GetThumbnail(model.Creator), style, thumbnailLoader, ActionsFor(model), IsCartFull(model), nowUnixSeconds);
+            card.Bind(model, creators.GetDisplayName(model.Creator), creators.GetThumbnail(model.Creator), style, thumbnailLoader, ActionsFor(model), IsInCart(model), nowUnixSeconds);
         }
 
         public void RefreshCartState(ShopItemCardView card)
         {
             if (card.Model != null)
-                card.SetCartState(IsCartFull(card.Model));
+                card.SetCartState(IsInCart(card.Model));
         }
 
         public ShopCardActions ActionsFor(ShopItemCardModel model) =>
@@ -87,6 +87,11 @@ namespace DCL.Shop
                 ? cart.Contains(model.Listing)
                 : model.ItemId != null && cart.Contains(model.ContractAddress, model.ItemId);
 
+        private static string CartLineIdOf(ShopItemCardModel model) =>
+            model.Listing != null
+                ? model.Listing.CartLineId()
+                : ShopListingDtoExtensions.CartLineId(model.ContractAddress, model.ItemId, null);
+
         public bool IsCartFull(ShopItemCardModel model)
         {
             if (!IsInCart(model))
@@ -99,10 +104,18 @@ namespace DCL.Shop
             return cart.TryGet(lineId, out ShopCartLine? line) && line!.Quantity >= line.StockCap;
         }
 
-        public UniTask AddToCartAsync(ShopItemCardView card, ShopCartSource source, CancellationToken ct) =>
-            card.Model == null || card.IsResolving
-                ? UniTask.CompletedTask
-                : AddToCartAsync(card.Model, source, card.SetResolving, ct);
+        /// <summary>Adds the card's item to the cart, or removes its whole line when it is already there.</summary>
+        public UniTask ToggleCartAsync(ShopItemCardView card, ShopCartSource source, CancellationToken ct)
+        {
+            if (card.Model == null || card.IsResolving)
+                return UniTask.CompletedTask;
+
+            if (!IsInCart(card.Model))
+                return AddToCartAsync(card.Model, source, card.SetResolving, ct);
+
+            cart.Remove(CartLineIdOf(card.Model));
+            return UniTask.CompletedTask;
+        }
 
         public UniTask BuyAsync(ShopItemCardView card, string source, CancellationToken ct) =>
             card.Model == null || card.IsResolving

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.UI.Credits;
+using DG.Tweening;
 using System;
 using System.Threading;
 using TMPro;
@@ -16,6 +17,8 @@ namespace DCL.Shop
         private const string BADGE_OVERFLOW = "99+";
         private const int BADGE_MAX = 99;
         private const int SEARCH_DEBOUNCE_MS = 500;
+        private const float CART_BUMP_SCALE = 0.25f;
+        private const float CART_BUMP_DURATION = 0.3f;
 
         [field: Header("Header")]
         [field: SerializeField] public SectionTab[] SectionTabs { get; private set; } = Array.Empty<SectionTab>();
@@ -45,6 +48,7 @@ namespace DCL.Shop
         [field: SerializeField] public Animator HeaderAnimator { get; private set; } = null!;
 
         private CancellationTokenSource? searchCts;
+        private Tweener? cartBumpTween;
         private float mainRightInset;
 
         public bool IsSearchBarFocused => SearchBar.inputField.isFocused;
@@ -73,6 +77,9 @@ namespace DCL.Shop
             SortDropdown.Dropdown.onValueChanged.AddListener(index => SortChanged?.Invoke((ShopSortOption)index));
             mainRightInset = -Main.offsetMax.x;
         }
+
+        private void OnDisable() =>
+            ResetCartBump();
 
         private void OnDestroy() =>
             searchCts.SafeCancelAndDispose();
@@ -145,8 +152,20 @@ namespace DCL.Shop
             CartBadgeText.text = units > BADGE_MAX ? BADGE_OVERFLOW : units.ToString();
         }
 
+        public void PlayCartBump()
+        {
+            ResetCartBump();
+            cartBumpTween = CartButton.transform.DOPunchScale(new Vector3(CART_BUMP_SCALE, CART_BUMP_SCALE, 0f), CART_BUMP_DURATION);
+        }
+
         public void SetCartButtonVisible(bool visible) =>
             CartButton.gameObject.SetActive(visible);
+
+        private void ResetCartBump()
+        {
+            cartBumpTween?.Kill();
+            CartButton.transform.localScale = Vector3.one;
+        }
 
         private void OnSearchValueChanged(string text)
         {

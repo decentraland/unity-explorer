@@ -272,7 +272,7 @@ namespace DCL.Shop
                 return;
 
             ShopCartSource source = IsTrendingCard(card) ? ShopCartSource.Trending : ShopCartSource.NewCreations;
-            cards.AddToCartAsync(card, source, actionsCts.Token).Forget();
+            cards.ToggleCartAsync(card, source, actionsCts.Token).Forget();
         }
 
         private void OnItemBuyClicked(ShopItemCardView card)
