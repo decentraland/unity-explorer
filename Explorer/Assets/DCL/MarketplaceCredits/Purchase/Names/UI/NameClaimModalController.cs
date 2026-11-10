@@ -257,6 +257,12 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 case NameClaimStatus.Pending:
                     ShowResult(PENDING_TITLE, string.Format(PENDING_TEXT, inputData.Name), allowRetry: false);
                     break;
+                case NameClaimStatus.Failed when result.Error == NameClaimError.Cancelled:
+                    // The quote and balance on screen may predate the cancelled claim, or be missing after a reopen.
+                    if (lifeCts != null)
+                        LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+
+                    break;
                 default:
                     ShowError(result.Error);
                     break;

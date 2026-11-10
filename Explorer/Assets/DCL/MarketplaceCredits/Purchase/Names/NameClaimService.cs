@@ -252,8 +252,13 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
             bool coversPrice;
 
-            // The credit must cover the whole price: a shortfall would be drawn from the buyer's own MANA.
-            try { coversPrice = authorization.usdCents <= quote.UsdCents && BigInteger.Parse(authorization.maxCreditedValue) >= NAME_PRICE; }
+            // The credit must cover the whole price, by its cap and by what is left of it: a shortfall would be drawn from the buyer's own MANA.
+            try
+            {
+                coversPrice = authorization.usdCents <= quote.UsdCents
+                              && BigInteger.Parse(authorization.maxCreditedValue) >= NAME_PRICE
+                              && BigInteger.Parse(authorization.credit.availableAmount) >= NAME_PRICE;
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
@@ -264,7 +269,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             if (!coversPrice)
             {
                 await executor.ReleaseIntentAsync(authorization.credit.id);
-                return NameClaimResult.Failed(NameClaimError.PriceChanged, $"Authorized {authorization.usdCents} cents for {authorization.maxCreditedValue} wei");
+                return NameClaimResult.Failed(NameClaimError.PriceChanged, $"Authorized {authorization.usdCents} cents for {authorization.maxCreditedValue} wei, {authorization.credit.availableAmount} wei available");
             }
 
             UseCreditsRequest request;

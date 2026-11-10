@@ -133,5 +133,13 @@ namespace DCL.Shop.Tests
         [TestCase(7286130001L, "7.2B")]
         public void ShortenPricesFromAThousandUp(long credits, string expected) =>
             Assert.AreEqual(expected, ShopItemCardModel.FormatPrice(credits));
+
+        [TestCase(0L, "0")]
+        [TestCase(999L, "999")]
+        [TestCase(1050L, "1,050")]
+        [TestCase(1099L, "1,099")]
+        [TestCase(1398765L, "1,398,765")]
+        public void KeepEveryDigitOfAnExactPrice(long credits, string expected) =>
+            Assert.AreEqual(expected, ShopItemCardModel.FormatExactPrice(credits));
     }
 }

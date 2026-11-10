@@ -1,5 +1,6 @@
 using DCL.MarketplaceCredits.Purchase;
 using System;
+using System.Globalization;
 
 namespace DCL.Shop
 {
@@ -155,6 +156,12 @@ namespace DCL.Shop
 
             return tenths == 0 ? $"{whole}{suffix}" : $"{whole}.{tenths}{suffix}";
         }
+
+        /// <summary>
+        ///     The whole price with thousands separators (1050 → 1,050), for places where two prices are compared or one is paid.
+        /// </summary>
+        public static string FormatExactPrice(long credits) =>
+            credits.ToString("N0", CultureInfo.InvariantCulture);
 
         public static string FormatCountdown(long secondsLeft)
         {

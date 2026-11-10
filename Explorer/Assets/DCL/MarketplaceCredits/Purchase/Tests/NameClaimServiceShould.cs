@@ -50,6 +50,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private CreditsChainConfig chainConfig = null!;
         private IWeb3IdentityCache identityCache = null!;
         private CancellationTokenSource warmUpCts = null!;
+        private CancellationTokenSource uiCts = null!;
         private NameClaimService service = null!;
         private List<NameClaimStage> recordedStages = null!;
         private List<NameClaimResult> completedResults = null!;
@@ -93,6 +94,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
             warmUpCts = new CancellationTokenSource();
+            uiCts = new CancellationTokenSource();
 
             service = new NameClaimService(creditsAPIClient, ethereumApi, metaTxRelayer, settlementPoller, manaUsdRateReader, bridgeStatusPoller,
                 chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
@@ -109,6 +111,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             service.Dispose();
             warmUpCts.Cancel();
             warmUpCts.Dispose();
+            uiCts.Dispose();
 
             FeatureFlagsConfiguration.Reset();
         }
@@ -225,6 +228,23 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task ReleaseTheCreditWhenItsAvailableAmountCannotCoverTheNamePrice()
+        {
+            // Arrange: the cap covers the price but part of the credit is already spent.
+            creditsAPIClient.AuthorizeUsdNameCreditAsync(Arg.Any<int>(), NAME, Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(NAME_PRICE_WEI, UNDER_SIZED_WEI)));
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimStatus.Failed, result.Status);
+            Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task KeepTheCreditWhenTheBridgeDoesNotRegisterTheName()
         {
             // Arrange
@@ -274,8 +294,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task FollowTheBridgeWhenTheBuyerClosesAfterSigning()
         {
             // Arrange: the buyer closes the modal as soon as the payment is signed and relayed.
-            using var uiCts = new CancellationTokenSource();
-
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(_ =>
                           {
@@ -299,7 +317,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange: the wallet prompt is cancelled by the modal closing.
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
-                         .Returns<UniTask<RelayResult>>(_ => throw new OperationCanceledException());
+                         .Returns(_ => throw new OperationCanceledException());
 
             // Act
             NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
@@ -335,8 +353,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task ReleaseTheCreditWhenTheBuyerClosesDuringAuthorization()
         {
             // Arrange: the buyer closes the modal while the credit is being authorized; the response still arrives.
-            using var uiCts = new CancellationTokenSource();
-
             creditsAPIClient.AuthorizeUsdNameCreditAsync(Arg.Any<int>(), NAME, Arg.Any<CancellationToken>())
                             .Returns(_ =>
                              {
@@ -397,14 +413,14 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 customExternalCallSignature = ROUTE_SIGNATURE,
             };
 
-        private static AuthorizeCreditResponse CreateAuthorization(string manaCapWei) =>
+        private static AuthorizeCreditResponse CreateAuthorization(string manaCapWei, string? availableWei = null) =>
             new ()
             {
                 credit = new AuthorizedCredit
                 {
                     id = CREDIT_ID,
                     amount = manaCapWei,
-                    availableAmount = manaCapWei,
+                    availableAmount = availableWei ?? manaCapWei,
                     expiresAt = 1767225600,
                     signature = "0x" + new string('b', 130),
                     contract = "0x8b3a40ca1b6f5cafc99d112a4d02e897d1fd8cc5",

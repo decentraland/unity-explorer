@@ -114,7 +114,7 @@ namespace DCL.Shop
         {
             NotForSaleTag.SetActive(notForSale);
             PriceContainer.SetActive(!notForSale);
-            PriceText.text = ShopItemCardModel.FormatPrice(priceCredits);
+            PriceText.text = ShopItemCardModel.FormatExactPrice(priceCredits);
         }
 
         public void SetDetailsLoading(bool loading)

@@ -26,7 +26,6 @@ namespace DCL.MarketplaceCredits.Purchase.Names
     /// </summary>
     public class AcrossBridgeStatusPoller
     {
-        private const string STATUS_URL = "https://app.across.to/api/deposit/status";
         private const string STATUS_FILLED = "filled";
         private const string STATUS_REFUNDED = "refunded";
         private const string STATUS_EXPIRED = "expired";
@@ -45,7 +44,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
         public virtual async UniTask<AcrossFillOutcome> WaitForFillAsync(string originTxHash, CancellationToken ct)
         {
-            var url = $"{STATUS_URL}?originChainId={chainConfig.ChainId}&depositTxHash={originTxHash}";
+            var url = $"{chainConfig.AcrossDepositStatusUrl}?originChainId={chainConfig.ChainId}&depositTxHash={originTxHash}";
 
             for (var attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
             {

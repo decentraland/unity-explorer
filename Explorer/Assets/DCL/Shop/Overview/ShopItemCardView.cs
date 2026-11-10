@@ -204,8 +204,8 @@ namespace DCL.Shop
             if (!sale)
                 return;
 
-            SaleNowText.text = ShopItemCardModel.FormatPrice(Model.PriceCredits);
-            SaleWasText.text = ShopItemCardModel.FormatPrice(Model.CompareAtCredits!.Value);
+            SaleNowText.text = ShopItemCardModel.FormatExactPrice(Model.PriceCredits);
+            SaleWasText.text = ShopItemCardModel.FormatExactPrice(Model.CompareAtCredits!.Value);
             SaleBadgeText.text = $"-{Model.DiscountPercent()}%";
 
             SaleCountdownText.text = Model.SaleEndsAtUnixSeconds.HasValue
