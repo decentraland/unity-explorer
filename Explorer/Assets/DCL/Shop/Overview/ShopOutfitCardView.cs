@@ -46,12 +46,15 @@ namespace DCL.Shop
 
         public bool IsAdding { get; private set; }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake() =>
             AddButton.onClick.AddListener(() => AddClicked?.Invoke(this));
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnEnable() =>
             ResetHoverVisuals();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDisable()
         {
             loadingThumbnailCts.SafeCancelAndDispose();

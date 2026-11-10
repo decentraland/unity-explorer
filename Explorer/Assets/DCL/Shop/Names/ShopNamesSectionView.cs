@@ -49,6 +49,7 @@ namespace DCL.Shop
         public event Action? InputSelected;
         public event Action? InputDeselected;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             NameInput.characterLimit = NameRules.MAX_LENGTH;

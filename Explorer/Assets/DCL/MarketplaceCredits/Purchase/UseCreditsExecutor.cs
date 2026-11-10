@@ -118,9 +118,10 @@ namespace DCL.MarketplaceCredits.Purchase
         /// <summary>
         ///     Runs the call to a terminal outcome. The credit is released on every failure that provably never
         ///     reached the chain and KEPT on any possible broadcast (double-spend risk); the server reconciler
-        ///     settles those. Cancellation during signing releases the intent and rethrows.
+        ///     settles those. <paramref name="signCt" /> is honoured until the wallet has signed: cancelling it
+        ///     releases the intent and rethrows. The relay and the settlement wait run on <paramref name="settleCt" />.
         /// </summary>
-        public async UniTask<UseCreditsOutcome> ExecuteAsync(UseCreditsRequest request, Action<CreditsPurchaseState> setState, CancellationToken ct)
+        public async UniTask<UseCreditsOutcome> ExecuteAsync(UseCreditsRequest request, Action<CreditsPurchaseState> setState, CancellationToken signCt, CancellationToken settleCt)
         {
             AuthorizedCredit credit = request.Credit;
             string useCreditsCalldata;
@@ -167,8 +168,8 @@ namespace DCL.MarketplaceCredits.Purchase
             try
             {
                 relay = request.MinNonce.Sign < 0
-                    ? await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, ct)
-                    : await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, request.MinNonce, ct);
+                    ? await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, signCt, settleCt)
+                    : await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, request.MinNonce, signCt, settleCt);
             }
             catch (OperationCanceledException)
             {
@@ -204,7 +205,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
             setState(CreditsPurchaseState.WaitingSettlement);
 
-            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash, SETTLEMENT_TIMEOUT, ct);
+            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash, SETTLEMENT_TIMEOUT, settleCt);
 
             switch (settlement)
             {

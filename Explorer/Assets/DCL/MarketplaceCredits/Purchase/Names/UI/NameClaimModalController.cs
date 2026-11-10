@@ -11,7 +11,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
 {
     /// <summary>
     ///     Confirms a NAME claim: shows the credits price against the balance, runs the claim and reports how
-    ///     it ended. Closing the modal while the bridge is registering does not stop the claim.
+    ///     it ended. Closing the modal once the payment is signed does not stop the claim: reopening it for the
+    ///     same NAME shows the progress and then the result.
     /// </summary>
     public class NameClaimModalController : ControllerBase<NameClaimModalView, NameClaimModalParams>
     {
@@ -29,6 +30,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         private const string PENDING_TITLE = "Registration in progress";
         private const string FAILED_TITLE = "The NAME was not claimed";
         private const string SUCCESS_TEXT = "<b>{0}</b> is yours. You can set it as your name from your profile.";
+        private const string CLAIM_IN_FLIGHT_TEXT = "Another NAME is still being claimed. Try again when it finishes.";
         private const string PENDING_TEXT = "Your payment was sent and <b>{0}</b> is still being registered. It can take a few minutes: check your names later.";
 
         private readonly NameClaimService claimService;
@@ -60,6 +62,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         public override void Dispose()
         {
             claimService.StageChanged -= OnClaimStageChanged;
+            claimService.Completed -= OnClaimCompleted;
             lifeCts.SafeCancelAndDispose();
             disposalCts.SafeCancelAndDispose();
         }
@@ -76,7 +79,21 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
             }
 
-            LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+            claimService.Completed += OnClaimCompleted;
+
+            if (claimService.InFlightName == inputData.Name)
+            {
+                SetUiState(ModalState.Claiming);
+                OnClaimStageChanged(claimService.CurrentStage);
+            }
+            else if (claimService.LastResultName == inputData.Name)
+            {
+                NameClaimResult finished = claimService.LastResult;
+                claimService.AcknowledgeResult();
+                ShowClaimResult(finished);
+            }
+            else
+                LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -88,6 +105,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 viewInstance.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
             }
 
+            claimService.Completed -= OnClaimCompleted;
             lifeCts.SafeCancelAndDispose();
             lifeCts = null;
         }
@@ -174,6 +192,12 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             if (currentState != ModalState.ReadyToConfirm || lifeCts == null)
                 return;
 
+            if (claimService.InFlightName != null)
+            {
+                ShowResult(FAILED_TITLE, CLAIM_IN_FLIGHT_TEXT, allowRetry: true);
+                return;
+            }
+
             ClaimAsync(lifeCts.Token).Forget();
         }
 
@@ -206,19 +230,29 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             SetUiState(ModalState.Claiming);
             NativeWindowManager.RequestTemporaryWindowMode();
 
-            NameClaimResult result;
-
-            try { result = await claimService.ClaimAsync(inputData.Name, quote, ct); }
+            try { await claimService.ClaimAsync(inputData.Name, quote, ct); }
             finally { NativeWindowManager.ReleaseTemporaryWindowMode(); }
+        }
 
-            if (ct.IsCancellationRequested)
+        private void OnClaimCompleted(string name, NameClaimResult result)
+        {
+            if (currentState != ModalState.Claiming || name != inputData.Name)
                 return;
 
+            claimService.AcknowledgeResult();
+            ShowClaimResult(result);
+        }
+
+        private void ShowClaimResult(NameClaimResult result)
+        {
             switch (result.Status)
             {
                 case NameClaimStatus.Registered:
                     ShowResult(SUCCESS_TITLE, string.Format(SUCCESS_TEXT, inputData.Name), allowRetry: false);
-                    RefreshBalanceAsync(ct).Forget();
+
+                    if (lifeCts != null)
+                        RefreshBalanceAsync(lifeCts.Token).Forget();
+
                     break;
                 case NameClaimStatus.Pending:
                     ShowResult(PENDING_TITLE, string.Format(PENDING_TEXT, inputData.Name), allowRetry: false);

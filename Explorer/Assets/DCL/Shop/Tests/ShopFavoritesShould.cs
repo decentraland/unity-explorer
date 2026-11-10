@@ -87,8 +87,8 @@ namespace DCL.Shop.Tests
 
             Received.InOrder(() =>
             {
-                api.SetFavoriteAsync(KEY_1, true, Arg.Any<CancellationToken>());
-                api.SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
+                _ = api.SetFavoriteAsync(KEY_1, true, Arg.Any<CancellationToken>());
+                _ = api.SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
             });
         }
 
@@ -100,7 +100,7 @@ namespace DCL.Shop.Tests
 
             // Assert
             Assert.AreEqual(0, favorites.Count);
-            api.DidNotReceive().SetFavoriteAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            _ = api.DidNotReceive().SetFavoriteAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -114,13 +114,13 @@ namespace DCL.Shop.Tests
             // Act
             favorites.Toggle(item, ShopCartSource.Grid);
             favorites.Toggle(item, ShopCartSource.Grid);
-            api.DidNotReceive().SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
+            _ = api.DidNotReceive().SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
             gate.TrySetResult();
 
             // Assert
             Assert.IsFalse(favorites.IsFavorite(KEY_1));
-            api.Received(1).SetFavoriteAsync(KEY_1, true, Arg.Any<CancellationToken>());
-            api.Received(1).SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
+            _ = api.Received(1).SetFavoriteAsync(KEY_1, true, Arg.Any<CancellationToken>());
+            _ = api.Received(1).SetFavoriteAsync(KEY_1, false, Arg.Any<CancellationToken>());
         }
 
         [Test]

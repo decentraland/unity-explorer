@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json.Linq;
 using System;
@@ -44,6 +43,16 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         /// <summary>True when the signed-in user can pay a NAME with credits from the client.</summary>
         public virtual bool IsAvailable => isFeatureEnabled && creditsFeatureAccess.IsUserAllowed();
 
+        /// <summary>The NAME being claimed, null when no claim is running. One claim runs at a time.</summary>
+        public string? InFlightName { get; private set; }
+
+        public NameClaimStage CurrentStage { get; private set; }
+
+        /// <summary>The NAME of the last finished claim whose result nobody acknowledged yet, null when there is none.</summary>
+        public string? LastResultName { get; private set; }
+
+        public NameClaimResult LastResult { get; private set; }
+
         public virtual event Action<NameClaimStage>? StageChanged;
 
         /// <summary>Raised once per claim with its final result, also when the caller stopped waiting for it.</summary>
@@ -74,6 +83,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
         public void Dispose() =>
             disposalCts.SafeCancelAndDispose();
+
+        public void AcknowledgeResult() =>
+            LastResultName = null;
 
         /// <summary>
         ///     Reads DCLRegistrar.available(name) on Ethereum. Never throws: an unreadable registrar is Unknown.
@@ -136,10 +148,18 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
         /// <summary>
         ///     Runs the claim to a final result and never throws. Cancelling <paramref name="ct" /> stops the
-        ///     claim only before the payment is signed; once it is broadcast the bridge is followed to the end.
+        ///     claim only before the payment is signed, releasing the reserved credit; from the signature on the
+        ///     payment and the bridge are followed to the end on the service's own lifetime. Every result but a
+        ///     cancellation is kept in <see cref="LastResult" /> until it is acknowledged.
         /// </summary>
         public virtual async UniTask<NameClaimResult> ClaimAsync(string name, NameClaimQuote quote, CancellationToken ct)
         {
+            if (InFlightName != null)
+                return NameClaimResult.Failed(NameClaimError.UnknownError, "A claim is already in progress");
+
+            InFlightName = name;
+            LastResultName = null;
+
             NameClaimResult result;
 
             try { result = await ClaimInternalAsync(name, quote, ct); }
@@ -148,6 +168,14 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
                 result = NameClaimResult.Failed(NameClaimError.UnknownError, e.Message);
+            }
+
+            InFlightName = null;
+
+            if (result.Error != NameClaimError.Cancelled)
+            {
+                LastResult = result;
+                LastResultName = name;
             }
 
             Completed?.Invoke(name, result);
@@ -194,12 +222,11 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             if (NameRules.Validate(name) != NameValidation.Valid)
                 return NameClaimResult.Failed(NameClaimError.NameUnavailable, "Invalid name");
 
-            StageChanged?.Invoke(NameClaimStage.Preparing);
+            SetStage(NameClaimStage.Preparing);
 
             NameCreditRouteResponse route;
 
             try { route = await creditsAPIClient.GetNameRouteAsync(name, chainConfig.ChainId, ct); }
-            catch (OperationCanceledException) { throw; }
             catch (UnityWebRequestException e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"NAME route refused for {name}: {e.ResponseCode} {e.Text}");
@@ -208,8 +235,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
             AuthorizeCreditResponse authorization;
 
-            try { authorization = await creditsAPIClient.AuthorizeUsdNameCreditAsync(quote.UsdCents, name, ct); }
-            catch (OperationCanceledException) { throw; }
+            // On the service lifetime: a credit reserved while the buyer was closing the modal is still known here.
+            try { authorization = await creditsAPIClient.AuthorizeUsdNameCreditAsync(quote.UsdCents, name, disposalCts.Token); }
             catch (UnityWebRequestException e)
             {
                 return NameClaimResult.Failed(
@@ -217,8 +244,24 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                     e.Text);
             }
 
+            if (ct.IsCancellationRequested)
+            {
+                await executor.ReleaseIntentAsync(authorization.credit.id);
+                return NameClaimResult.Failed(NameClaimError.Cancelled);
+            }
+
+            bool coversPrice;
+
             // The credit must cover the whole price: a shortfall would be drawn from the buyer's own MANA.
-            if (authorization.usdCents > quote.UsdCents || BigInteger.Parse(authorization.maxCreditedValue) < NAME_PRICE)
+            try { coversPrice = authorization.usdCents <= quote.UsdCents && BigInteger.Parse(authorization.maxCreditedValue) >= NAME_PRICE; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                await executor.ReleaseIntentAsync(authorization.credit.id);
+                return NameClaimResult.Failed(NameClaimError.AuthorizationFailed, e.Message);
+            }
+
+            if (!coversPrice)
             {
                 await executor.ReleaseIntentAsync(authorization.credit.id);
                 return NameClaimResult.Failed(NameClaimError.PriceChanged, $"Authorized {authorization.usdCents} cents for {authorization.maxCreditedValue} wei");
@@ -241,7 +284,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 return NameClaimResult.Failed(NameClaimError.RouteUnavailable, e.Message);
             }
 
-            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct);
+            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
 
             if (outcome.Error == CreditsPurchaseError.SettlementPending)
                 return new NameClaimResult(NameClaimStatus.Pending, message: outcome.Message);
@@ -249,7 +292,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             if (!outcome.Success)
                 return NameClaimResult.Failed(MapPaymentError(outcome.Error), outcome.Message);
 
-            StageChanged?.Invoke(NameClaimStage.Registering);
+            SetStage(NameClaimStage.Registering);
 
             // The credits are spent from here on: the bridge is followed on the service's own lifetime.
             AcrossFillOutcome fill = await bridgeStatusPoller.WaitForFillAsync(outcome.TxHash!, disposalCts.Token);
@@ -278,12 +321,18 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             switch (state)
             {
                 case CreditsPurchaseState.Signing:
-                    StageChanged?.Invoke(NameClaimStage.Signing);
+                    SetStage(NameClaimStage.Signing);
                     break;
                 case CreditsPurchaseState.WaitingSettlement:
-                    StageChanged?.Invoke(NameClaimStage.Confirming);
+                    SetStage(NameClaimStage.Confirming);
                     break;
             }
+        }
+
+        private void SetStage(NameClaimStage stage)
+        {
+            CurrentStage = stage;
+            StageChanged?.Invoke(stage);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.MarketplaceCredits
 {
     // Server schema: credits-server POST /credits/authorize (Server/shop/app/src/lib/credits.ts AuthorizeResult).

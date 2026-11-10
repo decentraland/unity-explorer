@@ -129,7 +129,7 @@ namespace DCL.MarketplaceCredits.Purchase
         public virtual async UniTask<List<string>> GetFavoriteIdsAsync(CancellationToken ct)
         {
             var ids = new List<string>();
-            var total = 0;
+            int total;
 
             do
             {

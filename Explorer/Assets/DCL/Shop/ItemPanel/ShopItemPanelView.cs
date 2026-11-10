@@ -67,9 +67,11 @@ namespace DCL.Shop
         public event Action? BuyClicked;
         public event Action? MarketplaceClicked;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDestroy() =>
             CreatorPicture.Dispose();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             CloseButton.onClick.AddListener(() => CloseClicked?.Invoke());

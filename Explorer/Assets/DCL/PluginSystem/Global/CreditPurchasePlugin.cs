@@ -220,15 +220,15 @@ namespace DCL.PluginSystem.Global
         public class CreditPurchaseSettings : IDCLPluginSettings
         {
             [field: Header("Credit purchase")]
-            [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
 
             [field: Header("Shop cart")]
-            [field: SerializeField] internal AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
 
             [field: Header("Shop names")]
-            [field: SerializeField] internal AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
         }
     }
 }

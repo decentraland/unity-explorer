@@ -63,6 +63,7 @@ namespace DCL.Shop
         public event Action<string>? SearchChanged;
         public event Action<ShopSortOption>? SortChanged;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             foreach (SectionTab tab in SectionTabs)
@@ -81,9 +82,11 @@ namespace DCL.Shop
             mainRightInset = -Main.offsetMax.x;
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDisable() =>
             ResetCartBump();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDestroy() =>
             searchCts.SafeCancelAndDispose();
 

@@ -53,6 +53,7 @@ namespace DCL.Shop
         public event Action? ViewAllClicked;
         public event Action<int>? PageChanged;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             dotsPool = new ObjectPool<Button>(
@@ -68,9 +69,11 @@ namespace DCL.Shop
             ViewAllButton?.onClick.AddListener(() => ViewAllClicked?.Invoke());
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDisable() =>
             trackTween?.Kill();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void LateUpdate()
         {
             if (!viewportDirty)
@@ -81,6 +84,7 @@ namespace DCL.Shop
             GoToPage(CurrentPage, animate: false);
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnRectTransformDimensionsChange()
         {
             // Runs inside the canvas layout pass, where toggling the dots or dirtying the track layout is not allowed: applied in LateUpdate

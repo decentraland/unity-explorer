@@ -479,7 +479,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StringAssert.DoesNotContain("d7d7d7d7d7", unsigned);
 
             // 65 bytes pad to three words.
-            Assert.AreEqual(unsigned.Length + 3 * 64, signed.Length);
+            Assert.AreEqual(unsigned.Length + (3 * 64), signed.Length);
         }
 
         [Test]
@@ -489,7 +489,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             string calldata = CreditsTradeEncoder.BuildNameAvailableCalldata("Carolo");
 
             // Assert: selector + offset word + length word + one padded word of UTF-8.
-            Assert.AreEqual(2 + 8 + 3 * 64, calldata.Length);
+            Assert.AreEqual(2 + 8 + (3 * 64), calldata.Length);
             StringAssert.Contains("0000000000000000000000000000000000000000000000000000000000000006", calldata);
             StringAssert.Contains("4361726f6c6f", calldata);
         }

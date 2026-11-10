@@ -101,18 +101,22 @@ namespace DCL.Shop
 
         private bool hasHoverActions => (actions & (ShopCardActions.AddToCart | ShopCardActions.Buy)) != 0;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             AddToCartButton.onClick.AddListener(() => OnActionClicked(AddToCartClicked));
             BuyButton.onClick.AddListener(() => OnActionClicked(BuyClicked));
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnEnable() =>
             ResetHoverVisuals();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDestroy() =>
             CreatorPicture.Dispose();
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDisable()
         {
             loadingThumbnailCts.SafeCancelAndDispose();

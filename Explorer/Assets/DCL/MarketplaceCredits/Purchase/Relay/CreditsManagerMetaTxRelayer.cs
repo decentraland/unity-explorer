@@ -62,19 +62,21 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct) =>
-            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, ct);
+        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken signCt, CancellationToken broadcastCt) =>
+            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, signCt, broadcastCt);
 
         /// <summary>
         ///     Signs and relays one useCredits call. minNonce floors the nonce read from the contract: a group signed
         ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
         ///     reusing it would make the relayer reject the second transaction.
+        ///     <paramref name="signCt" /> covers the nonce read and the wallet signature and is rethrown when cancelled;
+        ///     <paramref name="broadcastCt" /> covers the relayer request, where a cancellation is an ambiguous broadcast.
         /// </summary>
-        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken ct)
+        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
         {
             BigInteger nonce;
 
-            try { nonce = await GetNonceAsync(buyer, ct); }
+            try { nonce = await GetNonceAsync(buyer, signCt); }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
@@ -97,7 +99,7 @@ namespace DCL.MarketplaceCredits.Purchase
                     @params = new object[] { buyer, typedDataJson },
                 };
 
-                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, ct);
+                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signCt);
                 signature = signResponse.result?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(signature))
@@ -131,7 +133,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 string relayerUrl = decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer);
 
                 JObject response = await webRequestController
-                                        .PostAsync(new CommonArguments(URLAddress.FromString(relayerUrl)), GenericPostArguments.CreateJson(body.ToString(Newtonsoft.Json.Formatting.None)), ct, ReportCategory.CREDITS_PURCHASE)
+                                        .PostAsync(new CommonArguments(URLAddress.FromString(relayerUrl)), GenericPostArguments.CreateJson(body.ToString(Newtonsoft.Json.Formatting.None)), broadcastCt, ReportCategory.CREDITS_PURCHASE)
                                         .CreateFromJson<JObject>(WRJsonParser.Newtonsoft);
 
                 string? txHash = response["txHash"]?.ToString();

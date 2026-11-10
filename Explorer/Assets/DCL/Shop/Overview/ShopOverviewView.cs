@@ -39,6 +39,7 @@ namespace DCL.Shop
         public event Action<ShopOutfitCardView>? OutfitAddClicked;
         public event Action? ViewAllClicked;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             itemCardsPool = new ObjectPool<ShopItemCardView>(CreateItemCard, defaultCapacity: ITEM_CARDS_POOL_CAPACITY,
@@ -63,6 +64,7 @@ namespace DCL.Shop
             SetCompact(false);
         }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void OnDestroy()
         {
             TrendingCarousel.ViewAllClicked -= OnViewAllClicked;

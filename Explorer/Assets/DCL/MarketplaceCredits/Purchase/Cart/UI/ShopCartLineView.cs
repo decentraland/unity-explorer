@@ -28,6 +28,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
         public string? BoundLineId { get; private set; }
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             IncrementButton.onClick.AddListener(() => IncrementClicked?.Invoke(this));

@@ -47,6 +47,7 @@ namespace DCL.Shop
         public event Action<ShopItemCardView>? CardBuyClicked;
         public event Action<ShopItemCardView>? CardClicked;
 
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             RetryButton.onClick.AddListener(() => RetryClicked?.Invoke());

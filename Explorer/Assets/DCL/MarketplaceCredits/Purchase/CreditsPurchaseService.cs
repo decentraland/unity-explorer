@@ -301,7 +301,7 @@ namespace DCL.MarketplaceCredits.Purchase
             var request = new UseCreditsRequest(buyer, QuoteLabel(quote), externalCallTarget, externalCallSelector, externalCallData,
                 authorization.credit, authorization.maxCreditedValue, requiredManaWei, BigInteger.MinusOne);
 
-            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, SetState, ct);
+            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, SetState, ct, ct);
 
             return outcome.Success
                 ? CreditsPurchaseResult.Ok(outcome.TxHash!)

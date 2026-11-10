@@ -197,69 +197,27 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             }
 
             // Phase A: reserve every group before signing anything, so a shortfall on the last group never leaves
-            // the buyer with a half-bought cart.
-            var unitsReserved = 0;
+            // the buyer with a half-bought cart. Nothing is signed yet, so every failure releases all the credits.
+            CartCheckoutResult? reserveFailure;
 
-            for (var i = 0; i < groups.Count; i++)
+            try { reserveFailure = await ReserveGroupsAsync(groups, unitCount, uiCt); }
+            catch (OperationCanceledException)
             {
-                CheckoutGroup group = groups[i];
-                SetProgress(new CartCheckoutProgress(CartCheckoutStage.Reserving, i + 1, groups.Count, unitsReserved, unitCount));
-
-                if (uiCt.IsCancellationRequested)
-                {
-                    await ReleaseGroupsAsync(groups, 0);
-                    return BuildResult(groups, CartCheckoutOutcome.Cancelled, CreditsPurchaseError.Cancelled, null, -1, CartCheckoutStage.Reserving);
-                }
-
-                CreditsPurchaseError prepareError = await PrepareGroupAsync(group, uiCt);
-
-                if (prepareError != CreditsPurchaseError.None)
-                {
-                    await ReleaseGroupsAsync(groups, 0);
-                    group.Error = prepareError;
-                    return BuildResult(groups, prepareError == CreditsPurchaseError.Cancelled ? CartCheckoutOutcome.Cancelled : CartCheckoutOutcome.Failed, prepareError, group.Message, -1, CartCheckoutStage.Reserving);
-                }
-
-                EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError> authorization = await creditsAPIClient.AuthorizeUsdCreditGroupAsync(group.BuildCheckoutLines(), uiCt);
-
-                if (!authorization.Success)
-                {
-                    await ReleaseGroupsAsync(groups, 0);
-                    (CreditsAuthorizeError state, string message) = authorization.Error!.Value;
-                    return AuthorizationFailure(groups, group, state, message);
-                }
-
-                AuthorizeGroupResponse response = authorization.Value;
-                group.Credit = response.credit;
-                group.MaxCreditedValue = response.maxCreditedValue;
-                group.Reserved = true;
-
-                if (response.usdCents > group.UsdCents)
-                {
-                    await ReleaseGroupsAsync(groups, 0);
-                    group.Error = CreditsPurchaseError.PriceChanged;
-                    return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged,
-                        $"Authorized for {response.usdCents} cents, buyer confirmed {group.UsdCents}", -1, CartCheckoutStage.Reserving);
-                }
-
-                BigInteger authorizedCap = BigInteger.Parse(response.maxCreditedValue)
-                                           + CreditsTradeEncoder.UncreditedValue(response.maxCreditedValue, response.credit.availableAmount);
-
-                if (authorizedCap < group.RequiredManaWei)
-                {
-                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
-                        $"Authorized cap {authorizedCap} wei cannot cover the {group.RequiredManaWei} wei group {group.Key} draws");
-
-                    await ReleaseGroupsAsync(groups, 0);
-                    group.Error = CreditsPurchaseError.PriceChanged;
-                    return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged, "The authorized credits cannot cover this purchase", -1, CartCheckoutStage.Reserving);
-                }
-
-                unitsReserved += group.Units.Count;
+                await ReleaseGroupsAsync(groups, 0);
+                return BuildResult(groups, CartCheckoutOutcome.Cancelled, CreditsPurchaseError.Cancelled, null, -1, CartCheckoutStage.Reserving);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                await ReleaseGroupsAsync(groups, 0);
+                return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.EncodingFailed, e.Message, -1, CartCheckoutStage.Reserving);
             }
 
-            // Phase B: one signature per group, settled before the next is signed. From here on the buyer's
-            // cancellation is ignored: a signed group runs to a terminal state on the service lifetime.
+            if (reserveFailure != null)
+                return reserveFailure;
+
+            // Phase B: one signature per group, settled before the next is signed. uiCt is not read from here on:
+            // every reserved group is signed and settled on the service lifetime.
             BigInteger nextMinNonce = BigInteger.MinusOne;
             CreditsPurchaseError firstError = CreditsPurchaseError.None;
             string? firstMessage = null;
@@ -269,14 +227,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             {
                 CheckoutGroup group = groups[i];
                 int groupIndex = i + 1;
-
-                if (uiCt.IsCancellationRequested)
-                {
-                    await ReleaseGroupsAsync(groups, i);
-                    firstError = CreditsPurchaseError.Cancelled;
-                    failedAt = CartCheckoutStage.Signing;
-                    break;
-                }
 
                 UseCreditsRequest request;
 
@@ -294,9 +244,36 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
                 SetProgress(new CartCheckoutProgress(CartCheckoutStage.Signing, groupIndex, groups.Count, unitCount, unitCount));
 
-                UseCreditsOutcome outcome = await executor.ExecuteAsync(request,
-                    state => OnExecutorStateChanged(state, groupIndex, groups.Count, unitCount),
-                    lifetimeCts.Token);
+                UseCreditsOutcome outcome;
+
+                try
+                {
+                    outcome = await executor.ExecuteAsync(request,
+                        state => OnExecutorStateChanged(state, groupIndex, groups.Count, unitCount),
+                        lifetimeCts.Token, lifetimeCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Only a cancellation before the signature is rethrown, and the group's credit is released by then.
+                    group.Released = true;
+                    group.Error = CreditsPurchaseError.Cancelled;
+                    firstError = CreditsPurchaseError.Cancelled;
+                    failedAt = CartCheckoutStage.Signing;
+                    await ReleaseGroupsAsync(groups, i + 1);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+
+                    // Whether this group reached the chain is unknown, so its credit is kept.
+                    group.Outcome = UseCreditsOutcome.Failure(CreditsPurchaseError.UnknownError, e.Message);
+                    firstError = CreditsPurchaseError.UnknownError;
+                    firstMessage = e.Message;
+                    failedAt = CartCheckoutStage.Signing;
+                    await ReleaseGroupsAsync(groups, i + 1);
+                    break;
+                }
 
                 group.Outcome = outcome;
 
@@ -335,6 +312,83 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     : CartCheckoutOutcome.Failed;
 
             return BuildResult(groups, checkoutOutcome, firstError, firstMessage, -1, failedAt);
+        }
+
+        /// <summary>
+        ///     Reserves one credit per group. Returns the failed result after releasing every reserved credit, or
+        ///     null when all the groups are reserved and the buyer has not cancelled.
+        /// </summary>
+        private async UniTask<CartCheckoutResult?> ReserveGroupsAsync(List<CheckoutGroup> groups, int unitCount, CancellationToken uiCt)
+        {
+            var unitsReserved = 0;
+
+            for (var i = 0; i < groups.Count; i++)
+            {
+                CheckoutGroup group = groups[i];
+                SetProgress(new CartCheckoutProgress(CartCheckoutStage.Reserving, i + 1, groups.Count, unitsReserved, unitCount));
+
+                if (uiCt.IsCancellationRequested)
+                {
+                    await ReleaseGroupsAsync(groups, 0);
+                    return BuildResult(groups, CartCheckoutOutcome.Cancelled, CreditsPurchaseError.Cancelled, null, -1, CartCheckoutStage.Reserving);
+                }
+
+                CreditsPurchaseError prepareError = await PrepareGroupAsync(group, uiCt);
+
+                if (prepareError != CreditsPurchaseError.None)
+                {
+                    await ReleaseGroupsAsync(groups, 0);
+                    group.Error = prepareError;
+                    return BuildResult(groups, prepareError == CreditsPurchaseError.Cancelled ? CartCheckoutOutcome.Cancelled : CartCheckoutOutcome.Failed, prepareError, group.Message, -1, CartCheckoutStage.Reserving);
+                }
+
+                // On the service lifetime: a credit reserved while the buyer was closing the modal is still recorded,
+                // so the cancellation checks of this method can release it.
+                EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError> authorization = await creditsAPIClient.AuthorizeUsdCreditGroupAsync(group.BuildCheckoutLines(), lifetimeCts.Token);
+
+                if (!authorization.Success)
+                {
+                    await ReleaseGroupsAsync(groups, 0);
+                    (CreditsAuthorizeError state, string message) = authorization.Error!.Value;
+                    return AuthorizationFailure(groups, group, state, message);
+                }
+
+                AuthorizeGroupResponse response = authorization.Value;
+                group.Credit = response.credit;
+                group.MaxCreditedValue = response.maxCreditedValue;
+                group.Reserved = true;
+
+                if (response.usdCents > group.UsdCents)
+                {
+                    await ReleaseGroupsAsync(groups, 0);
+                    group.Error = CreditsPurchaseError.PriceChanged;
+                    return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged,
+                        $"Authorized for {response.usdCents} cents, buyer confirmed {group.UsdCents}", -1, CartCheckoutStage.Reserving);
+                }
+
+                BigInteger authorizedCap = BigInteger.Parse(response.maxCreditedValue)
+                                           + CreditsTradeEncoder.UncreditedValue(response.maxCreditedValue, response.credit.availableAmount);
+
+                if (authorizedCap < group.RequiredManaWei)
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
+                        $"Authorized cap {authorizedCap} wei cannot cover the {group.RequiredManaWei} wei group {group.Key} draws");
+
+                    await ReleaseGroupsAsync(groups, 0);
+                    group.Error = CreditsPurchaseError.PriceChanged;
+                    return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged, "The authorized credits cannot cover this purchase", -1, CartCheckoutStage.Reserving);
+                }
+
+                unitsReserved += group.Units.Count;
+            }
+
+            if (uiCt.IsCancellationRequested)
+            {
+                await ReleaseGroupsAsync(groups, 0);
+                return BuildResult(groups, CartCheckoutOutcome.Cancelled, CreditsPurchaseError.Cancelled, null, -1, CartCheckoutStage.Reserving);
+            }
+
+            return null;
         }
 
         private static List<CheckoutGroup> GroupUnits(CartReview review)

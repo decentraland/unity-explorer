@@ -26,8 +26,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         UniTask<CartReviewResult> ReviewAsync(IReadOnlyList<ShopCartLine> lines, CancellationToken ct);
 
         /// <summary>
-        ///     uiCt is honoured only while nothing is irreversible (reserving, between groups); once a group is being
-        ///     signed it runs to a terminal state on the service's own lifetime.
+        ///     uiCt is honoured only while the credits are being reserved, where it releases all of them; once the
+        ///     first group is being signed every group runs to a terminal state on the service's own lifetime.
         /// </summary>
         UniTask<CartCheckoutResult> CheckoutAsync(CartReview review, CancellationToken uiCt);
 
