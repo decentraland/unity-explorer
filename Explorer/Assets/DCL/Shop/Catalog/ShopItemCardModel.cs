@@ -134,6 +134,28 @@ namespace DCL.Shop
             return Math.Clamp(percent, 1, 99);
         }
 
+        /// <summary>
+        ///     Shortens prices from a thousand up to one truncated decimal with a k / M / B suffix (1560 → 1.5k, 1398765 → 1.3M).
+        /// </summary>
+        public static string FormatPrice(long credits)
+        {
+            if (credits >= 1_000_000_000)
+                return FormatPriceUnit(credits, 1_000_000_000, "B");
+
+            if (credits >= 1_000_000)
+                return FormatPriceUnit(credits, 1_000_000, "M");
+
+            return credits >= 1_000 ? FormatPriceUnit(credits, 1_000, "k") : credits.ToString();
+        }
+
+        private static string FormatPriceUnit(long credits, long unit, string suffix)
+        {
+            long whole = credits / unit;
+            long tenths = credits % unit / (unit / 10);
+
+            return tenths == 0 ? $"{whole}{suffix}" : $"{whole}.{tenths}{suffix}";
+        }
+
         public static string FormatCountdown(long secondsLeft)
         {
             if (secondsLeft <= 0)

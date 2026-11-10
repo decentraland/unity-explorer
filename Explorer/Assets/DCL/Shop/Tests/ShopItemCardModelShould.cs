@@ -120,5 +120,18 @@ namespace DCL.Shop.Tests
         [TestCase(187200L, "2d 4h")]
         public void FormatTheSaleCountdownLikeTheWeb(long secondsLeft, string expected) =>
             Assert.AreEqual(expected, ShopItemCardModel.FormatCountdown(secondsLeft));
+
+        [TestCase(0L, "0")]
+        [TestCase(999L, "999")]
+        [TestCase(1000L, "1k")]
+        [TestCase(1560L, "1.5k")]
+        [TestCase(15999L, "15.9k")]
+        [TestCase(999999L, "999.9k")]
+        [TestCase(1000000L, "1M")]
+        [TestCase(1398765L, "1.3M")]
+        [TestCase(1000000000L, "1B")]
+        [TestCase(7286130001L, "7.2B")]
+        public void ShortenPricesFromAThousandUp(long credits, string expected) =>
+            Assert.AreEqual(expected, ShopItemCardModel.FormatPrice(credits));
     }
 }
