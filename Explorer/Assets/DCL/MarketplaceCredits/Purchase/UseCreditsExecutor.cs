@@ -25,6 +25,12 @@ namespace DCL.MarketplaceCredits.Purchase
         public readonly BigInteger RequiredManaWei;
         public readonly BigInteger MinNonce;
 
+        /// <summary>
+        ///     Set when the credits-server signed the external call itself. Its expiry, salt and signature are
+        ///     part of what was signed, so they replace the ones the executor would otherwise generate.
+        /// </summary>
+        public readonly SignedExternalCall? SignedCall;
+
         public UseCreditsRequest(
             string buyer,
             string label,
@@ -34,7 +40,8 @@ namespace DCL.MarketplaceCredits.Purchase
             AuthorizedCredit credit,
             string maxCreditedValue,
             BigInteger requiredManaWei,
-            BigInteger minNonce)
+            BigInteger minNonce,
+            SignedExternalCall? signedCall = null)
         {
             Buyer = buyer;
             Label = label;
@@ -45,6 +52,21 @@ namespace DCL.MarketplaceCredits.Purchase
             MaxCreditedValue = maxCreditedValue;
             RequiredManaWei = requiredManaWei;
             MinNonce = minNonce;
+            SignedCall = signedCall;
+        }
+    }
+
+    public readonly struct SignedExternalCall
+    {
+        public readonly long ExpiresAt;
+        public readonly byte[] Salt;
+        public readonly byte[] Signature;
+
+        public SignedExternalCall(long expiresAt, byte[] salt, byte[] signature)
+        {
+            ExpiresAt = expiresAt;
+            Salt = salt;
+            Signature = signature;
         }
     }
 
@@ -109,11 +131,18 @@ namespace DCL.MarketplaceCredits.Purchase
                 authorizedCap = BigInteger.Parse(request.MaxCreditedValue)
                                 + CreditsTradeEncoder.UncreditedValue(request.MaxCreditedValue, credit.availableAmount);
 
-                long externalCallExpiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + EXTERNAL_CALL_TTL_SECONDS;
+                if (request.SignedCall is { } signedCall)
+                    useCreditsCalldata = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                        request.ExternalCallTarget, request.ExternalCallSelector, request.ExternalCallData,
+                        credit, request.MaxCreditedValue, signedCall.ExpiresAt, signedCall.Salt, signedCall.Signature);
+                else
+                {
+                    long externalCallExpiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + EXTERNAL_CALL_TTL_SECONDS;
 
-                useCreditsCalldata = CreditsTradeEncoder.BuildUseCreditsCalldata(
-                    request.ExternalCallTarget, request.ExternalCallSelector, request.ExternalCallData,
-                    credit, request.MaxCreditedValue, externalCallExpiresAt, RandomSalt());
+                    useCreditsCalldata = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                        request.ExternalCallTarget, request.ExternalCallSelector, request.ExternalCallData,
+                        credit, request.MaxCreditedValue, externalCallExpiresAt, RandomSalt());
+                }
             }
             catch (Exception e)
             {

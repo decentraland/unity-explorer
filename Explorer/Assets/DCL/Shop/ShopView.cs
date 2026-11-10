@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.UI.Credits;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -31,6 +32,8 @@ namespace DCL.Shop
 
         [field: Header("Columns")]
         [field: SerializeField] public CharacterPreviewView CharacterPreview { get; private set; } = null!;
+        [field: SerializeField] public GameObject PreviewNametagRoot { get; private set; } = null!;
+        [field: SerializeField] public SimpleUserNameElement PreviewNametag { get; private set; } = null!;
         [field: SerializeField] public RectTransform Main { get; private set; } = null!;
         [field: SerializeField] public ShopItemPanelView ItemPanel { get; private set; } = null!;
         [field: SerializeField] public float ItemPanelInset { get; private set; } = 398f;
@@ -39,7 +42,7 @@ namespace DCL.Shop
         [field: SerializeField] public ShopOverviewView OverviewView { get; private set; } = null!;
         [field: SerializeField] public ShopGridSectionView WearablesView { get; private set; } = null!;
         [field: SerializeField] public ShopGridSectionView EmotesView { get; private set; } = null!;
-        [field: SerializeField] public GameObject NamesRoot { get; private set; } = null!;
+        [field: SerializeField] public ShopNamesSectionView NamesView { get; private set; } = null!;
         [field: SerializeField] public GameObject LandsRoot { get; private set; } = null!;
         [field: SerializeField] public ShopGridSectionView FavoritesView { get; private set; } = null!;
 
@@ -102,14 +105,13 @@ namespace DCL.Shop
         }
 
         /// <summary>
-        ///     Selects the tab and shows the empty roots; the overview and grid sections are shown by their controllers.
+        ///     Selects the tab and shows the empty roots; the other sections are shown by their controllers.
         /// </summary>
         public void ShowSection(ShopSection section)
         {
             foreach (SectionTab tab in SectionTabs)
                 tab.Tab.SetSelected(tab.Section == section);
 
-            NamesRoot.SetActive(section == ShopSection.Names);
             LandsRoot.SetActive(section == ShopSection.Lands);
         }
 

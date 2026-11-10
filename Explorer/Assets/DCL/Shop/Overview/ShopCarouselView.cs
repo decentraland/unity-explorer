@@ -23,8 +23,6 @@ namespace DCL.Shop
         [field: SerializeField] public RectTransform Viewport { get; private set; } = null!;
         [field: SerializeField] public RectTransform Track { get; private set; } = null!;
         [field: SerializeField] public HorizontalLayoutGroup TrackLayout { get; private set; } = null!;
-        [field: SerializeField] public Button LeftArrow { get; private set; } = null!;
-        [field: SerializeField] public Button RightArrow { get; private set; } = null!;
         [field: SerializeField] public Transform DotsContainer { get; private set; } = null!;
         [field: SerializeField] public Button DotPrefab { get; private set; } = null!;
         [field: SerializeField] public RectTransform SelectedDot { get; private set; } = null!;
@@ -67,8 +65,6 @@ namespace DCL.Shop
                 },
                 actionOnRelease: dot => dot.gameObject.SetActive(false));
 
-            LeftArrow.onClick.AddListener(() => GoToPage(CurrentPage - 1));
-            RightArrow.onClick.AddListener(() => GoToPage(CurrentPage + 1));
             ViewAllButton?.onClick.AddListener(() => ViewAllClicked?.Invoke());
         }
 
@@ -213,12 +209,7 @@ namespace DCL.Shop
 
         private void UpdateControls()
         {
-            bool paged = PageCount > 1;
-            LeftArrow.gameObject.SetActive(paged);
-            RightArrow.gameObject.SetActive(paged);
-            LeftArrow.interactable = CurrentPage > 0;
-            RightArrow.interactable = CurrentPage < PageCount - 1;
-            DotsContainer.gameObject.SetActive(paged);
+            DotsContainer.gameObject.SetActive(PageCount > 1);
 
             int selectedDot = DotForPage(CurrentPage);
             bool hasSelectedDot = selectedDot < dots.Count;

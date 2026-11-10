@@ -19,6 +19,7 @@ namespace DCL.MarketplaceCredits
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         private const string PURCHASE_SOURCE = "client";
+        private const string NAME_ROUTE_PROVIDER = "across";
 
         private static readonly JsonSerializerSettings OMIT_NULLS = new () { NullValueHandling = NullValueHandling.Ignore };
 
@@ -101,6 +102,30 @@ namespace DCL.MarketplaceCredits
 
             return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                              .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        /// <summary>
+        ///     Reserves the credits for a NAME registration. Same endpoint as an item, keyed by the name.
+        /// </summary>
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdNameCreditAsync(int usdPriceCents, string name, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
+            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdNameCreditBody { usdPriceCents = usdPriceCents, name = name, source = PURCHASE_SOURCE });
+
+            return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                             .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        /// <summary>
+        ///     The server-signed cross-chain call that registers the NAME for the signed-in address. The server
+        ///     checks the name format and its on-chain availability before signing.
+        /// </summary>
+        public virtual async UniTask<NameCreditRouteResponse> GetNameRouteAsync(string name, int chainId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits-name-route?name={name}&chainId={chainId}&provider={NAME_ROUTE_PROVIDER}";
+
+            return await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                             .CreateFromJson<NameCreditRouteResponse>(WRJsonParser.Newtonsoft);
         }
 
         private static string BuildAuthorizeBody(int usdPriceCents, string? tradeId, string? contractAddress, string? itemId)

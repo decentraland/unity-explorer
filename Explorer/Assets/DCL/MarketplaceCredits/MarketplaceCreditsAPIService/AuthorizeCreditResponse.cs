@@ -43,6 +43,15 @@ namespace DCL.MarketplaceCredits
         public string source;
     }
 
+    // A NAME has no trade and no item: the name is the only identity the intent carries.
+    [Serializable]
+    public struct AuthorizeUsdNameCreditBody
+    {
+        public int usdPriceCents;
+        public string name;
+        public string source;
+    }
+
     [Serializable]
     public struct ReleaseUsdIntentsBody
     {

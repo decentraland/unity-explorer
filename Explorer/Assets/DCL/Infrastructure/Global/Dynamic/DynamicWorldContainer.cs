@@ -27,6 +27,7 @@ using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
+using DCL.MarketplaceCredits.Purchase.Names;
 using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -484,6 +485,18 @@ namespace Global.Dynamic
                 CreditsFeatureAccess.Instance,
                 isCreditsPurchaseEnabled);
 
+            var nameClaimService = new NameClaimService(
+                marketplaceCreditsApiClient,
+                dynamicWorldDependencies.CompositeWeb3Provider,
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
+                new AcrossBridgeStatusPoller(staticContainer.WebRequestsContainer.WebRequestController, creditsChainConfig),
+                creditsChainConfig,
+                identityCache,
+                CreditsFeatureAccess.Instance,
+                isCreditsPurchaseEnabled);
+
             var shopCart = new ShopCart(identityCache);
 
             ICreditsCartCheckoutService cartCheckoutService = new CreditsCartCheckoutService(
@@ -747,6 +760,7 @@ namespace Global.Dynamic
                     shopCart,
                     creditsPurchaseService,
                     cartCheckoutService,
+                    nameClaimService,
                     lobbyStagePresetSetting
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
@@ -845,6 +859,7 @@ namespace Global.Dynamic
                     wearableContainer.WearableCatalog,
                     shopCart,
                     cartCheckoutService,
+                    nameClaimService,
                     staticContainer.WebRequestsContainer.WebRequestController),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock,
                     identityCache, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity),

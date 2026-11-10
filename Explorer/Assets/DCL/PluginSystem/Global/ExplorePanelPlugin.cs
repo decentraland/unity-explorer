@@ -63,6 +63,7 @@ using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.Passport.Modules;
 using DCL.MarketplaceCredits.Purchase.Cart;
+using DCL.MarketplaceCredits.Purchase.Names;
 using DCL.Backpack.Gifting.Styling;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.UI.UpgradeGuestAccountPopup;
@@ -162,6 +163,7 @@ namespace DCL.PluginSystem.Global
         private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
         private readonly ShopCart shopCart;
         private readonly ICreditsPurchaseService creditsPurchaseService;
+        private readonly NameClaimService nameClaimService;
         private readonly ICreditsCartCheckoutService cartCheckoutService;
         private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
@@ -274,6 +276,7 @@ namespace DCL.PluginSystem.Global
             ShopCart shopCart,
             ICreditsPurchaseService creditsPurchaseService,
             ICreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService,
             LobbyStagePresetSetting lobbyStagePresetSetting
             )
         {
@@ -349,6 +352,7 @@ namespace DCL.PluginSystem.Global
             this.shopCart = shopCart;
             this.creditsPurchaseService = creditsPurchaseService;
             this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
             this.lobbyStagePresetSetting = lobbyStagePresetSetting;
         }
 
@@ -616,7 +620,7 @@ namespace DCL.PluginSystem.Global
             ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
 
             shopController = new ShopController(shopView, cursor, inputBlock, mvcManager, marketplaceShopAPIClient, shopCart, creditsPurchaseService, cartCheckoutService,
-                shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
+                nameClaimService, shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
                 characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile, wearablesProvider, emoteProvider, OpenBuyCreditsAsync);
 
             shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(shopView.CreditsPanel, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct,

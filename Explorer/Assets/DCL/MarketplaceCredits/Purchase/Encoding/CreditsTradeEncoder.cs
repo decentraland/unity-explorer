@@ -92,11 +92,15 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string GET_NONCE_ABI = @"[{""name"":""getNonce"",""type"":""function"",""outputs"":[],""inputs"":[
             {""name"":""_signer"",""type"":""address""}]}]";
 
+        private const string NAME_AVAILABLE_ABI = @"[{""name"":""available"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""_subdomain"",""type"":""string""}]}]";
+
         private static readonly FunctionABI ACCEPT_FUNCTION = DeserialiseFunction(ACCEPT_ABI);
         private static readonly FunctionABI STORE_BUY_FUNCTION = DeserialiseFunction(STORE_BUY_ABI);
         private static readonly FunctionABI USE_CREDITS_FUNCTION = DeserialiseFunction(USE_CREDITS_ABI);
         private static readonly FunctionABI EXECUTE_META_TX_FUNCTION = DeserialiseFunction(EXECUTE_META_TX_ABI);
         private static readonly FunctionABI GET_NONCE_FUNCTION = DeserialiseFunction(GET_NONCE_ABI);
+        private static readonly FunctionABI NAME_AVAILABLE_FUNCTION = DeserialiseFunction(NAME_AVAILABLE_ABI);
 
         private static readonly FunctionCallEncoder FUNCTION_CALL_ENCODER = new ();
         private static readonly ParametersEncoder PARAMETERS_ENCODER = new ();
@@ -218,7 +222,24 @@ namespace DCL.MarketplaceCredits.Purchase
             AuthorizedCredit credit,
             string maxCreditedValue,
             long externalCallExpiresAt,
-            byte[] externalCallSalt)
+            byte[] externalCallSalt) =>
+            BuildUseCreditsCalldata(externalCallTarget, externalCallSelector, externalCallData, credit, maxCreditedValue,
+                externalCallExpiresAt, externalCallSalt, Array.Empty<byte>());
+
+        /// <summary>
+        ///     The same envelope carrying a server-signed external call: the credits-server signs the
+        ///     (target, selector, data, expiresAt, salt) tuple for targets the CreditsManager does not allow on
+        ///     its own, so those five values and the signature must be passed through unchanged.
+        /// </summary>
+        public static string BuildUseCreditsCalldata(
+            string externalCallTarget,
+            byte[] externalCallSelector,
+            byte[] externalCallData,
+            AuthorizedCredit credit,
+            string maxCreditedValue,
+            long externalCallExpiresAt,
+            byte[] externalCallSalt,
+            byte[] customExternalCallSignature)
         {
             BigInteger maxCredited = BigInteger.Parse(maxCreditedValue);
             BigInteger uncredited = UncreditedValue(maxCreditedValue, credit.availableAmount);
@@ -233,7 +254,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 creditsTree,
                 new[] { credit.signature.HexToByteArray() },
                 new object[] { externalCallTarget, externalCallSelector, externalCallData, new BigInteger(externalCallExpiresAt), externalCallSalt },
-                Array.Empty<byte>(),
+                customExternalCallSignature,
                 uncredited,
                 maxCredited,
             };
@@ -267,6 +288,12 @@ namespace DCL.MarketplaceCredits.Purchase
         /// </summary>
         public static string BuildGetNonceCalldata(string signer) =>
             FUNCTION_CALL_ENCODER.EncodeRequest(GET_NONCE_FUNCTION.Sha3Signature, GET_NONCE_FUNCTION.InputParameters, signer);
+
+        /// <summary>
+        ///     available(subdomain) calldata for the DCLRegistrar read that tells whether a NAME is still free.
+        /// </summary>
+        public static string BuildNameAvailableCalldata(string name) =>
+            FUNCTION_CALL_ENCODER.EncodeRequest(NAME_AVAILABLE_FUNCTION.Sha3Signature, NAME_AVAILABLE_FUNCTION.InputParameters, name);
 
         /// <summary>
         ///     The prefixed 4-byte sighash of a single-function ABI — the entire calldata of a parameterless call.

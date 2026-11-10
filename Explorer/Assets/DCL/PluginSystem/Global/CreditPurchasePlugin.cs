@@ -12,6 +12,8 @@ using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.MarketplaceCredits.Purchase.Cart.UI;
+using DCL.MarketplaceCredits.Purchase.Names;
+using DCL.MarketplaceCredits.Purchase.Names.UI;
 using DCL.MarketplaceCredits.Purchase.TopUp;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
@@ -46,12 +48,14 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableStorage wearableStorage;
         private readonly ShopCart shopCart;
         private readonly ICreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
         private readonly IWebRequestController webRequestController;
 
         private CreditPurchaseModalController? creditPurchaseModalController;
         private ShopCartModalController? shopCartModalController;
         private ICreditsTopUpService? creditsTopUpService;
         private CreditsTopUpModalController? creditsTopUpModalController;
+        private NameClaimModalController? nameClaimModalController;
 
         public CreditPurchasePlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -69,6 +73,7 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage,
             ShopCart shopCart,
             ICreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService,
             IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -86,6 +91,7 @@ namespace DCL.PluginSystem.Global
             this.wearableStorage = wearableStorage;
             this.shopCart = shopCart;
             this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
             this.webRequestController = webRequestController;
         }
 
@@ -95,6 +101,8 @@ namespace DCL.PluginSystem.Global
             shopCartModalController?.Dispose();
             creditsTopUpModalController?.Dispose();
             creditsTopUpService?.Dispose();
+            nameClaimModalController?.Dispose();
+            nameClaimService.Dispose();
             cartCheckoutService.Dispose();
             shopCart.Dispose();
         }
@@ -138,6 +146,27 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(creditsTopUpModalController);
 
             await RegisterShopCartModalAsync(settings, rarityInfoPanelBackgrounds, ct);
+            await RegisterNameClaimModalAsync(settings, ct);
+        }
+
+        private async UniTask RegisterNameClaimModalAsync(CreditPurchaseSettings settings, CancellationToken ct)
+        {
+            if (!settings.NameClaimPopupPrefab.RuntimeKeyIsValid())
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "NameClaimPopupPrefab is not assigned in the plugin settings: the NAME claim modal is disabled.");
+                return;
+            }
+
+            NameClaimModalView nameClaimViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.NameClaimPopupPrefab, ct: ct)).GetComponent<NameClaimModalView>();
+
+            nameClaimModalController = new NameClaimModalController(
+                NameClaimModalController.CreateLazily(nameClaimViewAsset, null),
+                nameClaimService,
+                marketplaceCreditsAPIClient,
+                web3IdentityCache,
+                OpenGetCreditsPanelAsync);
+
+            mvcManager.RegisterController(nameClaimModalController);
         }
 
         private async UniTask RegisterShopCartModalAsync(CreditPurchaseSettings settings, NftTypeIconSO rarityInfoPanelBackgrounds, CancellationToken ct)
@@ -197,6 +226,9 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Shop cart")]
             [field: SerializeField] internal AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
+
+            [field: Header("Shop names")]
+            [field: SerializeField] internal AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
         }
     }
 }

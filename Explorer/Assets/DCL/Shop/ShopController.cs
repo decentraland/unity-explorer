@@ -15,6 +15,7 @@ using DCL.Input.Component;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.MarketplaceCredits.Purchase.Cart.UI;
+using DCL.MarketplaceCredits.Purchase.Names;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
@@ -39,7 +40,7 @@ namespace DCL.Shop
         private const string FAVORITE_ERROR_MESSAGE = "Your favorites could not be updated. Please try again.";
 
         // Hidden until those sections ship; the tabs stay in the prefab so they only need removing from this list
-        private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Names, ShopSection.Lands };
+        private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Lands };
 
         private readonly ShopView view;
         private readonly Vector3[] cornersCache = new Vector3[4];
@@ -68,6 +69,8 @@ namespace DCL.Shop
 
         public ShopFavoritesSectionController FavoritesController { get; }
 
+        public ShopNamesSectionController NamesController { get; }
+
         public ShopFavorites Favorites { get; }
 
         public ShopCharacterPreviewController Preview { get; }
@@ -89,6 +92,7 @@ namespace DCL.Shop
             ShopCart cart,
             ICreditsPurchaseService purchaseService,
             ICreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService,
             CreditPurchaseBuyHandler buyHandler,
             IWearableStylingCatalog styling,
             NftTypeIconSO rarityInfoPanelBackgrounds,
@@ -124,6 +128,7 @@ namespace DCL.Shop
             WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, ShopCategoryTree.WEARABLE);
             EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, ShopCategoryTree.EMOTE);
             FavoritesController = new ShopFavoritesSectionController(view.FavoritesView, api, presenter, creators, Favorites);
+            NamesController = new ShopNamesSectionController(view.NamesView, view.PreviewNametagRoot, view.PreviewNametag, nameClaimService, selfProfile, mvcManager, webBrowser, urlsSource);
             Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);
             ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider, Favorites);
 
@@ -133,6 +138,8 @@ namespace DCL.Shop
             view.SearchBarDeselected += RestoreShortcutsInput;
             view.SearchChanged += OnSearchChanged;
             view.SortChanged += OnSortChanged;
+            view.NamesView.InputSelected += DisableShortcutsInput;
+            view.NamesView.InputDeselected += RestoreShortcutsInput;
             OverviewController.ViewAllClicked += OnBrowseClicked;
             OverviewController.ItemClicked += OpenItem;
             WearablesController.BrowseClicked += OnBrowseClicked;
@@ -165,6 +172,8 @@ namespace DCL.Shop
             view.SearchBarDeselected -= RestoreShortcutsInput;
             view.SearchChanged -= OnSearchChanged;
             view.SortChanged -= OnSortChanged;
+            view.NamesView.InputSelected -= DisableShortcutsInput;
+            view.NamesView.InputDeselected -= RestoreShortcutsInput;
             OverviewController.ViewAllClicked -= OnBrowseClicked;
             OverviewController.ItemClicked -= OpenItem;
             WearablesController.BrowseClicked -= OnBrowseClicked;
@@ -187,6 +196,7 @@ namespace DCL.Shop
             WearablesController.Dispose();
             EmotesController.Dispose();
             FavoritesController.Dispose();
+            NamesController.Dispose();
             ItemPanel.Dispose();
             Favorites.Dispose();
             Preview.Dispose();
@@ -235,6 +245,7 @@ namespace DCL.Shop
             WearablesController.Deactivate();
             EmotesController.Deactivate();
             FavoritesController.Deactivate();
+            DeactivateNames();
             countdownCts.SafeCancelAndDispose();
             view.SetViewActive(false);
         }
@@ -261,6 +272,7 @@ namespace DCL.Shop
                 CloseItem();
                 OverviewController.Deactivate();
                 SectionFor(CurrentSection)?.Deactivate();
+                DeactivateNames();
             }
 
             CurrentSection = section;
@@ -282,6 +294,8 @@ namespace DCL.Shop
                 grid.Activate();
             else if (section == ShopSection.All)
                 OverviewController.Activate();
+            else if (section == ShopSection.Names)
+                NamesController.Activate();
 
             SectionViewed?.Invoke(section);
         }
@@ -341,6 +355,15 @@ namespace DCL.Shop
                 ShopSection.Emotes => EmotesController,
                 _ => null,
             };
+
+        // A focused field that is hidden never reports its deselection, which would leave the shortcuts blocked
+        private void DeactivateNames()
+        {
+            if (view.NamesView.IsInputFocused)
+                RestoreShortcutsInput();
+
+            NamesController.Deactivate();
+        }
 
         private void CloseItemPanel(bool restoreAvatar)
         {

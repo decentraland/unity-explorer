@@ -448,6 +448,52 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StringAssert.Contains(EXPECTED_ACCEPT_SELECTOR.Substring(2), trade);
         }
 
+        /// <summary>
+        ///     A NAME route is signed by the credits-server: the signature has to travel in the envelope, and an
+        ///     envelope without one must stay byte-identical to what trades and mints always sent.
+        /// </summary>
+        [Test]
+        public void CarryTheCustomExternalCallSignatureOnlyWhenOneIsGiven()
+        {
+            // Arrange
+            byte[] selector = { 0xfd, 0x16, 0x5a, 0x73 };
+            byte[] data = { 0xde, 0xad, 0xbe, 0xef };
+            var signature = new byte[65];
+
+            for (var i = 0; i < signature.Length; i++)
+                signature[i] = 0xd7;
+
+            // Act
+            string unsigned = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, selector, data, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            string emptySignature = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, selector, data, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt(), Array.Empty<byte>());
+
+            string signed = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, selector, data, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt(), signature);
+
+            // Assert
+            Assert.AreEqual(unsigned, emptySignature);
+            StringAssert.Contains("d7d7d7d7d7", signed);
+            StringAssert.DoesNotContain("d7d7d7d7d7", unsigned);
+
+            // 65 bytes pad to three words.
+            Assert.AreEqual(unsigned.Length + 3 * 64, signed.Length);
+        }
+
+        [Test]
+        public void EncodeTheNameAvailabilityCall()
+        {
+            // Act
+            string calldata = CreditsTradeEncoder.BuildNameAvailableCalldata("Carolo");
+
+            // Assert: selector + offset word + length word + one padded word of UTF-8.
+            Assert.AreEqual(2 + 8 + 3 * 64, calldata.Length);
+            StringAssert.Contains("0000000000000000000000000000000000000000000000000000000000000006", calldata);
+            StringAssert.Contains("4361726f6c6f", calldata);
+        }
+
         [Test]
         public void EncodeExecuteMetaTransactionMatchingReferenceImplementation()
         {

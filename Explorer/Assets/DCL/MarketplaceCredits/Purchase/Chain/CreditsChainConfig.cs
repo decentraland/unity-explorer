@@ -25,6 +25,12 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS = "0xa40b1d129b8906888720686f3a01921ddf37716f";
         private const string AMOY_OFFCHAIN_MARKETPLACE_ADDRESS = "0x1b67d0e31eeb6b52d8eeed71d3616c2f5b33b8e7";
 
+        // DCLRegistrar lives on Ethereum L1: it answers whether a NAME is still free.
+        private const string MAINNET_READONLY_NETWORK = "mainnet";
+        private const string SEPOLIA_READONLY_NETWORK = "sepolia";
+        private const string MAINNET_DCL_REGISTRAR_ADDRESS = "0x2a187453064356c898cae034eaed119e1663acb8";
+        private const string SEPOLIA_DCL_REGISTRAR_ADDRESS = "0x7518456ae93eb98f3e64571b689c626616bb7f30";
+
         private const string CREDITS_MANAGER_EIP712_NAME = "Decentraland Credits";
         private const string CREDITS_MANAGER_EIP712_VERSION = "1.0.0";
 
@@ -37,6 +43,10 @@ namespace DCL.MarketplaceCredits.Purchase
         public string CollectionStoreAddress { get; }
 
         public string OffChainMarketplaceAddress { get; }
+
+        public string EthereumReadonlyNetwork { get; }
+
+        public string DclRegistrarAddress { get; }
 
         public string CreditsManagerEip712Name => CREDITS_MANAGER_EIP712_NAME;
 
@@ -57,6 +67,8 @@ namespace DCL.MarketplaceCredits.Purchase
                     CreditsManagerAddress = POLYGON_CREDITS_MANAGER_ADDRESS;
                     CollectionStoreAddress = POLYGON_COLLECTION_STORE_ADDRESS;
                     OffChainMarketplaceAddress = POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    EthereumReadonlyNetwork = MAINNET_READONLY_NETWORK;
+                    DclRegistrarAddress = MAINNET_DCL_REGISTRAR_ADDRESS;
                     break;
                 case EthereumNetwork.Sepolia:
                     ChainId = AMOY_CHAIN_ID;
@@ -64,6 +76,8 @@ namespace DCL.MarketplaceCredits.Purchase
                     CreditsManagerAddress = AMOY_CREDITS_MANAGER_ADDRESS;
                     CollectionStoreAddress = AMOY_COLLECTION_STORE_ADDRESS;
                     OffChainMarketplaceAddress = AMOY_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    EthereumReadonlyNetwork = SEPOLIA_READONLY_NETWORK;
+                    DclRegistrarAddress = SEPOLIA_DCL_REGISTRAR_ADDRESS;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ethereumNetwork), ethereumNetwork, null);

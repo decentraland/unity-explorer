@@ -1368,6 +1368,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <NameClaimPopupPrefab>k__BackingField:
+          m_AssetGUID: a94c2e7d5b1f4083b6d2c8e1f0a37b54
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5688109100585189482
       type: {class: BugReportPlugin/BugReportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
