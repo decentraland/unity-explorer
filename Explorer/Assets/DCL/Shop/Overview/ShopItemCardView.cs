@@ -30,8 +30,6 @@ namespace DCL.Shop
     {
         private const float HOVER_SCALE = 1.025f;
         private const float HOVER_DURATION = 0.15f;
-        private const string ADD_TO_CART_LABEL = "Add to cart";
-        private const string IN_CART_LABEL = "In cart";
 
         [field: SerializeField] public RectTransform ScaleRoot { get; private set; } = null!;
 
@@ -68,7 +66,6 @@ namespace DCL.Shop
         [field: SerializeField] public CanvasGroup DetailsGroup { get; private set; } = null!;
         [field: SerializeField] public CanvasGroup ActionsGroup { get; private set; } = null!;
         [field: SerializeField] public Button AddToCartButton { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text AddToCartText { get; private set; } = null!;
         [field: SerializeField] public Button BuyButton { get; private set; } = null!;
         [field: SerializeField] public GameObject ResolvingSpinner { get; private set; } = null!;
 
@@ -113,7 +110,7 @@ namespace DCL.Shop
         }
 
         public void Bind(ShopItemCardModel model, string creatorName, IReactiveProperty<ProfileThumbnailViewModel> creatorThumbnail, in GiftItemStyleSnapshot style,
-            ThumbnailLoader thumbnailLoader,            ShopCardActions cardActions, bool inCart, bool isCartFull, long nowUnixSeconds)
+            ThumbnailLoader thumbnailLoader,            ShopCardActions cardActions, bool isCartFull, long nowUnixSeconds)
         {
             Model = model;
             IsResolving = false;
@@ -139,7 +136,7 @@ namespace DCL.Shop
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(model.ThumbnailUrl, Thumbnail, DefaultThumbnail, loadingThumbnailCts.Token, false).Forget();
 
             SetActions(cardActions);
-            SetCartState(inCart, isCartFull);
+            SetCartState(isCartFull);
             SelectedOutline.SetActive(false);
             ResolvingSpinner.SetActive(false);
         }
@@ -150,10 +147,9 @@ namespace DCL.Shop
         public void SetSelected(bool selected) =>
             SelectedOutline.SetActive(selected);
 
-        public void SetCartState(bool inCart, bool isCartFull)
+        public void SetCartState(bool isCartFull)
         {
             cartFull = isCartFull;
-            AddToCartText.text = inCart ? IN_CART_LABEL : ADD_TO_CART_LABEL;
             AddToCartButton.interactable = !isCartFull && !IsResolving;
         }
 

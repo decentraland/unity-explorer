@@ -17,7 +17,7 @@ namespace DCL.Shop
     /// <summary>
     ///     One paged grid of a single item category (wearables or emotes); search and sort come from the shop header.
     /// </summary>
-    public class ShopGridSectionController : IDisposable
+    public class ShopGridSectionController : IShopGridSection, IDisposable
     {
         private const string LOAD_ERROR_MESSAGE = "There was an error loading the shop. Please try again.";
 

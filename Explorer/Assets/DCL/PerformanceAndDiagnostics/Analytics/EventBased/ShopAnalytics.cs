@@ -31,6 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             shopController.OverviewController.OutfitAddedToCart += OnOutfitAddedToCart;
             shopController.Cart.ItemAdded += OnItemAddedToCart;
             shopController.Cart.ItemRemoved += OnItemRemovedFromCart;
+            shopController.Favorites.Toggled += OnFavoriteToggled;
         }
 
         public void Dispose()
@@ -44,6 +45,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             shopController.OverviewController.OutfitAddedToCart -= OnOutfitAddedToCart;
             shopController.Cart.ItemAdded -= OnItemAddedToCart;
             shopController.Cart.ItemRemoved -= OnItemRemovedFromCart;
+            shopController.Favorites.Toggled -= OnFavoriteToggled;
         }
 
         private void OnShopOpenedFromStartMenu() =>
@@ -114,6 +116,34 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 { "item_id", line.Listing.itemId },
                 { "cart_size", shopController.Cart.Count },
             }));
+
+        private void OnFavoriteToggled(ShopItemCardModel model, bool isFavorite, ShopCartSource source, int favoritesCount)
+        {
+            if (!isFavorite)
+            {
+                analytics.Track(AnalyticsEvents.Shop.SHOP_REMOVED_FROM_FAVORITES, WithPlatform(new JObject
+                {
+                    { "item_id", model.ItemId },
+                    { "source", ShopCartSources.ToWire(source) },
+                    { "favorites_size", favoritesCount },
+                }));
+
+                return;
+            }
+
+            analytics.Track(AnalyticsEvents.Shop.SHOP_ADDED_TO_FAVORITES, WithPlatform(new JObject
+            {
+                { "item_id", model.ItemId },
+                { "contract_address", model.ContractAddress },
+                { "price_credits", model.PriceCredits },
+                { "price_usd", model.PriceCredits * USD_PER_CREDIT },
+                { "category", model.Category },
+                { "is_smart", model.IsSmart },
+                { "is_primary", model.IsPrimary },
+                { "source", ShopCartSources.ToWire(source) },
+                { "favorites_size", favoritesCount },
+            }));
+        }
 
         private void OnOutfitAddedToCart(ShopOutfitAddResult result) =>
             analytics.Track(AnalyticsEvents.Shop.SHOP_OUTFIT_ADDED_TO_CART, WithPlatform(new JObject

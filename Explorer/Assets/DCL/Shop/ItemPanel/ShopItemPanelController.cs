@@ -35,6 +35,7 @@ namespace DCL.Shop
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEmoteProvider emoteProvider;
+        private readonly ShopFavorites favorites;
         private readonly HashSet<string> hidingList = new ();
         private readonly List<URN> pointers = new (1);
         private readonly List<string> catalogIds = new (1);
@@ -63,7 +64,8 @@ namespace DCL.Shop
             NftTypeIconSO rarityBackgrounds,
             ThumbnailLoader thumbnailLoader,
             IWearablesProvider wearablesProvider,
-            IEmoteProvider emoteProvider)
+            IEmoteProvider emoteProvider,
+            ShopFavorites favorites)
         {
             this.view = view;
             this.presenter = presenter;
@@ -74,12 +76,15 @@ namespace DCL.Shop
             this.thumbnailLoader = thumbnailLoader;
             this.wearablesProvider = wearablesProvider;
             this.emoteProvider = emoteProvider;
+            this.favorites = favorites;
 
             view.CloseClicked += OnCloseClicked;
             view.AddToCartClicked += OnAddToCartClicked;
             view.BuyClicked += OnBuyClicked;
             view.MarketplaceClicked += OnMarketplaceClicked;
-            view.FavoriteButton.gameObject.SetActive(false);
+            view.FavoriteClicked += OnFavoriteClicked;
+            favorites.Changed += OnFavoriteChanged;
+            favorites.Loaded += OnFavoritesLoaded;
         }
 
         public void Dispose()
@@ -88,6 +93,9 @@ namespace DCL.Shop
             view.AddToCartClicked -= OnAddToCartClicked;
             view.BuyClicked -= OnBuyClicked;
             view.MarketplaceClicked -= OnMarketplaceClicked;
+            view.FavoriteClicked -= OnFavoriteClicked;
+            favorites.Changed -= OnFavoriteChanged;
+            favorites.Loaded -= OnFavoritesLoaded;
             detailsCts.SafeCancelAndDispose();
             actionsCts.SafeCancelAndDispose();
         }
@@ -113,6 +121,7 @@ namespace DCL.Shop
             view.SetActions(presenter.ActionsFor(model));
             view.SetResolving(false);
             RefreshCartState();
+            RefreshFavoriteState();
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(model.ThumbnailUrl, view.Thumbnail, view.DefaultThumbnail, actionsCts.Token, false).Forget();
 
@@ -134,6 +143,16 @@ namespace DCL.Shop
         {
             if (Model != null)
                 view.SetCartState(presenter.IsInCart(Model), presenter.IsCartFull(Model));
+        }
+
+        private void RefreshFavoriteState()
+        {
+            if (Model == null)
+                return;
+
+            string? key = ShopFavorites.KeyOf(Model);
+            view.SetFavoriteVisible(key != null);
+            view.SetFavorite(key != null && favorites.IsFavorite(key));
         }
 
         private async UniTaskVoid LoadDetailsAsync(ShopItemCardModel model, BodyShape bodyShape, CancellationToken ct)
@@ -300,5 +319,17 @@ namespace DCL.Shop
             if (Model != null)
                 presenter.View(Model);
         }
+
+        private void OnFavoriteClicked()
+        {
+            if (Model != null)
+                favorites.Toggle(Model, cartSource);
+        }
+
+        private void OnFavoriteChanged(string key, ShopItemCardModel model, bool isFavorite) =>
+            RefreshFavoriteState();
+
+        private void OnFavoritesLoaded(bool success) =>
+            RefreshFavoriteState();
     }
 }

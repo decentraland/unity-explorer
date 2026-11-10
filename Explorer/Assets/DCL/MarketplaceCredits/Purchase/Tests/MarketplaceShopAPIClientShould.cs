@@ -86,6 +86,24 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual($"{MARKETPLACE}/v3/catalog/items?first=2&id=0xbbbb-2&id=0xcccc-3", byIds);
         }
 
+        [Test]
+        public void BuildTheFavoritePicksRequestsAgainstTheDefaultList()
+        {
+            // Act
+            string picks = MarketplaceShopAPIClient.BuildFavoritePicksUrl(urlsSource, 100);
+            string toggle = MarketplaceShopAPIClient.BuildFavoriteToggleUrl(urlsSource, "0xaaaa-1");
+            JObject pickBody = JObject.Parse(MarketplaceShopAPIClient.BuildFavoriteToggleBody(true));
+            JObject unpickBody = JObject.Parse(MarketplaceShopAPIClient.BuildFavoriteToggleBody(false));
+
+            // Assert
+            Assert.AreEqual($"{MARKETPLACE}/v1/lists/70ab6873-4a03-4eb2-b331-4b8be0e0b8af/picks?limit=100&offset=100", picks);
+            Assert.AreEqual($"{MARKETPLACE}/v1/picks/0xaaaa-1", toggle);
+            Assert.AreEqual(MarketplaceShopAPIClient.DEFAULT_FAVORITES_LIST_ID, pickBody["pickedFor"]![0]!.ToString());
+            Assert.IsNull(pickBody["unpickedFrom"]);
+            Assert.AreEqual(MarketplaceShopAPIClient.DEFAULT_FAVORITES_LIST_ID, unpickBody["unpickedFrom"]![0]!.ToString());
+            Assert.IsNull(unpickBody["pickedFor"]);
+        }
+
         [TestCase("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", ExpectedResult = true)]
         [TestCase("0123456789ABCDEF0123456789abcdef0123456789abcdef0123456789abcdef", ExpectedResult = false)]
         [TestCase("0123456789abcdef", ExpectedResult = false)]

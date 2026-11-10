@@ -134,6 +134,17 @@ namespace DCL.Shop
                 EmptyBody.text = query != null ? string.Format(EMPTY_SEARCH_FORMAT, query) : EMPTY_FILTERS_TEXT;
         }
 
+        /// <summary>
+        ///     The empty state of a section that has no search or filters to blame.
+        /// </summary>
+        public void ShowEmpty(bool on, string message)
+        {
+            EmptyContainer.SetActive(on);
+
+            if (on)
+                EmptyBody.text = message;
+        }
+
         public void SetError(bool on) =>
             ErrorContainer.SetActive(on);
 

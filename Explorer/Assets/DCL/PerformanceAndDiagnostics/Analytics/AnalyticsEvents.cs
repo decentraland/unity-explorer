@@ -270,6 +270,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string SHOP_ADDED_TO_CART = "Shop Added To Cart";
             public const string SHOP_REMOVED_FROM_CART = "Shop Removed From Cart";
             public const string SHOP_OUTFIT_ADDED_TO_CART = "Shop Outfit Added To Cart";
+            public const string SHOP_ADDED_TO_FAVORITES = "Shop Added To Favorites";
+            public const string SHOP_REMOVED_FROM_FAVORITES = "Shop Removed From Favorites";
             public const string PAGE_OVERVIEW = "overview";
             public const string PAGE_WEARABLES = "wearables";
             public const string PAGE_EMOTES = "emotes";

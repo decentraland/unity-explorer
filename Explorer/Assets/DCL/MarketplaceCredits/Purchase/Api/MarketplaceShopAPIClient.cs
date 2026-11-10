@@ -17,6 +17,13 @@ namespace DCL.MarketplaceCredits.Purchase
     /// </summary>
     public class MarketplaceShopAPIClient
     {
+        /// <summary>
+        ///     The default favorites list of marketplace-server: one well-known row shared by every account and every
+        ///     environment, with the picks scoped per signer.
+        /// </summary>
+        public const string DEFAULT_FAVORITES_LIST_ID = "70ab6873-4a03-4eb2-b331-4b8be0e0b8af";
+
+        private const int FAVORITES_PAGE_SIZE = 100;
         private const int CATALOG_IDS_CHUNK_SIZE = 50;
         private const int OUTFIT_THUMBNAIL_HASH_LENGTH = 64;
         private const string UNIFIED_PATH = "v3/catalog/unified";
@@ -114,6 +121,49 @@ namespace DCL.MarketplaceCredits.Purchase
             }
 
             return ordered.ToArray();
+        }
+
+        /// <summary>
+        ///     Every item id (contract-itemId) the signed-in account saved in the default favorites list, newest first.
+        /// </summary>
+        public virtual async UniTask<List<string>> GetFavoriteIdsAsync(CancellationToken ct)
+        {
+            var ids = new List<string>();
+            var total = 0;
+
+            do
+            {
+                FavoritePicksResponse response = await webRequestController.SignedFetchGetAsync(new CommonArguments(BuildFavoritePicksUrl(decentralandUrlsSource, ids.Count)), string.Empty, ct)
+                                                                           .CreateFromJson<FavoritePicksResponse>(WRJsonParser.Newtonsoft);
+
+                if (!response.ok || response.data == null)
+                    throw new Exception($"Favorites could not be read: {response.message}");
+
+                // An empty page ends the read even when the reported total was never reached
+                if (response.data.results.Length == 0)
+                    break;
+
+                foreach (FavoritePickDto pick in response.data.results)
+                    ids.Add(pick.itemId);
+
+                total = response.data.total;
+            }
+            while (ids.Count < total);
+
+            return ids;
+        }
+
+        public virtual async UniTask SetFavoriteAsync(string itemKey, bool favorite, CancellationToken ct)
+        {
+            FavoriteToggleResponse response = await webRequestController.SignedFetchPostAsync(
+                                                                             new CommonArguments(BuildFavoriteToggleUrl(decentralandUrlsSource, itemKey)),
+                                                                             GenericPostArguments.CreateJson(BuildFavoriteToggleBody(favorite)),
+                                                                             string.Empty,
+                                                                             ct)
+                                                                        .CreateFromJson<FavoriteToggleResponse>(WRJsonParser.Newtonsoft);
+
+            if (!response.ok)
+                throw new Exception($"Favorite {itemKey} could not be updated: {response.message}");
         }
 
         public virtual async UniTask<OutfitDto[]> GetOutfitsAsync(CancellationToken ct)
@@ -217,6 +267,29 @@ namespace DCL.MarketplaceCredits.Purchase
 
             return urlBuilder.Build();
         }
+
+        internal static URLAddress BuildFavoritePicksUrl(IDecentralandUrlsSource urlsSource, int offset)
+        {
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.MarketplaceServer, out URLBuilder urlBuilder);
+
+            urlBuilder.AppendPath(new URLPath($"v1/lists/{DEFAULT_FAVORITES_LIST_ID}/picks"));
+            urlBuilder.AppendParameter(new URLParameter("limit", FAVORITES_PAGE_SIZE.ToString()));
+            urlBuilder.AppendParameter(new URLParameter("offset", offset.ToString()));
+            return urlBuilder.Build();
+        }
+
+        internal static URLAddress BuildFavoriteToggleUrl(IDecentralandUrlsSource urlsSource, string itemKey)
+        {
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.MarketplaceServer, out URLBuilder urlBuilder);
+
+            urlBuilder.AppendPath(new URLPath($"v1/picks/{itemKey}"));
+            return urlBuilder.Build();
+        }
+
+        internal static string BuildFavoriteToggleBody(bool favorite) =>
+            favorite
+                ? $"{{\"pickedFor\":[\"{DEFAULT_FAVORITES_LIST_ID}\"]}}"
+                : $"{{\"unpickedFrom\":[\"{DEFAULT_FAVORITES_LIST_ID}\"]}}";
 
         private UniTask<ShopListingsResponse> GetListingsAsync(URLAddress url, CancellationToken ct) =>
             webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.CREDITS_PURCHASE)

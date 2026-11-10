@@ -17,6 +17,8 @@ using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.MarketplaceCredits.Purchase.Cart.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -34,9 +36,10 @@ namespace DCL.Shop
     {
         private const int COUNTDOWN_TICK_MS = 1000;
         private const int BOTTOM_RIGHT_CORNER = 3;
+        private const string FAVORITE_ERROR_MESSAGE = "Your favorites could not be updated. Please try again.";
 
         // Hidden until those sections ship; the tabs stay in the prefab so they only need removing from this list
-        private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Names, ShopSection.Lands, ShopSection.Favorites };
+        private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Names, ShopSection.Lands };
 
         private readonly ShopView view;
         private readonly Vector3[] cornersCache = new Vector3[4];
@@ -62,6 +65,10 @@ namespace DCL.Shop
         public ShopGridSectionController WearablesController { get; }
 
         public ShopGridSectionController EmotesController { get; }
+
+        public ShopFavoritesSectionController FavoritesController { get; }
+
+        public ShopFavorites Favorites { get; }
 
         public ShopCharacterPreviewController Preview { get; }
 
@@ -111,12 +118,14 @@ namespace DCL.Shop
 
             catalog = new ShopCatalogService(api);
             creators = new ShopCreatorCache(profileRepositoryWrapper);
+            Favorites = new ShopFavorites(api, identityCache);
             presenter = new ShopItemCardPresenter(cart, buyHandler, api, webBrowser, urlsSource, identityCache, styling, thumbnailLoader, creators);
             OverviewController = new ShopOverviewController(view.OverviewView, catalog, presenter, creators, thumbnailLoader, api, cart);
             WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, ShopCategoryTree.WEARABLE);
             EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, ShopCategoryTree.EMOTE);
+            FavoritesController = new ShopFavoritesSectionController(view.FavoritesView, api, presenter, creators, Favorites);
             Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);
-            ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider);
+            ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider, Favorites);
 
             view.SectionTabClicked += ShowSection;
             view.CartButtonClicked += OnCartButtonClicked;
@@ -130,6 +139,9 @@ namespace DCL.Shop
             WearablesController.ItemClicked += OnGridItemClicked;
             EmotesController.BrowseClicked += OnBrowseClicked;
             EmotesController.ItemClicked += OnGridItemClicked;
+            FavoritesController.BrowseClicked += OnBrowseClicked;
+            FavoritesController.ItemClicked += OnGridItemClicked;
+            Favorites.ToggleFailed += OnFavoriteToggleFailed;
             ItemPanel.CloseClicked += CloseItem;
             ItemPanel.WearableResolved += Preview.TryOnWearable;
             ItemPanel.WearableUnavailable += Preview.RestoreOwnAvatar;
@@ -158,6 +170,9 @@ namespace DCL.Shop
             WearablesController.ItemClicked -= OnGridItemClicked;
             EmotesController.BrowseClicked -= OnBrowseClicked;
             EmotesController.ItemClicked -= OnGridItemClicked;
+            FavoritesController.BrowseClicked -= OnBrowseClicked;
+            FavoritesController.ItemClicked -= OnGridItemClicked;
+            Favorites.ToggleFailed -= OnFavoriteToggleFailed;
             ItemPanel.CloseClicked -= CloseItem;
             ItemPanel.WearableResolved -= Preview.TryOnWearable;
             ItemPanel.WearableUnavailable -= Preview.RestoreOwnAvatar;
@@ -169,7 +184,9 @@ namespace DCL.Shop
             OverviewController.Dispose();
             WearablesController.Dispose();
             EmotesController.Dispose();
+            FavoritesController.Dispose();
             ItemPanel.Dispose();
+            Favorites.Dispose();
             Preview.Dispose();
             creators.Dispose();
             countdownCts.SafeCancelAndDispose();
@@ -194,6 +211,7 @@ namespace DCL.Shop
             WearablesController.ResetFilters();
             EmotesController.ResetFilters();
             isSectionShown = false;
+            Favorites.Reload();
             Preview.Show();
             ShowSection(ShopSection.All);
             cursor.Unlock();
@@ -214,6 +232,7 @@ namespace DCL.Shop
             OverviewController.Deactivate();
             WearablesController.Deactivate();
             EmotesController.Deactivate();
+            FavoritesController.Deactivate();
             countdownCts.SafeCancelAndDispose();
             view.SetViewActive(false);
         }
@@ -239,22 +258,26 @@ namespace DCL.Shop
             {
                 CloseItem();
                 OverviewController.Deactivate();
-                GridFor(CurrentSection)?.Deactivate();
+                SectionFor(CurrentSection)?.Deactivate();
             }
 
             CurrentSection = section;
             isSectionShown = true;
             view.ShowSection(section);
 
-            ShopGridSectionController? grid = GridFor(section);
-            view.SetSearchAndSortVisible(grid != null);
+            ShopGridSectionController? filteredGrid = FilteredGridFor(section);
+            view.SetSearchAndSortVisible(filteredGrid != null);
+
+            if (filteredGrid != null)
+            {
+                view.SetSearchText(filteredGrid.Filters.SearchText);
+                view.SetSort(filteredGrid.Filters.Sort);
+            }
+
+            IShopGridSection? grid = SectionFor(section);
 
             if (grid != null)
-            {
-                view.SetSearchText(grid.Filters.SearchText);
-                view.SetSort(grid.Filters.Sort);
                 grid.Activate();
-            }
             else if (section == ShopSection.All)
                 OverviewController.Activate();
 
@@ -278,6 +301,7 @@ namespace DCL.Shop
             OverviewController.SetSelected(model.Key);
             WearablesController.SetSelected(model.Key);
             EmotesController.SetSelected(model.Key);
+            FavoritesController.SetSelected(model.Key);
 
             // A wearable dresses the avatar once its entity resolves (see WearableResolved); until then an emote must not keep playing
             if (model.IsEmote)
@@ -298,7 +322,17 @@ namespace DCL.Shop
             OpenBuyCreditsAsync(modalCts.Token).Forget();
         }
 
-        private ShopGridSectionController? GridFor(ShopSection section) =>
+        private IShopGridSection? SectionFor(ShopSection section) =>
+            section switch
+            {
+                ShopSection.Wearables => WearablesController,
+                ShopSection.Emotes => EmotesController,
+                ShopSection.Favorites => FavoritesController,
+                _ => null,
+            };
+
+        // Search and sort only apply to the catalog grids
+        private ShopGridSectionController? FilteredGridFor(ShopSection section) =>
             section switch
             {
                 ShopSection.Wearables => WearablesController,
@@ -318,6 +352,7 @@ namespace DCL.Shop
             OverviewController.SetSelected(null);
             WearablesController.SetSelected(null);
             EmotesController.SetSelected(null);
+            FavoritesController.SetSelected(null);
 
             if (restoreAvatar)
                 Preview.RestoreOwnAvatar();
@@ -328,6 +363,7 @@ namespace DCL.Shop
             OverviewController.SetCompact(compact);
             WearablesController.SetCompact(compact);
             EmotesController.SetCompact(compact);
+            FavoritesController.SetCompact(compact);
         }
 
         private static string BuySourceFor(ShopCartSource source) =>
@@ -344,11 +380,14 @@ namespace DCL.Shop
         private void OnBrowseClicked() =>
             ShowSection(ShopSection.Wearables);
 
+        private void OnFavoriteToggleFailed() =>
+            NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_ERROR_MESSAGE));
+
         private void OnSearchChanged(string text) =>
-            GridFor(CurrentSection)?.SetSearch(text);
+            FilteredGridFor(CurrentSection)?.SetSearch(text);
 
         private void OnSortChanged(ShopSortOption sort) =>
-            GridFor(CurrentSection)?.SetSort(sort);
+            FilteredGridFor(CurrentSection)?.SetSort(sort);
 
         private void OnCartChanged()
         {
@@ -358,7 +397,7 @@ namespace DCL.Shop
                 return;
 
             OverviewController.RefreshCartState();
-            GridFor(CurrentSection)?.RefreshCartState();
+            SectionFor(CurrentSection)?.RefreshCartState();
             ItemPanel.RefreshCartState();
         }
 
@@ -382,7 +421,7 @@ namespace DCL.Shop
                 return;
 
             OverviewController.Reload();
-            GridFor(CurrentSection)?.Reload();
+            SectionFor(CurrentSection)?.Reload();
         }
 
         private void OnCartButtonClicked()
@@ -423,7 +462,7 @@ namespace DCL.Shop
 
                 long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 OverviewController.RefreshCountdowns(now);
-                GridFor(CurrentSection)?.RefreshCountdowns(now);
+                SectionFor(CurrentSection)?.RefreshCountdowns(now);
             }
         }
 

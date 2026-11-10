@@ -62,13 +62,13 @@ namespace DCL.Shop
         public void Bind(ShopItemCardView card, ShopItemCardModel model, long nowUnixSeconds)
         {
             GiftItemStyleSnapshot style = StyleOf(model);
-            card.Bind(model, creators.GetDisplayName(model.Creator), creators.GetThumbnail(model.Creator), style, thumbnailLoader, ActionsFor(model), IsInCart(model), IsCartFull(model), nowUnixSeconds);
+            card.Bind(model, creators.GetDisplayName(model.Creator), creators.GetThumbnail(model.Creator), style, thumbnailLoader, ActionsFor(model), IsCartFull(model), nowUnixSeconds);
         }
 
         public void RefreshCartState(ShopItemCardView card)
         {
             if (card.Model != null)
-                card.SetCartState(IsInCart(card.Model), IsCartFull(card.Model));
+                card.SetCartState(IsCartFull(card.Model));
         }
 
         public ShopCardActions ActionsFor(ShopItemCardModel model) =>

@@ -21,6 +21,9 @@ namespace DCL.Shop
         [field: Header("Header")]
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
         [field: SerializeField] public Button FavoriteButton { get; private set; } = null!;
+        [field: SerializeField] public Image FavoriteIcon { get; private set; } = null!;
+        [field: SerializeField] public Color FavoriteOnColor { get; private set; } = new (1f, 0.176f, 0.333f, 1f);
+        [field: SerializeField] public Color FavoriteOffColor { get; private set; } = new (0.443f, 0.42f, 0.486f, 1f);
 
         [field: Header("Media")]
         [field: SerializeField] public ImageView Thumbnail { get; private set; } = null!;
@@ -59,6 +62,7 @@ namespace DCL.Shop
         public bool IsResolving { get; private set; }
 
         public event Action? CloseClicked;
+        public event Action? FavoriteClicked;
         public event Action? AddToCartClicked;
         public event Action? BuyClicked;
         public event Action? MarketplaceClicked;
@@ -69,10 +73,17 @@ namespace DCL.Shop
         private void Awake()
         {
             CloseButton.onClick.AddListener(() => CloseClicked?.Invoke());
+            FavoriteButton.onClick.AddListener(() => FavoriteClicked?.Invoke());
             AddToCartButton.onClick.AddListener(() => AddToCartClicked?.Invoke());
             BuyButton.onClick.AddListener(() => BuyClicked?.Invoke());
             MarketplaceButton.onClick.AddListener(() => MarketplaceClicked?.Invoke());
         }
+
+        public void SetFavoriteVisible(bool visible) =>
+            FavoriteButton.gameObject.SetActive(visible);
+
+        public void SetFavorite(bool isFavorite) =>
+            FavoriteIcon.color = isFavorite ? FavoriteOnColor : FavoriteOffColor;
 
         public void SetActions(ShopCardActions actions)
         {

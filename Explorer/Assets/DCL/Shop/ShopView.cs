@@ -38,7 +38,7 @@ namespace DCL.Shop
         [field: SerializeField] public ShopGridSectionView EmotesView { get; private set; } = null!;
         [field: SerializeField] public GameObject NamesRoot { get; private set; } = null!;
         [field: SerializeField] public GameObject LandsRoot { get; private set; } = null!;
-        [field: SerializeField] public GameObject FavoritesRoot { get; private set; } = null!;
+        [field: SerializeField] public ShopGridSectionView FavoritesView { get; private set; } = null!;
 
         [field: Header("Animators")]
         [field: SerializeField] public Animator PanelAnimator { get; private set; } = null!;
@@ -104,7 +104,6 @@ namespace DCL.Shop
 
             NamesRoot.SetActive(section == ShopSection.Names);
             LandsRoot.SetActive(section == ShopSection.Lands);
-            FavoritesRoot.SetActive(section == ShopSection.Favorites);
         }
 
         public void SetSectionTabVisible(ShopSection section, bool visible)
