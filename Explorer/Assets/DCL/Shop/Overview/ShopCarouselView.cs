@@ -117,7 +117,6 @@ namespace DCL.Shop
             float bodyHeight = cardHeight + bodyPadding;
             Body.sizeDelta = new Vector2(Body.sizeDelta.x, bodyHeight);
             RootLayout.preferredHeight = bodyHeight + chromeHeight;
-            ((RectTransform)transform).sizeDelta = new Vector2(((RectTransform)transform).sizeDelta.x, bodyHeight + chromeHeight);
 
             for (var i = 0; i < GhostRow.childCount; i++)
             {
@@ -171,9 +170,10 @@ namespace DCL.Shop
                 return;
 
             metricsCaptured = true;
-            var root = (RectTransform)transform;
             float ghostHeight = GhostRow.childCount > 0 ? ((RectTransform)GhostRow.GetChild(0)).sizeDelta.y : Body.sizeDelta.y;
-            chromeHeight = root.sizeDelta.y - Body.sizeDelta.y;
+
+            // The root size is driven by the parent layout group and is serialized as 0, so the height comes from the LayoutElement
+            chromeHeight = RootLayout.preferredHeight - Body.sizeDelta.y;
             bodyPadding = Body.sizeDelta.y - ghostHeight;
         }
 
