@@ -803,7 +803,8 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     marketplaceShopApiClient,
-                    upscaleController
+                    upscaleController,
+                    staticContainer.DebugContainerBuilder
                 ),
                 new CreditPurchasePlugin(
                     assetsProvisioner,
