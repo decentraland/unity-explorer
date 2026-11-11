@@ -27,14 +27,16 @@ namespace DCL.SDKComponents.SceneWearables.Systems
     {
         private readonly ISceneData sceneData;
         private readonly IWearableStorage wearableStorage;
-        private readonly bool loadFromLocalScene;
+        private readonly bool loadRawGltf;
+        private readonly bool rawGltfFallback;
         private readonly string sceneWearableUrnPrefix;
 
-        internal ResolveSceneWearablePathsSystem(World world, ISceneData sceneData, IWearableStorage wearableStorage, bool loadFromLocalScene) : base(world)
+        internal ResolveSceneWearablePathsSystem(World world, ISceneData sceneData, IWearableStorage wearableStorage, bool localSceneDevelopment, bool useLocalAssetBundles) : base(world)
         {
             this.sceneData = sceneData;
             this.wearableStorage = wearableStorage;
-            this.loadFromLocalScene = loadFromLocalScene;
+            loadRawGltf = sceneData.SceneEntityDefinition.ShouldLoadRawGltf(localSceneDevelopment, useLocalAssetBundles);
+            rawGltfFallback = localSceneDevelopment && useLocalAssetBundles && !loadRawGltf;
             sceneWearableUrnPrefix = SceneWearableDTOFactory.GetUrnPrefix(sceneData.SceneEntityDefinition.id);
         }
 
@@ -73,7 +75,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
                     continue;
                 }
 
-                if (SceneWearableDTOFactory.TryGetUrn(sceneData, wearable, loadFromLocalScene, out URN urn, out string? category, out string? hash))
+                if (SceneWearableDTOFactory.TryGetUrn(sceneData, wearable, loadRawGltf, out URN urn, out string? category, out string? hash))
                 {
                     Seed(urn, wearable, category, hash);
                     wearables[i] = urn;
@@ -95,9 +97,9 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         private void Seed(URN urn, string path, string category, string hash)
         {
             if (!wearableStorage.TryGetElement(urn, out IWearable existing))
-                wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadFromLocalScene));
+                wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadRawGltf, rawGltfFallback));
             else if (!existing.Model.Succeeded)
-                wearableStorage.Set(urn, new Wearable(new StreamableLoadingResult<WearableDTO>(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadFromLocalScene))));
+                wearableStorage.Set(urn, new Wearable(new StreamableLoadingResult<WearableDTO>(SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadRawGltf, rawGltfFallback))));
 
             wearableStorage.ExcludeFromUnloading(urn);
         }

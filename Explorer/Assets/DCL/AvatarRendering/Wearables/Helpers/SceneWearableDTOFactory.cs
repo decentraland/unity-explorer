@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return category != null;
         }
 
-        public static bool TryGetUrn(ISceneData sceneData, string path, bool local, out URN urn,
+        public static bool TryGetUrn(ISceneData sceneData, string path, bool loadRawGltf, out URN urn,
             [NotNullWhen(true)] out string? category, [NotNullWhen(true)] out string? hash)
         {
             urn = default;
@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return false;
             }
 
-            if (!local && definition.assetBundleManifestVersion is null or { assetBundleManifestRequestFailed: true })
+            if (!loadRawGltf && definition.assetBundleManifestVersion is null or { assetBundleManifestRequestFailed: true })
             {
                 ReportHub.LogWarning(reportData, $"Scene wearable '{path}' skipped: the scene has no asset bundle manifest");
                 return false;
@@ -114,11 +114,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return true;
         }
 
-        public static WearableDTO Create(ISceneData sceneData, string path, URN urn, string category, string hash, bool local)
+        public static WearableDTO Create(ISceneData sceneData, string path, URN urn, string category, string hash, bool loadRawGltf, bool rawGltfFallback)
         {
             SceneEntityDefinition definition = sceneData.SceneEntityDefinition;
 
-            WearableDTO dto = local ? new LocalSceneWearableDTO(sceneData.SceneContent.ContentBaseUrl.Value) : new WearableDTO();
+            WearableDTO dto = loadRawGltf || rawGltfFallback
+                ? new LocalSceneWearableDTO(loadRawGltf ? sceneData.SceneContent.ContentBaseUrl.Value : null, rawGltfFallback)
+                : new WearableDTO();
             dto.id = definition.id;
             dto.type = WEARABLE_ENTITY_TYPE;
             dto.version = ENTITY_VERSION;
@@ -199,13 +201,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             && string.Compare(file, 0, mainPath, 0, folderLength, StringComparison.OrdinalIgnoreCase) == 0
             && file.IndexOf('/', folderLength) < 0
             && !string.Equals(file, mainPath, StringComparison.OrdinalIgnoreCase);
+    }
 
-        private sealed class LocalSceneWearableDTO : WearableDTO
+    public sealed class LocalSceneWearableDTO : WearableDTO
+    {
+        /// <summary>A bundle that fails to load, or loads without a GameObject, is re-requested as the raw GLTF.</summary>
+        public bool RawGltfFallback { get; }
+
+        public LocalSceneWearableDTO(string? contentDownloadUrl, bool rawGltfFallback)
         {
-            public LocalSceneWearableDTO(string contentDownloadUrl)
-            {
-                ContentDownloadUrl = contentDownloadUrl;
-            }
+            ContentDownloadUrl = contentDownloadUrl;
+            RawGltfFallback = rawGltfFallback;
         }
     }
 }

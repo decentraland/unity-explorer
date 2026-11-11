@@ -11,13 +11,15 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWearableStorage wearableStorage;
         private readonly Arch.Core.World globalWorld;
-        private readonly bool loadFromLocalScene;
+        private readonly bool localSceneDevelopment;
+        private readonly bool useLocalAssetBundles;
 
-        public SceneWearablesPlugin(IWearableStorage wearableStorage, Arch.Core.World globalWorld, bool loadFromLocalScene)
+        public SceneWearablesPlugin(IWearableStorage wearableStorage, Arch.Core.World globalWorld, bool localSceneDevelopment, bool useLocalAssetBundles)
         {
             this.wearableStorage = wearableStorage;
             this.globalWorld = globalWorld;
-            this.loadFromLocalScene = loadFromLocalScene;
+            this.localSceneDevelopment = localSceneDevelopment;
+            this.useLocalAssetBundles = useLocalAssetBundles;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -25,7 +27,8 @@ namespace DCL.PluginSystem.World
             if (sharedDependencies.SceneData.IsPortableExperience())
                 return;
 
-            finalizeWorldSystems.Add(ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage, loadFromLocalScene));
+            finalizeWorldSystems.Add(ResolveSceneWearablePathsSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, wearableStorage,
+                localSceneDevelopment, useLocalAssetBundles));
 
             PropagateSceneWearablesToAvatarsSystem propagateSystem = PropagateSceneWearablesToAvatarsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider,
                 sharedDependencies.EntitiesMap, globalWorld);

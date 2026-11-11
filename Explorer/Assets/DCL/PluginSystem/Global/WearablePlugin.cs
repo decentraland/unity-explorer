@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using System;
 using System.Threading;
@@ -38,6 +39,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearableStorage wearableStorage;
         private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
         private TimeSpan batchHeartbeat;
 
@@ -48,6 +50,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
+            AbgenConversionMetrics abgenConversionMetrics,
             string builderContentURL)
         {
             this.wearableStorage = wearableStorage;
@@ -59,6 +62,7 @@ namespace DCL.AvatarRendering.Wearables
             this.rawWearablesEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)
                                        || FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.entitiesAnalytics = entitiesAnalytics;
+            this.abgenConversionMetrics = abgenConversionMetrics;
 
             cacheCleaner.Register(this.wearableStorage);
             cacheCleaner.Register(this.trimmedWearableStorage);
@@ -76,7 +80,7 @@ namespace DCL.AvatarRendering.Wearables
             BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
-            FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
+            FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData, abgenConversionMetrics);
 
             if (rawWearablesEnabled)
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);

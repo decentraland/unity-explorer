@@ -14,6 +14,7 @@ using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
@@ -248,13 +249,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
-            if (content.file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)) // Wearables cannot be ".gltf"
-            {
-                // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
-                var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
-                var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
-                world.Create(promise, wearable, intention.BodyShape, index);
-            }
+            if (IsGlb(content))
+                CreateRawGltfPromise(content, wearable, intention.BodyShape, index, partitionComponent, world);
             else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format
             {
                 var promise = TexturePromise.Create(world,
@@ -267,6 +263,42 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
+        }
+
+        /// <summary>
+        ///     Requests the wearable's main file as a raw GLTF into the given slot, if that file is a ".glb" listed in the DTO content.
+        /// </summary>
+        public static bool TryCreateRawGltfPromise(IWearable wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world,
+            [NotNullWhen(true)] out string? file)
+        {
+            file = null;
+
+            if (!wearable.TryGetMainFileHash(bodyShape, out string? hash))
+                return false;
+
+            foreach (ContentDefinition content in wearable.DTO.content)
+            {
+                if (content.hash != hash || !IsGlb(content)) continue;
+
+                CreateRawGltfPromise(content, wearable, bodyShape, index, partitionComponent, world);
+                file = content.file;
+                return true;
+            }
+
+            return false;
+        }
+
+        // Wearables cannot be ".gltf"
+        private static bool IsGlb(ContentDefinition content) =>
+            content.file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase);
+
+        private static void CreateRawGltfPromise<T>(ContentDefinition content, T wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world)
+            where T: IAvatarAttachment
+        {
+            // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
+            var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
+            var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
+            world.Create(promise, wearable, bodyShape, index);
         }
 
         // Asset Bundle Wearable

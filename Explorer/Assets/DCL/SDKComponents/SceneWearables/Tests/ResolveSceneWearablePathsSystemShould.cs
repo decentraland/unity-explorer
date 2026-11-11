@@ -28,8 +28,10 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH + "-224e2dcb";
         private const string UNSEEDED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-bafkreimissinghash-00000000";
         private const string OTHER_SCENE_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":bafkreiotherscene-" + HAT_HASH + "-224e2dcb";
+        private const string CONTENT_BASE_URL = "http://127.0.0.1:8000/content/contents/";
 
         private ISceneData sceneData = null!;
+        private SceneEntityDefinition definition = null!;
         private WearableStorage wearableStorage = null!;
         private IPerformanceBudget unloadBudget = null!;
 
@@ -37,6 +39,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void SetUp()
         {
             ISceneContent sceneContent = Substitute.For<ISceneContent>();
+            sceneContent.ContentBaseUrl.Returns(URLDomain.FromString(CONTENT_BASE_URL));
 
             sceneContent.TryGetHash(HAT_PATH, out Arg.Any<string>())
                         .Returns(x =>
@@ -56,15 +59,17 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             sceneData.SceneShortInfo.Returns(new SceneShortInfo(Vector2Int.zero, SCENE_ID));
             sceneData.SceneContent.Returns(sceneContent);
 
-            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition(SCENE_ID, new SceneMetadata(), AssetBundleManifestVersion.CreateManualManifest())
+            definition = new SceneEntityDefinition(SCENE_ID, new SceneMetadata(), AssetBundleManifestVersion.CreateManualManifest())
             {
                 content = new[] { new ContentDefinition { file = HAT_PATH, hash = HAT_HASH } },
-            });
+            };
+
+            sceneData.SceneEntityDefinition.Returns(definition);
 
             wearableStorage = new WearableStorage();
             unloadBudget = Substitute.For<IPerformanceBudget>();
             unloadBudget.TrySpendBudget().Returns(true);
-            system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, false);
+            system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, false, false);
         }
 
         [Test]
@@ -82,6 +87,63 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out IWearable wearable));
             Assert.IsTrue(wearable.Model.Succeeded);
             Assert.AreEqual("hat", wearable.GetCategory());
+        }
+
+        [Test]
+        public void SeedAssetBundleWearableOutsideLocalSceneDevelopment()
+        {
+            // Act
+            WearableDTO dto = SeedHat();
+
+            // Assert
+            Assert.IsNotInstanceOf<LocalSceneWearableDTO>(dto);
+            Assert.IsTrue(string.IsNullOrEmpty(dto.ContentDownloadUrl));
+        }
+
+        [Test]
+        public void SeedRawWearableWithoutLocalAssetBundles()
+        {
+            // Arrange
+            definition.assetBundleManifestVersion = null;
+            system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, true, false);
+
+            // Act
+            WearableDTO dto = SeedHat();
+
+            // Assert
+            Assert.AreEqual(CONTENT_BASE_URL, dto.ContentDownloadUrl);
+            Assert.IsFalse(((LocalSceneWearableDTO)dto).RawGltfFallback);
+        }
+
+        [Test]
+        public void SeedAssetBundleWearableWithRawGltfFallbackWhenLocalAssetBundleManifestIsAvailable()
+        {
+            // Arrange
+            system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, true, true);
+
+            // Act
+            WearableDTO dto = SeedHat();
+
+            // Assert
+            Assert.IsTrue(string.IsNullOrEmpty(dto.ContentDownloadUrl));
+            Assert.IsTrue(((LocalSceneWearableDTO)dto).RawGltfFallback);
+            Assert.AreSame(definition.assetBundleManifestVersion, dto.assetBundleManifestVersion);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void SeedRawWearableWhenLocalAssetBundleManifestIsUnavailable(bool manifestFailed)
+        {
+            // Arrange
+            definition.assetBundleManifestVersion = manifestFailed ? AssetBundleManifestVersion.FAILED : null;
+            system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, true, true);
+
+            // Act
+            WearableDTO dto = SeedHat();
+
+            // Assert
+            Assert.AreEqual(CONTENT_BASE_URL, dto.ContentDownloadUrl);
+            Assert.IsFalse(((LocalSceneWearableDTO)dto).RawGltfFallback);
         }
 
         [Test]
@@ -136,7 +198,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         public void DropSceneWearableUrnsNotSeededByThisScene(bool onPlayerEntity)
         {
             // Arrange
-            wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, HAT_PATH, OTHER_SCENE_URN, "hat", HAT_HASH, false), qualifiedForUnloading: false);
+            wearableStorage.GetOrAddByDTO(SceneWearableDTOFactory.Create(sceneData, HAT_PATH, OTHER_SCENE_URN, "hat", HAT_HASH, false, false), qualifiedForUnloading: false);
             var pbAvatarShape = new PBAvatarShape { Wearables = { OTHER_SCENE_URN, CATALYST_WEARABLE, UNSEEDED_URN }, IsDirty = true };
 
             if (onPlayerEntity)
@@ -278,6 +340,17 @@ namespace DCL.SDKComponents.SceneWearables.Tests
 
             // Assert
             Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
+        }
+
+        private WearableDTO SeedHat()
+        {
+            var pbAvatarShape = new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true };
+            world.Create(pbAvatarShape);
+            system.Update(0);
+
+            CollectionAssert.AreEqual(new[] { EXPECTED_URN }, pbAvatarShape.Wearables);
+            Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out IWearable wearable));
+            return wearable.Model.Asset!;
         }
     }
 }

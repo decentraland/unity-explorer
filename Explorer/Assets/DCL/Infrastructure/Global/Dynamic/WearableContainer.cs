@@ -125,6 +125,7 @@ namespace Global.Dynamic
                 WearableCatalog,
                 trimmedWearableCatalog,
                 bootstrapContainer.Analytics.EntitiesAnalytics,
+                bootstrapContainer.AbgenConversionMetrics,
                 BuilderContentUrl.Value);
 
         public EmotePlugin CreateEmotePlugin(

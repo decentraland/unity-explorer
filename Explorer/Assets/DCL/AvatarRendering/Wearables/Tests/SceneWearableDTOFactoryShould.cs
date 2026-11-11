@@ -170,6 +170,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual(SCENE_ID, dto!.id);
             Assert.AreSame(sceneManifest, dto.assetBundleManifestVersion);
             Assert.IsTrue(string.IsNullOrEmpty(dto.ContentDownloadUrl));
+            Assert.IsNotInstanceOf<LocalSceneWearableDTO>(dto);
             Assert.AreEqual(urn.ToString(), dto.metadata.id);
             Assert.AreEqual("hat", dto.metadata.data.category);
             Assert.IsEmpty(dto.metadata.data.hides);
@@ -189,7 +190,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         }
 
         [Test]
-        public void CreateLocalSceneWearableWithoutManifest()
+        public void CreateRawSceneWearableWithoutManifest()
         {
             // Arrange
             definition.assetBundleManifestVersion = null;
@@ -201,6 +202,35 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.IsTrue(created);
             Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}-{HAT_PATH_HASH}", urn.ToString());
             Assert.AreEqual(CONTENT_BASE_URL, dto!.ContentDownloadUrl);
+            Assert.IsFalse(((LocalSceneWearableDTO)dto).RawGltfFallback);
+        }
+
+        [Test]
+        public void CreateAssetBundleSceneWearableWithRawGltfFallback()
+        {
+            // Act
+            bool created = TryCreate(HAT_PATH, false, out _, out WearableDTO? dto, rawGltfFallback: true);
+
+            // Assert
+            Assert.IsTrue(created);
+            Assert.IsInstanceOf<LocalSceneWearableDTO>(dto);
+            Assert.IsTrue(((LocalSceneWearableDTO)dto!).RawGltfFallback);
+            Assert.IsTrue(string.IsNullOrEmpty(dto.ContentDownloadUrl));
+            Assert.AreSame(sceneManifest, dto.assetBundleManifestVersion);
+        }
+
+        [Test]
+        public void NotCreateAssetBundleSceneWearableWithRawGltfFallbackWhenManifestFailed()
+        {
+            // Arrange
+            definition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+
+            // Act
+            bool created = TryCreate(HAT_PATH, false, out _, out WearableDTO? dto, rawGltfFallback: true);
+
+            // Assert
+            Assert.IsFalse(created);
+            Assert.IsNull(dto);
         }
 
         [Test]
@@ -248,10 +278,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.DoesNotThrow(() => attachment.GetThumbnail());
         }
 
-        private bool TryCreate(string path, bool local, out URN urn, out WearableDTO? dto)
+        private bool TryCreate(string path, bool loadRawGltf, out URN urn, out WearableDTO? dto, bool rawGltfFallback = false)
         {
-            dto = SceneWearableDTOFactory.TryGetUrn(sceneData, path, local, out urn, out string? category, out string? hash)
-                ? SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, local)
+            dto = SceneWearableDTOFactory.TryGetUrn(sceneData, path, loadRawGltf, out urn, out string? category, out string? hash)
+                ? SceneWearableDTOFactory.Create(sceneData, path, urn, category, hash, loadRawGltf, rawGltfFallback)
                 : null;
 
             return dto != null;
