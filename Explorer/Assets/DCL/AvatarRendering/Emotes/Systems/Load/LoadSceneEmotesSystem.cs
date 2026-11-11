@@ -24,16 +24,19 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IEmoteStorage emoteStorage;
+        private readonly bool useLocalAssetBundles;
 
         public LoadSceneEmotesSystem(
             World world,
             IEmoteStorage emoteStorage,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            bool useLocalAssetBundles
         )
             : base(world)
         {
             this.emoteStorage = emoteStorage;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.useLocalAssetBundles = useLocalAssetBundles;
         }
 
         protected override void Update(float t)
@@ -159,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;
 
-            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, emote);
+            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, useLocalAssetBundles, emote);
 
             emote.UpdateLoadingStatus(true);
             return true;

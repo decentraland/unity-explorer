@@ -8,17 +8,24 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.Interaction.PlayerOriginated.Systems
 {
     /// <summary>
-    ///     Writes the results of the pointer events in the scene world
+    ///     Writes the results of the pointer events in the scene world: raycast hits on world entities, pointer events
+    ///     UI Toolkit dispatched on scene UI elements, and the global events of the frame.
+    ///     <para>
+    ///         Every result of a frame is written here in one pass with one tick number, so the world, UI and global
+    ///         results of the same press share a timestamp.
+    ///     </para>
     ///     <para>
     ///         Must be executed after <see cref="Interaction.Systems.ProcessPointerEventsSystem" />. As they exist in different worlds we must attach them to different
     ///         root system groups as we can't make dependencies between them directly
@@ -55,28 +62,35 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
+            // The scene thread advances the tick concurrently: read it once so every result of this frame shares it.
+            uint tick = sceneStateProvider.TickNumber;
+
+            // UI events are written regardless of the scene being current: an event that stayed queued while the scene
+            // was not current would otherwise be delivered later as a fresh user gesture.
+            WriteUiResultsQuery(World!, tick);
+
             if (!sceneStateProvider.IsCurrent) return;
 
             var messageSent = false;
-            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, ref messageSent);
+            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, tick, ref messageSent);
 
             if (!messageSent)
-                WriteGlobalEvents();
+                WriteGlobalEvents(tick);
         }
 
-        private void WriteGlobalEvents()
+        private void WriteGlobalEvents(uint tick)
         {
             // ReSharper disable once ForCanBeConvertedToForeach
             for (var i = 0; i < globalInputEvents.Entries.Count; i++)
             {
                 IGlobalInputEvents.Entry entry = globalInputEvents.Entries[i];
-                AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
+                AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType, tick);
             }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] in Vector3 scenePosition, [Data] uint tick, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
             int validIndicesCount = intent.ValidIndicesCount();
@@ -90,7 +104,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.
                 //This logic is extracted from previous renderer in ECSPointerInputSystem.
                 InputAction inputAction = entry.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave ? InputAction.IaPointer : info.Button;
-                AppendSingleResult(sdkEntity, scenePosition, intent, inputAction, entry.EventType);
+                AppendSingleResult(sdkEntity, scenePosition, intent, inputAction, entry.EventType, tick);
             }
 
             if (intent.ValidInputActions != null)
@@ -98,7 +112,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 for (var i = 0; i < intent.ValidInputActions.Count; i++)
                 {
                     (InputAction inputAction, PointerEventType pointerEventType) entry = intent.ValidInputActions[i];
-                    messageSent |= AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType);
+                    messageSent |= AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType, tick);
                 }
             }
 
@@ -106,31 +120,62 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         /// <summary>
+        ///     Writes, in dispatch order, every pointer event UI Toolkit queued on the element since the last frame that
+        ///     the element's <see cref="PBPointerEvents" /> listens to, and counts each written result in the element's
+        ///     <see cref="UITransformComponent.Drains" />. UI events do not suppress the global events.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void WriteUiResults([Data] uint tick, ref PBPointerEvents pbPointerEvents, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
+        {
+            List<PointerEventType> pendingEvents = uiTransformComponent.PendingPointerEvents;
+
+            for (var i = 0; i < pendingEvents.Count; i++)
+            {
+                PointerEventType eventType = pendingEvents[i];
+
+                for (var j = 0; j < pbPointerEvents.PointerEvents.Count; j++)
+                {
+                    PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[j];
+
+                    if (entry.EventType != eventType)
+                        continue;
+
+                    AppendMessage(sdkEntity, null, entry.EventInfo.Button, eventType, tick);
+                    uiTransformComponent.Drains.RecordAppended(eventType);
+                    break;
+                }
+            }
+
+            pendingEvents.Clear();
+        }
+
+        /// <summary>
         /// Appends one pointer event result. Returns true if the event should suppress global input (non-hover).
         /// </summary>
-        private bool AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType)
+        private bool AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType, uint tick)
         {
             RaycastHit raycastHit = raycastHitPool.Get();
             raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
-            AppendMessage(sdkEntity, raycastHit, button, eventType);
+            AppendMessage(sdkEntity, raycastHit, button, eventType, tick);
 
             return eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
         }
 
-        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
+        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType, uint tick)
         {
             if (IsUserGesture(button, eventType))
-                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+                sceneStateProvider.LastUserInputTick = tick;
 
-            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
+            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, uint tick)>(
                 static (result, data) =>
                 {
                     result.Hit = data.sdkHit;
                     result.Button = data.button;
                     result.State = data.eventType;
-                    result.Timestamp = data.sceneStateProvider!.TickNumber;
-                    result.TickNumber = data.sceneStateProvider.TickNumber;
-                }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
+                    result.Timestamp = data.tick;
+                    result.TickNumber = data.tick;
+                }, sdkEntity, (int)tick, (sdkHit, button, eventType, tick));
         }
 
         /// <summary>

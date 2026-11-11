@@ -89,10 +89,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         /// </summary>
         private void FallBackToRawGltf(Entity entity, string name, string hash, string reason)
         {
-            if (abgenConversionMetrics.RawGltfFallbackReason == null)
+            if (abgenConversionMetrics.OnFellBackToRawGltf(name, reason))
                 ReportHub.LogWarning(GetReportCategory(), $"{name}: asset bundle unavailable ({reason}), loading the raw GLTF instead");
-
-            abgenConversionMetrics.OnFailed(name, $"{reason} — loaded as raw GLTF");
 
             World.Get<StreamableLoadingState>(entity).Dispose();
             World.Set(entity, StreamableLoadingState.Create());

@@ -7,14 +7,15 @@ using DCL.ECSComponents;
 using NSubstitute;
 using NUnit.Framework;
 using System.Buffers;
+using System.Collections.Generic;
 
 namespace CrdtEcsBridge.OutgoingMessages.Tests
 {
     public class OutgoingCRTDMessagesProviderShould
     {
-        private OutgoingCRDTMessagesProvider provider;
-        private ICRDTProtocol crdtProtocol;
-        private SDKComponentsRegistry sdkComponentRegistry;
+        private OutgoingCRDTMessagesProvider provider = null!;
+        private ICRDTProtocol crdtProtocol = null!;
+        private SDKComponentsRegistry sdkComponentRegistry = null!;
 
         [SetUp]
         public void SetUp()
@@ -31,7 +32,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             var crdtEntity = new CRDTEntity(1);
 
             //Act
-            PBPointerEventsResult message = provider.AppendMessage<PBPointerEventsResult, object>(
+            PBPointerEventsResult message = provider.AppendMessage<PBPointerEventsResult, object?>(
                 (_, _) => { }, crdtEntity, 100, null);
 
             //Assert
@@ -137,6 +138,35 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 1), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
             crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 2), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
             crdtProtocol.Received(1).CreateAppendMessage(Arg.Is<CRDTEntity>(c => c.Id == 3), ComponentID.POINTER_EVENTS_RESULT, 780, Arg.Any<IMemoryOwner<byte>>());
+        }
+
+        [Test]
+        public void TakePendingMessagesLeavesTheProviderEmpty()
+        {
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+            var crdtEntity = new CRDTEntity(1);
+
+            provider.AddPutMessage<PBPointerEventsResult, int>((_, _) => { }, crdtEntity, 100);
+            provider.AppendMessage<PBPointerEventsResult, int>((_, _) => { }, new CRDTEntity(2), 780, 100);
+
+            List<OutgoingCRDTMessagesProvider.PendingMessage> taken = provider.TakePendingMessages();
+
+            Assert.That(taken, Has.Count.EqualTo(2));
+            Assert.That(provider.messages, Is.Empty);
+            Assert.That(provider.lwwMessageIndices, Is.Empty);
+
+            // A put after the take starts a new batch instead of replacing the taken one
+            PBPointerEventsResult later = provider.AddPutMessage<PBPointerEventsResult, int>((_, _) => { }, crdtEntity, 200);
+
+            Assert.That(taken, Has.Count.EqualTo(2));
+            Assert.That(provider.messages, Has.Count.EqualTo(1));
+            Assert.That(provider.messages[0].Message, Is.EqualTo(later));
+
+            using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock(taken, null);
+
+            Assert.That(syncBlock.Messages, Has.Count.EqualTo(2));
+            crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 1), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
+            crdtProtocol.Received(1).CreateAppendMessage(Arg.Is<CRDTEntity>(c => c.Id == 2), ComponentID.POINTER_EVENTS_RESULT, 780, Arg.Any<IMemoryOwner<byte>>());
         }
 
         [Test]

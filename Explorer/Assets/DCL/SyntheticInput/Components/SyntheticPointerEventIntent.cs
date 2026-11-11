@@ -94,6 +94,15 @@ namespace DCL.SyntheticInput.Components
         public string? HoverText;
         public Vector3 HitPoint;
         public float Distance;
+
+        /// <summary>The input action the edge carried; <see cref="InputAction.IaAny" /> for a hover.</summary>
+        public InputAction Button;
+
+        /// <summary>
+        ///     Set on a hit that produced no result for the entity: its PointerEvents declare no entry for the
+        ///     button and event type that were delivered.
+        /// </summary>
+        public string? Warning;
         public int? BlockedByEntityId;
         public int? BlockedByCrdtId;
         public string? BlockedByColliderName;
@@ -117,10 +126,14 @@ namespace DCL.SyntheticInput.Components
                 ["hit"] = Hit,
                 ["entityId"] = SceneEntityId,
                 ["crdtEntityId"] = CrdtEntityId,
+                ["button"] = InputActionNames.ToWire(Button),
             };
 
             if (FailureReason != null)
                 json["reason"] = FailureReason;
+
+            if (Warning != null)
+                json["warning"] = Warning;
 
             if (BlockedByUi != null)
                 json["blockedByUi"] = BlockedByUi;

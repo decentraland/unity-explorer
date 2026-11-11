@@ -58,6 +58,22 @@ namespace DCL.SyntheticInput.AltTester
             }.ToString();
         }
 
+        /// <summary>What the reticle ray reaches this frame, in one round-trip; produces no scene event.</summary>
+        public static string GetReticleJson()
+        {
+            if (session == null)
+                return AltOperationRegistry.ErrorPayload(NOT_INSTALLED);
+
+            ReticleReading reading = session.Agent.ReadReticle();
+            JObject payload = reading.ToJson();
+            payload["ok"] = reading.Available;
+
+            if (!reading.Available)
+                payload["error"] = reading.UnavailableReason;
+
+            return payload.ToString();
+        }
+
         public static int StartWalk(float directionX, float directionY, string kind, float seconds, bool jump, bool ignoreInputModifiers)
         {
             if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
@@ -101,7 +117,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
-            if (!TryParseInputAction(button, out InputAction inputAction))
+            if (!InputActionNames.TryParse(button, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
 
             return AltOperationRegistry.Start(
@@ -114,7 +130,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
-            if (!TryParseInputAction(button, out InputAction inputAction))
+            if (!InputActionNames.TryParse(button, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
 
             var aim = PointerAim.AtScreenPoint(UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(x, y)));
@@ -129,7 +145,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
-            if (!TryParseInputAction(button, out InputAction inputAction))
+            if (!InputActionNames.TryParse(button, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
 
             if (deltaX == 0f && deltaY == 0f)
@@ -161,7 +177,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryGetAgent(out SyntheticInputAgent? readyAgent, out int failedId))
                 return failedId;
 
-            if (!TryParseInputAction(action, out InputAction inputAction))
+            if (!InputActionNames.TryParse(action, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{action}'")));
 
             PointerAim aim = entityId >= 0 ? PointerAim.AtEntity(entityId) : PointerAim.None;
@@ -190,26 +206,6 @@ namespace DCL.SyntheticInput.AltTester
 
         private static string? EmptyToNull(string value) =>
             string.IsNullOrEmpty(value) ? null : value;
-
-        /// <summary>Matches an <see cref="InputAction" /> name without its "Ia" prefix, ignoring case and underscores.</summary>
-        private static bool TryParseInputAction(string value, out InputAction action)
-        {
-            string normalized = value.Replace("_", "").Replace(" ", "");
-
-            foreach (InputAction candidate in (InputAction[])Enum.GetValues(typeof(InputAction)))
-            {
-                string candidateName = candidate.ToString();
-
-                if (candidateName.Length > 2 && string.Equals(candidateName[2..], normalized, StringComparison.OrdinalIgnoreCase))
-                {
-                    action = candidate;
-                    return true;
-                }
-            }
-
-            action = default(InputAction);
-            return false;
-        }
 
         private static string DeliveryPayload(SyntheticInputDelivery delivery) =>
             new JObject
