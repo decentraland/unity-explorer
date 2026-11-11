@@ -79,7 +79,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
             Assert.IsNull(uiTransformComponent.PointerEventTriggered);
             Assert.AreEqual(1, uiTransformComponent.Drains.DrainCount);
-            Assert.AreEqual(1, uiTransformComponent.Drains.AppendCount);
             Assert.AreEqual(eventType, uiTransformComponent.Drains.LastDrained);
             Assert.IsTrue(uiTransformComponent.Drains.LastWasAppended);
 
@@ -113,7 +112,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
             Assert.IsNull(uiTransformComponent.PointerEventTriggered);
             Assert.AreEqual(1, uiTransformComponent.Drains.DrainCount);
-            Assert.AreEqual(0, uiTransformComponent.Drains.AppendCount);
             Assert.AreEqual(PointerEventType.PetUp, uiTransformComponent.Drains.LastDrained);
             Assert.IsFalse(uiTransformComponent.Drains.LastWasAppended);
         }
@@ -150,8 +148,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             Assert.AreEqual(0, uiTransformComponent.Drains.DrainCount);
-            Assert.AreEqual(0, uiTransformComponent.Drains.AppendCount);
             Assert.IsNull(uiTransformComponent.Drains.LastDrained);
+            Assert.IsFalse(uiTransformComponent.Drains.LastWasAppended);
         }
 
         [Test]

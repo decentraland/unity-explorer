@@ -86,7 +86,8 @@ namespace DCL.McpServer.Tools
                 else
                     output.Append("[client:").Append(entry.Category).Append("] ");
 
-                output.Append(entry.Message)
+                // Continuation lines are indented, so a scene's own output cannot forge an entry header.
+                output.Append(entry.Message.Replace("\r", string.Empty).Replace("\n", "\n    "))
                       .AppendLine();
             }
 

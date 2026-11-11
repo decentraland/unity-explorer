@@ -16,7 +16,7 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>The slot was drained, but with another event in it: this one was overwritten before the drain.</summary>
         Dropped,
 
-        /// <summary>The slot was never drained in time (the event may not have reached the element at all).</summary>
+        /// <summary>The slot was never drained in time, or the scene has not read the result yet (the event may not have reached the element at all).</summary>
         NotDrained,
     }
 
@@ -82,7 +82,8 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!declared)
                 return SdkEventVerdict.NotDeclared;
 
-            if (!observed.Drained)
+            // A result the scene has not read yet reached no handler either.
+            if (!observed.Drained || (observed.DrainedType == sent && !observed.SceneRead))
                 return SdkEventVerdict.NotDrained;
 
             return observed.DrainedType == sent && observed.Appended ? SdkEventVerdict.Consumed : SdkEventVerdict.Dropped;

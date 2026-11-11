@@ -6,6 +6,7 @@ using DCL.McpServer.Utils;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -102,42 +103,43 @@ namespace DCL.McpServer.Tools
             AudioStateReader.Collect(scene.EcsExecutor.World, playerPosition, entries);
 
             bool sceneIsCurrent = scene.SceneStateProvider.IsCurrent;
-            JObject structured = AudioStateReader.Build(entries, onlyPlaying, limit, sceneIsCurrent, sceneIsCurrent ? null : NOT_CURRENT_NOTE);
+            string? note = sceneIsCurrent ? null : NOT_CURRENT_NOTE;
+            var shown = new List<AudioEntry>();
+            AudioStateReport report = AudioStateReader.Build(entries, onlyPlaying, limit, sceneIsCurrent, note, shown);
 
-            return UniTask.FromResult(McpToolResult.TextWithStructured(Describe(structured), structured));
+            return UniTask.FromResult(McpToolResult.TextWithStructured(Describe(in report, shown, note), report.Json));
         }
 
-        private static string Describe(JObject structured)
+        private static string Describe(in AudioStateReport report, List<AudioEntry> shown, string? note)
         {
-            var summary = (JObject)structured["summary"]!;
             var text = new StringBuilder();
 
-            text.Append("emitters=").Append(summary["total"])
-                .Append(" playing=").Append(summary["playing"])
-                .Append(" returned=").Append(structured["returned"]);
+            text.Append("emitters=").Append(report.Total)
+                .Append(" playing=").Append(report.Playing)
+                .Append(" returned=").Append(report.Returned);
 
-            if (structured["note"] is { Type: JTokenType.String } note)
+            if (note != null)
                 text.Append(" — ").Append(note);
 
             text.AppendLine();
 
-            foreach (JToken entry in (JArray)structured["entries"]!)
+            foreach (AudioEntry entry in shown)
             {
-                text.Append("crdt=").Append(entry["crdtEntity"])
-                    .Append(' ').Append(entry["kind"])
-                    .Append(' ').Append(entry["state"])
-                    .Append(entry["playing"]!.Value<bool>() ? " playing" : string.Empty);
+                text.Append("crdt=").Append(entry.CrdtEntity)
+                    .Append(' ').Append(McpWireEnum<AudioKind>.ToWire(entry.Kind))
+                    .Append(' ').Append(McpWireEnum<AudioPlaybackState>.ToWire(entry.State))
+                    .Append(entry.Playing ? " playing" : string.Empty);
 
-                if (entry["distance"] is { Type: JTokenType.Float } distance)
-                    text.Append(' ').Append(distance.Value<double>().ToString("0.##", CultureInfo.InvariantCulture)).Append("m");
+                if (!float.IsPositiveInfinity(entry.Distance))
+                    text.Append(' ').Append(Math.Round(entry.Distance, 2).ToString("0.##", CultureInfo.InvariantCulture)).Append("m");
 
-                if (entry["source"] is { Type: JTokenType.String } source)
-                    text.Append(" (").Append(source).Append(')');
+                if (entry.Source != null)
+                    text.Append(" (").Append(entry.Source).Append(')');
 
                 text.AppendLine();
             }
 
-            if (structured["truncated"]!.Value<bool>())
+            if (report.Truncated)
                 text.Append("more emitters exist; raise limit (max ").Append(MAX_LIMIT).Append(") to see them.");
 
             return text.ToString();

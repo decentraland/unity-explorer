@@ -20,8 +20,6 @@ namespace DCL.SyntheticInput.AltTester
         private const float SDK_CLICK_TIMEOUT_SEC = 5f;
         private const float GESTURE_TIMEOUT_GRACE_SEC = 5f;
 
-        private const string WORLD = "world";
-
         private static UiAutomationServices? services;
 
         public static void Install(UiAutomationServices installedServices) =>
@@ -59,10 +57,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!Enum.TryParse(button, ignoreCase: true, out PointerEventData.InputButton inputButton) || !Enum.IsDefined(typeof(PointerEventData.InputButton), inputButton))
                 return AltOperationRegistry.ErrorPayload($"unknown button '{button}' (use left, right or middle)");
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.ClickUgui(target, inputButton, force);
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.ClickUgui(target, inputButton, force).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string SetTextJson(string addressKind, string addressValue, string text, bool submit)
@@ -73,10 +68,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject? target, out string? resolveFailure))
                 return resolveFailure;
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.SetTextUgui(target, text, submit);
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.SetTextUgui(target, text, submit).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string ScrollJson(string addressKind, string addressValue, float dx, float dy, bool force)
@@ -87,10 +79,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryResolveUgui(ready, addressKind, addressValue, out GameObject? target, out string? resolveFailure))
                 return resolveFailure;
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.ScrollUgui(target, new Vector2(dx, dy), force);
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.ScrollUgui(target, new Vector2(dx, dy), force).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string SetTextSdkJson(int crdtId, string text, bool submit)
@@ -101,10 +90,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
                 return AltOperationRegistry.ErrorPayload(failure);
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.SetTextSdk(element, text, submit);
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.SetTextSdk(element, text, submit).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string SelectDropdownSdkJson(int crdtId, int optionIndex)
@@ -115,10 +101,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
                 return AltOperationRegistry.ErrorPayload(failure);
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.SelectDropdownSdk(element, optionIndex);
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.SelectDropdownSdk(element, optionIndex).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static string ScrollSdkJson(int crdtId, float dx, float dy)
@@ -129,10 +112,7 @@ namespace DCL.SyntheticInput.AltTester
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
                 return AltOperationRegistry.ErrorPayload(failure);
 
-            string? endedHover = ready.EndHover();
-            UiActionResult result = ready.Simulator.ScrollSdk(element, new Vector2(dx, dy));
-            result.EndedHover = endedHover;
-            return result.ToJson(ready.CursorStateName()).ToString();
+            return ready.ScrollSdk(element, new Vector2(dx, dy)).ToJson(ready.CursorStateName()).ToString();
         }
 
         public static int StartSdkClick(int crdtId, bool force)
@@ -145,15 +125,13 @@ namespace DCL.SyntheticInput.AltTester
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(failure)));
 
-            string? endedHover = ready.EndHover();
-
             // The timeout cancels the click as well, so an expired click does not keep driving the scene UI.
             var clickCancellation = new CancellationTokenSource();
 
             return AltOperationRegistry.Start(
-                ready.Simulator.ClickSdkAsync(element, force, clickCancellation.Token)
+                ready.ClickSdkAsync(element, force, clickCancellation.Token)
                      .Timeout(TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC), taskCancellationTokenSource: clickCancellation)
-                     .ContinueWith(result => WithEndedHover(result, endedHover).ToJson(ready.CursorStateName()).ToString()));
+                     .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 
         /// <summary>
@@ -170,11 +148,9 @@ namespace DCL.SyntheticInput.AltTester
             if (!ready.SdkResolver.TryResolve(crdtId, out SdkUiElement element, out string? failure))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload(failure)));
 
-            string? endedHover = ready.EndHover();
-
             return AltOperationRegistry.Start(
                 ready.ClickSdkWithDevicesAsync(element, rightButton ? MouseButton.Right : MouseButton.Left, force, SDK_CLICK_TIMEOUT_SEC, CancellationToken.None)
-                     .ContinueWith(result => WithEndedHover(result, endedHover).ToJson(ready.CursorStateName()).ToString()));
+                     .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 
         public static int StartDrag(float fromX, float fromY, float toX, float toY, int durationFrames, bool rightButton)
@@ -187,11 +163,10 @@ namespace DCL.SyntheticInput.AltTester
 
             Vector2 from = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(fromX, fromY));
             Vector2 to = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(toX, toY));
-            string? endedHover = ready.EndHover();
 
             return AltOperationRegistry.Start(
                 ready.DragWithDevicesAsync(from, to, frames, rightButton ? MouseButton.Right : MouseButton.Left, CancellationToken.None)
-                     .ContinueWith(outcome => DragPayload(outcome, endedHover)));
+                     .ContinueWith(outcome => DragPayload(outcome)));
         }
 
         public static int StartDeviceClick(float x, float y, bool rightButton)
@@ -208,10 +183,8 @@ namespace DCL.SyntheticInput.AltTester
                 Button = rightButton ? MouseButton.Right : MouseButton.Left,
             };
 
-            string? endedHover = ready.EndHover();
-
             return AltOperationRegistry.Start(ready.RunGestureAsync(request, GESTURE_TIMEOUT_GRACE_SEC, CancellationToken.None)
-                                                   .ContinueWith(result => GesturePayload(result, endedHover)));
+                                                   .ContinueWith(result => GesturePayload(result)));
         }
 
         /// <summary>
@@ -231,7 +204,7 @@ namespace DCL.SyntheticInput.AltTester
 
             return AltOperationRegistry.Start(
                 ready.HoverUguiAsync(address, target, force, device, GESTURE_TIMEOUT_GRACE_SEC, CancellationToken.None)
-                     .ContinueWith(outcome => HoverPayload(ready, outcome.Result, outcome.ReportsPointerOver, outcome.PointerOver)));
+                     .ContinueWith(outcome => ready.HoverJson(in outcome).ToString()));
         }
 
         /// <summary>Parks a hover on a scene UI element (start/poll); the enter is held until the scene consumed it.</summary>
@@ -250,7 +223,7 @@ namespace DCL.SyntheticInput.AltTester
             return AltOperationRegistry.Start(
                 ready.HoverSdkAsync(UiElementAddress.Sdk(crdtId), element, force, hoverCancellation.Token)
                      .Timeout(TimeSpan.FromSeconds(SDK_CLICK_TIMEOUT_SEC), taskCancellationTokenSource: hoverCancellation)
-                     .ContinueWith(result => HoverPayload(ready, result, false, null)));
+                     .ContinueWith(outcome => ready.HoverJson(in outcome).ToString()));
         }
 
         /// <summary>Ends the parked hover; <c>left</c> is null when none was parked.</summary>
@@ -319,32 +292,13 @@ namespace DCL.SyntheticInput.AltTester
             return true;
         }
 
-        private static UiActionResult WithEndedHover(UiActionResult result, string? endedHover)
-        {
-            result.EndedHover = endedHover;
-            return result;
-        }
-
-        private static string HoverPayload(UiAutomationServices ready, UiActionResult result, bool reportsPointerOver, string? pointerOver)
-        {
-            JObject payload = result.ToJson(ready.CursorStateName());
-
-            if (ready.HoveredAddress is { } hovered)
-                payload["hovering"] = hovered;
-
-            if (reportsPointerOver)
-                payload["pointerOver"] = pointerOver ?? WORLD;
-
-            return payload.ToString();
-        }
-
-        private static string DragPayload(UiDeviceDragOutcome outcome, string? endedHover)
+        private static string DragPayload(UiDeviceDragOutcome outcome)
         {
             var payload = new JObject
             {
                 ["ok"] = outcome.Ok,
-                ["pointerOverStart"] = outcome.CoverAtStart ?? WORLD,
-                ["pointerOverEnd"] = outcome.CoverAtEnd ?? WORLD,
+                ["pointerOverStart"] = outcome.CoverAtStart ?? UiAutomationServices.WORLD_COVER,
+                ["pointerOverEnd"] = outcome.CoverAtEnd ?? UiAutomationServices.WORLD_COVER,
             };
 
             if (outcome.FailureReason != null)
@@ -353,21 +307,21 @@ namespace DCL.SyntheticInput.AltTester
             if (outcome.DeliveryNote != null)
                 payload["info"] = outcome.DeliveryNote;
 
-            if (endedHover != null)
-                payload["hoverEnded"] = endedHover;
+            if (outcome.EndedHover != null)
+                payload["hoverEnded"] = outcome.EndedHover;
 
             return payload.ToString();
         }
 
-        private static string GesturePayload(UiGestureResult result, string? endedHover)
+        private static string GesturePayload(UiGestureResult result)
         {
             var payload = new JObject { ["ok"] = result.Ok };
 
             if (result.FailureReason != null)
                 payload["error"] = result.FailureReason;
 
-            if (endedHover != null)
-                payload["hoverEnded"] = endedHover;
+            if (result.EndedHover != null)
+                payload["hoverEnded"] = result.EndedHover;
 
             return payload.ToString();
         }

@@ -21,7 +21,7 @@ namespace DCL.SyntheticInput.Tests
         {
             world = World.Create();
             playerEntity = world.Create();
-            agent = new SyntheticInputAgent(world, playerEntity);
+            agent = new SyntheticInputAgent(world, playerEntity, static () => ReticleReading.Empty());
         }
 
         [TearDown]

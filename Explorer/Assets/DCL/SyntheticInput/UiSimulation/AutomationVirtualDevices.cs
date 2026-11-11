@@ -40,16 +40,19 @@ namespace DCL.SyntheticInput.UiSimulation
         public bool TryGetDeliveryBlocker(UiDeviceGestureKind kind, [NotNullWhen(true)] out string? reason)
         {
             bool keyboard = kind == UiDeviceGestureKind.KeyPress;
-            var editorWithholdsInput = false;
-
-#if UNITY_EDITOR
-            // Game view focus is what the Editor reports as application focus.
-            editorWithholdsInput = Application.isPlaying && !Application.isFocused
-                                   && InputSystem.settings.editorInputBehaviorInPlayMode != InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
-#endif
-
-            reason = DescribeDeliveryBlocker(keyboard ? Keyboard.enabled : Mouse.enabled, editorWithholdsInput, keyboard);
+            reason = DescribeDeliveryBlocker(keyboard ? Keyboard.enabled : Mouse.enabled, EditorWithholdsInput(), keyboard);
             return reason != null;
+        }
+
+        /// <summary>Game view focus is what the Editor reports as application focus; a player never withholds input.</summary>
+        private static bool EditorWithholdsInput()
+        {
+#if UNITY_EDITOR
+            return Application.isPlaying && !Application.isFocused
+                   && InputSystem.settings.editorInputBehaviorInPlayMode != InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+#else
+            return false;
+#endif
         }
 
         /// <summary>
@@ -78,6 +81,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (Keyboard.added)
                 InputSystem.RemoveDevice(Keyboard);
+
+            InputSystem.RemoveLayout(nameof(DclAutomationMouse));
+            InputSystem.RemoveLayout(nameof(DclAutomationKeyboard));
         }
 
         /// <summary>Position is in Unity screen coordinates (bottom-left origin).</summary>

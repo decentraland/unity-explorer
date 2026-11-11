@@ -29,6 +29,9 @@ namespace DCL.McpServer.Tools
         public const float DEFAULT_INTERVAL_SEC = 0.5f;
         public const float MIN_INTERVAL_SEC = 0.05f;
         public const float MAX_INTERVAL_SEC = 2f;
+
+        /// <summary>Longest wait between the first and the last frame, so a burst always ends inside the tool-call timeout.</summary>
+        public const float MAX_BURST_SEC = 20f;
         public const int DEFAULT_MAX_WIDTH = 640;
 
         private const string CAPTURES_FOLDER = "mcp-captures";
@@ -46,7 +49,8 @@ namespace DCL.McpServer.Tools
             + "screenshot cannot catch: a flash, a burst, a transition. The frames are written as files under the Explorer's own "
             + "temporary cache directory (never under a scene folder) and the result lists their paths, sizes and timestamps — no "
             + "image is returned inline, so read only the frames you need with a file tool. Shares the capture gate with screenshot: "
-            + "a call issued while either runs is refused. Defaults to 640 px wide so a burst stays cheap.";
+            + "a call issued while either runs is refused. Defaults to 640 px wide so a burst stays cheap. count is also capped so "
+            + "that (count - 1) * intervalSec stays within 20 s, the longest burst that completes inside a tool call.";
 
         public override JObject OutputSchema =>
             McpJsonSchema.Object()
@@ -80,7 +84,7 @@ namespace DCL.McpServer.Tools
         }
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("count", $"Frames to capture, 1..{MAX_COUNT}. Default {DEFAULT_COUNT}.")
+            schema.Integer("count", $"Frames to capture, 1..{MAX_COUNT}, further capped so the burst spans at most {MAX_BURST_SEC} s. Default {DEFAULT_COUNT}.")
                   .Number("intervalSec", $"Seconds between frames, {MIN_INTERVAL_SEC}..{MAX_INTERVAL_SEC}. Default {DEFAULT_INTERVAL_SEC}.")
                   .Integer("maxWidth", $"Maximum frame width in pixels (aspect ratio preserved). Default {DEFAULT_MAX_WIDTH}.")
                   .Enum<ScreenCaptureService.Format>("quality", "Frame encoding. Default jpg.")
@@ -121,11 +125,13 @@ namespace DCL.McpServer.Tools
                 {
                     ScreenCaptureService.Frame frame = await captureFrame(maxWidth, format, worldOnly, ct);
 
-                    // The capture returns on the thread pool; the bookkeeping below reads Unity time, so it runs on the main thread.
-                    await UniTask.SwitchToMainThread(ct);
-
+                    // The capture returns on the thread pool, where the file write belongs: a multi-MB write on the
+                    // main thread would stall the next frame.
                     string path = Path.Combine(directory, $"frame-{index:000}.{extension}");
                     File.WriteAllBytes(path, frame.Bytes);
+
+                    // The bookkeeping below reads Unity time, so it runs on the main thread.
+                    await UniTask.SwitchToMainThread(ct);
 
                     screenWidth = frame.ScreenWidth;
                     screenHeight = frame.ScreenHeight;
@@ -176,10 +182,16 @@ namespace DCL.McpServer.Tools
             finally { capture.Release(Name); }
         }
 
-        /// <summary>The count and interval the call will use, clamped to the documented ranges.</summary>
-        internal static (int count, float intervalSec) ClampArguments(JObject arguments) =>
-            (Mathf.Clamp(arguments.GetInt("count", DEFAULT_COUNT), 1, MAX_COUNT),
-                Mathf.Clamp(arguments.GetFloat("intervalSec", DEFAULT_INTERVAL_SEC), MIN_INTERVAL_SEC, MAX_INTERVAL_SEC));
+        /// <summary>
+        ///     The count and interval the call will use, clamped to the documented ranges and to a burst no longer
+        ///     than <see cref="MAX_BURST_SEC" />.
+        /// </summary>
+        internal static (int count, float intervalSec) ClampArguments(JObject arguments)
+        {
+            float intervalSec = Mathf.Clamp(arguments.GetFloat("intervalSec", DEFAULT_INTERVAL_SEC), MIN_INTERVAL_SEC, MAX_INTERVAL_SEC);
+            int maxCount = Mathf.Min(MAX_COUNT, 1 + Mathf.FloorToInt(MAX_BURST_SEC / intervalSec));
+            return (Mathf.Clamp(arguments.GetInt("count", DEFAULT_COUNT), 1, maxCount), intervalSec);
+        }
 
         private static void PruneOldCaptures(string capturesRoot)
         {

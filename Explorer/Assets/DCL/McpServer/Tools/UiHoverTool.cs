@@ -14,8 +14,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class UiHoverTool : McpTool
     {
-        private const string WORLD = "world";
-
         private static readonly string[] ADDRESS_ARGUMENTS = { "stack", "path", "id", "altId", "crdtId" };
 
         private readonly UiAutomationServices uiAutomation;
@@ -63,20 +61,15 @@ namespace DCL.McpServer.Tools
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? sdkFailure))
                     return McpToolResult.Error(sdkFailure);
 
-                UiActionResult sdkResult = await uiAutomation.HoverSdkAsync(address, element, force, ct);
-                return McpToolResult.Json(HoverJson(sdkResult));
+                UiHoverOutcome sdkOutcome = await uiAutomation.HoverSdkAsync(address, element, force, ct);
+                return McpToolResult.Json(uiAutomation.HoverJson(in sdkOutcome));
             }
 
             if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
                 return McpToolResult.Error(failure);
 
             UiHoverOutcome outcome = await uiAutomation.HoverUguiAsync(address, target, force, device, timeoutSec, ct);
-            JObject json = HoverJson(outcome.Result);
-
-            if (outcome.ReportsPointerOver)
-                json["pointerOver"] = outcome.PointerOver ?? WORLD;
-
-            return McpToolResult.Json(json);
+            return McpToolResult.Json(uiAutomation.HoverJson(in outcome));
         }
 
         private McpToolResult Leave(JObject arguments)
@@ -97,16 +90,6 @@ namespace DCL.McpServer.Tools
                 json["info"] = "no hover was parked, so nothing was left";
 
             return McpToolResult.Json(json);
-        }
-
-        private JObject HoverJson(UiActionResult result)
-        {
-            JObject json = result.ToJson(uiAutomation.CursorStateName());
-
-            if (uiAutomation.HoveredAddress is { } hovered)
-                json["hovering"] = hovered;
-
-            return json;
         }
     }
 }

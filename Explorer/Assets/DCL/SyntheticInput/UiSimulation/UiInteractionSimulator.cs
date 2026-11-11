@@ -193,8 +193,10 @@ namespace DCL.SyntheticInput.UiSimulation
 
                 if (slot.Drains.LastDrained == sent)
                 {
+                    // Read before the wait: a later drain (the real mouse, say) would overwrite it meanwhile.
+                    bool appended = slot.Drains.LastWasAppended;
                     bool sceneRead = await WaitForSceneToReadAsync(ct);
-                    return new SdkDrainObservation(true, sent, slot.Drains.LastWasAppended, sceneRead);
+                    return new SdkDrainObservation(true, sent, appended, sceneRead);
                 }
 
                 otherDrained = slot.Drains.LastDrained;
@@ -227,14 +229,19 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!enter.Drained)
                 return (UiActionResult.Failure("the scene did not consume the hover enter yet (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
 
-            UiActionResult result = UiActionResult.Success(imageRect);
+            // Judged as a click's events are: an enter the scene drained but never acted on was not delivered.
+            switch (SdkClickVerdict.Judge(PointerEventType.PetHoverEnter, declaresEnter, in enter))
+            {
+                case SdkEventVerdict.Dropped:
+                    return (UiActionResult.Failure(enter.DrainedType == PointerEventType.PetHoverEnter
+                            ? "the scene drained the hover enter without a result; the hover stays parked so it can be left"
+                            : $"the scene drained a {enter.DrainedType} instead of the hover enter: the element's single event slot was overwritten before the scene read it; the hover stays parked so it can be left",
+                        null, imageRect), true);
+                case SdkEventVerdict.NotDrained:
+                    return (UiActionResult.Failure("the scene drained the hover enter but has not read it (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
+            }
 
-            if (declaresEnter && !enter.Appended)
-                result.Info = enter.DrainedType == PointerEventType.PetHoverEnter
-                    ? "the scene drained the hover enter without a result"
-                    : $"the scene drained a {enter.DrainedType} instead of the hover enter: the element's single event slot was overwritten before the scene read it";
-
-            return (result, true);
+            return (UiActionResult.Success(imageRect), true);
         }
 
         /// <summary>Returns without waiting for the scene to consume the leave; the next SDK gesture waits for it.</summary>
@@ -374,11 +381,14 @@ namespace DCL.SyntheticInput.UiSimulation
         public async UniTask<bool> SettlePendingSdkEventsAsync(UITransformComponent? slotOwner, CancellationToken ct)
         {
             UITransformComponent? unsettled = unsettledSlot;
-            unsettledSlot = null;
 
             // A detached element's slot is never consumed, and its leave reaches no handler.
             if (unsettled is { Transform: { panel: not null } } && !await DrainSdkSlotAsync(unsettled, ct))
                 return false;
+
+            // Cleared only once settled, and only if no newer leave replaced it meanwhile.
+            if (ReferenceEquals(unsettledSlot, unsettled))
+                unsettledSlot = null;
 
             return slotOwner == unsettled || slotOwner?.PointerEventTriggered == null || await DrainSdkSlotAsync(slotOwner, ct);
         }
@@ -670,7 +680,7 @@ namespace DCL.SyntheticInput.UiSimulation
         public static UiActionResult Failure(string reason, string? blockedBy = null, Rect screenRect = default) =>
             new () { Ok = false, FailureReason = reason, BlockedBy = blockedBy, ScreenRect = screenRect };
 
-        public Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
+        public readonly Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
         {
             var json = new Newtonsoft.Json.Linq.JObject
             {

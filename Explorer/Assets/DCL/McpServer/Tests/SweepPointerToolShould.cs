@@ -20,7 +20,7 @@ namespace DCL.McpServer.Tests
             world = World.Create();
             Entity playerEntity = world.Create();
 
-            tool = new SweepPointerTool(new SyntheticInputAgent(world, playerEntity), new ExposedCameraData());
+            tool = new SweepPointerTool(new SyntheticInputAgent(world, playerEntity, static () => ReticleReading.Empty()), new ExposedCameraData());
         }
 
         [TearDown]

@@ -26,7 +26,7 @@ namespace DCL.SyntheticInput
 
             foreach (KeyValuePair<InputAction, string> pair in WIRE_NAMES)
             {
-                if (!string.Equals(Normalize(pair.Value), normalized, StringComparison.Ordinal))
+                if (!string.Equals(Normalize(pair.Value), normalized, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 action = pair.Key;
@@ -67,6 +67,6 @@ namespace DCL.SyntheticInput
         }
 
         private static string Normalize(string value) =>
-            value.Replace("_", string.Empty).Replace(" ", string.Empty).ToLowerInvariant();
+            value.Replace("_", string.Empty).Replace(" ", string.Empty);
     }
 }

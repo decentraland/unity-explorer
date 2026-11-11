@@ -14,8 +14,9 @@
     </assembly>
 
     <!--  AltTester static probes are reflection-only entry points (AltDriver.CallStaticMethod); High stripping
-          would remove their uncalled methods. The linker ignores entries whose types don't exist, so these are
-          no-ops in release builds where ALTTESTER is stripped.  -->
+          would remove their uncalled methods. The linker ignores entries whose types don't exist, so the probe
+          entries are no-ops in release builds where ALTTESTER is stripped. The two device layouts below compile
+          into every build and are kept in all of them.  -->
     <assembly fullname="DCL.SyntheticInput">
         <type fullname="DCL.SyntheticInput.AltTester.WorldAutomationProbe" preserve="all" />
         <type fullname="DCL.SyntheticInput.AltTester.UiAutomationProbe" preserve="all" />

@@ -48,6 +48,15 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
+        public void JudgeADrainTheSceneHasNotReadAsNotDrained()
+        {
+            var appendedButUnread = new SdkDrainObservation(true, PointerEventType.PetDown, true, false);
+
+            Assert.That(SdkClickVerdict.Judge(PointerEventType.PetDown, declared: true, in appendedButUnread), Is.EqualTo(SdkEventVerdict.NotDrained),
+                "a result the scene never read reached no handler");
+        }
+
+        [Test]
         public void DeclareOnlyTheTypesTheEntityLists()
         {
             var events = new PBPointerEvents();

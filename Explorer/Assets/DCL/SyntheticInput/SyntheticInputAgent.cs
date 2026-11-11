@@ -24,25 +24,18 @@ namespace DCL.SyntheticInput
 
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly ReticleProbe reticleProbe;
 
-        // The interaction pipeline lives in an assembly this one cannot reference, so its reader is installed by the systems.
-        private ReticleProbe? reticleProbe;
-
-        public SyntheticInputAgent(World world, Entity playerEntity)
+        public SyntheticInputAgent(World world, Entity playerEntity, ReticleProbe reticleProbe)
         {
             this.world = world;
             this.playerEntity = playerEntity;
+            this.reticleProbe = reticleProbe;
         }
-
-        /// <summary>Called once by the input systems' plugin, which can see the interaction pipeline's components.</summary>
-        public void InstallReticleProbe(ReticleProbe probe) =>
-            reticleProbe = probe;
 
         /// <summary>What is under the reticle on this frame. Reads only; no scene event is produced. Main thread only.</summary>
         public ReticleReading ReadReticle() =>
-            reticleProbe != null
-                ? reticleProbe()
-                : ReticleReading.Unavailable("the reticle reader is not installed (the synthetic input systems have not been injected yet)");
+            reticleProbe();
 
         /// <summary>Holds a camera-relative movement input for a duration (x = strafe right, y = forward).</summary>
         public async UniTask<SyntheticInputDelivery> WalkAsync(Vector2 axes, MovementKind kind, float seconds, bool jump = false,

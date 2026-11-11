@@ -929,7 +929,7 @@ namespace Global.Dynamic
 
             if (syntheticInputEnabled)
             {
-                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity);
+                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity, new SyntheticReticleReader(globalWorld, staticContainer.ScenesCache).Read);
 
                 var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
                     UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
@@ -941,7 +941,7 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache, staticContainer.LoadingStatus, bootstrapContainer.Environment);
 #endif
 
-                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, syntheticInputAgent, uiAutomation));
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
 
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                     globalPlugins.Add(new McpServerPlugin(

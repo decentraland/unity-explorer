@@ -59,6 +59,25 @@ namespace DCL.McpServer.Utils
         public float Distance;
     }
 
+    /// <summary>What <see cref="AudioStateReader.Build" /> produced: the structured payload and the counts it carries.</summary>
+    public readonly struct AudioStateReport
+    {
+        public readonly JObject Json;
+        public readonly int Total;
+        public readonly int Playing;
+        public readonly int Returned;
+        public readonly bool Truncated;
+
+        public AudioStateReport(JObject json, int total, int playing, int returned, bool truncated)
+        {
+            Json = json;
+            Total = total;
+            Playing = playing;
+            Returned = returned;
+            Truncated = truncated;
+        }
+    }
+
     /// <summary>Reads the scene world's audio emitters and shapes them for the agent, nearest first.</summary>
     public static class AudioStateReader
     {
@@ -164,8 +183,11 @@ namespace DCL.McpServer.Utils
                 _ => AudioPlaybackState.None,
             };
 
-        /// <summary>Shapes already-sorted entries: filters, limits and counts them.</summary>
-        public static JObject Build(List<AudioEntry> entries, bool onlyPlaying, int limit, bool sceneIsCurrent, string? note)
+        /// <summary>
+        ///     Shapes already-sorted entries: filters, limits and counts them. The entries that made it into the
+        ///     payload are appended to <paramref name="shown" />, in payload order.
+        /// </summary>
+        public static AudioStateReport Build(List<AudioEntry> entries, bool onlyPlaying, int limit, bool sceneIsCurrent, string? note, List<AudioEntry> shown)
         {
             var playing = 0;
             var audioSources = 0;
@@ -191,10 +213,13 @@ namespace DCL.McpServer.Utils
                 matched++;
 
                 if (shaped.Count < limit)
+                {
                     shaped.Add(ToJson(in entry));
+                    shown.Add(entry);
+                }
             }
 
-            var result = new JObject
+            var json = new JObject
             {
                 ["sceneIsCurrent"] = sceneIsCurrent,
                 ["note"] = note != null ? new JValue(note) : JValue.CreateNull(),
@@ -211,7 +236,7 @@ namespace DCL.McpServer.Utils
                 ["entries"] = shaped,
             };
 
-            return result;
+            return new AudioStateReport(json, entries.Count, playing, shaped.Count, shaped.Count < matched);
         }
 
         public static JObject ToJson(in AudioEntry entry) =>

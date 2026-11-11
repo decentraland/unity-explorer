@@ -182,20 +182,26 @@ namespace DCL.SyntheticInput.Systems
             if (intent.IsHover || !entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
                 return null;
 
-            var listened = new StringBuilder();
-
             for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
             {
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
-                InputAction entryButton = entry.EventInfo is { } info ? info.Button : InputAction.IaAny;
+                InputAction entryButton = ButtonOf(entry);
 
                 if (entry.EventType == intent.EventType && (entryButton == InputAction.IaAny || entryButton == intent.Button))
                     return null;
+            }
+
+            // Reached only when a warning is built: the matching case above allocates nothing.
+            var listened = new StringBuilder();
+
+            for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
+            {
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
 
                 if (listened.Length > 0)
                     listened.Append(", ");
 
-                listened.Append(EventTypeName(entry.EventType)).Append('/').Append(InputActionNames.ToWire(entryButton));
+                listened.Append(EventTypeName(entry.EventType)).Append('/').Append(InputActionNames.ToWire(ButtonOf(entry)));
             }
 
             string delivered = $"{EventTypeName(intent.EventType)}/{InputActionNames.ToWire(intent.Button)}";
@@ -228,6 +234,9 @@ namespace DCL.SyntheticInput.Systems
             return $"the free cursor is outside the window at image pixel ({imagePoint.x:F0}, {imagePoint.y:F0}) (screen {pixelWidth}x{pixelHeight}); "
                    + "the edge bound through the ray of that off-screen pixel, which a human's click there could not reach: aim explicitly (entityId or x/y/z), or lock the cursor";
         }
+
+        private static InputAction ButtonOf(PBPointerEvents.Types.Entry entry) =>
+            entry.EventInfo is { } info ? info.Button : InputAction.IaAny;
 
         private static string EventTypeName(PointerEventType eventType) =>
             eventType switch

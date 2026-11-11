@@ -55,18 +55,15 @@ namespace DCL.McpServer.Tools
             float timeoutSec = PointerArgs.ClampTimeout(arguments);
 
             UiActionResult result;
-            string? endedHover;
 
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
                     return McpToolResult.Error(failure);
 
-                endedHover = uiAutomation.EndHover();
-
                 result = device
                     ? await uiAutomation.ClickSdkWithDevicesAsync(element, ToMouseButton(button), force, timeoutSec, ct)
-                    : await uiAutomation.Simulator.ClickSdkAsync(element, force, ct);
+                    : await uiAutomation.ClickSdkAsync(element, force, ct);
             }
             else
             {
@@ -75,14 +72,10 @@ namespace DCL.McpServer.Tools
 
                 var rectTransform = (RectTransform)target.transform;
 
-                endedHover = uiAutomation.EndHover();
-
                 result = device
                     ? await uiAutomation.ClickWithDevicesAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), ToMouseButton(button), timeoutSec, ct)
-                    : uiAutomation.Simulator.ClickUgui(target, button, force);
+                    : uiAutomation.ClickUgui(target, button, force);
             }
-
-            result.EndedHover = endedHover;
 
             return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
         }

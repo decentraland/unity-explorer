@@ -49,14 +49,14 @@ namespace DCL.InWorldCamera
             return metadata;
         }
 
-        public void Init(Vector2Int sceneParcel, Plane[] frustumPlanes, Camera camera)
+        public void Init(Vector2Int parcel, Plane[] planes, Camera sourceCamera)
         {
             MetadataIsReady = false;
             visiblePeople.Clear();
 
-            this.frustumPlanes = frustumPlanes;
-            this.camera = camera;
-            this.sceneParcel = sceneParcel;
+            frustumPlanes = planes;
+            camera = sourceCamera;
+            sceneParcel = parcel;
         }
 
         public void AddSelfProfile(bool isEmoting)
@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
+                    userAddress = profile != null ? profile.UserId.Value : UNKNOWN_USER_WALLET,
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
                     screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
@@ -148,13 +148,15 @@ namespace DCL.InWorldCamera
         }
 
         internal void FillMetadata(Profile? profile, RealmData? realm, Vector2Int playerPosition,
-            string sceneName, string placeId, VisiblePerson[] visiblePeople)
+            string sceneName, string placeId, VisiblePerson[] people)
         {
+            string userAddress = profile != null ? profile.UserId.Value : UNKNOWN_USER_WALLET;
+
             if (metadata == null)
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
+                    userAddress = userAddress,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -163,18 +165,18 @@ namespace DCL.InWorldCamera
                         name = sceneName,
                         location = new Location(playerPosition),
                     },
-                    visiblePeople = visiblePeople,
+                    visiblePeople = people,
                 };
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId;
+                metadata.userAddress = userAddress;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;
                 metadata.scene.name = sceneName;
                 metadata.scene.location = new Location(playerPosition);
-                metadata.visiblePeople = visiblePeople;
+                metadata.visiblePeople = people;
             }
         }
     }

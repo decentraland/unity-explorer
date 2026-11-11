@@ -165,6 +165,9 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void ExplainWhyASceneUiDragDoesNotApply()
         {
+            GameObject hovered = AddHighlightable("Hovered", canvasRoot);
+            HoverForced(hovered, "Root/Hovered");
+
             UniTask<SceneUiDragAttempt> drag = services.DragSceneUiAsync(new Vector2(10f, 10f), new Vector2(20f, 20f), steps: 4, CancellationToken.None);
 
             Assert.That(drag.Status, Is.EqualTo(UniTaskStatus.Succeeded));
@@ -172,6 +175,7 @@ namespace DCL.SyntheticInput.Tests
             SceneUiDragAttempt attempt = drag.GetAwaiter().GetResult();
             Assert.That(attempt.Result, Is.Null);
             Assert.That(attempt.SkipReason, Is.EqualTo("no running current scene"));
+            Assert.That(attempt.EndedHover, Is.EqualTo("ugui:path=Root/Hovered"), "a skipped attempt still ended the hover, and says so");
         }
 
         [Test]
@@ -199,6 +203,33 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.Ok, Is.False);
             Assert.That(result.FailureReason, Does.Contain("automation mouse is disabled"));
             Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void AbandonADeviceGestureWhenItsCallerIsCancelled()
+        {
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+
+            UniTask<UiGestureResult> gesture = services.RunGestureAsync(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.Click, To = new Vector2(5f, 5f) }, timeoutSec: 1f, cancellation.Token);
+
+            Assert.That(gesture.Status, Is.EqualTo(UniTaskStatus.Canceled));
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False, "a request left on the entity would replay its states on later frames");
+        }
+
+        [Test]
+        public void EndTheParkedHoverInsideEverySemanticGesture()
+        {
+            GameObject hovered = AddHighlightable("Hovered", canvasRoot);
+            GameObject clicked = AddHighlightable("Clicked", canvasRoot);
+            HoverForced(hovered, "Root/Hovered");
+
+            UiActionResult click = services.ClickUgui(clicked, PointerEventData.InputButton.Left, force: true);
+
+            Assert.That(click.EndedHover, Is.EqualTo("ugui:path=Root/Hovered"));
+            Assert.That(IsHighlighted(hovered), Is.False);
+            Assert.That(services.HoveredAddress, Is.Null);
+            Assert.That(services.ScrollUgui(clicked, Vector2.up, force: true).EndedHover, Is.Null, "nothing is parked any more");
         }
 
         [Test]

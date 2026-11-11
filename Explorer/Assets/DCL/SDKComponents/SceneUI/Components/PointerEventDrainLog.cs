@@ -12,11 +12,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// <summary>Drains of the slot, matched or not.</summary>
         public int DrainCount;
 
-        /// <summary>Drains that appended a pointer-event result for the scene.</summary>
-        public int AppendCount;
-
         public PointerEventType? LastDrained;
 
+        /// <summary>Whether the last drain appended a pointer-event result for the scene.</summary>
         public bool LastWasAppended;
 
         public void Record(PointerEventType drained, bool appended)
@@ -24,9 +22,6 @@ namespace DCL.SDKComponents.SceneUI.Components
             DrainCount++;
             LastDrained = drained;
             LastWasAppended = appended;
-
-            if (appended)
-                AppendCount++;
         }
     }
 }

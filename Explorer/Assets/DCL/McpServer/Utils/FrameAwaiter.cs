@@ -25,7 +25,7 @@ namespace DCL.McpServer.Utils
         public static UniTask<T> RunAtEndOfFrameAsync<T>(ICoroutineRunner runner, Func<T> atEndOfFrame, CancellationToken ct)
         {
             var completion = new UniTaskCompletionSource<T>();
-            runner.StartCoroutine(RunAtEndOfFrameCoroutine(completion, atEndOfFrame));
+            runner.StartCoroutine(RunAtEndOfFrameCoroutine(completion, atEndOfFrame, ct));
             return completion.Task.AttachExternalCancellation(ct);
         }
 
@@ -35,9 +35,16 @@ namespace DCL.McpServer.Utils
             completion.TrySetResult();
         }
 
-        private static IEnumerator RunAtEndOfFrameCoroutine<T>(UniTaskCompletionSource<T> completion, Func<T> atEndOfFrame)
+        private static IEnumerator RunAtEndOfFrameCoroutine<T>(UniTaskCompletionSource<T> completion, Func<T> atEndOfFrame, CancellationToken ct)
         {
             yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
+
+            // Once the awaiter is cancelled, what atEndOfFrame writes into may already have been released.
+            if (ct.IsCancellationRequested)
+            {
+                completion.TrySetCanceled(ct);
+                yield break;
+            }
 
             T result;
 

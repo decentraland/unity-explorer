@@ -158,9 +158,11 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             camera.RemoveCameraInputLock();
 
-            // If there are more locks then there is another newer camera mode area in place
+            // More locks mean another area is still in place; leaving the newest one hands the camera to the next-newest.
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld ? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
+            else if (index == ACTIVE_AREAS.Count && ACTIVE_AREAS.Count > 0)
+                camera.Mode = ACTIVE_AREAS[ACTIVE_AREAS.Count - 1].AreaLock.Mode;
 
             sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
 
@@ -203,7 +205,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
                 return;
             }
 
-            CameraModeAreaLock newest = ACTIVE_AREAS[ACTIVE_AREAS.Count - 1].Lock;
+            CameraModeAreaLock newest = ACTIVE_AREAS[ACTIVE_AREAS.Count - 1].AreaLock;
             newest.ActiveAreaCount = ACTIVE_AREAS.Count;
             globalWorld.AddOrSet(cameraEntity, newest);
         }
@@ -212,13 +214,13 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         {
             public readonly World World;
             public readonly Entity Entity;
-            public readonly CameraModeAreaLock Lock;
+            public readonly CameraModeAreaLock AreaLock;
 
             public ActiveArea(World world, Entity entity, CameraModeAreaLock areaLock)
             {
                 World = world;
                 Entity = entity;
-                Lock = areaLock;
+                AreaLock = areaLock;
             }
         }
     }

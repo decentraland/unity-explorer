@@ -5,36 +5,6 @@ using Object = UnityEngine.Object;
 namespace DCL.Diagnostics
 {
     /// <summary>
-    ///     One report as a sink receives it: the message text plus the category and scene the reporter attached,
-    ///     which the Unity log line itself does not carry.
-    /// </summary>
-    public readonly struct ReportLogEntry
-    {
-        public readonly LogType LogType;
-        public readonly string Category;
-        public readonly SceneShortInfo Scene;
-        public readonly string Message;
-        public readonly string? StackTrace;
-
-        public ReportLogEntry(LogType logType, string category, SceneShortInfo scene, string message, string? stackTrace)
-        {
-            LogType = logType;
-            Category = category;
-            Scene = scene;
-            Message = message;
-            StackTrace = stackTrace;
-        }
-    }
-
-    /// <summary>
-    ///     Receives the reports a <see cref="ReportSinkHandler" /> lets through. Called from whichever thread reported.
-    /// </summary>
-    public interface IReportSink
-    {
-        void Receive(in ReportLogEntry entry);
-    }
-
-    /// <summary>
     ///     Forwards every report its matrix admits to a sink, keeping the report's category and scene so the sink
     ///     can tell a scene's own output from the client's.
     /// </summary>

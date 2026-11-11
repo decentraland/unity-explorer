@@ -144,15 +144,20 @@ namespace DCL.McpServer.Tests
             };
 
             // Act
-            JObject all = AudioStateReader.Build(entries, onlyPlaying: false, limit: 10, sceneIsCurrent: true, note: null);
-            JObject playing = AudioStateReader.Build(entries, onlyPlaying: true, limit: 10, sceneIsCurrent: true, note: null);
+            var shownOfAll = new List<AudioEntry>();
+            var shownOfPlaying = new List<AudioEntry>();
+            AudioStateReport all = AudioStateReader.Build(entries, onlyPlaying: false, limit: 10, sceneIsCurrent: true, note: null, shownOfAll);
+            AudioStateReport playing = AudioStateReader.Build(entries, onlyPlaying: true, limit: 10, sceneIsCurrent: true, note: null, shownOfPlaying);
 
             // Assert
-            Assert.That(((JArray)all["entries"]!).Count, Is.EqualTo(2));
-            Assert.That(((JArray)playing["entries"]!).Count, Is.EqualTo(1));
-            Assert.That(playing["entries"]![0]!["crdtEntity"]!.Value<int>(), Is.EqualTo(1));
-            Assert.That(playing["summary"]!["total"]!.Value<int>(), Is.EqualTo(2), "the summary counts the scene, not the filter");
-            Assert.That(playing["summary"]!["playing"]!.Value<int>(), Is.EqualTo(1));
+            Assert.That(((JArray)all.Json["entries"]!).Count, Is.EqualTo(2));
+            Assert.That(shownOfAll.Count, Is.EqualTo(2));
+            Assert.That(((JArray)playing.Json["entries"]!).Count, Is.EqualTo(1));
+            Assert.That(playing.Json["entries"]![0]!["crdtEntity"]!.Value<int>(), Is.EqualTo(1));
+            Assert.That(shownOfPlaying[0].CrdtEntity, Is.EqualTo(1), "the shown list mirrors the payload");
+            Assert.That(playing.Total, Is.EqualTo(2), "the summary counts the scene, not the filter");
+            Assert.That(playing.Json["summary"]!["total"]!.Value<int>(), Is.EqualTo(2));
+            Assert.That(playing.Playing, Is.EqualTo(1));
         }
 
         [Test]
@@ -165,11 +170,15 @@ namespace DCL.McpServer.Tests
                 entries.Add(new AudioEntry { CrdtEntity = i, Distance = i });
 
             // Act
-            JObject result = AudioStateReader.Build(entries, onlyPlaying: false, limit: 2, sceneIsCurrent: true, note: null);
+            var shown = new List<AudioEntry>();
+            AudioStateReport result = AudioStateReader.Build(entries, onlyPlaying: false, limit: 2, sceneIsCurrent: true, note: null, shown);
 
             // Assert
-            Assert.That(result["returned"]!.Value<int>(), Is.EqualTo(2));
-            Assert.That(result["truncated"]!.Value<bool>(), Is.True);
+            Assert.That(result.Returned, Is.EqualTo(2));
+            Assert.That(result.Json["returned"]!.Value<int>(), Is.EqualTo(2));
+            Assert.That(result.Truncated, Is.True);
+            Assert.That(result.Json["truncated"]!.Value<bool>(), Is.True);
+            Assert.That(shown.Count, Is.EqualTo(2));
         }
 
         [Test]

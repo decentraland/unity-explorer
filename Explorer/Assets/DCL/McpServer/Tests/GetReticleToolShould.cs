@@ -12,15 +12,16 @@ namespace DCL.McpServer.Tests
     public class GetReticleToolShould
     {
         private World world = null!;
-        private SyntheticInputAgent agent = null!;
         private GetReticleTool tool = null!;
+
+        // What the injected probe answers; each test sets it before executing.
+        private ReticleProbe probe = static () => ReticleReading.Unavailable("no reading set by the test");
 
         [SetUp]
         public void SetUp()
         {
             world = World.Create();
-            agent = new SyntheticInputAgent(world, world.Create());
-            tool = new GetReticleTool(agent);
+            tool = new GetReticleTool(new SyntheticInputAgent(world, world.Create(), () => probe()));
         }
 
         [TearDown]
@@ -50,18 +51,9 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void ErrorWhenTheReaderIsNotInstalled()
-        {
-            McpToolResult result = Execute();
-
-            Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
-            Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain("not installed"));
-        }
-
-        [Test]
         public void ErrorWhenThePipelineIsIdle()
         {
-            agent.InstallReticleProbe(static () => ReticleReading.Unavailable("the cursor is panning the camera"));
+            probe = static () => ReticleReading.Unavailable("the cursor is panning the camera");
 
             McpToolResult result = Execute();
 
@@ -72,7 +64,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ShapeASceneEntityHitLikeThePointerResults()
         {
-            agent.InstallReticleProbe(static () => SceneEntityReading());
+            probe = static () => SceneEntityReading();
 
             McpToolResult result = Execute();
 
@@ -90,12 +82,12 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FlagACursorOutsideTheWindow()
         {
-            agent.InstallReticleProbe(static () =>
+            probe = static () =>
             {
                 ReticleReading reading = SceneEntityReading();
                 reading.PointerImagePoint = new Vector2(-604f, 1175f);
                 return reading;
-            });
+            };
 
             McpToolResult result = Execute();
 
@@ -108,7 +100,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ReportTheCursorOnScreenWhenItIs()
         {
-            agent.InstallReticleProbe(static () => SceneEntityReading());
+            probe = static () => SceneEntityReading();
 
             var structured = (JObject)Execute().Payload["structuredContent"]!;
             Assert.That(structured["cursor"]!["onScreen"]!.Value<bool>(), Is.True);
@@ -117,7 +109,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void KeepTheOutputSchemaInSyncWithTheStructuredPayload()
         {
-            agent.InstallReticleProbe(static () => SceneEntityReading());
+            probe = static () => SceneEntityReading();
 
             McpToolResult result = Execute();
 

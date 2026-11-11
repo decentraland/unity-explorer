@@ -42,7 +42,7 @@ namespace DCL.McpServer.Tests
             globalWorldActions.MoveAndRotatePlayerAsync(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>(), Arg.Any<float>(), Arg.Any<CancellationToken>())
                               .Returns(UniTask.FromResult(true));
 
-            tool = new MoveToTool(globalWorldActions, world, playerEntity, new ExposedCameraData(), new SyntheticInputAgent(world, playerEntity));
+            tool = new MoveToTool(globalWorldActions, world, playerEntity, new ExposedCameraData(), new SyntheticInputAgent(world, playerEntity, static () => ReticleReading.Empty()));
         }
 
         [TearDown]

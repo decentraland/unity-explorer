@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaState state = GetAudioSourceState(in audioSourceComponent);
+            MediaState state = audioSourceComponent.GetMediaState();
 
             // Only propagate if state has changed to avoid CRDT message spam
             if (state == audioSourceComponent.LastPropagatedAudioState)
@@ -145,9 +145,6 @@ namespace DCL.SDKComponents.AudioSources
                 },
                 sdkEntity, sdkComponent);
         }
-
-        internal static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent) =>
-            audioSourceComponent.GetMediaState();
 
         private MediaState GetAudioStreamState(in MediaPlayerComponent mediaPlayer)
         {

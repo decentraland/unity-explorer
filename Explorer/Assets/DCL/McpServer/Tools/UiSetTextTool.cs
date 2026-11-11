@@ -46,17 +46,15 @@ namespace DCL.McpServer.Tools
             bool submit = arguments.GetBool("submit", false);
 
             UiActionResult result;
-            string? endedHover;
 
             if (address.Stack == UiStack.SDK)
             {
                 if (!uiAutomation.SdkResolver.TryResolve(address.CrdtId, out SdkUiElement element, out string? failure))
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
-                endedHover = uiAutomation.EndHover();
                 result = text != null && !hasOptionIndex
-                    ? uiAutomation.Simulator.SetTextSdk(element, text, submit)
-                    : uiAutomation.Simulator.SelectDropdownSdk(element, optionIndex);
+                    ? uiAutomation.SetTextSdk(element, text, submit)
+                    : uiAutomation.SelectDropdownSdk(element, optionIndex);
             }
             else
             {
@@ -66,11 +64,8 @@ namespace DCL.McpServer.Tools
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
-                endedHover = uiAutomation.EndHover();
-                result = uiAutomation.Simulator.SetTextUgui(target, text, submit);
+                result = uiAutomation.SetTextUgui(target, text, submit);
             }
-
-            result.EndedHover = endedHover;
 
             return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));
         }

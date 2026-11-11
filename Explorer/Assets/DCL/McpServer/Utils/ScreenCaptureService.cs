@@ -102,15 +102,23 @@ namespace DCL.McpServer.Utils
 
         /// <summary>
         ///     Claims the capture gate for <paramref name="owner" />. False when another capture is running; the
-        ///     caller reports <see cref="BusyOwner" /> instead of queueing, so one set of buffers suffices.
+        ///     caller reports <see cref="BusyOwner" /> instead of queueing, so one set of buffers suffices. A plain
+        ///     field is enough: tool execution is marshalled onto the main thread.
         /// </summary>
-        public bool TryAcquire(string owner) =>
-            Interlocked.CompareExchange(ref busyOwner, owner, null) == null;
+        public bool TryAcquire(string owner)
+        {
+            if (busyOwner != null)
+                return false;
+
+            busyOwner = owner;
+            return true;
+        }
 
         /// <summary>Releases the gate if <paramref name="owner" /> holds it.</summary>
         public void Release(string owner)
         {
-            Interlocked.CompareExchange(ref busyOwner, null, owner);
+            if (busyOwner == owner)
+                busyOwner = null;
         }
 
         /// <summary>
@@ -203,6 +211,10 @@ namespace DCL.McpServer.Utils
                 if (readback.hasError)
                 {
                     byte[] fallbackBytes = EncodeViaReadPixels(downscaled, format);
+
+                    // Released here so the finally block has nothing left to switch back to the main thread for.
+                    RenderTexture.ReleaseTemporary(downscaled);
+                    downscaled = null;
                     await DCLTask.SwitchToThreadPool();
                     return new Frame(fallbackBytes, MimeTypeOf(format), width, height, screenWidth, screenHeight, realtimeStamp);
                 }
@@ -261,7 +273,7 @@ namespace DCL.McpServer.Utils
         {
             using NativeArray<byte> encodedNative = format == Format.Png
                 ? ImageConversion.EncodeNativeArrayToPNG(pixels, graphicsFormat, (uint)width, (uint)height)
-                : ImageConversion.EncodeNativeArrayToJPG(pixels, graphicsFormat, (uint)width, (uint)height);
+                : ImageConversion.EncodeNativeArrayToJPG(pixels, graphicsFormat, (uint)width, (uint)height, quality: JPG_QUALITY);
 
             return encodedNative.ToArray();
         }

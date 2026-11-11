@@ -19,7 +19,7 @@ namespace DCL.McpServer.Tests
         public void SetUp()
         {
             world = World.Create();
-            tool = new PressInputTool(new SyntheticInputAgent(world, world.Create()));
+            tool = new PressInputTool(new SyntheticInputAgent(world, world.Create(), static () => ReticleReading.Empty()));
         }
 
         [TearDown]

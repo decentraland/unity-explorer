@@ -305,6 +305,25 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         }
 
         [Test]
+        public void ReapplyTheOuterAreaModeWhenTheInnerIsLeft()
+        {
+            // Arrange — the outer area forces first person, the inner one third person
+            system.OnEnteredCameraModeArea(entity, AREA_CRDT_ID, CameraMode.FirstPerson, AREA_SIZE);
+            system.OnEnteredCameraModeArea(otherEntity, OTHER_AREA_CRDT_ID, CameraMode.ThirdPerson, AREA_SIZE);
+
+            // Act
+            system.OnExitedCameraModeArea(otherEntity);
+
+            // Assert — the outer area is the one in effect again, and the published lock says so
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
+            Assert.AreEqual(CameraMode.FirstPerson, cameraComponent.Mode);
+            Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraModeAreaLock areaLock));
+            Assert.AreEqual(CameraMode.FirstPerson, areaLock.Mode);
+            Assert.AreEqual(AREA_CRDT_ID, areaLock.CrdtEntityId);
+        }
+
+        [Test]
         public void IgnoreASecondEnterOfTheSameArea()
         {
             // Arrange

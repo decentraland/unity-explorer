@@ -77,5 +77,8 @@ namespace DCL.SyntheticInput.UiSimulation
     {
         public bool Ok;
         public string? FailureReason;
+
+        /// <summary>Stamped by the facade: the address of a parked hover the gesture ended before it ran.</summary>
+        public string? EndedHover;
     }
 }

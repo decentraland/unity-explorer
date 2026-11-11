@@ -22,8 +22,6 @@ namespace DCL.McpServer.Tools
             Device,
         }
 
-        private const string WORLD = "world";
-
         private const int DEFAULT_DURATION_FRAMES = 15;
         private const int MIN_DURATION_FRAMES = 2;
         private const int MAX_DURATION_FRAMES = 300;
@@ -78,7 +76,9 @@ namespace DCL.McpServer.Tools
             int durationFrames = Mathf.Clamp(arguments.TryGetInt("durationFrames", out int frames) ? frames : DEFAULT_DURATION_FRAMES, MIN_DURATION_FRAMES, MAX_DURATION_FRAMES);
 
             string? skippedSceneUi = null;
-            string? endedHover = uiAutomation.EndHover();
+
+            // Whichever path runs first ends the parked hover; the other then finds none, so the first answer is kept.
+            string? endedHover = null;
 
             if (path != DragPath.Device)
             {
@@ -86,10 +86,10 @@ namespace DCL.McpServer.Tools
                 Vector2 toImage = UiScreenGeometry.NormalizedToImagePoint(new Vector2(toX, toY));
 
                 SceneUiDragAttempt attempt = await uiAutomation.DragSceneUiAsync(fromImage, toImage, durationFrames, ct);
+                endedHover = attempt.EndedHover;
 
                 if (attempt.Result is { } sdkResult)
                 {
-                    sdkResult.EndedHover = endedHover;
                     JObject sdkJson = sdkResult.ToJson(uiAutomation.CursorStateName());
                     sdkJson["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Sdk);
                     return McpToolResult.Json(sdkJson);
@@ -107,6 +107,7 @@ namespace DCL.McpServer.Tools
             MouseButton button = arguments.GetBool("rightButton", false) ? MouseButton.Right : MouseButton.Left;
 
             UiDeviceDragOutcome outcome = await uiAutomation.DragWithDevicesAsync(from, to, durationFrames, button, ct);
+            endedHover ??= outcome.EndedHover;
 
             if (!outcome.Ok)
                 return McpToolResult.Error((outcome.FailureReason ?? "the drag failed") + EndedHoverNote(endedHover));
@@ -118,8 +119,8 @@ namespace DCL.McpServer.Tools
                 ["cursorState"] = uiAutomation.CursorStateName(),
                 ["pointerOver"] = new JObject
                 {
-                    ["start"] = outcome.CoverAtStart ?? WORLD,
-                    ["end"] = outcome.CoverAtEnd ?? WORLD,
+                    ["start"] = outcome.CoverAtStart ?? UiAutomationServices.WORLD_COVER,
+                    ["end"] = outcome.CoverAtEnd ?? UiAutomationServices.WORLD_COVER,
                 },
                 ["screen"] = new JObject { ["width"] = Screen.width, ["height"] = Screen.height },
             };

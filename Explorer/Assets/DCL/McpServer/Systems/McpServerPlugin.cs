@@ -104,9 +104,10 @@ namespace DCL.McpServer.Systems
 
         public void Dispose()
         {
-            captureService?.Dispose();
-            server?.Dispose();
+            // The server first: a capture still in flight must not read buffers freed below.
             serverCts.SafeCancelAndDispose();
+            server?.Dispose();
+            captureService?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

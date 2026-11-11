@@ -47,7 +47,9 @@ namespace DCL.McpServer.Tests
             Object.DestroyImmediate(playerGameObject);
         }
 
-        [TestCase(99, 9f, CaptureSequenceTool.MAX_COUNT, CaptureSequenceTool.MAX_INTERVAL_SEC)]
+        // At the longest interval the count is capped so the burst fits the tool-call timeout.
+        [TestCase(99, 9f, 11, CaptureSequenceTool.MAX_INTERVAL_SEC)]
+        [TestCase(99, 0.5f, CaptureSequenceTool.MAX_COUNT, 0.5f)]
         [TestCase(0, 0f, 1, CaptureSequenceTool.MIN_INTERVAL_SEC)]
         [TestCase(3, 0.25f, 3, 0.25f)]
         public void ClampCountAndInterval(int count, float intervalSec, int expectedCount, float expectedInterval)
@@ -61,6 +63,16 @@ namespace DCL.McpServer.Tests
             // Assert
             Assert.That(clampedCount, Is.EqualTo(expectedCount));
             Assert.That(clampedInterval, Is.EqualTo(expectedInterval).Within(0.0001f));
+        }
+
+        [Test]
+        public void NeverAcceptABurstLongerThanTheCap()
+        {
+            // Act — the slowest interval with the largest count the clamp allows
+            (int count, float intervalSec) = CaptureSequenceTool.ClampArguments(new JObject { ["count"] = CaptureSequenceTool.MAX_COUNT, ["intervalSec"] = CaptureSequenceTool.MAX_INTERVAL_SEC });
+
+            // Assert
+            Assert.That((count - 1) * intervalSec, Is.LessThanOrEqualTo(CaptureSequenceTool.MAX_BURST_SEC));
         }
 
         [Test]
