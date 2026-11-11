@@ -301,6 +301,37 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task ReleaseEveryCreditWhenThePendingConfirmationIsAbandoned()
+        {
+            // Arrange: the first signature stays pending until its token is cancelled.
+            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(call =>
+                          {
+                              CancellationToken signCt = call.ArgAt<CancellationToken>(2);
+                              var pending = new UniTaskCompletionSource<RelayResult>();
+                              signCt.Register(() => pending.TrySetCanceled(signCt));
+                              return pending.Task;
+                          });
+
+            CartReview review = await ReviewAsync();
+            UniTask<CartCheckoutResult> running = service.CheckoutAsync(review, CancellationToken.None);
+            Assert.AreEqual(CartCheckoutStage.Signing, service.CurrentProgress.Stage);
+
+            // Act
+            service.CancelPendingConfirmation();
+            CartCheckoutResult result = await running;
+
+            // Assert: nothing was bought, the cart is intact and both reserved credits went back.
+            Assert.AreEqual(CartCheckoutOutcome.Cancelled, result.Outcome);
+            Assert.AreEqual(0, result.BoughtLineIds.Count);
+            Assert.AreEqual(3, cart.Count);
+            Assert.IsFalse(service.IsCheckoutInFlight);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_TRADE), Arg.Any<CancellationToken>());
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_STORE), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task ReleaseEverythingReservedAndSignNothingWhenCreditsRunOut()
         {
             // Arrange: the trade group reserves, then the store group is refused for lack of credits.

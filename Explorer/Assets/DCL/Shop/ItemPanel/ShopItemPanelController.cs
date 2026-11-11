@@ -115,7 +115,7 @@ namespace DCL.Shop
             creatorCts = creatorCts.SafeRestart();
             ResolveCreatorAsync(model.Creator, creatorCts.Token).Forget();
             view.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(model.Rarity);
-            view.RarityChipBackground.color = styling.GetRarityFlapColor(model.Rarity);
+            ShopRarityChip.Apply(view.RarityChipBackground, view.RarityChipText, styling.GetRarityFlapColor(model.Rarity));
             view.RarityChipText.text = ShopRaritySupply.ChipLabel(model.Rarity, model.Listing?.issuedId);
             view.CategoryIcon.sprite = styling.GetCategoryIcon(model.IsEmote ? ShopItemCardModel.CATEGORY_EMOTE : model.WearableCategory);
             view.SetPrice(model.IsNotForSale, model.PriceCredits);

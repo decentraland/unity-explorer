@@ -119,6 +119,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 viewInstance.CheckoutButton.onClick.RemoveListener(OnCheckoutClicked);
                 viewInstance.ConfirmChangesButton.onClick.RemoveListener(OnConfirmChangesClicked);
                 viewInstance.BackToCartButton.onClick.RemoveListener(ShowLines);
+                viewInstance.CancelConfirmationButton.onClick.RemoveListener(checkoutService.CancelPendingConfirmation);
                 viewInstance.RetryButton.onClick.RemoveListener(ShowLines);
                 viewInstance.BuyCreditsButton.onClick.RemoveListener(OnBuyCreditsClicked);
                 viewInstance.ToBackpackButton.onClick.RemoveListener(OnToBackpackClicked);
@@ -141,6 +142,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance!.CheckoutButton.onClick.AddListener(OnCheckoutClicked);
             viewInstance.ConfirmChangesButton.onClick.AddListener(OnConfirmChangesClicked);
             viewInstance.BackToCartButton.onClick.AddListener(ShowLines);
+            viewInstance.CancelConfirmationButton.onClick.AddListener(checkoutService.CancelPendingConfirmation);
             viewInstance.RetryButton.onClick.AddListener(ShowLines);
             viewInstance.BuyCreditsButton.onClick.AddListener(OnBuyCreditsClicked);
             viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
@@ -532,6 +534,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 _ => viewInstance.ProgressStatusText.text,
             };
 
+            viewInstance.CancelConfirmationButton.gameObject.SetActive(progress.Stage == CartCheckoutStage.Signing);
             UpdateSignatureBadge(progress.GroupCount);
         }
 
@@ -614,6 +617,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
             viewInstance.BuyCreditsButton.gameObject.SetActive(newState is ModalState.ConfirmChanges or ModalState.InsufficientCredits);
             viewInstance.CheckoutButton.interactable = newState == ModalState.Lines && cart.Count > 0;
+
+            if (newState != ModalState.Processing)
+                viewInstance.CancelConfirmationButton.gameObject.SetActive(false);
 
             if (newState is not (ModalState.ConfirmChanges or ModalState.Processing))
                 viewInstance.SignatureCountBadge.SetActive(false);

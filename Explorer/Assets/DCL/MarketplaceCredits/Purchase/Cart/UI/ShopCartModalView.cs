@@ -29,6 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         [field: SerializeField] public Button CheckoutButton { get; private set; } = null!;
         [field: SerializeField] public Button ConfirmChangesButton { get; private set; } = null!;
         [field: SerializeField] public Button BackToCartButton { get; private set; } = null!;
+        [field: SerializeField] public Button CancelConfirmationButton { get; private set; } = null!;
         [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
         [field: SerializeField] public Button ContinueShoppingButton { get; private set; } = null!;
         [field: SerializeField] public Button RetryButton { get; private set; } = null!;

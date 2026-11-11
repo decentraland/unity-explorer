@@ -33,6 +33,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         private readonly bool isFeatureEnabled;
         private readonly CancellationTokenSource lifetimeCts = new ();
 
+        private CancellationTokenSource? confirmationCts;
+
         public event Action<CartCheckoutProgress>? StateChanged;
 
         /// <summary>Raised for every terminal result, bought or not.</summary>
@@ -71,6 +73,13 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
         public void Dispose() =>
             lifetimeCts.SafeCancelAndDispose();
+
+        /// <summary>
+        ///     Abandons the confirmation the buyer is being asked for: its credit and those of the groups after it are
+        ///     released and the checkout ends as cancelled. Does nothing once the confirmation was given.
+        /// </summary>
+        public void CancelPendingConfirmation() =>
+            confirmationCts?.Cancel();
 
         public void AcknowledgeResult() =>
             LastResult = null;
@@ -254,11 +263,13 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
                 UseCreditsOutcome outcome;
 
+                confirmationCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCts.Token);
+
                 try
                 {
                     outcome = await executor.ExecuteAsync(request,
                         state => OnExecutorStateChanged(state, groupIndex, groups.Count, unitCount),
-                        lifetimeCts.Token, lifetimeCts.Token);
+                        confirmationCts.Token, lifetimeCts.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -281,6 +292,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     failedAt = CartCheckoutStage.Signing;
                     await ReleaseGroupsAsync(groups, i + 1);
                     break;
+                }
+                finally
+                {
+                    confirmationCts.Dispose();
+                    confirmationCts = null;
                 }
 
                 group.Outcome = outcome;

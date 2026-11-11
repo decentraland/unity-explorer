@@ -137,7 +137,7 @@ namespace DCL.Shop
             if (style.rarityBackground != null)
                 RarityBackground.sprite = style.rarityBackground;
 
-            RarityChipBackground.color = style.flapColor;
+            ShopRarityChip.Apply(RarityChipBackground, RarityChipText, style.flapColor);
             RarityChipText.text = model.Rarity.ToUpperInvariant();
             CategoryFlap.SetActive(style.categoryIcon != null);
             CategoryFlapBackground.color = style.flapColor;
