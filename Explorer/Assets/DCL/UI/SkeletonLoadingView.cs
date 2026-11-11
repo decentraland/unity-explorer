@@ -21,6 +21,7 @@ namespace DCL.UI
 
         public void ShowLoading(bool interactableLoading = false)
         {
+            loadedCanvasGroup.DOKill();
             loadedCanvasGroup.alpha = 0f;
             loadedCanvasGroup.blocksRaycasts = false;
             loadedCanvasGroup.interactable = false;
