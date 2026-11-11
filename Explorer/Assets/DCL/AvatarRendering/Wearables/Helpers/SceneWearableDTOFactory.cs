@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private const string SCENE_WEARABLE_URN_START = SCENE_WEARABLE_PREFIX + ":";
         private const string GLB_EXTENSION = ".glb";
+        private const string RAW_GLTF_URN_SUFFIX = "-raw";
         private const string WEARABLE_ENTITY_TYPE = "wearable";
         private const string ENTITY_VERSION = "v3";
         private const uint FNV_OFFSET_BASIS = 2166136261;
@@ -109,8 +110,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return false;
             }
 
-            // The path tells apart one model reused in folders with different textures.
-            urn = new URN($"{GetUrnPrefix(definition.id)}{hash}-{GetPathHash(path).ToString("x8")}");
+            // The path tells apart one model reused in folders with different textures, the suffix tells apart raw and bundle loads.
+            urn = new URN($"{GetUrnPrefix(definition.id)}{hash}-{GetPathHash(path).ToString("x8")}{(loadRawGltf ? RAW_GLTF_URN_SUFFIX : string.Empty)}");
             return true;
         }
 

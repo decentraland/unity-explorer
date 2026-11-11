@@ -26,6 +26,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
         private const string UPPERCASE_HAT_HASH = "bafkreicrownhash";
         private const string CATALYST_WEARABLE = "urn:decentraland:off-chain:base-avatars:eyes_00";
         private const string EXPECTED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-" + HAT_HASH + "-224e2dcb";
+        private const string EXPECTED_RAW_URN = EXPECTED_URN + "-raw";
         private const string UNSEEDED_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":" + SCENE_ID + "-bafkreimissinghash-00000000";
         private const string OTHER_SCENE_URN = SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX + ":bafkreiotherscene-" + HAT_HASH + "-224e2dcb";
         private const string CONTENT_BASE_URL = "http://127.0.0.1:8000/content/contents/";
@@ -108,7 +109,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, true, false);
 
             // Act
-            WearableDTO dto = SeedHat();
+            WearableDTO dto = SeedHat(EXPECTED_RAW_URN);
 
             // Assert
             Assert.AreEqual(CONTENT_BASE_URL, dto.ContentDownloadUrl);
@@ -139,7 +140,7 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             system = new ResolveSceneWearablePathsSystem(world, sceneData, wearableStorage, true, true);
 
             // Act
-            WearableDTO dto = SeedHat();
+            WearableDTO dto = SeedHat(EXPECTED_RAW_URN);
 
             // Assert
             Assert.AreEqual(CONTENT_BASE_URL, dto.ContentDownloadUrl);
@@ -342,14 +343,14 @@ namespace DCL.SDKComponents.SceneWearables.Tests
             Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out _));
         }
 
-        private WearableDTO SeedHat()
+        private WearableDTO SeedHat(string expectedUrn = EXPECTED_URN)
         {
             var pbAvatarShape = new PBAvatarShape { Wearables = { HAT_PATH }, IsDirty = true };
             world.Create(pbAvatarShape);
             system.Update(0);
 
-            CollectionAssert.AreEqual(new[] { EXPECTED_URN }, pbAvatarShape.Wearables);
-            Assert.IsTrue(wearableStorage.TryGetElement(EXPECTED_URN, out IWearable wearable));
+            CollectionAssert.AreEqual(new[] { expectedUrn }, pbAvatarShape.Wearables);
+            Assert.IsTrue(wearableStorage.TryGetElement(expectedUrn, out IWearable wearable));
             return wearable.Model.Asset!;
         }
     }

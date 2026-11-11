@@ -200,7 +200,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             // Assert
             Assert.IsTrue(created);
-            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}-{HAT_PATH_HASH}", urn.ToString());
+            Assert.AreEqual($"{SceneWearableDTOFactory.SCENE_WEARABLE_PREFIX}:{SCENE_ID}-{HAT_HASH}-{HAT_PATH_HASH}-raw", urn.ToString());
             Assert.AreEqual(CONTENT_BASE_URL, dto!.ContentDownloadUrl);
             Assert.IsFalse(((LocalSceneWearableDTO)dto).RawGltfFallback);
         }
@@ -243,6 +243,18 @@ namespace DCL.AvatarRendering.Wearables.Tests
             // Assert
             Assert.AreNotEqual(urn, redUrn);
             CollectionAssert.AreEqual(new[] { RED_HAT_PATH, "assets/wearables/red/cap_texture.png" }, Array.ConvertAll(redDto!.content, c => c.file));
+        }
+
+        [Test]
+        public void GiveRawLoadItsOwnUrn()
+        {
+            // Act
+            TryCreate(HAT_PATH, false, out URN bundleUrn, out WearableDTO? _);
+            TryCreate(HAT_PATH, true, out URN rawUrn, out WearableDTO? _);
+
+            // Assert
+            Assert.AreNotEqual(bundleUrn, rawUrn);
+            Assert.AreEqual(rawUrn, rawUrn.Shorten());
         }
 
         [Test]
