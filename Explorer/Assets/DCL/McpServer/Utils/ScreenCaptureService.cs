@@ -96,7 +96,9 @@ namespace DCL.McpServer.Utils
             if (readPixelsBuffer != null)
                 Object.Destroy(readPixelsBuffer);
 
-            if (encodeScratch.IsCreated)
+            // A capture holding the gate may still be encoding from the scratch buffer on the thread pool, and the
+            // encode takes no token, so the buffer is left to the process instead of freed under it.
+            if (encodeScratch.IsCreated && busyOwner == null)
                 encodeScratch.Dispose();
         }
 

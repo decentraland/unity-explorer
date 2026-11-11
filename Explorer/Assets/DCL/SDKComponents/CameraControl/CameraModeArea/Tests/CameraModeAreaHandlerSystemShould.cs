@@ -185,10 +185,10 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            // "Exit" last trigger area
+            // "Exit" last trigger area: the mode from before the first area comes back, not the first area's forced mode
             system.OnExitedCameraModeArea(otherEntity);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
-            Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
+            Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
         }
 
@@ -321,6 +321,24 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraModeAreaLock areaLock));
             Assert.AreEqual(CameraMode.FirstPerson, areaLock.Mode);
             Assert.AreEqual(AREA_CRDT_ID, areaLock.CrdtEntityId);
+        }
+
+        [Test]
+        public void RestoreTheModeFromBeforeTheFirstAreaWhenBothNestedAreasAreLeft()
+        {
+            // Arrange — the player is in third person before any area; both areas force other modes
+            CameraMode originalCameraMode = globalWorld.Get<CameraComponent>(cameraEntity).Mode;
+            system.OnEnteredCameraModeArea(entity, AREA_CRDT_ID, CameraMode.FirstPerson, AREA_SIZE);
+            system.OnEnteredCameraModeArea(otherEntity, OTHER_AREA_CRDT_ID, CameraMode.Free, AREA_SIZE);
+
+            // Act — inner first, then outer
+            system.OnExitedCameraModeArea(otherEntity);
+            system.OnExitedCameraModeArea(entity);
+
+            // Assert — neither area's forced mode survives
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
+            Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
+            Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
         }
 
         [Test]

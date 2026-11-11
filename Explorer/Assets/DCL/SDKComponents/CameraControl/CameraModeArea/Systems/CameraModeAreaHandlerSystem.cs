@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         // There's only 1 camera at a time, only 1 camera mode area effect at a time
         // and that area is only activated by the main player ('targetOnlyMainPlayer' property)
         // that's why we have these fields as static.
-        private static CameraMode cameraModeBeforeLastAreaEnter;
+        private static CameraMode cameraModeBeforeFirstAreaEnter;
 
         // Main player can enter an area while being already inside another one, but the last one
         // entered is the one in effect, so the list keeps entry order. Areas are keyed by world and
@@ -124,7 +124,10 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
 
-            cameraModeBeforeLastAreaEnter = camera.Mode;
+            // Only the first area entered sees the player's own mode; a nested enter would record the outer area's forced mode.
+            if (ACTIVE_AREAS.Count == 0)
+                cameraModeBeforeFirstAreaEnter = camera.Mode;
+
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
 
@@ -161,7 +164,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // More locks mean another area is still in place; leaving the newest one hands the camera to the next-newest,
             // unless an SDK virtual camera owns the mode meanwhile.
             if (camera.CameraInputChangeEnabled)
-                camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld ? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
+                camera.Mode = cameraModeBeforeFirstAreaEnter == CameraMode.InWorld ? CameraMode.ThirdPerson : cameraModeBeforeFirstAreaEnter;
             else if (index == ACTIVE_AREAS.Count && ACTIVE_AREAS.Count > 0 && camera.Mode != CameraMode.SdkCamera)
                 camera.Mode = ACTIVE_AREAS[ACTIVE_AREAS.Count - 1].AreaLock.Mode;
 

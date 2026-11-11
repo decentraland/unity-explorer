@@ -32,6 +32,9 @@ namespace DCL.McpServer.Tools
         /// <summary>Scene ticks the new scene must run before the reload is reported settled: its first outputs have then been applied.</summary>
         private const int SETTLE_TICKS = 2;
 
+        /// <summary>Least time the reloaded scene gets to settle, however much of the budget the reload itself used.</summary>
+        private const float MIN_SETTLE_SEC = 5f;
+
         private readonly Reload reload;
         private readonly IScenesCache scenesCache;
         private readonly World world;
@@ -61,7 +64,7 @@ namespace DCL.McpServer.Tools
                           .Build();
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("timeoutSec", "Maximum seconds to wait for the reload and the reloaded scene to settle. Default 15.");
+            schema.Number("timeoutSec", $"Maximum seconds to wait for the reload and the reloaded scene to settle. Default {DEFAULT_TIMEOUT_SEC}. The settle wait always gets at least {MIN_SETTLE_SEC} s, even when the reload used the whole budget.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: true, idempotent: false);
 
@@ -112,7 +115,7 @@ namespace DCL.McpServer.Tools
                 world.TryRemove<PauseSkyboxTimeUpdate>(skyboxEntity);
             }
 
-            float remainingSec = Mathf.Max(0f, timeoutSec - (UnityEngine.Time.realtimeSinceStartup - start));
+            float remainingSec = Mathf.Max(MIN_SETTLE_SEC, timeoutSec - (UnityEngine.Time.realtimeSinceStartup - start));
             SceneSettleWait.Result settle = await waitForFreshScene(scenesCache, previous, SETTLE_TICKS, remainingSec, ct);
 
             // The scene's first ticks are applied to the world during the frame; a frame boundary makes them visible.
