@@ -358,7 +358,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             viewInstance.ProgressStatusText.text = stage switch
                                                    {
                                                        NameClaimStage.Preparing => "Reserving your credits...",
-                                                       NameClaimStage.Signing => "Waiting for your signature...",
+                                                       NameClaimStage.Signing => "Waiting for your signature in the browser",
                                                        NameClaimStage.Confirming => "Confirming the payment...",
                                                        NameClaimStage.Registering => "Registering your NAME. This can take a few minutes...",
                                                        _ => viewInstance.ProgressStatusText.text,
