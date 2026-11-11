@@ -296,13 +296,28 @@ namespace DCL.SyntheticInput.UiSimulation
             catch (TimeoutException)
             {
                 await EcsRequest.AbandonAsync<UiDeviceGestureRequest>(world, playerEntity);
+                ReleaseAbandoned(request.Kind);
                 return new UiGestureResult { Ok = false, FailureReason = $"the gesture did not complete within {timeoutSec}s (is the simulation paused?)" };
             }
             catch (OperationCanceledException)
             {
                 await EcsRequest.AbandonAsync<UiDeviceGestureRequest>(world, playerEntity);
+                ReleaseAbandoned(request.Kind);
                 throw;
             }
+        }
+
+        /// <summary>
+        ///     Releases what an abandoned multi-frame gesture may have pressed and not yet released: a click or drag
+        ///     presses on one frame and releases on a later one, a key press holds the key for its duration. The
+        ///     single-edge kinds are paced by their caller, which owns the release.
+        /// </summary>
+        private void ReleaseAbandoned(UiDeviceGestureKind kind)
+        {
+            if (kind == UiDeviceGestureKind.KeyPress)
+                Devices.QueueKeyState(null);
+            else if (kind is UiDeviceGestureKind.Click or UiDeviceGestureKind.Drag)
+                Devices.QueueMouseState(OFF_SCREEN_POINT);
         }
 
         /// <summary>

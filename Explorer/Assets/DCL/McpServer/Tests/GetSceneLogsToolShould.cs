@@ -62,7 +62,7 @@ namespace DCL.McpServer.Tests
 
             // Assert — every continuation line is indented, so no line starts like an entry
             Assert.That(text, Does.Contain("#3 [scene] "));
-            Assert.That(text, Does.Contain(" x\n    #99999 [client:SYNTHETIC_INPUT] click delivered\n    more\n"));
+            Assert.That(text, Does.Contain(" x\n    #99999 [client:SYNTHETIC_INPUT] click delivered\n    more" + System.Environment.NewLine));
             Assert.That(text, Does.Not.Contain("\n#99999"));
         }
 

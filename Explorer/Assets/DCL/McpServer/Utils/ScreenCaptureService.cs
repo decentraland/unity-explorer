@@ -102,23 +102,16 @@ namespace DCL.McpServer.Utils
 
         /// <summary>
         ///     Claims the capture gate for <paramref name="owner" />. False when another capture is running; the
-        ///     caller reports <see cref="BusyOwner" /> instead of queueing, so one set of buffers suffices. A plain
-        ///     field is enough: tool execution is marshalled onto the main thread.
+        ///     caller reports <see cref="BusyOwner" /> instead of queueing, so one set of buffers suffices. The gate
+        ///     is released from the thread pool, where a capture returns, so the exchange is atomic.
         /// </summary>
-        public bool TryAcquire(string owner)
-        {
-            if (busyOwner != null)
-                return false;
-
-            busyOwner = owner;
-            return true;
-        }
+        public bool TryAcquire(string owner) =>
+            Interlocked.CompareExchange(ref busyOwner, owner, null) == null; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         /// <summary>Releases the gate if <paramref name="owner" /> holds it.</summary>
         public void Release(string owner)
         {
-            if (busyOwner == owner)
-                busyOwner = null;
+            Interlocked.CompareExchange(ref busyOwner, null, owner); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         }
 
         /// <summary>

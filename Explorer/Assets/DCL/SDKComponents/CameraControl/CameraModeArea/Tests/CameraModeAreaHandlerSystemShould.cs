@@ -324,6 +324,23 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         }
 
         [Test]
+        public void LeaveAnSdkCameraAloneWhenTheInnerAreaIsLeft()
+        {
+            // Arrange — nested areas, then an SDK virtual camera takes the mode over
+            system.OnEnteredCameraModeArea(entity, AREA_CRDT_ID, CameraMode.FirstPerson, AREA_SIZE);
+            system.OnEnteredCameraModeArea(otherEntity, OTHER_AREA_CRDT_ID, CameraMode.ThirdPerson, AREA_SIZE);
+            globalWorld.Get<CameraComponent>(cameraEntity).Mode = CameraMode.SdkCamera;
+
+            // Act
+            system.OnExitedCameraModeArea(otherEntity);
+
+            // Assert — the virtual camera keeps the mode; the outer area still holds its lock
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
+            Assert.AreEqual(CameraMode.SdkCamera, cameraComponent.Mode);
+            Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
+        }
+
+        [Test]
         public void IgnoreASecondEnterOfTheSameArea()
         {
             // Arrange
