@@ -38,13 +38,18 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public ScrollView? InnerScrollView { get; set; }
 
+        /// <summary>
+        ///     Pointer events UI Toolkit dispatched on <see cref="Transform" /> since the last drain, in dispatch order.
+        ///     A frame can carry several (a press and its release, or hover enter/leave from layout churn), so every
+        ///     one is kept until written.
+        /// </summary>
+        public readonly List<PointerEventType> PendingPointerEvents = new (4);
+
         public bool IsHidden;
 
         public bool StylesApplied;
 
-        public PointerEventType? PointerEventTriggered;
-
-        /// <summary>Written on every drain of <see cref="PointerEventTriggered" />.</summary>
+        /// <summary>Results the scene's write pass appended for the queued events, counted per event type.</summary>
         public PointerEventDrainLog Drains;
 
         public bool IsRoot { get; private set; }
@@ -75,7 +80,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             Transform = root;
             IsHidden = false;
             StylesApplied = false;
-            PointerEventTriggered = null;
+            PendingPointerEvents.Clear();
             Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;
@@ -89,7 +94,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
             StylesApplied = false;
-            PointerEventTriggered = null;
+            PendingPointerEvents.Clear();
             Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;

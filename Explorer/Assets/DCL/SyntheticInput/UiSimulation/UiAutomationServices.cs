@@ -370,7 +370,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (!moved.Ok)
                     return UiActionResult.Failure(moved.FailureReason ?? "the device click failed", null, imageRect);
 
-                delivery.Enter = SdkClickVerdict.Judge(PointerEventType.PetHoverEnter, declaresEnter, in enter);
+                delivery.Enter = SdkClickVerdict.Judge(declaresEnter, in enter);
 
                 // Set before the edge is awaited: a cancellation mid-press cannot tell whether the state was queued.
                 pressed = true;
@@ -380,7 +380,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (!downEdge.Ok)
                     return UiActionResult.Failure(downEdge.FailureReason ?? "the device click failed", null, imageRect);
 
-                delivery.Down = SdkClickVerdict.Judge(PointerEventType.PetDown, delivery.DeclaresDown, in down);
+                delivery.Down = SdkClickVerdict.Judge(delivery.DeclaresDown, in down);
 
                 (UiGestureResult upEdge, SdkDrainObservation up) = await RunPacedEdgeAsync(UiDeviceGestureKind.ButtonUp, center, button, slot, PointerEventType.PetUp, delivery.DeclaresUp, timeoutSec, ct);
                 pressed = pressed && !upEdge.Ok;
@@ -388,7 +388,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (!upEdge.Ok)
                     return UiActionResult.Failure(upEdge.FailureReason ?? "the device click failed", null, imageRect);
 
-                delivery.Up = SdkClickVerdict.Judge(PointerEventType.PetUp, delivery.DeclaresUp, in up);
+                delivery.Up = SdkClickVerdict.Judge(delivery.DeclaresUp, in up);
 
                 return SdkClickVerdict.Build(in delivery, imageRect, in down, in up);
             }
@@ -428,7 +428,7 @@ namespace DCL.SyntheticInput.UiSimulation
         private async UniTask<(UiGestureResult Gesture, SdkDrainObservation Observed)> RunPacedEdgeAsync(UiDeviceGestureKind kind, Vector2 point, MouseButton button,
             UITransformComponent slot, PointerEventType sent, bool declared, float timeoutSec, CancellationToken ct)
         {
-            int drainsBefore = slot.Drains.DrainCount;
+            int appendedBefore = slot.Drains.AppendedCount(sent);
 
             UiGestureResult gesture = await RunDeviceGestureAsync(new UiDeviceGestureRequest
             {
@@ -442,7 +442,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!gesture.Ok)
                 return (gesture, SdkDrainObservation.NotDrained);
 
-            return (gesture, await Simulator.ObserveOrSettleAsync(slot, sent, declared, drainsBefore, ct));
+            return (gesture, await Simulator.ObserveOrSettleAsync(slot, sent, declared, appendedBefore, ct));
         }
 
         /// <summary>Drags through the virtual devices. Main thread only.</summary>

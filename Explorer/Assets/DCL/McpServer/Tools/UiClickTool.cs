@@ -25,8 +25,8 @@ namespace DCL.McpServer.Tools
             + "instead of clicking through a cover (pass force:true to bypass). device:true replays the click positionally "
             + "through the virtual mouse instead of synthesizing element events — use it for widgets that need real hit-testing; "
             + "on scene UI it is paced one event per scene drain, and force cannot aim it through a client cover. For scene UI "
-            + "the result's delivered {enter, down, up} names what the scene consumed (consumed | not_declared | dropped | "
-            + "not_drained) and ok is false when a press or release the element declares was not consumed.";
+            + "the result's delivered {enter, down, up} names what the scene consumed (consumed | not_declared | not_drained) "
+            + "and ok is false when a press or release the element declares was not consumed.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             UiAddressArgs.DescribeAddress(schema)

@@ -3,25 +3,43 @@ using DCL.ECSComponents;
 namespace DCL.SDKComponents.SceneUI.Components
 {
     /// <summary>
-    ///     What happened to each pointer event the element's single slot held: written by the scene's pointer-event
-    ///     system whenever it drains the slot, matched to a declared entry or not. The automation layer reads it to tell
-    ///     an event the scene received from one the slot dropped.
+    ///     How many pointer-event results the scene's write pass appended for the element, per event type, since the
+    ///     pooled component was initialized. A queued event the entity does not declare is cleared without one. The
+    ///     automation layer reads it to tell an event the scene received from one that produced no result.
     /// </summary>
     public struct PointerEventDrainLog
     {
-        /// <summary>Drains of the slot, matched or not.</summary>
-        public int DrainCount;
+        private int upAppended;
+        private int downAppended;
+        private int hoverEnterAppended;
+        private int hoverLeaveAppended;
 
-        public PointerEventType? LastDrained;
+        public readonly int AppendedCount(PointerEventType type) =>
+            type switch
+            {
+                PointerEventType.PetUp => upAppended,
+                PointerEventType.PetDown => downAppended,
+                PointerEventType.PetHoverEnter => hoverEnterAppended,
+                _ => hoverLeaveAppended,
+            };
 
-        /// <summary>Whether the last drain appended a pointer-event result for the scene.</summary>
-        public bool LastWasAppended;
-
-        public void Record(PointerEventType drained, bool appended)
+        public void RecordAppended(PointerEventType type)
         {
-            DrainCount++;
-            LastDrained = drained;
-            LastWasAppended = appended;
+            switch (type)
+            {
+                case PointerEventType.PetUp:
+                    upAppended++;
+                    break;
+                case PointerEventType.PetDown:
+                    downAppended++;
+                    break;
+                case PointerEventType.PetHoverEnter:
+                    hoverEnterAppended++;
+                    break;
+                default:
+                    hoverLeaveAppended++;
+                    break;
+            }
         }
     }
 }

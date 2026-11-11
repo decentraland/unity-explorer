@@ -10,33 +10,36 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>The entity declares no handler for the event; the scene was told nothing, as for a user.</summary>
         NotDeclared,
 
-        /// <summary>The scene's pointer-event system appended a result for the event and the scene read it.</summary>
+        /// <summary>The scene's write pass appended a result for the event and the scene read it.</summary>
         Consumed,
 
-        /// <summary>The slot was drained, but with another event in it: this one was overwritten before the drain.</summary>
-        Dropped,
-
-        /// <summary>The slot was never drained in time, or the scene has not read the result yet (the event may not have reached the element at all).</summary>
+        /// <summary>
+        ///     No result was appended for the event in time (the element's queue was never written, or the event never
+        ///     reached the element), or the scene has not read the result yet.
+        /// </summary>
         NotDrained,
     }
 
-    /// <summary>One observation of the element's drain log after an event was sent or queued.</summary>
+    /// <summary>One observation of the element's queue and drain log after an event was sent or queued.</summary>
     public readonly struct SdkDrainObservation
     {
+        /// <summary>The write pass wrote the element's queue after the event was sent (always true once <see cref="Appended" /> is).</summary>
         public readonly bool Drained;
-        public readonly PointerEventType? DrainedType;
+
+        /// <summary>A result of the event's type was appended since the event was sent.</summary>
         public readonly bool Appended;
+
+        /// <summary>The scene's tick moved past the result, so a handler could have run.</summary>
         public readonly bool SceneRead;
 
-        public SdkDrainObservation(bool drained, PointerEventType? drainedType, bool appended, bool sceneRead)
+        public SdkDrainObservation(bool drained, bool appended, bool sceneRead)
         {
             Drained = drained;
-            DrainedType = drainedType;
             Appended = appended;
             SceneRead = sceneRead;
         }
 
-        public static SdkDrainObservation NotDrained => new (false, null, false, false);
+        public static SdkDrainObservation NotDrained => new (false, false, false);
     }
 
     /// <summary>The verdict of each event of a click, with what the element declared.</summary>
@@ -77,16 +80,13 @@ namespace DCL.SyntheticInput.UiSimulation
             return false;
         }
 
-        public static SdkEventVerdict Judge(PointerEventType sent, bool declared, in SdkDrainObservation observed)
+        public static SdkEventVerdict Judge(bool declared, in SdkDrainObservation observed)
         {
             if (!declared)
                 return SdkEventVerdict.NotDeclared;
 
             // A result the scene has not read yet reached no handler either.
-            if (!observed.Drained || (observed.DrainedType == sent && !observed.SceneRead))
-                return SdkEventVerdict.NotDrained;
-
-            return observed.DrainedType == sent && observed.Appended ? SdkEventVerdict.Consumed : SdkEventVerdict.Dropped;
+            return observed.Appended && observed.SceneRead ? SdkEventVerdict.Consumed : SdkEventVerdict.NotDrained;
         }
 
         /// <summary>
@@ -125,7 +125,6 @@ namespace DCL.SyntheticInput.UiSimulation
             verdict switch
             {
                 SdkEventVerdict.Consumed => "consumed",
-                SdkEventVerdict.Dropped => "dropped",
                 SdkEventVerdict.NotDrained => "not_drained",
                 _ => "not_declared",
             };
@@ -133,9 +132,7 @@ namespace DCL.SyntheticInput.UiSimulation
         private static string Describe(string eventName, SdkEventVerdict verdict, in SdkDrainObservation observed) =>
             verdict switch
             {
-                SdkEventVerdict.Dropped => observed.DrainedType != null
-                    ? $"the scene drained a {observed.DrainedType} instead of the {eventName}: the element's single event slot was overwritten before the scene read it (the real mouse moving over the UI can do that)"
-                    : $"the scene drained the {eventName} without a result: the element declares the event but did not match it",
+                SdkEventVerdict.NotDrained when observed.Appended => $"the scene has not read the {eventName} yet (is the scene paused?)",
                 SdkEventVerdict.NotDrained => $"the scene did not consume the {eventName} (is the scene paused, or did the event never reach the element?)",
                 _ => $"the {eventName} was not delivered",
             };

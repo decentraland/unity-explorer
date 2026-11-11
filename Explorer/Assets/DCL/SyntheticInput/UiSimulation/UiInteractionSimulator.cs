@@ -19,7 +19,7 @@ namespace DCL.SyntheticInput.UiSimulation
     /// </summary>
     public class UiInteractionSimulator
     {
-        // The scene system is throttled, so one drain can take many frames.
+        // The drain runs every frame, but a paused or frozen scene world never drains.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
         // A result written at tick N reaches the scene in the batch of tick N or N + 1, so it has been read once the
@@ -35,7 +35,7 @@ namespace DCL.SyntheticInput.UiSimulation
         private readonly PointerEventData hoverEventData;
         private readonly List<RaycastResult> raycastResults = new ();
 
-        // The slot of the last leave sent without waiting, settled by the next SDK gesture whichever element it targets.
+        // The element of the last leave sent without waiting, settled by the next SDK gesture whichever element it targets.
         private UITransformComponent? unsettledSlot;
 
         public UiInteractionSimulator(EventSystem eventSystem, SdkUiResolver sdkResolver)
@@ -133,13 +133,13 @@ namespace DCL.SyntheticInput.UiSimulation
             bool declaresEnter = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetHoverEnter);
 
             SdkDrainObservation enter = await SendAndObserveAsync<PointerEnterEvent>(target, element.Transform, PointerEventType.PetHoverEnter, declaresEnter, ct);
-            delivery.Enter = SdkClickVerdict.Judge(PointerEventType.PetHoverEnter, declaresEnter, in enter);
+            delivery.Enter = SdkClickVerdict.Judge(declaresEnter, in enter);
 
             SdkDrainObservation down = await SendAndObserveAsync<PointerDownEvent>(target, element.Transform, PointerEventType.PetDown, delivery.DeclaresDown, ct);
-            delivery.Down = SdkClickVerdict.Judge(PointerEventType.PetDown, delivery.DeclaresDown, in down);
+            delivery.Down = SdkClickVerdict.Judge(delivery.DeclaresDown, in down);
 
             SdkDrainObservation up = await SendAndObserveAsync<PointerUpEvent>(target, element.Transform, PointerEventType.PetUp, delivery.DeclaresUp, ct);
-            delivery.Up = SdkClickVerdict.Judge(PointerEventType.PetUp, delivery.DeclaresUp, in up);
+            delivery.Up = SdkClickVerdict.Judge(delivery.DeclaresUp, in up);
 
             SendSdkLeave(target, element.Transform);
 
@@ -148,63 +148,51 @@ namespace DCL.SyntheticInput.UiSimulation
 
         /// <summary>
         ///     Sends the event and, when the entity declares it, watches the element's drain log for the scene
-        ///     consuming it. An undeclared event is only settled (the slot cleared) so the next one cannot overwrite it.
+        ///     writing its result. An undeclared event is only settled (its queue written and the scene caught up) so
+        ///     the next event lands in a later frame.
         /// </summary>
         public async UniTask<SdkDrainObservation> SendAndObserveAsync<TEvent>(VisualElement target, UITransformComponent slot, PointerEventType sent, bool declared, CancellationToken ct)
             where TEvent: EventBase<TEvent>, new()
         {
-            int drainsBefore = slot.Drains.DrainCount;
+            int appendedBefore = slot.Drains.AppendedCount(sent);
             SendPooled<TEvent>(target);
 
-            return await ObserveOrSettleAsync(slot, sent, declared, drainsBefore, ct);
+            return await ObserveOrSettleAsync(slot, sent, declared, appendedBefore, ct);
         }
 
         /// <summary>
-        ///     As <see cref="ObserveSdkDrainAsync" /> for a declared event; an undeclared one is only settled (the slot
-        ///     cleared and the scene caught up) so the next event cannot overwrite it.
+        ///     As <see cref="ObserveSdkDrainAsync" /> for a declared event; an undeclared one is only settled (its queue
+        ///     written and the scene caught up) so the next event lands in a later frame.
         /// </summary>
-        public async UniTask<SdkDrainObservation> ObserveOrSettleAsync(UITransformComponent slot, PointerEventType sent, bool declared, int drainsBefore, CancellationToken ct)
+        public async UniTask<SdkDrainObservation> ObserveOrSettleAsync(UITransformComponent slot, PointerEventType sent, bool declared, int appendedBefore, CancellationToken ct)
         {
             if (declared)
-                return await ObserveSdkDrainAsync(slot, sent, drainsBefore, ct);
+                return await ObserveSdkDrainAsync(slot, sent, appendedBefore, ct);
 
-            bool settled = await DrainSdkSlotAsync(slot, ct);
-            return new SdkDrainObservation(settled, null, false, settled);
+            bool settled = await DrainSdkQueueAsync(slot, ct);
+            return new SdkDrainObservation(settled, false, settled);
         }
 
         /// <summary>
-        ///     Waits for the scene to drain the event sent (or queued) after <paramref name="drainsBefore" /> was read.
-        ///     A drain of another event meanwhile is kept waiting through, because the event may not have reached the
-        ///     slot yet; when the budget runs out it is what the observation names.
+        ///     Waits for the scene's write pass to append a result for the event sent (or queued) after
+        ///     <paramref name="appendedBefore" /> was read, then for the scene to read it. An empty queue meanwhile
+        ///     proves nothing: a device gesture's event reaches the element a frame after the gesture settles, so the
+        ///     wait runs its whole budget before the event is reported as not drained.
         /// </summary>
-        public async UniTask<SdkDrainObservation> ObserveSdkDrainAsync(UITransformComponent slot, PointerEventType sent, int drainsBefore, CancellationToken ct)
+        public async UniTask<SdkDrainObservation> ObserveSdkDrainAsync(UITransformComponent slot, PointerEventType sent, int appendedBefore, CancellationToken ct)
         {
-            PointerEventType? otherDrained = null;
-            var seen = drainsBefore;
-
             for (var frames = 0; frames < MAX_SDK_DRAIN_FRAMES; frames++)
             {
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-                if (slot.Drains.DrainCount == seen)
+                if (slot.Drains.AppendedCount(sent) <= appendedBefore)
                     continue;
 
-                seen = slot.Drains.DrainCount;
-
-                if (slot.Drains.LastDrained == sent)
-                {
-                    // Read before the wait: a later drain (the real mouse, say) would overwrite it meanwhile.
-                    bool appended = slot.Drains.LastWasAppended;
-                    bool sceneRead = await WaitForSceneToReadAsync(ct);
-                    return new SdkDrainObservation(true, sent, appended, sceneRead);
-                }
-
-                otherDrained = slot.Drains.LastDrained;
+                bool sceneRead = await WaitForSceneToReadAsync(ct);
+                return new SdkDrainObservation(true, true, sceneRead);
             }
 
-            return otherDrained != null
-                ? new SdkDrainObservation(true, otherDrained, false, false)
-                : SdkDrainObservation.NotDrained;
+            return SdkDrainObservation.NotDrained;
         }
 
         /// <summary>
@@ -229,17 +217,9 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!enter.Drained)
                 return (UiActionResult.Failure("the scene did not consume the hover enter yet (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
 
-            // Judged as a click's events are: an enter the scene drained but never acted on was not delivered.
-            switch (SdkClickVerdict.Judge(PointerEventType.PetHoverEnter, declaresEnter, in enter))
-            {
-                case SdkEventVerdict.Dropped:
-                    return (UiActionResult.Failure(enter.DrainedType == PointerEventType.PetHoverEnter
-                            ? "the scene drained the hover enter without a result; the hover stays parked so it can be left"
-                            : $"the scene drained a {enter.DrainedType} instead of the hover enter: the element's single event slot was overwritten before the scene read it; the hover stays parked so it can be left",
-                        null, imageRect), true);
-                case SdkEventVerdict.NotDrained:
-                    return (UiActionResult.Failure("the scene drained the hover enter but has not read it (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
-            }
+            // Judged as a click's events are: an enter the scene has not read yet reached no handler.
+            if (SdkClickVerdict.Judge(declaresEnter, in enter) == SdkEventVerdict.NotDrained)
+                return (UiActionResult.Failure("the scene wrote the hover enter but has not read it (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
 
             return (UiActionResult.Success(imageRect), true);
         }
@@ -375,41 +355,42 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Settles the last leave sent without waiting, on any element, then the slot's own pending event. Returns
-        ///     at once when neither is pending, so a gesture on an idle element starts without a frame of delay.
+        ///     Settles the last leave sent without waiting, on any element, then the element's own queued events.
+        ///     Returns at once when neither is pending, so a gesture on an idle element starts without a frame of delay.
         /// </summary>
-        public async UniTask<bool> SettlePendingSdkEventsAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        public async UniTask<bool> SettlePendingSdkEventsAsync(UITransformComponent? queueOwner, CancellationToken ct)
         {
             UITransformComponent? unsettled = unsettledSlot;
 
-            // A detached element's slot is never consumed, and its leave reaches no handler.
-            if (unsettled is { Transform: { panel: not null } } && !await DrainSdkSlotAsync(unsettled, ct))
+            // A detached element's queue is never written, and its leave reaches no handler.
+            if (unsettled is { Transform: { panel: not null } } && !await DrainSdkQueueAsync(unsettled, ct))
                 return false;
 
             // Cleared only once settled, and only if no newer leave replaced it meanwhile.
             if (ReferenceEquals(unsettledSlot, unsettled))
                 unsettledSlot = null;
 
-            return slotOwner == unsettled || slotOwner?.PointerEventTriggered == null || await DrainSdkSlotAsync(slotOwner, ct);
+            return queueOwner == unsettled || queueOwner == null || queueOwner.PendingPointerEvents.Count == 0 || await DrainSdkQueueAsync(queueOwner, ct);
         }
 
         /// <summary>
-        ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
-        ///     consumed the previous one and the scene has read it. A null owner has no slot to wait on.
+        ///     Waits until the scene's write pass wrote the element's queued pointer events and the scene has read them,
+        ///     so the next event lands in a later batch. Always yields at least one frame, so consecutive events land on
+        ///     separate frames. A null owner has no queue to wait on.
         /// </summary>
-        private async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        private async UniTask<bool> DrainSdkQueueAsync(UITransformComponent? queueOwner, CancellationToken ct)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            if (slotOwner == null)
+            if (queueOwner == null)
                 return true;
 
             var frames = 0;
 
-            while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
+            while (queueOwner.PendingPointerEvents.Count > 0 && frames++ < MAX_SDK_DRAIN_FRAMES)
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            return slotOwner.PointerEventTriggered == null && await WaitForSceneToReadAsync(ct);
+            return queueOwner.PendingPointerEvents.Count == 0 && await WaitForSceneToReadAsync(ct);
         }
 
         /// <summary>
@@ -442,16 +423,16 @@ namespace DCL.SyntheticInput.UiSimulation
                 return UiActionResult.Failure("no scene UI element at the drag start point");
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(panel, pressTarget.worldBound);
-            UITransformComponent? pressSlot = sdkResolver.ResolveComponent(pressTarget);
+            UITransformComponent? pressQueue = sdkResolver.ResolveComponent(pressTarget);
 
-            if (!await SettlePendingSdkEventsAsync(pressSlot, ct))
+            if (!await SettlePendingSdkEventsAsync(pressQueue, ct))
                 return UiActionResult.Failure("the scene did not consume an earlier pointer event on the start element (is the scene paused?); the drag was not delivered", null, imageRect);
 
             SendPooled<PointerEnterEvent>(pressTarget);
-            await DrainSdkSlotAsync(pressSlot, ct);
+            await DrainSdkQueueAsync(pressQueue, ct);
             SendPooled<PointerDownEvent>(pressTarget);
 
-            if (!await DrainSdkSlotAsync(pressSlot, ct))
+            if (!await DrainSdkQueueAsync(pressQueue, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the drag was abandoned", null, imageRect);
 
             // One move per frame, so the scene sees the drag progress.
@@ -468,7 +449,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (releaseTarget == null)
             {
-                await ReleaseSdkAsync(pressTarget, pressSlot, ct);
+                await ReleaseSdkAsync(pressTarget, pressQueue, ct);
                 return UiActionResult.Failure($"no scene UI element at the drag end point; the release was delivered back to '{pressTarget.name}'", null, imageRect);
             }
 
@@ -480,16 +461,16 @@ namespace DCL.SyntheticInput.UiSimulation
             return result;
         }
 
-        /// <summary>Drained after the up, so the leave cannot overwrite a release the scene has not read yet.</summary>
-        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
+        /// <summary>Drained after the up, so the leave lands in a later batch than a release the scene has not read yet.</summary>
+        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? queue, CancellationToken ct)
         {
-            await DrainSdkSlotAsync(slot, ct);
+            await DrainSdkQueueAsync(queue, ct);
             SendPooled<PointerUpEvent>(target);
 
-            bool consumed = await DrainSdkSlotAsync(slot, ct);
+            bool consumed = await DrainSdkQueueAsync(queue, ct);
 
             if (consumed)
-                SendSdkLeave(target, slot);
+                SendSdkLeave(target, queue);
 
             return consumed;
         }
