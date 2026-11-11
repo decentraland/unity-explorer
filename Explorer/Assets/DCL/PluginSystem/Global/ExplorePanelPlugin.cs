@@ -178,7 +178,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
-        private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private ICreditsPanelController shopCreditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
@@ -374,7 +373,6 @@ namespace DCL.PluginSystem.Global
             placeDetailPanelController?.Dispose();
             backpackModalController?.Dispose();
             exploreSectionModalController?.Dispose();
-            creditsPanelController.Dispose();
             shopCreditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
@@ -665,10 +663,6 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(exploreSectionModalController);
             }
 
-            EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
-               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
-               .Forget();
-
             explorePanelController = new
                 ExplorePanelController(
                     viewFactoryMethod,
@@ -711,11 +705,6 @@ namespace DCL.PluginSystem.Global
             return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_SHOP)), ct)
                 : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
-        }
-
-        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
-        {
-            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
         }
 
         private async UniTask EnableShopCreditsPanelAsync(CreditsPanelView view, Action openBuyCredits, CancellationToken ct)

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
-using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DG.Tweening;
@@ -32,9 +31,6 @@ namespace DCL.ExplorePanel
 
         [field: SerializeField]
         public Button LobbyButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public CreditsPanelView CreditsPanelView { get; private set; } = null!;
 
         [field: SerializeField]
         public ProfileWidgetView ProfileWidget { get; private set; } = null!;
