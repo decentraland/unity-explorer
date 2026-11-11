@@ -128,7 +128,7 @@ namespace DCL.Shop
             WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, ShopCategoryTree.WEARABLE);
             EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, ShopCategoryTree.EMOTE);
             FavoritesController = new ShopFavoritesSectionController(view.FavoritesView, api, presenter, creators, Favorites);
-            NamesController = new ShopNamesSectionController(view.NamesView, view.PreviewNametagRoot, view.PreviewNametag, nameClaimService, selfProfile, mvcManager, webBrowser, urlsSource);
+            NamesController = new ShopNamesSectionController(view.NamesView, view.PreviewNametagRoot, view.PreviewNametag, nameClaimService, api, selfProfile, mvcManager, webBrowser, urlsSource);
             Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);
             ItemPanel = new ShopItemPanelController(view.ItemPanel, presenter, creators, api, styling, rarityInfoPanelBackgrounds, thumbnailLoader, wearablesProvider, emoteProvider, Favorites);
 
@@ -139,6 +139,7 @@ namespace DCL.Shop
             view.SearchChanged += OnSearchChanged;
             view.SortChanged += OnSortChanged;
             view.NamesView.InputSelected += DisableShortcutsInput;
+            NamesController.TabChanged += OnNamesTabChanged;
             view.NamesView.InputDeselected += RestoreShortcutsInput;
             OverviewController.ViewAllClicked += OnBrowseClicked;
             OverviewController.ItemClicked += OpenItem;
@@ -173,6 +174,7 @@ namespace DCL.Shop
             view.SearchChanged -= OnSearchChanged;
             view.SortChanged -= OnSortChanged;
             view.NamesView.InputSelected -= DisableShortcutsInput;
+            NamesController.TabChanged -= OnNamesTabChanged;
             view.NamesView.InputDeselected -= RestoreShortcutsInput;
             OverviewController.ViewAllClicked -= OnBrowseClicked;
             OverviewController.ItemClicked -= OpenItem;
@@ -279,14 +281,7 @@ namespace DCL.Shop
             isSectionShown = true;
             view.ShowSection(section);
 
-            ShopGridSectionController? filteredGrid = FilteredGridFor(section);
-            view.SetSearchAndSortVisible(filteredGrid != null);
-
-            if (filteredGrid != null)
-            {
-                view.SetSearchText(filteredGrid.Filters.SearchText);
-                view.SetSort(filteredGrid.Filters.Sort);
-            }
+            RefreshSearchAndSort();
 
             IShopGridSection? grid = SectionFor(section);
 
@@ -347,7 +342,36 @@ namespace DCL.Shop
                 _ => null,
             };
 
-        // Search and sort only apply to the catalog grids
+        private void RefreshSearchAndSort()
+        {
+            ShopGridSectionController? filteredGrid = FilteredGridFor(CurrentSection);
+            bool resaleNames = CurrentSection == ShopSection.Names && NamesController.IsResaleShown;
+
+            view.SetSearchAndSortVisible(filteredGrid != null || resaleNames);
+            view.LimitSortOptions(resaleNames ? ShopNamesResaleController.SORT_OPTION_COUNT : null);
+
+            if (filteredGrid != null)
+            {
+                view.SetSearchText(filteredGrid.Filters.SearchText);
+                view.SetSort(filteredGrid.Filters.Sort);
+            }
+            else if (resaleNames)
+            {
+                view.SetSearchText(NamesController.Resale.SearchText);
+                view.SetSort(NamesController.Resale.Sort);
+            }
+        }
+
+        // A focused field that is hidden never reports its deselection, which would leave the shortcuts blocked
+        private void OnNamesTabChanged(ShopNamesTab _)
+        {
+            if (view.IsSearchBarFocused)
+                RestoreShortcutsInput();
+
+            RefreshSearchAndSort();
+        }
+
+        // Search and sort apply to the catalog grids and to the resale names grid
         private ShopGridSectionController? FilteredGridFor(ShopSection section) =>
             section switch
             {
@@ -408,11 +432,21 @@ namespace DCL.Shop
         private void OnFavoriteToggleFailed() =>
             NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_ERROR_MESSAGE));
 
-        private void OnSearchChanged(string text) =>
-            FilteredGridFor(CurrentSection)?.SetSearch(text);
+        private void OnSearchChanged(string text)
+        {
+            if (CurrentSection == ShopSection.Names)
+                NamesController.Resale.SetSearch(text);
+            else
+                FilteredGridFor(CurrentSection)?.SetSearch(text);
+        }
 
-        private void OnSortChanged(ShopSortOption sort) =>
-            FilteredGridFor(CurrentSection)?.SetSort(sort);
+        private void OnSortChanged(ShopSortOption sort)
+        {
+            if (CurrentSection == ShopSection.Names)
+                NamesController.Resale.SetSort(sort);
+            else
+                FilteredGridFor(CurrentSection)?.SetSort(sort);
+        }
 
         private void OnCartChanged()
         {

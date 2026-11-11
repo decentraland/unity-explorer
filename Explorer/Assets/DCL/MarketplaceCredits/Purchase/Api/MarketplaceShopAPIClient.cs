@@ -29,6 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string UNIFIED_PATH = "v3/catalog/unified";
         private const string TRENDING_PATH = "v3/catalog/trending";
         private const string CATALOG_ITEMS_PATH = "v3/catalog/items";
+        private const string NFTS_PATH = "v1/nfts";
         private const string OUTFITS_PATH = "v1/outfits";
         private const string OUTFIT_THUMBNAILS_PATH = "v1/outfits/thumbnails";
 
@@ -37,6 +38,8 @@ namespace DCL.MarketplaceCredits.Purchase
         private static readonly URLParameter EXCLUDE_SOCIAL_EMOTES = new ("includeSocialEmotes", "false");
         private static readonly URLParameter IS_SMART = new ("isSmart", "true");
         private static readonly URLParameter IS_WEARABLE_SMART = new ("isWearableSmart", "true");
+        private static readonly URLParameter CATEGORY_ENS = new ("category", "ens");
+        private static readonly URLParameter IS_ON_SALE = new ("isOnSale", "true");
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -92,6 +95,13 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public virtual UniTask<CatalogItemsResponse> GetCatalogItemsAsync(ShopCatalogQuery query, CancellationToken ct) =>
             GetCatalogItemsAsync(BuildCatalogItemsUrl(decentralandUrlsSource, query), ct);
+
+        /// <summary>
+        ///     One page of the NAMEs listed for sale by their owners.
+        /// </summary>
+        public virtual UniTask<NameListingsResponse> GetNamesOnSaleAsync(NamesOnSaleQuery query, CancellationToken ct) =>
+            webRequestController.GetAsync(new CommonArguments(BuildNamesOnSaleUrl(decentralandUrlsSource, query)), ct, ReportCategory.CREDITS_PURCHASE)
+                                .CreateFromJson<NameListingsResponse>(WRJsonParser.Newtonsoft);
 
         public virtual async UniTask<CatalogItemDto[]> GetCatalogItemsByIdsAsync(IReadOnlyList<string> ids, CancellationToken ct)
         {
@@ -252,6 +262,28 @@ namespace DCL.MarketplaceCredits.Purchase
                 urlBuilder.AppendParameter(new URLParameter("isOnSale", query.IsOnSale.Value ? "true" : "false"));
 
             urlBuilder.AppendParameter(EXCLUDE_SOCIAL_EMOTES);
+            return urlBuilder.Build();
+        }
+
+        internal static URLAddress BuildNamesOnSaleUrl(IDecentralandUrlsSource urlsSource, NamesOnSaleQuery query)
+        {
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.MarketplaceServer, out URLBuilder urlBuilder);
+
+            urlBuilder.AppendPath(new URLPath(NFTS_PATH));
+            urlBuilder.AppendParameter(CATEGORY_ENS);
+            urlBuilder.AppendParameter(IS_ON_SALE);
+            urlBuilder.AppendParameter(new URLParameter("first", query.First.ToString()));
+
+            if (query.Skip > 0)
+                urlBuilder.AppendParameter(new URLParameter("skip", query.Skip.ToString()));
+
+            AppendSearch(urlBuilder, query.Search);
+
+            string? sort = ShopCatalogQueryWire.NamesSortToWire(query.Sort);
+
+            if (sort != null)
+                urlBuilder.AppendParameter(new URLParameter("sortBy", sort));
+
             return urlBuilder.Build();
         }
 

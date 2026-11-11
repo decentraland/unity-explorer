@@ -75,6 +75,32 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public void BuildTheNamesOnSaleUrlWithPagingSearchAndSort()
+        {
+            // Arrange
+            var query = new NamesOnSaleQuery { First = 48, Skip = 96, Search = " tiger ", Sort = NamesSort.Cheapest };
+
+            // Act
+            string url = MarketplaceShopAPIClient.BuildNamesOnSaleUrl(urlsSource, query);
+
+            // Assert
+            Assert.AreEqual($"{MARKETPLACE}/v1/nfts?category=ens&isOnSale=true&first=48&skip=96&search=tiger&sortBy=cheapest", url);
+        }
+
+        [Test]
+        public void LeaveTheSortOutOfTheNamesOnSaleUrlForTheBestMatchOrder()
+        {
+            // Arrange
+            var query = new NamesOnSaleQuery { First = 48, Search = "tiger", Sort = NamesSort.BestMatch };
+
+            // Act
+            string url = MarketplaceShopAPIClient.BuildNamesOnSaleUrl(urlsSource, query);
+
+            // Assert
+            Assert.AreEqual($"{MARKETPLACE}/v1/nfts?category=ens&isOnSale=true&first=48&search=tiger", url);
+        }
+
+        [Test]
         public void BuildTheTrendingAndByIdsUrls()
         {
             // Act

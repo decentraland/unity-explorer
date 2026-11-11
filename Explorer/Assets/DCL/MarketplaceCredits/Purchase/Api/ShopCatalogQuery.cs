@@ -32,6 +32,25 @@ namespace DCL.MarketplaceCredits.Purchase
         public bool? IsOnSale;
     }
 
+    public enum NamesSort
+    {
+        Newest,
+        Cheapest,
+
+        /// <summary>
+        ///     The order of a search: how close each name is to the searched text.
+        /// </summary>
+        BestMatch,
+    }
+
+    public struct NamesOnSaleQuery
+    {
+        public int First;
+        public int Skip;
+        public string? Search;
+        public NamesSort Sort;
+    }
+
     internal static class ShopCatalogQueryWire
     {
         public static string SortToWire(ShopSort sort) =>
@@ -41,6 +60,14 @@ namespace DCL.MarketplaceCredits.Purchase
                 ShopSort.MostExpensive => "most_expensive",
                 ShopSort.Name => "name",
                 _ => "newest",
+            };
+
+        public static string? NamesSortToWire(NamesSort sort) =>
+            sort switch
+            {
+                NamesSort.Newest => "newest",
+                NamesSort.Cheapest => "cheapest",
+                _ => null,
             };
 
         public static string? CategoryToWire(ShopItemCategory category) =>

@@ -5,6 +5,7 @@ using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -53,6 +54,7 @@ namespace DCL.Shop
         private CancellationTokenSource? searchCts;
         private Tweener? cartBumpTween;
         private float mainRightInset;
+        private List<TMP_Dropdown.OptionData>? allSortOptions;
 
         public bool IsSearchBarFocused => SearchBar.inputField.isFocused;
 
@@ -137,6 +139,21 @@ namespace DCL.Shop
         {
             SearchBar.gameObject.SetActive(visible);
             SortDropdown.gameObject.SetActive(visible);
+        }
+
+        /// <summary>
+        ///     Offers only the first sort options of the dropdown, or all of them when no limit is given.
+        /// </summary>
+        public void LimitSortOptions(int? count)
+        {
+            allSortOptions ??= SortDropdown.Dropdown.options;
+
+            int shown = count.HasValue ? Math.Min(count.Value, allSortOptions.Count) : allSortOptions.Count;
+
+            if (SortDropdown.Dropdown.options.Count == shown)
+                return;
+
+            SortDropdown.Dropdown.options = shown == allSortOptions.Count ? allSortOptions : allSortOptions.GetRange(0, shown);
         }
 
         public void SetSort(ShopSortOption sort) =>

@@ -38,6 +38,9 @@ namespace DCL.Shop
         [field: SerializeField] public Color StatusErrorColor { get; private set; } = Color.red;
         [field: SerializeField] public Button MakeOfferButton { get; private set; } = null!;
 
+        [field: Header("Resale names")]
+        [field: SerializeField] public ShopNamesGridView ResaleGrid { get; private set; } = null!;
+
         public string Name => NameInput.text;
 
         public bool IsInputFocused => NameInput.isFocused;

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Names;
 using DCL.MarketplaceCredits.Purchase.Names.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -21,7 +22,8 @@ namespace DCL.Shop
 {
     /// <summary>
     ///     The Names section: a UNIQUE NAME tab that checks a typed name against the registrar and opens the
-    ///     claim modal, and a RESALE NAME tab. The nametag over the avatar preview shows the typed name, or the player's own while the field is empty.
+    ///     claim modal, and a RESALE NAME tab with the grid of the names on sale. The nametag over the avatar preview shows the name
+    ///     typed or picked in the open tab, or the player's own while there is none.
     /// </summary>
     public class ShopNamesSectionController : IDisposable
     {
@@ -45,12 +47,21 @@ namespace DCL.Shop
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? checkCts;
         private Profile? ownProfile;
+        private ShopNamesTab currentTab = ShopNamesTab.Unique;
+        private string selectedResaleName = string.Empty;
+
+        public ShopNamesResaleController Resale { get; }
+
+        public bool IsResaleShown => currentTab == ShopNamesTab.Resale;
+
+        public event Action<ShopNamesTab>? TabChanged;
 
         public ShopNamesSectionController(
             ShopNamesSectionView view,
             GameObject previewNametagRoot,
             SimpleUserNameElement previewNametag,
             NameClaimService claimService,
+            MarketplaceShopAPIClient api,
             SelfProfile selfProfile,
             IMVCManager mvcManager,
             UnityAppWebBrowser webBrowser,
@@ -64,8 +75,10 @@ namespace DCL.Shop
             this.mvcManager = mvcManager;
             this.webBrowser = webBrowser;
             this.urlsSource = urlsSource;
+            Resale = new ShopNamesResaleController(view.ResaleGrid, api, webBrowser, urlsSource);
 
-            view.TabClicked += view.ShowTab;
+            view.TabClicked += ShowTab;
+            Resale.NameSelected += OnResaleNameSelected;
             view.NameChanged += OnNameChanged;
             view.ClaimClicked += OnClaimClicked;
             view.MakeOfferClicked += OnMakeOfferClicked;
@@ -76,7 +89,9 @@ namespace DCL.Shop
 
         public void Dispose()
         {
-            view.TabClicked -= view.ShowTab;
+            view.TabClicked -= ShowTab;
+            Resale.NameSelected -= OnResaleNameSelected;
+            Resale.Dispose();
             view.NameChanged -= OnNameChanged;
             view.ClaimClicked -= OnClaimClicked;
             view.MakeOfferClicked -= OnMakeOfferClicked;
@@ -90,6 +105,7 @@ namespace DCL.Shop
             lifeCts = lifeCts.SafeRestart();
 
             view.gameObject.SetActive(true);
+            currentTab = ShopNamesTab.Unique;
             view.ShowTab(ShopNamesTab.Unique);
             view.ClearName();
             view.HideStatus();
@@ -108,7 +124,34 @@ namespace DCL.Shop
             checkCts = null;
             previewNametagRoot.SetActive(false);
             ownProfile = null;
+            Resale.Deactivate();
+            selectedResaleName = string.Empty;
+            currentTab = ShopNamesTab.Unique;
             view.gameObject.SetActive(false);
+        }
+
+        private void ShowTab(ShopNamesTab tab)
+        {
+            if (tab == currentTab)
+                return;
+
+            currentTab = tab;
+            view.ShowTab(tab);
+
+            if (tab == ShopNamesTab.Resale)
+                Resale.Activate();
+            else
+                Resale.Deactivate();
+
+            selectedResaleName = string.Empty;
+            RefreshNametag(tab == ShopNamesTab.Resale ? selectedResaleName : view.Name);
+            TabChanged?.Invoke(tab);
+        }
+
+        private void OnResaleNameSelected(string name)
+        {
+            selectedResaleName = name;
+            RefreshNametag(name);
         }
 
         private async UniTaskVoid LoadNametagAsync(CancellationToken ct)
@@ -120,17 +163,17 @@ namespace DCL.Shop
 
             ownProfile = profile;
             previewNametagRoot.SetActive(true);
-            RefreshNametag(view.Name);
+            RefreshNametag(currentTab == ShopNamesTab.Resale ? selectedResaleName : view.Name);
             view.SetHash(profile.Compact.WalletId ?? string.Empty);
         }
 
-        private void RefreshNametag(string typedName)
+        private void RefreshNametag(string previewedName)
         {
             if (ownProfile == null)
                 return;
 
-            if (typedName.Length > 0)
-                previewNametag.Setup(typedName, string.Empty, hasClaimedName: true, NameColorHelper.GetNameColor(typedName));
+            if (previewedName.Length > 0)
+                previewNametag.Setup(previewedName, string.Empty, hasClaimedName: true, NameColorHelper.GetNameColor(previewedName));
             else
                 previewNametag.Setup(ownProfile.Compact);
 
