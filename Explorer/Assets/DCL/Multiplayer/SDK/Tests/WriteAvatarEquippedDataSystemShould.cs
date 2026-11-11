@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
@@ -18,6 +19,7 @@ using NUnit.Framework;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using WriteAvatarEquippedDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEquippedDataSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -35,6 +37,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private WearableStorage wearableStorage = null!;
+        private IWearablesProvider wearablesProvider = null!;
         private SDKProfile profile = null!;
         private PlayerSceneCRDTEntity playerCRDTEntity;
 
@@ -69,7 +72,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             wearableStorage = new WearableStorage();
 
-            system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter, wearableStorage);
+            wearablesProvider = Substitute.For<IWearablesProvider>();
+
+            system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter, wearableStorage, wearablesProvider);
 
             profile = new SDKProfile();
             OverrideProfile(Array.Empty<string>(), HELMET_URN, HAIR_URN);
@@ -200,6 +205,51 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(2, writtenMessages.Count);
             AssertWearable(writtenMessages[1], 0, HELMET_URN, true);
             AssertWearable(writtenMessages[1], 1, HAIR_URN, false);
+        }
+
+        [Test]
+        public void RequestMissingWearableDtosOnce()
+        {
+            // Arrange
+            StoreWearable(HELMET_URN, WearableCategories.Categories.HELMET, WearableCategories.Categories.HAIR);
+            world.Add(entity, profile);
+            system.Update(0);
+            profile.IsDirty = false;
+
+            // Act
+            system.Update(0);
+            system.Update(0);
+            StoreWearable(HAIR_URN, WearableCategories.Categories.HAIR);
+            system.Update(0);
+
+            // Assert
+            wearablesProvider.Received(1).GetDTOsByPointersAsync(
+                Arg.Is<IReadOnlyCollection<URN>>(pointers => pointers.Count == 2),
+                BodyShape.MALE,
+                Arg.Any<CancellationToken>(),
+                Arg.Any<List<IWearable>?>());
+
+            Assert.AreEqual(2, writtenMessages.Count);
+            AssertWearable(writtenMessages[1], 0, HELMET_URN, true);
+            AssertWearable(writtenMessages[1], 1, HAIR_URN, false);
+        }
+
+        [Test]
+        public void NotRequestDtosOfLoadingWearables()
+        {
+            // Arrange
+            StoreWearable(HELMET_URN, WearableCategories.Categories.HELMET);
+            wearableStorage.Set(new URN(HAIR_URN), IWearable.NewEmpty());
+            world.Add(entity, profile);
+            system.Update(0);
+            profile.IsDirty = false;
+
+            // Act
+            system.Update(0);
+            system.Update(0);
+
+            // Assert
+            wearablesProvider.DidNotReceiveWithAnyArgs().GetDTOsByPointersAsync(default!, default, default);
         }
 
         [Test]

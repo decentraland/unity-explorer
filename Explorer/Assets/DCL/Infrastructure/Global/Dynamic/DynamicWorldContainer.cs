@@ -446,7 +446,7 @@ namespace Global.Dynamic
             // They join StaticContainer.ECSWorldPlugins for initialization and scene-world injection.
             var worldPlugins = new List<IDCLWorldPlugin>
             {
-                new DCL.PluginSystem.World.MultiplayerPlugin(globalWorld, playerEntity, staticContainer.CharacterDataPropagationUtility, wearableContainer.WearableCatalog),
+                new DCL.PluginSystem.World.MultiplayerPlugin(globalWorld, playerEntity, staticContainer.CharacterDataPropagationUtility, wearableContainer.WearableCatalog, wearableContainer.WearablesProvider),
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
                 new SceneWearablesPlugin(wearableContainer.WearableCatalog, globalWorld, localSceneDevelopment),

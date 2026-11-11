@@ -4,18 +4,23 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
@@ -32,11 +37,19 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IWearableStorage wearableStorage;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly CancellationTokenSource disposeCts = new ();
 
-        internal WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IWearableStorage wearableStorage) : base(world)
+        internal WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IWearableStorage wearableStorage, IWearablesProvider wearablesProvider) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.wearableStorage = wearableStorage;
+            this.wearablesProvider = wearablesProvider;
+        }
+
+        protected override void OnDispose()
+        {
+            disposeCts.SafeCancelAndDispose();
         }
 
         public override void Initialize()
@@ -72,6 +85,16 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 return;
             }
 
+            // Storage entries can be evicted, so missing DTOs are requested again.
+            if (!pending.DtosRequested && IsAnyWearableMissing(profile.Avatar.ShortenedWearables))
+            {
+                pending.DtosRequested = true;
+
+                wearablesProvider.GetDTOsByPointersAsync(profile.Avatar.ShortenedWearables, profile.Avatar.BodyShape, disposeCts.Token)
+                                 .SuppressToResultAsync(GetReportData())
+                                 .Forget();
+            }
+
             pending.ElapsedSeconds += dt;
 
             if (pending.ElapsedSeconds < MAX_PENDING_SECONDS) return;
@@ -85,6 +108,15 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         private void HandleComponentRemoval(PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
+        }
+
+        private bool IsAnyWearableMissing(IReadOnlyList<URN> pointers)
+        {
+            for (var i = 0; i < pointers.Count; i++)
+                if (!wearableStorage.TryGetElement(pointers[i], out _))
+                    return true;
+
+            return false;
         }
 
         /// <returns>Whether the visibility was resolved and written.</returns>
@@ -178,6 +210,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         private struct WearablesVisibilityPending
         {
             public float ElapsedSeconds;
+            public bool DtosRequested;
         }
     }
 }
