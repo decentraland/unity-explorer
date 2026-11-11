@@ -55,22 +55,29 @@ namespace DCL.AvatarRendering.Emotes
         public readonly URN NewSceneEmoteURN() =>
             $"{SCENE_EMOTE_PREFIX}:{SceneId}-{EmoteHash}-{Loop.ToString().ToLower()}";
 
-        public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
+        public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, bool useLocalAssetBundles, IEmote emote)
         {
-            // Scene emotes are scene content — resolve to the digest-bearing name so URL and cache identity match the scene's ABs.
-            var promise = AssetBundlePromise.Create(world,
-                GetAssetBundleIntention.FromHash(
-                    SceneAssetBundleManifestVersion.GetCdnRequestHash(this.EmoteHash),
-                    SceneAssetBundleManifestVersion,
-                    typeof(GameObject),
-                    parentEntityID: SceneId,
-                    permittedSources: this.PermittedSources,
-                    customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
-                    cancellationTokenSource: this.CancellationTokenSource),
-                partitionComponent);
+            AssetBundlePromise promise = CreateBundlePromise(world, SceneAssetBundleManifestVersion, EmoteHash, SceneId, customStreamingSubdirectory.Value,
+                CancellationTokenSource, partitionComponent, PermittedSources);
 
             world.Create(promise, emote, this.BodyShape);
         }
+
+        internal static AssetBundlePromise CreateBundlePromise(World world, AssetBundleManifestVersion manifest, string emoteHash, string sceneId,
+            URLSubdirectory customStreamingSubdirectory, CancellationTokenSource cancellationTokenSource, IPartitionComponent partitionComponent,
+            AssetSource permittedSources = AssetSource.All) =>
+
+            // Scene emotes are scene content — resolve to the digest-bearing name so URL and cache identity match the scene's ABs.
+            AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash(
+                    manifest.GetCdnRequestHash(emoteHash),
+                    manifest,
+                    typeof(GameObject),
+                    parentEntityID: sceneId,
+                    permittedSources: permittedSources,
+                    customEmbeddedSubDirectory: customStreamingSubdirectory,
+                    cancellationTokenSource: cancellationTokenSource),
+                partitionComponent);
 
         public bool IsTimeout(float deltaTime)
         {
