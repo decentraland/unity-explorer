@@ -7,8 +7,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.LowLevel;
-using EventCallback = UnityEngine.UIElements.EventCallback<UnityEngine.UIElements.PointerDownEvent>;
-using VisualElement = UnityEngine.UIElements.VisualElement;
 
 namespace DCL.McpServer.Tools
 {
@@ -18,8 +16,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class UiClickTool : McpTool
     {
-        private const int SDK_DEVICE_OBSERVE_FRAMES = 6;
-
         private readonly UiAutomationServices uiAutomation;
 
         public override string Name => "ui_click";
@@ -27,7 +23,10 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Click a UI element (client interface or SDK scene UI). " + UiAddressArgs.ADDRESS_SCHEMA_HINT + " The click fails "
             + "instead of clicking through a cover (pass force:true to bypass). device:true replays the click positionally "
-            + "through the virtual mouse instead of synthesizing element events — use it for widgets that need real hit-testing.";
+            + "through the virtual mouse instead of synthesizing element events — use it for widgets that need real hit-testing; "
+            + "on scene UI it is paced one event per scene drain, and force cannot aim it through a client cover. For scene UI "
+            + "the result's delivered {enter, down, up} names what the scene consumed (consumed | not_declared | not_drained) "
+            + "and ok is false when a press or release the element declares was not consumed.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             UiAddressArgs.DescribeAddress(schema)
@@ -63,8 +62,8 @@ namespace DCL.McpServer.Tools
                     return McpToolResult.Error(failure);
 
                 result = device
-                    ? await RunDeviceClickOnSdkAsync(element, button, timeoutSec, ct)
-                    : await uiAutomation.Simulator.ClickSdkAsync(element, force, ct);
+                    ? await uiAutomation.ClickSdkWithDevicesAsync(element, ToMouseButton(button), force, timeoutSec, ct)
+                    : await uiAutomation.ClickSdkAsync(element, force, ct);
             }
             else
             {
@@ -74,65 +73,11 @@ namespace DCL.McpServer.Tools
                 var rectTransform = (RectTransform)target.transform;
 
                 result = device
-                    ? await RunDeviceClickAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), button, timeoutSec, ct)
-                    : uiAutomation.Simulator.ClickUgui(target, button, force);
+                    ? await uiAutomation.ClickWithDevicesAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), ToMouseButton(button), timeoutSec, ct)
+                    : uiAutomation.ClickUgui(target, button, force);
             }
 
             return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
-        }
-
-        /// <summary>
-        ///     A successful gesture only means the device states were injected, so the element is watched for
-        ///     the pointer down it should have observed.
-        /// </summary>
-        private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
-        {
-            Rect imageRect = SdkImageRect(element);
-            VisualElement target = element.Transform.Transform;
-
-            var observed = false;
-            EventCallback observe = _ => observed = true;
-            target.RegisterCallback(observe);
-
-            UiActionResult result;
-
-            try
-            {
-                result = await RunDeviceClickAsync(UiScreenGeometry.ImageToScreenPoint(imageRect.center), imageRect, button, timeoutSec, ct);
-
-                if (!result.Ok)
-                    return result;
-
-                for (var frame = 0; !observed && frame < SDK_DEVICE_OBSERVE_FRAMES; frame++)
-                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
-            }
-            finally { target.UnregisterCallback(observe); }
-
-            result.Info = observed
-                ? "the element observed the device pointer event"
-                : $"the element observed no pointer event within {SDK_DEVICE_OBSERVE_FRAMES} frames: the virtual device drives the client UI stack, not UI Toolkit scene panels — use the semantic path (device:false) for scene UI";
-
-            return result;
-        }
-
-        private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, PointerEventData.InputButton button, float timeoutSec, CancellationToken ct)
-        {
-            UiGestureResult gesture = await uiAutomation.RunGestureAsync(new UiDeviceGestureRequest
-            {
-                Kind = UiDeviceGestureKind.Click,
-                To = screenCenter,
-                Button = ToMouseButton(button),
-            }, timeoutSec, ct);
-
-            return gesture.Ok
-                ? UiActionResult.Success(imageRect)
-                : UiActionResult.Failure(gesture.FailureReason ?? "the device click failed", null, imageRect);
-        }
-
-        private static Rect SdkImageRect(in SdkUiElement element)
-        {
-            VisualElement visual = element.Transform.Transform;
-            return UiScreenGeometry.PanelRectToImageRect(visual.panel, visual.worldBound);
         }
 
         private static MouseButton ToMouseButton(PointerEventData.InputButton button) =>

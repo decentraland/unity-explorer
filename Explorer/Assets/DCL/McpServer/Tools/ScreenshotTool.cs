@@ -5,274 +5,86 @@ using DCL.CharacterCamera;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections;
 using System.Threading;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Utility;
-using Utility.Multithreading;
-using Object = UnityEngine.Object;
 
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Captures the current frame (back buffer including UI, or a world-only camera render),
-    ///     downscales it and returns it as an MCP image content block. Textures never accumulate:
-    ///     temporaries are released per call and the ReadPixels fallback reuses one persistent buffer.
+    ///     Captures the current frame through the shared <see cref="ScreenCaptureService" /> and returns it as an
+    ///     MCP image content block. Waits out a Cinemachine blend first, so the frame is the settled view rather
+    ///     than a mid-transition one.
     /// </summary>
-    public class ScreenshotTool : McpTool, IDisposable
+    public class ScreenshotTool : McpTool
     {
-        private enum OutputFormat : byte
-        {
-            Jpg,
-            Png,
-        }
+        /// <summary>Longest a blend is waited out; the standard blends run 0.5–1 s.</summary>
+        private const float CAMERA_BLEND_DEADLINE_SEC = 1.5f;
 
-        private const int DEFAULT_MAX_WIDTH = 1280;
-        private const int MIN_WIDTH = 64;
-        private const int MAX_WIDTH = 1920;
-        private const int JPG_QUALITY = 75;
-        private const GraphicsFormat PASSTHROUGH_GRAPHICS_FORMAT = GraphicsFormat.R8G8B8A8_UNorm;
-
-        private const string MIME_TYPE_PNG = "image/png";
-        private const string MIME_TYPE_JPEG = "image/jpeg";
-
-        private readonly ICoroutineRunner coroutineRunner;
+        private readonly ScreenCaptureService capture;
         private readonly World world;
         private readonly Entity playerEntity;
-
-        // Reused across calls by the ReadPixels fallback so repeated captures don't allocate new textures.
-        private Texture2D? readPixelsBuffer;
-
-        // True while a capture is running; concurrent requests are rejected so one set of buffers suffices.
-        // A plain bool is safe: tool execution is marshalled onto the main thread by the dispatcher, so the
-        // check-and-set below runs without preemption before the first await.
-        private bool capturing;
+        private readonly IExposedCameraData exposedCameraData;
 
         public override string Name => "screenshot";
 
         public override string Description =>
             "Capture a screenshot of what the player currently sees in the Explorer, including scene UI. "
-            + "Use worldOnly to exclude all UI overlays. Returns a downscaled image plus a caption with the capture context.";
+            + "Use worldOnly to exclude all UI overlays. Returns a downscaled image plus a caption with the capture context "
+            + "(the screen size when downscaled, and how long a camera blend was waited out). One capture runs at a time: "
+            + "a call issued while a screenshot or capture_sequence is in progress is refused, not queued.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("maxWidth", "Maximum output width in pixels (aspect ratio preserved). Default 1280.")
-                  .Enum<OutputFormat>("quality", "Output encoding. Default jpg.")
-                  .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.");
+                  .Enum<ScreenCaptureService.Format>("quality", "Output encoding. Default jpg.")
+                  .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.")
+                  .Boolean("waitForCameraBlend", "Wait (at most 1.5 s) for a Cinemachine camera blend to finish before capturing, so the frame is not "
+                                                 + "mid-transition after an SDK virtual camera hands back or a mode switch. Default true.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
-        public ScreenshotTool(ICoroutineRunner coroutineRunner, World world, Entity playerEntity)
+        public ScreenshotTool(ScreenCaptureService capture, World world, Entity playerEntity, IExposedCameraData exposedCameraData)
         {
-            this.coroutineRunner = coroutineRunner;
+            this.capture = capture;
             this.world = world;
             this.playerEntity = playerEntity;
-        }
-
-        public void Dispose()
-        {
-            if (readPixelsBuffer != null)
-                Object.Destroy(readPixelsBuffer);
+            this.exposedCameraData = exposedCameraData;
         }
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
+            int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", ScreenCaptureService.DEFAULT_MAX_WIDTH), ScreenCaptureService.MIN_WIDTH, ScreenCaptureService.MAX_WIDTH);
 
-            if (!arguments.TryGetEnum("quality", OutputFormat.Jpg, out OutputFormat format))
-                return McpToolResult.Error(arguments.EnumArgumentError<OutputFormat>("quality"));
+            if (!arguments.TryGetEnum("quality", ScreenCaptureService.Format.Jpg, out ScreenCaptureService.Format format))
+                return McpToolResult.Error(arguments.EnumArgumentError<ScreenCaptureService.Format>("quality"));
 
-            bool asPng = format == OutputFormat.Png;
             bool worldOnly = arguments.GetBool("worldOnly", false);
+            bool waitForCameraBlend = arguments.GetBool("waitForCameraBlend", true);
 
-            if (capturing)
-                return McpToolResult.Error("Another screenshot capture is already in progress; retry when it completes.");
-
-            capturing = true;
-
-            try { return await CaptureAsync(maxWidth, asPng, worldOnly, ct); }
-            finally { capturing = false; }
-        }
-
-        private async UniTask<McpToolResult> CaptureAsync(int maxWidth, bool asPng, bool worldOnly, CancellationToken ct)
-        {
-            Texture2D? backbufferCopy = null;
-            RenderTexture? worldRender = null;
-            RenderTexture? downscaled = null;
+            if (!capture.TryAcquire(Name))
+                return McpToolResult.Error($"A capture is already in progress ({capture.BusyOwner}); retry when it completes.");
 
             try
             {
-                int sourceWidth;
-                int sourceHeight;
-
-                if (worldOnly)
-                {
-                    Camera camera = world.CacheCamera().GetCameraComponent(world).Camera;
-
-                    // URP replaces the camera's internal color buffer with the target texture's descriptor
-                    // (CreateRenderTextureDescriptor), so an LDR target silently downgrades the whole render
-                    // to 8-bit and clamps emissives to 1.0, starving bloom and other HDR-dependent post effects.
-                    // An HDR temporary keeps the pipeline HDR end-to-end; the downscale blit into the sRGB
-                    // descriptor below performs the linear-to-sRGB conversion.
-                    worldRender = RenderTexture.GetTemporary(camera.pixelWidth, camera.pixelHeight, 24, RenderTextureFormat.DefaultHDR);
-
-                    // Camera.Render() is unsupported under URP: redirect the camera's output into the
-                    // render texture for exactly one frame instead, then restore it.
-                    RenderTexture? previousTarget = camera.targetTexture;
-                    camera.targetTexture = worldRender;
-
-                    try { await WaitForEndOfFrameAsync(ct); }
-                    finally
-                    {
-                        await UniTask.SwitchToMainThread();
-                        camera.targetTexture = previousTarget;
-                    }
-
-                    sourceWidth = worldRender.width;
-                    sourceHeight = worldRender.height;
-                }
-                else
-                {
-                    backbufferCopy = await CaptureBackbufferAsync(ct);
-
-                    if (backbufferCopy == null)
-                        return McpToolResult.Error("Back buffer capture failed.");
-
-                    sourceWidth = backbufferCopy.width;
-                    sourceHeight = backbufferCopy.height;
-                }
-
-                int width = Mathf.Min(maxWidth, sourceWidth);
-                int height = Mathf.Max(1, Mathf.RoundToInt((float)sourceHeight * width / sourceWidth));
-
-                // In Linear color space the back buffer copy is already display-encoded but not flagged sRGB, so an sRGB target would encode it twice.
-                bool encodeToSrgb = backbufferCopy == null || backbufferCopy.isDataSRGB;
-
-                // sRGB must be assigned after graphicsFormat: its setter rewrites the format.
-                var descriptor = new RenderTextureDescriptor(width, height)
-                {
-                    graphicsFormat = encodeToSrgb ? OutputGraphicsFormat() : PASSTHROUGH_GRAPHICS_FORMAT,
-                    sRGB = encodeToSrgb, msaaSamples = 1, depthBufferBits = 0,
-                    mipCount = 1, useMipMap = false,
-                };
-
-                downscaled = RenderTexture.GetTemporary(descriptor);
-
-                if (backbufferCopy != null)
-                {
-                    Graphics.Blit(backbufferCopy, downscaled);
-
-                    // The back buffer copy is a fresh Texture2D allocated by Unity on every capture: destroy it as soon as it's blitted.
-                    Object.Destroy(backbufferCopy);
-                    backbufferCopy = null;
-                }
-                else
-                {
-                    Graphics.Blit(worldRender, downscaled);
-                    RenderTexture.ReleaseTemporary(worldRender);
-                    worldRender = null;
-                }
-
-                byte[] encoded;
-                string mimeType;
-
-                AsyncGPUReadbackRequest readback = await AsyncGPUReadback.Request(downscaled).WithCancellation(ct);
-
-                if (readback.hasError) { (encoded, mimeType) = EncodeViaReadPixels(downscaled, asPng); }
-                else
-                {
-                    NativeArray<byte> rawPixels = readback.GetData<byte>();
-
-                    using (NativeArray<byte> encodedNative = asPng
-                               ? ImageConversion.EncodeNativeArrayToPNG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height)
-                               : ImageConversion.EncodeNativeArrayToJPG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height))
-                        encoded = encodedNative.ToArray();
-
-                    mimeType = asPng ? MIME_TYPE_PNG : MIME_TYPE_JPEG;
-                }
+                (int waitedMs, bool stillBlending) = waitForCameraBlend
+                    ? await CameraBlendWait.WaitAsync(exposedCameraData, CAMERA_BLEND_DEADLINE_SEC, ct)
+                    : (0, false);
 
                 Vector2Int parcel = world.Get<CharacterTransform>(playerEntity).Position.ToParcel();
 
-                string scale = width != Screen.width ? $" (screen {Screen.width}x{Screen.height})" : string.Empty;
-                var caption = $"{width}x{height}{scale} {(worldOnly ? "world-only" : "full-view")} capture at parcel ({parcel.x},{parcel.y})";
+                ScreenCaptureService.Frame frame = await capture.CaptureAsync(maxWidth, format, worldOnly, ct);
 
-                // Base64 conversion of the encoded image happens off the main thread.
-                await DCLTask.SwitchToThreadPool();
-                return McpToolResult.Image(encoded, mimeType, caption);
+                string scale = frame.Width != frame.ScreenWidth ? $" (screen {frame.ScreenWidth}x{frame.ScreenHeight})" : string.Empty;
+                var caption = $"{frame.Width}x{frame.Height}{scale} {(worldOnly ? "world-only" : "full-view")} capture at parcel ({parcel.x},{parcel.y})";
+
+                if (stillBlending)
+                    caption += $", camera still blending after {(int)(CAMERA_BLEND_DEADLINE_SEC * 1000f)} ms — the frame may be mid-transition";
+                else if (waitedMs > 0)
+                    caption += $", waited {waitedMs} ms for the camera blend";
+
+                return McpToolResult.Image(frame.Bytes, frame.MimeType, caption);
             }
-            finally
-            {
-                if (backbufferCopy != null || worldRender != null || downscaled != null)
-                {
-                    await UniTask.SwitchToMainThread();
-
-                    if (backbufferCopy != null) Object.Destroy(backbufferCopy);
-                    if (worldRender != null) RenderTexture.ReleaseTemporary(worldRender);
-                    if (downscaled != null) RenderTexture.ReleaseTemporary(downscaled);
-                }
-            }
-        }
-
-        private UniTask<Texture2D?> CaptureBackbufferAsync(CancellationToken ct)
-        {
-            var completion = new UniTaskCompletionSource<Texture2D?>();
-            coroutineRunner.StartCoroutine(CaptureBackbufferCoroutine(completion));
-            return completion.Task.AttachExternalCancellation(ct);
-        }
-
-        private UniTask WaitForEndOfFrameAsync(CancellationToken ct)
-        {
-            var completion = new UniTaskCompletionSource();
-            coroutineRunner.StartCoroutine(SignalEndOfFrameCoroutine(completion));
-            return completion.Task.AttachExternalCancellation(ct);
-        }
-
-        private static IEnumerator SignalEndOfFrameCoroutine(UniTaskCompletionSource completion)
-        {
-            yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
-            completion.TrySetResult();
-        }
-
-        private static IEnumerator CaptureBackbufferCoroutine(UniTaskCompletionSource<Texture2D?> completion)
-        {
-            // The back buffer is only complete (UI included) at the very end of the frame.
-            yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME;
-
-            Texture2D texture = ScreenCapture.CaptureScreenshotAsTexture();
-
-            if (!completion.TrySetResult(texture))
-                Object.Destroy(texture);
-        }
-
-        private (byte[] bytes, string mimeType) EncodeViaReadPixels(RenderTexture source, bool asPng)
-        {
-            if (readPixelsBuffer == null)
-                readPixelsBuffer = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
-            else if (readPixelsBuffer.width != source.width || readPixelsBuffer.height != source.height)
-                readPixelsBuffer.Reinitialize(source.width, source.height, readPixelsBuffer.graphicsFormat, false);
-
-            RenderTexture? previousActive = RenderTexture.active;
-            RenderTexture.active = source;
-            readPixelsBuffer.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
-            readPixelsBuffer.Apply();
-            RenderTexture.active = previousActive;
-
-            return asPng
-                ? (readPixelsBuffer.EncodeToPNG(), MIME_TYPE_PNG)
-                : (readPixelsBuffer.EncodeToJPG(JPG_QUALITY), MIME_TYPE_JPEG);
-        }
-
-        private static GraphicsFormat OutputGraphicsFormat()
-        {
-            var preferred = GraphicsFormat.R8G8B8A8_SRGB;
-
-            if (SystemInfo.IsFormatSupported(preferred, GraphicsFormatUsage.Render))
-                return preferred;
-
-            return SystemInfo.GetCompatibleFormat(preferred, GraphicsFormatUsage.Render);
+            finally { capture.Release(Name); }
         }
     }
 }

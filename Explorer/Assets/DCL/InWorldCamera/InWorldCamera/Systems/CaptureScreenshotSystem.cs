@@ -165,7 +165,7 @@ namespace DCL.InWorldCamera.Systems
             Camera captureCamera = camera.GetCameraComponent(World).Camera;
             Plane[] frustumPlanes = CalculatePhotoFrustumPlanes(captureCamera);
 
-            metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes, captureCamera);
+            metadataBuilder.Init(parcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes, captureCamera);
 
             metadataBuilder.AddSelfProfile(UserIsEmoting(playerEntity));
             AddPeopleInFrameToMetadataQuery(World);

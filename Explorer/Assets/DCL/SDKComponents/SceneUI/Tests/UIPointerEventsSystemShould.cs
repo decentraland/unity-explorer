@@ -76,6 +76,19 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsEmpty(uiTransformComponent.PendingPointerEvents);
         }
 
+        [Test]
+        public void ResetTheDrainLogWhenTheComponentIsReused()
+        {
+            // Arrange
+            uiTransformComponent.Drains.RecordAppended(PointerEventType.PetDown);
+
+            // Act
+            uiTransformComponent.InitializeAsChild("Reused", new CRDTEntity(501), new CRDTEntity(0));
+
+            // Assert
+            Assert.AreEqual(0, uiTransformComponent.Drains.AppendedCount(PointerEventType.PetDown));
+        }
+
         private static PBPointerEvents CreatePointerEvents(PointerEventType eventType)
         {
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };

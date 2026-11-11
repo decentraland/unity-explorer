@@ -53,8 +53,8 @@ namespace DCL.McpServer.Tools
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
                 result = text != null && !hasOptionIndex
-                    ? uiAutomation.Simulator.SetTextSdk(element, text, submit)
-                    : uiAutomation.Simulator.SelectDropdownSdk(element, optionIndex);
+                    ? uiAutomation.SetTextSdk(element, text, submit)
+                    : uiAutomation.SelectDropdownSdk(element, optionIndex);
             }
             else
             {
@@ -64,7 +64,7 @@ namespace DCL.McpServer.Tools
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
                     return UniTask.FromResult(McpToolResult.Error(failure));
 
-                result = uiAutomation.Simulator.SetTextUgui(target, text, submit);
+                result = uiAutomation.SetTextUgui(target, text, submit);
             }
 
             return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));

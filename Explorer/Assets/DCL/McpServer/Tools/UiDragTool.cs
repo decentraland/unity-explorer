@@ -10,9 +10,8 @@ using UnityEngine.InputSystem.LowLevel;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Drags between two screen points: semantically inside the SDK scene UI, whose UI Toolkit panels take
-    ///     events sent to their elements rather than virtual-device pointer state, and through the virtual mouse
-    ///     elsewhere.
+    ///     Drags between two screen points: semantically inside the SDK scene UI, whose elements hold a single
+    ///     pointer-event slot that a per-frame device drag would overwrite, and through the virtual mouse elsewhere.
     /// </summary>
     public class UiDragTool : McpTool
     {
@@ -22,8 +21,6 @@ namespace DCL.McpServer.Tools
             Sdk,
             Device,
         }
-
-        private const string WORLD = "world";
 
         private const int DEFAULT_DURATION_FRAMES = 15;
         private const int MIN_DURATION_FRAMES = 2;
@@ -80,16 +77,20 @@ namespace DCL.McpServer.Tools
 
             string? skippedSceneUi = null;
 
+            // Whichever path runs first ends the parked hover; the other then finds none, so the first answer is kept.
+            string? endedHover = null;
+
             if (path != DragPath.Device)
             {
                 Vector2 fromImage = UiScreenGeometry.NormalizedToImagePoint(new Vector2(fromX, fromY));
                 Vector2 toImage = UiScreenGeometry.NormalizedToImagePoint(new Vector2(toX, toY));
 
                 SceneUiDragAttempt attempt = await uiAutomation.DragSceneUiAsync(fromImage, toImage, durationFrames, ct);
+                endedHover = attempt.EndedHover;
 
-                if (attempt.Result.HasValue)
+                if (attempt.Result is { } sdkResult)
                 {
-                    JObject sdkJson = attempt.Result.Value.ToJson(uiAutomation.CursorStateName());
+                    JObject sdkJson = sdkResult.ToJson(uiAutomation.CursorStateName());
                     sdkJson["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Sdk);
                     return McpToolResult.Json(sdkJson);
                 }
@@ -97,7 +98,7 @@ namespace DCL.McpServer.Tools
                 skippedSceneUi = attempt.SkipReason;
 
                 if (path == DragPath.Sdk)
-                    return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
+                    return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}{EndedHoverNote(endedHover)}");
             }
 
             Vector2 from = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(fromX, fromY));
@@ -106,9 +107,10 @@ namespace DCL.McpServer.Tools
             MouseButton button = arguments.GetBool("rightButton", false) ? MouseButton.Right : MouseButton.Left;
 
             UiDeviceDragOutcome outcome = await uiAutomation.DragWithDevicesAsync(from, to, durationFrames, button, ct);
+            endedHover ??= outcome.EndedHover;
 
             if (!outcome.Ok)
-                return McpToolResult.Error(outcome.FailureReason ?? "the drag failed");
+                return McpToolResult.Error((outcome.FailureReason ?? "the drag failed") + EndedHoverNote(endedHover));
 
             var result = new JObject
             {
@@ -117,8 +119,8 @@ namespace DCL.McpServer.Tools
                 ["cursorState"] = uiAutomation.CursorStateName(),
                 ["pointerOver"] = new JObject
                 {
-                    ["start"] = outcome.CoverAtStart ?? WORLD,
-                    ["end"] = outcome.CoverAtEnd ?? WORLD,
+                    ["start"] = outcome.CoverAtStart ?? UiAutomationServices.WORLD_COVER,
+                    ["end"] = outcome.CoverAtEnd ?? UiAutomationServices.WORLD_COVER,
                 },
                 ["screen"] = new JObject { ["width"] = Screen.width, ["height"] = Screen.height },
             };
@@ -129,7 +131,13 @@ namespace DCL.McpServer.Tools
             if (skippedSceneUi != null)
                 result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse was replayed instead";
 
+            if (endedHover != null)
+                result["hoverEnded"] = endedHover;
+
             return McpToolResult.Json(result);
         }
+
+        private static string EndedHoverNote(string? endedHover) =>
+            endedHover != null ? $" (the parked hover on {endedHover} was ended first)" : string.Empty;
     }
 }

@@ -23,11 +23,23 @@ namespace DCL.SyntheticInput.UiSimulation
         /// </summary>
         Drag,
 
-        /// <summary>Holds the pointer at <see cref="UiDeviceGestureRequest.To" /> for the duration.</summary>
+        /// <summary>
+        ///     Moves the pointer from <see cref="UiDeviceGestureRequest.From" /> to <see cref="UiDeviceGestureRequest.To" />
+        ///     over the duration, buttons up; equal points rest it there. The pointer stays after the gesture completes.
+        /// </summary>
         Hover,
 
         /// <summary>Presses and releases <see cref="UiDeviceGestureRequest.Key" />, held for the duration.</summary>
         KeyPress,
+
+        /// <summary>
+        ///     Presses <see cref="UiDeviceGestureRequest.Button" /> at <see cref="UiDeviceGestureRequest.To" /> in one
+        ///     frame and leaves it held, so a caller can pace the release on the scene's own cadence.
+        /// </summary>
+        ButtonDown,
+
+        /// <summary>Releases <see cref="UiDeviceGestureRequest.Button" /> at <see cref="UiDeviceGestureRequest.To" /> in one frame.</summary>
+        ButtonUp,
     }
 
     public enum UiGesturePhase : byte
@@ -65,5 +77,8 @@ namespace DCL.SyntheticInput.UiSimulation
     {
         public bool Ok;
         public string? FailureReason;
+
+        /// <summary>Stamped by the facade: the address of a parked hover the gesture ended before it ran.</summary>
+        public string? EndedHover;
     }
 }
