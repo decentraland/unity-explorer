@@ -39,6 +39,7 @@ namespace DCL.Shop
         private float bodyPadding;
         private bool metricsCaptured;
         private bool viewportDirty;
+        private float nextCardPeek;
 
         public int ItemCount { get; private set; }
 
@@ -106,13 +107,15 @@ namespace DCL.Shop
         }
 
         /// <summary>
-        ///     Sizes the row for its cards: the cards per page always fill the viewport, so the spacing stretches to fit.
+        ///     Sizes the row for its cards: the cards per page plus the visible fraction of the next card always fill the viewport,
+        ///     so the spacing stretches to fit.
         /// </summary>
-        public void Configure(float cardWidth, float cardHeight, int cardsPerPage)
+        public void Configure(float cardWidth, float cardHeight, int cardsPerPage, float nextCardPeek)
         {
             CaptureMetrics();
             CardWidth = cardWidth;
             CardsPerPage = Mathf.Max(1, cardsPerPage);
+            this.nextCardPeek = Mathf.Clamp01(nextCardPeek);
 
             float bodyHeight = cardHeight + bodyPadding;
             Body.sizeDelta = new Vector2(Body.sizeDelta.x, bodyHeight);
@@ -186,11 +189,15 @@ namespace DCL.Shop
 
         private float Spacing()
         {
-            if (CardsPerPage <= 1)
+            // A peeking card runs up to the viewport edge, so it adds one gap and takes the place of the right padding
+            bool peeking = nextCardPeek > 0f;
+            int gaps = peeking ? CardsPerPage : CardsPerPage - 1;
+
+            if (gaps == 0)
                 return MIN_SPACING;
 
-            float rowWidth = Viewport.rect.width - TrackLayout.padding.horizontal;
-            return Mathf.Max(MIN_SPACING, (rowWidth - (CardsPerPage * CardWidth)) / (CardsPerPage - 1));
+            float rowWidth = Viewport.rect.width - TrackLayout.padding.left - (peeking ? 0 : TrackLayout.padding.right);
+            return Mathf.Max(MIN_SPACING, (rowWidth - ((CardsPerPage + nextCardPeek) * CardWidth)) / gaps);
         }
 
         private void RebuildDots()

@@ -12,8 +12,12 @@ namespace DCL.Shop
         private const int OUTFIT_CARDS_POOL_CAPACITY = 12;
         private const int OUTFITS_PER_PAGE = 4;
         private const int OUTFITS_PER_PAGE_COMPACT = 3;
-        private const int ITEMS_PER_PAGE = 6;
-        private const int ITEMS_PER_PAGE_COMPACT = 4;
+        private const int ITEMS_PER_PAGE = 5;
+        private const int ITEMS_PER_PAGE_COMPACT = 3;
+
+        // Visible fraction of the card after the last full one: the cut card tells the row scrolls
+        private const float OUTFIT_PEEK = 0.1f;
+        private const float ITEM_PEEK = 0.85f;
 
         [field: SerializeField] public ScrollRect Scroll { get; private set; } = null!;
         [field: SerializeField] public ShopCarouselView TrendingCarousel { get; private set; } = null!;
@@ -126,9 +130,9 @@ namespace DCL.Shop
         {
             Vector2 outfitSize = ((RectTransform)OutfitCardPrefab.transform).sizeDelta;
             Vector2 itemSize = ((RectTransform)ItemCardPrefab.transform).sizeDelta;
-            OutfitsRow.Configure(outfitSize.x, outfitSize.y, compact ? OUTFITS_PER_PAGE_COMPACT : OUTFITS_PER_PAGE);
-            TrendingCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE);
-            NewCreationsCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE);
+            OutfitsRow.Configure(outfitSize.x, outfitSize.y, compact ? OUTFITS_PER_PAGE_COMPACT : OUTFITS_PER_PAGE, OUTFIT_PEEK);
+            TrendingCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE, ITEM_PEEK);
+            NewCreationsCarousel.Configure(itemSize.x, itemSize.y, compact ? ITEMS_PER_PAGE_COMPACT : ITEMS_PER_PAGE, ITEM_PEEK);
         }
 
         public void SetEmptyVisible(bool visible) =>
