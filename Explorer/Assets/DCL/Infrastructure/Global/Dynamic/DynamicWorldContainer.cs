@@ -26,6 +26,8 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
+using DCL.MarketplaceCredits.Purchase.Cart;
+using DCL.MarketplaceCredits.Purchase.Names;
 using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -93,6 +95,9 @@ namespace Global.Dynamic
         private readonly ChatContainer chatContainer;
         private readonly UpscalingController upscalingController;
         private readonly LobbyStagePresetCatalog lobbyStagePresetCatalog;
+        private readonly ShopCart shopCart;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
 
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
@@ -138,7 +143,10 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer,
             VoiceChatContainer voiceChatContainer,
             UpscalingController upscalingController,
-            LobbyStagePresetCatalog lobbyStagePresetCatalog)
+            LobbyStagePresetCatalog lobbyStagePresetCatalog,
+            ShopCart shopCart,
+            CreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -158,11 +166,17 @@ namespace Global.Dynamic
             this.voiceChatContainer = voiceChatContainer;
             this.upscalingController = upscalingController;
             this.lobbyStagePresetCatalog = lobbyStagePresetCatalog;
+            this.shopCart = shopCart;
+            this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
+            cartCheckoutService.Dispose();
+            shopCart.Dispose();
+            nameClaimService.Dispose();
             lobbyStagePresetCatalog.Dispose();
             upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
@@ -467,16 +481,48 @@ namespace Global.Dynamic
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
+            var creditsMetaTxRelayer = new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig);
+            var creditsSettlementPoller = new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            var manaUsdRateReader = new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            bool isCreditsPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
+
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
-                new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
-                new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
-                new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,
                 CreditsFeatureAccess.Instance,
-                FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits));
+                isCreditsPurchaseEnabled);
+
+            var nameClaimService = new NameClaimService(
+                marketplaceCreditsApiClient,
+                dynamicWorldDependencies.CompositeWeb3Provider,
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
+                new AcrossBridgeStatusPoller(staticContainer.WebRequestsContainer.WebRequestController, creditsChainConfig),
+                creditsChainConfig,
+                identityCache,
+                CreditsFeatureAccess.Instance,
+                isCreditsPurchaseEnabled);
+
+            var shopCart = new ShopCart(identityCache);
+
+            var cartCheckoutService = new CreditsCartCheckoutService(
+                shopCart,
+                creditsPurchaseService,
+                marketplaceShopApiClient,
+                marketplaceCreditsApiClient,
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
+                creditsChainConfig,
+                identityCache,
+                CreditsFeatureAccess.Instance,
+                isCreditsPurchaseEnabled);
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -722,6 +768,11 @@ namespace Global.Dynamic
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService,
                     marketplaceCreditsApiClient,
+                    marketplaceShopApiClient,
+                    shopCart,
+                    creditsPurchaseService,
+                    cartCheckoutService,
+                    nameClaimService,
                     lobbyStagePresetSetting
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
@@ -817,7 +868,11 @@ namespace Global.Dynamic
                     profileContainer.SelfProfile,
                     profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
-                    wearableContainer.WearableCatalog),
+                    wearableContainer.WearableCatalog,
+                    shopCart,
+                    cartCheckoutService,
+                    nameClaimService,
+                    staticContainer.WebRequestsContainer.WebRequestController),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, profileContainer.SelfProfile, staticContainer.InputBlock,
                     identityCache, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
@@ -1160,7 +1215,10 @@ namespace Global.Dynamic
                 communitiesContainer,
                 voiceChatContainer,
                 upscaleController,
-                lobbyStagePresetCatalog
+                lobbyStagePresetCatalog,
+                shopCart,
+                cartCheckoutService,
+                nameClaimService
             );
 
             // Init itself

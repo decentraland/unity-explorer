@@ -180,5 +180,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         SatelliteMapTiles = 108,
 
         CastPresenterService = 109,
+
+        ShopServer = 110,
     }
 }

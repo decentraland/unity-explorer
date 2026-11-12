@@ -19,6 +19,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual("0x8b3a40ca1b6f5cafc99d112a4d02e897d1fd8cc5", config.CreditsManagerAddress);
             Assert.AreEqual("0x214ffc0f0103735728dc66b61a22e4f163e275ae", config.CollectionStoreAddress);
             Assert.AreEqual("0xa40b1d129b8906888720686f3a01921ddf37716f", config.OffChainMarketplaceAddress);
+            Assert.AreEqual("https://app.across.to/api/deposit/status", config.AcrossDepositStatusUrl);
         }
 
         [Test]
@@ -31,6 +32,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual("0x8052a560e6e6ac86eeb7e711a4497f639b322fb3", config.CreditsManagerAddress);
             Assert.AreEqual("0xe36abc9ec616c83caaa386541380829106149d68", config.CollectionStoreAddress);
             Assert.AreEqual("0x1b67d0e31eeb6b52d8eeed71d3616c2f5b33b8e7", config.OffChainMarketplaceAddress);
+            Assert.AreEqual("https://testnet.across.to/api/deposit/status", config.AcrossDepositStatusUrl);
         }
 
         // Every address above has to belong to exactly one of the two networks; sharing one would mean a test chain
@@ -46,6 +48,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreNotEqual(mainnet.CreditsManagerAddress, sepolia.CreditsManagerAddress);
             Assert.AreNotEqual(mainnet.CollectionStoreAddress, sepolia.CollectionStoreAddress);
             Assert.AreNotEqual(mainnet.OffChainMarketplaceAddress, sepolia.OffChainMarketplaceAddress);
+            Assert.AreNotEqual(mainnet.AcrossDepositStatusUrl, sepolia.AcrossDepositStatusUrl);
         }
     }
 }

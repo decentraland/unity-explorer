@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase
         Broadcast,
         SignatureRejected,
         SigningFailed,
+        SignatureTimedOut,
         RelayerRejected,
         AmbiguousBroadcast,
     }
@@ -27,11 +28,15 @@ namespace DCL.MarketplaceCredits.Purchase
         public readonly string? TxHash;
         public readonly string? Message;
 
-        public RelayResult(RelayOutcome outcome, string? txHash = null, string? message = null)
+        /// <summary>The meta-transaction nonce that was signed; negative when signing never happened.</summary>
+        public readonly BigInteger Nonce;
+
+        public RelayResult(RelayOutcome outcome, string? txHash = null, string? message = null, BigInteger? nonce = null)
         {
             Outcome = outcome;
             TxHash = txHash;
             Message = message;
+            Nonce = nonce ?? BigInteger.MinusOne;
         }
     }
 
@@ -40,7 +45,10 @@ namespace DCL.MarketplaceCredits.Purchase
     {
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const string ETH_CALL_METHOD = "eth_call";
+        private const int HTTP_INTERNAL_SERVER_ERROR = 500;
+        private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromSeconds(30);
 
+        private readonly TimeSpan signatureTimeout;
         private readonly IEthereumApi ethereumApi;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -50,19 +58,38 @@ namespace DCL.MarketplaceCredits.Purchase
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            CreditsChainConfig chainConfig)
+            CreditsChainConfig chainConfig) : this(ethereumApi, webRequestController, decentralandUrlsSource, chainConfig, DEFAULT_SIGNATURE_TIMEOUT) { }
+
+        internal CreditsManagerMetaTxRelayer(
+            IEthereumApi ethereumApi,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            CreditsChainConfig chainConfig,
+            TimeSpan signatureTimeout)
         {
+            this.signatureTimeout = signatureTimeout;
             this.ethereumApi = ethereumApi;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.chainConfig = chainConfig;
         }
 
-        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct)
+        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken signCt, CancellationToken broadcastCt) =>
+            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, signCt, broadcastCt);
+
+        /// <summary>
+        ///     Signs and relays one useCredits call. minNonce floors the nonce read from the contract: a group signed
+        ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
+        ///     reusing it would make the relayer reject the second transaction.
+        ///     <paramref name="signCt" /> covers the nonce read and the wallet signature and is rethrown when cancelled;
+        ///     a signature that is neither given nor refused within the timeout ends as <see cref="RelayOutcome.SignatureTimedOut" />;
+        ///     <paramref name="broadcastCt" /> covers the relayer request, where a cancellation is an ambiguous broadcast.
+        /// </summary>
+        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
         {
             BigInteger nonce;
 
-            try { nonce = await GetNonceAsync(buyer, ct); }
+            try { nonce = await GetNonceAsync(buyer, signCt); }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
@@ -70,8 +97,14 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new RelayResult(RelayOutcome.SigningFailed, message: $"Nonce read failed: {e.Message}");
             }
 
+            if (minNonce > nonce)
+                nonce = minNonce;
+
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
             string signature;
+
+            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
+            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
 
             try
             {
@@ -82,11 +115,15 @@ namespace DCL.MarketplaceCredits.Purchase
                     @params = new object[] { buyer, typedDataJson },
                 };
 
-                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, ct);
+                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
                 signature = signResponse.result?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(signature))
                     return new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned");
+            }
+            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
+            {
+                return new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
@@ -116,7 +153,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 string relayerUrl = decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer);
 
                 JObject response = await webRequestController
-                                        .PostAsync(new CommonArguments(URLAddress.FromString(relayerUrl)), GenericPostArguments.CreateJson(body.ToString(Newtonsoft.Json.Formatting.None)), ct, ReportCategory.CREDITS_PURCHASE)
+                                        .PostAsync(new CommonArguments(URLAddress.FromString(relayerUrl)), GenericPostArguments.CreateJson(body.ToString(Newtonsoft.Json.Formatting.None)), broadcastCt, ReportCategory.CREDITS_PURCHASE)
                                         .CreateFromJson<JObject>(WRJsonParser.Newtonsoft);
 
                 string? txHash = response["txHash"]?.ToString();
@@ -124,25 +161,32 @@ namespace DCL.MarketplaceCredits.Purchase
                 if (string.IsNullOrEmpty(txHash))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
 
-                return new RelayResult(RelayOutcome.Broadcast, txHash);
+                return new RelayResult(RelayOutcome.Broadcast, txHash, nonce: nonce);
             }
             catch (OperationCanceledException)
             {
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "Cancelled while awaiting relayer response");
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "Cancelled while awaiting relayer response", nonce: nonce);
             }
             catch (UnityWebRequestException e)
             {
-                if (e.ResponseCode > 0)
+                if (IsProvenRejection(e.ResponseCode))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: $"Relayer {e.ResponseCode}: {e.Text}");
 
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
             }
         }
+
+        /// <summary>
+        ///     Only a 4xx proves the relayer refused the transaction. A 5xx can come from a gateway, or from the relayer
+        ///     after it already submitted, and no response code at all means the request may still have been received.
+        /// </summary>
+        internal static bool IsProvenRejection(long responseCode) =>
+            responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
 
         private async UniTask<BigInteger> GetNonceAsync(string buyer, CancellationToken ct)
         {

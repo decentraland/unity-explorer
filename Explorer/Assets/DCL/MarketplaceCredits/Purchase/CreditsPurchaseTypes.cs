@@ -24,6 +24,7 @@ namespace DCL.MarketplaceCredits.Purchase
         AuthorizationFailed,
         SignatureRejected,
         SigningFailed,
+        SignatureTimedOut,
         RelayerUnavailable,
         TransactionReverted,
         SettlementPending,
