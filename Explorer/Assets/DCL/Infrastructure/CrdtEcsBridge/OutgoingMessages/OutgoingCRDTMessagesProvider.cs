@@ -22,11 +22,18 @@ namespace CrdtEcsBridge.OutgoingMessages
             new (64, PoolConstants.SCENES_COUNT);
 
         internal readonly Dictionary<OutgoingMessageKey, int> lwwMessageIndices = INDICES_SHARED_POOL.Get();
-        internal readonly List<PendingMessage> messages = MESSAGES_SHARED_POOL.Get();
+
+        /// <summary>
+        ///     Guards <see cref="messages" /> and <see cref="lwwMessageIndices" />; the list itself is swapped out by
+        ///     <see cref="TakePendingMessages" /> so it cannot serve as the lock.
+        /// </summary>
+        private readonly object messagesLock = new ();
 
         private readonly ISDKComponentsRegistry componentsRegistry;
         private readonly ICRDTProtocol crdtProtocol;
         private readonly ICRDTMemoryAllocator memoryAllocator;
+
+        internal List<PendingMessage> messages = MESSAGES_SHARED_POOL.Get();
 
         public OutgoingCRDTMessagesProvider(ISDKComponentsRegistry componentsRegistry, ICRDTProtocol crdtProtocol, ICRDTMemoryAllocator memoryAllocator)
         {
@@ -56,7 +63,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             // avoid serialization on the site of the caller
             // serialization will be called from EngineAPIImplementation
             var message = (TMessage)componentBridge.Pool.Rent();
-            prepareMessage?.Invoke(message, data);
+            prepareMessage.Invoke(message, data);
             var newMessage = new PendingMessage(message, componentBridge, entity, CRDTMessageType.PUT_COMPONENT);
             AddLwwMessage(entity, componentBridge, newMessage);
             return message;
@@ -72,7 +79,7 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         private void AddLwwMessage(CRDTEntity entity, SDKComponentBridge componentBridge, in PendingMessage newMessage)
         {
-            lock (messages)
+            lock (messagesLock)
             {
                 var key = new OutgoingMessageKey(entity, componentBridge.Id);
 
@@ -104,7 +111,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             var message = (TMessage)componentBridge.Pool.Rent();
             prepareMessage(message, data);
 
-            lock (messages) { messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp)); }
+            lock (messagesLock) { messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp)); }
 
             return message;
         }
@@ -120,18 +127,30 @@ namespace CrdtEcsBridge.OutgoingMessages
             return true;
         }
 
-        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(Action<PendingMessage> actOnPendingMessage)
+        public List<PendingMessage> TakePendingMessages()
         {
-            // Process all pending messages
+            lock (messagesLock)
+            {
+                List<PendingMessage> pendingMessages = messages;
+                messages = MESSAGES_SHARED_POOL.Get();
+                lwwMessageIndices.Clear();
+                return pendingMessages;
+            }
+        }
 
+        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(Action<PendingMessage>? actOnPendingMessage) =>
+            GetSerializationSyncBlock(TakePendingMessages(), actOnPendingMessage);
+
+        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(List<PendingMessage> pendingMessages, Action<PendingMessage>? actOnPendingMessage)
+        {
             List<ProcessedCRDTMessage> processedMessages = OutgoingCRDTMessagesSyncBlock.MESSAGES_SHARED_POOL.Get();
 
-            // While we do it we must synchronize
-            lock (messages)
+            // The list was taken from the provider, so nothing else appends to it while it is processed
+            try
             {
-                for (var i = 0; i < messages.Count; i++)
+                for (var i = 0; i < pendingMessages.Count; i++)
                 {
-                    PendingMessage pendingMessage = messages[i];
+                    PendingMessage pendingMessage = pendingMessages[i];
 
                     actOnPendingMessage?.Invoke(pendingMessage);
 
@@ -156,9 +175,11 @@ namespace CrdtEcsBridge.OutgoingMessages
                             break;
                     }
                 }
-
-                messages.Clear();
-                lwwMessageIndices.Clear();
+            }
+            finally
+            {
+                pendingMessages.Clear();
+                MESSAGES_SHARED_POOL.Release(pendingMessages);
             }
 
             // This list will be released on block.Dispose()

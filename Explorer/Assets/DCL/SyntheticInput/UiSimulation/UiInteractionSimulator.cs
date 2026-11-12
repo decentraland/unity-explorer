@@ -17,7 +17,7 @@ namespace DCL.SyntheticInput.UiSimulation
     /// </summary>
     public class UiInteractionSimulator
     {
-        // The scene system is throttled, so one drain can take many frames.
+        // The drain runs every frame, but a paused or frozen scene world never drains.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
         private readonly EventSystem eventSystem;
@@ -138,17 +138,17 @@ namespace DCL.SyntheticInput.UiSimulation
 
             SendPooled<PointerEnterEvent>(target);
 
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
+            if (!await DrainSdkQueueAsync(element.Transform, ct))
                 return UiActionResult.Failure("the scene did not consume the hover enter (is the scene paused?); the click was not delivered", null, imageRect);
 
             SendPooled<PointerDownEvent>(target);
 
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
+            if (!await DrainSdkQueueAsync(element.Transform, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the release was not sent", null, imageRect);
 
             SendPooled<PointerUpEvent>(target);
 
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
+            if (!await DrainSdkQueueAsync(element.Transform, ct))
                 return UiActionResult.Failure("the scene did not consume the release (is the scene paused?)", null, imageRect);
 
             SendPooled<PointerLeaveEvent>(target);
@@ -157,23 +157,23 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
-        ///     consumed the previous one. Always yields at least one frame, so consecutive events land on separate
-        ///     frames. A null owner has no slot to wait on.
+        ///     Waits until the scene system wrote the element's queued pointer events, so each event is observed as
+        ///     delivered before the next is sent. Always yields at least one frame, so consecutive events land on
+        ///     separate frames. A null owner has no queue to wait on.
         /// </summary>
-        private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        private static async UniTask<bool> DrainSdkQueueAsync(UITransformComponent? queueOwner, CancellationToken ct)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            if (slotOwner == null)
+            if (queueOwner == null)
                 return true;
 
             var frames = 0;
 
-            while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
+            while (queueOwner.PendingPointerEvents.Count > 0 && frames++ < MAX_SDK_DRAIN_FRAMES)
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            return slotOwner.PointerEventTriggered == null;
+            return queueOwner.PendingPointerEvents.Count == 0;
         }
 
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
@@ -187,13 +187,13 @@ namespace DCL.SyntheticInput.UiSimulation
                 return UiActionResult.Failure("no scene UI element at the drag start point");
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(panel, pressTarget.worldBound);
-            UITransformComponent? pressSlot = sdkResolver.ResolveComponent(pressTarget);
+            UITransformComponent? pressQueue = sdkResolver.ResolveComponent(pressTarget);
 
             SendPooled<PointerEnterEvent>(pressTarget);
-            await DrainSdkSlotAsync(pressSlot, ct);
+            await DrainSdkQueueAsync(pressQueue, ct);
             SendPooled<PointerDownEvent>(pressTarget);
 
-            if (!await DrainSdkSlotAsync(pressSlot, ct))
+            if (!await DrainSdkQueueAsync(pressQueue, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the drag was abandoned", null, imageRect);
 
             // One move per frame, so the scene sees the drag progress.
@@ -210,7 +210,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (releaseTarget == null)
             {
-                await ReleaseSdkAsync(pressTarget, pressSlot, ct);
+                await ReleaseSdkAsync(pressTarget, pressQueue, ct);
                 return UiActionResult.Failure($"no scene UI element at the drag end point; the release was delivered back to '{pressTarget.name}'", null, imageRect);
             }
 
@@ -223,12 +223,12 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>Drained after the up, so the leave cannot overwrite a release the scene has not read yet.</summary>
-        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
+        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? queue, CancellationToken ct)
         {
-            await DrainSdkSlotAsync(slot, ct);
+            await DrainSdkQueueAsync(queue, ct);
             SendPooled<PointerUpEvent>(target);
 
-            bool consumed = await DrainSdkSlotAsync(slot, ct);
+            bool consumed = await DrainSdkQueueAsync(queue, ct);
 
             if (consumed)
                 SendPooled<PointerLeaveEvent>(target);
