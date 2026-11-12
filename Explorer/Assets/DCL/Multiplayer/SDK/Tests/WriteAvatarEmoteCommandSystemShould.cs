@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.SDK.Tests
             sceneStateProvider.TickNumber.Returns((uint)TICK_NUMBER);
             system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, sceneStateProvider);
 
-            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, Entity.Null);
 
             entity = world.Create(playerCRDTEntity);
         }

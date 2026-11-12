@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using System;
 using System.Threading;
@@ -32,12 +33,13 @@ namespace DCL.AvatarRendering.Wearables
 
         private readonly string builderContentURL;
         private readonly IWebRequestController webRequestController;
-        private readonly bool builderCollectionsPreview;
+        private readonly bool rawWearablesEnabled;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly AbgenConversionMetrics abgenConversionMetrics;
 
         private TimeSpan batchHeartbeat;
 
@@ -48,6 +50,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
+            AbgenConversionMetrics abgenConversionMetrics,
             string builderContentURL)
         {
             this.wearableStorage = wearableStorage;
@@ -56,8 +59,10 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.urlsSource = urlsSource;
             this.builderContentURL = builderContentURL;
-            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
+            this.rawWearablesEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)
+                                       || FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.entitiesAnalytics = entitiesAnalytics;
+            this.abgenConversionMetrics = abgenConversionMetrics;
 
             cacheCleaner.Register(this.wearableStorage);
             cacheCleaner.Register(this.trimmedWearableStorage);
@@ -75,9 +80,9 @@ namespace DCL.AvatarRendering.Wearables
             BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
-            FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
+            FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData, abgenConversionMetrics);
 
-            if (builderCollectionsPreview)
+            if (rawWearablesEnabled)
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

@@ -87,19 +87,19 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
 
-            ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
+            ResolvePlayerCRDTScene(entity, characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
 
             World.Add(entity, playerCRDTEntity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarShape))]
-        private void ModifyPlayerScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
+        private void ModifyPlayerScene(Entity entity, in CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
-            ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
+            ResolvePlayerCRDTScene(entity, characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
         }
 
-        private void ResolvePlayerCRDTScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
+        private void ResolvePlayerCRDTScene(Entity globalEntity, in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
         {
             bool newSceneIsValid = scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade currentScene)
                                    && currentScene.SceneStateProvider.State.Value() is SceneState.Running or SceneState.Starting
@@ -119,7 +119,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                     // LocalPlayerCRDTEntityHandlerSystem creates PlayerSceneCRDTEntity on scene start-up
                     Entity sceneWorldEntity = isLocalPlayer
                         ? currentScene.PersistentEntities.Player
-                        : sceneEcsExecutor.World.Create(new PlayerSceneCRDTEntity(reservedEntityId));
+                        : sceneEcsExecutor.World.Create(new PlayerSceneCRDTEntity(reservedEntityId, globalEntity));
 
                     globalPlayerCRDTEntity.AssignToScene(currentScene, sceneWorldEntity);
                 }
