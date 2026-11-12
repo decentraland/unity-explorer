@@ -12,10 +12,13 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         /// <summary>World-space bottom-right corner of the control that opened the cart; the popup hangs under it.</summary>
         public readonly Vector3 AnchorBottomRight;
 
-        public ShopCartModalParams(string source, Vector3 anchorBottomRight)
+        public readonly IShopCartFavorites Favorites;
+
+        public ShopCartModalParams(string source, Vector3 anchorBottomRight, IShopCartFavorites favorites)
         {
             Source = source;
             AnchorBottomRight = anchorBottomRight;
+            Favorites = favorites;
         }
     }
 }

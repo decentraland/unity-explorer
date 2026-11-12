@@ -504,7 +504,7 @@ namespace DCL.Shop
         private async UniTaskVoid ShowCartAsync(string source, CancellationToken ct)
         {
             ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
-            var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER]);
+            var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER], Favorites);
 
             try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct); }
             catch (OperationCanceledException) { }

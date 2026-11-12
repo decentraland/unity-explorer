@@ -93,6 +93,27 @@ namespace DCL.Shop.Tests
         }
 
         [Test]
+        public void ToggleACartListingUnderTheSameKeyAsItsItem()
+        {
+            // Arrange
+            var listing = new ShopListingDto { tradeId = "trade", listingType = "primary", contractAddress = COLLECTION.ToUpperInvariant().Replace("0X", "0x"), itemId = "1", name = "Item", thumbnail = string.Empty, rarity = "rare", category = "wearable", creator = COLLECTION, chainId = 137 };
+            var tokenListing = new ShopListingDto { contractAddress = COLLECTION, tokenId = "7" };
+            var notifications = 0;
+            favorites.FavoritesChanged += () => notifications++;
+
+            // Act
+            favorites.Toggle(listing, ShopCartSource.Grid);
+
+            // Assert
+            Assert.IsTrue(favorites.CanBeFavorite(listing));
+            Assert.IsTrue(favorites.IsFavorite(listing));
+            Assert.IsTrue(favorites.IsFavorite(KEY_1));
+            Assert.IsFalse(favorites.CanBeFavorite(tokenListing));
+            Assert.IsFalse(favorites.IsFavorite(tokenListing));
+            Assert.AreEqual(1, notifications);
+        }
+
+        [Test]
         public void IgnoreAnItemWithoutAKey()
         {
             // Act

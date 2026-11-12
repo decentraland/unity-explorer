@@ -70,6 +70,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? thumbnailsCts;
         private CartReview? review;
+        private IShopCartFavorites? favorites;
         private int balanceCredits = -1;
         private bool awaitingOwnCheckout;
 
@@ -159,6 +160,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             cart.Changed += OnCartChanged;
             checkoutService.StateChanged += OnCheckoutProgress;
             checkoutService.CheckoutCompleted += OnCheckoutCompleted;
+            favorites = inputData.Favorites;
+            favorites.FavoritesChanged += OnFavoritesChanged;
 
             CartOpened?.Invoke(inputData.Source, cart.TotalUnits, cart.TotalCredits);
 
@@ -206,6 +209,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             cart.Changed -= OnCartChanged;
             checkoutService.StateChanged -= OnCheckoutProgress;
             checkoutService.CheckoutCompleted -= OnCheckoutCompleted;
+
+            if (favorites != null)
+            {
+                favorites.FavoritesChanged -= OnFavoritesChanged;
+                favorites = null;
+            }
         }
 
         private ShopCartLineView CreateLineView()
@@ -214,6 +223,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             line.IncrementClicked = OnIncrementClicked;
             line.DecrementClicked = OnDecrementClicked;
             line.RemoveClicked = OnRemoveClicked;
+            line.FavoriteClicked = OnFavoriteClicked;
             return line;
         }
 
@@ -229,19 +239,35 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             if (viewInstance == null || linePool == null)
                 return;
 
-            ReleaseLines();
             thumbnailsCts = thumbnailsCts.SafeRestart();
 
-            foreach (ShopCartLine line in cart.Lines)
+            // Rows are rebound in place: a row that stays under the pointer keeps its hover buttons.
+            for (var i = 0; i < cart.Lines.Count; i++)
             {
-                ShopCartLineView lineView = linePool.Get();
-                lineView.transform.SetAsLastSibling();
+                ShopCartLine line = cart.Lines[i];
+                ShopCartLineView lineView;
+
+                if (i < activeLines.Count)
+                    lineView = activeLines[i];
+                else
+                {
+                    lineView = linePool.Get();
+                    lineView.transform.SetAsLastSibling();
+                    activeLines.Add(lineView);
+                }
+
                 Sprite? cached = spriteCache.GetCachedSprite(line.Listing.thumbnail);
                 lineView.Bind(line, cached, rarityBackgrounds.GetTypeImage(line.Listing.rarity));
-                activeLines.Add(lineView);
+                RefreshFavorite(lineView, line);
 
                 if (cached == null)
                     LoadThumbnailAsync(lineView, line.Listing.thumbnail, thumbnailsCts.Token).Forget();
+            }
+
+            for (int i = activeLines.Count - 1; i >= cart.Lines.Count; i--)
+            {
+                linePool.Release(activeLines[i]);
+                activeLines.RemoveAt(i);
             }
 
             viewInstance.EmptyState.SetActive(cart.Count == 0);
@@ -315,6 +341,24 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             LineRemoved?.Invoke(line!);
             cart.Remove(lineView.BoundLineId);
         }
+
+        private void OnFavoriteClicked(ShopCartLineView lineView)
+        {
+            if (lineView.BoundLineId != null && cart.TryGet(lineView.BoundLineId, out ShopCartLine? line))
+                inputData.Favorites.Toggle(line!.Listing, line.Source);
+        }
+
+        private void OnFavoritesChanged()
+        {
+            foreach (ShopCartLineView lineView in activeLines)
+            {
+                if (lineView.BoundLineId != null && cart.TryGet(lineView.BoundLineId, out ShopCartLine? line))
+                    RefreshFavorite(lineView, line!);
+            }
+        }
+
+        private void RefreshFavorite(ShopCartLineView lineView, ShopCartLine line) =>
+            lineView.SetFavorite(inputData.Favorites.CanBeFavorite(line.Listing), inputData.Favorites.IsFavorite(line.Listing));
 
         private void OnCheckoutClicked()
         {

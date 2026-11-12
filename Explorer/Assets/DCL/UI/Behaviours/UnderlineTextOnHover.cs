@@ -17,5 +17,11 @@ namespace DCL.AuthenticationScreenFlow
         {
             text.fontStyle &= ~FontStyles.Underline;
         }
+
+        // An object disabled under the pointer never receives the exit event.
+        private void OnDisable()
+        {
+            text.fontStyle &= ~FontStyles.Underline;
+        }
     }
 }

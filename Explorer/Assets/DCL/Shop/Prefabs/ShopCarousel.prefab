@@ -992,6 +992,7 @@ GameObject:
   - component: {fileID: 549331083799365606}
   - component: {fileID: 2847816089854724022}
   - component: {fileID: 957113486941536031}
+  - component: {fileID: 7301942650318860001}
   m_Layer: 5
   m_Name: ViewAllButton
   m_TagString: Untagged
@@ -1080,7 +1081,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
-    m_HighlightedColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 0.16470589}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0}
     m_PressedColor: {r: 1, g: 1, b: 1, a: 0}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 0}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -2928,3 +2929,16 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7301942650318860001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 758979273571917294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c82c9247f543467889e5afbf8a1d9662, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.AuthenticationScreenFlow.UnderlineTextOnHover
+  text: {fileID: 3563938427807906218}

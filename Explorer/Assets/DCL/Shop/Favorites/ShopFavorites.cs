@@ -16,7 +16,7 @@ namespace DCL.Shop
     ///     The signed-in account's favorite items, shared with the web shop through the marketplace picks service.
     ///     A toggle applies at once and is sent afterwards; a rejected toggle is undone by reading the list again.
     /// </summary>
-    public sealed class ShopFavorites : IDisposable
+    public sealed class ShopFavorites : IShopCartFavorites, IDisposable
     {
         private readonly MarketplaceShopAPIClient api;
         private readonly IWeb3IdentityCache identityCache;
@@ -46,6 +46,8 @@ namespace DCL.Shop
 
         public event Action? ToggleFailed;
 
+        public event Action? FavoritesChanged;
+
         public ShopFavorites(MarketplaceShopAPIClient api, IWeb3IdentityCache identityCache)
         {
             this.api = api;
@@ -72,6 +74,15 @@ namespace DCL.Shop
         public bool IsFavorite(string key) =>
             idSet.Contains(key);
 
+        public bool CanBeFavorite(ShopListingDto listing) =>
+            !string.IsNullOrEmpty(listing.itemId);
+
+        public bool IsFavorite(ShopListingDto listing) =>
+            CanBeFavorite(listing) && idSet.Contains($"{listing.contractAddress}-{listing.itemId}");
+
+        public void Toggle(ShopListingDto listing, ShopCartSource source) =>
+            Toggle(ShopItemCardModel.FromListing(listing), source);
+
         /// <summary>Reads the list again; the newest call replaces one still in flight.</summary>
         public void Reload()
         {
@@ -92,6 +103,7 @@ namespace DCL.Shop
 
             Changed?.Invoke(key, model, favorite);
             Toggled?.Invoke(model, favorite, source, ids.Count);
+            FavoritesChanged?.Invoke();
 
             bool isAlreadySending = sending.ContainsKey(key);
             sending[key] = favorite;
@@ -139,6 +151,7 @@ namespace DCL.Shop
                 recentToggles.Remove(key);
 
             Loaded?.Invoke(true);
+            FavoritesChanged?.Invoke();
         }
 
         /// <summary>
