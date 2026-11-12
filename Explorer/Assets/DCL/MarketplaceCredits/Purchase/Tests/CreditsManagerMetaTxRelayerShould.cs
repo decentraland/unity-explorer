@@ -29,6 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private IEthereumApi ethereumApi = null!;
         private IWebRequestController webRequestController = null!;
+        private IDecentralandUrlsSource urlsSource = null!;
         private CreditsManagerMetaTxRelayer relayer = null!;
         private BigInteger onChainNonce;
         private string? signedTypedData;
@@ -39,7 +40,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             ethereumApi = Substitute.For<IEthereumApi>();
             webRequestController = Substitute.For<IWebRequestController>();
-            IDecentralandUrlsSource urlsSource = Substitute.For<IDecentralandUrlsSource>();
+            urlsSource = Substitute.For<IDecentralandUrlsSource>();
             urlsSource.Url(DecentralandUrl.MetaTransactionServer).Returns(RELAYER_URL);
 
             onChainNonce = new BigInteger(5);
@@ -127,6 +128,26 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act and assert
             Assert.CatchAsync<OperationCanceledException>(async () => await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None));
+
+            webRequestController.DidNotReceiveWithAnyArgs()
+                                .SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<JObject, GenericPostRequest>, JObject>(default, default);
+        }
+
+        [Test]
+        public async Task TimeOutAnUnansweredSignatureWithoutRelayingAnything()
+        {
+            // Arrange: the signing tab is closed, so the wallet never answers.
+            ethereumApi.SendAsync(Arg.Is<EthApiRequest>(request => request.method == ETH_SIGN_TYPED_DATA_METHOD), Arg.Any<Web3RequestSource>(), Arg.Any<CancellationToken>())
+                       .Returns(info => UniTask.Never<EthApiResponse>(info.Arg<CancellationToken>()));
+
+            var impatientRelayer = new CreditsManagerMetaTxRelayer(ethereumApi, webRequestController, urlsSource, new CreditsChainConfig(EthereumNetwork.Sepolia), TimeSpan.FromMilliseconds(50));
+
+            // Act
+            RelayResult result = await impatientRelayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(RelayOutcome.SignatureTimedOut, result.Outcome);
+            Assert.IsFalse(cts.IsCancellationRequested);
 
             webRequestController.DidNotReceiveWithAnyArgs()
                                 .SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<JObject, GenericPostRequest>, JObject>(default, default);

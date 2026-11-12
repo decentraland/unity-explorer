@@ -693,6 +693,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 CreditsPurchaseError.InsufficientCredits => "You don't have enough credits for this purchase.",
                 CreditsPurchaseError.SettlementPending => PENDING_SETTLEMENT_COPY,
                 CreditsPurchaseError.SignatureRejected or CreditsPurchaseError.Cancelled => "You cancelled the request.",
+                CreditsPurchaseError.SignatureTimedOut => "The confirmation timed out. Your credits were not spent.",
                 CreditsPurchaseError.PriceChanged => "The price of an item changed. Please review your cart and try again.",
                 CreditsPurchaseError.PriceUnavailable => "A price is unavailable right now. Please try again later.",
                 CreditsPurchaseError.ListingNotAvailable => "Some items are no longer available for purchase with credits.",

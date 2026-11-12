@@ -43,6 +43,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         PriceChanged,
         SignatureRejected,
         SigningFailed,
+        SignatureTimedOut,
         RelayerUnavailable,
         TransactionReverted,
 

@@ -335,6 +335,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 case NameClaimError.SignatureRejected:
                     ShowResult(FAILED_TITLE, "The signature was rejected. Your credits were not spent.", allowRetry: true);
                     break;
+                case NameClaimError.SignatureTimedOut:
+                    ShowResult(FAILED_TITLE, "The confirmation timed out. Your credits were not spent.", allowRetry: true);
+                    break;
                 case NameClaimError.TransactionReverted:
                     ShowResult(FAILED_TITLE, "The payment failed on-chain. Your credits were not spent.", allowRetry: true);
                     break;

@@ -317,6 +317,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 CreditsPurchaseError.PriceChanged => NameClaimError.PriceChanged,
                 CreditsPurchaseError.SignatureRejected => NameClaimError.SignatureRejected,
                 CreditsPurchaseError.SigningFailed => NameClaimError.SigningFailed,
+                CreditsPurchaseError.SignatureTimedOut => NameClaimError.SignatureTimedOut,
                 CreditsPurchaseError.RelayerUnavailable => NameClaimError.RelayerUnavailable,
                 CreditsPurchaseError.TransactionReverted => NameClaimError.TransactionReverted,
                 _ => NameClaimError.UnknownError,

@@ -42,6 +42,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         [TestCase(CreditsPurchaseError.SignatureRejected, "user_rejected")]
         [TestCase(CreditsPurchaseError.Cancelled, "user_rejected")]
+        [TestCase(CreditsPurchaseError.SignatureTimedOut, "signature_timeout")]
         [TestCase(CreditsPurchaseError.InsufficientCredits, "insufficient_credits")]
         [TestCase(CreditsPurchaseError.ListingNotAvailable, "not_for_sale")]
         [TestCase(CreditsPurchaseError.OwnListing, "not_for_sale")]

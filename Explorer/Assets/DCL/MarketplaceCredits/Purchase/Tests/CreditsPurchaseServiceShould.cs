@@ -499,6 +499,21 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task ReleaseReservationWhenTheSignatureRequestTimesOut()
+        {
+            // Arrange: the buyer closed the signing tab, or left it open, without answering.
+            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SignatureTimedOut)));
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync();
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.SignatureTimedOut, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task FailWithoutAskingForASecondSignatureWhenTheRelayerRefuses()
         {
             // Arrange

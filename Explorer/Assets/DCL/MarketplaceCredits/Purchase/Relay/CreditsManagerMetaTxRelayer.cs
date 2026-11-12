@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase
         Broadcast,
         SignatureRejected,
         SigningFailed,
+        SignatureTimedOut,
         RelayerRejected,
         AmbiguousBroadcast,
     }
@@ -45,7 +46,9 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const string ETH_CALL_METHOD = "eth_call";
         private const int HTTP_INTERNAL_SERVER_ERROR = 500;
+        private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromSeconds(30);
 
+        private readonly TimeSpan signatureTimeout;
         private readonly IEthereumApi ethereumApi;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -55,8 +58,16 @@ namespace DCL.MarketplaceCredits.Purchase
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            CreditsChainConfig chainConfig)
+            CreditsChainConfig chainConfig) : this(ethereumApi, webRequestController, decentralandUrlsSource, chainConfig, DEFAULT_SIGNATURE_TIMEOUT) { }
+
+        internal CreditsManagerMetaTxRelayer(
+            IEthereumApi ethereumApi,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            CreditsChainConfig chainConfig,
+            TimeSpan signatureTimeout)
         {
+            this.signatureTimeout = signatureTimeout;
             this.ethereumApi = ethereumApi;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -71,6 +82,7 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
         ///     reusing it would make the relayer reject the second transaction.
         ///     <paramref name="signCt" /> covers the nonce read and the wallet signature and is rethrown when cancelled;
+        ///     a signature that is neither given nor refused within the timeout ends as <see cref="RelayOutcome.SignatureTimedOut" />;
         ///     <paramref name="broadcastCt" /> covers the relayer request, where a cancellation is an ambiguous broadcast.
         /// </summary>
         public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
@@ -91,6 +103,9 @@ namespace DCL.MarketplaceCredits.Purchase
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
             string signature;
 
+            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
+            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
+
             try
             {
                 var signRequest = new EthApiRequest
@@ -100,11 +115,15 @@ namespace DCL.MarketplaceCredits.Purchase
                     @params = new object[] { buyer, typedDataJson },
                 };
 
-                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signCt);
+                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
                 signature = signResponse.result?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(signature))
                     return new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned");
+            }
+            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
+            {
+                return new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
