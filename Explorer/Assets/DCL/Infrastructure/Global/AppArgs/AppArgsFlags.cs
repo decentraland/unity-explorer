@@ -239,6 +239,37 @@ namespace Global.AppArgs
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
         }
 
+        /// <summary>
+        ///     The locomotion recorder: scripted movement scenarios recorded frame by frame into JSON Lines traces.
+        ///     Active only with the debug flag (Editor, development build or <see cref="DEBUG" />); command line only.
+        /// </summary>
+        public static class Locomotion
+        {
+            /// <summary>Scenario suite to record: a directory of scenario files or one JSON file (object or array).</summary>
+            public const string SUITE = "locomotion-suite";
+
+            /// <summary>Runs per scenario, default 1.</summary>
+            public const string REPEATS = "locomotion-repeats";
+
+            /// <summary>Output directory, default <c>Application.persistentDataPath/locomotion-traces</c>.</summary>
+            public const string OUTPUT = "locomotion-out";
+
+            /// <summary>Spawn point <c>x,y,z[,yaw]</c> in scene coordinates; default: where the player stands when the suite starts.</summary>
+            public const string SPAWN = "locomotion-spawn";
+
+            /// <summary>Avatar animations while the recorder is active, <c>true</c> or <c>false</c> (default).</summary>
+            public const string ANIMATIONS = "locomotion-animations";
+
+            /// <summary>Input seam: <c>keyboard</c> (virtual keyboard device, default) or <c>component</c> (movement input component).</summary>
+            public const string INPUT = "locomotion-input";
+
+            /// <summary>Frame time: <c>real</c> (default) or <c>fixed</c> (every frame advances exactly 1/fps).</summary>
+            public const string DELTA_TIME = "locomotion-dt";
+
+            /// <summary>When present, quits the application once the suite is recorded.</summary>
+            public const string QUIT = "locomotion-quit";
+        }
+
         public static class Launcher
         {
             /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
