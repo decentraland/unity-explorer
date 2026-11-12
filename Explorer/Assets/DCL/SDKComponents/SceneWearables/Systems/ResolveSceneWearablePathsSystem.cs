@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.SceneWearables.Systems
         {
             this.sceneData = sceneData;
             this.wearableStorage = wearableStorage;
-            loadRawGltf = sceneData.SceneEntityDefinition.ShouldLoadRawGltf(localSceneDevelopment, useLocalAssetBundles);
+            loadRawGltf = localSceneDevelopment && sceneData.SceneEntityDefinition.GetLocalBundleManifest(useLocalAssetBundles) == null;
             rawGltfFallback = localSceneDevelopment && useLocalAssetBundles && !loadRawGltf;
             sceneWearableUrnPrefix = SceneWearableDTOFactory.GetUrnPrefix(sceneData.SceneEntityDefinition.id);
         }

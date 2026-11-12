@@ -1,10 +1,13 @@
 using Arch.Core;
 using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.SyntheticInput.Components;
+using DCL.SyntheticInput.UiSimulation;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -20,6 +23,7 @@ namespace DCL.SyntheticInput.Systems
                 Hit = false,
                 FailureReason = reason,
                 SceneEntityId = intent.TargetEntityId,
+                Button = intent.Button,
             };
 
         /// <summary>A release must hit the press entity, an explicit target must be hit itself, and a pure aim-point event accepts any hit.</summary>
@@ -63,7 +67,7 @@ namespace DCL.SyntheticInput.Systems
                         Tick = intent.InjectedTick,
                     };
 
-                return Hit(in raycastResult, in entityInfo, tooltips);
+                return Hit(in intent, in raycastResult, in entityInfo, tooltips);
             }
 
             return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance(),
@@ -71,16 +75,17 @@ namespace DCL.SyntheticInput.Systems
         }
 
         /// <summary>An aimless edge has no target to validate, so the result reports only what the cursor ray was hovering.</summary>
-        public static SyntheticPointerResult BuildAimlessResult(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
-            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips)
+        public static SyntheticPointerResult BuildAimlessResult(in SyntheticPointerEventIntent intent, in PlayerOriginRaycastResultForSceneEntities raycastResult,
+            in HoverStateComponent hoverState, IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips)
         {
             if (raycastResult is { IsValidHit: true, EntityInfo: { } entityInfo } && IsHoveredAtDistance(in raycastResult, in hoverState))
-                return Hit(in raycastResult, in entityInfo, tooltips);
+                return Hit(in intent, in raycastResult, in entityInfo, tooltips);
 
             return new SyntheticPointerResult
             {
                 Hit = false,
                 SceneEntityId = -1,
+                Button = intent.Button,
                 RootBroadcast = true,
             };
         }
@@ -152,8 +157,8 @@ namespace DCL.SyntheticInput.Systems
         private static bool IsHoveredAtDistance(in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState) =>
             hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance;
 
-        private static SyntheticPointerResult Hit(in PlayerOriginRaycastResultForSceneEntities raycastResult, in GlobalColliderSceneEntityInfo entityInfo,
-            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips) =>
+        private static SyntheticPointerResult Hit(in SyntheticPointerEventIntent intent, in PlayerOriginRaycastResultForSceneEntities raycastResult,
+            in GlobalColliderSceneEntityInfo entityInfo, IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips) =>
             new ()
             {
                 Hit = true,
@@ -162,6 +167,85 @@ namespace DCL.SyntheticInput.Systems
                 HoverText = ResolveHoverText(in entityInfo, tooltips),
                 HitPoint = raycastResult.RaycastHit.point,
                 Distance = raycastResult.GetDistance(),
+                Button = intent.Button,
+                Warning = DescribeUndeclaredEntry(in intent, in entityInfo),
+            };
+
+        /// <summary>
+        ///     A hover-qualified entity gets every button edge written to its PointerEventsResult whether or not it
+        ///     declares an entry for it (an <see cref="InputAction.IaAny" /> entry matches every button), and that write
+        ///     suppresses the scene-root broadcast. So a hit with no matching entry fired no declared handler, and the
+        ///     root heard nothing either. Null when an entry matched, or for a hover.
+        /// </summary>
+        private static string? DescribeUndeclaredEntry(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo)
+        {
+            if (intent.IsHover || !entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
+                return null;
+
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
+            {
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
+                InputAction entryButton = ButtonOf(entry);
+
+                if (entry.EventType == intent.EventType && (entryButton == InputAction.IaAny || entryButton == intent.Button))
+                    return null;
+            }
+
+            // Reached only when a warning is built: the matching case above allocates nothing.
+            var listened = new StringBuilder();
+
+            for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
+            {
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
+
+                if (listened.Length > 0)
+                    listened.Append(", ");
+
+                listened.Append(EventTypeName(entry.EventType)).Append('/').Append(InputActionNames.ToWire(ButtonOf(entry)));
+            }
+
+            string delivered = $"{EventTypeName(intent.EventType)}/{InputActionNames.ToWire(intent.Button)}";
+
+            string outcome = $"the pipeline still wrote {delivered} to the entity's PointerEventsResult (a handler bound to a declared entry does not fire on it; "
+                             + $"inputSystem.isTriggered(InputAction.IA_{InputActionNames.ToWire(intent.Button).ToUpperInvariant()}, PointerEventType.{EventTypeName(intent.EventType).ToUpperInvariant()}, entity) does), "
+                             + "and the scene root received no broadcast: a result written to any entity suppresses it, as for a real click";
+
+            return listened.Length > 0
+                ? $"the entity declares no PointerEvents entry for {delivered}; it listens for: {listened}; {outcome}"
+                : $"the entity declares no PointerEvents entries at all for {delivered}; {outcome}";
+        }
+
+        /// <summary>
+        ///     A free cursor outside the window still builds the reticle ray, so an aimless edge binds through it where
+        ///     a human's click would reach another window. Null while the cursor is captured or on screen.
+        /// </summary>
+        public static string? DescribeOffScreenCursor(in CursorComponent cursor, int pixelWidth, int pixelHeight)
+        {
+            if (cursor.CursorState != CursorState.Free)
+                return null;
+
+            Vector2 position = cursor.Position;
+
+            if (position.x >= 0f && position.x <= pixelWidth && position.y >= 0f && position.y <= pixelHeight)
+                return null;
+
+            Vector2 imagePoint = UiScreenGeometry.ScreenToImagePoint(position);
+
+            return $"the free cursor is outside the window at image pixel ({imagePoint.x:F0}, {imagePoint.y:F0}) (screen {pixelWidth}x{pixelHeight}); "
+                   + "the edge bound through the ray of that off-screen pixel, which a human's click there could not reach: aim explicitly (entityId or x/y/z), or lock the cursor";
+        }
+
+        private static InputAction ButtonOf(PBPointerEvents.Types.Entry entry) =>
+            entry.EventInfo is { } info ? info.Button : InputAction.IaAny;
+
+        private static string EventTypeName(PointerEventType eventType) =>
+            eventType switch
+            {
+                PointerEventType.PetUp => "pet_up",
+                PointerEventType.PetDown => "pet_down",
+                PointerEventType.PetHoverEnter => "pet_hover_enter",
+                PointerEventType.PetHoverLeave => "pet_hover_leave",
+                _ => eventType.ToString(),
             };
 
         private static SyntheticPointerResult Blocked(in SyntheticPointerEventIntent intent, string what, Entity hitEntity, int hitCrdtId, string colliderName)

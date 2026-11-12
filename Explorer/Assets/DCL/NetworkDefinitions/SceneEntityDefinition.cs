@@ -19,13 +19,6 @@ namespace DCL.Ipfs
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
 
-        /// <summary>
-        ///     Whether the scene's models load from the raw GLTF files instead of asset bundles: in local scene development,
-        ///     unless local asset bundles are on and the scene's manifest was fetched from the local asset-bundle server.
-        /// </summary>
-        public bool ShouldLoadRawGltf(bool localSceneDevelopment, bool useLocalAssetBundles) =>
-            localSceneDevelopment && (!useLocalAssetBundles || assetBundleManifestVersion is not { assetBundleManifestRequestFailed: false });
-
         public bool Contains(int x, int y)
         {
             if(SceneLookup.HasValue)

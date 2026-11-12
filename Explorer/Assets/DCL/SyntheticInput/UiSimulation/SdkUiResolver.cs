@@ -51,8 +51,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
             world.TryGet(found, out UIInputComponent? input);
             world.TryGet(found, out UIDropdownComponent? dropdown);
+            world.TryGet(found, out PBPointerEvents? pointerEvents);
 
-            element = new SdkUiElement(transform, input, dropdown);
+            element = new SdkUiElement(transform, input, dropdown, pointerEvents);
             return true;
         }
 
@@ -206,20 +207,41 @@ namespace DCL.SyntheticInput.UiSimulation
             return entries;
         }
 
+        /// <summary>The running current scene's state, whose tick number counts the scene's update loop.</summary>
+        public bool TryGetRunningSceneState([NotNullWhen(true)] out ISceneStateProvider? sceneState)
+        {
+            sceneState = null;
+
+            if (!TryGetRunningScene(out ISceneFacade? scene, out _))
+                return false;
+
+            sceneState = scene.SceneStateProvider;
+            return true;
+        }
+
         private bool TryGetRunningSceneWorld([NotNullWhen(true)] out World? world, [NotNullWhen(false)] out string? failure)
         {
             world = null;
-            failure = null;
 
-            ISceneFacade? scene = scenesCache.CurrentScene.Value;
+            if (!TryGetRunningScene(out ISceneFacade? scene, out failure))
+                return false;
+
+            world = scene.EcsExecutor.World;
+            return true;
+        }
+
+        private bool TryGetRunningScene([NotNullWhen(true)] out ISceneFacade? scene, [NotNullWhen(false)] out string? failure)
+        {
+            scene = scenesCache.CurrentScene.Value;
+            failure = null;
 
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {
+                scene = null;
                 failure = "no running current scene";
                 return false;
             }
 
-            world = scene.EcsExecutor.World;
             return true;
         }
     }
@@ -231,11 +253,15 @@ namespace DCL.SyntheticInput.UiSimulation
         public readonly UIInputComponent? Input;
         public readonly UIDropdownComponent? Dropdown;
 
-        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown)
+        /// <summary>The pointer events the entity declares; null when it declares none.</summary>
+        public readonly PBPointerEvents? PointerEvents;
+
+        public SdkUiElement(UITransformComponent transform, UIInputComponent? input, UIDropdownComponent? dropdown, PBPointerEvents? pointerEvents = null)
         {
             Transform = transform;
             Input = input;
             Dropdown = dropdown;
+            PointerEvents = pointerEvents;
         }
     }
 }

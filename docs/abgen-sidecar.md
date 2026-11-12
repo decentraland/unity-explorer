@@ -109,6 +109,11 @@ The scene must load whatever happens to the sidecar, so every failure has a raw-
   entity — the bundle lane's intention and result are dropped and a fresh `StreamableLoadingState`
   is installed so deferred loading admits it like any new request. The file shows as `FAILED` on the
   AB tab.
+- **Scene emotes** (`*_emote.glb` in the scene's content, from the player, `triggerSceneEmote` or an
+  SDK `AvatarShape`) follow the same rules: `LoadSceneEmotesSystem` requests the emote's bundle from
+  the sidecar when the scene manifest was fetched, and loads the raw GLB directly when it was not.
+  When the bundle fails, `FinalizeEmoteLoadingSystem` replaces its promise with a raw-GLB one for the
+  same emote (`SceneEmoteRawGltfFallback`) and the file shows as `FAILED` on the AB tab.
 - **Server dies mid-session** and supervision gives up (3 restarts): the dead port makes every
   bundle request fail fast, the per-file fallback above loads the scene's raw files, and the reason
   is recorded. Wearables, emotes, LODs and registry lookups still resolve to the dead port and have

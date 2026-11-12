@@ -71,8 +71,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 }
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection
-                               || sceneData.SceneEntityDefinition.ShouldLoadRawGltf(options.LocalSceneDevelopment, options.UseLocalAssetBundles);
+            bool loadRawGltf = options.PreviewingBuilderCollection;
+
+            // Whole-scene degrade: without a fetched local manifest every AB request would dead-end, so load raw GLTFs instead.
+            if (options.LocalSceneDevelopment)
+                loadRawGltf |= sceneData.SceneEntityDefinition.GetLocalBundleManifest(options.UseLocalAssetBundles) == null;
 
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));

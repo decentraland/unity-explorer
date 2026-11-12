@@ -37,20 +37,20 @@ namespace DCL.AvatarRendering.Emotes.Tests
 {
     public class FinalizeEmoteLoadingSystemShould : UnitySystemTestBase<FinalizeEmoteLoadingSystem>
     {
-        private MockEmoteStorage mockEmoteStorage;
-        private ListObjectPool<URN> urnPool;
+        private MockEmoteStorage mockEmoteStorage = null!;
+        private ListObjectPool<URN> urnPool = null!;
 
         // Shared mock objects for assets
-        private GameObject mockGameObject;
-        private AttachmentRegularAsset mockAttachmentAsset;
-        private MockStreamableDataWithURN mockStreamableData;
+        private GameObject mockGameObject = null!;
+        private AttachmentRegularAsset mockAttachmentAsset = null!;
+        private MockStreamableDataWithURN mockStreamableData = null!;
 
         [SetUp]
         public void SetUp()
         {
             mockEmoteStorage = new MockEmoteStorage();
             urnPool = new ListObjectPool<URN>();
-            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage);
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, new AbgenConversionMetrics());
 
             // Common mock assets
             mockGameObject = new GameObject("MockAsset");
@@ -350,6 +350,87 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
+        public void FallBackToRawGltfWhenLocalSceneEmoteBundleFails()
+        {
+            // Arrange
+            var metrics = new AbgenConversionMetrics();
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, metrics);
+
+            var emoteURN = new URN("urn:ab:local_scene_emote_fail");
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { IsLoading = true };
+            mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, false));
+            ((MockEmote)mockEmote).IsLoading = true;
+
+            BodyShape bodyShape = BodyShape.FEMALE;
+            var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated local AssetBundle load failure");
+
+            Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
+            var cts = new CancellationTokenSource();
+            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY, cts));
+            Entity resultHolderEntity = promise.Entity;
+
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
+            world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, exception));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.IsAlive(emoteEntity));
+            Assert.IsFalse(world.IsAlive(resultHolderEntity));
+            AssertSingleRawGltfFallbackPromise("assets/dance_emote.glb", "DANCE_HASH", cts);
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].HasValue);
+            Assert.IsTrue(mockEmote.IsLoading);
+            Assert.AreEqual(1, metrics.Failed);
+        }
+
+        [Test]
+        public void FallBackToRawGltfWhenLocalSceneEmoteBundleHasNoGameObject()
+        {
+            // Arrange
+            var metrics = new AbgenConversionMetrics();
+            system = new FinalizeEmoteLoadingSystem(world, mockEmoteStorage, metrics);
+
+            var emoteURN = new URN("urn:ab:local_scene_emote_no_go");
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { IsLoading = true };
+            mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, false));
+            ((MockEmote)mockEmote).IsLoading = true;
+
+            BodyShape bodyShape = BodyShape.FEMALE;
+            var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
+            var cts = new CancellationTokenSource();
+            world.Add(emoteEntity, new SceneEmoteRawGltfFallback("assets/dance_emote.glb", "DANCE_HASH", PartitionComponent.TOP_PRIORITY, cts));
+
+            // A bundle that loaded but holds no GameObject; the reference mirrors the one LoadSystemBase adds on success
+            var emptyBundle = new AssetBundleData(null, Array.Empty<Object>(), null, Array.Empty<AssetBundleData>());
+            emptyBundle.AddReference();
+            world.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(emptyBundle));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.IsAlive(emoteEntity));
+            Assert.IsTrue(emptyBundle.CanBeDisposed(), "The bundle reference taken on load must be released when falling back.");
+            AssertSingleRawGltfFallbackPromise("assets/dance_emote.glb", "DANCE_HASH", cts);
+            Assert.IsTrue(mockEmote.IsLoading);
+            Assert.AreEqual(1, metrics.Failed);
+        }
+
+        private void AssertSingleRawGltfFallbackPromise(string expectedName, string expectedHash, CancellationTokenSource expectedCts)
+        {
+            var fallbackPromises = new List<GltfPromise>();
+            world.Query(new QueryDescription().WithAll<GltfPromise, IEmote, BodyShape>(), (ref GltfPromise p) => fallbackPromises.Add(p));
+
+            Assert.AreEqual(1, fallbackPromises.Count);
+            Assert.AreEqual(expectedName, fallbackPromises[0].LoadingIntention.Name);
+            Assert.AreEqual(expectedHash, fallbackPromises[0].LoadingIntention.Hash);
+            Assert.AreSame(expectedCts, fallbackPromises[0].LoadingIntention.CancellationTokenSource, "The fallback must stay cancellable through the requesting intention.");
+        }
+
+        [Test]
         public void FinalizeAssetBundleEmoteLoadingCancelledCorrectly()
         {
             var emoteURN = new URN("urn:ab:emote_female_cancel");
@@ -531,7 +612,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly Dictionary<URN, IEmote> Emotes = new ();
             public readonly List<URN> GetOrAddByDTOCalls = new ();
             public readonly List<URN> TryGetElementCalls = new ();
-            public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
+            public Action<MockEmote, bool>? OnUpdateLoadingStatusCalled;
             public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)

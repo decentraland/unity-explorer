@@ -13,6 +13,7 @@ using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -174,16 +175,116 @@ namespace DCL.SyntheticInput.Tests
             PointerEventType eventType = PointerEventType.PetDown,
             int? targetId = null,
             SyntheticPressHandoff? press = null,
-            string? sceneId = null)
+            string? sceneId = null,
+            InputAction button = InputAction.IaPointer)
         {
             var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
 
-            world.Add(playerEntity, new SyntheticPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
+            world.Add(playerEntity, new SyntheticPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, button, eventType, press)
             {
                 Completion = completion,
             });
 
             return completion;
+        }
+
+        private SyntheticPointerResult DeliverPressWith(InputAction button)
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(button: button);
+
+            system.Update(0); // inject
+            RunPipelineFrame();
+            system.Update(0); // observe
+
+            return ResultOf(completion);
+        }
+
+        [Test]
+        public void ReportTheDeliveredButton()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPointer);
+
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaPointer));
+            Assert.That(result.ToJson()["button"]!.Value<string>(), Is.EqualTo("pointer"));
+        }
+
+        [Test]
+        public void WarnNothingWhenTheEntryMatches()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPointer);
+
+            Assert.That(result.Warning, Is.Null, "the target declares pet_down/pointer, so the press produced a result");
+            Assert.That(result.ToJson()["warning"], Is.Null);
+        }
+
+        [Test]
+        public void WarnWhenTheEntityDeclaresNoEntryForTheButton()
+        {
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPrimary);
+
+            Assert.That(result.Hit, Is.True, "the reticle qualified the entity; the warning is about what it was notified of");
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaPrimary));
+            Assert.That(result.Warning, Does.Contain("pet_down/primary"));
+            Assert.That(result.Warning, Does.Contain("pet_down/pointer"), "the entries the entity listens for are named");
+            Assert.That(result.Warning, Does.Contain("wrote pet_down/primary to the entity"), "the pipeline writes every edge to the hovered entity, declared or not");
+            Assert.That(result.Warning, Does.Contain("no broadcast"), "a result written to the entity suppresses the root broadcast");
+            Assert.That(result.ToJson()["warning"]!.Value<string>(), Is.EqualTo(result.Warning));
+        }
+
+        [Test]
+        public void WarnNothingForAnIaAnyEntry()
+        {
+            sceneWorld.Get<PBPointerEvents>(targetEntity).PointerEvents[0]!.EventInfo.Button = InputAction.IaAny;
+
+            SyntheticPointerResult result = DeliverPressWith(InputAction.IaPrimary);
+
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Warning, Is.Null, "an IA_ANY entry matches every button, as in the production merge");
+        }
+
+        [Test]
+        public void WarnOnAnAimlessHitToo()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaSecondary));
+            Assert.That(result.Warning, Does.Contain("pet_down/secondary"));
+            Assert.That(result.Warning, Does.Contain("no broadcast"), "the hovered entity consumed the aimless edge, so the root heard nothing");
+        }
+
+        [Test]
+        public void WarnWhenAnAimlessHitBoundThroughAnOffWindowCursor()
+        {
+            world.Add(cameraEntity, new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(-604f, 1175f) });
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Warning, Does.Contain("outside the window"));
+            Assert.That(result.Warning, Does.Contain("pet_down/secondary"), "the undeclared-entry warning is kept beside it");
+        }
+
+        [Test]
+        public void DescribeNoOffScreenCursorWhileCapturedOrOnScreen()
+        {
+            var captured = new CursorComponent { CursorState = CursorState.Locked, Position = new Vector2(-10f, -10f) };
+            var onScreen = new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(10f, 10f) };
+            var offScreen = new CursorComponent { CursorState = CursorState.Free, Position = new Vector2(2050f, 10f) };
+
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in captured, 2044, 1150), Is.Null, "a captured cursor builds the ray from the screen centre");
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in onScreen, 2044, 1150), Is.Null);
+            Assert.That(SyntheticPointerDiagnostics.DescribeOffScreenCursor(in offScreen, 2044, 1150), Does.Contain("screen 2044x1150"));
         }
 
         private void SetCurrentSceneDefinitionId(string id) =>

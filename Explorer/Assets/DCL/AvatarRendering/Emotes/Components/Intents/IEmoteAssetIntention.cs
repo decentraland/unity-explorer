@@ -12,7 +12,8 @@ namespace DCL.AvatarRendering.Emotes
         bool Loop { get; }
         string EmoteHash { get; }
         URN NewSceneEmoteURN();
-        void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote);
+        /// <param name="useLocalAssetBundles">Whether a local scene emote may load from the local asset-bundle server; realm emotes always load bundles.</param>
+        void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, bool useLocalAssetBundles, IEmote emote);
         bool IsTimeout(float deltaTime);
     }
 }

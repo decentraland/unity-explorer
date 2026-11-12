@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.Profiling;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -24,24 +25,25 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
     {
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private IInstancePoolsProvider instancePoolsProvider;
-        private ICRDTProtocol crdtProtocol;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private ISharedPoolsProvider sharedPoolsProvider = null!;
+        private IInstancePoolsProvider instancePoolsProvider = null!;
+        private ICRDTProtocol crdtProtocol = null!;
+        private ICRDTDeserializer crdtDeserializer = null!;
+        private ICRDTWorldSynchronizer crdtWorldSynchronizer = null!;
+        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider = null!;
+        private ISystemGroupsUpdateGate systemGroupsUpdateGate = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = null!;
 
-        private EngineAPIImplementation engineAPIImplementation;
+        private EngineAPIImplementation engineAPIImplementation = null!;
         private SceneRuntimeMetrics metrics = null!;
 
-        private List<CRDTMessage> crdtMessages;
-        private List<ProcessedCRDTMessage> outgoingMessages;
-        private List<ProcessedCRDTMessage> crdtStateMessages;
+        private List<CRDTMessage> crdtMessages = null!;
+        private List<ProcessedCRDTMessage> outgoingMessages = null!;
+        private List<ProcessedCRDTMessage> crdtStateMessages = null!;
 
-        private IWorldSyncCommandBuffer worldSyncCommandBuffer;
-        private Mutex mutex;
+        private IWorldSyncCommandBuffer worldSyncCommandBuffer = null!;
+        private Mutex mutex = null!;
 
         [SetUp]
         public void SetUp()
@@ -74,11 +76,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>(), instancePoolsProvider = Substitute.For<IInstancePoolsProvider>(),
                 crdtProtocol = Substitute.For<ICRDTProtocol>(),
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
-                crdtSerializer = new CRDTSerializer(),
+                new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
-                Substitute.For<ISystemGroupsUpdateGate>(),
+                systemGroupsUpdateGate = Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
+                sceneStateProvider = Substitute.For<ISceneStateProvider>(),
                 new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"),
                 metrics = new SceneRuntimeMetrics());
 
@@ -112,6 +115,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sharedPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
 
             outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>())
+                                        .Returns(_ =>
+                                         {
+                                             mutex.WaitOne();
+                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages.ToList());
+                                         });
+
+            outgoingCrtdMessagesProvider.TakePendingMessages().Returns(_ => new List<OutgoingCRDTMessagesProvider.PendingMessage>());
+
+            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<List<OutgoingCRDTMessagesProvider.PendingMessage>>(), Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>())
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
@@ -194,15 +206,46 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 }
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
+
+                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncCommandBuffer);
+
+                // The batch is taken and the tick advanced inside the world lock; Open is the last call in it
+                outgoingCrtdMessagesProvider.TakePendingMessages();
+                sceneStateProvider.TickNumber = Arg.Any<uint>();
+                systemGroupsUpdateGate.Open();
+
                 instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
 
-                outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>());
+                // Serialization happens after the lock is released
+                outgoingCrtdMessagesProvider.GetSerializationSyncBlock(Arg.Any<List<OutgoingCRDTMessagesProvider.PendingMessage>>(), Arg.Any<Action<OutgoingCRDTMessagesProvider.PendingMessage>>());
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
 
                 // can't check Serialize, can't mock `Span<byte>`
-                // Apply will be called asynchronously
-                // crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
             });
+        }
+
+        [Test]
+        public void AdvanceTheTickOncePerBatch()
+        {
+            // Arrange
+            sceneStateProvider.TickNumber.Returns(7u);
+
+            // Act
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+
+            // Assert
+            sceneStateProvider.Received(1).TickNumber = 8u;
+        }
+
+        [Test]
+        public void NotAdvanceTheTickForStaticMessages()
+        {
+            // Act
+            engineAPIImplementation.CrdtSendToRenderer(INPUT, returnData: false);
+
+            // Assert
+            sceneStateProvider.DidNotReceive().TickNumber = Arg.Any<uint>();
+            outgoingCrtdMessagesProvider.DidNotReceive().TakePendingMessages();
         }
 
         [Test]

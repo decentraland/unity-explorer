@@ -68,6 +68,8 @@ namespace DCL.SyntheticInput.Systems
                             UiDeviceGestureKind.Hover => StepMove(ref gesture),
                             UiDeviceGestureKind.Click => StepClick(ref gesture),
                             UiDeviceGestureKind.Drag => StepDrag(ref gesture),
+                            UiDeviceGestureKind.ButtonDown => StepButton(ref gesture, pressed: true),
+                            UiDeviceGestureKind.ButtonUp => StepButton(ref gesture, pressed: false),
                             _ => StepKeyPress(ref gesture),
                         };
 
@@ -122,6 +124,14 @@ namespace DCL.SyntheticInput.Systems
                     gesture.Phase = UiGesturePhase.Released;
                     return true;
             }
+        }
+
+        // One button edge, completed the frame it is queued; the caller paces the other edge.
+        private bool StepButton(ref UiDeviceGestureRequest gesture, bool pressed)
+        {
+            QueueButtonAt(gesture.To, gesture.Button, pressed);
+            gesture.Phase = pressed ? UiGesturePhase.Pressed : UiGesturePhase.Released;
+            return true;
         }
 
         private bool StepDrag(ref UiDeviceGestureRequest gesture)
