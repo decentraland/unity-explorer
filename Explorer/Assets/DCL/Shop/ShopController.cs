@@ -143,6 +143,7 @@ namespace DCL.Shop
             view.NamesView.InputDeselected += RestoreShortcutsInput;
             OverviewController.ViewAllClicked += OnBrowseClicked;
             OverviewController.ItemClicked += OpenItem;
+            OverviewController.OpenCartRequested += OnOpenCartRequested;
             WearablesController.BrowseClicked += OnBrowseClicked;
             WearablesController.ItemClicked += OnGridItemClicked;
             EmotesController.BrowseClicked += OnBrowseClicked;
@@ -151,6 +152,7 @@ namespace DCL.Shop
             FavoritesController.ItemClicked += OnGridItemClicked;
             Favorites.ToggleFailed += OnFavoriteToggleFailed;
             ItemPanel.CloseClicked += CloseItem;
+            ItemPanel.OpenCartRequested += OnOpenCartRequested;
             ItemPanel.WearableResolved += Preview.TryOnWearable;
             ItemPanel.PreviewUnavailable += Preview.RestoreOwnAvatar;
 
@@ -186,6 +188,7 @@ namespace DCL.Shop
             FavoritesController.ItemClicked -= OnGridItemClicked;
             Favorites.ToggleFailed -= OnFavoriteToggleFailed;
             ItemPanel.CloseClicked -= CloseItem;
+            ItemPanel.OpenCartRequested -= OnOpenCartRequested;
             ItemPanel.WearableResolved -= Preview.TryOnWearable;
             ItemPanel.PreviewUnavailable -= Preview.RestoreOwnAvatar;
 
@@ -486,16 +489,22 @@ namespace DCL.Shop
             SectionFor(CurrentSection)?.Reload();
         }
 
-        private void OnCartButtonClicked()
+        private void OnCartButtonClicked() =>
+            OpenCart(ShopCartModalParams.SOURCE_SHOP_HEADER);
+
+        private void OnOpenCartRequested() =>
+            OpenCart(ShopCartModalParams.SOURCE_ADD_TO_CART);
+
+        private void OpenCart(string source)
         {
             modalCts = modalCts.SafeRestart();
-            ShowCartAsync(modalCts.Token).Forget();
+            ShowCartAsync(source, modalCts.Token).Forget();
         }
 
-        private async UniTaskVoid ShowCartAsync(CancellationToken ct)
+        private async UniTaskVoid ShowCartAsync(string source, CancellationToken ct)
         {
             ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
-            var parameter = new ShopCartModalParams(ShopCartModalParams.SOURCE_SHOP_HEADER, cornersCache[BOTTOM_RIGHT_CORNER]);
+            var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER]);
 
             try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct); }
             catch (OperationCanceledException) { }

@@ -17,6 +17,7 @@ namespace DCL.Shop
         private const float HOVER_DURATION = 0.2f;
         private const string ADD_LABEL = "Add to cart";
         private const string ADDING_LABEL = "Adding...";
+        private const string IN_CART_LABEL = "ALREADY IN CART";
         private const string ITEMS_SINGULAR = "1 item";
         private const string ITEMS_FORMAT = "{0} items";
 
@@ -45,6 +46,8 @@ namespace DCL.Shop
         public ShopOutfitModel? Model { get; private set; }
 
         public bool IsAdding { get; private set; }
+
+        public bool IsInCart { get; private set; }
 
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake() =>
@@ -80,18 +83,17 @@ namespace DCL.Shop
             ShopThumbnails.LoadWithRetryAsync(thumbnailLoader, model.ThumbnailUrl, Thumbnail, DefaultThumbnail, loadingThumbnailCts.Token).Forget();
         }
 
-        public void SetCtaEnabled(bool isEnabled)
+        public void SetCtaState(bool canAdd, bool inCart)
         {
-            ctaEnabled = isEnabled;
-            AddButton.interactable = isEnabled && !IsAdding;
+            IsInCart = inCart;
+            ctaEnabled = canAdd || inCart;
+            RefreshCta();
         }
 
         public void SetAdding(bool adding)
         {
             IsAdding = adding;
-            AddSpinner.SetActive(adding);
-            AddButtonText.text = adding ? ADDING_LABEL : ADD_LABEL;
-            AddButton.interactable = ctaEnabled && !adding;
+            RefreshCta();
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -99,6 +101,13 @@ namespace DCL.Shop
 
         public void OnPointerExit(PointerEventData eventData) =>
             AnimateHover(false);
+
+        private void RefreshCta()
+        {
+            AddSpinner.SetActive(IsAdding);
+            AddButtonText.text = IsAdding ? ADDING_LABEL : IsInCart ? IN_CART_LABEL : ADD_LABEL;
+            AddButton.interactable = ctaEnabled && !IsAdding;
+        }
 
         private void AnimateHover(bool hovered)
         {

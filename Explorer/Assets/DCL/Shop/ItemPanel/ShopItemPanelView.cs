@@ -16,7 +16,7 @@ namespace DCL.Shop
     {
         private const int HIDE_CHIPS_POOL_CAPACITY = 13;
         private const string ADD_TO_CART_LABEL = "Add to cart";
-        private const string IN_CART_LABEL = "In cart";
+        private const string IN_CART_LABEL = "IN CART";
 
         [field: Header("Header")]
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
@@ -56,8 +56,6 @@ namespace DCL.Shop
 
         private readonly List<HideCategoryView> activeHideChips = new ();
         private IObjectPool<HideCategoryView>? hideChipsPool;
-        private bool cartFull;
-
         public bool IsResolving { get; private set; }
 
         public event Action? CloseClicked;
@@ -97,18 +95,14 @@ namespace DCL.Shop
             MarketplaceButton.gameObject.SetActive(viewOnly);
         }
 
-        public void SetCartState(bool inCart, bool isCartFull)
-        {
-            cartFull = isCartFull;
+        public void SetCartState(bool inCart) =>
             AddToCartText.text = inCart ? IN_CART_LABEL : ADD_TO_CART_LABEL;
-            AddToCartButton.interactable = !isCartFull && !IsResolving;
-        }
 
         public void SetResolving(bool resolving)
         {
             IsResolving = resolving;
             ResolvingSpinner.SetActive(resolving);
-            AddToCartButton.interactable = !resolving && !cartFull;
+            AddToCartButton.interactable = !resolving;
             BuyButton.interactable = !resolving;
         }
 

@@ -54,6 +54,7 @@ namespace DCL.Shop
         public event Action? CloseClicked;
         public event Action<IWearable>? WearableResolved;
         public event Action? PreviewUnavailable;
+        public event Action? OpenCartRequested;
 
         public ShopItemPanelController(
             ShopItemPanelView view,
@@ -143,7 +144,7 @@ namespace DCL.Shop
         public void RefreshCartState()
         {
             if (Model != null)
-                view.SetCartState(presenter.IsInCart(Model), presenter.IsCartFull(Model));
+                view.SetCartState(presenter.IsInCart(Model));
         }
 
         private void RefreshFavoriteState()
@@ -302,7 +303,10 @@ namespace DCL.Shop
             if (Model == null || view.IsResolving || actionsCts == null)
                 return;
 
-            presenter.AddToCartAsync(Model, cartSource, view.SetResolving, actionsCts.Token).Forget();
+            if (presenter.IsInCart(Model))
+                OpenCartRequested?.Invoke();
+            else
+                presenter.AddToCartAsync(Model, cartSource, view.SetResolving, actionsCts.Token).Forget();
         }
 
         private void OnBuyClicked()

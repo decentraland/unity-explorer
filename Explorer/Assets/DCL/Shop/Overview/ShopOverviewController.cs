@@ -42,6 +42,7 @@ namespace DCL.Shop
         private string? selectedKey;
 
         public event Action<ShopOutfitAddResult>? OutfitAddedToCart;
+        public event Action? OpenCartRequested;
         public event Action? ViewAllClicked;
         public event Action<ShopItemCardModel, ShopCartSource>? ItemClicked;
 
@@ -128,7 +129,7 @@ namespace DCL.Shop
             foreach (ShopOutfitCardView card in view.ActiveOutfitCards)
             {
                 if (card.Model != null)
-                    card.SetCtaEnabled(HasPurchasableItems(card.Model));
+                    RefreshOutfitCta(card, card.Model);
             }
         }
 
@@ -217,7 +218,11 @@ namespace DCL.Shop
             {
                 ShopOutfitCardView card = view.RentOutfitCard();
                 card.Bind(model, thumbnailLoader, dataset.ResolutionFailed);
-                card.SetCtaEnabled(!dataset.ResolutionFailed && HasPurchasableItems(model));
+
+                if (dataset.ResolutionFailed)
+                    card.SetCtaState(false, false);
+                else
+                    RefreshOutfitCta(card, model);
             }
 
             row.SetItemCount(dataset.Outfits.Count);
@@ -259,15 +264,26 @@ namespace DCL.Shop
             }
         }
 
-        private bool HasPurchasableItems(ShopOutfitModel model)
+        /// <summary>
+        ///     An outfit counts as in the cart once none of its items is left to add and at least one of them is in the cart.
+        /// </summary>
+        private void RefreshOutfitCta(ShopOutfitCardView card, ShopOutfitModel model)
         {
+            var canAdd = false;
+            var anyInCart = false;
+
             foreach (ShopItemCardModel item in model.ResolvedItems)
             {
-                if (!item.IsNotForSale && !cards.IsOwnListing(item) && !cards.IsInCart(item))
-                    return true;
+                if (item.IsNotForSale || cards.IsOwnListing(item))
+                    continue;
+
+                if (cards.IsInCart(item))
+                    anyInCart = true;
+                else
+                    canAdd = true;
             }
 
-            return false;
+            card.SetCtaState(canAdd, !canAdd && anyInCart);
         }
 
         private void OnItemAddToCartClicked(ShopItemCardView card)
@@ -296,7 +312,9 @@ namespace DCL.Shop
 
         private void OnOutfitAddClicked(ShopOutfitCardView card)
         {
-            if (actionsCts != null)
+            if (card.IsInCart)
+                OpenCartRequested?.Invoke();
+            else if (actionsCts != null)
                 AddOutfitAsync(card, actionsCts.Token).Forget();
         }
 

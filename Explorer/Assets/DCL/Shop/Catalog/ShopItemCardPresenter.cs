@@ -92,18 +92,6 @@ namespace DCL.Shop
                 ? model.Listing.CartLineId()
                 : ShopListingDtoExtensions.CartLineId(model.ContractAddress, model.ItemId, null);
 
-        public bool IsCartFull(ShopItemCardModel model)
-        {
-            if (!IsInCart(model))
-                return false;
-
-            if (model.TokenId != null)
-                return true;
-
-            string lineId = ShopListingDtoExtensions.CartLineId(model.ContractAddress, model.ItemId, model.TokenId);
-            return cart.TryGet(lineId, out ShopCartLine? line) && line!.Quantity >= line.StockCap;
-        }
-
         /// <summary>Adds the card's item to the cart, or removes its whole line when it is already there.</summary>
         public UniTask ToggleCartAsync(ShopItemCardView card, ShopCartSource source, CancellationToken ct)
         {
