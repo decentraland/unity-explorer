@@ -231,7 +231,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
             foreach (var place in response.Value.Data)
-               if (!userNames.ContainsKey(place.owner))
+               if (!userNames.ContainsKey(place.owner) && !userIds.Value.Contains(place.owner))
                    userIds.Value.Add(place.owner);
 
             if (userIds.Value.Count > 0)
@@ -242,10 +242,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
                     foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
-                    {
-                        userNames.Add(profile.UserId, profile.Name);
-                        break;
-                    }
+                        userNames[profile.UserId] = profile.Name;
             }
 
             foreach (var place in response.Value.Data)

@@ -10,7 +10,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine.Device;
-using UnityEngine.Pool;
 using Cysharp.Threading.Tasks;
 using Utility;
 using Utility.Multithreading;
@@ -39,7 +38,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private readonly string anonId;
         private volatile string? cachedUserId;
 
-        private readonly DCLConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
+        // Guarded by CURRENT, which Callback holds
+        private readonly PendingOperations<(Operation type, List<MarshaledString> strings)> pendingOperations = new ();
         private readonly IContextSource contextSource = new ContextSource();
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -126,7 +126,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             {
                 cachedUserId = userId;
 
-                var list = ListPool<MarshaledString>.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
 
                 var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
@@ -137,10 +137,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 AlertIfInvalid(operationId);
 
                 list.Add(mUserId);
+                list.Add(mAnonId);
                 list.Add(mTraits);
                 list.Add(mContext);
 
-                afterClean[operationId] = (Operation.Identify, list);
+                Register(operationId, Operation.Identify, list);
             }
         }
 
@@ -164,11 +165,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 AlertIfInvalid(operationId);
 
                 list.Add(mUserId);
+                list.Add(mAnonId);
                 list.Add(mEventName);
                 list.Add(mProperties);
                 list.Add(mContext);
 
-                afterClean[operationId] = (Operation.Track, list);
+                Register(operationId, Operation.Track, list);
 
                 trackId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
@@ -195,11 +197,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 AlertIfInvalid(operationId);
 
                 list.Add(mUserId);
+                list.Add(mAnonId);
                 list.Add(mEventName);
                 list.Add(mProperties);
                 list.Add(mContext);
 
-                afterClean[operationId] = (Operation.Track, list);
+                Register(operationId, Operation.Track, list);
 
                 trackId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
@@ -222,7 +225,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 AlertIfInvalid(operationId);
 
                 List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
-                afterClean[operationId] = (Operation.Flush, list);
+                Register(operationId, Operation.Flush, list);
 
                 flushId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
@@ -267,24 +270,18 @@ namespace Plugins.RustSegment.SegmentServerWrap
             {
                 using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
-                if (instanceGuard.Value == null) return;
+                RustSegmentAnalyticsService? instance = instanceGuard.Value;
 
-                Operation type = instanceGuard.Value.afterClean[operationId].Item1;
+                if (instance == null) return;
 
-                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
-
-                if (response is NativeMethods.Response.ErrorDiskFull)
+                // The thread that started the operation may not have registered it yet: Register releases its memory then
+                if (instance.pendingOperations.TryComplete(operationId, out (Operation type, List<MarshaledString> strings) pending))
                 {
-                    // Environment condition, not an app bug: warn instead of a Sentry exception
-                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed: disk is full");
-
-                    // Published on every occurrence since subscribers may not exist yet during boot
-                    instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
+                    instance.ReportResponse(operationId, pending.type.ToString(), response);
+                    Release(pending.strings);
                 }
-                else if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
-
-                instanceGuard.Value.CleanMemory(operationId);
+                else
+                    instance.ReportResponse(operationId, "Unregistered", response);
             }
             catch
             {
@@ -292,13 +289,45 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        private void CleanMemory(ulong operationId)
+        private void ReportResponse(ulong operationId, string type, NativeMethods.Response response)
         {
-            if (afterClean.TryRemove(operationId, out var list))
+            ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+
+            if (response is NativeMethods.Response.ErrorDiskFull)
             {
-                foreach (var item in list.Item2) item.Dispose();
-                ThreadSafeListPool<MarshaledString>.SHARED.Release(list.Item2);
+                // Environment condition, not an app bug: warn instead of a Sentry exception
+                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed: disk is full");
+
+                // Published on every occurrence since subscribers may not exist yet during boot
+                eventBus?.Publish(new AnalyticsDiskFullDetected());
             }
+            else if (response is not NativeMethods.Response.Success)
+                ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+        }
+
+        /// <summary>
+        ///     Called after the native call that returned <paramref name="operationId" />, never around it: the native side holds its own lock
+        ///     while it pumps <see cref="Callback" />, which takes <see cref="CURRENT" />.
+        /// </summary>
+        private void Register(ulong operationId, Operation type, List<MarshaledString> strings)
+        {
+            // A rejected operation never completes, so no callback would release its memory
+            if (operationId == 0)
+            {
+                Release(strings);
+                return;
+            }
+
+            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+
+            if (!pendingOperations.TryRegister(operationId, (type, strings)))
+                Release(strings);
+        }
+
+        private static void Release(List<MarshaledString> strings)
+        {
+            foreach (MarshaledString item in strings) item.Dispose();
+            ThreadSafeListPool<MarshaledString>.SHARED.Release(strings);
         }
 
         private static void AlertIfInvalid(ulong operationId)

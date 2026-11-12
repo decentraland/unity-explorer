@@ -67,6 +67,11 @@ namespace DCL.CharacterCamera
         CinemachineBrain? CinemachineBrain { get; set; }
         CameraMode CameraMode { get; set; }
 
+        /// <summary>
+        ///     The camera the brain renders to, null until the brain is assigned. Reachable from assemblies that do not reference Cinemachine.
+        /// </summary>
+        Camera? OutputCamera => CinemachineBrain != null ? CinemachineBrain.OutputCamera : null;
+
         public class Fake : IExposedCameraData
         {
             public CanBeDirty<Vector3> WorldPosition { get; }

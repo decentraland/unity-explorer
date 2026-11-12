@@ -26,8 +26,8 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             [ClientMessage.MessageOneofCase.Handshake] = CreatePool<HandshakeRequest>((packet, mes) => packet.Handshake = mes),
             [ClientMessage.MessageOneofCase.Input] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
-            [ClientMessage.MessageOneofCase.Resync] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
-            [ClientMessage.MessageOneofCase.ProfileAnnouncement] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
+            [ClientMessage.MessageOneofCase.Resync] = CreatePool<ResyncRequest>((packet, mes) => packet.Resync = mes),
+            [ClientMessage.MessageOneofCase.ProfileAnnouncement] = CreatePool<ProfileVersionAnnouncement>((packet, mes) => packet.ProfileAnnouncement = mes),
             [ClientMessage.MessageOneofCase.EmoteStart] = CreatePool<EmoteStart>((packet, mes) => packet.EmoteStart = mes),
             [ClientMessage.MessageOneofCase.EmoteStop] = CreatePool<EmoteStop>((packet, mes) => packet.EmoteStop = mes),
             [ClientMessage.MessageOneofCase.Teleport] = CreatePool<TeleportRequest>((packet, mes) => packet.Teleport = mes),

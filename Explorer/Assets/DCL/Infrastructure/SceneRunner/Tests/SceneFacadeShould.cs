@@ -440,6 +440,29 @@ namespace SceneRunner.Tests
             }
         }
 
+        [TestCase(SceneState.NotStarted, true)]
+        [TestCase(SceneState.Starting, true)]
+        [TestCase(SceneState.Running, true)]
+        [TestCase(SceneState.JavaScriptError, true)]
+        [TestCase(SceneState.Disposing, true)]
+        [TestCase(SceneState.Disposed, false)]
+        public void NotifyIsCurrentChangedUntilDisposed(SceneState state, bool expected)
+        {
+            Assert.AreEqual(expected, SceneFacade.CanNotifyIsCurrentChanged(state));
+        }
+
+        [Test]
+        public void NotNotifyListenersAfterDispose()
+        {
+            // Not added to sceneFacades: it is disposed here and the teardown must not dispose it again
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, new SceneStateProvider()));
+
+            sceneFacade.Dispose();
+            sceneFacade.SetIsCurrent(false);
+
+            sceneFacade.deps.Runtime.DidNotReceive().OnSceneIsCurrentChanged(Arg.Any<bool>());
+        }
+
         [Test]
         public async Task DisposeInProperOrder()
         {
