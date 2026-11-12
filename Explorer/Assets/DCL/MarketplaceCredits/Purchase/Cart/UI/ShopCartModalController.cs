@@ -652,6 +652,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 return;
 
             viewInstance.LinesStateContainer.SetActive(newState is ModalState.Lines or ModalState.Reviewing);
+            viewInstance.LinesContainer.gameObject.SetActive(newState != ModalState.Reviewing);
             viewInstance.ReviewingSpinner.SetActive(newState == ModalState.Reviewing);
             viewInstance.ConfirmChangesContainer.SetActive(newState == ModalState.ConfirmChanges);
             viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.InsufficientCredits);
