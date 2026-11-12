@@ -421,6 +421,28 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `locomotion-*`
+**Type:** String values; see the table
+**Description:** The locomotion recorder plays scripted movement scenarios and writes one JSON Lines trace per run, frame by frame (see [Locomotion § Locomotion recorder](locomotion.md#locomotion-recorder)). It is created only with the debug flag (Editor, development build or `--debug`) and when `locomotion-suite` or `locomotion-animations` is given, or when the MCP server is on (`--mcp`; its tools start suites in a running client, see [MCP Automation § Locomotion recorder](mcp-automation.md#locomotion-recorder-debug-only)); otherwise nothing is constructed. Command line only: the flags are not in the deep-link allowlist.
+
+| Flag | Value | Default |
+|---|---|---|
+| `locomotion-suite` | Directory of scenario `.json` files, or one file holding a scenario or an array of them. Starts once the world has loaded and the player stands on the ground. | none |
+| `locomotion-repeats` | Runs per scenario. | `1` |
+| `locomotion-out` | Output directory; traces go to `<dir>/unity/<scenario id>__fps<fps>__r<repeat>.jsonl`. | `<persistentDataPath>/locomotion-traces` |
+| `locomotion-spawn` | `x,y,z[,yaw]` in scene coordinates (relative to the base parcel of the scene the suite starts in). | where the player stands; facing the scenario's camera yaw |
+| `locomotion-animations` | `true` or `false`: the own avatar's Animator while the recorder is active. | `false` |
+| `locomotion-input` | `keyboard` (virtual keyboard device through the DCLInput actions) or `component` (overwrites `MovementInputComponent`). | `keyboard` |
+| `locomotion-dt` | `real`, or `fixed` to advance every frame by exactly 1/fps (`Time.captureDeltaTime`). | `real` |
+| `locomotion-quit` | When present, quits the application after the suite. | absent |
+
+**Usage:**
+```bash
+--debug --realm http://127.0.0.1:8000 --local-scene true --position 0,0 --locomotion-suite C:/scenarios --locomotion-repeats 3 --locomotion-quit
+```
+
+---
+
 ### `launch-cdp-monitor-on-start`
 **Type:** Boolean
 **Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.

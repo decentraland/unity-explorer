@@ -112,3 +112,24 @@ The Head IK was separated into 2 different constraints since we needed to contro
 
 All the IK systems are being handled and updated by the `HandsIKSystem`, `HeadIKSystem`, and `FeetIKSystem` respectively.
 All weight speed ratios, twist limits, and offsets can be found in `CharacterControllerSettings`.
+
+----
+
+## Locomotion recorder
+
+`Character/CharacterMotion/LocomotionRecorder` records how the own player moves, frame by frame, for comparison with other clients. It plays scenarios (JSON: a step function of W/A/S/D, walk and sprint keys over time, a held camera yaw, a frame rate, a settle time and a duration) and writes one JSON Lines trace per run: a header, one line per rendered frame (time, delta time, the movement input consumed, position in scene coordinates, movement velocity, grounded, avatar and camera yaw) and a footer. Launch flags: [App Arguments § `locomotion-*`](app-arguments.md#locomotion-); a debug panel widget, `Locomotion: Recorder`, toggles the avatar animations, re-runs the latest suite and cancels it.
+
+In a running client the MCP server starts suites without a restart: `run_locomotion_suite`, `get_locomotion_status`, `cancel_locomotion_suite` and `set_avatar_animations` ([MCP Automation § Locomotion recorder](mcp-automation.md#locomotion-recorder-debug-only)). The recorder exists only with the debug flag (Editor, development build or `--debug`), and then when a `--locomotion-*` flag asks for it or the MCP server is on. Created for the MCP tools alone it is inert until a suite starts: no input device, no frame-rate lock, avatar animations on. The input seam, frame time, spawn, output and animations are chosen per suite; a suite's `animations` setting holds while it runs and the toggle applies again after it. Each suite gets a run id; the status lists each written trace with its footer counts (`dropped`, `input_mismatch_frames`).
+
+Per run: the player is teleported to the spawn point (the instant teleport `movePlayerTo` uses), its movement velocity is zeroed and it faces the spawn yaw; it then stays idle for the settle time with the frame rate locked (`Application.targetFrameRate`, vsync off) and the third-person camera held at the scenario's yaw. The next frame is t = 0.
+
+| Part | Where it runs |
+|---|---|
+| Keys | `keyboard` seam: a virtual keyboard whose state is queued in `InputSystem.onBeforeUpdate`, so `UpdateInputMovementSystem` reads it in the same frame through the DCLInput actions. In the Editor the Game view must have focus, or the Editor keeps keyboard input for itself; the run waits until it has (the status reports `waitingForFocus`). Created by the first keyboard suite. `component` seam: `LocomotionComponentInputSystem` overwrites `MovementInputComponent` after `UpdateInputMovementSystem`; needs no focus. |
+| Camera yaw | `LocomotionCameraYawSystem`, between `ApplyCinemachineCameraInputSystem` and `UpdateCinemachineBrainSystem`: sets the world-space orbit's X axis. |
+| Recording | `LocomotionSuiteSystem`, after `RotateCharacterSystem`: the frame's final position and rotations. |
+| Animations off | `LocomotionAnimationsOffSystem`, after `FinishAvatarMatricesCalculationSystem`: keeps the own avatar's Animator disabled, so the model holds its pose. |
+
+Timing to keep in mind when reading a trace: `CalculateCharacterVelocitySystem` runs on the fixed tick (`PhysicsSystemGroup`), before the frame's input systems, so a frame's velocity comes from the previous frame's input and changes only on frames with a fixed tick (`extra.physics_tick`); `InterpolateCharacterSystem` moves the character by that velocity every rendered frame.
+
+The recorder logs under `ReportCategory.MCP`, which the development and the production `ReportsHandlingSettings` both enable at every severity, so a player build's `Player.log` holds each suite's start, every trace written, failed loads and writes, cancellation and completion. Without `--locomotion-out` (or the tool's `out`), traces go to `<persistentDataPath>/locomotion-traces/unity/`; on Windows that is `%USERPROFILE%\AppData\LocalLow\Decentraland\Explorer\locomotion-traces\unity\`, next to `Player.log`. The Editor renders slower than a player, so measure high frame rates in a player build: a release build with `--debug`, or a development build.
