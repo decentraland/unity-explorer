@@ -74,7 +74,7 @@ namespace DCL.Shop
         public void Hide()
         {
             profileCts.SafeCancelAndDispose();
-            emoteCts.SafeCancelAndDispose();
+            StopEmotes();
             ResetModelToOwnAvatar();
             OnHide();
         }
@@ -88,6 +88,7 @@ namespace DCL.Shop
             foreach (URN urn in newAvatar.Wearables)
                 baseWearables.Add(urn.Shorten());
 
+            StopEmotes();
             ResetModelToOwnAvatar();
 
             // The base only creates the preview once; afterwards it reads the model only through OnModelUpdated
@@ -109,6 +110,7 @@ namespace DCL.Shop
                 return;
 
             URN urn = wearable.GetUrn().Shorten();
+            StopEmotes();
             ResetModelToOwnAvatar();
             modelWearables.Clear();
 
@@ -134,6 +136,8 @@ namespace DCL.Shop
             if (avatar == null)
                 return;
 
+            // An emote already playing is not stopped: the stop blends out over several frames and would end the
+            // emote started within them, whereas a new emote intent replaces the playing one directly
             ResetModelToOwnAvatar();
             tryOnActive = true;
             emoteCts = emoteCts.SafeRestart();
@@ -145,6 +149,7 @@ namespace DCL.Shop
             if (avatar == null || !tryOnActive)
                 return;
 
+            StopEmotes();
             ResetModelToOwnAvatar();
             OnModelUpdated();
         }
@@ -180,7 +185,6 @@ namespace DCL.Shop
         {
             emoteCts.SafeCancelAndDispose();
             emoteCts = null;
-            StopEmotes();
             tryOnActive = false;
 
             modelWearables.Clear();

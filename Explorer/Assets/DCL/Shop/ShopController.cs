@@ -152,7 +152,7 @@ namespace DCL.Shop
             Favorites.ToggleFailed += OnFavoriteToggleFailed;
             ItemPanel.CloseClicked += CloseItem;
             ItemPanel.WearableResolved += Preview.TryOnWearable;
-            ItemPanel.WearableUnavailable += Preview.RestoreOwnAvatar;
+            ItemPanel.PreviewUnavailable += Preview.RestoreOwnAvatar;
 
             cart.Changed += OnCartChanged;
             cart.ItemAdded += OnCartItemAdded;
@@ -187,7 +187,7 @@ namespace DCL.Shop
             Favorites.ToggleFailed -= OnFavoriteToggleFailed;
             ItemPanel.CloseClicked -= CloseItem;
             ItemPanel.WearableResolved -= Preview.TryOnWearable;
-            ItemPanel.WearableUnavailable -= Preview.RestoreOwnAvatar;
+            ItemPanel.PreviewUnavailable -= Preview.RestoreOwnAvatar;
 
             Cart.Changed -= OnCartChanged;
             Cart.ItemAdded -= OnCartItemAdded;

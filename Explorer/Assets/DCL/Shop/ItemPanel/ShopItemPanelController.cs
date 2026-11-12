@@ -53,7 +53,7 @@ namespace DCL.Shop
 
         public event Action? CloseClicked;
         public event Action<IWearable>? WearableResolved;
-        public event Action? WearableUnavailable;
+        public event Action? PreviewUnavailable;
 
         public ShopItemPanelController(
             ShopItemPanelView view,
@@ -182,7 +182,7 @@ namespace DCL.Shop
 
             if (string.IsNullOrEmpty(urn))
             {
-                SetPreviewUnavailable(model);
+                SetPreviewUnavailable();
                 view.SetDetailsLoading(false);
                 return;
             }
@@ -208,19 +208,17 @@ namespace DCL.Shop
                 if (catalogItem != null)
                     view.SetDescription(catalogItem.Description());
 
-                SetPreviewUnavailable(model);
+                SetPreviewUnavailable();
             }
 
             view.SetDetailsLoading(false);
         }
 
-        // Without an entity there is nothing to dress the avatar with; an emote try-on already degrades to the own avatar
-        private void SetPreviewUnavailable(ShopItemCardModel model)
+        // Without an entity there is nothing to dress the avatar with or to play on it
+        private void SetPreviewUnavailable()
         {
             view.SetPreviewUnavailable(true);
-
-            if (!model.IsEmote)
-                WearableUnavailable?.Invoke();
+            PreviewUnavailable?.Invoke();
         }
 
         private async UniTask ResolveCreatorAsync(string address, CancellationToken ct)
