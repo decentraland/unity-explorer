@@ -32,6 +32,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 null!,
                 null!,
                 null!,
+                null!,
+                null!,
+                null!,
                 _ => UniTask.CompletedTask,
                 _ => UniTask.CompletedTask);
         }
@@ -58,6 +61,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [TestCase(CreditsPurchaseError.UnknownError, "unknown")]
         public void BucketEveryPurchaseErrorIntoAnAnalyticsErrorCode(CreditsPurchaseError error, string expectedBucket) =>
             Assert.AreEqual(expectedBucket, CreditPurchaseModalController.MapAnalyticsErrorCode(error));
+
+        [TestCase(true, false, CreditPurchaseModalOutcome.Purchased)]
+        [TestCase(true, true, CreditPurchaseModalOutcome.Purchased)] // a retry that went through after a failed attempt
+        [TestCase(false, true, CreditPurchaseModalOutcome.Failed)] // closed after a failed attempt
+        [TestCase(false, false, CreditPurchaseModalOutcome.Dismissed)]
+        public void ResolveHowAClosedModalEnded(bool purchaseSucceeded, bool purchaseFailed, CreditPurchaseModalOutcome expected) =>
+            Assert.AreEqual(expected, CreditPurchaseModalController.ResolveOutcome(purchaseSucceeded, purchaseFailed));
 
         [Test]
         public void MapEveryPurchaseErrorToADistinctAnalyticsDetail()

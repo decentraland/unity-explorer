@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
 using ECS.Unity.ExplorerUiEvents;
@@ -26,10 +27,13 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     public class ExplorerUiActionsShould
     {
         private const uint TICK = 21;
+        private const string ITEM_URN = "urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:3";
 
         private IMVCManager mvcManager = null!;
         private ISceneStateProvider sceneStateProvider = null!;
         private Queue<ExplorerUiEvent> events = null!;
+        private Queue<ExplorerItemPurchaseEvent> itemPurchaseEvents = null!;
+        private SceneItemPurchaseFlow itemPurchaseFlow = null!;
         private ExplorerUiActions explorerUiActions = null!;
 
         [SetUp]
@@ -39,10 +43,15 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(TICK);
             events = new Queue<ExplorerUiEvent>();
+            itemPurchaseEvents = new Queue<ExplorerItemPurchaseEvent>();
+
+            itemPurchaseFlow = Substitute.For<SceneItemPurchaseFlow>(null, null, null, null);
+            itemPurchaseFlow.IsAvailable.Returns(true);
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ExplorerItemPurchaseStatus.Purchased));
 
             // Built before any panel state is arranged, the way a scene load builds it long after the user
             // could have opened a panel.
-            explorerUiActions = new ExplorerUiActions(mvcManager, sceneStateProvider, events);
+            explorerUiActions = new ExplorerUiActions(mvcManager, sceneStateProvider, events, itemPurchaseEvents, itemPurchaseFlow);
         }
 
         [Test]
@@ -182,6 +191,86 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             Assert.That(await OpenAsync(ExplorerUi.EuMap, ExploreSections.Navmap), Is.EqualTo(OpenExplorerUiResult.Opened));
         }
+
+        [Test]
+        public async Task RefuseAnItemPurchaseWhileBuyingWithCreditsIsUnavailable()
+        {
+            itemPurchaseFlow.IsAvailable.Returns(false);
+
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.RejectedFeatureDisabled));
+
+            Assert.That(events, Is.Empty);
+            Assert.That(itemPurchaseEvents, Is.Empty);
+            _ = itemPurchaseFlow.DidNotReceive().RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task AnswerWasAlreadyOpenForAPurchaseModalThisSceneDidNotOpen()
+        {
+            mvcManager.IsShowing<CreditPurchaseModalView, CreditPurchaseModalControllerParams>().Returns(true);
+
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+
+            Assert.That(events, Is.Empty);
+            _ = itemPurchaseFlow.DidNotReceive().RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseASecondItemPurchaseWhileTheFirstOneIsStillRunning()
+        {
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(new UniTaskCompletionSource<ExplorerItemPurchaseStatus>().Task);
+
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.Opened));
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+
+            _ = itemPurchaseFlow.Received(1).RunAsync(ITEM_URN, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task OpenAnItemPurchaseWhileTheExplorePanelIsOpen()
+        {
+            // The purchase modal does not share the explore panel's slot.
+            mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>().Returns(true);
+
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        [Test]
+        public async Task ReportThePurchaseOutcomeBetweenTheOpenedAndClosedEvents()
+        {
+            var purchase = new UniTaskCompletionSource<ExplorerItemPurchaseStatus>();
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(purchase.Task);
+
+            sceneStateProvider.TickNumber.Returns((uint)5);
+            await OpenItemPurchaseAsync(31);
+
+            // Only Opened is out while the purchase is still running.
+            Assert.That(events, Is.EqualTo(new[] { new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Opened, 31, 5) }));
+            Assert.That(itemPurchaseEvents, Is.Empty);
+
+            sceneStateProvider.TickNumber.Returns((uint)9);
+            purchase.TrySetResult(ExplorerItemPurchaseStatus.Failed);
+
+            Assert.That(itemPurchaseEvents, Is.EqualTo(new[] { new ExplorerItemPurchaseEvent(ITEM_URN, ExplorerItemPurchaseStatus.Failed, 31, 9) }));
+
+            Assert.That(events, Is.EqualTo(new[]
+            {
+                new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Opened, 31, 5),
+                new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, 31, 9),
+            }));
+        }
+
+        [Test]
+        public async Task AcceptAnItemPurchaseAgainOnceTheFirstOneEnded()
+        {
+            await OpenItemPurchaseAsync();
+
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        private async Task<OpenExplorerUiResult> OpenItemPurchaseAsync(uint requestId = 0) =>
+            await explorerUiActions.OpenItemPurchaseAsync(ITEM_URN, requestId, CancellationToken.None);
 
         private async Task<OpenExplorerUiResult> OpenAsync(ExplorerUi ui, ExploreSections section, uint requestId = 0) =>
             await explorerUiActions.OpenSectionAsync(ui, section, requestId, CancellationToken.None);

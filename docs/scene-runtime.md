@@ -33,6 +33,21 @@ To load a module, the JavaScript code calls `require(moduleName)`.
 
 _Example: If a content creator wants to teleport the user that is running the scene, they can use the function `TeleportTo` from the `RestrictedActionsService` module. That function is part of the SDK7 and the Explorer must implement it and provide the functionality for it._
 
+### Explorer UI from Scenes (`OpenExplorerUi`)
+
+`RestrictedActionsService.OpenExplorerUi` lets a scene open an explorer panel. The call answers at once with an `OpenExplorerUiResult` verdict, and what happens afterwards reaches the scene as grow-only components on the scene root entity, each echoing the `request_id` of the call:
+
+- `PBExplorerUiEventsResult` reports the panel being opened and closed.
+- `PBExplorerItemPurchaseResult` reports how an item purchase ended.
+
+Every request must come from the current scene and within one tick of a pointer gesture. `RestrictedActionsAPIImplementation` applies those gates on the scene thread, and `ExplorerUiActions` (one per scene) opens the UI on the main thread and queues the events that `WriteExplorerUiEventsSystem` writes out.
+
+**Item purchase (`EU_ITEM_PURCHASE`).** The scene passes only an item URN in `params.item_purchase`. `SceneItemPurchaseFlow` resolves it to its primary listing and shows the credits purchase modal, so price and payment never pass through the scene.
+
+- Portable experiences are refused with `REJECTED_FEATURE_DISABLED`, as is any user for whom buying with credits is off.
+- The modal has its own slot: it can open over the explore panel, and a second request while one is running answers `WAS_ALREADY_OPEN`.
+- The outcome is `Purchased`, `Dismissed` or `Failed`, written before the `Closed` event of the same request. `Failed` is deliberately coarse and also covers a URN that is not an item or has no primary listing, in which case no modal is shown.
+
 ### Engine API Implementation
 
 The Engine API is the main module where the [CRDT](#crdt) messages are exchanged between the Explorer and the Scene Runtime to sync the entities and components.

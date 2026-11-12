@@ -4,6 +4,7 @@ using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
 using ECS.Unity.ExplorerUiEvents;
@@ -18,21 +19,32 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     /// <summary>
     ///     Implementation of <see cref="IExplorerUiActions" />. The sibling asmref compiles it into
     ///     DCL.Social (not into SceneRuntime like the rest of this folder) because it references
-    ///     <see cref="ExplorePanelController" />, and DCL.Social already depends on SceneRuntime.
+    ///     <see cref="ExplorePanelController" /> and the credits purchase modal, and DCL.Social already
+    ///     depends on SceneRuntime.
     /// </summary>
     public class ExplorerUiActions : IExplorerUiActions
     {
         private readonly IMVCManager mvcManager;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly Queue<ExplorerUiEvent> events;
+        private readonly Queue<ExplorerItemPurchaseEvent> itemPurchaseEvents;
+        private readonly SceneItemPurchaseFlow itemPurchaseFlow;
 
         private bool showPending;
+        private bool purchasePending;
 
-        public ExplorerUiActions(IMVCManager mvcManager, ISceneStateProvider sceneStateProvider, Queue<ExplorerUiEvent> events)
+        public ExplorerUiActions(
+            IMVCManager mvcManager,
+            ISceneStateProvider sceneStateProvider,
+            Queue<ExplorerUiEvent> events,
+            Queue<ExplorerItemPurchaseEvent> itemPurchaseEvents,
+            SceneItemPurchaseFlow itemPurchaseFlow)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
             this.events = events;
+            this.itemPurchaseEvents = itemPurchaseEvents;
+            this.itemPurchaseFlow = itemPurchaseFlow;
         }
 
         public async UniTask<OpenExplorerUiResult> OpenSectionAsync(ExplorerUi ui, ExploreSections section, uint requestId, CancellationToken ct)
@@ -59,6 +71,40 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
             ShowUntilClosedAsync(ui, section, requestId).Forget();
             return OpenExplorerUiResult.Opened;
+        }
+
+        public async UniTask<OpenExplorerUiResult> OpenItemPurchaseAsync(string itemUrn, uint requestId, CancellationToken ct)
+        {
+            if (!itemPurchaseFlow.IsAvailable)
+            {
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: buying with credits is not available for this user");
+                return OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
+            await UniTask.SwitchToMainThread(ct);
+
+            // The purchase modal has a slot of its own, apart from the explore panel. purchasePending covers
+            // the time the item is still being resolved, when no modal is on screen yet.
+            if (purchasePending || mvcManager.IsShowing<CreditPurchaseModalView, CreditPurchaseModalControllerParams>())
+                return OpenExplorerUiResult.WasAlreadyOpen;
+
+            purchasePending = true;
+
+            Enqueue(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Opened, requestId);
+
+            PurchaseUntilClosedAsync(itemUrn, requestId).Forget();
+            return OpenExplorerUiResult.Opened;
+        }
+
+        private async UniTask PurchaseUntilClosedAsync(string itemUrn, uint requestId)
+        {
+            ExplorerItemPurchaseStatus status = await itemPurchaseFlow.RunAsync(itemUrn, CancellationToken.None);
+
+            purchasePending = false;
+
+            // The outcome is queued ahead of Closed, so it is never written out after it.
+            itemPurchaseEvents.Enqueue(new ExplorerItemPurchaseEvent(itemUrn, status, requestId, sceneStateProvider.TickNumber));
+            Enqueue(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, requestId);
         }
 
         // ShowAsync resolves when the panel closes, so this runs detached instead of being awaited.

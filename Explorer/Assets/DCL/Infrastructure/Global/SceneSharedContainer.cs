@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -49,6 +50,7 @@ namespace Global
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
+            SceneItemPurchaseFlow itemPurchaseFlow,
             IReadOnlyList<IDCLWorldPlugin> additionalWorldPlugins)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -87,6 +89,7 @@ namespace Global
                     remoteMetadata,
                     dclEnvironment,
                     systemClipboard,
+                    itemPurchaseFlow,
                     staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty),
             };
         }

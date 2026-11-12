@@ -14,6 +14,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -118,6 +119,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>(),
+                Substitute.For<SceneItemPurchaseFlow>(null, null, null, null),
                 string.Empty);
         }
 
