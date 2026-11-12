@@ -251,7 +251,7 @@ namespace DCL.Emoji
             if (inputBlock == null || shortcutsBlocked) return;
 
             shortcutsBlocked = true;
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.BLOCK_WHILE_TYPING);
         }
 
         private void RestoreShortcuts()
@@ -259,7 +259,7 @@ namespace DCL.Emoji
             if (inputBlock == null || !shortcutsBlocked) return;
 
             shortcutsBlocked = false;
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.BLOCK_WHILE_TYPING);
         }
 
         private void OnEmojiSelected(string code)
