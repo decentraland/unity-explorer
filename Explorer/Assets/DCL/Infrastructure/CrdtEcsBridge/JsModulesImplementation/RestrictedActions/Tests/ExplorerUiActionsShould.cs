@@ -10,9 +10,13 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -45,7 +49,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             events = new Queue<ExplorerUiEvent>();
             itemPurchaseEvents = new Queue<ExplorerItemPurchaseEvent>();
 
-            itemPurchaseFlow = Substitute.For<SceneItemPurchaseFlow>(null, null, null, null);
+            // Only the virtual members are substituted: the slot (TryReserve and Release) is the real one,
+            // which is why the flow is given the MVC manager.
+            itemPurchaseFlow = Substitute.For<SceneItemPurchaseFlow>(mvcManager, null, null, null);
             itemPurchaseFlow.IsAvailable.Returns(true);
             itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ExplorerItemPurchaseStatus.Purchased));
 
@@ -266,6 +272,57 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             await OpenItemPurchaseAsync();
 
+            Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        [Test]
+        public async Task RefuseAnItemPurchaseWhileAnotherSceneIsStillRunningOne()
+        {
+            // Arrange: the flow is client wide, so both scenes are handed the same one.
+            var otherSceneEvents = new Queue<ExplorerUiEvent>();
+            var otherSceneActions = new ExplorerUiActions(mvcManager, sceneStateProvider, otherSceneEvents, new Queue<ExplorerItemPurchaseEvent>(), itemPurchaseFlow);
+
+            var purchase = new UniTaskCompletionSource<ExplorerItemPurchaseStatus>();
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(purchase.Task);
+
+            // Act
+            OpenExplorerUiResult first = await OpenItemPurchaseAsync();
+            OpenExplorerUiResult second = await otherSceneActions.OpenItemPurchaseAsync(ITEM_URN, 0, CancellationToken.None);
+
+            // Assert
+            Assert.That(first, Is.EqualTo(OpenExplorerUiResult.Opened));
+            Assert.That(second, Is.EqualTo(OpenExplorerUiResult.WasAlreadyOpen));
+            Assert.That(otherSceneEvents, Is.Empty);
+            _ = itemPurchaseFlow.Received(1).RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+
+            // The other scene is accepted once the first purchase is over.
+            purchase.TrySetResult(ExplorerItemPurchaseStatus.Dismissed);
+
+            Assert.That(await otherSceneActions.OpenItemPurchaseAsync(ITEM_URN, 0, CancellationToken.None), Is.EqualTo(OpenExplorerUiResult.Opened));
+        }
+
+        [Test]
+        public async Task ReportFailedAndClosedAndFreeTheSlotWhenThePurchaseFlowThrows()
+        {
+            // Arrange
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromException<ExplorerItemPurchaseStatus>(new InvalidOperationException("flow broke")));
+
+            LogAssert.Expect(LogType.Exception, new Regex("flow broke"));
+
+            // Act
+            await OpenItemPurchaseAsync(7);
+
+            // Assert
+            Assert.That(itemPurchaseEvents, Is.EqualTo(new[] { new ExplorerItemPurchaseEvent(ITEM_URN, ExplorerItemPurchaseStatus.Failed, 7, TICK) }));
+
+            Assert.That(events, Is.EqualTo(new[]
+            {
+                new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Opened, 7, TICK),
+                new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, 7, TICK),
+            }));
+
+            itemPurchaseFlow.RunAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(UniTask.FromResult(ExplorerItemPurchaseStatus.Purchased));
             Assert.That(await OpenItemPurchaseAsync(), Is.EqualTo(OpenExplorerUiResult.Opened));
         }
 

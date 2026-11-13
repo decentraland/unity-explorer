@@ -46,8 +46,9 @@ Every request must come from the current scene and within one tick of a pointer 
 
 - The feature has its own switch, `FeatureId.SceneItemPurchase`: the `alfa-scene-item-purchase` flag, overridable with the `--scene-item-purchase` app argument (`false` turns it off; forcing it on in a build also needs `--debug`). It is on by default in the Editor.
 - A request is refused with `REJECTED_FEATURE_DISABLED` when that switch is off, when buying with credits is off for the user, or when it comes from a portable experience.
-- The modal has its own slot: it can open over the explore panel, and a second request while one is running answers `WAS_ALREADY_OPEN`.
+- The modal has its own slot: it can open over the explore panel, and a second request while one is running answers `WAS_ALREADY_OPEN`. `SceneItemPurchaseFlow` holds that slot, so it is shared by every scene.
 - The outcome is `Purchased`, `Dismissed` or `Failed`, written before the `Closed` event of the same request. `Failed` is deliberately coarse and also covers a URN that is not an item or has no primary listing, in which case no modal is shown.
+- A purchase that was paid for but is still settling when the modal closes is reported as `Dismissed`, not `Failed`: the protocol has no pending result, and the item is delivered later without a further event. A scene must not treat `Dismissed` as proof that nothing was bought.
 
 ### Engine API Implementation
 

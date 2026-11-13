@@ -4,7 +4,6 @@ using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
-using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
 using ECS.Unity.ExplorerUiEvents;
@@ -19,8 +18,8 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     /// <summary>
     ///     Implementation of <see cref="IExplorerUiActions" />. The sibling asmref compiles it into
     ///     DCL.Social (not into SceneRuntime like the rest of this folder) because it references
-    ///     <see cref="ExplorePanelController" /> and the credits purchase modal, and DCL.Social already
-    ///     depends on SceneRuntime.
+    ///     <see cref="ExplorePanelController" /> and <see cref="SceneItemPurchaseFlow" />, and DCL.Social
+    ///     already depends on SceneRuntime.
     /// </summary>
     public class ExplorerUiActions : IExplorerUiActions
     {
@@ -31,7 +30,6 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         private readonly SceneItemPurchaseFlow itemPurchaseFlow;
 
         private bool showPending;
-        private bool purchasePending;
 
         public ExplorerUiActions(
             IMVCManager mvcManager,
@@ -83,12 +81,10 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
             await UniTask.SwitchToMainThread(ct);
 
-            // The purchase modal has a slot of its own, apart from the explore panel. purchasePending covers
-            // the time the item is still being resolved, when no modal is on screen yet.
-            if (purchasePending || mvcManager.IsShowing<CreditPurchaseModalView, CreditPurchaseModalControllerParams>())
+            // The purchase modal has a slot of its own, apart from the explore panel, and the flow holds it
+            // because every scene shares the one modal.
+            if (!itemPurchaseFlow.TryReserve())
                 return OpenExplorerUiResult.WasAlreadyOpen;
-
-            purchasePending = true;
 
             Enqueue(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Opened, requestId);
 
@@ -96,15 +92,22 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
             return OpenExplorerUiResult.Opened;
         }
 
+        // RunAsync resolves when the modal closes, so this runs detached instead of being awaited.
         private async UniTask PurchaseUntilClosedAsync(string itemUrn, uint requestId)
         {
-            ExplorerItemPurchaseStatus status = await itemPurchaseFlow.RunAsync(itemUrn, CancellationToken.None);
+            var status = ExplorerItemPurchaseStatus.Failed;
 
-            purchasePending = false;
+            try { status = await itemPurchaseFlow.RunAsync(itemUrn, CancellationToken.None); }
+            catch (OperationCanceledException) { status = ExplorerItemPurchaseStatus.Dismissed; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
+            finally
+            {
+                itemPurchaseFlow.Release();
 
-            // The outcome is queued ahead of Closed, so it is never written out after it.
-            itemPurchaseEvents.Enqueue(new ExplorerItemPurchaseEvent(itemUrn, status, requestId, sceneStateProvider.TickNumber));
-            Enqueue(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, requestId);
+                // The outcome is queued ahead of Closed, so it is never written out after it.
+                itemPurchaseEvents.Enqueue(new ExplorerItemPurchaseEvent(itemUrn, status, requestId, sceneStateProvider.TickNumber));
+                Enqueue(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, requestId);
+            }
         }
 
         // ShowAsync resolves when the panel closes, so this runs detached instead of being awaited.

@@ -32,6 +32,8 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         // reference count of a texture something else still holds below zero.
         private readonly Dictionary<string, (Texture2DRef textureRef, Sprite sprite)> thumbnails = new ();
 
+        private bool reserved;
+
         public virtual bool IsAvailable =>
             FeaturesRegistry.Instance.IsEnabled(FeatureId.SceneItemPurchase)
             && FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
@@ -60,6 +62,24 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
             thumbnails.Clear();
         }
+
+        /// <summary>
+        ///     Takes the one purchase slot all scenes share. False while another purchase holds it or the
+        ///     modal is on screen for any other reason. A caller that got true must call
+        ///     <see cref="Release" /> once its purchase is over.
+        /// </summary>
+        public bool TryReserve()
+        {
+            // reserved covers the time the item is still being resolved, when no modal is on screen yet.
+            if (reserved || mvcManager.IsShowing<CreditPurchaseModalView, CreditPurchaseModalControllerParams>())
+                return false;
+
+            reserved = true;
+            return true;
+        }
+
+        public void Release() =>
+            reserved = false;
 
         /// <summary>
         ///     Resolves once the purchase is over, which for a shown modal is when it closes. Never throws:

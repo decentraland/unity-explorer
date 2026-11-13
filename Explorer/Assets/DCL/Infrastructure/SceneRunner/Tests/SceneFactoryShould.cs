@@ -1,5 +1,4 @@
 using Arch.Core;
-using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
@@ -95,19 +94,18 @@ namespace SceneRunner.Tests
                 await sceneFacade.DisposeAsync();
         }
 
-        private V8EngineFactory engineFactory;
+        private V8EngineFactory engineFactory = null!;
 
-        private SceneRuntimeFactory sceneRuntimeFactory;
-        private IECSWorldFactory ecsWorldFactory;
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ISDKComponentsRegistry componentsRegistry;
-        private SceneFactory sceneFactory;
+        private SceneRuntimeFactory sceneRuntimeFactory = null!;
+        private IECSWorldFactory ecsWorldFactory = null!;
+        private ISharedPoolsProvider sharedPoolsProvider = null!;
+        private ICRDTSerializer crdtSerializer = null!;
+        private ISDKComponentsRegistry componentsRegistry = null!;
+        private SceneFactory sceneFactory = null!;
 
-        private ISceneFacade sceneFacade;
+        private ISceneFacade? sceneFacade;
 
-        private string path;
+        private string path = null!;
 
         [Test]
         public async Task CreateSceneFacadeForTestScene()

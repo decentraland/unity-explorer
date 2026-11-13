@@ -251,7 +251,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             lifeCts.SafeCancelAndDispose();
 
-            inputData.Closed?.Invoke(ResolveOutcome(purchaseSucceeded, purchaseFailed));
+            inputData.Closed?.Invoke(ResolveOutcome(purchaseSucceeded, purchaseFailed, settlementPending));
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -731,11 +731,16 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         /// <summary>
         ///     How a closed modal ended. A completed purchase wins over an earlier failed attempt, and a failed
         ///     attempt that was never followed by a completed one stays a failure even if the user then closes.
+        ///     A purchase that is still settling is neither: it is paid for and not yet delivered, so it ends
+        ///     as dismissed whatever happened in earlier attempts.
         /// </summary>
-        public static CreditPurchaseModalOutcome ResolveOutcome(bool purchaseSucceeded, bool purchaseFailed)
+        public static CreditPurchaseModalOutcome ResolveOutcome(bool purchaseSucceeded, bool purchaseFailed, bool settlementPending)
         {
             if (purchaseSucceeded)
                 return CreditPurchaseModalOutcome.Purchased;
+
+            if (settlementPending)
+                return CreditPurchaseModalOutcome.Dismissed;
 
             return purchaseFailed ? CreditPurchaseModalOutcome.Failed : CreditPurchaseModalOutcome.Dismissed;
         }

@@ -35,7 +35,12 @@ namespace Global
         /// <summary>
         /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
         /// </summary>
-        public ISceneFactory SceneFactory { get; private set; }
+        public ISceneFactory SceneFactory { get; }
+
+        private SceneSharedContainer(ISceneFactory sceneFactory)
+        {
+            SceneFactory = sceneFactory;
+        }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -64,11 +69,10 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins.Concat(additionalWorldPlugins).ToArray());
 
-            return new SceneSharedContainer
-            {
-                SceneFactory = new SceneFactory(
+            return new SceneSharedContainer(
+                new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                    new SceneRuntimeFactory(realmData, new V8EngineFactory(),
                         webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
@@ -90,8 +94,7 @@ namespace Global
                     dclEnvironment,
                     systemClipboard,
                     itemPurchaseFlow,
-                    staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty),
-            };
+                    staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty));
         }
     }
 }

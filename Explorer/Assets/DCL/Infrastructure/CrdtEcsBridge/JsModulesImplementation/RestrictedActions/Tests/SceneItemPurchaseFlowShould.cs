@@ -9,8 +9,11 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -73,7 +76,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             // Arrange
             shopApiClient.GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns<UniTask<ShopListingDto?>>(_ => throw new InvalidOperationException("lookup failed"));
+                         .Returns(_ => throw new InvalidOperationException("lookup failed"));
+
+            LogAssert.Expect(LogType.Exception, new Regex("lookup failed"));
 
             // Act
             ExplorerItemPurchaseStatus status = await flow.RunAsync(ITEM_URN, CancellationToken.None);
@@ -153,6 +158,28 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual(ExplorerItemPurchaseStatus.Dismissed, status);
+        }
+
+        [Test]
+        public void HoldTheSlotUntilItIsReleased()
+        {
+            // Act and assert
+            Assert.IsTrue(flow.TryReserve());
+            Assert.IsFalse(flow.TryReserve());
+
+            flow.Release();
+
+            Assert.IsTrue(flow.TryReserve());
+        }
+
+        [Test]
+        public void RefuseTheSlotWhileThePurchaseModalIsOnScreen()
+        {
+            // Arrange
+            mvcManager.IsShowing<CreditPurchaseModalView, CreditPurchaseModalControllerParams>().Returns(true);
+
+            // Act and assert
+            Assert.IsFalse(flow.TryReserve());
         }
 
         private void ArrangeListing() =>

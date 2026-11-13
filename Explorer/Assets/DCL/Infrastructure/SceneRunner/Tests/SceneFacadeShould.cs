@@ -137,19 +137,18 @@ namespace SceneRunner.Tests
             sceneFacades.Clear();
         }
 
-        private V8EngineFactory engineFactory;
+        private V8EngineFactory engineFactory = null!;
 
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
         private IECSWorldFactory ecsWorldFactory = null!;
         private ISharedPoolsProvider sharedPoolsProvider = null!;
-        private ICRDTDeserializer crdtDeserializer = null!;
         private ICRDTSerializer crdtSerializer = null!;
         private ISDKComponentsRegistry componentsRegistry = null!;
         private SceneFactory sceneFactory = null!;
 
         private readonly DCLConcurrentBag<ISceneFacade> sceneFacades = new ();
 
-        private string path;
+        private string path = null!;
 
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
@@ -223,9 +222,6 @@ namespace SceneRunner.Tests
         }
         */
 
-        private bool EqualWithTolerance(float dt, float expectedDT, float tolerance) =>
-            dt >= expectedDT - tolerance && dt <= expectedDT + tolerance;
-
         [Test]
         [TestCase(new[] { 120, 60, 30 }, new[] { 200, 150, 500 })]
         [TestCase(new[] { 30, 20, 10, 5, 2 }, new[] { 300, 300, 300, 300, 300 })]
@@ -236,13 +232,13 @@ namespace SceneRunner.Tests
 
             var list = new DCLConcurrentBag<int>();
 
-            await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
+            await UniTask.WhenAll(fps.Select((targetFps, i) => CreateAndLaunch(targetFps, lifeTimeMs[i], i.ToString())));
 
             // It is not reliable to count the threads exactly as the agent can have a limited capacity
             Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
             return;
 
-            async UniTask CreateAndLaunch(int fps, int lifeTime, string id)
+            async UniTask CreateAndLaunch(int targetFps, int lifeTime, string id)
             {
                 var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None, id);
                 sceneFacades.Add(sceneFacade);
@@ -252,7 +248,7 @@ namespace SceneRunner.Tests
                 cancellationTokenSource.CancelAfter(lifeTime);
 
                 // will end gracefully
-                await sceneFacade.StartUpdateLoopAsync(fps, cancellationTokenSource.Token);
+                await sceneFacade.StartUpdateLoopAsync(targetFps, cancellationTokenSource.Token);
 
                 list.Add(Thread.CurrentThread.ManagedThreadId);
 
