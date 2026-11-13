@@ -43,6 +43,8 @@ namespace Data
                 public string[] replaces = Array.Empty<string>();
                 public string[] removesDefaultHiding = Array.Empty<string>();
                 public bool loop; // For emotes only
+                // False keeps the wearable out of the avatar outline, as in-world. Absent means true.
+                public bool outlineCompatible = true;
                 public SpringBonesDto springBones;
 
                 // A social emote's clips, ADR-287; absent on any other emote.

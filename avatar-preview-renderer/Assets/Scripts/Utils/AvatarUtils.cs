@@ -168,7 +168,7 @@ namespace Utils
         /// </param>
         public static void SetupWearable(GameObject go, AvatarColors colors,
             List<Renderer> outlineRenderers, Transform avatarRootBone = null, Transform[] avatarBones = null,
-            bool includeInactive = false)
+            bool includeInactive = false, bool outlineCompatible = true)
         {
             Dictionary<string, Transform> avatarBoneMap = null;
             var renderers = go.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive);
@@ -199,7 +199,7 @@ namespace Utils
 
                 foreach (var sharedMaterial in renderer.sharedMaterials)
                 {
-                    if (sharedMaterial != null && sharedMaterial.shader.name == "DCL/DCL_Toon"
+                    if (outlineCompatible && sharedMaterial != null && sharedMaterial.shader.name == "DCL/DCL_Toon"
                                                && sharedMaterial.renderQueue is >= 2000 and < 3000)
                     {
                         outlineRenderers.Add(renderer);

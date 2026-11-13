@@ -19,6 +19,8 @@ namespace Data
         public readonly EntityType Type;
         public readonly EntityFlags Flags;
 
+        public bool OutlineCompatible => (Flags & EntityFlags.NoOutline) == 0;
+
         [CanBeNull] private readonly SpringBonesDto _springBones;
 
         /// <summary>
@@ -188,6 +190,8 @@ namespace Data
                     WearablesConstants.BODY_SHAPE_MALE, StringComparison.OrdinalIgnoreCase)  ? EntityType.Body :
                 WearableCategories.FACIAL_FEATURES.Contains(category) ? EntityType.FacialFeature : EntityType.Wearable;
             var flags = entity.IsEmote && entity.metadata.emoteDataADR74.loop ? EntityFlags.Looping : EntityFlags.None;
+            if (!entity.IsEmote && entity.metadata?.data is { outlineCompatible: false })
+                flags |= EntityFlags.NoOutline;
 
             var representations = new Dictionary<BodyShape, Representation>
             {
@@ -270,6 +274,8 @@ namespace Data
     {
         None = 0,
         Looping = 1 << 0,
+        // The wearable set outlineCompatible to false, so the outline pass leaves it out as in-world does.
+        NoOutline = 1 << 1,
     }
 
     public enum EntityType
