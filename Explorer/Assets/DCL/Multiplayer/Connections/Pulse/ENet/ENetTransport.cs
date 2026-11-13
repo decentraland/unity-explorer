@@ -23,6 +23,11 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private readonly byte[] receiveBuffer;
         private readonly byte[] sendBuffer;
 
+        /// <summary>
+        ///     A cancelled connect and a disconnect can tear the same host down at once; only the first one may touch it.
+        /// </summary>
+        private readonly object teardownLock = new ();
+
         private Peer? serverPeer;
         private Host? host;
         private CancellationTokenSource? lifeCycleCts;
@@ -121,8 +126,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 await UniTask.WaitUntil(() => State == ITransport.TransportState.Connected, cancellationToken: ct)
                              .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
-            catch (TimeoutException)
+            catch (Exception e) when (e is TimeoutException or OperationCanceledException)
             {
+                // The host and peer created above would otherwise stay alive in the Connecting state.
                 await ForceDisconnectAsync();
                 throw;
             }
@@ -162,10 +168,13 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             lifeCycleCts.SafeCancelAndDispose();
             await WaitForListenLoopExitAsync(spinThread: false);
 
-            // As there is no direct way to tell Connection Timeout to ENet
-            // at this point it might be [already] connected or not, simply force it to disconnect
-            serverPeer?.DisconnectNow((uint)DisconnectReason.NONE);
-            FinalizeHost();
+            lock (teardownLock)
+            {
+                // As there is no direct way to tell Connection Timeout to ENet
+                // at this point it might be [already] connected or not, simply force it to disconnect
+                serverPeer?.DisconnectNow((uint)DisconnectReason.NONE);
+                FinalizeHost();
+            }
         }
 
         public UniTask DisconnectAsync(DisconnectReason reason) =>
@@ -179,8 +188,11 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             lifeCycleCts.SafeCancelAndDispose();
             await WaitForListenLoopExitAsync(spinThread);
 
-            serverPeer?.Disconnect((uint)reason);
-            FinalizeHost();
+            lock (teardownLock)
+            {
+                serverPeer?.Disconnect((uint)reason);
+                FinalizeHost();
+            }
         }
 
         /// <summary>
