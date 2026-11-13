@@ -190,7 +190,7 @@ namespace Data
                     WearablesConstants.BODY_SHAPE_MALE, StringComparison.OrdinalIgnoreCase)  ? EntityType.Body :
                 WearableCategories.FACIAL_FEATURES.Contains(category) ? EntityType.FacialFeature : EntityType.Wearable;
             var flags = entity.IsEmote && entity.metadata.emoteDataADR74.loop ? EntityFlags.Looping : EntityFlags.None;
-            if (!entity.IsEmote && entity.metadata?.data is { outlineCompatible: false })
+            if (!entity.IsEmote && !entity.metadata.data.outlineCompatible)
                 flags |= EntityFlags.NoOutline;
 
             var representations = new Dictionary<BodyShape, Representation>
@@ -274,7 +274,7 @@ namespace Data
     {
         None = 0,
         Looping = 1 << 0,
-        // The wearable set outlineCompatible to false, so the outline pass leaves it out as in-world does.
+        // The wearable declares outlineCompatible: false.
         NoOutline = 1 << 1,
     }
 

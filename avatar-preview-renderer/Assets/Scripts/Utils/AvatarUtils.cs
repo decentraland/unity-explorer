@@ -166,6 +166,7 @@ namespace Utils
         /// <param name="includeInactive">
         /// Also sets up the renderers of an inactive <paramref name="go"/>, for a copy built before it is shown.
         /// </param>
+        /// <param name="outlineCompatible">False keeps the renderers out of <paramref name="outlineRenderers"/>.</param>
         public static void SetupWearable(GameObject go, AvatarColors colors,
             List<Renderer> outlineRenderers, Transform avatarRootBone = null, Transform[] avatarBones = null,
             bool includeInactive = false, bool outlineCompatible = true)
