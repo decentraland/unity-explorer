@@ -198,9 +198,11 @@ namespace Utils
                     RemapBonesPreservingExtras(renderer, avatarRootBone, avatarBoneMap);
                 }
 
+                if (!outlineCompatible) continue;
+
                 foreach (var sharedMaterial in renderer.sharedMaterials)
                 {
-                    if (outlineCompatible && sharedMaterial != null && sharedMaterial.shader.name == "DCL/DCL_Toon"
+                    if (sharedMaterial != null && sharedMaterial.shader.name == "DCL/DCL_Toon"
                                                && sharedMaterial.renderQueue is >= 2000 and < 3000)
                     {
                         outlineRenderers.Add(renderer);
