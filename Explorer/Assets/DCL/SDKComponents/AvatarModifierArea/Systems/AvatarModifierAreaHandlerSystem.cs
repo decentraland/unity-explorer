@@ -68,6 +68,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 ShowAvatar(avatarEntity, avatarTransform);
                 ShowNameTag(avatarEntity);
+                EnableNameTagCulling(avatarEntity);
                 EnableAvatarInteraction(avatarEntity);
             }
 
@@ -94,6 +95,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             bool isHideAvatarsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtHideAvatars);
             bool isHidePassportsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtDisablePassports);
             bool isHideNameTagsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtHideNametags);
+            bool isDisableNameTagCullingType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtDisableNametagCulling);
 
             if (pbAvatarModifierArea.IsDirty)
             {
@@ -115,6 +117,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                     if (isHideNameTagsType)
                         HideNameTag(entity, modifierAreaComponent.ExcludedIds);
+
+                    if (isDisableNameTagCullingType)
+                        DisableNameTagCulling(entity, modifierAreaComponent.ExcludedIds);
                 }
             }
 
@@ -125,6 +130,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 ShowAvatar(entity, avatarTransform);
                 ShowNameTag(entity);
+                EnableNameTagCulling(entity);
                 EnableAvatarInteraction(entity);
             }
 
@@ -143,6 +149,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 if (isHideNameTagsType)
                     HideNameTag(entity, modifierAreaComponent.ExcludedIds);
+
+                if (isDisableNameTagCullingType)
+                    DisableNameTagCulling(entity, modifierAreaComponent.ExcludedIds);
             }
 
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
@@ -161,6 +170,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 ShowAvatar(entity, avatarTransform);
                 ShowNameTag(entity);
+                EnableNameTagCulling(entity);
                 EnableAvatarInteraction(entity);
             }
 
@@ -180,6 +190,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                 ShowAvatar(avatarEntity, avatarTransform);
                 ShowNameTag(avatarEntity);
+                EnableNameTagCulling(avatarEntity);
                 EnableAvatarInteraction(avatarEntity);
             }
 
@@ -235,6 +246,24 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (!hasAvatarShape) return;
 
             avatarShape.NameTagHiddenByModifierArea = false;
+        }
+
+        private void DisableNameTagCulling(Entity entity, HashSet<string> excludedIds)
+        {
+            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
+
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
+
+            avatarShape.NameTagCullingDisabledByModifierArea = !excludedIds.Contains(profile!.UserId);
+        }
+
+        private void EnableNameTagCulling(Entity entity)
+        {
+            ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
+            if (!hasAvatarShape) return;
+
+            avatarShape.NameTagCullingDisabledByModifierArea = false;
         }
 
         private void DisableAvatarInteraction(Entity entity, HashSet<string> excludedIds)
