@@ -1,11 +1,11 @@
 using Arch.Core;
-using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -83,6 +83,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>(),
+                Substitute.For<SceneItemPurchaseFlow>(null, null, null, null),
                 string.Empty);
         }
 
@@ -93,19 +94,18 @@ namespace SceneRunner.Tests
                 await sceneFacade.DisposeAsync();
         }
 
-        private V8EngineFactory engineFactory;
+        private V8EngineFactory engineFactory = null!;
 
-        private SceneRuntimeFactory sceneRuntimeFactory;
-        private IECSWorldFactory ecsWorldFactory;
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ISDKComponentsRegistry componentsRegistry;
-        private SceneFactory sceneFactory;
+        private SceneRuntimeFactory sceneRuntimeFactory = null!;
+        private IECSWorldFactory ecsWorldFactory = null!;
+        private ISharedPoolsProvider sharedPoolsProvider = null!;
+        private ICRDTSerializer crdtSerializer = null!;
+        private ISDKComponentsRegistry componentsRegistry = null!;
+        private SceneFactory sceneFactory = null!;
 
-        private ISceneFacade sceneFacade;
+        private ISceneFacade? sceneFacade;
 
-        private string path;
+        private string path = null!;
 
         [Test]
         public async Task CreateSceneFacadeForTestScene()

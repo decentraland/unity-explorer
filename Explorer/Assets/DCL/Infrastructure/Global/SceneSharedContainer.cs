@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -34,7 +35,12 @@ namespace Global
         /// <summary>
         /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
         /// </summary>
-        public ISceneFactory SceneFactory { get; private set; }
+        public ISceneFactory SceneFactory { get; }
+
+        private SceneSharedContainer(ISceneFactory sceneFactory)
+        {
+            SceneFactory = sceneFactory;
+        }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -49,6 +55,7 @@ namespace Global
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
+            SceneItemPurchaseFlow itemPurchaseFlow,
             IReadOnlyList<IDCLWorldPlugin> additionalWorldPlugins)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -62,11 +69,10 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins.Concat(additionalWorldPlugins).ToArray());
 
-            return new SceneSharedContainer
-            {
-                SceneFactory = new SceneFactory(
+            return new SceneSharedContainer(
+                new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                    new SceneRuntimeFactory(realmData, new V8EngineFactory(),
                         webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
@@ -87,8 +93,8 @@ namespace Global
                     remoteMetadata,
                     dclEnvironment,
                     systemClipboard,
-                    staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty),
-            };
+                    itemPurchaseFlow,
+                    staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty));
         }
     }
 }

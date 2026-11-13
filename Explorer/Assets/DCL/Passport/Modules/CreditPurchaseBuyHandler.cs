@@ -13,26 +13,6 @@ namespace DCL.Passport.Modules
 {
     public class CreditPurchaseBuyHandler
     {
-        public readonly struct ItemVisuals
-        {
-            public readonly string Name;
-            public readonly string RarityName;
-            public readonly Sprite? Thumbnail;
-            public readonly Sprite? RarityBackground;
-            public readonly Color RarityColor;
-            public readonly Sprite? CategoryIcon;
-
-            public ItemVisuals(string name, string rarityName, Sprite? thumbnail, Sprite? rarityBackground, Color rarityColor, Sprite? categoryIcon)
-            {
-                Name = name;
-                RarityName = rarityName;
-                Thumbnail = thumbnail;
-                RarityBackground = rarityBackground;
-                RarityColor = rarityColor;
-                CategoryIcon = categoryIcon;
-            }
-        }
-
         public const string FALLBACK_FEATURE_DISABLED = "feature_disabled";
         public const string FALLBACK_RESOLUTION_FAILED = "resolution_failed";
         public const string FALLBACK_NO_CREDITS_LISTING = "no_credits_listing";
@@ -79,10 +59,19 @@ namespace DCL.Passport.Modules
             return true;
         }
 
+        /// <summary>
+        ///     The primary listing of the item behind the urn. Null when the urn is not a collection item or
+        ///     the item has no primary listing.
+        /// </summary>
+        public static UniTask<ShopListingDto?> FetchListingAsync(MarketplaceShopAPIClient shopApiClient, string itemUrn, CancellationToken ct) =>
+            TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId)
+                ? shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct)
+                : UniTask.FromResult<ShopListingDto?>(null);
+
         public void ClearCache() =>
             listingCache.Clear();
 
-        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, ItemVisuals visuals, string source, Action<bool> setResolving, CancellationToken ct)
+        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, Sprite? thumbnail, string source, Action<bool> setResolving, CancellationToken ct)
         {
             if (!isEnabled)
             {
@@ -126,12 +115,7 @@ namespace DCL.Passport.Modules
 
             var modalParams = new CreditPurchaseModalControllerParams(
                 listing,
-                visuals.Name,
-                visuals.RarityName,
-                visuals.Thumbnail,
-                visuals.RarityBackground,
-                visuals.RarityColor,
-                visuals.CategoryIcon,
+                thumbnail,
                 marketplaceUrl,
                 source,
                 itemUrn);
@@ -151,13 +135,7 @@ namespace DCL.Passport.Modules
             if (listingCache.TryGetValue(itemUrn, out ShopListingDto? cached))
                 return cached;
 
-            if (!TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId))
-            {
-                listingCache[itemUrn] = null;
-                return null;
-            }
-
-            ShopListingDto? listing = await shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
+            ShopListingDto? listing = await FetchListingAsync(shopApiClient, itemUrn, ct);
             listingCache[itemUrn] = listing;
             return listing;
         }

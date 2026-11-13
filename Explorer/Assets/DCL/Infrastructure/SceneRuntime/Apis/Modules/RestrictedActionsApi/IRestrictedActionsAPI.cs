@@ -23,7 +23,11 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         bool TryOpenNftDialog(string urn);
 
-        UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, CancellationToken ct);
+        /// <summary>
+        ///     <paramref name="itemUrn" /> is the item to sell and is read only for
+        ///     <see cref="ExplorerUi.EuItemPurchase" />.
+        /// </summary>
+        UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, string itemUrn, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 

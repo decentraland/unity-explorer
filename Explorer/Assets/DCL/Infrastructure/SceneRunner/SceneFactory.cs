@@ -9,6 +9,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -67,6 +68,7 @@ namespace SceneRunner
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
+        private readonly SceneItemPurchaseFlow itemPurchaseFlow;
         private readonly string installSource;
 
         private IGlobalWorldActions globalWorldActions = null!;
@@ -93,6 +95,7 @@ namespace SceneRunner
             IRemoteMetadata remoteMetadata,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
+            SceneItemPurchaseFlow itemPurchaseFlow,
             string installSource)
         {
             Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
@@ -111,6 +114,7 @@ namespace SceneRunner
             this.webRequestController = webRequestController;
             this.roomHub = roomHub;
             this.systemClipboard = systemClipboard;
+            this.itemPurchaseFlow = itemPurchaseFlow;
             this.realmData = realmData;
             this.portableExperiencesController = portableExperiencesController;
             this.skyboxSettings = skyboxSettings;
@@ -209,7 +213,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, itemPurchaseFlow, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -240,7 +244,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, itemPurchaseFlow, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

@@ -63,6 +63,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly World world;
         private readonly IWearableStorage wearableStorage;
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
+        private readonly NFTColorsSO rarityColors;
+        private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NftTypeIconSO categoryIcons;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
         private readonly Func<CancellationToken, UniTask> openBackpackAsync;
         private readonly CancellationTokenSource disposalCts = new ();
@@ -72,6 +75,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private CancellationTokenSource? lifeCts;
         private CreditsPurchaseQuote? quote;
         private bool purchaseSucceeded;
+        private bool purchaseFailed;
         private bool navigatedAway;
         private float purchaseStartedAt;
         private CreditsPurchaseState lastPurchaseState;
@@ -105,6 +109,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             World world,
             IWearableStorage wearableStorage,
             NftTypeIconSO rarityInfoPanelBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO rarityBackgrounds,
+            NftTypeIconSO categoryIcons,
             Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
             Func<CancellationToken, UniTask> openBackpackAsync)
             : base(viewFactory)
@@ -120,6 +127,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.world = world;
             this.wearableStorage = wearableStorage;
             this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
+            this.rarityColors = rarityColors;
+            this.rarityBackgrounds = rarityBackgrounds;
+            this.categoryIcons = categoryIcons;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
             this.openBackpackAsync = openBackpackAsync;
             purchaseService.StateChanged += OnPurchaseStateChanged;
@@ -161,18 +171,24 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             settlementPending = false;
             quote = null;
             purchaseSucceeded = false;
+            purchaseFailed = false;
             navigatedAway = false;
             lastPurchaseState = CreditsPurchaseState.ResolvingListing;
             shortenedItemUrn = new URN(inputData.ItemUrn).Shorten();
 
             if (viewInstance != null)
             {
-                viewInstance.ItemName.text = inputData.ItemName;
+                string rarity = inputData.Listing.rarity;
+                Color rarityColor = rarityColors.GetColor(rarity);
+                Sprite? rarityBackground = rarityBackgrounds.GetTypeImage(rarity);
+                Sprite? categoryIcon = categoryIcons.GetTypeImage(inputData.CategoryIconKey);
+
+                viewInstance.ItemName.text = inputData.Listing.name;
                 viewInstance.CreatorName.text = string.Empty;
-                viewInstance.RarityLabel.text = inputData.RarityName;
-                viewInstance.RarityLabel.color = inputData.RarityColor;
-                viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
-                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(inputData.RarityName);
+                viewInstance.RarityLabel.text = rarity;
+                viewInstance.RarityLabel.color = rarityColor;
+                viewInstance.RarityBackground.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, viewInstance.RarityBackground.color.a);
+                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(rarity);
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -180,20 +196,20 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                     viewInstance.ItemThumbnailCompleted.sprite = inputData.ItemThumbnail;
                 }
 
-                if (inputData.RarityBackground != null)
+                if (rarityBackground != null)
                 {
-                    viewInstance.ItemBackground.sprite = inputData.RarityBackground;
-                    viewInstance.ItemBackgroundCompleted.sprite = inputData.RarityBackground;
+                    viewInstance.ItemBackground.sprite = rarityBackground;
+                    viewInstance.ItemBackgroundCompleted.sprite = rarityBackground;
                 }
 
-                if (inputData.CategoryIcon != null)
+                if (categoryIcon != null)
                 {
-                    viewInstance.ItemCategory.sprite = inputData.CategoryIcon;
-                    viewInstance.ItemCategoryCompleted.sprite = inputData.CategoryIcon;
+                    viewInstance.ItemCategory.sprite = categoryIcon;
+                    viewInstance.ItemCategoryCompleted.sprite = categoryIcon;
                 }
 
-                viewInstance.ItemCategoryBackground.color = inputData.RarityColor;
-                viewInstance.ItemCategoryBackgroundCompleted.color = inputData.RarityColor;
+                viewInstance.ItemCategoryBackground.color = rarityColor;
+                viewInstance.ItemCategoryBackgroundCompleted.color = rarityColor;
 
                 viewInstance.ConfirmButton.onClick.AddListener(OnConfirmClicked);
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
@@ -227,6 +243,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 PurchaseCancelled?.Invoke(inputData.Listing, MapAnalyticsStageName(currentState));
 
             lifeCts.SafeCancelAndDispose();
+
+            inputData.Closed?.Invoke(ResolveOutcome(purchaseSucceeded, purchaseFailed, settlementPending));
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -255,7 +273,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             if (identity == null)
             {
-                PurchaseFailed?.Invoke(inputData.Listing, ANALYTICS_STEP_QUOTE, ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_NO_IDENTITY);
+                ReportPurchaseFailed(ANALYTICS_STEP_QUOTE, ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_NO_IDENTITY);
                 ShowFailure("You need to be signed in to buy items.", allowRetry: false);
                 return;
             }
@@ -270,7 +288,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
                     $"Quote failed for {inputData.Listing.contractAddress}-{inputData.Listing.itemId}: {quoteResult.Error} {quoteResult.Message}");
-                PurchaseFailed?.Invoke(inputData.Listing, ANALYTICS_STEP_QUOTE, MapAnalyticsErrorCode(quoteResult.Error), MapAnalyticsErrorDetail(quoteResult.Error));
+                ReportPurchaseFailed(ANALYTICS_STEP_QUOTE, MapAnalyticsErrorCode(quoteResult.Error), MapAnalyticsErrorDetail(quoteResult.Error));
                 ShowError(quoteResult.Error);
                 return;
             }
@@ -307,7 +325,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                PurchaseFailed?.Invoke(inputData.Listing, ANALYTICS_STEP_BALANCE, ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_BALANCE_LOAD_FAILED);
+                ReportPurchaseFailed(ANALYTICS_STEP_BALANCE, ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_BALANCE_LOAD_FAILED);
                 ShowFailure("Could not load your credits balance.", allowRetry: true);
             }
         }
@@ -518,7 +536,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 {
                     // Cancelled is the modal-close path, reported once as PurchaseCancelled, not as a failure.
                     if (result.Error != CreditsPurchaseError.Cancelled)
-                        PurchaseFailed?.Invoke(inputData.Listing, MapAnalyticsStepName(lastPurchaseState), MapAnalyticsErrorCode(result.Error), MapAnalyticsErrorDetail(result.Error));
+                        ReportPurchaseFailed(MapAnalyticsStepName(lastPurchaseState), MapAnalyticsErrorCode(result.Error), MapAnalyticsErrorDetail(result.Error));
 
                     ShowError(result.Error);
                 }
@@ -526,7 +544,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                PurchaseFailed?.Invoke(inputData.Listing, MapAnalyticsStepName(lastPurchaseState), ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_UNHANDLED_EXCEPTION);
+                ReportPurchaseFailed(MapAnalyticsStepName(lastPurchaseState), ANALYTICS_ERROR_UNKNOWN, ANALYTICS_DETAIL_UNHANDLED_EXCEPTION);
                 ShowFailure("Something went wrong. Please try again.", allowRetry: true);
             }
             finally
@@ -639,6 +657,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
         }
 
+        private void ReportPurchaseFailed(string step, string errorCode, string errorDetail)
+        {
+            purchaseFailed = true;
+            PurchaseFailed?.Invoke(inputData.Listing, step, errorCode, errorDetail);
+        }
+
         private void ShowFailure(string reason, bool allowRetry)
         {
             SetUiState(ModalState.Failed);
@@ -696,6 +720,23 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void RequestClose() =>
             viewInstance?.CloseButton.onClick.Invoke();
+
+        /// <summary>
+        ///     How a closed modal ended. A completed purchase wins over an earlier failed attempt, and a failed
+        ///     attempt that was never followed by a completed one stays a failure even if the user then closes.
+        ///     A purchase that is still settling is neither: it is paid for and not yet delivered, so it ends
+        ///     as dismissed whatever happened in earlier attempts.
+        /// </summary>
+        public static CreditPurchaseModalOutcome ResolveOutcome(bool purchaseSucceeded, bool purchaseFailed, bool settlementPending)
+        {
+            if (purchaseSucceeded)
+                return CreditPurchaseModalOutcome.Purchased;
+
+            if (settlementPending)
+                return CreditPurchaseModalOutcome.Dismissed;
+
+            return purchaseFailed ? CreditPurchaseModalOutcome.Failed : CreditPurchaseModalOutcome.Dismissed;
+        }
 
         /// <summary>
         ///     Coarse analytics buckets, a superset of the web shop's

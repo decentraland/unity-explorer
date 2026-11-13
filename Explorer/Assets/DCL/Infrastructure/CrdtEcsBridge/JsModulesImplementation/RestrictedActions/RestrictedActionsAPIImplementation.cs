@@ -218,7 +218,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public async UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, CancellationToken ct)
+        public async UniTask<OpenExplorerUiResult> TryOpenExplorerUiAsync(ExplorerUi ui, uint requestId, string itemUrn, CancellationToken ct)
         {
             // Every rejection below returns before the first await, so only an accepted request pays for
             // the hop to the main thread.
@@ -233,6 +233,19 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
                 return OpenExplorerUiResult.RejectedNoUserGesture;
+            }
+
+            if (ui == ExplorerUi.EuItemPurchase)
+            {
+                // A purchase is offered only by the scene the player stands in, never by an experience that
+                // travels with them.
+                if (sceneData.IsPortableExperience())
+                {
+                    ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, a portable experience cannot offer item purchases");
+                    return OpenExplorerUiResult.RejectedFeatureDisabled;
+                }
+
+                return await explorerUiActions.OpenItemPurchaseAsync(itemUrn, requestId, ct);
             }
 
             if (!TryMapExplorerUi(ui, out ExploreSections section, out FeatureId? gatingFeature))
@@ -314,7 +327,7 @@ namespace CrdtEcsBridge.RestrictedActions
         /// <summary>
         ///     Maps a protocol <see cref="ExplorerUi" /> value to its explore panel section and, when the
         ///     section is behind a synchronous feature flag, the <see cref="FeatureId" /> that gates it.
-        ///     Returns false for unknown values so the caller can reject the request.
+        ///     Returns false for unknown values, and for the item purchase modal, which is not a section.
         /// </summary>
         private static bool TryMapExplorerUi(ExplorerUi ui, out ExploreSections section, out FeatureId? gatingFeature)
         {
@@ -352,8 +365,6 @@ namespace CrdtEcsBridge.RestrictedActions
                     gatingFeature = FeatureId.Discover;
                     return true;
                 default:
-                    // EuItemPurchase falls here on purpose: the explorer has no purchase flow, so the scene
-                    // is told that the feature is unavailable.
                     section = default(ExploreSections);
                     gatingFeature = null;
                     return false;

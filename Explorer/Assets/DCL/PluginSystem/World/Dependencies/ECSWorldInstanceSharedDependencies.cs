@@ -35,6 +35,12 @@ namespace DCL.PluginSystem.World.Dependencies
         /// </summary>
         public readonly Queue<ExplorerUiEvent> ExplorerUiEvents;
 
+        /// <summary>
+        ///     Outcomes of the item purchases this scene's own openExplorerUi calls started, filled and drained
+        ///     the same way as <see cref="ExplorerUiEvents" />.
+        /// </summary>
+        public readonly Queue<ExplorerItemPurchaseEvent> ExplorerItemPurchaseEvents;
+
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
             IPartitionComponent scenePartition,
@@ -46,7 +52,8 @@ namespace DCL.PluginSystem.World.Dependencies
             MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
             SceneRuntimeMetrics runtimeMetrics,
-            Queue<ExplorerUiEvent> explorerUiEvents)
+            Queue<ExplorerUiEvent> explorerUiEvents,
+            Queue<ExplorerItemPurchaseEvent> explorerItemPurchaseEvents)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
@@ -61,6 +68,7 @@ namespace DCL.PluginSystem.World.Dependencies
             EntityEventsBuilder = entityEventsBuilder;
             RuntimeMetrics = runtimeMetrics;
             ExplorerUiEvents = explorerUiEvents;
+            ExplorerItemPurchaseEvents = explorerItemPurchaseEvents;
         }
     }
 }

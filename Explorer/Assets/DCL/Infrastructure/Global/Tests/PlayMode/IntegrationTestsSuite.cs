@@ -20,6 +20,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using ECS;
 using MVC;
 using MVC.PopupsController.PopupCloser;
@@ -146,6 +147,7 @@ namespace Global.Tests.PlayMode
                 webJsSources,
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>(),
+                Substitute.For<SceneItemPurchaseFlow>(null, null, null, null),
                 Array.Empty<IDCLWorldPlugin>()
             );
 
