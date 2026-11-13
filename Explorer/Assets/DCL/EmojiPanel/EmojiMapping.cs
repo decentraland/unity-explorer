@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatReactions.Core;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,8 +17,11 @@ namespace DCL.Emoji
 
             foreach (var kvp in emojiPanelConfiguration.EmojiSections.SelectMany(section => section.emojis))
             {
-                emojiNameMapping.Add(kvp.key, new EmojiData(char.ConvertFromUtf32(kvp.value), kvp.key));
-                emojiValueMapping.Add(kvp.value, kvp.key);
+                if (!emojiNameMapping.TryAdd(kvp.key, new EmojiData(char.ConvertFromUtf32(kvp.value), kvp.key)))
+                    ReportHub.LogError(ReportCategory.UI, $"Emoji panel configuration has the shortcode '{kvp.key}' more than once, the first entry is kept");
+
+                if (!emojiValueMapping.TryAdd(kvp.value, kvp.key))
+                    ReportHub.LogError(ReportCategory.UI, $"Emoji panel configuration has the codepoint {kvp.value:X} more than once, the first entry is kept");
             }
 
             // Regional indicator symbols (U+1F1E6–U+1F1FF) render as boxed letters A–Z.
@@ -29,8 +33,7 @@ namespace DCL.Emoji
                 uint unicode = EmojiCodepointHelper.REGIONAL_INDICATOR_START + i;
                 string shortcode = EmojiCodepointHelper.TryGetRegionalIndicatorShortcode(unicode)!;
 
-                if (!emojiNameMapping.ContainsKey(shortcode))
-                    emojiNameMapping.Add(shortcode, new EmojiData(char.ConvertFromUtf32((int)unicode), shortcode));
+                emojiNameMapping.TryAdd(shortcode, new EmojiData(char.ConvertFromUtf32((int)unicode), shortcode));
             }
 
             NameMapping = emojiNameMapping;

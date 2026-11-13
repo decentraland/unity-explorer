@@ -37,6 +37,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
@@ -194,7 +195,9 @@ namespace Global.Dynamic
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue,
                 realmData, sceneRoomStatus);
 
-            IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(PartitionComponent)}");
+
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 

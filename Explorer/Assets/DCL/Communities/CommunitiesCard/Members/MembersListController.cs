@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
+        private readonly SectionFetchData<ICommunityMemberData>[] sectionsFetchData = new SectionFetchData<ICommunityMemberData>[EnumUtils.Values<MembersListView.MemberListSections>().Length];
 
         private GetCommunityResponse.CommunityData? communityData;
 
@@ -70,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        protected override SectionFetchData<ICommunityMemberData> currentSectionFetchData => sectionsFetchData[currentSection];
+        protected override SectionFetchData<ICommunityMemberData> currentSectionFetchData => sectionsFetchData[(int)currentSection];
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
@@ -125,7 +125,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.SetSelfProfile(selfProfile);
 
             foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
-                sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
+                sectionsFetchData[(int)section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
         }
 
         private void OnGiftUserRequested(ICommunityMemberData memberData)
@@ -187,7 +187,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (intention == InviteRequestIntention.accepted)
                 {
                     profile.Role = CommunityMemberRole.member;
-                    List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.Members].Items;
+                    List<ICommunityMemberData> memberList = sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items;
                     memberList.Add(profile);
                 }
 
@@ -277,9 +277,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                sectionsFetchData[MembersListView.MemberListSections.Members].Items.Remove(profile);
+                sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items.Remove(profile);
 
-                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.Banned].Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[(int)MembersListView.MemberListSections.Banned].Items;
                 profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
@@ -331,14 +331,14 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                sectionsFetchData[MembersListView.MemberListSections.Members].Items.Remove(profile);
+                sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items.Remove(profile);
                 RefreshGrid(true);
             }
         }
 
         public void TryRemoveLocalUser()
         {
-            List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.Members].Items;
+            List<ICommunityMemberData> memberList = sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items;
 
             string? userAddress = web3IdentityCache.Identity?.Address;
 
@@ -374,7 +374,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.Members].Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items;
 
                 foreach (ICommunityMemberData member in memberList)
                     if (member.Address.Equals(profile.Address))
@@ -407,7 +407,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.Members].Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[(int)MembersListView.MemberListSections.Members].Items;
 
                 foreach (ICommunityMemberData member in memberList)
                     if (member.Address.Equals(profile.Address))
@@ -447,7 +447,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.Close();
 
             foreach (var sectionFetchData in sectionsFetchData)
-                sectionFetchData.Value.Reset();
+                sectionFetchData.Reset();
 
             panelLifecycleTask?.TrySetResult();
 
@@ -627,7 +627,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                sectionsFetchData[MembersListView.MemberListSections.Banned].Items.Remove(profile);
+                sectionsFetchData[(int)MembersListView.MemberListSections.Banned].Items.Remove(profile);
                 RefreshGrid(false);
             }
         }

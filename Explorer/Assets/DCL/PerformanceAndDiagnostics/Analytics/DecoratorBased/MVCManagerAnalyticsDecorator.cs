@@ -75,8 +75,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             Type cType = controller.GetType();
 
-            if (controllerAnalyticsFactory.ContainsKey(cType) && !registeredAnalytics.ContainsKey(cType))
-                registeredAnalytics.Add(cType, controllerAnalyticsFactory[cType].Invoke(controller));
+            if (!registeredAnalytics.ContainsKey(cType) && controllerAnalyticsFactory.TryGetValue(cType, out Func<IController, IDisposable> factory))
+                registeredAnalytics[cType] = factory(controller);
         }
 
         public UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView =>

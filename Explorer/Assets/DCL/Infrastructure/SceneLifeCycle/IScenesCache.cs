@@ -1,4 +1,5 @@
-﻿using DCL.Optimization.Pools;
+﻿using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.Utilities;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace ECS.SceneLifeCycle
 
         void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels);
 
-        void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels);
+        void RemoveSceneFacade(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         bool Contains(Vector2Int parcel);
 
@@ -61,7 +62,20 @@ namespace ECS.SceneLifeCycle
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
             for (var i = 0; i < parcels.Count; i++)
-                scenesByParcels.Add(parcels[i], sceneFacade);
+            {
+                Vector2Int parcel = parcels[i];
+
+                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? owner))
+                {
+                    // A parcel listed twice in the same scene's metadata maps to the same facade and is harmless
+                    if (owner != sceneFacade)
+                        ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Parcel {parcel} is already owned by another scene, keeping the existing one");
+
+                    continue;
+                }
+
+                scenesByParcels[parcel] = sceneFacade;
+            }
 
             scenes.Add(sceneFacade);
         }
@@ -83,16 +97,14 @@ namespace ECS.SceneLifeCycle
                 nonRealSceneByParcel.Remove(parcel);
         }
 
-        public void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels)
+        public void RemoveSceneFacade(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
-            foreach (var parcel in parcels)
-            {
-                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? sceneFacade))
-                {
-                    scenes.Remove(sceneFacade);
+            // A parcel owned by another scene stays mapped to it
+            foreach (Vector2Int parcel in parcels)
+                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? owner) && owner == sceneFacade)
                     scenesByParcels.Remove(parcel);
-                }
-            }
+
+            scenes.Remove(sceneFacade);
         }
 
         public void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn)

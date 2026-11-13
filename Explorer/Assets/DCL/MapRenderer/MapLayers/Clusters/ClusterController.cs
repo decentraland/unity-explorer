@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Categories;
@@ -68,10 +69,13 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             {
                 Vector2Int hashPosition = ClusterUtilities.GetHashPosition(markerEntry.Key, clusterCellSize);
 
-                if (!spatialHashGrid.ContainsKey(hashPosition))
-                    spatialHashGrid[hashPosition] = new List<IClusterableMarker>();
+                if (!spatialHashGrid.TryGetValue(hashPosition, out List<IClusterableMarker> cellMarkers))
+                {
+                    cellMarkers = new List<IClusterableMarker>();
+                    spatialHashGrid[hashPosition] = cellMarkers;
+                }
 
-                spatialHashGrid[hashPosition].Add(markerEntry.Value);
+                cellMarkers.Add(markerEntry.Value);
             }
 
             foreach (var cell in spatialHashGrid)
@@ -92,7 +96,10 @@ namespace DCL.MapRenderer.MapLayers.Cluster
                     clusterMarker.SetCategorySprite(clusterIcon);
                     clusterMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
                     clusterMarker.OnBecameVisible();
-                    clusterVisibleMarkers.Add(clusterMarker.GetGameObject(), clusterMarker);
+
+                    if (!clusterVisibleMarkers.TryAdd(clusterMarker.GetGameObject(), clusterMarker))
+                        ReportHub.LogError(ReportCategory.UI, $"Cluster marker at {averagePosition} is already tracked");
+
                     clusteredMarkers.Add(clusterMarker);
                 }
                 else

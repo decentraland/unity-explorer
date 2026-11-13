@@ -62,7 +62,7 @@ namespace DCL.Chat.History
             newChannel.Cleared += OnChannelCleared;
             newChannel.ReadMessagesChanged += OnChannelReadMessagesChanged;
 
-            channels.Add(newChannel.Id, newChannel);
+            channels[channelId] = newChannel;
             ChannelAdded?.Invoke(newChannel);
             return newChannel;
         }

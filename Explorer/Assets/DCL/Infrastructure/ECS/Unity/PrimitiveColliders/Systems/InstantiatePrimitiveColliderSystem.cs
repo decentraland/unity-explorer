@@ -57,9 +57,13 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         {
             if (sdkComponent.MeshCase == PBMeshCollider.MeshOneofCase.None) return;
 
+            if (!setupColliderCases.TryGetValue(sdkComponent.MeshCase, out ISetupCollider setupCollider))
+                return;
+
             var component = new PrimitiveColliderComponent();
-            Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
-            World.Add(entity, component);
+
+            if (Instantiate(entity, crdtEntity, setupCollider, ref component, ref sdkComponent, ref transform))
+                World.Add(entity, component);
         }
 
         [Query]
@@ -73,7 +77,12 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
-            ISetupCollider setupCollider = setupColliderCases[sdkComponent.MeshCase];
+            if (!setupColliderCases.TryGetValue(sdkComponent.MeshCase, out ISetupCollider setupCollider))
+            {
+                ReportHub.LogError(GetReportData(), $"No collider setup registered for mesh case {sdkComponent.MeshCase} on entity {crdtEntity}");
+                sdkComponent.IsDirty = false;
+                return;
+            }
 
             // Prevent calling an overloaded comparison from UnityEngine.Object
             if (ReferenceEquals(primitiveColliderComponent.Collider, null))
@@ -104,7 +113,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(
+        private bool Instantiate(
             in Entity entity,
             CRDTEntity sdkEntity,
             ISetupCollider setupCollider,
@@ -113,7 +122,13 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             ref TransformComponent transformComponent
         )
         {
-            var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType).Rent();
+            if (!poolsRegistry.TryGetPool(setupCollider.ColliderType, out IComponentPool colliderPool))
+            {
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {setupCollider.ColliderType} on entity {sdkEntity}");
+                return false;
+            }
+
+            var collider = (Collider)colliderPool.Rent();
             component.AssignCollider(new SDKCollider(collider), setupCollider.ColliderType, sdkComponent.MeshCase);
 
             SetupCollider(entity, sdkEntity, setupCollider, ref component.SDKCollider, in sdkComponent);
@@ -123,6 +138,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             colliderTransform.SetParent(transformComponent.Transform, false);
             colliderTransform.ResetLocalTRS();
+            return true;
         }
     }
 }

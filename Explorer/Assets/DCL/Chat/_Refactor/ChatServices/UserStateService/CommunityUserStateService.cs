@@ -61,7 +61,15 @@ namespace DCL.Chat.ChatServices
             if (onlineParticipantsPerChannel.ContainsKey(addedChannel.Id))
                 return;
 
-            onlineParticipantsPerChannel.SyncAdd(addedChannel.Id, (HASHSET_POOL.Get(), HASHSET_POOL.Get()));
+            (HashSet<string> normal, HashSet<string> blocked) participants = (HASHSET_POOL.Get(), HASHSET_POOL.Get());
+
+            if (!onlineParticipantsPerChannel.SyncTryAdd(addedChannel.Id, participants))
+            {
+                HASHSET_POOL.Release(participants.normal);
+                HASHSET_POOL.Release(participants.blocked);
+                return;
+            }
+
             InitializeOnlineMembersAsync(addedChannel.Id, lifeTimeCts.Token).Forget();
         }
 

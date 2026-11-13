@@ -15,7 +15,18 @@ namespace DCL.MapRenderer
         // for testing purpose only
         internal IReadOnlyList<IMapLayerController> layers_Test => layers.Select(l => l.Value.MapLayerController).ToList();
 
-        internal Dictionary<MapLayer, IMapLayerController> layersDictionary_Test => layers.ToDictionary(l => l.Key, l => l.Value.MapLayerController);
+        internal Dictionary<MapLayer, IMapLayerController> layersDictionary_Test
+        {
+            get
+            {
+                var result = new Dictionary<MapLayer, IMapLayerController>(layers!.Count);
+
+                foreach (KeyValuePair<MapLayer, MapLayerStatus> pair in layers)
+                    result[pair.Key] = pair.Value.MapLayerController;
+
+                return result;
+            }
+        }
 
         internal void EnableLayers_Test(IMapActivityOwner owner, MapLayer mask) =>
             EnableLayers(owner, mask);

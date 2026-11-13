@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -63,7 +62,12 @@ namespace DCL.Backpack
             foreach (var s in sections.Values)
                 s.Deactivate();
 
-            var tabs = view.TabSelectorMappedViews.ToDictionary(m => m.Section, m => m.TabSelectorView);
+            var tabs = new Dictionary<AvatarSubSection, TabSelectorView>(view.TabSelectorMappedViews.Length);
+
+            foreach (AvatarPanelTabSelectorMapping mapping in view.TabSelectorMappedViews)
+                if (!tabs.TryAdd(mapping.Section, mapping.TabSelectorView))
+                    ReportHub.LogError(ReportCategory.OUTFITS, $"AvatarTabsManager: duplicate tab mapping for section '{mapping.Section}'.");
+
             var tabOrder = new List<AvatarSubSection>
             {
                 AvatarSubSection.Categories, AvatarSubSection.Outfits
@@ -146,13 +150,17 @@ namespace DCL.Backpack
             if (isAnimating || newSection == lastShownSection)
                 return;
 
+            if (!sectionsByKey.TryGetValue(lastShownSection, out ISection? lastSectionController)
+                || !sectionsByKey.TryGetValue(newSection, out ISection? newSectionController))
+            {
+                ReportHub.LogError(ReportCategory.OUTFITS, $"AvatarTabsManager: no section registered to switch from '{lastShownSection}' to '{newSection}'.");
+                return;
+            }
+
             if (tabsByKey.TryGetValue(lastShownSection, out var lastTabView))
                 SetTabAnimationState(lastTabView, false);
             if (tabsByKey.TryGetValue(newSection, out var newTabView))
                 SetTabAnimationState(newTabView, true);
-
-            var lastSectionController = sectionsByKey[lastShownSection];
-            var newSectionController = sectionsByKey[newSection];
 
             if (useAnimation)
             {

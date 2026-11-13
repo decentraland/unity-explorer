@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -56,7 +57,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             await controller.InitializeAsync(cancellationToken);
-            writer.Add(MapLayer.SearchResults, controller);
+            if (!writer.TryAdd(MapLayer.SearchResults, controller))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.SearchResults} is already installed");
             zoomScalingWriter.Add(controller);
             return controller;
         }

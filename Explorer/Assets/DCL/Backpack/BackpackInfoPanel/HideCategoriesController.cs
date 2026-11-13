@@ -77,18 +77,23 @@ namespace DCL.Backpack
 
             URN bodyShapeUrn = bodyShapeWearable.GetUrn();
             wearable.GetHidingList(bodyShapeUrn, hidingList);
-            view.HideHeader.SetActive(hidingList.Count > 0);
 
             foreach (string category in hidingList)
             {
+                // Hides come from the wearable metadata and may name categories this client does not display
+                if (!WearableComponentsUtils.CATEGORIES_TO_READABLE.TryGetValue(category, out string? readableCategory))
+                    continue;
+
                 HideCategoryView hideCategoryView = hidesPool.Get();
                 usedHides.Add(hideCategoryView);
 
                 hideCategoryView.transform.SetParent(view.HideCategoriesContainer, false);
                 hideCategoryView.transform.SetAsLastSibling();
-                hideCategoryView.categoryText.text = WearableComponentsUtils.CATEGORIES_TO_READABLE[category];
+                hideCategoryView.categoryText.text = readableCategory;
                 hideCategoryView.categoryImage.sprite = categoryIcons.GetTypeImage(category);
             }
+
+            view.HideHeader.SetActive(usedHides.Count > 0);
         }
 
         private void ClearPool()

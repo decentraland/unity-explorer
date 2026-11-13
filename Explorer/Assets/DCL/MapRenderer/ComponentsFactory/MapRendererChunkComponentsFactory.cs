@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapPins.Bus;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
@@ -223,7 +224,8 @@ namespace DCL.MapRenderer.ComponentsFactory
         {
             var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, IMapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
-            layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
+            if (!layers.TryAdd(MapLayer.ParcelsAtlas, chunkAtlas))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.ParcelsAtlas} is already installed");
             return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
@@ -269,7 +271,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
-            layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
+            if (!layers.TryAdd(MapLayer.SatelliteAtlas, chunkAtlas))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.SatelliteAtlas} is already installed");
 
             async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {

@@ -93,7 +93,7 @@ namespace DCL.Audio
             if (!audioDatasPerIndexDictionary.TryGetValue(clipType, out Dictionary<int, List<WorldPlaybackAudioData>> audioSourcesPerIndex))
             {
                 audioSourcesPerIndex = new Dictionary<int, List<WorldPlaybackAudioData>>();
-                audioDatasPerIndexDictionary.Add(clipType, audioSourcesPerIndex);
+                audioDatasPerIndexDictionary[clipType] = audioSourcesPerIndex;
             }
 
             if (!audioSourcesPerIndex.TryGetValue(index, out List<WorldPlaybackAudioData> audioSourceList))
@@ -108,7 +108,7 @@ namespace DCL.Audio
                     audioSourceList.Add(audioData);
                 }
 
-                audioSourcesPerIndex.Add(index, audioSourceList);
+                audioSourcesPerIndex[index] = audioSourceList;
             }
             else
             {
@@ -150,7 +150,7 @@ namespace DCL.Audio
             if (!audioDatasPerIndexDictionary.TryGetValue(clipType, out Dictionary<int, List<WorldPlaybackAudioData>> audioDatasPerIndex))
             {
                 audioDatasPerIndex = new Dictionary<int, List<WorldPlaybackAudioData>>();
-                audioDatasPerIndexDictionary.Add(clipType, audioDatasPerIndex);
+                audioDatasPerIndexDictionary[clipType] = audioDatasPerIndex;
             }
 
             return audioDatasPerIndex;

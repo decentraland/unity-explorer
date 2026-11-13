@@ -42,7 +42,12 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
             sdkVirtualCameraPool = Substitute.For<IComponentPool<CinemachineFreeLook>>();
-            poolsRegistry.GetReferenceTypePool<CinemachineFreeLook>().Returns(sdkVirtualCameraPool);
+            poolsRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<CinemachineFreeLook>?>())
+                         .Returns(x =>
+                          {
+                              x[0] = sdkVirtualCameraPool;
+                              return true;
+                          });
             sdkVirtualCameraPool.Get().Returns(virtualCamera);
 
             var sceneData = Substitute.For<ISceneData>();

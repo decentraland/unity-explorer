@@ -84,7 +84,7 @@ System constructors are `internal`. Expose them to tests via an `AssemblyInfo.cs
 | `ISceneData` | `ECSTestUtils.SceneDataSub()` (maps content paths to URLs) |
 | `ISceneStateProvider` | `sceneStateProvider.IsCurrent.Returns(true)` |
 | `IPerformanceBudget` | `budget.TrySpendBudget().Returns(true)` |
-| `IComponentPoolsRegistry` | Mock pool chain: `poolsRegistry.GetReferenceTypePool<T>().Returns(pool)` |
+| `IComponentPoolsRegistry` | Mock the out parameter: `poolsRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<T>>()).Returns(x => { x[0] = pool; return true; })` |
 | `IECSToCRDTWriter` | `Substitute.For<IECSToCRDTWriter>()` then verify with `.Received()` |
 | `IFinalizeWorldSystem` | `Substitute.For<IFinalizeWorldSystem>()` then verify `FinalizeComponents` called |
 | `IRealmData` | `Substitute.For<IRealmData>()` |

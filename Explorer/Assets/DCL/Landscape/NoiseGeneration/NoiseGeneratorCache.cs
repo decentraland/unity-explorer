@@ -19,9 +19,9 @@ namespace DCL.Landscape.NoiseGeneration
                 return noiseGen;
 
             var generator = noiseData.GetGenerator(baseSeed, 0, this);
-            cachedGenerators.Add(noiseData, generator);
+            cachedGenerators[noiseData] = generator;
 
-            return cachedGenerators[noiseData];
+            return generator;
         }
 
         public void ResetNoiseNativeArrayProvider()

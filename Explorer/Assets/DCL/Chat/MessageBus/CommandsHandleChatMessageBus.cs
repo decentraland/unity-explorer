@@ -4,7 +4,6 @@ using DCL.Chat.History;
 using DCL.RealmNavigation;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Utility;
 using DCL.Diagnostics;
@@ -24,7 +23,12 @@ namespace DCL.Chat.MessageBus
         {
             this.origin = origin;
             this.loadingStatus = loadingStatus;
-            this.commands = commands.ToDictionary(cmd => cmd.Command);
+            this.commands = new Dictionary<string, IChatCommand>(commands.Count);
+
+            foreach (IChatCommand command in commands)
+                if (!this.commands.TryAdd(command.Command, command))
+                    ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Duplicate chat command '/{command.Command}', the first registration is kept");
+
             origin.MessageAdded += OriginOnOnMessageAdded;
         }
 

@@ -126,7 +126,12 @@ namespace DCL.Settings
 
         public void Toggle(SettingsSection section)
         {
-            var config = sections[section];
+            if (!sections.TryGetValue(section, out var config))
+            {
+                ReportHub.LogError(ReportCategory.SETTINGS_MENU, $"Settings has no section {section}");
+                return;
+            }
+
             OpenSection(section, config.config!.SettingsGroups.Count);
         }
 
@@ -253,14 +258,16 @@ namespace DCL.Settings
 
         private void OpenSection(SettingsSection section, int settingsGroupCount)
         {
-            foreach ((SettingsSection current, (Transform container, ButtonWithSelectableStateView button, Sprite _, SettingsSectionConfig _)) in sections)
+            foreach ((SettingsSection current, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig _)) in sections)
             {
                 bool opened = section == current;
                 container.gameObject.SetActive(opened && settingsGroupCount > 0);
                 button.SetSelected(opened);
+
+                if (opened)
+                    view.BackgroundImage.sprite = background;
             }
 
-            view.BackgroundImage.sprite = sections[section].background!;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 

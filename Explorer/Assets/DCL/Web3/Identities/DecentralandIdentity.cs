@@ -65,7 +65,8 @@ namespace DCL.Web3.Identities
 
         private void AssertSigner(AuthChain authChain)
         {
-            AuthLink signer = authChain.Get(AuthLinkType.SIGNER);
+            if (!authChain.TryGet(AuthLinkType.SIGNER, out AuthLink signer))
+                throw new Web3IdentityException(this, "Invalid auth chain. SIGNER does not exist");
 
             if (string.IsNullOrEmpty(signer.payload))
                 throw new Web3IdentityException(this, "Invalid auth chain. SIGNER payload is empty");
@@ -106,7 +107,8 @@ namespace DCL.Web3.Identities
 
         private void AssertEcdsaSignedEntity(AuthChain authChain)
         {
-            AuthLink ecdsaSignedEntity = authChain.Get(AuthLinkType.ECDSA_SIGNED_ENTITY);
+            if (!authChain.TryGet(AuthLinkType.ECDSA_SIGNED_ENTITY, out AuthLink ecdsaSignedEntity))
+                throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_SIGNED_ENTITY does not exist");
 
             if (string.IsNullOrEmpty(ecdsaSignedEntity.payload))
                 throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_SIGNED_ENTITY payload is empty");

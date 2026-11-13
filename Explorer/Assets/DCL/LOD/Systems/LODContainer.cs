@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -72,7 +73,10 @@ namespace DCL.LOD.Systems
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
 
                 foreach (RoadDescription roadDescription in c.roadSettingsAsset.Value.RoadDescriptions)
-                    roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
+                {
+                    if (!roadDataDictionary.TryAdd(roadDescription.RoadCoordinate, roadDescription))
+                        ReportHub.LogError(ReportCategory.ROADS, $"Duplicate road description for coordinate {roadDescription.RoadCoordinate}");
+                }
 
                 container.RoadCoordinates = roadDataDictionary.Keys.ToHashSet();
 

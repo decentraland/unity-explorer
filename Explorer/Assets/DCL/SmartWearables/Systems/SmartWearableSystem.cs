@@ -159,10 +159,13 @@ namespace DCL.SmartWearables
                 // Re-check after the thread hop, the world must not be touched once the session is over
                 if (ct.IsCancellationRequested) return;
 
+                // A concurrent equip of the same wearable may have started the load during the thread hop
+                if (pendingScenes.ContainsKey(id)) return;
+
                 var promise = ScenePromise.Create(World, intention, partition);
                 World.Add(promise.Entity, promise, new SmartWearableId { Value = id });
 
-                pendingScenes.Add(id, promise);
+                pendingScenes[id] = promise;
             }
             catch (OperationCanceledException) { /* expected on logout or system disposal */ }
             catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }

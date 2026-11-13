@@ -33,8 +33,6 @@ namespace DCL.Multiplayer.Profiles.Tables
 
         int Count { get; }
 
-        Entry Get(string walletId);
-
         bool TryGet(string walletId, out Entry entry);
 
         bool Has(string walletId);

@@ -24,7 +24,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
                 sharedMat.DisableKeyword(keyword);
                 instancedMat.EnableKeyword(keyword);
 
-                instancingMaterials.Add(sharedMat, instancedMat);
+                instancingMaterials[sharedMat] = instancedMat;
             }
 
             return instancedMat;

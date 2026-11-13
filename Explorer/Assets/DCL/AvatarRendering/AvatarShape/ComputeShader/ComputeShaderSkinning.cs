@@ -123,8 +123,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 MeshData meshData = gameObjects[i];
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
-                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
+                bool materialIsSet = TrySetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture, out AvatarCustomSkinningComponent.MaterialSetup materialSetup);
                 auxVertCounter += currentVertexCount;
+
+                // A renderer without a skinned material stays hidden even when its enabled flag is toggled
+                meshData.Renderer.forceRenderingOff = !materialIsSet;
+
+                if (!materialIsSet)
+                    continue;
+
+                list.Add(materialSetup);
 
                 if (avatarShapeComponent.ShowOnlyWearables)
                 {
@@ -208,9 +216,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
-        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
-            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures) =>
-            AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures);
+        private protected override bool TrySetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures, out AvatarCustomSkinningComponent.MaterialSetup materialSetup) =>
+            AvatarMaterialConfiguration.TrySetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures, out materialSetup);
 
         /// <summary>
         /// Checks the bounds of a list of meshes and computes the bounding box that contains them all.

@@ -155,7 +155,11 @@ namespace DCL.PluginSystem.Global
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
-            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? transformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            transformPoolRegistry = transformPool;
+
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
             debugContainerBuilder.TryAddWidget("Nametags")
@@ -210,7 +214,7 @@ namespace DCL.PluginSystem.Global
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
-            componentPoolsRegistry.AddGameObjectPool(
+            avatarPoolRegistry = componentPoolsRegistry.AddGameObjectPool(
                 () =>
                 {
                     AvatarBase instance = Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity);
@@ -223,7 +227,6 @@ namespace DCL.PluginSystem.Global
                     return instance;
                 },
                 onRelease: avatarBase => avatarBase.ResetState());
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)

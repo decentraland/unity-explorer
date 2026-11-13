@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Commands;
@@ -212,7 +213,13 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         public void RequestThumbnailLoad(int itemIndex)
         {
             string urn = viewModelUrnOrder[itemIndex];
-            var vm = viewModelsByUrn[urn];
+
+            if (!viewModelsByUrn.TryGetValue(urn, out TViewModel vm))
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, $"No gifting view model is registered for {urn}");
+                return;
+            }
+
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
@@ -274,9 +281,13 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Interface Implementation
-        public TViewModel GetViewModel(int itemIndex)
+        public bool TryGetViewModel(int itemIndex, [MaybeNullWhen(false)] out TViewModel viewModel)
         {
-            return viewModelsByUrn[viewModelUrnOrder[itemIndex]];
+            if (itemIndex >= 0 && itemIndex < viewModelUrnOrder.Count)
+                return viewModelsByUrn.TryGetValue(viewModelUrnOrder[itemIndex], out viewModel);
+
+            viewModel = default(TViewModel);
+            return false;
         }
 
         public string? GetItemNameByUrn(string urn)

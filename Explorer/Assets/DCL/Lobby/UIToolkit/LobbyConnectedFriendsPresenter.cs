@@ -84,7 +84,7 @@ namespace DCL.Lobby
             if (!bindings.TryGetValue(friends, out CardBinding binding))
             {
                 binding = new CardBinding(friends, this);
-                bindings.Add(friends, binding);
+                bindings[friends] = binding;
             }
 
             binding.Addresses = addresses;

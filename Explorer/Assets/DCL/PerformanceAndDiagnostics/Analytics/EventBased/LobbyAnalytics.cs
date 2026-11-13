@@ -60,7 +60,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnClosed()
         {
             JObject payload = VisitPayload();
-            payload.Add("duration_sec", UnityEngine.Time.realtimeSinceStartup - openedAt);
+            payload["duration_sec"] = UnityEngine.Time.realtimeSinceStartup - openedAt;
 
             analytics.Track(AnalyticsEvents.Lobby.LOBBY_CLOSED, payload);
         }

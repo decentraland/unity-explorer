@@ -4,10 +4,12 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using Runtime.Wearables;
 using Utility;
 
 namespace DCL.Backpack
@@ -49,7 +51,9 @@ namespace DCL.Backpack
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
-                avatarSlots.Add(avatarSlotView.Category.ToLower(), (avatarSlotView, new CancellationTokenSource()));
+                if (!avatarSlots.TryAdd(avatarSlotView.Category.ToLower(), (avatarSlotView, new CancellationTokenSource())))
+                    ReportHub.LogError(ReportCategory.BACKPACK, $"Duplicate backpack avatar slot for category {avatarSlotView.Category}");
+
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.OverrideHide.onClick.AddListener(() => RemoveForceRender(avatarSlotView.Category));
                 avatarSlotView.NoOverride.onClick.AddListener(() => AddForceRender(avatarSlotView.Category));
@@ -132,13 +136,20 @@ namespace DCL.Backpack
 
         private void CalculateHideStatus()
         {
-            WearableComponentsUtils.ComposeHiddenCategoriesOrdered(avatarSlots["body_shape"].Item1.SlotWearableUrn, null, equippedWearables, hidingList);
+            if (!avatarSlots.TryGetValue(WearableCategories.Categories.BODY_SHAPE, out (AvatarSlotView, CancellationTokenSource) bodyShapeSlot))
+            {
+                ReportHub.LogError(ReportCategory.BACKPACK, $"No backpack avatar slot is configured for category {WearableCategories.Categories.BODY_SHAPE}");
+                return;
+            }
+
+            string bodyShapeUrn = bodyShapeSlot.Item1.SlotWearableUrn;
+            WearableComponentsUtils.ComposeHiddenCategoriesOrdered(bodyShapeUrn, null, equippedWearables, hidingList);
 
             foreach (var avatarSlotView in avatarSlots.Values)
             {
                 avatarSlotView.Item1.OverrideHideContainer.SetActive(false);
 
-                string hiderTextText = WearableComponentsUtils.GetCategoryHider(avatarSlots["body_shape"].Item1.SlotWearableUrn, avatarSlotView.Item1.Category, equippedWearables);
+                string hiderTextText = WearableComponentsUtils.GetCategoryHider(bodyShapeUrn, avatarSlotView.Item1.Category, equippedWearables);
                 avatarSlotView.Item1.HiderText.gameObject.SetActive(!string.IsNullOrEmpty(hiderTextText));
 
                 if (!string.IsNullOrEmpty(hiderTextText) && WearableComponentsUtils.CATEGORIES_TO_READABLE.TryGetValue(hiderTextText, out string readableCategoryHider))
@@ -174,8 +185,8 @@ namespace DCL.Backpack
 
             var thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
 
-            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = thumbnail;
-            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.gameObject.SetActive(true);
+            avatarSlotView.SlotWearableThumbnail.sprite = thumbnail;
+            avatarSlotView.SlotWearableThumbnail.gameObject.SetActive(true);
             avatarSlotView.LoadingView.FinishLoadingAnimation(avatarSlotView.NftContainer);
         }
 

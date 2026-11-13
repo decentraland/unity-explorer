@@ -14,6 +14,7 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -49,7 +50,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             this.changedMeshes = changedMeshes;
             poolRegistry = poolsRegistry;
 
-            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<MeshRenderer>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(MeshRenderer)}");
+
+            rendererPoolRegistry = pool;
         }
 
         protected override void Update(float t)
@@ -71,7 +75,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
             MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
-            Instantiate(entity, setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
+
+            if (!Instantiate(entity, setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform))
+            {
+                rendererPoolRegistry.Release(meshRendererGo);
+                return;
+            }
+
             World.Add(entity, meshRendererComponent);
         }
 
@@ -110,11 +120,17 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         /// <summary>
         ///     It is either called when there is no mesh or mesh was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(Entity entity, ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
+        private bool Instantiate(Entity entity, ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
             ref PrimitiveMeshRendererComponent rendererComponent,
             PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
-            var primitiveMesh = (IPrimitiveMesh)poolRegistry.GetPool(meshSetup.MeshType).Rent();
+            if (!poolRegistry.TryGetPool(meshSetup.MeshType, out IComponentPool meshPool))
+            {
+                ReportHub.LogError(GetReportData(), $"No component pool registered for {meshSetup.MeshType}");
+                return false;
+            }
+
+            var primitiveMesh = (IPrimitiveMesh)meshPool.Rent();
             meshSetup.Execute(sdkComponent, primitiveMesh);
 
             rendererComponent.PrimitiveMesh = primitiveMesh;
@@ -134,6 +150,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
             changedMeshes.Add(entity, rendererComponent);
+            return true;
         }
     }
 }

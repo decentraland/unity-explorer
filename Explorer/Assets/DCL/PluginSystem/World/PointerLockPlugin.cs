@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.PluginSystem.World.Dependencies;
@@ -34,7 +33,7 @@ namespace DCL.PluginSystem.World
                 ref builder,
                 globalWorld,
                 cameraData,
-                sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY],
+                persistentEntities.Camera,
                 sharedDependencies.SceneStateProvider);
         }
     }

@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
@@ -29,7 +30,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<Label>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Label)}");
+
+            labelsPool = pool;
+
             this.styleFontDefinitions = styleFontDefinitions;
             this.sceneData = sceneData;
             this.scenePartition = scenePartition;

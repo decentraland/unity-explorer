@@ -93,7 +93,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var poolMaterialSetup = new PoolMaterialSetup(materialPool, textureArrayContainer);
 
             IAvatarMaterialPoolHandler? materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
-            materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);
+            materialPoolHandler.TryGetMaterialPool(Arg.Any<int>(), out Arg.Any<PoolMaterialSetup>())
+                               .Returns(call =>
+                                {
+                                    call[1] = poolMaterialSetup;
+                                    return true;
+                                });
 
             var facialFeatureTextures = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>
             {

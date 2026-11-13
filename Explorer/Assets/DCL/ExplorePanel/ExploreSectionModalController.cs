@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Places;
 using DCL.UI;
 using MVC;
@@ -17,20 +18,27 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private IHostableSection section => sections[inputData.Section];
-
         public ExploreSectionModalController(ViewFactoryMethod viewFactory, IReadOnlyDictionary<ExploreSections, IHostableSection> sections, IPlacesSectionOpener placesSections) : base(viewFactory)
         {
             this.sections = sections;
             this.placesSections = placesSections;
         }
 
-        protected override void OnBeforeViewShow() =>
-            section.AttachTo(viewInstance!.SectionHost);
+        protected override void OnBeforeViewShow()
+        {
+            if (!sections.TryGetValue(inputData.Section, out IHostableSection? shown))
+            {
+                ReportHub.LogError(ReportCategory.UI, $"The explore section modal does not host the section {inputData.Section}");
+                return;
+            }
+
+            shown.AttachTo(viewInstance!.SectionHost);
+        }
 
         protected override void OnViewShow()
         {
-            IHostableSection shown = section;
+            if (!sections.TryGetValue(inputData.Section, out IHostableSection? shown)) return;
+
             shown.Activate();
 
             // The view may still sit on the OUT frame of its last hide.
@@ -43,7 +51,7 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewClose()
         {
-            IHostableSection shown = section;
+            if (!sections.TryGetValue(inputData.Section, out IHostableSection? shown)) return;
 
             // Another host may already have claimed the view back.
             if (shown.CurrentHost != viewInstance!.SectionHost) return;

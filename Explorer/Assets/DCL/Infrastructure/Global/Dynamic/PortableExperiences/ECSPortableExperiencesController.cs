@@ -125,6 +125,8 @@ namespace PortableExperiences.Controller
                     WorldManifest.Empty
                 );
 
+                if (PortableExperienceEntities.ContainsKey(portableExperienceId)) throw new Exception($"ENS {ens} was loaded by another request while this one was in progress");
+
                 ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
                 string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
                 Entity portableExperienceEntity = world.Create();
@@ -138,7 +140,7 @@ namespace PortableExperiences.Controller
                     ParentSceneId = parentSceneName
                 });
 
-                PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
+                PortableExperienceEntities[portableExperienceId] = portableExperienceEntity;
 
                 PortableExperienceLoaded?.Invoke(portableExperienceId);
 

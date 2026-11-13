@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -21,8 +22,13 @@ namespace DCL.McpServer.Core
 
         public McpToolsRegistry Add(McpTool tool)
         {
-            tools.Add(tool.Name, tool);
-            argumentNames.Add(tool.Name, DeclaredArgumentNames(tool));
+            if (!tools.TryAdd(tool.Name, tool))
+            {
+                ReportHub.LogError(ReportCategory.MCP, $"MCP tool '{tool.Name}' is registered more than once, the first registration is kept");
+                return this;
+            }
+
+            argumentNames[tool.Name] = DeclaredArgumentNames(tool);
             return this;
         }
 
@@ -30,8 +36,14 @@ namespace DCL.McpServer.Core
         ///     The argument names the tool's input schema declares. Captured at registration because
         ///     <see cref="McpTool.InputSchema" /> is rebuilt on every read.
         /// </summary>
-        public string[] ArgumentNames(string toolName) =>
-            argumentNames[toolName];
+        public string[] ArgumentNames(string toolName)
+        {
+            if (argumentNames.TryGetValue(toolName, out string[] names))
+                return names;
+
+            ReportHub.LogError(ReportCategory.MCP, $"MCP tool '{toolName}' has no registered argument names");
+            return Array.Empty<string>();
+        }
 
         private static string[] DeclaredArgumentNames(McpTool tool)
         {

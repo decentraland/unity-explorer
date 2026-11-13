@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using System;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -23,7 +24,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            componentPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UITransformComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UITransformComponent)}");
+
+            componentPool = pool;
         }
 
         protected override void Update(float t)

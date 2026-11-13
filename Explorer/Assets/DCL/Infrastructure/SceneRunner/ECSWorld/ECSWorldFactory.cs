@@ -83,7 +83,10 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in systemsDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
-            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PartitionComponent>? partitionComponentPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(PartitionComponent)}");
+
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, partitionComponentPool, persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, isLoadingScreenOn);
             WriteExplorerUiEventsSystem.InjectToWorld(ref builder, sharedDependencies.ExplorerUiEvents, sharedDependencies.EcsToCRDTWriter);

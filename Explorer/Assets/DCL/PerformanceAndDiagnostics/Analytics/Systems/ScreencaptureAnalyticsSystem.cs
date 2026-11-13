@@ -70,8 +70,8 @@ namespace DCL.Analytics.Systems
             foreach (var visiblePerson in persons)
             {
                 JObject JObject = JSON_OBJECT_POOL.Get().EnsureNotNull();
-                JObject.Add("address", visiblePerson.userAddress);
-                JObject.Add("isEmoting", visiblePerson.isEmoting);
+                JObject["address"] = visiblePerson.userAddress;
+                JObject["isEmoting"] = visiblePerson.isEmoting;
 
                 ADDRESS_BUILDER.Add(JObject);
             }

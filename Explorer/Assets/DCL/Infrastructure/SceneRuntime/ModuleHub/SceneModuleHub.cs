@@ -1,4 +1,5 @@
-﻿using Microsoft.ClearScript.V8;
+﻿using DCL.Diagnostics;
+using Microsoft.ClearScript.V8;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,19 +25,25 @@ namespace SceneRuntime.ModuleHub
                 string extension = Path.GetExtension(moduleName);
 
                 // "system/foo.js"
-                jsNodulesCompiledScripts.Add(moduleName, script);
+                AddModuleScript(moduleName, script);
 
                 // "system/foo"
                 if (!string.IsNullOrEmpty(extension))
-                    jsNodulesCompiledScripts.Add(moduleName[..^extension.Length], script);
+                    AddModuleScript(moduleName[..^extension.Length], script);
 
                 // We added a "system/" prefix to all our modules, but protobufjs, a third party
                 // library, is not aware of that and is looking for buffer and long in the wrong place.
                 if (source.Key == "buffer.js")
-                    jsNodulesCompiledScripts.Add("buffer", script);
+                    AddModuleScript("buffer", script);
                 else if (source.Key == "long.js")
-                    jsNodulesCompiledScripts.Add("long", script);
+                    AddModuleScript("long", script);
             }
+        }
+
+        private void AddModuleScript(string moduleName, V8Script script)
+        {
+            if (!jsNodulesCompiledScripts.TryAdd(moduleName, script))
+                ReportHub.LogError(ReportCategory.JAVASCRIPT, $"JS module '{moduleName}' is already registered, keeping the first one");
         }
 
         /// <summary>

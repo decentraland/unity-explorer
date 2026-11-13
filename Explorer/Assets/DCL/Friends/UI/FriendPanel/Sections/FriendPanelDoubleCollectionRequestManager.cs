@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
@@ -111,7 +112,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     Profile.CompactInfo friendProfile = GetFirstCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
+
+                    if (thumbnailContextMenuActions.TryGetValue(friendProfile.UserId, out Action? thumbnailAction))
+                        friendListUserView.ConfigureThumbnailClickData(thumbnailAction);
+                    else
+                        ReportHub.LogError(ReportCategory.FRIENDS, $"No thumbnail context menu action registered for {friendProfile.UserId}");
+
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
@@ -135,7 +141,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     Profile.CompactInfo friendProfile = GetSecondCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
+
+                    if (thumbnailContextMenuActions.TryGetValue(friendProfile.UserId, out Action? thumbnailAction))
+                        friendListUserView.ConfigureThumbnailClickData(thumbnailAction);
+                    else
+                        ReportHub.LogError(ReportCategory.FRIENDS, $"No thumbnail context menu action registered for {friendProfile.UserId}");
+
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 

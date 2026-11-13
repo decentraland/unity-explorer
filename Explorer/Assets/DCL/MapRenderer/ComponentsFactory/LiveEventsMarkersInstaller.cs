@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -59,7 +60,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             await liveEventsMarkersController.InitializeAsync(cancellationToken);
-            writer.Add(MapLayer.LiveEvents, liveEventsMarkersController);
+            if (!writer.TryAdd(MapLayer.LiveEvents, liveEventsMarkersController))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.LiveEvents} is already installed");
             zoomScalingWriter.Add(liveEventsMarkersController);
             return liveEventsMarkersController;
         }
