@@ -166,9 +166,10 @@ namespace Utils
         /// <param name="includeInactive">
         /// Also sets up the renderers of an inactive <paramref name="go"/>, for a copy built before it is shown.
         /// </param>
+        /// <param name="outlineCompatible">False keeps the renderers out of <paramref name="outlineRenderers"/>.</param>
         public static void SetupWearable(GameObject go, AvatarColors colors,
             List<Renderer> outlineRenderers, Transform avatarRootBone = null, Transform[] avatarBones = null,
-            bool includeInactive = false)
+            bool includeInactive = false, bool outlineCompatible = true)
         {
             Dictionary<string, Transform> avatarBoneMap = null;
             var renderers = go.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive);
@@ -196,6 +197,8 @@ namespace Utils
                     avatarBoneMap ??= BuildBoneMap(avatarBones);
                     RemapBonesPreservingExtras(renderer, avatarRootBone, avatarBoneMap);
                 }
+
+                if (!outlineCompatible) continue;
 
                 foreach (var sharedMaterial in renderer.sharedMaterials)
                 {

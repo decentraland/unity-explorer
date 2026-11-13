@@ -97,7 +97,8 @@ namespace Loading
             _loadedUrn = entityDefinition.URN;
 
             _outlineRenderers.Clear();
-            AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers);
+            AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers,
+                outlineCompatible: entityDefinition.OutlineCompatible);
 
             // Nothing animates this view, so posing the skeleton once is the whole job. It has to happen
             // before the frame CenterAndFit measures bounds from, or the item ends up off-centre.
