@@ -90,3 +90,7 @@ Explorer/Assets/StreamingAssets/abgen
 Explorer/Assets/StreamingAssets/abgen.exe
 Explorer/Assets/StreamingAssets/abgen.exe.meta
 Explorer/Assets/StreamingAssets/abgen.meta
+
+# Python bytecode
+__pycache__/
+*.pyc
