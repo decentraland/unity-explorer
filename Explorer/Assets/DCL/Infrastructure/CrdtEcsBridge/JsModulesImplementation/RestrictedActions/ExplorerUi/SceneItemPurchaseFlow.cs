@@ -88,19 +88,13 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         /// </summary>
         public virtual async UniTask<ExplorerItemPurchaseStatus> RunAsync(string itemUrn, CancellationToken ct)
         {
-            if (!CreditPurchaseBuyHandler.TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId))
-            {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"A scene offered '{itemUrn}', which is not a collection item urn");
-                return ExplorerItemPurchaseStatus.Failed;
-            }
-
             try
             {
-                ShopListingDto? listing = await shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
+                ShopListingDto? listing = await CreditPurchaseBuyHandler.FetchListingAsync(shopApiClient, itemUrn, ct);
 
                 if (listing == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"A scene offered '{itemUrn}', which has no primary listing");
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"A scene offered '{itemUrn}', which is not a collection item or has no primary listing");
                     return ExplorerItemPurchaseStatus.Failed;
                 }
 
@@ -113,7 +107,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                 var modalParams = new CreditPurchaseModalControllerParams(
                     listing,
                     thumbnail,
-                    $"{decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink)}/contracts/{contractAddress}/items/{itemId}",
+                    $"{decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink)}/contracts/{listing.contractAddress}/items/{listing.itemId}",
                     CreditPurchaseModalControllerParams.SOURCE_SDK_SCENE,
                     itemUrn,
                     closedWith => outcome = closedWith);

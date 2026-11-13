@@ -51,7 +51,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private const int UNKNOWN_MISSING_CREDITS = -1;
         private const string EMOTE_PLAY_LABEL = "Play";
         private const string EMOTE_STOP_LABEL = "Stop";
-        private const string EMOTE_CATEGORY = "emote";
 
         private readonly ICreditsPurchaseService purchaseService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
@@ -179,23 +178,17 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             if (viewInstance != null)
             {
-                Color rarityColor = inputData.RarityColor;
-                Sprite? rarityBackground = inputData.RarityBackground;
-                Sprite? categoryIcon = inputData.CategoryIcon;
+                string rarity = inputData.Listing.rarity;
+                Color rarityColor = rarityColors.GetColor(rarity);
+                Sprite? rarityBackground = rarityBackgrounds.GetTypeImage(rarity);
+                Sprite? categoryIcon = categoryIcons.GetTypeImage(inputData.CategoryIconKey);
 
-                if (inputData.VisualsFromListing)
-                {
-                    rarityColor = rarityColors.GetColor(inputData.RarityName);
-                    rarityBackground = rarityBackgrounds.GetTypeImage(inputData.RarityName);
-                    categoryIcon = categoryIcons.GetTypeImage(inputData.IsEmote ? EMOTE_CATEGORY : inputData.Listing.wearableCategory);
-                }
-
-                viewInstance.ItemName.text = inputData.ItemName;
+                viewInstance.ItemName.text = inputData.Listing.name;
                 viewInstance.CreatorName.text = string.Empty;
-                viewInstance.RarityLabel.text = inputData.RarityName;
+                viewInstance.RarityLabel.text = rarity;
                 viewInstance.RarityLabel.color = rarityColor;
                 viewInstance.RarityBackground.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, viewInstance.RarityBackground.color.a);
-                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(inputData.RarityName);
+                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(rarity);
 
                 if (inputData.ItemThumbnail != null)
                 {

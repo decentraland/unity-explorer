@@ -73,13 +73,14 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
         public async UniTask<OpenExplorerUiResult> OpenItemPurchaseAsync(string itemUrn, uint requestId, CancellationToken ct)
         {
+            // The flow is main thread only, and that includes its availability check.
+            await UniTask.SwitchToMainThread(ct);
+
             if (!itemPurchaseFlow.IsAvailable)
             {
                 ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: item purchase from scenes is not available for this user");
                 return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
-
-            await UniTask.SwitchToMainThread(ct);
 
             // The purchase modal has a slot of its own, apart from the explore panel, and the flow holds it
             // because every scene shares the one modal.

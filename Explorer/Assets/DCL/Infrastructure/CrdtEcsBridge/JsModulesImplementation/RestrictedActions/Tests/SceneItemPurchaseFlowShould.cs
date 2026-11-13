@@ -110,7 +110,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public async Task ShowTheModalForTheListingWithVisualsLeftToTheModal()
+        public async Task ShowTheModalForTheListing()
         {
             // Arrange
             ArrangeListing();
@@ -123,9 +123,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 Arg.Is<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(cmd =>
                     cmd.InputData.Source == CreditPurchaseModalControllerParams.SOURCE_SDK_SCENE
                     && cmd.InputData.ItemUrn == ITEM_URN
-                    && cmd.InputData.ItemName == "Cool Hat"
-                    && cmd.InputData.RarityName == "epic"
-                    && cmd.InputData.VisualsFromListing
+                    && cmd.InputData.Listing.name == "Cool Hat"
                     && cmd.InputData.FallbackMarketplaceUrl == "https://example.org/marketplace/contracts/" + CONTRACT + "/items/3"),
                 Arg.Any<CancellationToken>());
         }
@@ -184,6 +182,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
         private void ArrangeListing() =>
             shopApiClient.GetShopListingForItemAsync(CONTRACT, "3", Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult<ShopListingDto?>(new ShopListingDto { tradeId = "trade-1", priceCredits = 25, name = "Cool Hat", rarity = "epic", category = "wearable", thumbnail = string.Empty }));
+                         .Returns(UniTask.FromResult<ShopListingDto?>(new ShopListingDto { tradeId = "trade-1", contractAddress = CONTRACT, itemId = "3", priceCredits = 25, name = "Cool Hat", rarity = "epic", category = "wearable", thumbnail = string.Empty }));
     }
 }

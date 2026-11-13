@@ -222,7 +222,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string wearableUrn = wearable.GetUrn();
                 var wearableItemView = equippedWearableItem;
-                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor, ct));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, ct));
                 equippedWearableItem.WearableClicked = onWearableClicked;
 
                 bool hasMarketplaceActions = wearable.IsOnChain() && marketPlaceLink != string.Empty;
@@ -263,7 +263,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string emoteUrn = emote.GetUrn();
                 var emoteItemView = equippedWearableItem;
-                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor, ct));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, ct));
                 equippedWearableItem.EmoteClicked = onEmoteClicked;
 
                 bool hasEmoteMarketplaceActions = emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty;
@@ -435,18 +435,10 @@ namespace DCL.Passport.Modules
             instantiatedEmptyItems.Clear();
         }
 
-        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, string rarityName, Sprite raritySprite, Color rarityColor, CancellationToken ct)
+        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, CancellationToken ct)
         {
-            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(
-                itemView.AssetNameText.text,
-                rarityName,
-                itemView.EquippedItemThumbnail.sprite,
-                raritySprite,
-                rarityColor,
-                itemView.CategoryImage.sprite);
-
             creditPurchaseBuyHandler.HandleBuyClickAsync(
-                                         urn, marketplaceLink, visuals,
+                                         urn, marketplaceLink, itemView.EquippedItemThumbnail.sprite,
                                          CreditPurchaseModalControllerParams.SOURCE_PASSPORT_EQUIPPED,
                                          resolving => itemView.BuyButton.interactable = !resolving,
                                          ct)
