@@ -33,7 +33,8 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         private readonly Dictionary<string, (Texture2DRef textureRef, Sprite sprite)> thumbnails = new ();
 
         public virtual bool IsAvailable =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
+            FeaturesRegistry.Instance.IsEnabled(FeatureId.SceneItemPurchase)
+            && FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
             && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
             && CreditsFeatureAccess.Instance.IsUserAllowed();
 

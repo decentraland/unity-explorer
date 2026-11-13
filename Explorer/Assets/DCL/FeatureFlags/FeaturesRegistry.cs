@@ -87,6 +87,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
+                [FeatureId.SceneItemPurchase] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.SCENE_ITEM_PURCHASE, featureFlags.IsEnabled(FeatureFlagsStrings.SCENE_ITEM_PURCHASE) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -282,5 +283,6 @@ namespace DCL.FeatureFlags
         GuestLogin = 77,
         Lobby = 78,
         EphemeralGuestAccount = 79,
+        SceneItemPurchase = 80,
     }
 }

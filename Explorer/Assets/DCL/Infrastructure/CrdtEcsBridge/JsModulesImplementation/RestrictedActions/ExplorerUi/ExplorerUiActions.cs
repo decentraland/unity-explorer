@@ -77,7 +77,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         {
             if (!itemPurchaseFlow.IsAvailable)
             {
-                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: buying with credits is not available for this user");
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: item purchase from scenes is not available for this user");
                 return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
