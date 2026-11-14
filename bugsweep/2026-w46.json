@@ -1,0 +1,228 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-11-07T12:02:14Z",
+ "collectedAt": "2026-11-14T12:01:57Z",
+ "groups": [
+  [
+   10653,
+   10654,
+   10655,
+   10656,
+   10658,
+   10660,
+   10661,
+   10667,
+   10659,
+   10665
+  ]
+ ],
+ "issues": [
+  {
+   "number": 10653,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10654,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10655,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10656,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10658,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10660,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10661,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10667,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10659,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10665,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10650,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10664,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10636,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10637,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10645,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10643,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10649,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10633,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10628,
+   "status": "skipped",
+   "commit": null,
+   "note": "backend/service outage, not a client defect: deploy timeouts, GLBs not loading and comms not connecting while the Asset Bundle Converter was down (status page); no reproduction steps"
+  },
+  {
+   "number": 10631,
+   "status": "skipped",
+   "commit": null,
+   "note": "could not reproduce and no client evidence: the popup is the fishing scene's own UI text, the attached log has nothing about it; likely scene content (Halloween leftover) rather than the Explorer"
+  },
+  {
+   "number": 10639,
+   "status": "skipped",
+   "commit": null,
+   "note": "scene runtime contract: the mining emote is triggered by the claimbite.dcl.eth scene through the SDK; how the client handles repeated scene-triggered emotes is the SDK contract, needs an SDK-side owner and the scene code"
+  },
+  {
+   "number": 10648,
+   "status": "skipped",
+   "commit": null,
+   "note": "no root cause: the log shows a scene JS exception (H._child is not iterable) and a teleport retry loop that cleared after an Explorer restart; no reproduction steps that isolate a client defect"
+  },
+  {
+   "number": 10632,
+   "status": "skipped",
+   "commit": null,
+   "note": "native crash (EXCEPTION_ACCESS_VIOLATION in il2cpp interface dispatch from SetAsDirty) with no managed frames; first seen before the 2026-W46 CRDT regression, kept reported until a root cause is shown"
+  },
+  {
+   "number": 10635,
+   "status": "skipped",
+   "commit": null,
+   "note": "native crash (EXCEPTION_ACCESS_VIOLATION in Arch Chunk.GetArray) with no managed frames; no root cause identifiable from the trace"
+  },
+  {
+   "number": 10666,
+   "status": "skipped",
+   "commit": null,
+   "note": "native crash (EXCEPTION_ACCESS_VIOLATION in SDKComponentCommandBufferSynchronizer.Apply) with no managed frames; first seen before the 2026-W46 CRDT regression, no root cause identifiable"
+  },
+  {
+   "number": 10662,
+   "status": "skipped",
+   "commit": null,
+   "note": "native V8 stack overflow inside the scene JS engine (macOS EXC_BAD_ACCESS), no managed frames; most likely a scene's own unbounded recursion"
+  },
+  {
+   "number": 10641,
+   "status": "skipped",
+   "commit": null,
+   "note": "malformed protobuf in a scene's own incoming CRDT payload (invalid tag zero while deserializing what the scene sent); no client root cause found and the event carries no scene to reproduce with"
+  },
+  {
+   "number": 10638,
+   "status": "skipped",
+   "commit": null,
+   "note": "TextMeshPro package internal (TMP_InputField.Backspace -> Delete) with no Decentraland frame to attribute the caret/text mismatch to; needs a repro to find which field rewrites its text while focused"
+  },
+  {
+   "number": 10640,
+   "status": "skipped",
+   "commit": null,
+   "note": "already swept elsewhere: same defect as #10609 (self-profile request timeout), fixed in the open 2026-W45 sweep PR https://github.com/decentraland/unity-explorer/pull/10624 (commit e35e2455c)"
+  },
+  {
+   "number": 10644,
+   "status": "skipped",
+   "commit": null,
+   "note": "already fixed on dev: the reported lines (RPCFriendsService.cs:591/129) match a July build; #9443 (c82132494) guards the unset Friend and ToClientFriendProfile now returns Option; the event is from an old build"
+  },
+  {
+   "number": 10626,
+   "status": "skipped",
+   "commit": null,
+   "note": "no root cause confirmed: the unguarded candidates are FindAvatarUtils.AvatarWithID reading a participant entry without IsAlive, or Transform.Apply on a destroyed pooled transform; needs the exact line from the Sentry event before a fix"
+  },
+  {
+   "number": 10627,
+   "status": "skipped",
+   "commit": null,
+   "note": "covered by open PR https://github.com/decentraland/unity-explorer/pull/10083 (fix/bugsweep-week-2026-w36-fable), which already null-guards CinemachineBrain.ActiveVirtualCamera in MainCameraSystem with a test; that PR is conflicting and needs a refresh rather than a duplicate fix"
+  },
+  {
+   "number": 10620,
+   "status": "skipped",
+   "commit": null,
+   "note": "re-checked: client works as designed, /goto crowd takes the top entry of archipelago hot-scenes and the live response still lists Genesis Plaza first (8 users vs 4); excluding Genesis Plaza is a product decision; only movement since the 2026-W45 skip was a label removal"
+  },
+  {
+   "number": 10444,
+   "status": "skipped",
+   "commit": null,
+   "note": "re-checked: backend, not client; the community place picker lists exactly what the places API returns for GetDestinationsByOwnerAsync (owner filter); owned Lands missing from that response must be fixed in decentraland/places; only movement since the 2026-W42 skip was a label removal"
+  }
+ ]
+}
