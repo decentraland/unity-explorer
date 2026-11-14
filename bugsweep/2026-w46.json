@@ -118,8 +118,8 @@
   },
   {
    "number": 10649,
-   "status": "pending",
-   "commit": null,
+   "status": "fixed",
+   "commit": "8bc7a9d6d03888ba165920551a39c8903278d7d3",
    "note": null
   },
   {
