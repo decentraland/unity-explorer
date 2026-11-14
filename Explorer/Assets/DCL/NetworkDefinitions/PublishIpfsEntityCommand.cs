@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,14 +21,12 @@ namespace DCL.Ipfs
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly IRealmData realmData;
 
-        public PublishIpfsEntityCommand(IWeb3IdentityCache web3IdentityCache, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, IRealmData realmData)
+        public PublishIpfsEntityCommand(IWeb3IdentityCache web3IdentityCache, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
-            this.realmData = realmData;
         }
 
         public async UniTask ExecuteAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
@@ -55,7 +52,8 @@ namespace DCL.Ipfs
         {
             string entityJson = JsonConvert.SerializeObject(entity, Formatting.None, serializerSettings);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
-            string entityId = realmData.Ipfs.GetFileHash(entityFile);
+            // Content-addressed: the id does not depend on the realm, which can be unset mid realm change
+            string entityId = entityFile.IpfsHashV1();
             using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             var form = new WWWForm();
