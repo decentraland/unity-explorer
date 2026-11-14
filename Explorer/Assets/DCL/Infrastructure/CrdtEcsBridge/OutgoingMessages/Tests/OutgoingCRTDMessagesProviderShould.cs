@@ -177,5 +177,43 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.GreaterOrEqual(OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.CountInactive, 1);
             Assert.GreaterOrEqual(OutgoingCRDTMessagesProvider.INDICES_SHARED_POOL.CountInactive, 1);
         }
+
+        [Test]
+        public void ReleaseToPoolOnlyOnceWhenDisposedTwice()
+        {
+            provider.Dispose();
+            int messagesInactive = OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.CountInactive;
+            int indicesInactive = OutgoingCRDTMessagesProvider.INDICES_SHARED_POOL.CountInactive;
+
+            provider.Dispose();
+
+            Assert.That(OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.CountInactive, Is.EqualTo(messagesInactive));
+            Assert.That(OutgoingCRDTMessagesProvider.INDICES_SHARED_POOL.CountInactive, Is.EqualTo(indicesInactive));
+        }
+
+        [Test]
+        public void NotHandOutTheReleasedListAfterDispose()
+        {
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+            List<OutgoingCRDTMessagesProvider.PendingMessage> released = provider.messages;
+
+            provider.Dispose();
+
+            // Another scene takes the released list from the shared pool
+            List<OutgoingCRDTMessagesProvider.PendingMessage> otherScene = OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.Get();
+
+            provider.AddPutMessage<PBPointerEventsResult, int>((_, _) => { }, new CRDTEntity(1), 100);
+            provider.AppendMessage<PBPointerEventsResult, int>((_, _) => { }, new CRDTEntity(2), 780, 100);
+            List<OutgoingCRDTMessagesProvider.PendingMessage> taken = provider.TakePendingMessages();
+
+            Assert.That(released, Is.Empty);
+            Assert.That(otherScene, Is.Empty);
+            Assert.That(taken, Is.Not.SameAs(otherScene));
+            Assert.That(taken, Is.Empty);
+
+            using (provider.GetSerializationSyncBlock(taken, null)) { }
+
+            OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.Release(otherScene);
+        }
     }
 }
