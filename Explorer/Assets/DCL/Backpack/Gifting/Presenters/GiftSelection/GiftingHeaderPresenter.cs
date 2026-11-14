@@ -14,14 +14,6 @@ namespace DCL.Backpack.Gifting.Presenters
 {
     public class GiftingHeaderPresenter : IDisposable
     {
-        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
-        {
-            InputMapComponent.Kind.Player,
-            InputMapComponent.Kind.Shortcuts,
-            InputMapComponent.Kind.Camera,
-            InputMapComponent.Kind.InWorldCamera,
-        };
-
         private const string TITLE_FORMAT = "Send a Gift to <color=#{0}>{1}</color>";
         private const int SEARCH_DEBOUNCE_MS = 500;
 
@@ -67,10 +59,10 @@ namespace DCL.Backpack.Gifting.Presenters
         }
 
         private void DisableInputs(string text) =>
-            inputBlock.Disable(BLOCKED_INPUTS);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
         private void EnableInputs(string text) =>
-            inputBlock.Enable(BLOCKED_INPUTS);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
         {

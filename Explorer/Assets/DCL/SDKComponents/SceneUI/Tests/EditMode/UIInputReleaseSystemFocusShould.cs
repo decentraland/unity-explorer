@@ -151,6 +151,23 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.That(UIInputComponent.BLOCKED_INPUT_KINDS, Contains.Item(InputMapComponent.Kind.Submit));
         }
 
+        [Test]
+        public void BlockPushToTalkWhileFocused()
+        {
+            // Act
+            Focus();
+
+            // Assert
+            Assert.That(UIInputComponent.BLOCKED_INPUT_KINDS, Contains.Item(InputMapComponent.Kind.VoiceChat));
+        }
+
+        [Test]
+        public void BlockPushToTalkWhileTypingInExplorerTextFields()
+        {
+            Assert.That(InputMapComponent.BLOCK_WHILE_TYPING, Contains.Item(InputMapComponent.Kind.VoiceChat));
+            Assert.That(InputMapComponent.BLOCK_USER_INPUT, Contains.Item(InputMapComponent.Kind.VoiceChat));
+        }
+
         private void Focus()
         {
             uiInputComponent.TextField.Focus();
