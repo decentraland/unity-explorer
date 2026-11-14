@@ -22,63 +22,63 @@
  "issues": [
   {
    "number": 10653,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10654,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10655,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10656,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10658,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10660,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10661,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10667,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10659,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10665,
-   "status": "pending",
-   "commit": null,
-   "note": null
+   "status": "fixed",
+   "commit": "03e88247e1d063d1dbe0090406c85ccb9d3e72c3",
+   "note": "one root cause (CRDT provider pooled list re-released after dispose, regression from #10630)"
   },
   {
    "number": 10650,
