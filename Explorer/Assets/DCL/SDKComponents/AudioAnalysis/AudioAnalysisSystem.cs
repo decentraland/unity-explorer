@@ -30,6 +30,12 @@ namespace DCL.SDKComponents.AudioSources
         // Main-thread copy of the frame under analysis, sized to one DSP callback so the producers never block on it.
         private float[] frameScratch;
 
+        /// <summary>
+        ///     The OS failing to open the native plugin is per-machine-permanent: analysis stays off for this scene instead of
+        ///     throwing every frame until the scene is suspended for engine exceptions.
+        /// </summary>
+        private bool isNativeAnalysisUnavailable;
+
         internal AudioAnalysisSystem(
             World world, 
             IPerformanceBudget frameTimeBudgetProvider,
@@ -82,6 +88,8 @@ namespace DCL.SDKComponents.AudioSources
             ref PBAudioAnalysis sdkComponent
         ) where TComponent : IComponentWithAudioFrameBuffer
         {
+            if (isNativeAnalysisUnavailable) return;
+
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             if (!component.TryAttachAudioFrameBuffer())
@@ -100,10 +108,18 @@ namespace DCL.SDKComponents.AudioSources
                 float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN; 
                 float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN; 
 
-                unsafe 
-                {
-                    AudioAnalysis result = NativeMethods.AnalyzeAudioBuffer(frameScratch.AsSpan(0, sampleCount), AudioSettings.outputSampleRate, mode, amplitudeGain, bandsGain);
+                AudioAnalysis result;
 
+                try { result = NativeMethods.AnalyzeAudioBuffer(frameScratch.AsSpan(0, sampleCount), AudioSettings.outputSampleRate, mode, amplitudeGain, bandsGain); }
+                catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
+                {
+                    isNativeAnalysisUnavailable = true;
+                    ReportHub.LogWarning(GetReportCategory(), $"Audio analysis disabled: the native plugin cannot be loaded on this machine ({e.Message})");
+                    return;
+                }
+
+                unsafe
+                {
                     sdkComponent.Amplitude = result.amplitude;
 
                     // Manual iteration because ProtoBuf doesn't support fixed arrays like C#, Rust, C lang do
