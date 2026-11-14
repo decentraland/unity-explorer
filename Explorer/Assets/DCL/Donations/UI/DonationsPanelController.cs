@@ -24,13 +24,6 @@ namespace DCL.Donations.UI
     public class DonationsPanelController : ControllerBase<DonationsPanelView, DonationsPanelParameter>
     {
         private static readonly URN EMOTE_MONEY_URN = new ("money");
-        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
-        {
-            InputMapComponent.Kind.Player,
-            InputMapComponent.Kind.Shortcuts,
-            InputMapComponent.Kind.Camera,
-            InputMapComponent.Kind.InWorldCamera,
-        };
 
         private readonly IDonationsService donationsService;
         private readonly IProfileRepository profileRepository;
@@ -212,11 +205,11 @@ namespace DCL.Donations.UI
         }
 
         protected override void OnViewShow() =>
-            inputBlock.Disable(BLOCKED_INPUTS);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
         protected override void OnViewClose()
         {
-            inputBlock.Enable(BLOCKED_INPUTS);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             panelLifecycleCts.SafeCancelAndDispose();
         }
 

@@ -180,7 +180,7 @@ namespace Global
             var container = new StaticContainer();
 
             container.RealmData = realmData;
-            container.PublishIpfsEntityCommand = new PublishIpfsEntityCommand(web3IdentityProvider, webRequestsContainer.WebRequestController, decentralandUrlsSource, realmData);
+            container.PublishIpfsEntityCommand = new PublishIpfsEntityCommand(web3IdentityProvider, webRequestsContainer.WebRequestController, decentralandUrlsSource);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;

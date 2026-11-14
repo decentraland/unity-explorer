@@ -812,10 +812,10 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.BLOCK_WHILE_TYPING);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.BLOCK_WHILE_TYPING);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

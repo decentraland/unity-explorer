@@ -161,7 +161,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             JumpIn?.Invoke();
 
             if (!string.IsNullOrEmpty(screenshotRealm) && screenshotRealm.IsEns())
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(screenshotRealm).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), teleportCts.Token).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(screenshotRealm).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), teleportCts.Token, isWorld: true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(screenshotParcel, teleportCts.Token, false).Forget();
         }

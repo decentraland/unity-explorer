@@ -51,10 +51,19 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.SwitchVisibility(false);
 
                 if (!genesisTerrain.IsTerrainGenerated)
+                {
                     await genesisTerrain.GenerateGenesisTerrainAndShowAsync(
                         realmController.RealmData.WorldManifest,
                         processReport: landscapeLoadReport,
                         cancellationToken: ct);
+
+                    // Generation skips an empty manifest and swallows failures: there is no terrain to announce
+                    if (!genesisTerrain.IsTerrainGenerated)
+                    {
+                        landscapeLoadReport.SetProgress(1f);
+                        return EnumResult<LandscapeError>.ErrorResult(LandscapeError.TerrainDataUnavailable);
+                    }
+                }
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
             }
@@ -128,7 +137,8 @@ namespace Global.Dynamic.Landscapes
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
+                if (!worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport))
+                    return WorldsTerrainResult.Unavailable;
             }
 
             return WorldsTerrainResult.Generated;
@@ -144,10 +154,9 @@ namespace Global.Dynamic.Landscapes
                 return WorldsTerrainResult.Disabled;
 
             if (!worldManifest.IsEmpty)
-            {
-                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
-                return WorldsTerrainResult.Generated;
-            }
+                return worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport)
+                    ? WorldsTerrainResult.Generated
+                    : WorldsTerrainResult.Unavailable;
 
             var parcelsAmount = 0;
 
@@ -162,7 +171,8 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
+                if (!worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport))
+                    return WorldsTerrainResult.Unavailable;
             }
 
             return WorldsTerrainResult.Generated;

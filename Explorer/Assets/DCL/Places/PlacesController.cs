@@ -153,9 +153,9 @@ namespace DCL.Places
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.BLOCK_WHILE_TYPING);
 
         private void RestoreShortcutsInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.BLOCK_WHILE_TYPING);
     }
 }

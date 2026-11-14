@@ -37,6 +37,11 @@ namespace DCL.Diagnostics.Sentry
             "Platform does not support compute shaders",
         };
 
+        // FMOD failing to read a built-in clip's audio data from the player's own damaged or quarantined install (#10633);
+        // other FMOD failures such as "File not found" or "Unsupported format" stay reported
+        private const string FMOD_SOUND_CREATION_PREFIX = "Cannot create FMOD::Sound instance";
+        private const string FMOD_ERROR_LOADING_FILE = "(FMOD error: Error loading file.";
+
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
@@ -320,7 +325,8 @@ namespace DCL.Diagnostics.Sentry
                 if (message.StartsWith(IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
                     return true;
 
-            return false;
+            return message.StartsWith(FMOD_SOUND_CREATION_PREFIX, StringComparison.Ordinal)
+                   && message.Contains(FMOD_ERROR_LOADING_FILE, StringComparison.Ordinal);
         }
 
         private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment, bool isOffline)

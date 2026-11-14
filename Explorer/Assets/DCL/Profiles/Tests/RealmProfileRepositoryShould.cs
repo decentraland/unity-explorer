@@ -255,7 +255,7 @@ namespace DCL.Profiles.Tests
         }
 
         private RealmProfileRepository NewRepository(bool useCentralizedProfiles) =>
-            new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
+            new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
 
         private void FailSinglePostWith(Exception error) =>
             webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>

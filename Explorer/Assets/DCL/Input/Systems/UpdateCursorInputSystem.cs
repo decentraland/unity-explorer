@@ -43,6 +43,12 @@ namespace DCL.Input.Systems
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
         private bool shouldBeLocked;
+
+        /// <summary>
+        ///     A press that began over UI (a slider drag, a scroll bar) belongs to that UI until release and must not turn
+        ///     into a camera pan once the pointer leaves the element.
+        /// </summary>
+        private bool temporalLockStartedOverUI;
         private Vector2 lastRaycastPosition;
         private IReadOnlyList<RaycastResult> cachedRaycastResults = Array.Empty<RaycastResult>();
 
@@ -241,6 +247,9 @@ namespace DCL.Input.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
+            if (cameraActions.TemporalLock.WasPressedThisFrame()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                temporalLockStartedOverUI = cursorComponent.IsOverUI;
+
             CursorState nextState = cursorComponent.CursorState;
 
             // Opened a menu while locked
@@ -279,7 +288,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && exposedCameraData.CameraMode != CameraMode.SdkCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
+            if (!isMouseOutOfBounds && isTemporalLock && !temporalLockStartedOverUI && exposedCameraData.CameraMode != CameraMode.SdkCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })

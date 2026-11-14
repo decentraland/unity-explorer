@@ -90,7 +90,7 @@ namespace DCL.InWorldCamera.Playground
             return new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(IWebRequestController.TEST,
-                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
+                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource),
                         urlsSource,
                         new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false)
                 ),

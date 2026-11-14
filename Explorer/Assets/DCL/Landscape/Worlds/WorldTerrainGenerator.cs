@@ -74,15 +74,16 @@ namespace DCL.Landscape
             Trees?.Hide();
         }
 
-        public void GenerateTerrain(NativeHashSet<int2> ownedParcels,
+        /// <returns>False when nothing was generated, so the caller must not treat the terrain as loaded</returns>
+        public bool GenerateTerrain(NativeHashSet<int2> ownedParcels,
             AsyncLoadProcessReport? processReport = null)
         {
-            if (!IsInitialized) return;
+            if (!IsInitialized) return false;
 
             if (ownedParcels.Count == 0)
             {
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skipping world terrain generation: occupied parcels set is empty.");
-                return;
+                return false;
             }
 
             TerrainModel = new TerrainModel(ParcelSize, ownedParcels, terrainGenData.borderPadding, true);
@@ -121,6 +122,7 @@ namespace DCL.Landscape
             processReport?.SetProgress(1f);
 
             IsTerrainShown = true;
+            return true;
         }
     }
 }
