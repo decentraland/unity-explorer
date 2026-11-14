@@ -257,6 +257,41 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
+        public void NotPanWhenADragThatStartedOverUILeavesIt()
+        {
+            cursor.IsLocked().Returns(false);
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
+
+            // Press on a UI element, e.g. the time of day slider handle
+            eventSystem.IsPointerOverGameObject().Returns(true);
+            Press(mouse.leftButton);
+            system.Update(0);
+
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
+
+            // Keep holding and drag out of the element
+            InputSystem.Update();
+            eventSystem.IsPointerOverGameObject().Returns(false);
+            CursorComponent cursorComponent = world.Get<CursorComponent>(entity);
+            cursorComponent.PositionIsDirty = true;
+            world.Set(entity, cursorComponent);
+            system.Update(0);
+
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
+
+            // A new press outside UI still pans
+            Release(mouse.leftButton);
+            system.Update(0);
+            Press(mouse.leftButton);
+            cursorComponent = world.Get<CursorComponent>(entity);
+            cursorComponent.PositionIsDirty = true;
+            world.Set(entity, cursorComponent);
+            system.Update(0);
+
+            Assert.AreEqual(CursorState.Panning, world.Get<CursorComponent>(entity).CursorState);
+        }
+
+        [Test]
         public void AutomaticallyUnlockCursorByExternalUnlock()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Locked });
