@@ -13,8 +13,8 @@ namespace DCL.Shop
     public class ShopCategoryPillsView : MonoBehaviour
     {
         /// <summary>The "ALL" pill authored in the prefab; the category pills are clones of it.</summary>
-        [field: SerializeField] public ButtonWithSelectableStateView AllPill { get; private set; } = null!;
-        [field: SerializeField] public float LabelRightPadding { get; private set; } = 16f;
+        [field: SerializeField] private ButtonWithSelectableStateView AllPill { get; set; } = null!;
+        [field: SerializeField] private float LabelRightPadding { get; set; } = 16f;
 
         private readonly List<ButtonWithSelectableStateView> pills = new ();
         private readonly List<string?> pillKeys = new ();
