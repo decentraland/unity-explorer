@@ -21,6 +21,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     {
         private const string CONTRACT = "0x2222222222222222222222222222222222222222";
         private const string ITEM_URN = "urn:decentraland:matic:collections-v2:" + CONTRACT + ":3";
+        private const int POLYGON_CHAIN_ID = 137;
+        private const int AMOY_CHAIN_ID = 80002;
 
         private IMVCManager mvcManager = null!;
         private MarketplaceShopAPIClient shopApiClient = null!;
@@ -46,6 +48,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [TestCase("not-a-urn")]
         [TestCase("")]
         [TestCase("urn:decentraland:matic:collections-v2:" + CONTRACT + ":3:105312291668557186697918027683670432318895095400549111254310977537")]
+        [TestCase("urn:x:" + CONTRACT + "&listingType=secondary&first=5:0")]
+        [TestCase("urn:decentraland:matic:collections-v2:" + CONTRACT + "&listingType=secondary:3")]
+        [TestCase("urn:decentraland:matic:collections-thirdparty:a:b:c:" + CONTRACT + ":3")]
+        [TestCase("urn:decentraland:mainnet:collections-v2:" + CONTRACT + ":3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222:3")]
+        [TestCase("urn:decentraland:matic:collections-v2:" + CONTRACT + ":+3")]
+        [TestCase("urn:decentraland:matic:collections-v2:" + CONTRACT + ":3\n")]
+        [TestCase(" urn:decentraland:matic:collections-v2:" + CONTRACT + ":3")]
         public async Task FailWithoutALookupWhenTheUrnIsNotACollectionItem(string urn)
         {
             // Act
@@ -62,6 +72,23 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             shopApiClient.GetShopListingForItemAsync(CONTRACT, "3", Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult<ShopListingDto?>(null));
+
+            // Act
+            ExplorerItemPurchaseStatus status = await flow.RunAsync(ITEM_URN, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(ExplorerItemPurchaseStatus.Failed, status);
+            await mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(), Arg.Any<CancellationToken>());
+        }
+
+        [TestCase("0x3333333333333333333333333333333333333333", "3", POLYGON_CHAIN_ID)]
+        [TestCase(CONTRACT, "4", POLYGON_CHAIN_ID)]
+        [TestCase(CONTRACT, null, POLYGON_CHAIN_ID)]
+        [TestCase(CONTRACT, "3", 1)]
+        public async Task FailWithoutAModalWhenTheListingIsNotTheOfferedItem(string listingContract, string? listingItemId, int listingChainId)
+        {
+            // Arrange
+            ArrangeListing(listingContract, listingItemId, listingChainId);
 
             // Act
             ExplorerItemPurchaseStatus status = await flow.RunAsync(ITEM_URN, CancellationToken.None);
@@ -129,6 +156,26 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
+        public async Task GiveTheModalTheUrnOfTheListingNotTheOneTheSceneSent()
+        {
+            // Arrange: the scene spells the address in upper case, the listing in lower case.
+            const string LISTING_CONTRACT = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
+            const string SCENE_CONTRACT = "0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD";
+
+            shopApiClient.GetShopListingForItemAsync(SCENE_CONTRACT, "3", Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(CreateListing(LISTING_CONTRACT, "3", AMOY_CHAIN_ID)));
+
+            // Act
+            await flow.RunAsync("urn:decentraland:matic:collections-v2:" + SCENE_CONTRACT + ":3", CancellationToken.None);
+
+            // Assert
+            await mvcManager.Received(1).ShowAsync(
+                Arg.Is<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(cmd =>
+                    cmd.InputData.ItemUrn == "urn:decentraland:amoy:collections-v2:" + LISTING_CONTRACT + ":3"),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task FailWhenTheModalNeverRan()
         {
             // Arrange: MVC returns from a show request at once, without running the modal, when its
@@ -180,8 +227,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.IsFalse(flow.TryReserve());
         }
 
-        private void ArrangeListing() =>
+        private void ArrangeListing(string listingContract = CONTRACT, string? listingItemId = "3", int listingChainId = POLYGON_CHAIN_ID) =>
             shopApiClient.GetShopListingForItemAsync(CONTRACT, "3", Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult<ShopListingDto?>(new ShopListingDto { tradeId = "trade-1", contractAddress = CONTRACT, itemId = "3", priceCredits = 25, name = "Cool Hat", rarity = "epic", category = "wearable", thumbnail = string.Empty }));
+                         .Returns(UniTask.FromResult<ShopListingDto?>(CreateListing(listingContract, listingItemId, listingChainId)));
+
+        private static ShopListingDto CreateListing(string contract, string? itemId, int chainId) =>
+            new () { tradeId = "trade-1", contractAddress = contract, itemId = itemId, chainId = chainId, priceCredits = 25, name = "Cool Hat", rarity = "epic", category = "wearable", thumbnail = string.Empty };
     }
 }

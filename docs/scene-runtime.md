@@ -44,6 +44,8 @@ Every request must come from the current scene and within one tick of a pointer 
 
 **Item purchase (`EU_ITEM_PURCHASE`).** The scene passes only an item URN in `params.item_purchase`. `SceneItemPurchaseFlow` resolves it to its primary listing and shows the credits purchase modal, so price and payment never pass through the scene.
 
+- The URN must be exactly `urn:decentraland:{matic|amoy}:collections-v2:<0x + 40 hex address>:<item id>`. Anything else, including a URN with a token id or a third-party collection, is `Failed` without a listing lookup. The address and item id go into the catalog query, so nothing else may reach it.
+- The listing that comes back must be for that same contract and item on a Polygon chain. The URN the modal gets (the one its try-on preview loads) is built from that listing, not from the scene's string, so what is previewed is what is charged.
 - The feature has its own switch, `FeatureId.SceneItemPurchase`: the `alfa-scene-item-purchase` flag, overridable with the `--scene-item-purchase` app argument (`false` turns it off; forcing it on in a build also needs `--debug`). It is on by default in the Editor.
 - A request is refused with `REJECTED_FEATURE_DISABLED` when that switch is off, when buying with credits is off for the user, or when it comes from a portable experience.
 - The modal has its own slot: it can open over the explore panel, and a second request while one is running answers `WAS_ALREADY_OPEN`. `SceneItemPurchaseFlow` holds that slot, so it is shared by every scene.

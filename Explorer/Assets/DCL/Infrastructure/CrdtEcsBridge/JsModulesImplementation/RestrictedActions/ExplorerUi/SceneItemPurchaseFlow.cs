@@ -4,12 +4,13 @@ using DCL.FeatureFlags;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Passport.Modules;
+using DCL.Shop;
 using DCL.UI;
 using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -23,6 +24,15 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     /// </summary>
     public class SceneItemPurchaseFlow : IDisposable
     {
+        private const string URN_CONTRACT_GROUP = "contract";
+        private const string URN_ITEM_GROUP = "item";
+
+        // The only shape a scene may offer: an item of a Polygon collection. The address and the item id
+        // go into the listing query, so they are matched to the character.
+        private static readonly Regex SCENE_ITEM_URN = new (
+            @"\Aurn:decentraland:(?:matic|amoy):collections-v2:(?<contract>0x[0-9a-fA-F]{40}):(?<item>[0-9]+)\z",
+            RegexOptions.CultureInvariant);
+
         private readonly IMVCManager mvcManager;
         private readonly MarketplaceShopAPIClient shopApiClient;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -90,13 +100,34 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
         {
             try
             {
-                ShopListingDto? listing = await CreditPurchaseBuyHandler.FetchListingAsync(shopApiClient, itemUrn, ct);
+                Match urnMatch = SCENE_ITEM_URN.Match(itemUrn);
+
+                if (!urnMatch.Success)
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "A scene offered a urn that is not a collection item");
+                    return ExplorerItemPurchaseStatus.Failed;
+                }
+
+                string contractAddress = urnMatch.Groups[URN_CONTRACT_GROUP].Value;
+                string itemId = urnMatch.Groups[URN_ITEM_GROUP].Value;
+
+                ShopListingDto? listing = await shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
 
                 if (listing == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"A scene offered '{itemUrn}', which is not a collection item or has no primary listing");
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"A scene offered '{itemUrn}', which has no primary listing");
                     return ExplorerItemPurchaseStatus.Failed;
                 }
+
+                if (!IsListingOf(listing, contractAddress, itemId))
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"The listing resolved for '{itemUrn}' is {listing.contractAddress}:{listing.itemId} on chain {listing.chainId}, not the item the scene offered");
+                    return ExplorerItemPurchaseStatus.Failed;
+                }
+
+                // Built from the listing that is charged, never from the scene's string, so the item the
+                // modal previews is the item it sells.
+                string listingUrn = ShopItemLinks.BuildItemUrn(listing.chainId, listing.contractAddress, itemId);
 
                 Sprite? thumbnail = await GetThumbnailAsync(listing.thumbnail, ct);
 
@@ -109,7 +140,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                     thumbnail,
                     $"{decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink)}/contracts/{listing.contractAddress}/items/{listing.itemId}",
                     CreditPurchaseModalControllerParams.SOURCE_SDK_SCENE,
-                    itemUrn,
+                    listingUrn,
                     closedWith => outcome = closedWith);
 
                 await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct);
@@ -128,6 +159,11 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                 return ExplorerItemPurchaseStatus.Failed;
             }
         }
+
+        private static bool IsListingOf(ShopListingDto listing, string contractAddress, string itemId) =>
+            ShopItemLinks.HasDerivableUrn(listing.chainId)
+            && string.Equals(listing.contractAddress, contractAddress, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(listing.itemId, itemId, StringComparison.Ordinal);
 
         private async UniTask<Sprite?> GetThumbnailAsync(string url, CancellationToken ct)
         {

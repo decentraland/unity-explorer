@@ -17,6 +17,8 @@ namespace DCL.Passport.Modules
         public const string FALLBACK_RESOLUTION_FAILED = "resolution_failed";
         public const string FALLBACK_NO_CREDITS_LISTING = "no_credits_listing";
 
+        private const int CONTRACT_ADDRESS_LENGTH = 42;
+
         private readonly IMVCManager mvcManager;
         private readonly MarketplaceShopAPIClient shopApiClient;
         private readonly UnityAppWebBrowser webBrowser;
@@ -46,27 +48,43 @@ namespace DCL.Passport.Modules
             if (lastColonIndex == -1)
                 return false;
 
-            var item = urnSpan.Slice(lastColonIndex + 1).ToString();
+            ReadOnlySpan<char> item = urnSpan.Slice(lastColonIndex + 1);
             urnSpan = urnSpan.Slice(0, lastColonIndex);
             int secondLastColonIndex = urnSpan.LastIndexOf(':');
-            var contract = urnSpan.Slice(secondLastColonIndex + 1).ToString();
+            ReadOnlySpan<char> contract = urnSpan.Slice(secondLastColonIndex + 1);
 
-            if (!contract.StartsWith("0x") || item.Length == 0 || !ulong.TryParse(item, out ulong _))
+            // Both end up as query parameter values, so nothing but an address and a number may pass.
+            if (!IsContractAddress(contract) || !IsDecimalNumber(item) || !ulong.TryParse(item, out ulong _))
                 return false;
 
-            contractAddress = contract;
-            itemId = item;
+            contractAddress = contract.ToString();
+            itemId = item.ToString();
             return true;
         }
 
-        /// <summary>
-        ///     The primary listing of the item behind the urn. Null when the urn is not a collection item or
-        ///     the item has no primary listing.
-        /// </summary>
-        public static UniTask<ShopListingDto?> FetchListingAsync(MarketplaceShopAPIClient shopApiClient, string itemUrn, CancellationToken ct) =>
-            TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId)
-                ? shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct)
-                : UniTask.FromResult<ShopListingDto?>(null);
+        private static bool IsContractAddress(ReadOnlySpan<char> value)
+        {
+            if (value.Length != CONTRACT_ADDRESS_LENGTH || value[0] != '0' || value[1] != 'x')
+                return false;
+
+            for (var i = 2; i < value.Length; i++)
+                if (!Uri.IsHexDigit(value[i]))
+                    return false;
+
+            return true;
+        }
+
+        private static bool IsDecimalNumber(ReadOnlySpan<char> value)
+        {
+            if (value.Length == 0)
+                return false;
+
+            foreach (char c in value)
+                if (c is < '0' or > '9')
+                    return false;
+
+            return true;
+        }
 
         public void ClearCache() =>
             listingCache.Clear();
@@ -161,7 +179,13 @@ namespace DCL.Passport.Modules
             if (listingCache.TryGetValue(itemUrn, out ShopListingDto? cached))
                 return cached;
 
-            ShopListingDto? listing = await FetchListingAsync(shopApiClient, itemUrn, ct);
+            if (!TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId))
+            {
+                listingCache[itemUrn] = null;
+                return null;
+            }
+
+            ShopListingDto? listing = await shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
             listingCache[itemUrn] = listing;
             return listing;
         }

@@ -178,6 +178,17 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("no-colons-here", out _, out _));
         }
 
+        [TestCase("urn:x:0x2222222222222222222222222222222222222222&listingType=secondary:0")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222:3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x222222222222222222222222222222222222222g:3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:+3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222: 3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:3&first=5")]
+        public void RejectUrnsWhoseContractOrItemIsNotAnAddressAndANumber(string urn)
+        {
+            Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem(urn, out _, out _));
+        }
+
         private class MockWebBrowser : UnityAppWebBrowser
         {
             public string? UrlOpened { get; private set; }
