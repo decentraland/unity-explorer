@@ -19,6 +19,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         public float Right;
         public MovementKind Kind;
 
+        /// <summary>The jump key as <c>JumpInputComponent.IsPressed</c> holds it this frame.</summary>
+        public bool Jump;
+
         /// <summary>Scene coordinates.</summary>
         public Vector3 Pos;
 
@@ -32,6 +35,14 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         public float YawCamera;
         public int PhysicsTick;
 
+        /// <summary>A jump (ground or air) started on a fixed tick since the previous frame.</summary>
+        public bool JumpTriggered;
+
+        /// <summary><c>JumpState.JumpCount</c>: jumps since the character last stood on the ground.</summary>
+        public int JumpCount;
+
+        public GlideStateValue Glide;
+
         /// <summary>The scenario's input at <see cref="T" />, kept to count frames whose consumed input disagrees with it.</summary>
         public LocomotionInputStep Expected;
 
@@ -40,7 +51,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                                       && Kind == (!Expected.IsMoving ? MovementKind.Idle
                                              : Expected.Sprint ? MovementKind.Run
                                              : Expected.Walk ? MovementKind.Walk
-                                             : MovementKind.Jog);
+                                             : MovementKind.Jog)
+                                      && Jump == Expected.Jump;
 
         private static int Sign(float axis) =>
             axis > 0.5f ? 1 : axis < -0.5f ? -1 : 0;
@@ -61,8 +73,12 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         public readonly Vector3 Spawn;
         public readonly float SpawnYaw;
 
+        /// <summary>The double jump and gliding features (<c>FeatureId.DoubleJump</c>, <c>FeatureId.Gliding</c>): what a jump press does in the air.</summary>
+        public readonly bool DoubleJump;
+        public readonly bool Gliding;
+
         public LocomotionRunInfo(int repeat, bool animationsEnabled, string position, string startedUtc, LocomotionInputSeam inputSeam, bool fixedDeltaTime,
-            float physicsDeltaTime, string cameraMode, Vector2Int sceneBaseParcel, Vector3 spawn, float spawnYaw)
+            float physicsDeltaTime, string cameraMode, Vector2Int sceneBaseParcel, Vector3 spawn, float spawnYaw, bool doubleJump, bool gliding)
         {
             Repeat = repeat;
             AnimationsEnabled = animationsEnabled;
@@ -75,6 +91,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             SceneBaseParcel = sceneBaseParcel;
             Spawn = spawn;
             SpawnYaw = spawnYaw;
+            DoubleJump = doubleJump;
+            Gliding = gliding;
         }
     }
 
@@ -147,6 +165,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"scene_base_parcel\":[").Append(run.SceneBaseParcel.x).Append(',').Append(run.SceneBaseParcel.y).Append(']')
               .Append(",\"spawn\":").AppendVector(run.Spawn)
               .Append(",\"spawn_yaw\":").AppendFloat(run.SpawnYaw)
+              .Append(",\"double_jump\":").Append(run.DoubleJump ? "true" : "false")
+              .Append(",\"gliding\":").Append(run.Gliding ? "true" : "false")
               .Append("}}\n");
         }
 
@@ -159,6 +179,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"right\":").AppendFloat(frame.Right)
               .Append(",\"walk\":").Append(frame.Kind == MovementKind.Walk ? "true" : "false")
               .Append(",\"sprint\":").Append(frame.Kind == MovementKind.Run ? "true" : "false")
+              .Append(",\"jump\":").Append(frame.Jump ? "true" : "false")
               .Append("},\"pos\":").AppendVector(frame.Pos)
               .Append(",\"vel\":").AppendVector(frame.Vel)
               .Append(",\"grounded\":").Append(frame.Grounded ? "true" : "false")
@@ -168,6 +189,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"physics_tick\":").Append(frame.PhysicsTick)
               .Append(",\"vel_external\":").AppendVector(frame.ExternalVel)
               .Append(",\"vel_gravity_y\":").AppendFloat(frame.GravityVelY)
+              .Append(",\"jump_triggered\":").Append(frame.JumpTriggered ? "true" : "false")
+              .Append(",\"jump_count\":").Append(frame.JumpCount)
+              .Append(",\"glide\":\"").Append(GlideName(frame.Glide)).Append('"')
               .Append("}}\n");
         }
 
@@ -178,6 +202,15 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 MovementKind.Jog => "jog",
                 MovementKind.Run => "run",
                 _ => "idle",
+            };
+
+        private static string GlideName(GlideStateValue glide) =>
+            glide switch
+            {
+                GlideStateValue.OpeningProp => "opening",
+                GlideStateValue.Gliding => "gliding",
+                GlideStateValue.ClosingProp => "closing",
+                _ => "closed",
             };
 
         private static StringBuilder AppendVector(this StringBuilder sb, Vector3 v) =>

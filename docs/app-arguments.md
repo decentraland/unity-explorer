@@ -432,7 +432,7 @@ decentraland://?force-open-backpack=true
 | `locomotion-out` | Output directory; traces go to `<dir>/unity/<scenario id>__fps<fps>__r<repeat>.jsonl`. | `<persistentDataPath>/locomotion-traces` |
 | `locomotion-spawn` | `x,y,z[,yaw]` in scene coordinates (relative to the base parcel of the scene the suite starts in). | where the player stands; facing the scenario's camera yaw |
 | `locomotion-animations` | `true` or `false`: the own avatar's Animator while the recorder is active. | `false` |
-| `locomotion-input` | `keyboard` (virtual keyboard device through the DCLInput actions) or `component` (overwrites `MovementInputComponent`). | `keyboard` |
+| `locomotion-input` | `keyboard` (virtual keyboard device through the DCLInput actions) or `component` (overwrites `MovementInputComponent` and `JumpInputComponent`). | `keyboard` |
 | `locomotion-dt` | `real`, or `fixed` to advance every frame by exactly 1/fps (`Time.captureDeltaTime`). | `real` |
 | `locomotion-quit` | When present, quits the application after the suite. | absent |
 

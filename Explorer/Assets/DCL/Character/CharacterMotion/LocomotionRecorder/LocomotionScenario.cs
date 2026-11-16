@@ -22,20 +22,25 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         public readonly bool Walk;
         public readonly bool Sprint;
 
-        public LocomotionInputStep(float t, int fwd, int right, bool walk, bool sprint)
+        /// <summary>The jump key held; a press is the step that sets it after one that did not.</summary>
+        public readonly bool Jump;
+
+        public LocomotionInputStep(float t, int fwd, int right, bool walk, bool sprint, bool jump = false)
         {
             T = t;
             Fwd = fwd;
             Right = right;
             Walk = walk;
             Sprint = sprint;
+            Jump = jump;
         }
 
         public bool IsMoving => Fwd != 0 || Right != 0;
     }
 
     /// <summary>
-    ///     A locomotion scenario (trace format v1, shared with the Bevy recorder): a step function of digital keys,
+    ///     A locomotion scenario (trace format v1, shared with the Bevy recorder): a step function of digital keys
+    ///     (movement, walk, sprint and jump),
     ///     played under a held camera yaw at a locked frame rate after an idle settle.
     /// </summary>
     public sealed class LocomotionScenario
@@ -147,7 +152,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             {
                 JObject e = rawEvent as JObject ?? throw new FormatException($"{source} ({id}): an event is not an object");
                 var step = new LocomotionInputStep(Required<float>(e, "t", source), Axis(e, "fwd", source), Axis(e, "right", source),
-                    e.Value<bool?>("walk") ?? false, e.Value<bool?>("sprint") ?? false);
+                    Key(e, "walk", source), Key(e, "sprint", source), Key(e, "jump", source));
 
                 if (events.Count > 0 && step.T < events[events.Count - 1].T)
                     throw new FormatException($"{source} ({id}): events must be ordered by t");
@@ -166,6 +171,20 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 throw new FormatException($"{source}: {key} must be -1, 0 or 1, got {value}");
 
             return value;
+        }
+
+        /// <summary>A key's held state: a JSON boolean, false when absent.</summary>
+        private static bool Key(JObject json, string key, string source)
+        {
+            JToken? token = json[key];
+
+            if (token == null || token.Type == JTokenType.Null)
+                return false;
+
+            if (token.Type != JTokenType.Boolean)
+                throw new FormatException($"{source}: {key} must be true or false, got {token}");
+
+            return token.Value<bool>();
         }
 
         private static T Required<T>(JObject json, string key, string source)

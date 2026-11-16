@@ -2,11 +2,13 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.RealmNavigation;
 using DCL.Utility;
 using ECS;
@@ -43,6 +45,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity physicsTick;
+
+        /// <summary><c>JumpTrigger.TickWhenJumpWasConsumed</c> at the previous recorded frame: it changes on every tick that starts a jump.</summary>
+        private int jumpConsumedTick;
 
         internal LocomotionSuiteSystem(World world, LocomotionSuiteSession session, Entity playerEntity, ILoadingStatus loadingStatus, IScenesCache scenesCache,
             IRealmData realmData) : base(world)
@@ -200,10 +205,16 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
             CharacterRigidTransform rigidTransform = World.Get<CharacterRigidTransform>(playerEntity);
             ref readonly MovementInputComponent input = ref World.Get<MovementInputComponent>(playerEntity);
+            ref readonly JumpInputComponent jumpInput = ref World.Get<JumpInputComponent>(playerEntity);
             Transform characterTransform = World.Get<CharacterTransform>(playerEntity).Transform;
 
             // The avatar model is parented to the character; read it when present so the yaw is the one on screen.
             Transform avatarTransform = World.TryGet(playerEntity, out AvatarBase? avatarBase) && avatarBase != null ? avatarBase.transform : characterTransform;
+
+            // Frame 0's fixed ticks ran before its input, on the settle's idle input, so no jump can start there.
+            int consumedTick = jumpInput.Trigger.TickWhenJumpWasConsumed;
+            bool jumpTriggered = session.Frames.Count > 0 && consumedTick != jumpConsumedTick;
+            jumpConsumedTick = consumedTick;
 
             session.Frames.Add(new LocomotionFrameSample
             {
@@ -212,6 +223,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 Fwd = input.Axes.y,
                 Right = input.Axes.x,
                 Kind = input.Kind,
+                Jump = jumpInput.IsPressed,
                 Pos = characterTransform.position - session.SceneOrigin,
                 Vel = rigidTransform.MoveVelocity.Velocity,
                 ExternalVel = rigidTransform.ExternalVelocity,
@@ -220,6 +232,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 YawAvatar = Yaw(avatarTransform.forward),
                 YawCamera = Yaw(camera.GetCameraComponent(World).Camera.transform.forward),
                 PhysicsTick = physicsTick.GetPhysicsTickComponent(World).Tick,
+                JumpTriggered = jumpTriggered,
+                JumpCount = World.Get<JumpState>(playerEntity).JumpCount,
+                Glide = World.Get<GlideState>(playerEntity).Value,
                 Expected = scenario.SampleAt(runTime),
             });
 
@@ -242,7 +257,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 camera.GetCameraComponent(World).Mode.ToString(),
                 session.SceneBaseParcel,
                 session.Spawn,
-                session.SpawnYaw ?? scenario.CameraYaw);
+                session.SpawnYaw ?? scenario.CameraYaw,
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleJump),
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.Gliding));
 
             try
             {

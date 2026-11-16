@@ -13,7 +13,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
     /// <summary>
     ///     The <see cref="LocomotionInputSeam.Keyboard" /> seam: a virtual keyboard whose key state is queued right
     ///     before every dynamic Input System update, so the same frame's <c>UpdateInputMovementSystem</c> reads it through
-    ///     the production DCLInput actions (WASD composite, Shift = sprint, Ctrl = walk), exactly as physical keys.
+    ///     the production DCLInput actions (WASD composite, Shift = sprint, Ctrl = walk, Space = jump), exactly as
+    ///     physical keys: <c>UpdateInputJumpSystem</c> sees the press in the frame it is queued (<c>WasPressedThisFrame</c>).
     ///     Being a real device it also raises the SDK's global input actions (IA_FORWARD...) a physical key does.
     ///     Created by the first keyboard suite and kept until the recorder is disposed.
     /// </summary>
@@ -85,6 +86,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
             if (step.Sprint) state.Press(Key.LeftShift);
             if (step.Walk) state.Press(Key.LeftCtrl);
+            if (step.Jump) state.Press(Key.Space);
 
             InputSystem.QueueStateEvent(keyboard, state);
             keysHeld = true;
