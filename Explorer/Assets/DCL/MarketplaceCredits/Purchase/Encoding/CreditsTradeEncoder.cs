@@ -4,6 +4,7 @@ using Nethereum.ABI.Model;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
@@ -91,11 +92,15 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string GET_NONCE_ABI = @"[{""name"":""getNonce"",""type"":""function"",""outputs"":[],""inputs"":[
             {""name"":""_signer"",""type"":""address""}]}]";
 
+        private const string NAME_AVAILABLE_ABI = @"[{""name"":""available"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""_subdomain"",""type"":""string""}]}]";
+
         private static readonly FunctionABI ACCEPT_FUNCTION = DeserialiseFunction(ACCEPT_ABI);
         private static readonly FunctionABI STORE_BUY_FUNCTION = DeserialiseFunction(STORE_BUY_ABI);
         private static readonly FunctionABI USE_CREDITS_FUNCTION = DeserialiseFunction(USE_CREDITS_ABI);
         private static readonly FunctionABI EXECUTE_META_TX_FUNCTION = DeserialiseFunction(EXECUTE_META_TX_ABI);
         private static readonly FunctionABI GET_NONCE_FUNCTION = DeserialiseFunction(GET_NONCE_ABI);
+        private static readonly FunctionABI NAME_AVAILABLE_FUNCTION = DeserialiseFunction(NAME_AVAILABLE_ABI);
 
         private static readonly FunctionCallEncoder FUNCTION_CALL_ENCODER = new ();
         private static readonly ParametersEncoder PARAMETERS_ENCODER = new ();
@@ -104,17 +109,28 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     accept([trade]) split into the (selector, data) pair consumed by the useCredits externalCall
         ///     struct: the selector is the 4-byte sighash, the data is the ABI-encoded parameters only.
         /// </summary>
-        public static (byte[] selector, byte[] data) BuildAcceptCall(TradeDto trade, string buyer)
+        public static (byte[] selector, byte[] data) BuildAcceptCall(TradeDto trade, string buyer) =>
+            BuildAcceptCall(new[] { trade }, buyer);
+
+        /// <summary>
+        ///     accept([...trades]) for every trade of one marketplace: a single external call fulfils the whole
+        ///     batch, which is what lets a cart settle in one transaction (web `buildAcceptCalldata`).
+        /// </summary>
+        public static (byte[] selector, byte[] data) BuildAcceptCall(IReadOnlyList<TradeDto> trades, string buyer)
         {
-            object[] tradeTree = BuildOnChainTradeTree(trade, buyer);
-            byte[] data = PARAMETERS_ENCODER.EncodeParameters(ACCEPT_FUNCTION.InputParameters, new object[] { new object[] { tradeTree } });
+            var tradesTree = new object[trades.Count];
+
+            for (var i = 0; i < trades.Count; i++)
+                tradesTree[i] = BuildOnChainTradeTree(trades[i], buyer);
+
+            byte[] data = PARAMETERS_ENCODER.EncodeParameters(ACCEPT_FUNCTION.InputParameters, new object[] { tradesTree });
             byte[] selector = ACCEPT_FUNCTION.Sha3Signature.HexToByteArray();
             return (selector, data);
         }
 
         /// <summary>
         ///     buy([item]) split into the (selector, data) pair consumed by the useCredits externalCall struct —
-        ///     the CollectionStore counterpart of <see cref="BuildAcceptCall" />.
+        ///     the CollectionStore counterpart of <see cref="BuildAcceptCall(IReadOnlyList{TradeDto}, string)" />.
         ///     <para>
         ///         The buyer is named EXPLICITLY as the beneficiary, which is what makes a mint relayable at all:
         ///         the store never sees the buyer as msg.sender on either rail (the CreditsManager is the caller),
@@ -127,17 +143,31 @@ namespace DCL.MarketplaceCredits.Purchase
         ///         path where a stale quote is a revert rather than a wrong number.
         ///     </para>
         /// </summary>
-        public static (byte[] selector, byte[] data) BuildStoreBuyCall(string collectionAddress, string itemId, string priceWei, string buyer)
-        {
-            var itemToBuy = new object[]
-            {
-                collectionAddress,
-                new[] { BigInteger.Parse(itemId) },
-                new[] { BigInteger.Parse(priceWei) },
-                new[] { buyer },
-            };
+        public static (byte[] selector, byte[] data) BuildStoreBuyCall(string collectionAddress, string itemId, string priceWei, string buyer) =>
+            BuildStoreBuyCall(new[] { new StoreMintTarget(collectionAddress, itemId, priceWei) }, buyer);
 
-            byte[] data = PARAMETERS_ENCODER.EncodeParameters(STORE_BUY_FUNCTION.InputParameters, new object[] { new object[] { itemToBuy } });
+        /// <summary>
+        ///     buy([...items]) for every mint of a cart: one ItemToBuy PER UNIT, never merged per collection, exactly
+        ///     as the web's `itemsToBuyArg` shapes it, so both clients hand the store byte-identical batches.
+        /// </summary>
+        public static (byte[] selector, byte[] data) BuildStoreBuyCall(IReadOnlyList<StoreMintTarget> mints, string buyer)
+        {
+            var itemsToBuy = new object[mints.Count];
+
+            for (var i = 0; i < mints.Count; i++)
+            {
+                StoreMintTarget mint = mints[i];
+
+                itemsToBuy[i] = new object[]
+                {
+                    mint.CollectionAddress,
+                    new[] { BigInteger.Parse(mint.ItemId) },
+                    new[] { BigInteger.Parse(mint.PriceWei) },
+                    new[] { buyer },
+                };
+            }
+
+            byte[] data = PARAMETERS_ENCODER.EncodeParameters(STORE_BUY_FUNCTION.InputParameters, new object[] { itemsToBuy });
             byte[] selector = STORE_BUY_FUNCTION.Sha3Signature.HexToByteArray();
             return (selector, data);
         }
@@ -185,14 +215,31 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     and the mint differ ONLY in the (target, selector, data) triple. Mirrors the shop's
         ///     `wrapInUseCredits`.
         /// </summary>
-        private static string BuildUseCreditsCalldata(
+        public static string BuildUseCreditsCalldata(
             string externalCallTarget,
             byte[] externalCallSelector,
             byte[] externalCallData,
             AuthorizedCredit credit,
             string maxCreditedValue,
             long externalCallExpiresAt,
-            byte[] externalCallSalt)
+            byte[] externalCallSalt) =>
+            BuildUseCreditsCalldata(externalCallTarget, externalCallSelector, externalCallData, credit, maxCreditedValue,
+                externalCallExpiresAt, externalCallSalt, Array.Empty<byte>());
+
+        /// <summary>
+        ///     The same envelope carrying a server-signed external call: the credits-server signs the
+        ///     (target, selector, data, expiresAt, salt) tuple for targets the CreditsManager does not allow on
+        ///     its own, so those five values and the signature must be passed through unchanged.
+        /// </summary>
+        public static string BuildUseCreditsCalldata(
+            string externalCallTarget,
+            byte[] externalCallSelector,
+            byte[] externalCallData,
+            AuthorizedCredit credit,
+            string maxCreditedValue,
+            long externalCallExpiresAt,
+            byte[] externalCallSalt,
+            byte[] customExternalCallSignature)
         {
             BigInteger maxCredited = BigInteger.Parse(maxCreditedValue);
             BigInteger uncredited = UncreditedValue(maxCreditedValue, credit.availableAmount);
@@ -207,7 +254,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 creditsTree,
                 new[] { credit.signature.HexToByteArray() },
                 new object[] { externalCallTarget, externalCallSelector, externalCallData, new BigInteger(externalCallExpiresAt), externalCallSalt },
-                Array.Empty<byte>(),
+                customExternalCallSignature,
                 uncredited,
                 maxCredited,
             };
@@ -241,6 +288,12 @@ namespace DCL.MarketplaceCredits.Purchase
         /// </summary>
         public static string BuildGetNonceCalldata(string signer) =>
             FUNCTION_CALL_ENCODER.EncodeRequest(GET_NONCE_FUNCTION.Sha3Signature, GET_NONCE_FUNCTION.InputParameters, signer);
+
+        /// <summary>
+        ///     available(subdomain) calldata for the DCLRegistrar read that tells whether a NAME is still free.
+        /// </summary>
+        public static string BuildNameAvailableCalldata(string name) =>
+            FUNCTION_CALL_ENCODER.EncodeRequest(NAME_AVAILABLE_FUNCTION.Sha3Signature, NAME_AVAILABLE_FUNCTION.InputParameters, name);
 
         /// <summary>
         ///     The prefixed 4-byte sighash of a single-function ABI — the entire calldata of a parameterless call.

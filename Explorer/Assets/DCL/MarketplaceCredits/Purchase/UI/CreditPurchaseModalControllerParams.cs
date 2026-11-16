@@ -15,6 +15,10 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public const string SOURCE_PASSPORT_EQUIPPED = "passport_equipped";
         public const string SOURCE_PASSPORT_CREATIONS = "passport_creations";
         public const string SOURCE_SDK_SCENE = "sdk_scene";
+        public const string SOURCE_SHOP_GRID = "shop_grid";
+        public const string SOURCE_SHOP_TRENDING = "shop_trending";
+        public const string SOURCE_SHOP_NEW_CREATIONS = "shop_new_creations";
+        public const string SOURCE_SHOP_OUTFIT = "shop_outfit";
 
         private const string EMOTE_CATEGORY = "emote";
 
