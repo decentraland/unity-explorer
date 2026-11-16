@@ -109,7 +109,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
-            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, chainConfig, identityCache,
+            new (shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller), manaUsdRateReader, chainConfig, identityCache,
                 featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
         /// <summary>The listing row a trade is quoted from — the quote resolves the trade through its id.</summary>

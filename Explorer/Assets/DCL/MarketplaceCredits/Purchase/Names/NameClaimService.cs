@@ -61,8 +61,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         public NameClaimService(
             MarketplaceCreditsAPIClient creditsAPIClient,
             IEthereumApi ethereumApi,
-            CreditsManagerMetaTxRelayer metaTxRelayer,
-            PolygonSettlementPoller settlementPoller,
+            UseCreditsExecutor executor,
             ManaUsdRateReader manaUsdRateReader,
             AcrossBridgeStatusPoller bridgeStatusPoller,
             CreditsChainConfig chainConfig,
@@ -78,7 +77,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             this.identityCache = identityCache;
             this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
-            executor = new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller);
+            this.executor = executor;
         }
 
         public void Dispose() =>

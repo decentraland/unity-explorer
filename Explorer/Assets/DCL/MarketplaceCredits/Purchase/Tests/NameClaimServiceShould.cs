@@ -96,7 +96,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             warmUpCts = new CancellationTokenSource();
             uiCts = new CancellationTokenSource();
 
-            service = new NameClaimService(creditsAPIClient, ethereumApi, metaTxRelayer, settlementPoller, manaUsdRateReader, bridgeStatusPoller,
+            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller), manaUsdRateReader, bridgeStatusPoller,
                 chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
 
             recordedStages = new List<NameClaimStage>();

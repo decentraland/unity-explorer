@@ -483,14 +483,14 @@ namespace Global.Dynamic
 
             var creditsMetaTxRelayer = new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig);
             var creditsSettlementPoller = new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            var useCreditsExecutor = new UseCreditsExecutor(marketplaceCreditsApiClient, creditsMetaTxRelayer, creditsSettlementPoller);
             var manaUsdRateReader = new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
             bool isCreditsPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
 
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
-                creditsMetaTxRelayer,
-                creditsSettlementPoller,
+                useCreditsExecutor,
                 manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,
@@ -500,8 +500,7 @@ namespace Global.Dynamic
             var nameClaimService = new NameClaimService(
                 marketplaceCreditsApiClient,
                 dynamicWorldDependencies.CompositeWeb3Provider,
-                creditsMetaTxRelayer,
-                creditsSettlementPoller,
+                useCreditsExecutor,
                 manaUsdRateReader,
                 new AcrossBridgeStatusPoller(staticContainer.WebRequestsContainer.WebRequestController, creditsChainConfig),
                 creditsChainConfig,
@@ -516,8 +515,7 @@ namespace Global.Dynamic
                 creditsPurchaseService,
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
-                creditsMetaTxRelayer,
-                creditsSettlementPoller,
+                useCreditsExecutor,
                 manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,

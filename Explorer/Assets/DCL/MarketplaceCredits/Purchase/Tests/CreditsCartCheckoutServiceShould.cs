@@ -111,7 +111,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             cart.Add(MintListing(MINT_COLLECTION_A, "1"), ShopCartSource.Outfit, "outfit-1");
             cart.Add(MintListing(MINT_COLLECTION_B, "2"), ShopCartSource.Grid);
 
-            service = new CreditsCartCheckoutService(cart, quoteService, shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller,
+            service = new CreditsCartCheckoutService(cart, quoteService, shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller),
                 manaUsdRateReader, new CreditsChainConfig(EthereumNetwork.Sepolia), identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
         }
 

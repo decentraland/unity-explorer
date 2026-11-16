@@ -86,6 +86,7 @@ namespace DCL.Shop
             isActive = true;
             view.gameObject.SetActive(true);
             view.ResetScroll();
+            actionsCts = actionsCts.SafeRestart();
             Reload();
         }
 
@@ -105,7 +106,6 @@ namespace DCL.Shop
                 return;
 
             loadCts = loadCts.SafeRestart();
-            actionsCts = actionsCts.SafeRestart();
             view.SetEmptyVisible(false);
             LoadAllAsync(loadCts.Token).Forget();
         }

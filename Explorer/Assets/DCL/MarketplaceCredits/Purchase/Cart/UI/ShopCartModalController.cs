@@ -69,10 +69,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         private ModalState currentState;
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? thumbnailsCts;
+        private CancellationTokenSource? reviewCts;
+        private CancellationTokenSource? checkoutSessionCts;
         private CartReview? review;
         private IShopCartFavorites? favorites;
         private int balanceCredits = -1;
-        private bool awaitingOwnCheckout;
 
         public ShopCart Cart => cart;
 
@@ -111,6 +112,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         public override void Dispose()
         {
             UnsubscribeFromServices();
+            reviewCts.SafeCancelAndDispose();
             lifeCts.SafeCancelAndDispose();
             thumbnailsCts.SafeCancelAndDispose();
             disposalCts.SafeCancelAndDispose();
@@ -188,6 +190,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             thumbnailsCts.SafeCancelAndDispose();
             thumbnailsCts = null;
             ReleaseLines();
+            reviewCts.SafeCancelAndDispose();
+            reviewCts = null;
             lifeCts.SafeCancelAndDispose();
             lifeCts = null;
         }
@@ -229,6 +233,8 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
         private void ShowLines()
         {
+            reviewCts.SafeCancelAndDispose();
+            reviewCts = null;
             review = null;
             SetUiState(ModalState.Lines);
             RenderLines();
@@ -380,10 +386,14 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         {
             SetUiState(ModalState.Reviewing);
 
-            // The cart can be edited while the review is running, so it works on a copy and is dropped if that happened.
-            CartReviewResult reviewResult = await checkoutService.ReviewAsync(new List<ShopCartLine>(cart.Lines), ct);
+            // Each review runs on its own token, cancelled when the modal goes back to the lines.
+            reviewCts = reviewCts.SafeRestartLinked(ct);
+            CancellationToken reviewCt = reviewCts.Token;
 
-            if (ct.IsCancellationRequested || currentState != ModalState.Reviewing)
+            // The cart can be edited while the review is running, so it works on a copy and is dropped if that happened.
+            CartReviewResult reviewResult = await checkoutService.ReviewAsync(new List<ShopCartLine>(cart.Lines), reviewCt);
+
+            if (reviewCt.IsCancellationRequested)
                 return;
 
             if (!reviewResult.Success)
@@ -429,7 +439,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             SetUiState(ModalState.Processing);
             NativeWindowManager.RequestTemporaryWindowMode();
-            awaitingOwnCheckout = true;
+            checkoutSessionCts = lifeCts;
 
             try
             {
@@ -452,7 +462,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             }
             finally
             {
-                awaitingOwnCheckout = false;
+                checkoutSessionCts = null;
                 NativeWindowManager.ReleaseTemporaryWindowMode();
             }
         }
@@ -460,7 +470,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         // Renders a checkout this modal session did not start: one that was still running when the modal was reopened.
         private void OnCheckoutCompleted(CartCheckoutResult result)
         {
-            if (currentState != ModalState.Processing || awaitingOwnCheckout)
+            if (currentState != ModalState.Processing || checkoutSessionCts == lifeCts)
                 return;
 
             checkoutService.AcknowledgeResult();

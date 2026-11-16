@@ -46,7 +46,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const string ETH_CALL_METHOD = "eth_call";
         private const int HTTP_INTERNAL_SERVER_ERROR = 500;
-        private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromMinutes(5);
 
         private readonly TimeSpan signatureTimeout;
         private readonly IEthereumApi ethereumApi;

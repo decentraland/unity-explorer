@@ -51,8 +51,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             ICreditsPurchaseService quoteService,
             MarketplaceShopAPIClient shopAPIClient,
             MarketplaceCreditsAPIClient creditsAPIClient,
-            CreditsManagerMetaTxRelayer metaTxRelayer,
-            PolygonSettlementPoller settlementPoller,
+            UseCreditsExecutor executor,
             ManaUsdRateReader manaUsdRateReader,
             CreditsChainConfig chainConfig,
             IWeb3IdentityCache identityCache,
@@ -68,7 +67,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             this.identityCache = identityCache;
             this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
-            executor = new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller);
+            this.executor = executor;
         }
 
         public void Dispose() =>
