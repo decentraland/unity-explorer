@@ -32,6 +32,7 @@ using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using Microsoft.ClearScript;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -281,6 +282,66 @@ namespace SceneRunner.Tests
             // Assert: the first tick runs, then the loop idles instead of sleeping for an overflowed interval
             await runtime.Received(1).StartScene();
             await runtime.Received(1).UpdateScene(Arg.Any<float>());
+        }
+
+        [Test]
+        public async Task AdvanceTheTickWhenTheUpdateThrows()
+        {
+            // Arrange
+            const int DURATION = 300;
+
+            var sceneStateProvider = new SceneStateProvider();
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, sceneStateProvider));
+            sceneFacades.Add(sceneFacade);
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
+            runtime.UpdateScene(Arg.Any<float>()).Returns(_ => UniTask.FromException(new ScriptEngineException("scene system threw")));
+
+            await UniTask.SwitchToThreadPool();
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            // Act
+            await sceneFacade.StartUpdateLoopAsync(60, cancellationTokenSource.Token);
+
+            // Assert: every failed update still advanced the tick exactly once
+            int updateCalls = runtime.ReceivedCalls().Count(call => call.GetMethodInfo().Name == nameof(ISceneRuntime.UpdateScene));
+            Assert.Greater(updateCalls, 1);
+            Assert.AreEqual((uint)updateCalls, sceneStateProvider.TickNumber);
+        }
+
+        [Test]
+        public async Task NotAdvanceTheTickTwiceWhenTheUpdateAlreadyAdvancedIt()
+        {
+            // Arrange
+            const int DURATION = 300;
+
+            var sceneStateProvider = new SceneStateProvider();
+            var sceneFacade = new SceneFacade(Substitute.For<ISceneData>(), new TestDeps(ecsWorldFactory, sceneStateProvider));
+            sceneFacades.Add(sceneFacade);
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
+
+            runtime.UpdateScene(Arg.Any<float>())
+                   .Returns(_ =>
+                    {
+                        sceneStateProvider.TickNumber++;
+                        return UniTask.CompletedTask;
+                    });
+
+            await UniTask.SwitchToThreadPool();
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            // Act
+            await sceneFacade.StartUpdateLoopAsync(60, cancellationTokenSource.Token);
+
+            // Assert: an update that advanced the tick itself is counted once
+            int updateCalls = runtime.ReceivedCalls().Count(call => call.GetMethodInfo().Name == nameof(ISceneRuntime.UpdateScene));
+            Assert.Greater(updateCalls, 1);
+            Assert.AreEqual((uint)updateCalls, sceneStateProvider.TickNumber);
         }
 
         [Test]

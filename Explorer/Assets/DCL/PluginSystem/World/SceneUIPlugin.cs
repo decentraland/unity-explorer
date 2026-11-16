@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
             finalizeWorldSystems.Add(UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
-            UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            UIPointerEventsSystem.InjectToWorld(ref builder);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, uiDocument);
             UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 

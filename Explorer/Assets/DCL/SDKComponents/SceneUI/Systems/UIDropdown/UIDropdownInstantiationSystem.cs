@@ -89,10 +89,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         }
 
         [Query]
-        [All(typeof(PBUiDropdown))]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent) =>
-            UiElementUtils.ApplyLoadedCustomFont(World, ref uiDropdownComponent.FontRequest, uiDropdownComponent.DropdownField);
+        private void ApplyLoadedFont(ref UIDropdownComponent uiDropdownComponent, in PBUiDropdown sdkModel) =>
+            UiElementUtils.ApplyLoadedCustomFont(World, ref uiDropdownComponent.FontRequest, uiDropdownComponent.DropdownField)?.AddDropdownGlyphs(uiDropdownComponent.DropdownField, sdkModel.EmptyLabel);
 
         [Query]
         [All(typeof(UIDropdownComponent))]

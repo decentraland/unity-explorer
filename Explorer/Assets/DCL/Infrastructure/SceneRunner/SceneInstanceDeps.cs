@@ -313,6 +313,7 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
+                        syncDeps.SceneStateProvider,
                         syncDeps.ecsMultiThreadSync,
                         syncOwner,
                         syncDeps.RuntimeMetrics),
@@ -340,6 +341,7 @@ namespace SceneRunner
                             syncDeps.OutgoingCRDTMessagesProvider,
                             syncDeps.systemGroupThrottler,
                             syncDeps.ExceptionsHandler,
+                            syncDeps.SceneStateProvider,
                             syncDeps.ecsMultiThreadSync,
                             syncOwner,
                             syncDeps.RuntimeMetrics

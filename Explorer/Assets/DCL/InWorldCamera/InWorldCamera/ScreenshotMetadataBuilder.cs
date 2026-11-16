@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.PlacesAPIService;
@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.InWorldCamera
 {
@@ -18,9 +19,6 @@ namespace DCL.InWorldCamera
         private const string UNKNOWN_USER = "Unknown";
         private const string UNKNOWN_USER_WALLET = "0x000000000000000000000000000000000000000";
         private const string UNKNOWN_PLACE = "Unknown place";
-
-        /// <summary>Corners of an axis-aligned box; also one past the highest axis bit of a corner index.</summary>
-        private const int BOX_CORNER_COUNT = 8;
 
         private readonly SelfProfile selfProfile;
         private readonly CharacterController characterObjectController;
@@ -51,14 +49,14 @@ namespace DCL.InWorldCamera
             return metadata;
         }
 
-        public void Init(Vector2Int sceneParcel, Plane[] frustumPlanes, Camera camera)
+        public void Init(Vector2Int parcel, Plane[] planes, Camera sourceCamera)
         {
             MetadataIsReady = false;
             visiblePeople.Clear();
 
-            this.frustumPlanes = frustumPlanes;
-            this.camera = camera;
-            this.sceneParcel = sceneParcel;
+            frustumPlanes = planes;
+            camera = sourceCamera;
+            sceneParcel = parcel;
         }
 
         public void AddSelfProfile(bool isEmoting)
@@ -74,7 +72,7 @@ namespace DCL.InWorldCamera
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
+                    userAddress = profile != null ? profile.UserId.Value : UNKNOWN_USER_WALLET,
                     isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
                     screenRect = camera == null ? Rect.zero : CalculateScreenRect(camera, avatarCollider.bounds),
@@ -122,38 +120,11 @@ namespace DCL.InWorldCamera
         /// </summary>
         internal static Rect CalculateScreenRect(Camera camera, Bounds bounds)
         {
-            Transform cameraTransform = camera.transform;
-            Vector3 cameraPosition = cameraTransform.position;
-            Vector3 cameraForward = cameraTransform.forward;
-            float nearPlane = camera.nearClipPlane;
+            if (!ScreenBoundsProjection.TryProjectToViewport(camera, in bounds, out Rect viewport)) return Rect.zero;
 
-            var frameMin = new Vector2(float.MaxValue, float.MaxValue);
-            var frameMax = new Vector2(float.MinValue, float.MinValue);
-            var projectedAnyPoint = false;
-
-            // Each bit of a corner index picks the low or the high side of an axis. The visible part of the box is
-            // its corners in front of the near plane plus the points where its edges cross that plane.
-            for (var corner = 0; corner < BOX_CORNER_COUNT; corner++)
-            {
-                Vector3 from = GetCorner(bounds, corner);
-                float fromDepth = Vector3.Dot(from - cameraPosition, cameraForward);
-
-                if (fromDepth >= nearPlane)
-                    Include(from);
-
-                for (var axisBit = 1; axisBit < BOX_CORNER_COUNT; axisBit <<= 1)
-                {
-                    if ((corner & axisBit) != 0) continue;
-
-                    Vector3 to = GetCorner(bounds, corner | axisBit);
-                    float toDepth = Vector3.Dot(to - cameraPosition, cameraForward);
-
-                    if ((fromDepth >= nearPlane) != (toDepth >= nearPlane))
-                        Include(Vector3.Lerp(from, to, (fromDepth - nearPlane) / (fromDepth - toDepth)));
-                }
-            }
-
-            if (!projectedAnyPoint) return Rect.zero;
+            // The frame measures from the top, so the viewport's top edge becomes the frame's minimum.
+            Vector2 frameMin = ViewportToFrame(new Vector3(viewport.xMin, viewport.yMax), camera.aspect);
+            Vector2 frameMax = ViewportToFrame(new Vector3(viewport.xMax, viewport.yMin), camera.aspect);
 
             frameMin = Vector2.Max(frameMin, Vector2.zero);
             frameMax = Vector2.Min(frameMax, Vector2.one);
@@ -161,25 +132,6 @@ namespace DCL.InWorldCamera
             if (frameMax.x <= frameMin.x || frameMax.y <= frameMin.y) return Rect.zero;
 
             return new Rect(frameMin.x, frameMin.y, frameMax.x - frameMin.x, frameMax.y - frameMin.y);
-
-            void Include(Vector3 world)
-            {
-                Vector2 framePoint = ViewportToFrame(camera.WorldToViewportPoint(world), camera.aspect);
-                frameMin = Vector2.Min(frameMin, framePoint);
-                frameMax = Vector2.Max(frameMax, framePoint);
-                projectedAnyPoint = true;
-            }
-        }
-
-        private static Vector3 GetCorner(Bounds bounds, int corner)
-        {
-            Vector3 min = bounds.min;
-            Vector3 max = bounds.max;
-
-            return new Vector3(
-                (corner & 1) == 0 ? min.x : max.x,
-                (corner & 2) == 0 ? min.y : max.y,
-                (corner & 4) == 0 ? min.z : max.z);
         }
 
         /// <summary>
@@ -196,13 +148,15 @@ namespace DCL.InWorldCamera
         }
 
         internal void FillMetadata(Profile? profile, RealmData? realm, Vector2Int playerPosition,
-            string sceneName, string placeId, VisiblePerson[] visiblePeople)
+            string sceneName, string placeId, VisiblePerson[] people)
         {
+            string userAddress = profile != null ? profile.UserId.Value : UNKNOWN_USER_WALLET;
+
             if (metadata == null)
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId,
+                    userAddress = userAddress,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -211,18 +165,18 @@ namespace DCL.InWorldCamera
                         name = sceneName,
                         location = new Location(playerPosition),
                     },
-                    visiblePeople = visiblePeople,
+                    visiblePeople = people,
                 };
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile.UserId;
+                metadata.userAddress = userAddress;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;
                 metadata.scene.name = sceneName;
                 metadata.scene.location = new Location(playerPosition);
-                metadata.visiblePeople = visiblePeople;
+                metadata.visiblePeople = people;
             }
         }
     }

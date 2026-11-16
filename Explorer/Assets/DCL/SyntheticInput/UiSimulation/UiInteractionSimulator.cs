@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -17,19 +19,31 @@ namespace DCL.SyntheticInput.UiSimulation
     /// </summary>
     public class UiInteractionSimulator
     {
-        // The scene system is throttled, so one drain can take many frames.
+        // The drain runs every frame, but a paused or frozen scene world never drains.
         private const int MAX_SDK_DRAIN_FRAMES = 60;
+
+        // A result written at tick N reaches the scene in the batch of tick N or N + 1, so it has been read once the
+        // tick number is N + 2.
+        private const uint SCENE_TICKS_PER_EVENT = 2;
+        private const float MAX_SCENE_TICK_WAIT_SEC = 2f;
 
         private readonly EventSystem eventSystem;
         private readonly SdkUiResolver sdkResolver;
         private readonly PointerEventData pointerEventData;
+
+        // Kept apart from pointerEventData, which every other gesture resets while a hover stays parked.
+        private readonly PointerEventData hoverEventData;
         private readonly List<RaycastResult> raycastResults = new ();
+
+        // The element of the last leave sent without waiting, settled by the next SDK gesture whichever element it targets.
+        private UITransformComponent? unsettledSlot;
 
         public UiInteractionSimulator(EventSystem eventSystem, SdkUiResolver sdkResolver)
         {
             this.eventSystem = eventSystem;
             this.sdkResolver = sdkResolver;
             pointerEventData = new PointerEventData(eventSystem);
+            hoverEventData = new PointerEventData(eventSystem);
         }
 
         public UiActionResult ClickUgui(GameObject target, PointerEventData.InputButton button, bool force)
@@ -104,15 +118,207 @@ namespace DCL.SyntheticInput.UiSimulation
         {
             VisualElement target = element.Transform.Transform;
 
-            if (target.panel == null)
-                return UiActionResult.Failure("the element is not attached to a panel");
+            if (!TryCheckSdkPointer(target, force, "click", out UiActionResult blocked, out Rect imageRect))
+                return blocked;
 
-            Rect imageRect = UiScreenGeometry.PanelRectToImageRect(target.panel, target.worldBound);
+            if (!await SettlePendingSdkEventsAsync(element.Transform, ct))
+                return UiActionResult.Failure("the scene did not consume an earlier pointer event on the element (is the scene paused?); the click was not delivered", null, imageRect);
+
+            var delivery = new SdkClickDelivery
+            {
+                DeclaresDown = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetDown),
+                DeclaresUp = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetUp),
+            };
+
+            bool declaresEnter = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetHoverEnter);
+
+            SdkDrainObservation enter = await SendAndObserveAsync<PointerEnterEvent>(target, element.Transform, PointerEventType.PetHoverEnter, declaresEnter, ct);
+            delivery.Enter = SdkClickVerdict.Judge(declaresEnter, in enter);
+
+            SdkDrainObservation down = await SendAndObserveAsync<PointerDownEvent>(target, element.Transform, PointerEventType.PetDown, delivery.DeclaresDown, ct);
+            delivery.Down = SdkClickVerdict.Judge(delivery.DeclaresDown, in down);
+
+            SdkDrainObservation up = await SendAndObserveAsync<PointerUpEvent>(target, element.Transform, PointerEventType.PetUp, delivery.DeclaresUp, ct);
+            delivery.Up = SdkClickVerdict.Judge(delivery.DeclaresUp, in up);
+
+            SendSdkLeave(target, element.Transform);
+
+            return SdkClickVerdict.Build(in delivery, imageRect, in down, in up);
+        }
+
+        /// <summary>
+        ///     Sends the event and, when the entity declares it, watches the element's drain log for the scene
+        ///     writing its result. An undeclared event is only settled (its queue written and the scene caught up) so
+        ///     the next event lands in a later frame.
+        /// </summary>
+        public async UniTask<SdkDrainObservation> SendAndObserveAsync<TEvent>(VisualElement target, UITransformComponent slot, PointerEventType sent, bool declared, CancellationToken ct)
+            where TEvent: EventBase<TEvent>, new()
+        {
+            int appendedBefore = slot.Drains.AppendedCount(sent);
+            SendPooled<TEvent>(target);
+
+            return await ObserveOrSettleAsync(slot, sent, declared, appendedBefore, ct);
+        }
+
+        /// <summary>
+        ///     As <see cref="ObserveSdkDrainAsync" /> for a declared event; an undeclared one is only settled (its queue
+        ///     written and the scene caught up) so the next event lands in a later frame.
+        /// </summary>
+        public async UniTask<SdkDrainObservation> ObserveOrSettleAsync(UITransformComponent slot, PointerEventType sent, bool declared, int appendedBefore, CancellationToken ct)
+        {
+            if (declared)
+                return await ObserveSdkDrainAsync(slot, sent, appendedBefore, ct);
+
+            bool settled = await DrainSdkQueueAsync(slot, ct);
+            return new SdkDrainObservation(settled, false, settled);
+        }
+
+        /// <summary>
+        ///     Waits for the scene's write pass to append a result for the event sent (or queued) after
+        ///     <paramref name="appendedBefore" /> was read, then for the scene to read it. An empty queue meanwhile
+        ///     proves nothing: a device gesture's event reaches the element a frame after the gesture settles, so the
+        ///     wait runs its whole budget before the event is reported as not drained.
+        /// </summary>
+        public async UniTask<SdkDrainObservation> ObserveSdkDrainAsync(UITransformComponent slot, PointerEventType sent, int appendedBefore, CancellationToken ct)
+        {
+            for (var frames = 0; frames < MAX_SDK_DRAIN_FRAMES; frames++)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+                if (slot.Drains.AppendedCount(sent) <= appendedBefore)
+                    continue;
+
+                bool sceneRead = await WaitForSceneToReadAsync(ct);
+                return new SdkDrainObservation(true, true, sceneRead);
+            }
+
+            return SdkDrainObservation.NotDrained;
+        }
+
+        /// <summary>
+        ///     Sends the enter and waits for the scene to consume it. The leave is <see cref="SendSdkLeave" />, sent by
+        ///     whoever ends the hover.
+        /// </summary>
+        public async UniTask<(UiActionResult Result, bool EnterSent)> HoverSdkEnterAsync(SdkUiElement element, bool force, CancellationToken ct)
+        {
+            VisualElement target = element.Transform.Transform;
+
+            if (!TryCheckSdkPointer(target, force, "hover", out UiActionResult blocked, out Rect imageRect))
+                return (blocked, false);
+
+            if (!await SettlePendingSdkEventsAsync(element.Transform, ct))
+                return (UiActionResult.Failure("the scene did not consume an earlier pointer event on the element (is the scene paused?); the hover was not delivered", null, imageRect), false);
+
+            bool declaresEnter = SdkClickVerdict.Declares(element.PointerEvents, PointerEventType.PetHoverEnter);
+
+            // Not cancellable once the enter is sent, so the result always reports an enter that reached the element.
+            SdkDrainObservation enter = await SendAndObserveAsync<PointerEnterEvent>(target, element.Transform, PointerEventType.PetHoverEnter, declaresEnter, CancellationToken.None);
+
+            if (!enter.Drained)
+                return (UiActionResult.Failure("the scene did not consume the hover enter yet (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
+
+            // Judged as a click's events are: an enter the scene has not read yet reached no handler.
+            if (SdkClickVerdict.Judge(declaresEnter, in enter) == SdkEventVerdict.NotDrained)
+                return (UiActionResult.Failure("the scene wrote the hover enter but has not read it (is the scene paused?); the hover stays parked so it can be left", null, imageRect), true);
+
+            return (UiActionResult.Success(imageRect), true);
+        }
+
+        /// <summary>Returns without waiting for the scene to consume the leave; the next SDK gesture waits for it.</summary>
+        public void SendSdkLeave(VisualElement target, UITransformComponent? slot)
+        {
+            SendPooled<PointerLeaveEvent>(target);
+            unsettledSlot = slot;
+        }
+
+        /// <summary>
+        ///     Registers a leave the virtual mouse produced by moving off the element, so the next SDK gesture waits
+        ///     for the scene to consume it exactly as for a leave sent semantically.
+        /// </summary>
+        public void NoteUnsettledLeave(UITransformComponent? slot) =>
+            unsettledSlot = slot;
+
+        /// <summary>
+        ///     Enters the top raycast hit (the target itself when forced past a cover) and each ancestor, as the input
+        ///     module does for a pointer arriving from outside the canvas. The entered objects are appended to
+        ///     <paramref name="enteredChain" /> in entry order.
+        /// </summary>
+        public UiActionResult HoverUguiEnter(GameObject target, bool force, List<GameObject> enteredChain)
+        {
+            var rectTransform = (RectTransform)target.transform;
+            Rect imageRect = UiScreenGeometry.ImageRectOf(rectTransform);
+
+            // A non-interactable element still raycasts, so a user's pointer enters it; only its press is ignored.
+            if (!PrepareUguiPointer(target, UiScreenGeometry.ScreenCenterOf(rectTransform), force, out UiActionResult blockedResult, requireInteractable: false))
+                return blockedResult;
+
+            GameObject leaf = raycastResults.Count > 0 && UiOcclusion.IsTopHitFor(target, raycastResults, out _)
+                ? raycastResults[0].gameObject
+                : target;
+
+            hoverEventData.Reset();
+            hoverEventData.hovered.Clear();
+            hoverEventData.position = pointerEventData.position;
+            hoverEventData.pointerCurrentRaycast = pointerEventData.pointerCurrentRaycast;
+            hoverEventData.pointerEnter = leaf;
+
+            for (Transform? current = leaf.transform; current != null; current = current.parent)
+            {
+                GameObject entered = current.gameObject;
+                hoverEventData.hovered.Add(entered);
+                ExecuteEvents.Execute(entered, hoverEventData, ExecuteEvents.pointerEnterHandler);
+                enteredChain.Add(entered);
+            }
+
+            UiActionResult result = UiActionResult.Success(imageRect);
+
+            if (target.TryGetComponent(out Selectable selectable) && !selectable.IsInteractable())
+                result.Info = "the element is not interactable: its handlers received the enter, but a disabled Selectable shows no highlight";
+
+            return result;
+        }
+
+        /// <summary>Exits the chain leaf first, as the input module does; objects destroyed meanwhile are skipped.</summary>
+        public void HoverUguiLeave(List<GameObject> enteredChain)
+        {
+            hoverEventData.Reset();
+
+            foreach (GameObject entered in enteredChain)
+            {
+                if (entered == null)
+                    continue;
+
+                hoverEventData.hovered.Remove(entered);
+                ExecuteEvents.Execute(entered, hoverEventData, ExecuteEvents.pointerExitHandler);
+            }
+
+            hoverEventData.hovered.Clear();
+            hoverEventData.pointerEnter = null;
+        }
+
+        /// <summary>
+        ///     Checks what a user's pointer at the element's center would meet: the element must be attached and enabled
+        ///     and, unless <paramref name="force" />, be the top pick of its panel with no client UI above the panel.
+        /// </summary>
+        public bool TryCheckSdkPointer(VisualElement target, bool force, string gesture, out UiActionResult blocked, out Rect imageRect)
+        {
+            imageRect = default(Rect);
+
+            if (target.panel == null)
+            {
+                blocked = UiActionResult.Failure("the element is not attached to a panel");
+                return false;
+            }
+
+            imageRect = UiScreenGeometry.PanelRectToImageRect(target.panel, target.worldBound);
 
             // Before the pick and regardless of force: a disabled element is PickingMode.Ignore, so the pick would
             // blame a cover that is not there.
             if (!target.enabledInHierarchy)
-                return UiActionResult.Failure("the element is disabled; a user could not click it", null, imageRect);
+            {
+                blocked = UiActionResult.Failure($"the element is disabled; a user could not {gesture} it", null, imageRect);
+                return false;
+            }
 
             if (!force)
             {
@@ -120,10 +326,14 @@ namespace DCL.SyntheticInput.UiSimulation
                 VisualElement picked = target.panel.Pick(panelCenter);
 
                 if (picked == null || (picked != target && !target.Contains(picked)))
-                    return UiActionResult.Failure(
+                {
+                    blocked = UiActionResult.Failure(
                         "another element covers the target at its center",
                         picked != null ? $"{picked.name} ({string.Join(' ', picked.GetClasses())})" : "nothing pickable at the point",
                         imageRect);
+
+                    return false;
+                }
 
                 pointerEventData.Reset();
                 pointerEventData.position = UiScreenGeometry.ImageToScreenPoint(UiScreenGeometry.PanelToImagePoint(target.panel, panelCenter));
@@ -131,49 +341,75 @@ namespace DCL.SyntheticInput.UiSimulation
                 eventSystem.RaycastAll(pointerEventData, raycastResults);
 
                 if (TryFindClientCover(target.panel, out GameObject? cover))
-                    return UiActionResult.Failure(
-                        "a client UI element covers the scene UI at this point (a client surface can be fully transparent and still take the click); pass force to click through it",
+                {
+                    blocked = UiActionResult.Failure(
+                        $"a client UI element covers the scene UI at this point (a client surface can be fully transparent and still take the {gesture}); pass force to {gesture} through it",
                         PathOf(cover.transform), imageRect);
+
+                    return false;
+                }
             }
 
-            SendPooled<PointerEnterEvent>(target);
-
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
-                return UiActionResult.Failure("the scene did not consume the hover enter (is the scene paused?); the click was not delivered", null, imageRect);
-
-            SendPooled<PointerDownEvent>(target);
-
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
-                return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the release was not sent", null, imageRect);
-
-            SendPooled<PointerUpEvent>(target);
-
-            if (!await DrainSdkSlotAsync(element.Transform, ct))
-                return UiActionResult.Failure("the scene did not consume the release (is the scene paused?)", null, imageRect);
-
-            SendPooled<PointerLeaveEvent>(target);
-
-            return UiActionResult.Success(imageRect);
+            blocked = default(UiActionResult);
+            return true;
         }
 
         /// <summary>
-        ///     The element's pointer-event slot holds one event, so the next event waits until the scene system
-        ///     consumed the previous one. Always yields at least one frame, so consecutive events land on separate
-        ///     frames. A null owner has no slot to wait on.
+        ///     Settles the last leave sent without waiting, on any element, then the element's own queued events.
+        ///     Returns at once when neither is pending, so a gesture on an idle element starts without a frame of delay.
         /// </summary>
-        private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        public async UniTask<bool> SettlePendingSdkEventsAsync(UITransformComponent? queueOwner, CancellationToken ct)
+        {
+            UITransformComponent? unsettled = unsettledSlot;
+
+            // A detached element's queue is never written, and its leave reaches no handler.
+            if (unsettled is { Transform: { panel: not null } } && !await DrainSdkQueueAsync(unsettled, ct))
+                return false;
+
+            // Cleared only once settled, and only if no newer leave replaced it meanwhile.
+            if (ReferenceEquals(unsettledSlot, unsettled))
+                unsettledSlot = null;
+
+            return queueOwner == unsettled || queueOwner == null || queueOwner.PendingPointerEvents.Count == 0 || await DrainSdkQueueAsync(queueOwner, ct);
+        }
+
+        /// <summary>
+        ///     Waits until the scene's write pass wrote the element's queued pointer events and the scene has read them,
+        ///     so the next event lands in a later batch. Always yields at least one frame, so consecutive events land on
+        ///     separate frames. A null owner has no queue to wait on.
+        /// </summary>
+        private async UniTask<bool> DrainSdkQueueAsync(UITransformComponent? queueOwner, CancellationToken ct)
         {
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            if (slotOwner == null)
+            if (queueOwner == null)
                 return true;
 
             var frames = 0;
 
-            while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
+            while (queueOwner.PendingPointerEvents.Count > 0 && frames++ < MAX_SDK_DRAIN_FRAMES)
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
-            return slotOwner.PointerEventTriggered == null;
+            return queueOwner.PendingPointerEvents.Count == 0 && await WaitForSceneToReadAsync(ct);
+        }
+
+        /// <summary>
+        ///     The scene reads the results written since its last tick as one batch and runs that batch's handlers in
+        ///     registration order, not event order: a leave and the next enter in one batch reach the scene as enter,
+        ///     then leave. Waits until the result written so far has been read, so the next one lands in a later batch.
+        /// </summary>
+        private async UniTask<bool> WaitForSceneToReadAsync(CancellationToken ct)
+        {
+            if (!sdkResolver.TryGetRunningSceneState(out ISceneStateProvider? sceneState))
+                return true;
+
+            uint readTick = sceneState.TickNumber + SCENE_TICKS_PER_EVENT;
+            float deadline = UnityEngine.Time.realtimeSinceStartup + MAX_SCENE_TICK_WAIT_SEC;
+
+            while (sceneState.TickNumber < readTick && UnityEngine.Time.realtimeSinceStartup < deadline)
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+            return sceneState.TickNumber >= readTick;
         }
 
         public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
@@ -187,13 +423,16 @@ namespace DCL.SyntheticInput.UiSimulation
                 return UiActionResult.Failure("no scene UI element at the drag start point");
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(panel, pressTarget.worldBound);
-            UITransformComponent? pressSlot = sdkResolver.ResolveComponent(pressTarget);
+            UITransformComponent? pressQueue = sdkResolver.ResolveComponent(pressTarget);
+
+            if (!await SettlePendingSdkEventsAsync(pressQueue, ct))
+                return UiActionResult.Failure("the scene did not consume an earlier pointer event on the start element (is the scene paused?); the drag was not delivered", null, imageRect);
 
             SendPooled<PointerEnterEvent>(pressTarget);
-            await DrainSdkSlotAsync(pressSlot, ct);
+            await DrainSdkQueueAsync(pressQueue, ct);
             SendPooled<PointerDownEvent>(pressTarget);
 
-            if (!await DrainSdkSlotAsync(pressSlot, ct))
+            if (!await DrainSdkQueueAsync(pressQueue, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the drag was abandoned", null, imageRect);
 
             // One move per frame, so the scene sees the drag progress.
@@ -210,7 +449,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (releaseTarget == null)
             {
-                await ReleaseSdkAsync(pressTarget, pressSlot, ct);
+                await ReleaseSdkAsync(pressTarget, pressQueue, ct);
                 return UiActionResult.Failure($"no scene UI element at the drag end point; the release was delivered back to '{pressTarget.name}'", null, imageRect);
             }
 
@@ -222,16 +461,16 @@ namespace DCL.SyntheticInput.UiSimulation
             return result;
         }
 
-        /// <summary>Drained after the up, so the leave cannot overwrite a release the scene has not read yet.</summary>
-        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
+        /// <summary>Drained after the up, so the leave lands in a later batch than a release the scene has not read yet.</summary>
+        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? queue, CancellationToken ct)
         {
-            await DrainSdkSlotAsync(slot, ct);
+            await DrainSdkQueueAsync(queue, ct);
             SendPooled<PointerUpEvent>(target);
 
-            bool consumed = await DrainSdkSlotAsync(slot, ct);
+            bool consumed = await DrainSdkQueueAsync(queue, ct);
 
             if (consumed)
-                SendPooled<PointerLeaveEvent>(target);
+                SendSdkLeave(target, queue);
 
             return consumed;
         }
@@ -334,14 +573,14 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        private bool PrepareUguiPointer(GameObject target, Vector2 screenPoint, bool force, out UiActionResult blockedResult)
+        private bool PrepareUguiPointer(GameObject target, Vector2 screenPoint, bool force, out UiActionResult blockedResult, bool requireInteractable = true)
         {
             blockedResult = default(UiActionResult);
 
             // Not skipped by force: a disabled Selectable drops the events and the click would report success.
             var selectable = target.GetComponent<Selectable>();
 
-            if (selectable != null && !selectable.IsInteractable())
+            if (requireInteractable && selectable != null && !selectable.IsInteractable())
             {
                 blockedResult = UiActionResult.Failure("the element is not interactable (disabled by the client, or inside a CanvasGroup that is)",
                     null, UiScreenGeometry.ImageRectOf((RectTransform)target.transform));
@@ -405,7 +644,13 @@ namespace DCL.SyntheticInput.UiSimulation
         /// <summary>Set when a bare ok would mislead, for example a scroll that hit its clamp.</summary>
         public string? Info;
 
+        /// <summary>The address of a parked hover this gesture ended before it ran.</summary>
+        public string? EndedHover;
+
         public string? BlockedBy;
+
+        /// <summary>What the scene consumed of a scene-UI click, event by event. Null for every other gesture.</summary>
+        public SdkClickDelivery? SdkDelivery;
 
         /// <summary>Image coordinates (top-left origin). Default when it could not be computed.</summary>
         public Rect ScreenRect;
@@ -416,7 +661,7 @@ namespace DCL.SyntheticInput.UiSimulation
         public static UiActionResult Failure(string reason, string? blockedBy = null, Rect screenRect = default) =>
             new () { Ok = false, FailureReason = reason, BlockedBy = blockedBy, ScreenRect = screenRect };
 
-        public Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
+        public readonly Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
         {
             var json = new Newtonsoft.Json.Linq.JObject
             {
@@ -432,6 +677,12 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (BlockedBy != null)
                 json["blockedBy"] = BlockedBy;
+
+            if (EndedHover != null)
+                json["hoverEnded"] = EndedHover;
+
+            if (SdkDelivery != null)
+                json["delivered"] = SdkDelivery.Value.ToJson();
 
             // Stated even without a rect: every coordinate in this payload is in this screen's space.
             json["screen"] = UiDiscovery.ScreenJson();

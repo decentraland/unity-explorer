@@ -244,6 +244,8 @@ namespace SceneRunner
                     sceneCodeIsRunning.Set();
                     DCLInterlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
 
+                    uint tickBeforeUpdate = SceneStateProvider.TickNumber;
+
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -256,7 +258,9 @@ namespace SceneRunner
                         sceneCodeIsRunning.Reset();
                     }
 
-                    SceneStateProvider.TickNumber++;
+                    // An update that flushed no outgoing batch (it threw, or sent nothing) still counts as a tick
+                    if (SceneStateProvider.TickNumber == tickBeforeUpdate)
+                        SceneStateProvider.TickNumber++;
 
                     MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 

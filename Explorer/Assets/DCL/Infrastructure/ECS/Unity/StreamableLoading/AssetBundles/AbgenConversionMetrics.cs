@@ -363,6 +363,16 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        /// <summary>
+        ///     Records a file whose bundle was unavailable and that loads as a raw GLTF instead. Returns false once the
+        ///     whole session has degraded to raw GLTFs: that reason is already recorded, so a per-file warning would repeat it.
+        /// </summary>
+        public bool OnFellBackToRawGltf(string contentPath, string reason)
+        {
+            OnFailed(contentPath, $"{reason} — loaded as raw GLTF");
+            return RawGltfFallbackReason == null;
+        }
+
         public void OnCancelled(string contentPath)
         {
             lock (gate)

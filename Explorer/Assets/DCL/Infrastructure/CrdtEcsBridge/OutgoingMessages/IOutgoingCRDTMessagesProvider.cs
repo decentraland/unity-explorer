@@ -2,6 +2,7 @@ using CRDT;
 using Google.Protobuf;
 using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
 
 namespace CrdtEcsBridge.OutgoingMessages
 {
@@ -26,9 +27,20 @@ namespace CrdtEcsBridge.OutgoingMessages
         void AddDeleteMessage<TMessage>(CRDTEntity entity) where TMessage: class, IMessage;
 
         /// <summary>
-        ///     Freeze the modification of the queue while it's being processed from the background thread
+        ///     Removes every pending message from the provider in one step and hands them over to the caller; the list
+        ///     must be passed to <see cref="GetSerializationSyncBlock(List{OutgoingCRDTMessagesProvider.PendingMessage}, Action{OutgoingCRDTMessagesProvider.PendingMessage})" />,
+        ///     which returns it to the pool
         /// </summary>
-        /// <returns></returns>
-        OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock([CanBeNull] Action<OutgoingCRDTMessagesProvider.PendingMessage> actOnPendingMessage);
+        List<OutgoingCRDTMessagesProvider.PendingMessage> TakePendingMessages();
+
+        /// <summary>
+        ///     Takes the pending messages and serializes them
+        /// </summary>
+        OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(Action<OutgoingCRDTMessagesProvider.PendingMessage>? actOnPendingMessage);
+
+        /// <summary>
+        ///     Serializes messages previously taken with <see cref="TakePendingMessages" />
+        /// </summary>
+        OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(List<OutgoingCRDTMessagesProvider.PendingMessage> pendingMessages, Action<OutgoingCRDTMessagesProvider.PendingMessage>? actOnPendingMessage);
     }
 }

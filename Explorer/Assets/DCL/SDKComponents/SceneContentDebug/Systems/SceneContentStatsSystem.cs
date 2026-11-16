@@ -5,10 +5,12 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Profiling;
 using DCL.SDKComponents.MediaStream;
+using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
@@ -54,6 +56,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private readonly HashSet<Mesh> uniqueMeshes = new ();
         private readonly HashSet<Material> uniqueMaterials = new ();
         private readonly HashSet<Texture> uniqueTextures = new ();
+        private readonly HashSet<Texture> uniqueUiTextures = new ();
         private readonly HashSet<long> uniqueShaderVariants = new ();
         private readonly HashSet<long> sourceVariantsScratch = new ();
         private readonly Dictionary<Shader, LocalKeyword[]> shaderKeywordsCache = new ();
@@ -70,6 +73,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private int geometries;
         private int materials;
         private int textures;
+        private int uiTextures;
         private int shaderVariants;
         private int colliders;
         private int videos;
@@ -88,11 +92,12 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 // and drop asset references held from the last pass
                 framesSinceCollection = COLLECTION_COOLDOWN_FRAMES;
 
-                if (uniqueMeshes.Count > 0)
+                if (uniqueMeshes.Count > 0 || uniqueUiTextures.Count > 0)
                 {
                     uniqueMeshes.Clear();
                     uniqueMaterials.Clear();
                     uniqueTextures.Clear();
+                    uniqueUiTextures.Clear();
                     uniqueShaderVariants.Clear();
                     shaderKeywordsCache.Clear();
                     breakdownScratch.Clear();
@@ -115,12 +120,14 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             geometries = 0;
             materials = 0;
             textures = 0;
+            uiTextures = 0;
             shaderVariants = 0;
             colliders = 0;
 
             uniqueMeshes.Clear();
             uniqueMaterials.Clear();
             uniqueTextures.Clear();
+            uniqueUiTextures.Clear();
             uniqueShaderVariants.Clear();
 
             collectBreakdown = stats.BreakdownRequests > 0;
@@ -134,6 +141,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             CountPrimitiveMeshesQuery(World);
             CountGltfContainersQuery(World);
             CountSdkMaterialsQuery(World);
+            CountUiBackgroundsQuery(World);
             CountPrimitiveCollidersQuery(World);
             videos = World.CountEntities(in MEDIA_PLAYERS_QUERY);
 
@@ -146,6 +154,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             stats.Geometries = geometries;
             stats.Materials = materials;
             stats.Textures = textures;
+            stats.UiTextures = uiTextures;
             stats.ShaderVariants = shaderVariants;
             stats.Colliders = colliders;
             stats.Videos = videos;
@@ -235,6 +244,26 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
+        private void CountUiBackgrounds(in UIBackgroundComponent component)
+        {
+            if (component.TexturePromise is not { } promise) return;
+
+            StreamableLoadingResult<TextureData>? result = promise.Result;
+            if (result is not { Succeeded: true }) return;
+
+            Texture? texture = result.Value.Asset;
+            if (texture == null) return;
+
+            if (uniqueUiTextures.Add(texture))
+                uiTextures++;
+
+            // The same file can back a material and a UI background: the scene-wide total counts it once.
+            if (uniqueTextures.Add(texture))
+                textures++;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CountPrimitiveColliders(in PrimitiveColliderComponent component)
         {
             if (component.Collider != null)
@@ -274,13 +303,13 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         // Allocates one set per source; only reached during explicitly requested breakdown passes
         private HashSet<Material> GetBreakdownMaterials(string source)
         {
-            if (!breakdownMaterialsScratch.TryGetValue(source, out HashSet<Material>? materials))
+            if (!breakdownMaterialsScratch.TryGetValue(source, out HashSet<Material>? sourceMaterials))
             {
-                materials = new HashSet<Material>();
-                breakdownMaterialsScratch[source] = materials;
+                sourceMaterials = new HashSet<Material>();
+                breakdownMaterialsScratch[source] = sourceMaterials;
             }
 
-            return materials;
+            return sourceMaterials;
         }
 
         private void FlushBreakdown()

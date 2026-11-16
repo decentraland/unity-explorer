@@ -21,7 +21,7 @@ namespace DCL.SyntheticInput.Tests
         {
             world = World.Create();
             playerEntity = world.Create();
-            agent = new SyntheticInputAgent(world, playerEntity);
+            agent = new SyntheticInputAgent(world, playerEntity, static () => ReticleReading.Empty());
         }
 
         [TearDown]
@@ -67,6 +67,43 @@ namespace DCL.SyntheticInput.Tests
             SyntheticPointerResult result = click.GetAwaiter().GetResult();
             Assert.That(result.Hit, Is.True);
             Assert.That(result.CrdtEntityId, Is.EqualTo(99));
+        }
+
+        [Test]
+        public void CarryThePressWarningIntoTheClickResult()
+        {
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPrimary, timeoutSec: 30f);
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = true, SceneEntityId = 7, Button = InputAction.IaPrimary, Warning = "no entry for pet_down/primary" },
+                Press = new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 },
+            });
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = true, SceneEntityId = 7, Button = InputAction.IaPrimary, Warning = "no entry for pet_up/primary" },
+            });
+
+            SyntheticPointerResult result = click.GetAwaiter().GetResult();
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Button, Is.EqualTo(InputAction.IaPrimary));
+            Assert.That(result.Warning, Is.EqualTo("press: no entry for pet_down/primary; release: no entry for pet_up/primary"));
+        }
+
+        [Test]
+        public void DropAReleaseOnlyWarningFromTheClickResult()
+        {
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f);
+
+            CompletePointerIntent(Delivered(7, press: new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 }));
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = true, SceneEntityId = 7, Warning = "no entry for pet_up/pointer" },
+            });
+
+            Assert.That(click.GetAwaiter().GetResult().Warning, Is.Null, "an entity declaring only the press is the common SDK shape and got its click");
         }
 
         [Test]

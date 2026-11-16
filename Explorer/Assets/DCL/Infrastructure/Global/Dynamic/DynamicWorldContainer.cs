@@ -982,7 +982,7 @@ namespace Global.Dynamic
 
             if (syntheticInputEnabled)
             {
-                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity);
+                var syntheticInputAgent = new SyntheticInputAgent(globalWorld, playerEntity, new SyntheticReticleReader(globalWorld, staticContainer.ScenesCache).Read);
 
                 var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
                     UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);

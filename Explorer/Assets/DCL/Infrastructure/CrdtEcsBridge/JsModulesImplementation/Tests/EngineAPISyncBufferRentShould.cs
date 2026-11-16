@@ -14,6 +14,7 @@ using DCL.Diagnostics;
 using DCL.Profiling;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -66,6 +67,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 Substitute.For<ISceneExceptionsHandler>(),
+                Substitute.For<ISceneStateProvider>(),
                 multiThreadSync,
                 new MultiThreadSync.Owner("TEST"),
                 new SceneRuntimeMetrics());

@@ -33,7 +33,9 @@ namespace ECS.StreamableLoading.GLTF
                 cancellationTokenSource: cancellationTokenSource);
         }
 
-        public static GetGLTFIntention Create(string name, string hash, bool mecanimAnimationClips = false, ContentDefinition[]? contentMappings = null) => new (name, hash, mecanimAnimationClips, contentMappings);
+        public static GetGLTFIntention Create(string name, string hash, bool mecanimAnimationClips = false, ContentDefinition[]? contentMappings = null,
+            CancellationTokenSource? cancellationTokenSource = null) =>
+            new (name, hash, mecanimAnimationClips, contentMappings, cancellationTokenSource);
 
         // Identity: Hash + Name. Hash alone would be enough for content identity, but matching the
         // sibling GetGltfContainerAssetIntention's shape (Name + Hash) keeps the two layers

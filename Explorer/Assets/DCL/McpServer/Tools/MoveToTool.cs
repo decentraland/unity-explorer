@@ -5,6 +5,8 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Components;
 using ECS.Abstract;
 using Newtonsoft.Json.Linq;
 using System;
@@ -28,36 +30,42 @@ namespace DCL.McpServer.Tools
         private const string CAMERA_LOOK_AT_NOT_APPLIED =
             "the camera did not apply the look-at (a scene controls the camera, e.g. an SDK virtual camera); the player was moved — use look_at once the scene releases the camera";
 
+        private const string AIM_REFINEMENT_NOT_RUN =
+            "the aim refinement did not run (is the simulation paused?)";
+
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly SyntheticInputAgent syntheticInput;
 
         public override string Name => "move_to";
 
         public override string Description =>
-            "Move the player to a world-space position (x,y,z in meters; one parcel is 16x16m). Instant by default, or smooth over durationSec. "
-            + "lookAtX/Y/Z aim the camera and the avatar at that point — the same look-at a scene's movePlayerTo gives — and the result reports "
-            + "the camera's aimErrorDegrees (a production look-at, not refined; use look_at when the aim must be exact). "
-            + "For crossing to another scene prefer the teleport tool.";
+            "Teleport the player to a world-space position (x,y,z in meters; one parcel is 16x16m): the transform is set directly "
+            + "(or lerped over durationSec), bypassing locomotion and physics — no footsteps, velocity or collision — so a scene that "
+            + "watches movement, trigger areas or speed must be driven with walk instead. lookAtX/Y/Z turn the avatar toward that point "
+            + "and then refine the camera onto it exactly as look_at does; the result reports aimErrorDegrees (normally ~0; a warning "
+            + "explains a rig clamp or a scene-controlled camera). For crossing to another scene prefer the teleport tool.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Number("x", isRequired: true)
                   .Number("y", isRequired: true)
                   .Number("z", isRequired: true)
-                  .Number("lookAtX", "World point to aim the camera and avatar at on arrival; pass all three lookAt coordinates or none.")
+                  .Number("lookAtX", "World point to aim the avatar and the camera at on arrival (the camera is refined like look_at); pass all three lookAt coordinates or none.")
                   .Number("lookAtY")
                   .Number("lookAtZ")
                   .Number("durationSec", "Seconds to move over; 0 (default) teleports instantly.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
-        public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
+        public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData, SyntheticInputAgent syntheticInput)
         {
             this.globalWorldActions = globalWorldActions;
             this.world = world;
             this.playerEntity = playerEntity;
             this.exposedCameraData = exposedCameraData;
+            this.syntheticInput = syntheticInput;
         }
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -91,6 +99,12 @@ namespace DCL.McpServer.Tools
 
             bool cameraLookAtApplied = lookAtTarget == null || await WaitForCameraLookAtAsync(ct);
 
+            // The production look-at computes its angles from the avatar root, so it lands tens of degrees off;
+            // the closed-loop refinement look_at uses puts the point under the reticle.
+            SyntheticInputDelivery refinement = lookAtTarget == null
+                ? SyntheticInputDelivery.Completed
+                : await syntheticInput.LookAtAsync(lookAtTarget.Value, ct);
+
             await UniTask.DelayFrame(APPLY_DELAY_FRAMES, cancellationToken: ct);
 
             Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Position;
@@ -102,7 +116,7 @@ namespace DCL.McpServer.Tools
             };
 
             if (lookAtTarget != null)
-                ReportCameraAim(result, lookAtTarget.Value, cameraLookAtApplied);
+                await ReportCameraAimAsync(result, lookAtTarget.Value, cameraLookAtApplied, refinement, ct);
 
             return McpToolResult.Json(result);
         }
@@ -123,16 +137,23 @@ namespace DCL.McpServer.Tools
             return true;
         }
 
-        private void ReportCameraAim(JObject result, Vector3 lookAtTarget, bool applied)
+        private async UniTask ReportCameraAimAsync(JObject result, Vector3 lookAtTarget, bool cameraLookAtApplied, SyntheticInputDelivery refinement, CancellationToken ct)
         {
-            Vector3 cameraPosition = exposedCameraData.WorldPosition.Value;
-            Quaternion cameraRotation = exposedCameraData.WorldRotation.Value;
+            (Vector3 cameraPosition, Quaternion cameraRotation) = await exposedCameraData.ReadSettledPoseAsync(ct);
 
-            result["cameraRotationEuler"] = cameraRotation.eulerAngles.ToVector();
-            result["aimErrorDegrees"] = Math.Round(Vector3.Angle(cameraRotation * Vector3.forward, lookAtTarget - cameraPosition), 1);
+            CameraAimReport.Append(result, cameraPosition, cameraRotation, lookAtTarget);
 
-            if (!applied)
-                result["warning"] = CAMERA_LOOK_AT_NOT_APPLIED;
+            if (!cameraLookAtApplied)
+                AppendWarning(result, CAMERA_LOOK_AT_NOT_APPLIED);
+
+            if (refinement == SyntheticInputDelivery.TimedOut)
+                AppendWarning(result, AIM_REFINEMENT_NOT_RUN);
+        }
+
+        private static void AppendWarning(JObject result, string warning)
+        {
+            string? existing = result["warning"]?.Value<string>();
+            result["warning"] = string.IsNullOrEmpty(existing) ? warning : $"{existing}; {warning}";
         }
     }
 }

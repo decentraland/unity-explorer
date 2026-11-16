@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Profiling;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
@@ -28,10 +29,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
-            ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
+            ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler, ISceneStateProvider sceneStateProvider,
             MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner, SceneRuntimeMetrics metrics) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
             crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
-            systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner, metrics) { }
+            systemGroupsUpdateGate, exceptionsHandler, sceneStateProvider, multiThreadSync, syncOwner, metrics) { }
 
         public void TryAddSubscription(string eventId)
         {
