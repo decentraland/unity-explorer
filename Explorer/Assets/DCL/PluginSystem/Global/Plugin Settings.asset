@@ -613,6 +613,30 @@ MonoBehaviour:
           m_SubObjectGUID:
           m_EditorAssetChanged: 0
         <QualityPresets>k__BackingField: {fileID: 11400000, guid: d8c17d5ed6e4b5e41b9155c640906ef2, type: 2}
+        <ShopRarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <ShopRarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <ShopCategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <ShopRarityInfoPanelBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
         <ExploreSectionModalPrefab>k__BackingField:
           m_AssetGUID: 2f632a9f636549a2b1d4b833b1a6b5df
           m_SubObjectName:
@@ -1334,6 +1358,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RarityInfoPanelBackgroundsMapping>k__BackingField:
           m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <ShopCartPopupPrefab>k__BackingField:
+          m_AssetGUID: c28d7f9abea142fff7d8e9f0a1b2c3d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NameClaimPopupPrefab>k__BackingField:
+          m_AssetGUID: a94c2e7d5b1f4083b6d2c8e1f0a37b54
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

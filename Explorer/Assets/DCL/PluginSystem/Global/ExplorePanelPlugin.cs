@@ -60,6 +60,13 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase;
+using DCL.Passport.Modules;
+using DCL.MarketplaceCredits.Purchase.Cart;
+using DCL.MarketplaceCredits.Purchase.Names;
+using DCL.Backpack.Gifting.Styling;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -153,6 +160,11 @@ namespace DCL.PluginSystem.Global
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly ShopCart shopCart;
+        private readonly ICreditsPurchaseService creditsPurchaseService;
+        private readonly NameClaimService nameClaimService;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
         private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
@@ -166,7 +178,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
-        private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
+        private ICreditsPanelController shopCreditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
 
@@ -186,6 +198,7 @@ namespace DCL.PluginSystem.Global
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
+        private ShopController? shopController;
         private EventDetailPanelController? eventDetailPanelController;
         private BackpackModalController? backpackModalController;
         private ExploreSectionModalController? exploreSectionModalController;
@@ -258,6 +271,11 @@ namespace DCL.PluginSystem.Global
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
             IPendingTransferService ownedNftFilter,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            MarketplaceShopAPIClient marketplaceShopAPIClient,
+            ShopCart shopCart,
+            ICreditsPurchaseService creditsPurchaseService,
+            CreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService,
             LobbyStagePresetSetting lobbyStagePresetSetting
             )
         {
@@ -329,6 +347,11 @@ namespace DCL.PluginSystem.Global
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.shopCart = shopCart;
+            this.creditsPurchaseService = creditsPurchaseService;
+            this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
             this.lobbyStagePresetSetting = lobbyStagePresetSetting;
         }
 
@@ -345,11 +368,12 @@ namespace DCL.PluginSystem.Global
             explorePanelController?.Dispose();
             lobbyButton?.onClick.RemoveListener(OpenLobby);
             eventsController?.Dispose();
+            shopController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
             backpackModalController?.Dispose();
             exploreSectionModalController?.Dispose();
-            creditsPanelController.Dispose();
+            shopCreditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -581,8 +605,25 @@ namespace DCL.PluginSystem.Global
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
                 eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
+            (NFTColorsSO shopRarityColors, NftTypeIconSO shopRarityBackgrounds, NftTypeIconSO shopCategoryIcons, NftTypeIconSO shopRarityInfoPanelBackgrounds) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityBackgroundsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopRarityInfoPanelBackgroundsMapping, ct));
+
+            var shopStyling = new WearableStylingCatalog(shopRarityColors, shopRarityBackgrounds, shopCategoryIcons);
+            var shopThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+            bool shopBuyEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
+            var shopBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopAPIClient, webBrowser, static () => { }, shopBuyEnabled);
             ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
-            var shopController = new ShopController(shopView);
+
+            shopController = new ShopController(shopView, cursor, inputBlock, mvcManager, marketplaceShopAPIClient, shopCart, creditsPurchaseService, cartCheckoutService,
+                nameClaimService, shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
+                characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile, wearablesProvider, emoteProvider, OpenBuyCreditsAsync);
+
+            EnableShopCreditsPanelAsync(shopView.CreditsPanel, shopController.OpenBuyCredits, ct)
+               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+               .Forget();
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
@@ -622,10 +663,6 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(exploreSectionModalController);
             }
 
-            EnableCreditsPanelAsync(explorePanelView.CreditsPanelView, ct)
-               .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
-               .Forget();
-
             explorePanelController = new
                 ExplorePanelController(
                     viewFactoryMethod,
@@ -660,9 +697,19 @@ namespace DCL.PluginSystem.Global
                 BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
         }
 
-        private async UniTask EnableCreditsPanelAsync(CreditsPanelView view, CancellationToken ct)
+        private UniTask OpenBuyCreditsAsync(CancellationToken ct)
         {
-            creditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct);
+            if (web3IdentityCache.IsGuest())
+                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct);
+
+            return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
+                ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_SHOP)), ct)
+                : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
+        }
+
+        private async UniTask EnableShopCreditsPanelAsync(CreditsPanelView view, Action openBuyCredits, CancellationToken ct)
+        {
+            shopCreditsPanelController = await CreditsPanelSetup.EnableIfUserAllowedAsync(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache, mvcManager, ct, openBuyCredits);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -808,6 +855,12 @@ namespace DCL.PluginSystem.Global
             [field: Header("Event Detail Panel")] [field: SerializeField] public AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
             [field: Header("Quality Settings")] [field: SerializeField] public QualityPresetsAsset QualityPresets { get; private set; } = null!;
             [field: Header("Lobby modal")] [field: SerializeField] public AssetReferenceGameObject ExploreSectionModalPrefab { get; private set; } = null!;
+
+            [field: Header("Shop")]
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> ShopRarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopRarityBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopCategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> ShopRarityInfoPanelBackgroundsMapping { get; private set; } = null!;
         }
     }
 }
