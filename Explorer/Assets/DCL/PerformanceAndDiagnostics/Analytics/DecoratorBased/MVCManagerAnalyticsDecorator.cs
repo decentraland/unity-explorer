@@ -7,6 +7,7 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Lobby;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
+using DCL.MarketplaceCredits.Purchase.Cart.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Passport;
 using DCL.Browser;
@@ -54,6 +55,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
                 { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },
                 { typeof(CreditPurchaseModalController), CreateAnalytics<CreditPurchaseModalController>(c => new CreditPurchaseAnalytics(analytics, c)) },
+                { typeof(ShopCartModalController), CreateAnalytics<ShopCartModalController>(c => new ShopCartAnalytics(analytics, c)) },
                 { typeof(UpgradeGuestAccountPopupController), CreateAnalytics<UpgradeGuestAccountPopupController>(c => new UpgradeGuestAccountAnalytics(analytics, c, pendingGuestUpgrade)) },
             };
 
