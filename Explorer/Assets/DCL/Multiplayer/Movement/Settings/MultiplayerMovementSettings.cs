@@ -7,6 +7,12 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public class MultiplayerMovementSettings : ScriptableObject, IMultiplayerMovementSettings
     {
+        private static readonly Dictionary<MovementKind, float> MOVE_KIND_BY_DISTANCE = new ()
+        {
+            { MovementKind.Walk, 1f },
+            { MovementKind.Jog, 2f },
+        };
+
         [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public bool UseCompression { get; set; }
@@ -40,10 +46,6 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }
         [field: SerializeField] public float AccelerationTimeThreshold { get; private set; }
         [field: SerializeField] public float IdleSlowDownSpeed { get; private set; }
-        public Dictionary<MovementKind, float> MoveKindByDistance => new()
-        {
-            { MovementKind.Walk, 1f },
-            { MovementKind.Jog, 2f },
-        };
+        public Dictionary<MovementKind, float> MoveKindByDistance => MOVE_KIND_BY_DISTANCE;
     }
 }

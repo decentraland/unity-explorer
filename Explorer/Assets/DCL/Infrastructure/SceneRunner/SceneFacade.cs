@@ -148,8 +148,18 @@ namespace SceneRunner
         public bool IsSceneReady() =>
             SceneData.SceneLoadingConcluded;
 
+        /// <summary>
+        ///     A disposed scene has no ECS world nor runtime left to notify, yet a holder of the facade (e.g. <c>UpdateCurrentSceneSystem</c>
+        ///     after the scene was unloaded under the player) may still flip it. While <see cref="SceneState.Disposing" /> the world is alive.
+        /// </summary>
+        internal static bool CanNotifyIsCurrentChanged(SceneState state) =>
+            state != SceneState.Disposed;
+
         public void SetIsCurrent(bool isCurrent)
         {
+            if (!CanNotifyIsCurrentChanged(SceneStateProvider.State.Value()))
+                return;
+
             SceneStateProvider.IsCurrent = isCurrent;
 
             // Portable experiences are always flagged as current, so they keep the partition interval

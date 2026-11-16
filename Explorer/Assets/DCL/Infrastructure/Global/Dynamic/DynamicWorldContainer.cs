@@ -653,7 +653,7 @@ namespace Global.Dynamic
                     donationsService),
                 chatContainer.CreatePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, commsContainer, profileContainer, communitiesContainer,
                     voiceChatContainer, socialServiceContainer, menusAccessFacade, dynamicSettings.NametagsData, hyperlinkTextFormatter, identityCache, userBlockingCache,
-                    friendsEventBus, friendsServices?.FriendsService, communitiesDataService, globalWorld, playerEntity),
+                    friendsEventBus, friendsServices?.FriendsService, communitiesDataService, globalWorld, playerEntity, exposedGlobalDataContainer.ExposedCameraData),
                 new ExplorePanelPlugin(
                     chatContainer.ChatEventBus,
                     assetsProvisioner,

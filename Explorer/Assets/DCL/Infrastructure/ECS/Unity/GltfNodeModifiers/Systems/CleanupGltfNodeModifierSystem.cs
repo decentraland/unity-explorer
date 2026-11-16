@@ -48,7 +48,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         [None(typeof(PBGltfNodeModifiers))]
         private void HandleComponentRemoval(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref nodeModifiers);
+            RunCleanup(containerEntity, nodeModifiers);
         }
 
         [Query]
@@ -56,14 +56,14 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         [None(typeof(PBGltfContainer))]
         private void HandleGltfContainerComponentRemoval(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref nodeModifiers);
+            RunCleanup(containerEntity, nodeModifiers);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref nodeModifiers);
+            RunCleanup(containerEntity, nodeModifiers);
         }
 
         public void FinalizeComponents(in Query query)
@@ -74,10 +74,12 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         [Query]
         private void FinalizeComponents(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref nodeModifiers);
+            RunCleanup(containerEntity, nodeModifiers);
         }
 
-        private void RunCleanup(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
+        // By value: with a global modifier the cleanup removes PBMaterial from the container itself, moving it to another archetype
+        // and invalidating any ref into its chunk. The component holds only readonly references, so a copy is equivalent.
+        private void RunCleanup(Entity containerEntity, Components.GltfNodeModifiers nodeModifiers)
         {
             CleanupAllGltfNodeEntities(containerEntity, ref nodeModifiers);
             ResetOriginalMaterials(nodeModifiers);
@@ -113,10 +115,9 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             // Loading and Finished events share this buffer and would tear down the modifiers just set up for the loaded asset.
             if (component.State != LoadingState.Unknown) return;
 
-            var nodeModifiers = World.TryGetRef<Components.GltfNodeModifiers>(entity, out bool exists);
-            if (!exists) return;
+            if (!World.TryGet(entity, out Components.GltfNodeModifiers nodeModifiers)) return;
 
-            RunCleanup(entity, ref nodeModifiers);
+            RunCleanup(entity, nodeModifiers);
         }
     }
 }
