@@ -88,10 +88,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (result.Succeeded)
                 bundle!.Dereference();
 
-            if (abgenConversionMetrics.RawGltfFallbackReason == null)
+            if (abgenConversionMetrics.OnFellBackToRawGltf(file, reason))
                 ReportHub.LogWarning(GetReportData(), $"{file}: asset bundle unavailable ({reason}), loading the raw GLTF instead");
-
-            abgenConversionMetrics.OnFailed(file, $"{reason} — loaded as raw GLTF");
 
             promise.Consume(World);
             World.Destroy(entity);
