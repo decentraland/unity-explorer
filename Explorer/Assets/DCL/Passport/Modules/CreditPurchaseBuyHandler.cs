@@ -146,6 +146,37 @@ namespace DCL.Passport.Modules
             }
         }
 
+        public async UniTask HandleBuyClickAsync(ShopListingDto listing, string itemUrn, string marketplaceUrl, ItemVisuals visuals, string source, CancellationToken ct)
+        {
+            if (!isEnabled)
+            {
+                FellBackToWeb?.Invoke(FALLBACK_FEATURE_DISABLED, itemUrn, source);
+                webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
+                return;
+            }
+
+            var modalParams = new CreditPurchaseModalControllerParams(
+                listing,
+                visuals.Name,
+                visuals.RarityName,
+                visuals.Thumbnail,
+                visuals.RarityBackground,
+                visuals.RarityColor,
+                visuals.CategoryIcon,
+                marketplaceUrl,
+                source,
+                itemUrn);
+
+            stopEmotePreview();
+
+            try { await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct); }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+            }
+        }
+
         private async UniTask<ShopListingDto?> ResolveListingAsync(string itemUrn, CancellationToken ct)
         {
             if (listingCache.TryGetValue(itemUrn, out ShopListingDto? cached))
