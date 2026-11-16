@@ -12,7 +12,7 @@ namespace DCL.Shop
         private const string EMPTY_FILTERS_TEXT = "No items match these filters.";
 
         [field: Header("Items")]
-        [field: SerializeField] public ShopCategoryDropdownView? CategoryDropdown { get; private set; }
+        [field: SerializeField] public ShopCategoryPillsView? CategoryPills { get; private set; }
         [field: SerializeField] public Button BrowseButton { get; private set; } = null!;
 
         public event Action? BrowseClicked;
