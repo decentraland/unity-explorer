@@ -359,6 +359,7 @@ namespace DCL.ECSComponents {
         private bool visible_;
         /// <summary>
         /// true if the wearable is visible in the profile outfit, after hides, replaces and force render apply.
+        /// Of two wearables with the same category, the later one is used: the earlier one is false and hides nothing.
         /// Unset until all the wearables of the outfit have loaded or failed. A wearable that failed to load is false.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
