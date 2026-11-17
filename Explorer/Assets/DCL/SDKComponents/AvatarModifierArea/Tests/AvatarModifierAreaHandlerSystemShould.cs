@@ -30,6 +30,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 {
     public class AvatarModifierAreaHandlerSystemShould : UnitySystemTestBase<AvatarModifierAreaHandlerSystem>
     {
+        private const string CULLING_FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
         private Entity triggerAreaEntity;
         private Entity fakeAvatarEntity;
         private World globalWorld;
@@ -836,6 +838,150 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             system.Update(0);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+        }
+
+        [Test]
+        public void ToggleNameTagCullingFlagCorrectly()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+
+            // Act
+            EnterArea(CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling));
+
+            // Assert
+            AvatarShapeComponent avatarShape = globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity);
+            Assert.IsTrue(avatarShape.NameTagCullingDisabledByModifierArea);
+            Assert.IsFalse(avatarShape.NameTagHiddenByModifierArea);
+            Assert.IsFalse(avatarShape.HiddenByModifierArea);
+
+            // Act
+            sdkEntityTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
+            system.Update(0f);
+
+            // Assert
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+        }
+
+        [Test]
+        public void SetNameTagHidingAndCullingFlagsTogether()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+
+            // Act
+            EnterArea(CreateModifierArea(AvatarModifierType.AmtHideNametags, AvatarModifierType.AmtDisableNametagCulling));
+
+            // Assert
+            AvatarShapeComponent avatarShape = globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity);
+            Assert.IsTrue(avatarShape.NameTagHiddenByModifierArea);
+            Assert.IsTrue(avatarShape.NameTagCullingDisabledByModifierArea);
+        }
+
+        [Test]
+        public void FilterNameTagCullingByExcludedIds()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+            PBAvatarModifierArea pbComponent = CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling);
+            pbComponent.ExcludeIds.Add(CULLING_FAKE_USER_ID);
+
+            // Act
+            EnterArea(pbComponent);
+
+            // Assert
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+
+            // Act
+            world.Set(triggerAreaEntity, CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling));
+            system.Update(0f);
+
+            // Assert
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+        }
+
+        [Test]
+        public void ResetNameTagCullingOnComponentRemove()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+            EnterArea(CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling));
+
+            // Act
+            world.Remove<PBAvatarModifierArea>(triggerAreaEntity);
+            system.Update(0f);
+
+            // Assert
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+        }
+
+        [Test]
+        public void ResetNameTagCullingOnEntityDestruction()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+            EnterArea(CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling));
+
+            // Act
+            world.Add<DeleteEntityIntention>(triggerAreaEntity);
+            system.Update(0f);
+
+            // Assert
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+        }
+
+        [Test]
+        public void ResetNameTagCullingOnWorldFinalize()
+        {
+            // Arrange
+            AddFakeAvatarProfile();
+            EnterArea(CreateModifierArea(AvatarModifierType.AmtDisableNametagCulling));
+
+            // Act
+            system.FinalizeComponents(default(Query));
+
+            // Assert
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagCullingDisabledByModifierArea);
+        }
+
+        private void AddFakeAvatarProfile()
+        {
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(CULLING_FAKE_USER_ID.ToLower()).Unwrap(), "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+        }
+
+        private static PBAvatarModifierArea CreateModifierArea(params AvatarModifierType[] modifiers)
+        {
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+            };
+
+            pbComponent.Modifiers.AddRange(modifiers);
+            return pbComponent;
+        }
+
+        private void EnterArea(PBAvatarModifierArea pbComponent)
+        {
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0f);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0f);
         }
     }
 }

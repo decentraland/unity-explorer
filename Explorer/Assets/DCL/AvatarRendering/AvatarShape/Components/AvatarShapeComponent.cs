@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsVisible;
         public bool HiddenByModifierArea;
         public bool NameTagHiddenByModifierArea;
+        public bool NameTagCullingDisabledByModifierArea;
         public bool IsPreview;
         public int InstantiationVersion;
 
@@ -57,6 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsVisible = true;
             HiddenByModifierArea = false;
             NameTagHiddenByModifierArea = false;
+            NameTagCullingDisabledByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
             InstantiationVersion = -1;

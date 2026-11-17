@@ -2,7 +2,6 @@ namespace DCL.Nametags
 {
     public static class NametagViewConstants
     {
-        public const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
         internal const long CHAT_BUBBLE_DELAY = 5000L;
         internal const int MAX_MESSAGE_WIDTH = 300;
 
