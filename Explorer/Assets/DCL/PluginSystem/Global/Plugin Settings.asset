@@ -1362,15 +1362,33 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
         <ShopCartPopupPrefab>k__BackingField:
           m_AssetGUID: c28d7f9abea142fff7d8e9f0a1b2c3d4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 0
         <NameClaimPopupPrefab>k__BackingField:
           m_AssetGUID: a94c2e7d5b1f4083b6d2c8e1f0a37b54
-          m_SubObjectName: 
+          m_SubObjectName:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0

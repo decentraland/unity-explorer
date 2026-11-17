@@ -19,6 +19,7 @@ module.exports.ExplorerUi = makeEnum([
     ['EU_COMMUNITIES', 4],
     ['EU_PLACES', 5],
     ['EU_EVENTS', 6],
+    ['EU_ITEM_PURCHASE', 7],
 ]);
 
 module.exports.OpenExplorerUiResult = makeEnum([
@@ -112,9 +113,13 @@ module.exports.openNftDialog = async function(message) {
 
 module.exports.openExplorerUi = async function(message) {
     // requestId is optional, and 0 is the protocol's value for "no correlation"
+    // itemPurchase is the `params` oneof of the request and is read only for EU_ITEM_PURCHASE
+    const itemPurchase = message.itemPurchase
+
     const openResult = await UnityRestrictedActionsApi.OpenExplorerUi(
         message.ui,
-        message.requestId != undefined ? message.requestId : 0)
+        message.requestId != undefined ? message.requestId : 0,
+        itemPurchase != undefined && itemPurchase.urn != undefined ? itemPurchase.urn : '')
     return { openResult };
 }
 

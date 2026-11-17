@@ -268,8 +268,7 @@ namespace DCL.Passport.Modules.Creations
 
             RemoveNavigationListener(itemView);
             string itemUrn = item.urn ?? string.Empty;
-            string rarityName = item.rarity ?? string.Empty;
-            UnityAction buyListener = () => OnBuyClicked(itemView, itemUrn, marketplaceLink, rarityName, raritySprite, rarityColor);
+            UnityAction buyListener = () => OnBuyClicked(itemView, itemUrn, marketplaceLink);
             UnityAction viewListener = () => webBrowser.OpenUrlMainThreadOnly(marketplaceLink);
             itemView.BuyButton.onClick.AddListener(buyListener);
             itemView.ViewButton.onClick.AddListener(viewListener);
@@ -291,21 +290,13 @@ namespace DCL.Passport.Modules.Creations
             navigationListeners.Remove(itemView);
         }
 
-        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, string rarityName, Sprite raritySprite, Color rarityColor)
+        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink)
         {
             if (loadCreationsCts == null)
                 return;
 
-            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(
-                itemView.AssetNameText.text,
-                rarityName,
-                itemView.EquippedItemThumbnail.sprite,
-                raritySprite,
-                rarityColor,
-                itemView.CategoryImage.sprite);
-
             creditPurchaseBuyHandler.HandleBuyClickAsync(
-                                         urn, marketplaceLink, visuals,
+                                         urn, marketplaceLink, itemView.EquippedItemThumbnail.sprite,
                                          CreditPurchaseModalControllerParams.SOURCE_PASSPORT_CREATIONS,
                                          resolving => itemView.BuyButton.interactable = !resolving,
                                          loadCreationsCts.Token)

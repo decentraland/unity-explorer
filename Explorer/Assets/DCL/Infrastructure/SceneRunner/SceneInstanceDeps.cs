@@ -148,11 +148,12 @@ namespace SceneRunner
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var entityEventsBuilder = new EntityEventsBuilder();
             var explorerUiEvents = new Queue<ExplorerUiEvent>();
+            var explorerItemPurchaseEvents = new Queue<ExplorerItemPurchaseEvent>();
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                systemGroupThrottler, systemsUpdateGate, RuntimeMetrics, explorerUiEvents);
+                systemGroupThrottler, systemsUpdateGate, RuntimeMetrics, explorerUiEvents, explorerItemPurchaseEvents);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
@@ -263,11 +264,12 @@ namespace SceneRunner
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
+                SceneItemPurchaseFlow itemPurchaseFlow,
                 IRoomHub roomHub,
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents)),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player, new ExplorerUiActions(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, syncDeps.ecsWorldSharedDependencies.ExplorerUiEvents, syncDeps.ecsWorldSharedDependencies.ExplorerItemPurchaseEvents, itemPurchaseFlow)),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),
@@ -301,6 +303,7 @@ namespace SceneRunner
                 MultiThreadSync.Owner syncOwner,
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
+                SceneItemPurchaseFlow itemPurchaseFlow,
                 IRoomHub roomHub,
                 string installSource)
                 : base(new EngineAPIImplementation(
@@ -317,7 +320,7 @@ namespace SceneRunner
                         syncDeps.ecsMultiThreadSync,
                         syncOwner,
                         syncDeps.RuntimeMetrics),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, itemPurchaseFlow, roomHub, installSource) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -328,6 +331,7 @@ namespace SceneRunner
                 IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, MultiThreadSync.Owner syncOwner,
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
+                SceneItemPurchaseFlow itemPurchaseFlow,
                 IRoomHub roomHub,
                 string installSource)
                 : base(
@@ -357,6 +361,7 @@ namespace SceneRunner
                     webRequestController,
                     skyboxSettings,
                     systemClipboard,
+                    itemPurchaseFlow,
                     roomHub,
                     installSource
                   ) { }

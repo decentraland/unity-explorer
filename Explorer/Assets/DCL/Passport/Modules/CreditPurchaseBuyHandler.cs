@@ -13,29 +13,11 @@ namespace DCL.Passport.Modules
 {
     public class CreditPurchaseBuyHandler
     {
-        public readonly struct ItemVisuals
-        {
-            public readonly string Name;
-            public readonly string RarityName;
-            public readonly Sprite? Thumbnail;
-            public readonly Sprite? RarityBackground;
-            public readonly Color RarityColor;
-            public readonly Sprite? CategoryIcon;
-
-            public ItemVisuals(string name, string rarityName, Sprite? thumbnail, Sprite? rarityBackground, Color rarityColor, Sprite? categoryIcon)
-            {
-                Name = name;
-                RarityName = rarityName;
-                Thumbnail = thumbnail;
-                RarityBackground = rarityBackground;
-                RarityColor = rarityColor;
-                CategoryIcon = categoryIcon;
-            }
-        }
-
         public const string FALLBACK_FEATURE_DISABLED = "feature_disabled";
         public const string FALLBACK_RESOLUTION_FAILED = "resolution_failed";
         public const string FALLBACK_NO_CREDITS_LISTING = "no_credits_listing";
+
+        private const int CONTRACT_ADDRESS_LENGTH = 42;
 
         private readonly IMVCManager mvcManager;
         private readonly MarketplaceShopAPIClient shopApiClient;
@@ -66,23 +48,48 @@ namespace DCL.Passport.Modules
             if (lastColonIndex == -1)
                 return false;
 
-            var item = urnSpan.Slice(lastColonIndex + 1).ToString();
+            ReadOnlySpan<char> item = urnSpan.Slice(lastColonIndex + 1);
             urnSpan = urnSpan.Slice(0, lastColonIndex);
             int secondLastColonIndex = urnSpan.LastIndexOf(':');
-            var contract = urnSpan.Slice(secondLastColonIndex + 1).ToString();
+            ReadOnlySpan<char> contract = urnSpan.Slice(secondLastColonIndex + 1);
 
-            if (!contract.StartsWith("0x") || item.Length == 0 || !ulong.TryParse(item, out ulong _))
+            // Both end up as query parameter values, so nothing but an address and a number may pass.
+            if (!IsContractAddress(contract) || !IsDecimalNumber(item) || !ulong.TryParse(item, out ulong _))
                 return false;
 
-            contractAddress = contract;
-            itemId = item;
+            contractAddress = contract.ToString();
+            itemId = item.ToString();
+            return true;
+        }
+
+        private static bool IsContractAddress(ReadOnlySpan<char> value)
+        {
+            if (value.Length != CONTRACT_ADDRESS_LENGTH || value[0] != '0' || value[1] != 'x')
+                return false;
+
+            for (var i = 2; i < value.Length; i++)
+                if (!Uri.IsHexDigit(value[i]))
+                    return false;
+
+            return true;
+        }
+
+        private static bool IsDecimalNumber(ReadOnlySpan<char> value)
+        {
+            if (value.Length == 0)
+                return false;
+
+            foreach (char c in value)
+                if (c is < '0' or > '9')
+                    return false;
+
             return true;
         }
 
         public void ClearCache() =>
             listingCache.Clear();
 
-        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, ItemVisuals visuals, string source, Action<bool> setResolving, CancellationToken ct)
+        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, Sprite? thumbnail, string source, Action<bool> setResolving, CancellationToken ct)
         {
             if (!isEnabled)
             {
@@ -126,12 +133,7 @@ namespace DCL.Passport.Modules
 
             var modalParams = new CreditPurchaseModalControllerParams(
                 listing,
-                visuals.Name,
-                visuals.RarityName,
-                visuals.Thumbnail,
-                visuals.RarityBackground,
-                visuals.RarityColor,
-                visuals.CategoryIcon,
+                thumbnail,
                 marketplaceUrl,
                 source,
                 itemUrn);
@@ -146,7 +148,7 @@ namespace DCL.Passport.Modules
             }
         }
 
-        public async UniTask HandleBuyClickAsync(ShopListingDto listing, string itemUrn, string marketplaceUrl, ItemVisuals visuals, string source, CancellationToken ct)
+        public async UniTask HandleBuyClickAsync(ShopListingDto listing, string itemUrn, string marketplaceUrl, Sprite? thumbnail, string source, CancellationToken ct)
         {
             if (!isEnabled)
             {
@@ -157,12 +159,7 @@ namespace DCL.Passport.Modules
 
             var modalParams = new CreditPurchaseModalControllerParams(
                 listing,
-                visuals.Name,
-                visuals.RarityName,
-                visuals.Thumbnail,
-                visuals.RarityBackground,
-                visuals.RarityColor,
-                visuals.CategoryIcon,
+                thumbnail,
                 marketplaceUrl,
                 source,
                 itemUrn);

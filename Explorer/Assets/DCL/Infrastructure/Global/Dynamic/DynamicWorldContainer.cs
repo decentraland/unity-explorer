@@ -12,6 +12,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Communities;
 using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
@@ -125,6 +126,8 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
+        public SceneItemPurchaseFlow ItemPurchaseFlow { get; }
+
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
@@ -144,6 +147,7 @@ namespace Global.Dynamic
             VoiceChatContainer voiceChatContainer,
             UpscalingController upscalingController,
             LobbyStagePresetCatalog lobbyStagePresetCatalog,
+            SceneItemPurchaseFlow itemPurchaseFlow,
             ShopCart shopCart,
             CreditsCartCheckoutService cartCheckoutService,
             NameClaimService nameClaimService)
@@ -166,6 +170,7 @@ namespace Global.Dynamic
             this.voiceChatContainer = voiceChatContainer;
             this.upscalingController = upscalingController;
             this.lobbyStagePresetCatalog = lobbyStagePresetCatalog;
+            ItemPurchaseFlow = itemPurchaseFlow;
             this.shopCart = shopCart;
             this.cartCheckoutService = cartCheckoutService;
             this.nameClaimService = nameClaimService;
@@ -177,6 +182,7 @@ namespace Global.Dynamic
             cartCheckoutService.Dispose();
             shopCart.Dispose();
             nameClaimService.Dispose();
+            ItemPurchaseFlow.Dispose();
             lobbyStagePresetCatalog.Dispose();
             upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
@@ -477,6 +483,7 @@ namespace Global.Dynamic
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var itemPurchaseFlow = new SceneItemPurchaseFlow(uiShellContainer.MvcManager, marketplaceShopApiClient, staticContainer.ImageControllerProvider, bootstrapContainer.DecentralandUrlsSource);
             var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.EthereumNetwork);
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
@@ -1218,6 +1225,7 @@ namespace Global.Dynamic
                 voiceChatContainer,
                 upscaleController,
                 lobbyStagePresetCatalog,
+                itemPurchaseFlow,
                 shopCart,
                 cartCheckoutService,
                 nameClaimService

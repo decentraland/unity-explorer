@@ -146,9 +146,7 @@ namespace DCL.Shop
                 return;
             }
 
-            GiftItemStyleSnapshot style = StyleOf(model);
-            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(model.Name, model.Rarity, thumbnail, style.rarityBackground, style.flapColor, style.categoryIcon);
-            await buyHandler.HandleBuyClickAsync(listing, model.Urn, itemUrl, visuals, source, ct);
+            await buyHandler.HandleBuyClickAsync(listing, model.Urn, itemUrl, thumbnail, source, ct);
         }
 
         public void View(ShopItemCardModel model) =>

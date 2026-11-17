@@ -17,5 +17,12 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
         ///     Resolves once the request has been accepted or refused, not when the panel closes.
         /// </summary>
         UniTask<OpenExplorerUiResult> OpenSectionAsync(ExplorerUi ui, ExploreSections section, uint requestId, CancellationToken ct);
+
+        /// <summary>
+        ///     Starts the credits purchase of the item <paramref name="itemUrn" /> names. Like
+        ///     <see cref="OpenSectionAsync" />, it resolves once the request has been accepted or refused; the
+        ///     purchase outcome follows as an event tagged with <paramref name="requestId" />.
+        /// </summary>
+        UniTask<OpenExplorerUiResult> OpenItemPurchaseAsync(string itemUrn, uint requestId, CancellationToken ct);
     }
 }

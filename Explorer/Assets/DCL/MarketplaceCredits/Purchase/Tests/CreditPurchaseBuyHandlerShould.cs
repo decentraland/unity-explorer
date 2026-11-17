@@ -9,7 +9,6 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
 {
@@ -41,9 +40,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             return handler;
         }
 
-        private static CreditPurchaseBuyHandler.ItemVisuals CreateVisuals() =>
-            new ("Cool Hat", "epic", null, null, Color.magenta, null);
-
         [Test]
         public async Task RedirectToWebWhenFeatureIsDisabled()
         {
@@ -51,7 +47,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: false);
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
@@ -69,7 +65,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: true);
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             await mvcManager.Received(1).ShowAsync(
@@ -90,7 +86,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: true);
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
@@ -108,7 +104,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: true);
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
@@ -122,7 +118,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: true);
 
             // Act
-            await handler.HandleBuyClickAsync("urn:decentraland:off-chain:base-avatars:brown_pants", MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync("urn:decentraland:off-chain:base-avatars:brown_pants", MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
@@ -140,15 +136,15 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditPurchaseBuyHandler handler = CreateHandler(isEnabled: true);
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             await shopApiClient.Received(1).GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
 
             // Act: clearing the cache forces a re-fetch (fresh listings on the next passport opening).
             handler.ClearCache();
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, _ => { }, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, _ => { }, CancellationToken.None);
 
             // Assert
             await shopApiClient.Received(2).GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -165,7 +161,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             var callbackValues = new System.Collections.Generic.List<bool>();
 
             // Act
-            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), SOURCE, callbackValues.Add, CancellationToken.None);
+            await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, null, SOURCE, callbackValues.Add, CancellationToken.None);
 
             // Assert
             CollectionAssert.AreEqual(new[] { true, false }, callbackValues);
@@ -180,6 +176,17 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("urn:decentraland:off-chain:base-avatars:brown_pants", out _, out _));
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("no-colons-here", out _, out _));
+        }
+
+        [TestCase("urn:x:0x2222222222222222222222222222222222222222&listingType=secondary:0")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222:3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x222222222222222222222222222222222222222g:3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:+3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222: 3")]
+        [TestCase("urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:3&first=5")]
+        public void RejectUrnsWhoseContractOrItemIsNotAnAddressAndANumber(string urn)
+        {
+            Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem(urn, out _, out _));
         }
 
         private class MockWebBrowser : UnityAppWebBrowser
