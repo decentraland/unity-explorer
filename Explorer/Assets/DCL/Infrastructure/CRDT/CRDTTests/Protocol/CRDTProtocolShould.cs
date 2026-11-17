@@ -82,6 +82,44 @@ namespace CRDT.CRDTTests.Protocol
             Assert.That(crdt.IsIdenticalToLwwState(new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[] { 9 }))), Is.False);
         }
 
+        [TestCase(new byte[] { 0, 0 }, new byte[] { 255 })]
+        [TestCase(new byte[] { 1, 2 }, new byte[] { 1, 1 })]
+        [TestCase(new byte[] { 128 }, new byte[] { 127 })]
+        [TestCase(new byte[] { 0 }, new byte[] { })]
+        public void ConvergeOnTheSamePayloadAtEqualTimestampsRegardlessOfArrivalOrder(byte[] winner, byte[] loser)
+        {
+            // Arrange
+            using var first = new CRDTProtocol();
+            using var second = new CRDTProtocol();
+            first.ProcessMessage(Put(1, winner));
+            second.ProcessMessage(Put(1, loser));
+
+            // Act
+            first.ProcessMessage(Put(1, loser));
+            second.ProcessMessage(Put(1, winner));
+
+            // Assert
+            CollectionAssert.AreEqual(winner, first.CRDTState.lwwComponents[100][new CRDTEntity(10)].Data.Memory.ToArray());
+            CollectionAssert.AreEqual(winner, second.CRDTState.lwwComponents[100][new CRDTEntity(10)].Data.Memory.ToArray());
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void PreferTheNewerTimestampOverPayloadLength(bool newerArrivesFirst)
+        {
+            // Arrange
+            using var crdt = new CRDTProtocol();
+            CRDTMessage newer = Put(2, new byte[] { 1 });
+            CRDTMessage older = Put(1, new byte[] { 255, 255 });
+
+            // Act
+            crdt.ProcessMessage(newerArrivesFirst ? newer : older);
+            crdt.ProcessMessage(newerArrivesFirst ? older : newer);
+
+            // Assert
+            CollectionAssert.AreEqual(new byte[] { 1 }, crdt.CRDTState.lwwComponents[100][new CRDTEntity(10)].Data.Memory.ToArray());
+        }
+
         private CRDTMessage Put(int timestamp, byte[] data) =>
             new (CRDTMessageType.PUT_COMPONENT, 10, 100, timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(data));
 
