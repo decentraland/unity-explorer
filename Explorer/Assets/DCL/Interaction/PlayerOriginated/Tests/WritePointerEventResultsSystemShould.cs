@@ -252,6 +252,24 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         }
 
         [Test]
+        public void CountOnlyTheAppendedUiResultsInTheElementsDrainLog()
+        {
+            // Arrange - the entity listens to the press only
+            UITransformComponent uiTransform = CreateUiEntity(PointerEventType.PetDown);
+            uiTransform.PendingPointerEvents.Add(PointerEventType.PetHoverEnter);
+            uiTransform.PendingPointerEvents.Add(PointerEventType.PetDown);
+            uiTransform.PendingPointerEvents.Add(PointerEventType.PetDown);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(uiTransform.Drains.AppendedCount(PointerEventType.PetDown), Is.EqualTo(2));
+            Assert.That(uiTransform.Drains.AppendedCount(PointerEventType.PetHoverEnter), Is.Zero);
+            Assert.That(uiTransform.Drains.AppendedCount(PointerEventType.PetUp), Is.Zero);
+        }
+
+        [Test]
         public void WriteUiAndGlobalEventsOfTheSameFrameWithTheSameTick()
         {
             // Arrange - the tick advances on every read, so a shared stamp proves it was read once

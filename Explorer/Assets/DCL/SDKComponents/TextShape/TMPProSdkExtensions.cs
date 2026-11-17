@@ -39,6 +39,7 @@ namespace DCL.SDKComponents.TextShape
 
             tmpText.rectTransform.sizeDelta = textShape.TextWrapping ? new Vector2(width, height) : Vector2.zero;
 
+            textShapeComponent.FontRequest.Assets?.AddTextMeshProGlyphs(textShape.Text);
             tmpText.text = textShape.Text;
 
             tmpText.color = textShape.TextColor?.ToUnityColor() ?? Color.white;

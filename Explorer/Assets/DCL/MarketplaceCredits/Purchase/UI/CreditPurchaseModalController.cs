@@ -553,6 +553,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 case CreditsPurchaseError.SignatureRejected:
                     ShowFailure("The signature request was rejected.", allowRetry: true);
                     break;
+                case CreditsPurchaseError.SignatureTimedOut:
+                    ShowFailure("The confirmation timed out. Your credits were not spent.", allowRetry: true);
+                    break;
                 case CreditsPurchaseError.PriceChanged:
                     ShowFailure("The price of this item changed. Please reopen the item to see the new price.", allowRetry: false);
                     break;
@@ -706,6 +709,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             {
                 CreditsPurchaseError.SignatureRejected => "user_rejected",
                 CreditsPurchaseError.Cancelled => "user_rejected",
+                CreditsPurchaseError.SignatureTimedOut => "signature_timeout",
                 CreditsPurchaseError.InsufficientCredits => "insufficient_credits",
                 CreditsPurchaseError.ListingNotAvailable => "not_for_sale",
                 CreditsPurchaseError.OwnListing => "not_for_sale",
@@ -733,6 +737,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 CreditsPurchaseError.AuthorizationFailed => "authorization_failed",
                 CreditsPurchaseError.SignatureRejected => "signature_rejected",
                 CreditsPurchaseError.SigningFailed => "signing_failed",
+                CreditsPurchaseError.SignatureTimedOut => "signature_timed_out",
                 CreditsPurchaseError.RelayerUnavailable => "relayer_unavailable",
                 CreditsPurchaseError.TransactionReverted => "transaction_reverted",
                 CreditsPurchaseError.SettlementPending => "settlement_pending",

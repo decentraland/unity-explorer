@@ -835,6 +835,41 @@ namespace DCL.SkyBox.Tests
         }
 
         [Test]
+        public void ScaleLensFlareWithADimmerSunIntensity()
+        {
+            // Arrange
+            Light sunLight = CreateSunController(lensFlareEnabled: true);
+            var lensFlare = sunLight.GetComponent<LensFlareComponentSRP>();
+            sunController!.SetSceneLook(true, null);
+            float timeOfDayFlareIntensity = lensFlare.intensity;
+            Assert.That(timeOfDayFlareIntensity, Is.GreaterThan(0f), "the legacy flare shows at noon");
+
+            // Act
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 0f }));
+
+            // Assert
+            Assert.That(lensFlare.intensity, Is.EqualTo(0f));
+
+            // Act
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 0.5f }));
+
+            // Assert
+            Assert.That(lensFlare.intensity, Is.EqualTo(timeOfDayFlareIntensity * 0.5f).Within(1e-5f));
+
+            // Act
+            sunController.SetSceneSun(Sun(new PBSun { Intensity = 2f }));
+
+            // Assert
+            Assert.That(lensFlare.intensity, Is.EqualTo(timeOfDayFlareIntensity).Within(1e-5f));
+
+            // Act
+            sunController.SetSceneSun(SceneSunOverride.NONE);
+
+            // Assert
+            Assert.That(lensFlare.intensity, Is.EqualTo(timeOfDayFlareIntensity).Within(1e-5f));
+        }
+
+        [Test]
         public void KeepTheSunAtAFixedDirectionAtEveryTimeOfDay()
         {
             // Arrange

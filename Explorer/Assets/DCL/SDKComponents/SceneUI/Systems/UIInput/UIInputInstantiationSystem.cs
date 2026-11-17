@@ -103,7 +103,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [All(typeof(PBUiInput))]
         [None(typeof(DeleteEntityIntention))]
         private void ApplyLoadedFont(ref UIInputComponent uiInputComponent) =>
-            UiElementUtils.ApplyLoadedCustomFont(World!, ref uiInputComponent.FontRequest, uiInputComponent.TextField);
+            UiElementUtils.ApplyLoadedCustomFont(World!, ref uiInputComponent.FontRequest, uiInputComponent.TextField)?.AddInputGlyphs(uiInputComponent);
 
         [Query]
         [All(typeof(UIInputComponent))]

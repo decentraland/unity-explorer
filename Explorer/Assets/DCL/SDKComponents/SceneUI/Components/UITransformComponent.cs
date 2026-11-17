@@ -49,6 +49,9 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public bool StylesApplied;
 
+        /// <summary>Results the scene's write pass appended for the queued events, counted per event type.</summary>
+        public PointerEventDrainLog Drains;
+
         public bool IsRoot { get; private set; }
         public int? ZIndex;
 
@@ -78,6 +81,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsHidden = false;
             StylesApplied = false;
             PendingPointerEvents.Clear();
+            Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = 0;
@@ -91,6 +95,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             IsHidden = false;
             StylesApplied = false;
             PendingPointerEvents.Clear();
+            Drains = default(PointerEventDrainLog);
             ZIndex = null;
             RelationData.parent = Entity.Null;
             RelationData.rightOf = rightOf;

@@ -30,8 +30,10 @@ namespace DCL.McpServer.Tools
             + "(https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/) also report the cap for the scene's parcel count; "
             + "exceeding a cap degrades performance but is not enforced. Interpretation: URP's SRP Batcher bins draws by shader variant, so "
             + "per-frame draw-call cost tracks shaderVariants, not materials — a high material count with few variants mainly costs memory and "
-            + "texture budget, not frame time. Materials therefore carries no cap here even though the docs list one. Triggers a fresh counting "
-            + "pass, so values reflect the currently rendered content.";
+            + "texture budget, not frame time. Materials therefore carries no cap here even though the docs list one. materials counts live "
+            + "material instances: the client instantiates every GLTF renderer's materials, so a model authored with 11 materials spread over "
+            + "7 renderers reports the per-renderer slots, not 11 — do not reconcile it against authored counts. textures includes the scene-UI "
+            + "background textures (uiTextures). Triggers a fresh counting pass, so values reflect the currently rendered content.";
 
         public override JObject OutputSchema =>
             McpJsonSchema.Object()
@@ -44,9 +46,10 @@ namespace DCL.McpServer.Tools
                           .Integer("bodies", "Renderer count (primitive + GLTF).")
                           .Integer("bodiesCap")
                           .Integer("geometries", "Unique meshes. No documented cap.")
-                          .Integer("materials", "Unique materials, SDK and GLTF-embedded. Reported without a cap — draw-call cost tracks shaderVariants, not this count.")
-                          .Integer("textures", "Unique textures probed from common shader properties.")
+                          .Integer("materials", "Unique live material instances, SDK and GLTF-embedded. GLTF materials are instantiated per renderer by the client, so this is not the authored count. Reported without a cap — draw-call cost tracks shaderVariants, not this count.")
+                          .Integer("textures", "Unique textures probed from common shader properties plus the scene-UI background textures.")
                           .Integer("texturesCap")
+                          .Integer("uiTextures", "Unique textures referenced by scene UI backgrounds; included in textures.")
                           .Integer("shaderVariants", "Unique shader variants (shader + enabled keywords) across all materials — the SRP Batcher bins draws by variant, so draw-call cost tracks this, not the material count. No documented cap.")
                           .Integer("colliders", "Primitive + GLTF colliders. No documented cap.")
                           .Integer("videos", "Media players in the scene — one per VideoPlayer/AudioStream component. No documented cap.")
@@ -104,6 +107,7 @@ namespace DCL.McpServer.Tools
                 ["materials"] = stats.Materials,
                 ["textures"] = stats.Textures,
                 ["texturesCap"] = caps.Textures,
+                ["uiTextures"] = stats.UiTextures,
                 ["shaderVariants"] = stats.ShaderVariants,
                 ["colliders"] = stats.Colliders,
                 ["videos"] = stats.Videos,
@@ -115,8 +119,9 @@ namespace DCL.McpServer.Tools
             AppendCapped(text, "Triangles", stats.Triangles, caps.Triangles);
             AppendCapped(text, "Meshes (bodies)", stats.Bodies, caps.Bodies);
             AppendCount(text, "Geometries", stats.Geometries);
-            AppendCount(text, "Materials", stats.Materials);
+            AppendCount(text, "Materials (live instances)", stats.Materials);
             AppendCapped(text, "Textures", stats.Textures, caps.Textures);
+            AppendCount(text, "  of which UI backgrounds", stats.UiTextures);
             AppendCount(text, "Shader variants", stats.ShaderVariants);
             AppendCount(text, "Colliders", stats.Colliders);
             AppendCount(text, "Videos", stats.Videos);

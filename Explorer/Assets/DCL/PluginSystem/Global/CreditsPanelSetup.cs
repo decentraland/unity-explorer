@@ -9,6 +9,7 @@ using DCL.UI.Credits;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -21,13 +22,21 @@ namespace DCL.PluginSystem.Global
         /// <summary>
         ///     Keeps the view hidden unless the credits feature is on and the user is allowed, in which case it returns a live controller.
         /// </summary>
+        /// <param name="view">The embedded panel; shown only once a live controller drives it.</param>
+        /// <param name="creditsAPIClient">Handed to the controller.</param>
+        /// <param name="profileChangesBus">Handed to the controller.</param>
+        /// <param name="identityCache">Handed to the controller; the default top-up flow also checks it for a guest.</param>
+        /// <param name="mvcManager">Shows the default top-up flow.</param>
+        /// <param name="ct">Cancels the allowance check.</param>
+        /// <param name="openTopUpPanel">Replaces the HUD top-up flow the pill opens by default.</param>
         public static async UniTask<ICreditsPanelController> EnableIfUserAllowedAsync(
             ICreditsPanelView view,
             MarketplaceCreditsAPIClient creditsAPIClient,
             ProfileChangesBus profileChangesBus,
             IWeb3IdentityCache identityCache,
             IMVCManager mvcManager,
-            CancellationToken ct)
+            CancellationToken ct,
+            Action? openTopUpPanel = null)
         {
             view.IsShown = false;
 
@@ -39,7 +48,7 @@ namespace DCL.PluginSystem.Global
 
             var controller = new CreditsPanelController(view, creditsAPIClient, profileChangesBus, identityCache,
                 topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
-                openTopUpPanel: OpenTopUpPanel);
+                openTopUpPanel: openTopUpPanel ?? OpenTopUpPanel);
 
             view.IsShown = true;
 

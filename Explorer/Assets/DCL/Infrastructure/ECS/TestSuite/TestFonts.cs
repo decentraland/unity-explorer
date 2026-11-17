@@ -21,8 +21,8 @@ namespace ECS.TestSuite
         public static TMP_FontAsset CreateTextMeshProFont(int atlasSize = ATLAS_SIZE) =>
             TMP_FontAsset.CreateFontAsset(PATH, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, GlyphRenderMode.SDFAA, atlasSize, atlasSize);
 
-        public static FontAsset CreateUIToolkitFont() =>
-            FontAsset.CreateFontAsset(PATH, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, GlyphRenderMode.SDFAA, ATLAS_SIZE, ATLAS_SIZE);
+        public static FontAsset CreateUiToolkitFont(int atlasSize = ATLAS_SIZE) =>
+            FontAsset.CreateFontAsset(PATH, 0, SAMPLING_POINT_SIZE, ATLAS_PADDING, GlyphRenderMode.SDFAA, atlasSize, atlasSize);
 
         /// <summary>
         ///     Release the font with <see cref="DestroyBundledFont" />, because disposing the font does not destroy its font assets.
@@ -30,7 +30,7 @@ namespace ECS.TestSuite
         public static FontData CreateBundledFont(TMP_FontAsset referenceFont)
         {
             TMP_FontAsset textMeshPro = CreateTextMeshProFont();
-            FontAsset uiToolkit = CreateUIToolkitFont();
+            FontAsset uiToolkit = CreateUiToolkitFont();
             Material generatedMaterial = textMeshPro.material;
             var bundle = new AssetBundleData(null!, new Object[] { textMeshPro, uiToolkit }, null, Array.Empty<AssetBundleData>());
             bundle.AcquireRef();

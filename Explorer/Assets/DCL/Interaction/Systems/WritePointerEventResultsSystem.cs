@@ -121,7 +121,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         /// <summary>
         ///     Writes, in dispatch order, every pointer event UI Toolkit queued on the element since the last frame that
-        ///     the element's <see cref="PBPointerEvents" /> listens to. UI events do not suppress the global events.
+        ///     the element's <see cref="PBPointerEvents" /> listens to, and counts each written result in the element's
+        ///     <see cref="UITransformComponent.Drains" />. UI events do not suppress the global events.
         /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -141,6 +142,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                         continue;
 
                     AppendMessage(sdkEntity, null, entry.EventInfo.Button, eventType, tick);
+                    uiTransformComponent.Drains.RecordAppended(eventType);
                     break;
                 }
             }

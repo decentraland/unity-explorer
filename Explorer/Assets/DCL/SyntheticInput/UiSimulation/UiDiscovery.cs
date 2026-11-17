@@ -346,14 +346,14 @@ namespace DCL.SyntheticInput.UiSimulation
         ///     The screen size every reported rect is expressed in. Stated because a screenshot may be downscaled from
         ///     the screen.
         /// </summary>
-        internal static JObject ScreenJson() =>
+        public static JObject ScreenJson() =>
             new ()
             {
                 ["width"] = Screen.width,
                 ["height"] = Screen.height,
             };
 
-        internal static JObject CenterJson(Rect rect)
+        public static JObject CenterJson(Rect rect)
         {
             Vector2 center = UiScreenGeometry.NormalizedCenterOf(rect);
 
@@ -364,7 +364,7 @@ namespace DCL.SyntheticInput.UiSimulation
             };
         }
 
-        internal static JObject RectJson(Rect rect) =>
+        public static JObject RectJson(Rect rect) =>
             new ()
             {
                 ["x"] = Math.Round(rect.x, 1),

@@ -5,10 +5,15 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
+using DCL.MarketplaceCredits.Purchase.Cart;
+using DCL.MarketplaceCredits.Purchase.Cart.UI;
+using DCL.MarketplaceCredits.Purchase.Names;
+using DCL.MarketplaceCredits.Purchase.Names.UI;
 using DCL.MarketplaceCredits.Purchase.TopUp;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
@@ -17,6 +22,7 @@ using DCL.UI;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -40,10 +46,16 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Arch.Core.World world;
         private readonly IWearableStorage wearableStorage;
+        private readonly ShopCart shopCart;
+        private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
+        private readonly IWebRequestController webRequestController;
 
         private CreditPurchaseModalController? creditPurchaseModalController;
+        private ShopCartModalController? shopCartModalController;
         private ICreditsTopUpService? creditsTopUpService;
         private CreditsTopUpModalController? creditsTopUpModalController;
+        private NameClaimModalController? nameClaimModalController;
 
         public CreditPurchasePlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -58,7 +70,11 @@ namespace DCL.PluginSystem.Global
             SelfProfile selfProfile,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             Arch.Core.World world,
-            IWearableStorage wearableStorage)
+            IWearableStorage wearableStorage,
+            ShopCart shopCart,
+            CreditsCartCheckoutService cartCheckoutService,
+            NameClaimService nameClaimService,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -73,13 +89,19 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.wearableStorage = wearableStorage;
+            this.shopCart = shopCart;
+            this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose()
         {
             creditPurchaseModalController?.Dispose();
+            shopCartModalController?.Dispose();
             creditsTopUpModalController?.Dispose();
             creditsTopUpService?.Dispose();
+            nameClaimModalController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -119,6 +141,63 @@ namespace DCL.PluginSystem.Global
                 imageControllerProvider);
 
             mvcManager.RegisterController(creditsTopUpModalController);
+
+            await RegisterShopCartModalAsync(settings, rarityInfoPanelBackgrounds, ct);
+            await RegisterNameClaimModalAsync(settings, ct);
+        }
+
+        private async UniTask RegisterNameClaimModalAsync(CreditPurchaseSettings settings, CancellationToken ct)
+        {
+            if (!settings.NameClaimPopupPrefab.RuntimeKeyIsValid())
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "NameClaimPopupPrefab is not assigned in the plugin settings: the NAME claim modal is disabled.");
+                return;
+            }
+
+            NameClaimModalView nameClaimViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.NameClaimPopupPrefab, ct: ct)).GetComponent<NameClaimModalView>();
+
+            nameClaimModalController = new NameClaimModalController(
+                NameClaimModalController.CreateLazily(nameClaimViewAsset, null),
+                nameClaimService,
+                marketplaceCreditsAPIClient,
+                web3IdentityCache,
+                OpenGetCreditsPanelAsync);
+
+            mvcManager.RegisterController(nameClaimModalController);
+        }
+
+        private async UniTask RegisterShopCartModalAsync(CreditPurchaseSettings settings, NftTypeIconSO rarityInfoPanelBackgrounds, CancellationToken ct)
+        {
+            if (!settings.ShopCartPopupPrefab.RuntimeKeyIsValid())
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "ShopCartPopupPrefab is not assigned in the plugin settings: the shop cart modal is disabled.");
+                return;
+            }
+
+            ShopCartModalView cartViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCartPopupPrefab, ct: ct)).GetComponent<ShopCartModalView>();
+
+            shopCartModalController = new ShopCartModalController(
+                ShopCartModalController.CreateLazily(cartViewAsset, null),
+                shopCart,
+                cartCheckoutService,
+                marketplaceCreditsAPIClient,
+                web3IdentityCache,
+                new SpriteCache(webRequestController),
+                rarityInfoPanelBackgrounds,
+                OpenGetCreditsFromCartAsync,
+                OpenBackpackPanelAsync);
+
+            mvcManager.RegisterController(shopCartModalController);
+        }
+
+        private UniTask OpenGetCreditsFromCartAsync(CancellationToken ct)
+        {
+            if (web3IdentityCache.IsGuest())
+                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(new UpgradeGuestAccountPopupController.Params(GuestUpgradeTrigger.Credits)), ct);
+
+            return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
+                ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_CART_MODAL)), ct)
+                : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
         }
 
         private UniTask OpenGetCreditsPanelAsync(CancellationToken ct)
@@ -138,9 +217,15 @@ namespace DCL.PluginSystem.Global
         public class CreditPurchaseSettings : IDCLPluginSettings
         {
             [field: Header("Credit purchase")]
-            [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
+
+            [field: Header("Shop cart")]
+            [field: SerializeField] public AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
+
+            [field: Header("Shop names")]
+            [field: SerializeField] public AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
         }
     }
 }

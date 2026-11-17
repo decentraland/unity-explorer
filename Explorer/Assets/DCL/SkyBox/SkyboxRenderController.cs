@@ -696,7 +696,8 @@ public class SkyboxRenderController : MonoBehaviour
     {
         if (lensFlare == null) return;
 
-        lensFlare.intensity = preset.LensFlareIntensity.Evaluate(timeOfDay) * (1f - swapDip);
+        // The flare dims with a scene sun dimmer than the time-of-day light and goes out with it; a brighter one never strengthens it.
+        lensFlare.intensity = preset.LensFlareIntensity.Evaluate(timeOfDay) * (1f - swapDip) * Mathf.Min(sceneSunIntensity, 1f);
 
         LensFlareDataSRP? newFlareData = SkyboxLookPreset.ActiveLensFlareEntry(preset.LensFlareEntries, timeOfDay)?.FlareAsset;
 
