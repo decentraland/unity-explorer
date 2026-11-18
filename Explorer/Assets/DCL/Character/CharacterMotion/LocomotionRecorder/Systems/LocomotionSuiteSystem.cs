@@ -153,7 +153,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 return;
 
             LocomotionScenario scenario = session.Scenario;
-            float yaw = session.SpawnYaw ?? scenario.CameraYaw;
+            float yaw = session.SpawnYaw ?? scenario.CameraYawAt(0f);
             Vector3 facing = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
 
             // Every run starts from the same state: no residual velocity from the previous run (smooth damping never reaches exact zero).
@@ -231,6 +231,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 Grounded = rigidTransform.IsGrounded,
                 YawAvatar = Yaw(avatarTransform.forward),
                 YawCamera = Yaw(camera.GetCameraComponent(World).Camera.transform.forward),
+                CamYaw = scenario.CameraYawAt(runTime),
                 PhysicsTick = physicsTick.GetPhysicsTickComponent(World).Tick,
                 JumpTriggered = jumpTriggered,
                 JumpCount = World.Get<JumpState>(playerEntity).JumpCount,
@@ -257,7 +258,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 camera.GetCameraComponent(World).Mode.ToString(),
                 session.SceneBaseParcel,
                 session.Spawn,
-                session.SpawnYaw ?? scenario.CameraYaw,
+                session.SpawnYaw ?? scenario.CameraYawAt(0f),
                 FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleJump),
                 FeaturesRegistry.Instance.IsEnabled(FeatureId.Gliding));
 

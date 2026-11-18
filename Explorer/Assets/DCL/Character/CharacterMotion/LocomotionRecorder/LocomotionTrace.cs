@@ -33,6 +33,10 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         public bool Grounded;
         public float YawAvatar;
         public float YawCamera;
+
+        /// <summary>The yaw the scenario holds the camera at this frame (<c>extra.cam.yaw</c> when the scenario has a camera track).</summary>
+        public float CamYaw;
+
         public int PhysicsTick;
 
         /// <summary>A jump (ground or air) started on a fixed tick since the previous frame.</summary>
@@ -131,7 +135,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 if (i > 0 && frame.Dt > droppedThreshold)
                     dropped++;
 
-                AppendFrame(sb, i, in frame);
+                AppendFrame(sb, i, in frame, scenario.HasCameraTrack);
             }
 
             sb.Append("{\"type\":\"footer\",\"frames\":").Append(frames.Count)
@@ -166,11 +170,17 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"spawn\":").AppendVector(run.Spawn)
               .Append(",\"spawn_yaw\":").AppendFloat(run.SpawnYaw)
               .Append(",\"double_jump\":").Append(run.DoubleJump ? "true" : "false")
-              .Append(",\"gliding\":").Append(run.Gliding ? "true" : "false")
-              .Append("}}\n");
+              .Append(",\"gliding\":").Append(run.Gliding ? "true" : "false");
+
+            // as the Bevy recorder: only a run whose camera turns states how
+            if (scenario.HasCameraTrack)
+                sb.Append(",\"camera_control\":\"track\"");
+
+            sb.Append("}}\n");
         }
 
-        private static void AppendFrame(StringBuilder sb, int index, in LocomotionFrameSample frame)
+        /// <param name="cameraTrack">The run follows a camera track: the frame adds <c>extra.cam.yaw</c>, the yaw the track holds.</param>
+        private static void AppendFrame(StringBuilder sb, int index, in LocomotionFrameSample frame, bool cameraTrack)
         {
             sb.Append("{\"type\":\"frame\",\"i\":").Append(index)
               .Append(",\"t\":").AppendFloat(frame.T)
@@ -191,8 +201,12 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"vel_gravity_y\":").AppendFloat(frame.GravityVelY)
               .Append(",\"jump_triggered\":").Append(frame.JumpTriggered ? "true" : "false")
               .Append(",\"jump_count\":").Append(frame.JumpCount)
-              .Append(",\"glide\":\"").Append(GlideName(frame.Glide)).Append('"')
-              .Append("}}\n");
+              .Append(",\"glide\":\"").Append(GlideName(frame.Glide)).Append('"');
+
+            if (cameraTrack)
+                sb.Append(",\"cam\":{\"yaw\":").AppendFloat(frame.CamYaw).Append('}');
+
+            sb.Append("}}\n");
         }
 
         private static string KindName(MovementKind kind) =>

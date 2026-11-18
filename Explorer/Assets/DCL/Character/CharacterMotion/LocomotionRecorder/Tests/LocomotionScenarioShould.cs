@@ -35,6 +35,24 @@ namespace DCL.CharacterMotion.LocomotionRecorder.Tests
             ]
         }";
 
+        /// <summary>A free play converted to format 2: the camera track crosses 180 between its first two samples.</summary>
+        private const string FREE_PLAY = @"{
+            ""format"": 2,
+            ""id"": ""free-play-replay"",
+            ""fps"": 60,
+            ""camera_yaw"": 170,
+            ""settle"": 0.2,
+            ""duration"": 300.0,
+            ""events"": [
+                { ""t"": 0.0, ""fwd"": 1 }
+            ],
+            ""camera"": [
+                { ""t"": 0.0, ""yaw"": 170, ""pitch"": -20 },
+                { ""t"": 1.0, ""yaw"": -170, ""pitch"": -10 },
+                { ""t"": 2.0, ""yaw"": -100, ""pitch"": -10 }
+            ]
+        }";
+
         [Test]
         public void ParseAScenario()
         {
@@ -94,12 +112,89 @@ namespace DCL.CharacterMotion.LocomotionRecorder.Tests
         [TestCase("\"fwd\": 1", "\"fwd\": 2")]
         [TestCase("\"walk\": false", "\"walk\": 0")]
         [TestCase("\"t\": 2.0", "\"t\": -1.0")]
-        [TestCase("\"format\": 1", "\"format\": 2")]
+        [TestCase("\"format\": 1", "\"format\": 3")]
         [TestCase("\"fps\": 60", "\"fps\": 0")]
         [TestCase("\"id\": \"jog-W-hold2.0-release\"", "\"id\": \"a/b\"")]
         public void RejectAnInvalidScenario(string valid, string invalid)
         {
             Assert.Throws<FormatException>(() => LocomotionScenario.Parse(JOG_W.Replace(valid, invalid), "test"));
+        }
+
+        [Test]
+        public void ParseAFormat2CameraTrack()
+        {
+            LocomotionScenario scenario = LocomotionScenario.Parse(FREE_PLAY, "test")[0];
+
+            Assert.That(scenario.HasCameraTrack, Is.True);
+            Assert.That(scenario.CameraTrack.Count, Is.EqualTo(3));
+            Assert.That(scenario.CameraTrack[1].T, Is.EqualTo(1f));
+            Assert.That(scenario.CameraTrack[1].Yaw, Is.EqualTo(-170f));
+            Assert.That(scenario.Duration, Is.EqualTo(300f));
+        }
+
+        [Test]
+        public void ReadAFormat2ScenarioWithoutATrackAsAHeldYaw()
+        {
+            LocomotionScenario scenario = LocomotionScenario.Parse(JOG_W.Replace("\"format\": 1", "\"format\": 2"), "test")[0];
+
+            Assert.That(scenario.HasCameraTrack, Is.False);
+            Assert.That(scenario.CameraYawAt(3f), Is.EqualTo(90f));
+        }
+
+        [TestCase(-1f, 170f)]
+        [TestCase(0f, 170f)]
+        [TestCase(0.25f, 175f)]
+        [TestCase(0.75f, -175f)]
+        [TestCase(1f, -170f)]
+        [TestCase(1.5f, -135f)]
+        [TestCase(2f, -100f)]
+        [TestCase(10f, -100f)]
+        public void FollowTheCameraTrackTheShortWayRound(float t, float expectedYaw)
+        {
+            LocomotionScenario scenario = LocomotionScenario.Parse(FREE_PLAY, "test")[0];
+
+            Assert.That(scenario.CameraYawAt(t), Is.EqualTo(expectedYaw).Within(1e-3f));
+        }
+
+        [TestCase("\"format\": 2", "\"format\": 1")]
+        [TestCase("\"t\": 2.0, \"yaw\": -100", "\"t\": 0.5, \"yaw\": -100")]
+        [TestCase("\"yaw\": -100", "\"yaw\": \"west\"")]
+        [TestCase("\"yaw\": -170, \"pitch\": -10", "\"yaw\": -170")]
+        [TestCase("\"pitch\": -20", "\"pitch\": -95")]
+        [TestCase("\"camera\": [", "\"camera\": 1, \"unused\": [")]
+        public void RejectAnInvalidCameraTrack(string valid, string invalid)
+        {
+            Assert.That(FREE_PLAY, Does.Contain(valid));
+            Assert.Throws<FormatException>(() => LocomotionScenario.Parse(FREE_PLAY.Replace(valid, invalid), "test"));
+        }
+
+        [Test]
+        public void WriteTheTrackYawInEachFrameOfATrackedRun()
+        {
+            LocomotionScenario tracked = LocomotionScenario.Parse(FREE_PLAY, "test")[0];
+            LocomotionScenario held = LocomotionScenario.Parse(JOG_W, "test")[0];
+            string directory = Path.Combine(Path.GetTempPath(), "locomotion-trace-test-" + Guid.NewGuid().ToString("N"));
+
+            var frames = new List<LocomotionFrameSample> { new () { T = 0.25f, Kind = MovementKind.Jog, Fwd = 1f, CamYaw = tracked.CameraYawAt(0.25f), Expected = tracked.SampleAt(0.25f) } };
+
+            var run = new LocomotionRunInfo(1, false, "test", "2026-01-01T00:00:00Z", LocomotionInputSeam.Component, false, 0.02f, "ThirdPerson",
+                Vector2Int.zero, Vector3.zero, 0f, doubleJump: true, gliding: false);
+
+            try
+            {
+                string[] trackedLines = File.ReadAllLines(LocomotionTraceWriter.Write(directory, tracked, in run, frames).Path);
+                string[] heldLines = File.ReadAllLines(LocomotionTraceWriter.Write(directory, held, in run, frames).Path);
+
+                Assert.That(trackedLines[0], Does.Contain("\"camera_control\":\"track\""));
+                Assert.That(trackedLines[1], Does.Contain("\"cam\":{\"yaw\":175.0}"));
+                Assert.That(heldLines[0], Does.Not.Contain("camera_control"));
+                Assert.That(heldLines[1], Does.Not.Contain("\"cam\""));
+            }
+            finally
+            {
+                if (Directory.Exists(directory))
+                    Directory.Delete(directory, true);
+            }
         }
 
         [TestCase(0f, 0f, 1f, 0f)]

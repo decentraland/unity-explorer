@@ -279,11 +279,26 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             }
         }
 
+        /// <summary>
+        ///     The camera yaw the suite holds this frame, or false when it holds none: the scenario's yaw at its t = 0
+        ///     while the run is set up, then the yaw at the run time (constant without a camera track).
+        /// </summary>
         public bool TryGetHeldCameraYaw(out float yaw)
         {
-            bool held = Phase is LocomotionSuitePhase.Spawning or LocomotionSuitePhase.Settling or LocomotionSuitePhase.Armed or LocomotionSuitePhase.Running;
-            yaw = held ? Scenario.CameraYaw : 0f;
-            return held;
+            switch (Phase)
+            {
+                case LocomotionSuitePhase.Running:
+                    yaw = Scenario.CameraYawAt(RunTime());
+                    return true;
+                case LocomotionSuitePhase.Spawning:
+                case LocomotionSuitePhase.Settling:
+                case LocomotionSuitePhase.Armed:
+                    yaw = Scenario.CameraYawAt(0f);
+                    return true;
+                default:
+                    yaw = 0f;
+                    return false;
+            }
         }
 
         /// <summary>Moves to the next run; false when the suite is complete.</summary>
