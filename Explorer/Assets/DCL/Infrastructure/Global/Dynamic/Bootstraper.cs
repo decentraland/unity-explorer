@@ -256,6 +256,7 @@ namespace Global.Dynamic
                 webJsSources,
                 bootstrapContainer.Environment,
                 dynamicWorldContainer.SystemClipboard,
+                dynamicWorldContainer.ItemPurchaseFlow,
                 dynamicWorldContainer.WorldPlugins
             );
 

@@ -152,6 +152,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBPhysicsCombinedImpulse>.Create(ComponentID.PHYSICS_COMBINED_IMPULSE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPhysicsCombinedForce>.Create(ComponentID.PHYSICS_COMBINED_FORCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBExplorerUiEventsResult>.Create(ComponentID.EXPLORER_UI_EVENTS_RESULT).AsProtobufResult())
+               .Add(SDKComponentBuilder<PBExplorerItemPurchaseResult>.Create(ComponentID.EXPLORER_ITEM_PURCHASE_RESULT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBAvatarNametag>.Create(ComponentID.AVATAR_NAMETAG).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;

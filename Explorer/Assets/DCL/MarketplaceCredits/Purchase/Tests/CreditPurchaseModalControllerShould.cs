@@ -32,6 +32,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 null!,
                 null!,
                 null!,
+                null!,
+                null!,
+                null!,
                 _ => UniTask.CompletedTask,
                 _ => UniTask.CompletedTask);
         }
@@ -42,6 +45,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         [TestCase(CreditsPurchaseError.SignatureRejected, "user_rejected")]
         [TestCase(CreditsPurchaseError.Cancelled, "user_rejected")]
+        [TestCase(CreditsPurchaseError.SignatureTimedOut, "signature_timeout")]
         [TestCase(CreditsPurchaseError.InsufficientCredits, "insufficient_credits")]
         [TestCase(CreditsPurchaseError.ListingNotAvailable, "not_for_sale")]
         [TestCase(CreditsPurchaseError.OwnListing, "not_for_sale")]
@@ -58,6 +62,14 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [TestCase(CreditsPurchaseError.UnknownError, "unknown")]
         public void BucketEveryPurchaseErrorIntoAnAnalyticsErrorCode(CreditsPurchaseError error, string expectedBucket) =>
             Assert.AreEqual(expectedBucket, CreditPurchaseModalController.MapAnalyticsErrorCode(error));
+
+        [TestCase(true, false, false, CreditPurchaseModalOutcome.Purchased)]
+        [TestCase(true, true, false, CreditPurchaseModalOutcome.Purchased)] // a retry that went through after a failed attempt
+        [TestCase(false, true, false, CreditPurchaseModalOutcome.Failed)] // closed after a failed attempt
+        [TestCase(false, false, false, CreditPurchaseModalOutcome.Dismissed)]
+        [TestCase(false, true, true, CreditPurchaseModalOutcome.Dismissed)] // paid for and still settling, reported to analytics as a failure
+        public void ResolveHowAClosedModalEnded(bool purchaseSucceeded, bool purchaseFailed, bool settlementPending, CreditPurchaseModalOutcome expected) =>
+            Assert.AreEqual(expected, CreditPurchaseModalController.ResolveOutcome(purchaseSucceeded, purchaseFailed, settlementPending));
 
         [Test]
         public void MapEveryPurchaseErrorToADistinctAnalyticsDetail()

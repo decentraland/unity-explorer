@@ -15,6 +15,7 @@ namespace DCL.Multiplayer.SDK.Tests
     public class LocalPlayerCRDTEntityHandlerSystemShould : UnitySystemTestBase<LocalPlayerCRDTEntityHandlerSystem>
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+        private const string OTHER_USER_ID = "0xexample0000000000000000000000000000000001";
 
         private World globalWorld = null!;
         private Entity localPlayerEntity;
@@ -64,6 +65,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.Has<PlayerSceneCRDTEntity>(persistentPlayerEntity));
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
+            Assert.AreEqual(localPlayerEntity, crdtEntity.GlobalEntity);
 
             Assert.IsTrue(world.TryGet(persistentPlayerEntity, out SDKProfile? sdkProfile));
             Assert.AreEqual(FAKE_USER_ID, sdkProfile!.UserId);
@@ -77,6 +79,25 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Initialize();
 
             Assert.IsFalse(world.Has<PlayerSceneCRDTEntity>(persistentPlayerEntity));
+        }
+
+        [Test]
+        public void SeedPlayerWhenProfileArrivesAfterInitialize()
+        {
+            // Arrange
+            Profile profile = globalWorld.Get<Profile>(localPlayerEntity);
+            globalWorld.Remove<Profile>(localPlayerEntity);
+            system.Initialize();
+            globalWorld.Add(localPlayerEntity, profile);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsTrue(world.TryGet(persistentPlayerEntity, out PlayerSceneCRDTEntity crdtEntity));
+            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, crdtEntity.CRDTEntity.Id);
+            Assert.AreEqual(localPlayerEntity, crdtEntity.GlobalEntity);
+            Assert.AreEqual(FAKE_USER_ID, world.Get<SDKProfile>(persistentPlayerEntity).UserId);
         }
 
         [Test]
@@ -109,6 +130,40 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Assert
             Assert.IsFalse(world.Get<SDKTalking>(persistentPlayerEntity).IsTalking);
+        }
+
+        [Test]
+        public void CopyReplacedProfileWithoutDirtyFlag()
+        {
+            // Arrange
+            system.Initialize();
+            Profile replacement = Profile.NewRandomProfile(OTHER_USER_ID);
+            replacement.IsDirty = false;
+            globalWorld.Set(localPlayerEntity, replacement);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SDKProfile sdkProfile = world.Get<SDKProfile>(persistentPlayerEntity);
+            Assert.AreEqual(OTHER_USER_ID, sdkProfile.UserId);
+            Assert.IsTrue(sdkProfile.IsDirty);
+        }
+
+        [Test]
+        public void NotCopyUnchangedProfile()
+        {
+            // Arrange
+            system.Initialize();
+            globalWorld.Get<Profile>(localPlayerEntity).IsDirty = false;
+            SDKProfile sdkProfile = world.Get<SDKProfile>(persistentPlayerEntity);
+            sdkProfile.IsDirty = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(sdkProfile.IsDirty);
         }
 
         [Test]

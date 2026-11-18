@@ -18,8 +18,8 @@ namespace DCL.Multiplayer.SDK.Tests
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
         private Entity entity;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private SDKProfile profile;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private SDKProfile profile = null!;
         private PlayerSceneCRDTEntity playerCRDTEntity;
 
         [OneTimeSetUp]
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.SDK.Tests
             profile = new SDKProfile();
             profile.OverrideWith(Profile.NewRandomProfile(FAKE_USER_ID));
 
-            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, Entity.Null);
 
             entity = world.Create(playerCRDTEntity);
         }

@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.SDK.Tests
             profile.OverrideWith(Profile.NewRandomProfile(FAKE_USER_ID));
             profile.IsDirty = true;
 
-            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, Entity.Null);
 
             entity = world.Create(playerCRDTEntity);
         }

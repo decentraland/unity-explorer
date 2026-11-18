@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Passport.Modules.Creations;
 using DCL.Profiles;
+using DCL.Shop;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -55,7 +56,7 @@ namespace DCL.Passport.Modules
         private readonly Action<URN> onEmoteClicked;
         private readonly Action onWearableClicked;
         private readonly List<(EquippedItemPassportFieldView view, string urn)> primaryListingCandidates = new ();
-        private readonly Dictionary<string, int> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, long> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource? getEquippedItemsCts;
 
@@ -222,7 +223,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string wearableUrn = wearable.GetUrn();
                 var wearableItemView = equippedWearableItem;
-                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor, ct));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, ct));
                 equippedWearableItem.WearableClicked = onWearableClicked;
 
                 bool hasMarketplaceActions = wearable.IsOnChain() && marketPlaceLink != string.Empty;
@@ -263,7 +264,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string emoteUrn = emote.GetUrn();
                 var emoteItemView = equippedWearableItem;
-                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor, ct));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, ct));
                 equippedWearableItem.EmoteClicked = onEmoteClicked;
 
                 bool hasEmoteMarketplaceActions = emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty;
@@ -327,7 +328,7 @@ namespace DCL.Passport.Modules
 
                 foreach ((EquippedItemPassportFieldView itemView, string urn) in primaryListingCandidates)
                 {
-                    bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out int priceCredits);
+                    bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out long priceCredits);
                     itemView.BuyButtonSection.SetActive(isOnPrimarySale);
                     itemView.ViewButton.gameObject.SetActive(!isOnPrimarySale);
                     itemView.OnSaleFlap.gameObject.SetActive(isOnPrimarySale);
@@ -435,43 +436,17 @@ namespace DCL.Passport.Modules
             instantiatedEmptyItems.Clear();
         }
 
-        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, string rarityName, Sprite raritySprite, Color rarityColor, CancellationToken ct)
+        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, CancellationToken ct)
         {
-            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(
-                itemView.AssetNameText.text,
-                rarityName,
-                itemView.EquippedItemThumbnail.sprite,
-                raritySprite,
-                rarityColor,
-                itemView.CategoryImage.sprite);
-
             creditPurchaseBuyHandler.HandleBuyClickAsync(
-                                         urn, marketplaceLink, visuals,
+                                         urn, marketplaceLink, itemView.EquippedItemThumbnail.sprite,
                                          CreditPurchaseModalControllerParams.SOURCE_PASSPORT_EQUIPPED,
                                          resolving => itemView.BuyButton.interactable = !resolving,
                                          ct)
                                     .Forget();
         }
 
-        private string GetMarketplaceLink(string id)
-        {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}?utm_source=client";
-            ReadOnlySpan<char> idSpan = id.AsSpan();
-            int lastColonIndex = idSpan.LastIndexOf(':');
-
-            if (lastColonIndex == -1)
-                return "";
-
-            var item = idSpan.Slice(lastColonIndex + 1).ToString();
-            idSpan = idSpan.Slice(0, lastColonIndex);
-            int secondLastColonIndex = idSpan.LastIndexOf(':');
-            var contract = idSpan.Slice(secondLastColonIndex + 1).ToString();
-
-            // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
-            if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
-                return "";
-
-            return string.Format(marketplace, contract, item);
-        }
+        private string GetMarketplaceLink(string id) =>
+            ShopItemLinks.BuildItemUrlFromUrn(decentralandUrlsSource, id);
     }
 }

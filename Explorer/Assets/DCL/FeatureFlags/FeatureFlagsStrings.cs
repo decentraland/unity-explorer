@@ -44,6 +44,7 @@ namespace DCL.FeatureFlags
         public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
         public const string CREDITS_TOPUP = "alfa-credits-topup";
         public const string CREDITS_WALLETS = "alfa-credits-wallets";
+        public const string SCENE_ITEM_PURCHASE = "alfa-scene-item-purchase";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
@@ -51,6 +52,7 @@ namespace DCL.FeatureFlags
         public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
         public const string GUEST_LOGIN = "alfa-guest-login";
         public const string LOBBY = "alfa-lobby";
+        public const string LOBBY_BACKGROUNDS = "alfa-lobby-backgrounds";
         public const string EPHEMERAL_GUEST_ACCOUNT = "alfa-ephemeral-guest-account";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
