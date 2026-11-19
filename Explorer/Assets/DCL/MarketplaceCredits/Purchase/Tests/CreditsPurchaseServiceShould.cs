@@ -965,5 +965,84 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(PaymentMethod.Mana, options.Options[1].Method);
             Assert.AreEqual(TEN_MANA, options.Options[1].ManaWei);
         }
+
+        [Test]
+        public async Task RefuseAManaPaymentForATradeAskingForMoreThanItsPrice()
+        {
+            // Arrange: next to its price the trade asks for an NFT, which the buyer's own call would hand over.
+            TradeDto trade = CreateTrade();
+            trade.contract = chainConfig.OffChainMarketplaceAddress;
+            trade.received = new[] { trade.received[0], new TradeAssetDto { assetType = CreditsTradeEncoder.ASSET_TYPE_ERC721, contractAddress = COLLECTION, tokenId = "7" } };
+
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<TradeDto?>(trade));
+
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync(new PaymentOption(PaymentMethod.Mana, 0, 0, TEN_MANA));
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAManaPaymentPricedInAnotherToken()
+        {
+            // Arrange: an ERC20 price is pulled from the token it names, and this one is not MANA.
+            TradeDto trade = CreateLegacyManaTrade();
+            trade.contract = chainConfig.OffChainMarketplaceAddress;
+
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<TradeDto?>(trade));
+
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync(new PaymentOption(PaymentMethod.Mana, 0, 0, 5 * ONE_MANA));
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task PayWithManaForATradePricedInTheManaToken()
+        {
+            // Arrange
+            TradeDto trade = CreateLegacyManaTrade();
+            trade.contract = chainConfig.OffChainMarketplaceAddress;
+            trade.received[0].contractAddress = chainConfig.ManaTokenContract.Address;
+
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<TradeDto?>(trade));
+
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync(new PaymentOption(PaymentMethod.Mana, 0, 0, 5 * ONE_MANA));
+
+            // Assert
+            Assert.IsTrue(result.Success);
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenItsAmountIsUnreadable()
+        {
+            // Arrange
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(MIXED_CREDITS_CENTS, "not-a-number")));
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync(new PaymentOption(PaymentMethod.CreditsAndMana, MIXED_CREDITS_CENTS, 10, 6 * ONE_MANA));
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.EncodingFailed, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
     }
 }

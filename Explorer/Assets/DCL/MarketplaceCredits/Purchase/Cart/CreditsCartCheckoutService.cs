@@ -262,8 +262,10 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     return EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.ListingNotAvailable, $"Group {group.Key} is not on chain {chainConfig.ChainId}");
             }
 
-            long balanceCents = option.Method == PaymentMethod.CreditsAndMana ? await paymentOptionsProvider.CreditsBalanceCentsAsync(buyer, uiCt) : 0;
-            AssignCredits(groups, option.Method, balanceCents);
+            if (option.Method == PaymentMethod.CreditsAndMana && (option.CreditsCents <= 0 || option.CreditsCents >= review.LiveTotalUsdCents))
+                return EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged, $"A credits leg of {option.CreditsCents} cents does not split a basket of {review.LiveTotalUsdCents}");
+
+            AssignCredits(groups, option.Method, option.CreditsCents);
 
             // Phase A: reserve every group before signing anything, so a shortfall on the last group never leaves
             // the buyer with a half-bought cart. Nothing is signed yet, so every failure releases all the credits.
@@ -457,12 +459,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
                 if (group.Method == PaymentMethod.Mana)
                 {
-                    if (group.Kind == CreditsListingKind.Trade && !chainConfig.IsKnownMarketplace(group.Trades[0].contract))
+                    if (group.Kind == CreditsListingKind.Trade && !CanPayInMana(group))
                     {
                         await ReleaseGroupsAsync(groups, 0);
                         group.Error = CreditsPurchaseError.ListingNotAvailable;
                         return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.ListingNotAvailable,
-                            $"Group {group.Key} names an unknown marketplace", -1, CartCheckoutStage.Reserving);
+                            $"Group {group.Key} cannot be paid in MANA", -1, CartCheckoutStage.Reserving);
                     }
 
                     unitsReserved += group.Units.Count;
@@ -495,14 +497,16 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
                 if (group.Method == PaymentMethod.CreditsAndMana)
                 {
-                    // The gap is the group's share of the price that credits do not pay, raised when the credit
-                    // turned out to be worth less MANA than its share. Adding it to maxCreditedValue is what makes
-                    // useCredits pull it from the buyer's MANA.
-                    BigInteger creditValueWei = BigInteger.Parse(response.credit.availableAmount);
-                    BigInteger gapWei = PaymentOptionsCalculator.ManaForRemainder(group.UsdCents - group.CreditsCents, group.UsdCents, group.RequiredManaWei);
+                    if (!BigInteger.TryParse(response.credit.availableAmount, out BigInteger creditValueWei))
+                    {
+                        await ReleaseGroupsAsync(groups, 0);
+                        group.Error = CreditsPurchaseError.EncodingFailed;
+                        return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.EncodingFailed,
+                            $"Credit {response.credit.id} carries an unreadable amount", -1, CartCheckoutStage.Reserving);
+                    }
 
-                    if (creditValueWei + gapWei < group.RequiredManaWei)
-                        gapWei = group.RequiredManaWei - creditValueWei;
+                    // Adding the gap to maxCreditedValue is what makes useCredits pull it from the buyer's MANA.
+                    BigInteger gapWei = PaymentOptionsCalculator.ManaGap(group.UsdCents - group.CreditsCents, group.UsdCents, group.RequiredManaWei, creditValueWei);
 
                     group.ManaGapWei = gapWei;
                     group.MaxCreditedValue = (creditValueWei + gapWei).ToString();
@@ -619,6 +623,17 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return BuildResult(groups, outcome, error, message, -1, CartCheckoutStage.ApprovingMana);
         }
 
+        private bool CanPayInMana(CheckoutGroup group)
+        {
+            foreach (TradeDto trade in group.Trades)
+            {
+                if (!chainConfig.IsKnownMarketplace(trade.contract) || !chainConfig.AsksOnlyForMana(trade))
+                    return false;
+            }
+
+            return true;
+        }
+
         private MetaTxContract ManaTargetOf(CheckoutGroup group) =>
             group.Kind == CreditsListingKind.StoreMint
                 ? chainConfig.CollectionStoreContract
@@ -626,10 +641,10 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
         /// <summary>
         ///     Decides what each unit pays in credits and, from that, the method of each group: credits only keeps
-        ///     every unit at its price, MANA only gives none, and the mixed method spreads the buyer's whole
-        ///     credits over the units in order.
+        ///     every unit at its price, MANA only gives none, and the mixed method spreads the credits the buyer
+        ///     confirmed over the units in order.
         /// </summary>
-        private static void AssignCredits(List<CheckoutGroup> groups, PaymentMethod method, long balanceCents)
+        private static void AssignCredits(List<CheckoutGroup> groups, PaymentMethod method, int creditsCents)
         {
             var unitCents = new List<int>();
 
@@ -643,7 +658,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             {
                 PaymentMethod.Credits => unitCents.ToArray(),
                 PaymentMethod.Mana => new int[unitCents.Count],
-                _ => PaymentOptionsCalculator.DistributeCredits(unitCents, balanceCents),
+                _ => PaymentOptionsCalculator.DistributeCredits(unitCents, creditsCents),
             };
 
             var index = 0;

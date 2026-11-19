@@ -6,6 +6,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
     [TestFixture]
     public class CreditsChainConfigShould
     {
+        private const string OTHER_TOKEN = "0x3333333333333333333333333333333333333333";
+
         // Pinned rather than derived: these are the addresses real money moves through, and the pairing between an
         // ethereum network and its polygon counterpart is a convention no compiler enforces. Swapping the two arms
         // of the switch would otherwise ship silently.
@@ -50,5 +52,50 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreNotEqual(mainnet.OffChainMarketplaceAddress, sepolia.OffChainMarketplaceAddress);
             Assert.AreNotEqual(mainnet.AcrossDepositStatusUrl, sepolia.AcrossDepositStatusUrl);
         }
+
+        [Test]
+        public void KnowBothMarketplaceDeployments()
+        {
+            // Arrange
+            var config = new CreditsChainConfig(EthereumNetwork.Mainnet);
+
+            // Assert
+            Assert.IsTrue(config.IsKnownMarketplace("0xa40b1d129b8906888720686f3a01921ddf37716f"));
+            Assert.IsTrue(config.IsKnownMarketplace("0xE38EF22ABE871513555CBA89ADFE45AB4F548ADA"));
+            Assert.IsFalse(config.IsKnownMarketplace("0x36fd1434a6c4b8ade80c9847c1d15033ce34488c"));
+            Assert.IsFalse(config.IsKnownMarketplace(config.CollectionStoreAddress));
+        }
+
+        [Test]
+        public void AcceptATradeAskingForASingleManaPrice()
+        {
+            // Arrange
+            var config = new CreditsChainConfig(EthereumNetwork.Sepolia);
+
+            // Assert: a USD-pegged price settles in MANA whatever address it names, an ERC20 one has to name MANA.
+            Assert.IsTrue(config.AsksOnlyForMana(TradeReceiving(Asset(CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA, OTHER_TOKEN))));
+            Assert.IsTrue(config.AsksOnlyForMana(TradeReceiving(Asset(CreditsTradeEncoder.ASSET_TYPE_ERC20, config.ManaTokenContract.Address.ToUpperInvariant()))));
+        }
+
+        [Test]
+        public void RefuseATradeAskingForMoreThanAManaPrice()
+        {
+            // Arrange
+            var config = new CreditsChainConfig(EthereumNetwork.Sepolia);
+            TradeAssetDto mana = Asset(CreditsTradeEncoder.ASSET_TYPE_ERC20, config.ManaTokenContract.Address);
+
+            // Assert
+            Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving(Asset(CreditsTradeEncoder.ASSET_TYPE_ERC20, OTHER_TOKEN))));
+            Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving(mana, Asset(CreditsTradeEncoder.ASSET_TYPE_ERC721, OTHER_TOKEN))));
+            Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving(mana, mana)));
+            Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving(Asset(CreditsTradeEncoder.ASSET_TYPE_ERC721, config.ManaTokenContract.Address))));
+            Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving()));
+        }
+
+        private static TradeAssetDto Asset(int assetType, string contractAddress) =>
+            new () { assetType = assetType, contractAddress = contractAddress, amount = "1", tokenId = "1" };
+
+        private static TradeDto TradeReceiving(params TradeAssetDto[] received) =>
+            new () { received = received };
     }
 }

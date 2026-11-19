@@ -54,7 +54,7 @@ namespace DCL.MarketplaceCredits.Purchase
             }
         }
 
-        public async UniTask<long> CreditsBalanceCentsAsync(string buyer, CancellationToken ct)
+        private async UniTask<long> CreditsBalanceCentsAsync(string buyer, CancellationToken ct)
         {
             try
             {

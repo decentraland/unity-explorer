@@ -6,50 +6,10 @@ using System.Threading;
 
 namespace DCL.MarketplaceCredits.Purchase
 {
-    /// <summary>One accept or buy call paid straight from the buyer's MANA, already encoded.</summary>
-    public readonly struct ManaPurchaseRequest
-    {
-        public readonly string Buyer;
-        public readonly string Label;
-
-        /// <summary>The marketplace or the CollectionStore: the contract that is called and that pulls the MANA.</summary>
-        public readonly MetaTxContract Target;
-        public readonly string Calldata;
-        public readonly BigInteger MinNonce;
-
-        public ManaPurchaseRequest(string buyer, string label, MetaTxContract target, string calldata, BigInteger minNonce)
-        {
-            Buyer = buyer;
-            Label = label;
-            Target = target;
-            Calldata = calldata;
-            MinNonce = minNonce;
-        }
-    }
-
-    public readonly struct ManaApprovalResult
-    {
-        public readonly CreditsPurchaseError Error;
-        public readonly string? Message;
-
-        /// <summary>The MANA meta-transaction nonce the approval used; negative when none was sent.</summary>
-        public readonly BigInteger Nonce;
-
-        public bool Success => Error == CreditsPurchaseError.None;
-
-        public ManaApprovalResult(CreditsPurchaseError error, string? message, BigInteger nonce)
-        {
-            Error = error;
-            Message = message;
-            Nonce = nonce;
-        }
-    }
-
     /// <summary>
     ///     The MANA side of a purchase: granting a contract the allowance to pull the buyer's MANA, and settling a
     ///     purchase that spends no credits directly against the marketplace or the CollectionStore. Everything is
-    ///     relayed, so the buyer signs and never pays gas. Port of the shop web app's lib/buy-mana.ts and
-    ///     lib/authorizations.ts.
+    ///     relayed, so the buyer signs and never pays gas.
     /// </summary>
     public class ManaRail
     {
@@ -94,7 +54,10 @@ namespace DCL.MarketplaceCredits.Purchase
             if (relay.Outcome != RelayOutcome.Broadcast || string.IsNullOrEmpty(relay.TxHash))
             {
                 CreditsPurchaseError error = relay.Outcome == RelayOutcome.Broadcast ? CreditsPurchaseError.RelayerUnavailable : ErrorOf(relay.Outcome, CreditsPurchaseError.ManaApprovalFailed);
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA approval for {spender} not sent ({relay.Outcome}): {relay.Message}");
+
+                if (relay.Outcome != RelayOutcome.SignatureRejected)
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA approval for {spender} not sent ({relay.Outcome}): {relay.Message}");
+
                 return new ManaApprovalResult(error, relay.Message, relay.Nonce);
             }
 
@@ -125,7 +88,9 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (relay.Outcome != RelayOutcome.Broadcast || string.IsNullOrEmpty(relay.TxHash))
             {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA purchase {request.Label} not sent ({relay.Outcome}): {relay.Message}");
+                if (relay.Outcome != RelayOutcome.SignatureRejected)
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA purchase {request.Label} not sent ({relay.Outcome}): {relay.Message}");
+
                 setState(CreditsPurchaseState.Failed);
                 return PurchaseOutcome.Failure(ErrorOf(relay.Outcome, CreditsPurchaseError.RelayerUnavailable), relay.Message);
             }

@@ -5,59 +5,8 @@ using System.Numerics;
 namespace DCL.MarketplaceCredits.Purchase
 {
     /// <summary>
-    ///     MANA the buyer holds that cannot pay for the purchase, alone or mixed, with what it is worth at the
-    ///     purchase's own rate.
-    /// </summary>
-    public readonly struct ManaShortfall
-    {
-        public readonly BigInteger ManaWei;
-        public readonly int ManaCents;
-        public readonly int PriceCents;
-
-        public ManaShortfall(BigInteger manaWei, int manaCents, int priceCents)
-        {
-            ManaWei = manaWei;
-            ManaCents = manaCents;
-            PriceCents = priceCents;
-        }
-    }
-
-    /// <summary>
-    ///     The ways a buyer can pay one price, in preference order: credits, credits + MANA, MANA. Empty when
-    ///     nothing the buyer holds covers it.
-    /// </summary>
-    public sealed class PaymentOptions
-    {
-        public static readonly PaymentOptions NONE = new (Array.Empty<PaymentOption>(), null);
-
-        public readonly IReadOnlyList<PaymentOption> Options;
-        public readonly ManaShortfall? ManaShortfall;
-
-        public PaymentOptions(IReadOnlyList<PaymentOption> options, ManaShortfall? manaShortfall)
-        {
-            Options = options;
-            ManaShortfall = manaShortfall;
-        }
-
-        public bool TryGet(PaymentMethod method, out PaymentOption option)
-        {
-            foreach (PaymentOption candidate in Options)
-            {
-                if (candidate.Method != method)
-                    continue;
-
-                option = candidate;
-                return true;
-            }
-
-            option = default(PaymentOption);
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     Which payment methods a buyer's balances support and how a mixed payment splits. Port of the shop web
-    ///     app's lib/payment-options.ts; amounts are integer cents and MANA wei, so nothing drifts through floats.
+    ///     Which payment methods a buyer's balances support and how a mixed payment splits. Amounts are integer
+    ///     cents and MANA wei, so nothing drifts through floats.
     /// </summary>
     public static class PaymentOptionsCalculator
     {
@@ -133,6 +82,14 @@ namespace DCL.MarketplaceCredits.Purchase
 
             return ((priceManaWei * remainderCents) + priceCents - BigInteger.One) / priceCents;
         }
+
+        /// <summary>
+        ///     The MANA a mixed payment adds to a credit worth creditValueWei: the remainder's share of the price,
+        ///     raised when the credit is worth less MANA than its own share, so that the credit plus the gap always
+        ///     reach requiredManaWei.
+        /// </summary>
+        public static BigInteger ManaGap(int remainderCents, int priceCents, BigInteger requiredManaWei, BigInteger creditValueWei) =>
+            BigInteger.Max(ManaForRemainder(remainderCents, priceCents, requiredManaWei), requiredManaWei - creditValueWei);
 
         /// <summary>
         ///     Spreads a credit balance over the units of a cart, in order: each unit takes what its price needs

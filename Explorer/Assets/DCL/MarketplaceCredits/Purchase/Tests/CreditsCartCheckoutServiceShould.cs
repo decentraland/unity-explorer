@@ -27,6 +27,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const string BUYER = "0x99995f38fc9d786eab5c3a1b1c4e6ae5f4e99999";
         private const string SELLER = "0x24e5f44999c151f08609f8e27b2238c773c4d020";
         private const string TRADE_ID = "trade-1";
+        private const string GREEDY_TRADE_ID = "trade-2";
         private const string TRADE_COLLECTION = "0x2222222222222222222222222222222222222222";
         private const string MINT_COLLECTION_A = "0x7777777777777777777777777777777777777777";
         private const string MINT_COLLECTION_B = "0x8888888888888888888888888888888888888888";
@@ -581,6 +582,185 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(3, cart.Count);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 2), Arg.Any<CancellationToken>());
             await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAManaCheckoutWhenAnyTradeOfAGroupAsksForMoreThanItsPrice()
+        {
+            // Arrange: a second trade on the same marketplace asks for an NFT next to its price.
+            ListTheTradeOnTheMarketplace();
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            ShopListingDto greedyListing = TradeListing();
+            greedyListing.tradeId = GREEDY_TRADE_ID;
+            greedyListing.itemId = "4";
+            cart.Add(greedyListing, ShopCartSource.Grid);
+
+            quoteService.QuoteAsync(Arg.Is<ShopListingDto>(listing => listing.tradeId == GREEDY_TRADE_ID), Arg.Any<CancellationToken>())
+                        .Returns(_ =>
+                         {
+                             TradeDto trade = CreateTrade();
+                             trade.id = GREEDY_TRADE_ID;
+                             trade.contract = chainConfig.OffChainMarketplaceAddress;
+                             trade.received = new[] { trade.received[0], new TradeAssetDto { assetType = CreditsTradeEncoder.ASSET_TYPE_ERC721, contractAddress = TRADE_COLLECTION, tokenId = "7" } };
+                             return UniTask.FromResult(CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForTrade(trade, TRADE_PRICE_CENTS, TRADE_PRICE_CREDITS, BigInteger.Zero, false)));
+                         });
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.Mana, 0, 0, 35 * ONE_MANA), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CartCheckoutOutcome.Failed, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.FirstError);
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task SpendOnlyTheCreditsTheBuyerConfirmed()
+        {
+            // Arrange: the balance grew to cover the whole cart after the buyer confirmed 30 credits.
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+            StubEveryRelayAsBroadcast();
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 6400, credits = 640 } }));
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.CreditsAndMana, 300, 30, 14 * ONE_MANA), CancellationToken.None);
+
+            // Assert: the split is the confirmed one, $2.50 on the trade and $0.50 on the mints.
+            Assert.AreEqual(CartCheckoutOutcome.Completed, result.Outcome);
+            Assert.AreEqual(PaymentMethod.Credits, result.Groups[0].Method);
+            Assert.AreEqual(PaymentMethod.CreditsAndMana, result.Groups[1].Method);
+            await creditsAPIClient.Received(1).AuthorizeUsdCreditGroupAsync(Arg.Is<IReadOnlyList<CheckoutLine>>(l => l.Count == 1 && l[0].UsdPriceCents == 50), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAMixedCheckoutWhoseCreditsDoNotSplitTheBasket()
+        {
+            // Arrange
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.CreditsAndMana, 0, 0, 25 * ONE_MANA), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CartCheckoutOutcome.Failed, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.FirstError);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditGroupAsync(Arg.Any<IReadOnlyList<CheckoutLine>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ApproveEachSpenderOnOneNonceSequenceBeforePayingWithMana()
+        {
+            // Arrange: neither the marketplace nor the store may pull the buyer's MANA yet.
+            ListTheTradeOnTheMarketplace();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.Mana, 0, 0, 25 * ONE_MANA), CancellationToken.None);
+
+            // Assert: the second approval is floored past the first one's nonce, and each purchase starts its own contract's sequence.
+            Assert.AreEqual(CartCheckoutOutcome.Completed, result.Outcome);
+            await manaTokenReader.Received(1).AllowanceAsync(BUYER, chainConfig.OffChainMarketplaceAddress, Arg.Any<CancellationToken>());
+            await manaTokenReader.Received(1).AllowanceAsync(BUYER, chainConfig.CollectionStoreAddress, Arg.Any<CancellationToken>());
+
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.ManaTokenContract.Address),
+                BUYER, Arg.Any<string>(), Arg.Is<BigInteger>(n => n.Sign < 0), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.ManaTokenContract.Address),
+                BUYER, Arg.Any<string>(), new BigInteger(6), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.OffChainMarketplaceAddress),
+                BUYER, Arg.Any<string>(), Arg.Is<BigInteger>(n => n.Sign < 0), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.CollectionStoreAddress),
+                BUYER, Arg.Any<string>(), Arg.Is<BigInteger>(n => n.Sign < 0), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAManaCheckoutThatGrewPastWhatTheBuyerConfirmed()
+        {
+            // Arrange: the buyer confirmed 20 MANA, the cart draws 25.
+            ListTheTradeOnTheMarketplace();
+            StubMana(HUNDRED_MANA, HUNDRED_MANA);
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.Mana, 0, 0, 20 * ONE_MANA), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CartCheckoutOutcome.Failed, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.FirstError);
+            Assert.AreEqual(3, cart.Count);
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task EndAsCancelledWhenTheBuyerDeclinesAManaApproval()
+        {
+            // Arrange
+            ListTheTradeOnTheMarketplace();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SignatureRejected, message: "rejected")));
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.Mana, 0, 0, 25 * ONE_MANA), CancellationToken.None);
+
+            // Assert: the first approval was the only thing asked of the buyer.
+            Assert.AreEqual(CartCheckoutOutcome.Cancelled, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.SignatureRejected, result.FirstError);
+            Assert.AreEqual(3, cart.Count);
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task PriceTheWholeBasketInManaForItsPaymentOptions()
+        {
+            // Arrange: no credits; the $2.50 trade is worth 10 MANA at the rate and the three mints cost 15.
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 0, credits = 0 } }));
+
+            CartReview review = await ReviewAsync();
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(review, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(1, options.Options.Count);
+            Assert.AreEqual(PaymentMethod.Mana, options.Options[0].Method);
+            Assert.AreEqual(25 * ONE_MANA, options.Options[0].ManaWei);
+        }
+
+        [Test]
+        public async Task OfferNoManaMethodWhenOneLineHasNoManaPrice()
+        {
+            // Arrange: the trade's MANA price cannot be resolved, although the mints carry theirs.
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 100, credits = 10 } }));
+
+            CartReview review = await ReviewAsync();
+
+            manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                             .Returns(_ => UniTask.FromException<ManaUsdRate>(new InvalidOperationException("rate unavailable")));
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(review, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.IsNull(options.ManaShortfall);
         }
     }
 }

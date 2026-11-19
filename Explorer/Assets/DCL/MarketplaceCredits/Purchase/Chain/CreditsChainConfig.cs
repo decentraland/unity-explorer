@@ -127,6 +127,26 @@ namespace DCL.MarketplaceCredits.Purchase
             string.Equals(address, OffChainMarketplaceAddress, StringComparison.OrdinalIgnoreCase)
             || string.Equals(address, offChainMarketplaceV3Address, StringComparison.OrdinalIgnoreCase);
 
+        /// <summary>
+        ///     Whether the trade asks the buyer for one MANA payment and nothing else. A USD-pegged price is always
+        ///     settled in MANA by the marketplace whatever address it names; a plain ERC20 price is pulled from the
+        ///     address it names, so that address has to be the MANA token.
+        /// </summary>
+        public bool AsksOnlyForMana(TradeDto trade)
+        {
+            if (trade.received.Length != 1)
+                return false;
+
+            TradeAssetDto price = trade.received[0];
+
+            return price.assetType switch
+                   {
+                       CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA => true,
+                       CreditsTradeEncoder.ASSET_TYPE_ERC20 => string.Equals(price.contractAddress, ManaTokenContract.Address, StringComparison.OrdinalIgnoreCase),
+                       _ => false,
+                   };
+        }
+
         public MetaTxContract MarketplaceContract(string address) =>
             new (address, OFFCHAIN_MARKETPLACE_EIP712_NAME, OFFCHAIN_MARKETPLACE_EIP712_VERSION, false);
     }

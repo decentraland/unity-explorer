@@ -6,7 +6,6 @@ using DCL.Web3;
 using DCL.WebRequests;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Globalization;
 using System.Numerics;
 using System.Threading;
 
@@ -44,7 +43,6 @@ namespace DCL.MarketplaceCredits.Purchase
     public class MetaTxRelayer
     {
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
-        private const string ETH_CALL_METHOD = "eth_call";
         private const int HTTP_INTERNAL_SERVER_ERROR = 500;
         private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromMinutes(5);
 
@@ -192,32 +190,7 @@ namespace DCL.MarketplaceCredits.Purchase
         internal static bool IsProvenRejection(long responseCode) =>
             responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
 
-        private async UniTask<BigInteger> GetNonceAsync(string contractAddress, string buyer, CancellationToken ct)
-        {
-            var request = new EthApiRequest
-            {
-                readonlyNetwork = chainConfig.ReadonlyNetwork,
-                id = Guid.NewGuid().GetHashCode(),
-                method = ETH_CALL_METHOD,
-                @params = new object[]
-                {
-                    new JObject
-                    {
-                        ["to"] = contractAddress,
-                        ["data"] = CreditsTradeEncoder.BuildGetNonceCalldata(buyer),
-                    },
-                    "latest",
-                },
-            };
-
-            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
-            string hex = response.result?.ToString() ?? throw new InvalidOperationException("getNonce returned no result");
-            string digits = hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
-
-            if (digits.Length == 0)
-                return BigInteger.Zero;
-
-            return BigInteger.Parse($"0{digits}", NumberStyles.HexNumber);
-        }
+        private UniTask<BigInteger> GetNonceAsync(string contractAddress, string buyer, CancellationToken ct) =>
+            EthCallReader.ReadUint256Async(ethereumApi, chainConfig.ReadonlyNetwork, contractAddress, CreditsTradeEncoder.BuildGetNonceCalldata(buyer), ct);
     }
 }

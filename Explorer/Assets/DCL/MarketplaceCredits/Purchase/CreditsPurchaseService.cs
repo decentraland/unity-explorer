@@ -365,13 +365,13 @@ namespace DCL.MarketplaceCredits.Purchase
                 return Fail(CreditsPurchaseError.PriceChanged, message: $"Authorized for {authorization.usdCents} cents, buyer confirmed {option.CreditsCents}");
             }
 
-            // The gap is the buyer's share of the price, raised when the credit turned out to be worth less MANA
-            // than its share, so that the credit plus the gap always reach what the call draws.
-            BigInteger creditValueWei = BigInteger.Parse(authorization.credit.availableAmount);
-            BigInteger gapWei = PaymentOptionsCalculator.ManaForRemainder(quote.UsdCents - option.CreditsCents, quote.UsdCents, requiredManaWei);
+            if (!BigInteger.TryParse(authorization.credit.availableAmount, out BigInteger creditValueWei))
+            {
+                await executor.ReleaseIntentAsync(creditId);
+                return Fail(CreditsPurchaseError.EncodingFailed, message: $"Credit {creditId} carries an unreadable amount");
+            }
 
-            if (creditValueWei + gapWei < requiredManaWei)
-                gapWei = requiredManaWei - creditValueWei;
+            BigInteger gapWei = PaymentOptionsCalculator.ManaGap(quote.UsdCents - option.CreditsCents, quote.UsdCents, requiredManaWei, creditValueWei);
 
             if (PaymentOptionsCalculator.ExceedsConfirmedMana(gapWei, option.ManaWei))
             {
@@ -413,10 +413,12 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (quote.Kind == CreditsListingKind.StoreMint)
                 target = chainConfig.CollectionStoreContract;
-            else if (chainConfig.IsKnownMarketplace(quote.Trade!.contract))
-                target = chainConfig.MarketplaceContract(quote.Trade!.contract);
-            else
+            else if (!chainConfig.IsKnownMarketplace(quote.Trade!.contract))
                 return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade {quote.Trade!.id} names an unknown marketplace {quote.Trade!.contract}");
+            else if (!chainConfig.AsksOnlyForMana(quote.Trade!))
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade {quote.Trade!.id} asks the buyer for more than its MANA price");
+            else
+                target = chainConfig.MarketplaceContract(quote.Trade!.contract);
 
             string calldata;
 

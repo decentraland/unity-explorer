@@ -110,6 +110,7 @@ namespace DCL.MarketplaceCredits.Purchase
             {""name"":""amount"",""type"":""uint256""}]}]";
 
         private const int SIGNATURE_LENGTH = 65;
+        private const int SIGNATURE_WORD_LENGTH = 32;
         private const int SIGNATURE_V_OFFSET = 27;
         private const string CLASSIC_META_TX_PAYLOAD_FIELD = "functionSignature";
         private const string META_TX_PAYLOAD_FIELD = "functionData";
@@ -134,7 +135,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private static readonly FunctionCallEncoder FUNCTION_CALL_ENCODER = new ();
         private static readonly ParametersEncoder PARAMETERS_ENCODER = new ();
 
-        // 2^256 - 1: the unlimited allowance the web shop grants, so one approval per spender serves both clients.
+        // 2^256 - 1: an unlimited allowance, so a spender is approved once.
         private static readonly BigInteger MAX_ALLOWANCE = BigInteger.Pow(2, 256) - BigInteger.One;
 
         /// <summary>
@@ -334,11 +335,11 @@ namespace DCL.MarketplaceCredits.Purchase
             if (signatureBytes.Length != SIGNATURE_LENGTH)
                 throw new ArgumentException($"Signature is {signatureBytes.Length} bytes, expected {SIGNATURE_LENGTH}");
 
-            var r = new byte[32];
-            var s = new byte[32];
-            Array.Copy(signatureBytes, 0, r, 0, 32);
-            Array.Copy(signatureBytes, 32, s, 0, 32);
-            int v = signatureBytes[64];
+            var r = new byte[SIGNATURE_WORD_LENGTH];
+            var s = new byte[SIGNATURE_WORD_LENGTH];
+            Array.Copy(signatureBytes, 0, r, 0, SIGNATURE_WORD_LENGTH);
+            Array.Copy(signatureBytes, SIGNATURE_WORD_LENGTH, s, 0, SIGNATURE_WORD_LENGTH);
+            int v = signatureBytes[SIGNATURE_WORD_LENGTH * 2];
 
             if (v < SIGNATURE_V_OFFSET)
                 v += SIGNATURE_V_OFFSET;
