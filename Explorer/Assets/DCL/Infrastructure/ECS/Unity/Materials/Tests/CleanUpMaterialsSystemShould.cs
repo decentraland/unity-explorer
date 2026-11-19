@@ -43,7 +43,7 @@ namespace ECS.Unity.Materials.Tests
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            CancellationToken ct = component.AlbedoTexPromise.Value.LoadingIntention.CommonArguments.CancellationToken;
+            CancellationToken ct = component.AlbedoTexPromise!.Value.LoadingIntention.CommonArguments.CancellationToken;
 
             system.Update(0);
 
@@ -105,6 +105,31 @@ namespace ECS.Unity.Materials.Tests
             destroyMaterial.Received(1)(in released.Data, material);
             Assert.That(released.Result, Is.Null);
             Assert.That(released.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingNotStarted));
+        }
+
+        [Test]
+        public void ReleaseMaterialOnlyOnceWhenReleasedTwice()
+        {
+            ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
+            component.Status = StreamableLoading.LifeCycle.Applied;
+            Material material = component.Result = DefaultMaterial.New();
+
+            ReleaseMaterial.Execute(e, world, ref component, destroyMaterial);
+            ReleaseMaterial.Execute(e, world, ref component, destroyMaterial);
+
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), material);
+        }
+
+        [Test]
+        public void ReleaseMaterialOfReloadingComponent()
+        {
+            ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
+            Material material = component.Result = DefaultMaterial.New();
+
+            system.Update(0);
+
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), material);
         }
     }
 }
