@@ -5,6 +5,7 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Chat.ChatReactions.Networking;
@@ -42,6 +43,12 @@ namespace DCL.Chat.ChatMessages
         private readonly MessageReactionInteractionPresenter reactionInteraction;
         private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly EventSubscriptionScope scope = new ();
+
+        /// <summary>
+        ///     The user state services mutate their online set from LiveKit and friends callbacks off the main thread, so the
+        ///     view reads this main-thread copy instead of enumerating the live set.
+        /// </summary>
+        private readonly HashSet<string> onlineParticipantsSnapshot = new (PoolConstants.AVATARS_COUNT);
         private readonly ChatConfig.ChatConfig chatConfig;
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
@@ -462,7 +469,8 @@ namespace DCL.Chat.ChatMessages
 
                     Subscribe();
 
-                    view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
+                    RefreshOnlineParticipantsSnapshot();
+                    view.SetUserConnectivityProvider(onlineParticipantsSnapshot);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
@@ -556,13 +564,29 @@ namespace DCL.Chat.ChatMessages
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
         {
             if (upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
+            {
+                RefreshOnlineParticipantsSnapshot();
                 view.RefreshVisibleElements();
+            }
         }
 
         private void OnChannelUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
         {
             if (upd.Qualifies(currentChannelService.CurrentChannel))
+            {
+                RefreshOnlineParticipantsSnapshot();
                 view.RefreshVisibleElements();
+            }
+        }
+
+        private void RefreshOnlineParticipantsSnapshot()
+        {
+            ICurrentChannelUserStateService? userStateService = currentChannelService.UserStateService;
+
+            if (userStateService == null)
+                onlineParticipantsSnapshot.Clear();
+            else
+                userStateService.CopyOnlineParticipantsTo(onlineParticipantsSnapshot);
         }
 
         private void OnReactionChanged(string messageId)

@@ -140,7 +140,7 @@ namespace DCL.BugReporting.UI
 
         protected override void OnViewShow()
         {
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
             // Popups draw behind Overlay views, so only the draw order is raised; the MVC stack reassigns it on every show.
             if (inputData.ShowAboveOverlays)
@@ -151,7 +151,7 @@ namespace DCL.BugReporting.UI
         {
             operationsCts = operationsCts.SafeRestart();
             ClearAttachedImages();
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

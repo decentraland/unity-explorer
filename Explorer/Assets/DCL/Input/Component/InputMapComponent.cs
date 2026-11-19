@@ -18,6 +18,17 @@ namespace DCL.Input.Component
             Kind.VoiceChat
         };
 
+        /// <summary>
+        ///     Maps whose keyboard bindings collide with typed characters, blocked while a text field has focus.
+        ///     Push-to-talk lives in its own VoiceChat map, so blocking Shortcuts alone leaves it live.
+        /// </summary>
+        public static readonly Kind[] BLOCK_WHILE_TYPING =
+        {
+            Kind.Shortcuts,
+            Kind.InWorldCamera,
+            Kind.VoiceChat,
+        };
+
 
         [Flags]
         public enum Kind

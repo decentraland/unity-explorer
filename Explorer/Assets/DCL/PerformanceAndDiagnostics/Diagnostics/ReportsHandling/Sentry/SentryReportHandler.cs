@@ -37,6 +37,11 @@ namespace DCL.Diagnostics.Sentry
             "Platform does not support compute shaders",
         };
 
+        // FMOD failing to read a built-in clip's audio data from the player's own damaged or quarantined install (#10633);
+        // other FMOD failures such as "File not found" or "Unsupported format" stay reported
+        private const string FMOD_SOUND_CREATION_PREFIX = "Cannot create FMOD::Sound instance";
+        private const string FMOD_ERROR_LOADING_FILE = "(FMOD error: Error loading file.";
+
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
@@ -61,6 +66,10 @@ namespace DCL.Diagnostics.Sentry
 
         // Status 0 means Thirdweb's bundler request got no HTTP answer at all: the player's network, not a client defect (#7713, #10570)
         private const string THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE = "Bundler Request Failed. Error: 0 - ";
+
+        // A catalyst that never answered the own-profile GET within its deadline, retries included: the self-profile FSM backs off
+        // and retries (#10609). Duplicated from SelfProfileCmdExecutor, which this assembly cannot reference
+        private const string SELF_PROFILE_TIMEOUT_MESSAGE_PREFIX = "Self profile request timed out";
 
         // Beyond this many held networking failures, an error storm falls back to the last confirmed connectivity state
         private const int MAX_HELD_NETWORK_FAILURES = 32;
@@ -320,7 +329,8 @@ namespace DCL.Diagnostics.Sentry
                 if (message.StartsWith(IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
                     return true;
 
-            return false;
+            return message.StartsWith(FMOD_SOUND_CREATION_PREFIX, StringComparison.Ordinal)
+                   && message.Contains(FMOD_ERROR_LOADING_FILE, StringComparison.Ordinal);
         }
 
         private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment, bool isOffline)
@@ -350,6 +360,8 @@ namespace DCL.Diagnostics.Sentry
 
                 case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
                                                     || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+
+                case TimeoutException when exception.Message.StartsWith(SELF_PROFILE_TIMEOUT_MESSAGE_PREFIX, StringComparison.Ordinal):
                     return true;
             }
 

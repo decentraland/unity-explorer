@@ -29,6 +29,12 @@ namespace CrdtEcsBridge.OutgoingMessages
         /// </summary>
         private readonly object messagesLock = new ();
 
+        /// <summary>
+        ///     Guarded by <see cref="messagesLock" />. The scene thread can still flush after the scene is disposed, and
+        ///     the pooled collections released here must not be handed out or written to once another scene owns them.
+        /// </summary>
+        private bool disposed;
+
         private readonly ISDKComponentsRegistry componentsRegistry;
         private readonly ICRDTProtocol crdtProtocol;
         private readonly ICRDTMemoryAllocator memoryAllocator;
@@ -44,8 +50,14 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         public void Dispose()
         {
-            INDICES_SHARED_POOL.Release(lwwMessageIndices);
-            MESSAGES_SHARED_POOL.Release(messages);
+            lock (messagesLock)
+            {
+                if (disposed) return;
+
+                disposed = true;
+                INDICES_SHARED_POOL.Release(lwwMessageIndices);
+                MESSAGES_SHARED_POOL.Release(messages);
+            }
         }
 
         public void AddDeleteMessage<TMessage>(CRDTEntity entity) where TMessage: class, IMessage
@@ -81,6 +93,8 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             lock (messagesLock)
             {
+                if (disposed) return;
+
                 var key = new OutgoingMessageKey(entity, componentBridge.Id);
 
                 if (lwwMessageIndices.TryGetValue(key, out int lwwIndex))
@@ -111,7 +125,11 @@ namespace CrdtEcsBridge.OutgoingMessages
             var message = (TMessage)componentBridge.Pool.Rent();
             prepareMessage(message, data);
 
-            lock (messagesLock) { messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp)); }
+            lock (messagesLock)
+            {
+                if (!disposed)
+                    messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp));
+            }
 
             return message;
         }
@@ -131,6 +149,9 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             lock (messagesLock)
             {
+                // The caller releases the returned list, so a disposed provider hands out a fresh one, never the list it already released
+                if (disposed) return MESSAGES_SHARED_POOL.Get();
+
                 List<PendingMessage> pendingMessages = messages;
                 messages = MESSAGES_SHARED_POOL.Get();
                 lwwMessageIndices.Clear();
