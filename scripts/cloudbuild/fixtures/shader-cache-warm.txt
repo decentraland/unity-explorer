@@ -1,0 +1,41 @@
+[2026-09-30T13:21:26.466Z] - 7.6.62.3.3.5 - INFO: + Fetching Cached library_6000_5_9f1_arm64
+[2026-09-30T13:32:54.136Z] - 7.6.62.3.3.5 - INFO: Extracting cache files to /BUILD_PATH/example/Explorer
+[2026-09-30T13:33:16.584Z] - 7.6.62.3.3.5 - INFO: library_6000_5_9f1_arm64 successfully fetched and unpacked from remote cache
+[2026-09-30T13:36:33Z - Unity] Compiling shader "Shader Graphs/SatelliteView"
+[2026-09-30T13:36:33Z - Unity]   Pass "ForwardLit" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 16
+[2026-09-30T13:36:33Z - Unity]   Pass "ForwardLit" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 64
+[2026-09-30T13:36:33Z - Unity]   Pass "GBuffer" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 0
+[2026-09-30T13:36:33Z - Unity]   Pass "GBuffer" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 0
+[2026-09-30T13:36:33Z - Unity]   Pass "MotionVectors" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "MotionVectors" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "DepthOnly" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "DepthOnly" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "DepthNormals" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "DepthNormals" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 4
+[2026-09-30T13:36:33Z - Unity]   Pass "Universal 2D" (vp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 1
+[2026-09-30T13:36:33Z - Unity]   Pass "Universal 2D" (fp)
+[2026-09-30T13:36:33Z - Unity]     After scriptable stripping: 1
+[2026-09-30T13:36:33Z - Unity]   Pass ForwardLit (vp, metal) finished in 0.01 seconds. Local cache hits 16 (0.01s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass ForwardLit (fp, metal) finished in 0.01 seconds. Local cache hits 64 (0.02s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass MotionVectors (vp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass MotionVectors (fp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass DepthOnly (vp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass DepthOnly (fp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass DepthNormals (vp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass DepthNormals (fp, metal) finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass Universal 2D (vp, metal) finished in 0.00 seconds. Local cache hits 1 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:36:33Z - Unity]   Pass Universal 2D (fp, metal) finished in 0.00 seconds. Local cache hits 1 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants.
+[2026-09-30T13:46:21.883Z] - 7.6.62.3.3.5 - INFO: Zipping cache files from Library using compression level none
+[2026-09-30T13:46:49.656Z] - 7.6.62.3.3.5 - INFO: Created the archive file in 27.772002 seconds.
+[2026-09-30T13:58:04.096Z] - 7.6.62.3.3.5 - INFO: postbuildsteps finished successfully
