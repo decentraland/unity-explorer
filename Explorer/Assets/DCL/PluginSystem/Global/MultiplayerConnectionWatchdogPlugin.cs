@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.WebRequests;
+using ECS;
 using MVC;
 using System.Threading;
 
@@ -22,9 +23,10 @@ namespace DCL.PluginSystem.Global
             ITransport pulseTransport,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IRealmData realmData)
         {
-            watchdog = new MultiplayerConnectionWatchdog(roomHub, pulseTransport, webRequestController, mvcManager, decentralandUrlsSource);
+            watchdog = new MultiplayerConnectionWatchdog(roomHub, pulseTransport, webRequestController, mvcManager, decentralandUrlsSource, realmData);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

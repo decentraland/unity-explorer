@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.ErrorPopup;
 using DCL.WebRequests;
+using ECS;
 using LiveKit.Rooms;
 using MVC;
 using System;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITransport pulseTransport;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
+        private readonly IRealmData realmData;
         private readonly URLAddress reachabilityProbeUrl;
 
         private CancellationTokenSource? lifeCts;
@@ -54,12 +56,14 @@ namespace DCL.PluginSystem.Global
             ITransport pulseTransport,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IRealmData realmData)
         {
             this.roomHub = roomHub;
             this.pulseTransport = pulseTransport;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
+            this.realmData = realmData;
 
             // Raw host endpoint (e.g. https://decentraland.org), no gateway transform / feature-flag dependency — a stable reachability target.
             reachabilityProbeUrl = URLAddress.FromString(decentralandUrlsSource.Probe(DecentralandUrl.Host));
@@ -118,6 +122,13 @@ namespace DCL.PluginSystem.Global
 
             try
             {
+                // Single-player realm (comms adapter "offline:offline"): no transport is expected to be connected, nothing to watch.
+                if (realmData.IsCommsOffline())
+                {
+                    DismissPopupIfShowing();
+                    return;
+                }
+
                 if (IsMultiplayerConnected())
                 {
                     everConnected = true;

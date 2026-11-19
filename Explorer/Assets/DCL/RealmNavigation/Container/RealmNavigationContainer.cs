@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -53,7 +54,9 @@ namespace DCL.RealmNavigation
             IWeb3IdentityCache identityCache,
             ICommunityMembershipChecker communityMembershipChecker,
             IMVCManager mvcManager,
-            StartParcel startParcel)
+            StartParcel startParcel,
+            IPulseMultiplayerService pulseMultiplayerService,
+            PulseActivation pulseActivation)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
@@ -76,11 +79,13 @@ namespace DCL.RealmNavigation
                     new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                     new ClearWorldsCacheTeleportOperation(placesApiService),
                     new ChangeRealmTeleportOperation(realmContainer.RealmController),
+                    new DisconnectPulseInOfflineRealmTeleportOperation(pulseMultiplayerService, pulseActivation, staticContainer.RealmData),
                     new AnalyticsFlushTeleportOperation(analytics),
                     new LoadLandscapeTeleportOperation(landscape),
                     new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                     new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData, roomHub),
+                    new ConnectPulseTeleportOperation(pulseMultiplayerService, pulseActivation, staticContainer.RealmData),
                     new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 },
                 ReportCategory.SCENE_LOADING,
