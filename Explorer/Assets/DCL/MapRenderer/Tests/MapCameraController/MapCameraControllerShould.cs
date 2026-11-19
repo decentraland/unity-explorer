@@ -59,6 +59,15 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         }
 
         [Test]
+        public void InitializeWithAtLeastOnePixelWhenResolutionIsEmpty()
+        {
+            ((IMapCameraControllerInternal)mapCamera).Initialize(owner, Vector2Int.zero, new Vector2Int(10, 20), MapLayer.SatelliteAtlas);
+
+            Assert.AreEqual(1, mapCamera.RenderTexture.width);
+            Assert.AreEqual(1, mapCamera.RenderTexture.height);
+        }
+
+        [Test]
         public void ThrowIfAccessingRenderTextureWhenNotInitialized()
         {
             Assert.Throws<Exception>(() => mapCamera.GetRenderTexture());

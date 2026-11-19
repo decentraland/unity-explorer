@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
@@ -80,7 +81,8 @@ namespace DCL.Chat
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
             IInputBlock inputBlock,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IExposedCameraData exposedCameraData)
         {
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
@@ -238,6 +240,7 @@ namespace DCL.Chat
                     reactionSimulation,
                     reactionsConfig,
                     reactionDebugState,
+                    exposedCameraData,
                     reactionDebugController,
                     view.ChatReactionButton.ReactionButton);
             }

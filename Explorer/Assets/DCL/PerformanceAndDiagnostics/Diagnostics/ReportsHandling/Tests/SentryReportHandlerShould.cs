@@ -101,6 +101,22 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropSelfProfileRequestTimeouts()
+        {
+            var @event = new SentryEvent(new TimeoutException("Self profile request timed out after 10s"));
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherTimeouts()
+        {
+            var @event = new SentryEvent(new TimeoutException("Profile fetch timed out after 15s"));
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void DropDiskFullEvenWhenUnobservedTaskWrapsIt()
         {
             var @event = new SentryEvent(new AggregateException(new IOException("Disk full. Path /Users/jane/userdata_0.json")));

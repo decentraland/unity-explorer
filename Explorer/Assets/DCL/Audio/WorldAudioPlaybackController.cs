@@ -101,28 +101,35 @@ namespace DCL.Audio
                 audioSourceList = new List<WorldPlaybackAudioData>();
 
                 foreach (int2 position in audioSourcesPositions)
-                {
-                    AudioSource audioSource = GetAndSetAudioSourceAtPosition(position);
-                    var cts = new CancellationTokenSource();
-                    var audioData = new WorldPlaybackAudioData(audioSource, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, mainCancellationTokenSource.Token));
-                    audioSourceList.Add(audioData);
-                }
+                    audioSourceList.Add(CreateAudioDataAtPosition(position));
 
                 audioSourcesPerIndex.Add(index, audioSourceList);
             }
             else
             {
-                for (var i = 0; i < Math.Min(audioSourcesPositions.Length, audioSourcesPositions.Length); i++)
+                int reusedCount = Math.Min(audioSourcesPositions.Length, audioSourceList.Count);
+
+                for (var i = 0; i < reusedCount; i++)
                 {
                     int2 position = audioSourcesPositions[i];
                     audioSourceList[i].AudioSource.transform.position = new Vector3(position.x, 1, position.y);
                 }
+
+                for (int i = reusedCount; i < audioSourcesPositions.Length; i++)
+                    audioSourceList.Add(CreateAudioDataAtPosition(audioSourcesPositions[i]));
             }
 
             foreach (WorldPlaybackAudioData audioData in audioSourceList)
             {
                 if (!audioData.AudioSource.isPlaying) SetupAudioClip(audioData, audioClipConfig);
             }
+        }
+
+        private WorldPlaybackAudioData CreateAudioDataAtPosition(int2 position)
+        {
+            AudioSource audioSource = GetAndSetAudioSourceAtPosition(position);
+            var cts = new CancellationTokenSource();
+            return new WorldPlaybackAudioData(audioSource, CancellationTokenSource.CreateLinkedTokenSource(cts.Token, mainCancellationTokenSource.Token));
         }
 
         private void StopAndReleaseAudioSources(int index, WorldAudioClipType clipType)

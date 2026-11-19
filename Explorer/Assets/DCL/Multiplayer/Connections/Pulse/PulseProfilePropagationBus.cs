@@ -29,10 +29,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             var message = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);
 
-            message.Message.ProfileAnnouncement = new ProfileVersionAnnouncement
-            {
-                Version = profile.Version,
-            };
+            message.Message.ProfileAnnouncement.Version = profile.Version;
 
             service.Send(message);
         }
