@@ -1,0 +1,172 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+
+namespace DCL.MarketplaceCredits.Purchase
+{
+    /// <summary>
+    ///     MANA the buyer holds that cannot pay for the purchase, alone or mixed, with what it is worth at the
+    ///     purchase's own rate.
+    /// </summary>
+    public readonly struct ManaShortfall
+    {
+        public readonly BigInteger ManaWei;
+        public readonly int ManaCents;
+        public readonly int PriceCents;
+
+        public ManaShortfall(BigInteger manaWei, int manaCents, int priceCents)
+        {
+            ManaWei = manaWei;
+            ManaCents = manaCents;
+            PriceCents = priceCents;
+        }
+    }
+
+    /// <summary>
+    ///     The ways a buyer can pay one price, in preference order: credits, credits + MANA, MANA. Empty when
+    ///     nothing the buyer holds covers it.
+    /// </summary>
+    public sealed class PaymentOptions
+    {
+        public static readonly PaymentOptions NONE = new (Array.Empty<PaymentOption>(), null);
+
+        public readonly IReadOnlyList<PaymentOption> Options;
+        public readonly ManaShortfall? ManaShortfall;
+
+        public PaymentOptions(IReadOnlyList<PaymentOption> options, ManaShortfall? manaShortfall)
+        {
+            Options = options;
+            ManaShortfall = manaShortfall;
+        }
+
+        public bool TryGet(PaymentMethod method, out PaymentOption option)
+        {
+            foreach (PaymentOption candidate in Options)
+            {
+                if (candidate.Method != method)
+                    continue;
+
+                option = candidate;
+                return true;
+            }
+
+            option = default(PaymentOption);
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Which payment methods a buyer's balances support and how a mixed payment splits. Port of the shop web
+    ///     app's lib/payment-options.ts; amounts are integer cents and MANA wei, so nothing drifts through floats.
+    /// </summary>
+    public static class PaymentOptionsCalculator
+    {
+        public const int CENTS_PER_CREDIT = 10;
+
+        // How far the MANA a purchase draws may exceed what the buyer confirmed. A USD-pegged listing is
+        // converted at the oracle rate when it settles, so its MANA amount moves between the quote and the purchase.
+        private const int MANA_DRIFT_TOLERANCE_PERCENT = 2;
+
+        /// <summary>
+        ///     priceManaWei is what the price costs in MANA right now; zero (rate unknown) leaves only credits.
+        /// </summary>
+        public static PaymentOptions Compute(int priceCents, BigInteger priceManaWei, long balanceCents, BigInteger manaBalanceWei)
+        {
+            if (priceCents <= 0)
+                return PaymentOptions.NONE;
+
+            if (balanceCents < 0)
+                balanceCents = 0;
+
+            if (priceManaWei.Sign < 0)
+                priceManaWei = BigInteger.Zero;
+
+            if (manaBalanceWei.Sign < 0)
+                manaBalanceWei = BigInteger.Zero;
+
+            var options = new List<PaymentOption>(3);
+            var hasManaOption = false;
+
+            if (balanceCents >= priceCents)
+                options.Add(new PaymentOption(PaymentMethod.Credits, priceCents, CeilToCredits(priceCents), BigInteger.Zero));
+
+            // The credits leg is the balance floored to whole credits: the credits-server rounds every charge up
+            // to a whole credit, so asking for a balance with odd cents would be refused as insufficient.
+            int creditsLegCents = WholeCreditCents(balanceCents);
+
+            if (priceManaWei.Sign > 0 && creditsLegCents > 0 && creditsLegCents < priceCents)
+            {
+                BigInteger gapWei = ManaForRemainder(priceCents - creditsLegCents, priceCents, priceManaWei);
+
+                if (manaBalanceWei >= gapWei)
+                {
+                    options.Add(new PaymentOption(PaymentMethod.CreditsAndMana, creditsLegCents, creditsLegCents / CENTS_PER_CREDIT, gapWei));
+                    hasManaOption = true;
+                }
+            }
+
+            if (priceManaWei.Sign > 0 && manaBalanceWei >= priceManaWei)
+            {
+                options.Add(new PaymentOption(PaymentMethod.Mana, 0, 0, priceManaWei));
+                hasManaOption = true;
+            }
+
+            ManaShortfall? shortfall = null;
+
+            if (!hasManaOption && priceManaWei.Sign > 0 && manaBalanceWei.Sign > 0)
+                shortfall = new ManaShortfall(manaBalanceWei, (int)(manaBalanceWei * priceCents / priceManaWei), priceCents);
+
+            return new PaymentOptions(options, shortfall);
+        }
+
+        /// <summary>
+        ///     The MANA that covers remainderCents of a price of priceCents costing priceManaWei, rounded up so a
+        ///     split never under-funds the price.
+        /// </summary>
+        public static BigInteger ManaForRemainder(int remainderCents, int priceCents, BigInteger priceManaWei)
+        {
+            if (remainderCents <= 0 || priceCents <= 0)
+                return BigInteger.Zero;
+
+            if (remainderCents >= priceCents)
+                return priceManaWei;
+
+            return ((priceManaWei * remainderCents) + priceCents - BigInteger.One) / priceCents;
+        }
+
+        /// <summary>
+        ///     Spreads a credit balance over the units of a cart, in order: each unit takes what its price needs
+        ///     from what is left, in whole credits. The result has one entry per unit.
+        /// </summary>
+        public static int[] DistributeCredits(IReadOnlyList<int> unitCents, long balanceCents)
+        {
+            var allocation = new int[unitCents.Count];
+            int remaining = WholeCreditCents(balanceCents);
+
+            for (var i = 0; i < unitCents.Count; i++)
+            {
+                int take = Math.Min(Math.Max(0, unitCents[i]), remaining);
+                take -= take % CENTS_PER_CREDIT;
+                allocation[i] = take;
+                remaining -= take;
+            }
+
+            return allocation;
+        }
+
+        public static bool ExceedsConfirmedMana(BigInteger neededWei, BigInteger confirmedWei) =>
+            neededWei * 100 > confirmedWei * (100 + MANA_DRIFT_TOLERANCE_PERCENT);
+
+        private static int WholeCreditCents(long balanceCents)
+        {
+            if (balanceCents <= 0)
+                return 0;
+
+            long whole = balanceCents - (balanceCents % CENTS_PER_CREDIT);
+            return whole > int.MaxValue ? int.MaxValue - (int.MaxValue % CENTS_PER_CREDIT) : (int)whole;
+        }
+
+        private static int CeilToCredits(int cents) =>
+            (cents + CENTS_PER_CREDIT - 1) / CENTS_PER_CREDIT;
+    }
+}

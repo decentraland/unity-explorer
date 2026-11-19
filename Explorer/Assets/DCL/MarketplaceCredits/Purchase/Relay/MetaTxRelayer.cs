@@ -41,7 +41,7 @@ namespace DCL.MarketplaceCredits.Purchase
     }
 
     // AI Generated on the base of the backend information
-    public class CreditsManagerMetaTxRelayer
+    public class MetaTxRelayer
     {
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const string ETH_CALL_METHOD = "eth_call";
@@ -54,13 +54,13 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly CreditsChainConfig chainConfig;
 
-        public CreditsManagerMetaTxRelayer(
+        public MetaTxRelayer(
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             CreditsChainConfig chainConfig) : this(ethereumApi, webRequestController, decentralandUrlsSource, chainConfig, DEFAULT_SIGNATURE_TIMEOUT) { }
 
-        internal CreditsManagerMetaTxRelayer(
+        internal MetaTxRelayer(
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -74,22 +74,19 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken signCt, CancellationToken broadcastCt) =>
-            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, signCt, broadcastCt);
-
         /// <summary>
-        ///     Signs and relays one useCredits call. minNonce floors the nonce read from the contract: a group signed
-        ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
-        ///     reusing it would make the relayer reject the second transaction.
+        ///     Signs and relays one call as a meta-transaction of the given contract. minNonce floors the nonce read
+        ///     from the contract (negative for no floor): a call signed right after another one's receipt may still
+        ///     read the previous nonce from a lagging RPC node, and reusing it would make the relayer reject it.
         ///     <paramref name="signCt" /> covers the nonce read and the wallet signature and is rethrown when cancelled;
         ///     a signature that is neither given nor refused within the timeout ends as <see cref="RelayOutcome.SignatureTimedOut" />;
         ///     <paramref name="broadcastCt" /> covers the relayer request, where a cancellation is an ambiguous broadcast.
         /// </summary>
-        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
+        public virtual async UniTask<RelayResult> RelayAsync(MetaTxContract contract, string buyer, string calldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
         {
             BigInteger nonce;
 
-            try { nonce = await GetNonceAsync(buyer, signCt); }
+            try { nonce = await GetNonceAsync(contract.Address, buyer, signCt); }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
@@ -100,7 +97,7 @@ namespace DCL.MarketplaceCredits.Purchase
             if (minNonce > nonce)
                 nonce = minNonce;
 
-            string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
+            string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(contract, chainConfig.ChainId, nonce, buyer, calldata);
             string signature;
 
             using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
@@ -137,14 +134,21 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message);
             }
 
-            string txData = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(buyer, useCreditsCalldata, signature);
+            string txData;
+
+            try { txData = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(contract, buyer, calldata, signature); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                return new RelayResult(RelayOutcome.SigningFailed, message: $"Unusable signature: {e.Message}");
+            }
 
             var body = new JObject
             {
                 ["transactionData"] = new JObject
                 {
                     ["from"] = buyer,
-                    ["params"] = new JArray { chainConfig.CreditsManagerAddress, txData },
+                    ["params"] = new JArray { contract.Address, txData },
                 },
             };
 
@@ -188,7 +192,7 @@ namespace DCL.MarketplaceCredits.Purchase
         internal static bool IsProvenRejection(long responseCode) =>
             responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
 
-        private async UniTask<BigInteger> GetNonceAsync(string buyer, CancellationToken ct)
+        private async UniTask<BigInteger> GetNonceAsync(string contractAddress, string buyer, CancellationToken ct)
         {
             var request = new EthApiRequest
             {
@@ -199,7 +203,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 {
                     new JObject
                     {
-                        ["to"] = chainConfig.CreditsManagerAddress,
+                        ["to"] = contractAddress,
                         ["data"] = CreditsTradeEncoder.BuildGetNonceCalldata(buyer),
                     },
                     "latest",

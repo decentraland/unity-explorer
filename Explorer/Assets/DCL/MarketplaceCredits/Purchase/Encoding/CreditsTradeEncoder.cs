@@ -89,6 +89,31 @@ namespace DCL.MarketplaceCredits.Purchase
             {""name"":""_functionData"",""type"":""bytes""},
             {""name"":""_signature"",""type"":""bytes""}]}]";
 
+        // The classic Decentraland meta-transaction entry point (MANA, CollectionStore): the signature travels
+        // split into r, s and v.
+        private const string EXECUTE_CLASSIC_META_TX_ABI = @"[{""name"":""executeMetaTransaction"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""userAddress"",""type"":""address""},
+            {""name"":""functionSignature"",""type"":""bytes""},
+            {""name"":""sigR"",""type"":""bytes32""},
+            {""name"":""sigS"",""type"":""bytes32""},
+            {""name"":""sigV"",""type"":""uint8""}]}]";
+
+        private const string ERC20_BALANCE_OF_ABI = @"[{""name"":""balanceOf"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""owner"",""type"":""address""}]}]";
+
+        private const string ERC20_ALLOWANCE_ABI = @"[{""name"":""allowance"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""owner"",""type"":""address""},
+            {""name"":""spender"",""type"":""address""}]}]";
+
+        private const string ERC20_APPROVE_ABI = @"[{""name"":""approve"",""type"":""function"",""outputs"":[],""inputs"":[
+            {""name"":""spender"",""type"":""address""},
+            {""name"":""amount"",""type"":""uint256""}]}]";
+
+        private const int SIGNATURE_LENGTH = 65;
+        private const int SIGNATURE_V_OFFSET = 27;
+        private const string CLASSIC_META_TX_PAYLOAD_FIELD = "functionSignature";
+        private const string META_TX_PAYLOAD_FIELD = "functionData";
+
         private const string GET_NONCE_ABI = @"[{""name"":""getNonce"",""type"":""function"",""outputs"":[],""inputs"":[
             {""name"":""_signer"",""type"":""address""}]}]";
 
@@ -99,11 +124,18 @@ namespace DCL.MarketplaceCredits.Purchase
         private static readonly FunctionABI STORE_BUY_FUNCTION = DeserialiseFunction(STORE_BUY_ABI);
         private static readonly FunctionABI USE_CREDITS_FUNCTION = DeserialiseFunction(USE_CREDITS_ABI);
         private static readonly FunctionABI EXECUTE_META_TX_FUNCTION = DeserialiseFunction(EXECUTE_META_TX_ABI);
+        private static readonly FunctionABI EXECUTE_CLASSIC_META_TX_FUNCTION = DeserialiseFunction(EXECUTE_CLASSIC_META_TX_ABI);
+        private static readonly FunctionABI ERC20_BALANCE_OF_FUNCTION = DeserialiseFunction(ERC20_BALANCE_OF_ABI);
+        private static readonly FunctionABI ERC20_ALLOWANCE_FUNCTION = DeserialiseFunction(ERC20_ALLOWANCE_ABI);
+        private static readonly FunctionABI ERC20_APPROVE_FUNCTION = DeserialiseFunction(ERC20_APPROVE_ABI);
         private static readonly FunctionABI GET_NONCE_FUNCTION = DeserialiseFunction(GET_NONCE_ABI);
         private static readonly FunctionABI NAME_AVAILABLE_FUNCTION = DeserialiseFunction(NAME_AVAILABLE_ABI);
 
         private static readonly FunctionCallEncoder FUNCTION_CALL_ENCODER = new ();
         private static readonly ParametersEncoder PARAMETERS_ENCODER = new ();
+
+        // 2^256 - 1: the unlimited allowance the web shop grants, so one approval per spender serves both clients.
+        private static readonly BigInteger MAX_ALLOWANCE = BigInteger.Pow(2, 256) - BigInteger.One;
 
         /// <summary>
         ///     accept([trade]) split into the (selector, data) pair consumed by the useCredits externalCall
@@ -284,7 +316,64 @@ namespace DCL.MarketplaceCredits.Purchase
                 from, functionData.HexToByteArray(), signature.HexToByteArray());
 
         /// <summary>
-        ///     getNonce(signer) calldata for the CreditsManager meta-transaction replay protection read.
+        ///     executeMetaTransaction calldata in the variant the contract implements.
+        /// </summary>
+        public static string BuildExecuteMetaTxCalldata(in MetaTxContract contract, string from, string functionData, string signature) =>
+            contract.IsClassic
+                ? BuildClassicExecuteMetaTxCalldata(from, functionData, signature)
+                : BuildExecuteMetaTxCalldata(from, functionData, signature);
+
+        /// <summary>
+        ///     executeMetaTransaction(userAddress, functionSignature, sigR, sigS, sigV) calldata. Wallets that
+        ///     return a recovery id of 0 or 1 are normalised to 27 or 28, which is what the contract's ecrecover takes.
+        /// </summary>
+        public static string BuildClassicExecuteMetaTxCalldata(string from, string functionSignature, string signature)
+        {
+            byte[] signatureBytes = signature.HexToByteArray();
+
+            if (signatureBytes.Length != SIGNATURE_LENGTH)
+                throw new ArgumentException($"Signature is {signatureBytes.Length} bytes, expected {SIGNATURE_LENGTH}");
+
+            var r = new byte[32];
+            var s = new byte[32];
+            Array.Copy(signatureBytes, 0, r, 0, 32);
+            Array.Copy(signatureBytes, 32, s, 0, 32);
+            int v = signatureBytes[64];
+
+            if (v < SIGNATURE_V_OFFSET)
+                v += SIGNATURE_V_OFFSET;
+
+            return FUNCTION_CALL_ENCODER.EncodeRequest(
+                EXECUTE_CLASSIC_META_TX_FUNCTION.Sha3Signature,
+                EXECUTE_CLASSIC_META_TX_FUNCTION.InputParameters,
+                from, functionSignature.HexToByteArray(), r, s, new BigInteger(v));
+        }
+
+        /// <summary>
+        ///     The full calldata of a call given as the (selector, data) pair the useCredits external call takes.
+        /// </summary>
+        public static string ToCalldata(byte[] selector, byte[] data)
+        {
+            var calldata = new byte[selector.Length + data.Length];
+            Array.Copy(selector, 0, calldata, 0, selector.Length);
+            Array.Copy(data, 0, calldata, selector.Length, data.Length);
+            return calldata.ToHex(true);
+        }
+
+        public static string BuildBalanceOfCalldata(string owner) =>
+            FUNCTION_CALL_ENCODER.EncodeRequest(ERC20_BALANCE_OF_FUNCTION.Sha3Signature, ERC20_BALANCE_OF_FUNCTION.InputParameters, owner);
+
+        public static string BuildAllowanceCalldata(string owner, string spender) =>
+            FUNCTION_CALL_ENCODER.EncodeRequest(ERC20_ALLOWANCE_FUNCTION.Sha3Signature, ERC20_ALLOWANCE_FUNCTION.InputParameters, owner, spender);
+
+        /// <summary>
+        ///     approve(spender, 2^256 - 1) calldata.
+        /// </summary>
+        public static string BuildUnlimitedApproveCalldata(string spender) =>
+            FUNCTION_CALL_ENCODER.EncodeRequest(ERC20_APPROVE_FUNCTION.Sha3Signature, ERC20_APPROVE_FUNCTION.InputParameters, spender, MAX_ALLOWANCE);
+
+        /// <summary>
+        ///     getNonce(signer) calldata for the meta-transaction replay protection read.
         /// </summary>
         public static string BuildGetNonceCalldata(string signer) =>
             FUNCTION_CALL_ENCODER.EncodeRequest(GET_NONCE_FUNCTION.Sha3Signature, GET_NONCE_FUNCTION.InputParameters, signer);
@@ -303,10 +392,13 @@ namespace DCL.MarketplaceCredits.Purchase
 
         /// <summary>
         ///     eth_signTypedData_v4 payload for the Decentraland/Polygon native meta-transaction: domain
-        ///     salt = bytes32(chainId), primary type MetaTransaction { nonce, from, functionData }.
+        ///     salt = bytes32(chainId), primary type MetaTransaction { nonce, from, functionData }. The classic
+        ///     variant names the payload field functionSignature.
         /// </summary>
-        public static string BuildMetaTxTypedDataJson(CreditsChainConfig chainConfig, BigInteger nonce, string from, string functionData)
+        public static string BuildMetaTxTypedDataJson(in MetaTxContract contract, int chainId, BigInteger nonce, string from, string functionData)
         {
+            string payloadField = contract.IsClassic ? CLASSIC_META_TX_PAYLOAD_FIELD : META_TX_PAYLOAD_FIELD;
+
             var typedData = new JObject
             {
                 ["types"] = new JObject
@@ -322,22 +414,22 @@ namespace DCL.MarketplaceCredits.Purchase
                     {
                         TypeEntry("nonce", "uint256"),
                         TypeEntry("from", "address"),
-                        TypeEntry("functionData", "bytes"),
+                        TypeEntry(payloadField, "bytes"),
                     },
                 },
                 ["domain"] = new JObject
                 {
-                    ["name"] = chainConfig.CreditsManagerEip712Name,
-                    ["version"] = chainConfig.CreditsManagerEip712Version,
-                    ["verifyingContract"] = chainConfig.CreditsManagerAddress,
-                    ["salt"] = ChainIdSalt(chainConfig.ChainId),
+                    ["name"] = contract.Eip712Name,
+                    ["version"] = contract.Eip712Version,
+                    ["verifyingContract"] = contract.Address,
+                    ["salt"] = ChainIdSalt(chainId),
                 },
                 ["primaryType"] = "MetaTransaction",
                 ["message"] = new JObject
                 {
                     ["nonce"] = nonce.ToString(),
                     ["from"] = from,
-                    ["functionData"] = functionData,
+                    [payloadField] = functionData,
                 },
             };
 

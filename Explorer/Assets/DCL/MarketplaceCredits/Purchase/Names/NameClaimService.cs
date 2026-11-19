@@ -288,7 +288,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 return NameClaimResult.Failed(NameClaimError.RouteUnavailable, e.Message);
             }
 
-            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
+            PurchaseOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
 
             // Without a transaction hash there is nothing to look the bridge deposit up by.
             if (outcome.Error == CreditsPurchaseError.SettlementPending && string.IsNullOrEmpty(outcome.TxHash))

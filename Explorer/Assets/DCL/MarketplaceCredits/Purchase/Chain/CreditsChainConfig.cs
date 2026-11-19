@@ -25,6 +25,14 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS = "0xa40b1d129b8906888720686f3a01921ddf37716f";
         private const string AMOY_OFFCHAIN_MARKETPLACE_ADDRESS = "0x1b67d0e31eeb6b52d8eeed71d3616c2f5b33b8e7";
 
+        // The newer marketplace deployment. A trade names the marketplace it was signed against, so both are valid
+        // settlement targets.
+        private const string POLYGON_OFFCHAIN_MARKETPLACE_V3_ADDRESS = "0xe38ef22abe871513555cba89adfe45ab4f548ada";
+        private const string AMOY_OFFCHAIN_MARKETPLACE_V3_ADDRESS = "0x36fd1434a6c4b8ade80c9847c1d15033ce34488c";
+
+        private const string POLYGON_MANA_TOKEN_ADDRESS = "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4";
+        private const string AMOY_MANA_TOKEN_ADDRESS = "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0";
+
         // DCLRegistrar lives on Ethereum L1: it answers whether a NAME is still free.
         private const string MAINNET_READONLY_NETWORK = "mainnet";
         private const string SEPOLIA_READONLY_NETWORK = "sepolia";
@@ -35,8 +43,18 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string MAINNET_ACROSS_DEPOSIT_STATUS_URL = "https://app.across.to/api/deposit/status";
         private const string TESTNET_ACROSS_DEPOSIT_STATUS_URL = "https://testnet.across.to/api/deposit/status";
 
+        // EIP-712 domains, as published in decentraland-transactions (src/contracts).
         private const string CREDITS_MANAGER_EIP712_NAME = "Decentraland Credits";
         private const string CREDITS_MANAGER_EIP712_VERSION = "1.0.0";
+        private const string OFFCHAIN_MARKETPLACE_EIP712_NAME = "DecentralandMarketplacePolygon";
+        private const string OFFCHAIN_MARKETPLACE_EIP712_VERSION = "1.0.0";
+        private const string COLLECTION_STORE_EIP712_NAME = "Decentraland Collection Store";
+        private const string COLLECTION_STORE_EIP712_VERSION = "1";
+        private const string POLYGON_MANA_TOKEN_EIP712_NAME = "(PoS) Decentraland MANA";
+        private const string AMOY_MANA_TOKEN_EIP712_NAME = "Decentraland MANA(PoS)";
+        private const string MANA_TOKEN_EIP712_VERSION = "1";
+
+        private readonly string offChainMarketplaceV3Address;
 
         public int ChainId { get; }
 
@@ -54,9 +72,11 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public string AcrossDepositStatusUrl { get; }
 
-        public string CreditsManagerEip712Name => CREDITS_MANAGER_EIP712_NAME;
+        public MetaTxContract CreditsManagerContract { get; }
 
-        public string CreditsManagerEip712Version => CREDITS_MANAGER_EIP712_VERSION;
+        public MetaTxContract CollectionStoreContract { get; }
+
+        public MetaTxContract ManaTokenContract { get; }
 
         /// <summary>
         ///     Polygon is the network that pairs with ethereum mainnet and Amoy the one that pairs with sepolia, so
@@ -76,6 +96,8 @@ namespace DCL.MarketplaceCredits.Purchase
                     EthereumReadonlyNetwork = MAINNET_READONLY_NETWORK;
                     DclRegistrarAddress = MAINNET_DCL_REGISTRAR_ADDRESS;
                     AcrossDepositStatusUrl = MAINNET_ACROSS_DEPOSIT_STATUS_URL;
+                    offChainMarketplaceV3Address = POLYGON_OFFCHAIN_MARKETPLACE_V3_ADDRESS;
+                    ManaTokenContract = new MetaTxContract(POLYGON_MANA_TOKEN_ADDRESS, POLYGON_MANA_TOKEN_EIP712_NAME, MANA_TOKEN_EIP712_VERSION, true);
                     break;
                 case EthereumNetwork.Sepolia:
                     ChainId = AMOY_CHAIN_ID;
@@ -86,10 +108,26 @@ namespace DCL.MarketplaceCredits.Purchase
                     EthereumReadonlyNetwork = SEPOLIA_READONLY_NETWORK;
                     DclRegistrarAddress = SEPOLIA_DCL_REGISTRAR_ADDRESS;
                     AcrossDepositStatusUrl = TESTNET_ACROSS_DEPOSIT_STATUS_URL;
+                    offChainMarketplaceV3Address = AMOY_OFFCHAIN_MARKETPLACE_V3_ADDRESS;
+                    ManaTokenContract = new MetaTxContract(AMOY_MANA_TOKEN_ADDRESS, AMOY_MANA_TOKEN_EIP712_NAME, MANA_TOKEN_EIP712_VERSION, true);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ethereumNetwork), ethereumNetwork, null);
             }
+
+            CreditsManagerContract = new MetaTxContract(CreditsManagerAddress, CREDITS_MANAGER_EIP712_NAME, CREDITS_MANAGER_EIP712_VERSION, false);
+            CollectionStoreContract = new MetaTxContract(CollectionStoreAddress, COLLECTION_STORE_EIP712_NAME, COLLECTION_STORE_EIP712_VERSION, true);
         }
+
+        /// <summary>
+        ///     Whether the address is one of the offchain marketplace deployments of this chain. A trade arrives
+        ///     from the API naming its own marketplace, and that address ends up holding a MANA allowance.
+        /// </summary>
+        public bool IsKnownMarketplace(string address) =>
+            string.Equals(address, OffChainMarketplaceAddress, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(address, offChainMarketplaceV3Address, StringComparison.OrdinalIgnoreCase);
+
+        public MetaTxContract MarketplaceContract(string address) =>
+            new (address, OFFCHAIN_MARKETPLACE_EIP712_NAME, OFFCHAIN_MARKETPLACE_EIP712_VERSION, false);
     }
 }

@@ -17,7 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
     ///     The meta-transaction relay: which nonce gets signed, and which failures prove the transaction never
     ///     reached the chain.
     /// </summary>
-    public class CreditsManagerMetaTxRelayerShould
+    public class MetaTxRelayerShould
     {
         private const string BUYER = "0x99995f38fc9d786eab5c3a1b1c4e6ae5f4e99999";
         private const string CALLDATA = "0xabcdef";
@@ -30,9 +30,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private IEthereumApi ethereumApi = null!;
         private IWebRequestController webRequestController = null!;
         private IDecentralandUrlsSource urlsSource = null!;
-        private CreditsManagerMetaTxRelayer relayer = null!;
+        private MetaTxRelayer relayer = null!;
+        private CreditsChainConfig chainConfig = null!;
+        private MetaTxContract contract;
         private BigInteger onChainNonce;
         private string? signedTypedData;
+        private string? nonceContract;
+        private string signature = null!;
         private CancellationTokenSource cts = null!;
 
         [SetUp]
@@ -45,6 +49,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             onChainNonce = new BigInteger(5);
             signedTypedData = null;
+            nonceContract = null;
+            signature = SIGNATURE;
             cts = new CancellationTokenSource();
 
             ethereumApi.SendAsync(Arg.Any<EthApiRequest>(), Arg.Any<Web3RequestSource>(), Arg.Any<CancellationToken>())
@@ -52,7 +58,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             StubRelayerResponse(_ => UniTask.FromResult<JObject?>(new JObject { ["txHash"] = TX_HASH }));
 
-            relayer = new CreditsManagerMetaTxRelayer(ethereumApi, webRequestController, urlsSource, new CreditsChainConfig(EthereumNetwork.Sepolia));
+            chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
+            contract = chainConfig.CreditsManagerContract;
+            relayer = new MetaTxRelayer(ethereumApi, webRequestController, urlsSource, chainConfig);
         }
 
         [TearDown]
@@ -64,11 +72,14 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             string result;
 
             if (request.method == ETH_CALL_METHOD)
+            {
+                nonceContract = ((JObject)request.@params[0])["to"]!.ToString();
                 result = $"0x{onChainNonce.ToString("x").PadLeft(64, '0')}";
+            }
             else if (request.method == ETH_SIGN_TYPED_DATA_METHOD)
             {
                 signedTypedData = (string)request.@params[1];
-                result = SIGNATURE;
+                result = signature;
             }
             else
                 throw new InvalidOperationException($"Unexpected method {request.method}");
@@ -92,7 +103,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task SignTheFloorWhenTheContractStillReportsAnOlderNonce()
         {
             // Act
-            RelayResult result = await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, new BigInteger(7), CancellationToken.None, CancellationToken.None);
+            RelayResult result = await relayer.RelayAsync(contract, BUYER, CALLDATA, new BigInteger(7), CancellationToken.None, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(RelayOutcome.Broadcast, result.Outcome);
@@ -108,7 +119,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             onChainNonce = new BigInteger(9);
 
             // Act
-            RelayResult result = await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, new BigInteger(7), CancellationToken.None, CancellationToken.None);
+            RelayResult result = await relayer.RelayAsync(contract, BUYER, CALLDATA, new BigInteger(7), CancellationToken.None, CancellationToken.None);
 
             // Assert
             Assert.AreEqual("9", SignedNonce());
@@ -127,7 +138,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                         });
 
             // Act and assert
-            Assert.CatchAsync<OperationCanceledException>(async () => await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None));
+            Assert.CatchAsync<OperationCanceledException>(async () => await relayer.RelayAsync(contract, BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None));
 
             webRequestController.DidNotReceiveWithAnyArgs()
                                 .SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<JObject, GenericPostRequest>, JObject>(default, default);
@@ -140,10 +151,10 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             ethereumApi.SendAsync(Arg.Is<EthApiRequest>(request => request.method == ETH_SIGN_TYPED_DATA_METHOD), Arg.Any<Web3RequestSource>(), Arg.Any<CancellationToken>())
                        .Returns(info => UniTask.Never<EthApiResponse>(info.Arg<CancellationToken>()));
 
-            var impatientRelayer = new CreditsManagerMetaTxRelayer(ethereumApi, webRequestController, urlsSource, new CreditsChainConfig(EthereumNetwork.Sepolia), TimeSpan.FromMilliseconds(50));
+            var impatientRelayer = new MetaTxRelayer(ethereumApi, webRequestController, urlsSource, chainConfig, TimeSpan.FromMilliseconds(50));
 
             // Act
-            RelayResult result = await impatientRelayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None);
+            RelayResult result = await impatientRelayer.RelayAsync(contract, BUYER, CALLDATA, BigInteger.MinusOne, cts.Token, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(RelayOutcome.SignatureTimedOut, result.Outcome);
@@ -164,7 +175,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             });
 
             // Act
-            RelayResult result = await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, cts.Token);
+            RelayResult result = await relayer.RelayAsync(contract, BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, cts.Token);
 
             // Assert
             Assert.AreEqual(RelayOutcome.AmbiguousBroadcast, result.Outcome);
@@ -178,7 +189,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StubRelayerResponse(_ => UniTask.FromResult<JObject?>(new JObject { ["message"] = "quota exceeded" }));
 
             // Act
-            RelayResult result = await relayer.RelayUseCreditsAsync(BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
+            RelayResult result = await relayer.RelayAsync(contract, BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(RelayOutcome.RelayerRejected, result.Outcome);
@@ -193,6 +204,35 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [TestCase(504L, ExpectedResult = false)]
         [TestCase(0L, ExpectedResult = false)]
         public bool TreatOnlyAClientErrorAsAProvenRejection(long responseCode) =>
-            CreditsManagerMetaTxRelayer.IsProvenRejection(responseCode);
+            MetaTxRelayer.IsProvenRejection(responseCode);
+
+        [Test]
+        public async Task SignAgainstTheContractItIsGiven()
+        {
+            // Arrange: the MANA token uses the classic variant, which needs a whole 65-byte signature to split.
+            signature = $"0x{new string('1', 64)}{new string('2', 64)}1b";
+            MetaTxContract manaToken = chainConfig.ManaTokenContract;
+
+            // Act
+            RelayResult result = await relayer.RelayAsync(manaToken, BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
+
+            // Assert: the nonce is read from that contract and the domain names it.
+            JObject typedData = JObject.Parse(signedTypedData!);
+            Assert.AreEqual(RelayOutcome.Broadcast, result.Outcome);
+            Assert.AreEqual(manaToken.Address, nonceContract);
+            Assert.AreEqual(manaToken.Address, typedData["domain"]!["verifyingContract"]!.ToString());
+            Assert.AreEqual(manaToken.Eip712Name, typedData["domain"]!["name"]!.ToString());
+            Assert.AreEqual(CALLDATA, typedData["message"]!["functionSignature"]!.ToString());
+        }
+
+        [Test]
+        public async Task FailBeforeRelayingWhenTheSignatureCannotBeSplit()
+        {
+            // Act: the default fixture signature is two bytes long.
+            RelayResult result = await relayer.RelayAsync(chainConfig.ManaTokenContract, BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(RelayOutcome.SigningFailed, result.Outcome);
+        }
     }
 }

@@ -10,6 +10,16 @@ namespace DCL.MarketplaceCredits.Purchase
 
         UniTask<CreditsQuoteResult> QuoteAsync(ShopListingDto listing, CancellationToken ct);
 
-        UniTask<CreditsPurchaseResult> PurchaseAsync(CreditsPurchaseQuote quote, CancellationToken ct);
+        /// <summary>
+        ///     The payment methods the buyer's credits and Polygon MANA support for the quote. Reads only.
+        /// </summary>
+        UniTask<PaymentOptions> GetPaymentOptionsAsync(CreditsPurchaseQuote quote, CancellationToken ct);
+
+        /// <summary>
+        ///     Buys the quoted listing with the given option, normally one returned by
+        ///     <see cref="GetPaymentOptionsAsync" />. Its amounts are what the buyer confirmed: the purchase fails
+        ///     with <see cref="CreditsPurchaseError.PriceChanged" /> instead of drawing noticeably more MANA.
+        /// </summary>
+        UniTask<CreditsPurchaseResult> PurchaseAsync(CreditsPurchaseQuote quote, PaymentOption option, CancellationToken ct);
     }
 }

@@ -443,7 +443,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             try
             {
-                CartCheckoutResult result = await checkoutService.CheckoutAsync(reviewed, ct);
+                CartCheckoutResult result = await checkoutService.CheckoutAsync(reviewed, CartReview.CreditsOnly(reviewed), ct);
                 ReportResult(result);
 
                 // A popup closed during the checkout leaves the result on the service for the next time it opens.

@@ -632,7 +632,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             var chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
 
             // Act
-            string json = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, new BigInteger(7), BUYER, "0x1234");
+            string json = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig.CreditsManagerContract, chainConfig.ChainId, new BigInteger(7), BUYER, "0x1234");
             var typedData = Newtonsoft.Json.Linq.JObject.Parse(json);
 
             // Assert
@@ -717,5 +717,71 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private static string ToHex(byte[] bytes) =>
             "0x" + BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();
+
+        [Test]
+        public void EncodeTheErc20CallsOfTheManaRail()
+        {
+            // Arrange
+            const string SPENDER = "0x8052a560e6e6ac86eeb7e711a4497f639b322fb3";
+            const string BUYER_WORD = "00000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4e99999";
+            const string SPENDER_WORD = "0000000000000000000000008052a560e6e6ac86eeb7e711a4497f639b322fb3";
+
+            // Act and assert: the selectors are the standard ERC20 ones, and the approval is unlimited.
+            Assert.AreEqual($"0x70a08231{BUYER_WORD}", CreditsTradeEncoder.BuildBalanceOfCalldata(BUYER));
+            Assert.AreEqual($"0xdd62ed3e{BUYER_WORD}{SPENDER_WORD}", CreditsTradeEncoder.BuildAllowanceCalldata(BUYER, SPENDER));
+            Assert.AreEqual($"0x095ea7b3{SPENDER_WORD}{new string('f', 64)}", CreditsTradeEncoder.BuildUnlimitedApproveCalldata(SPENDER));
+        }
+
+        [Test]
+        public void SplitTheSignatureForTheClassicMetaTransaction()
+        {
+            // Arrange: a signature whose recovery id came back as 1 instead of 28.
+            string r = new string('1', 64);
+            string s = new string('2', 64);
+
+            // Act
+            string calldata = CreditsTradeEncoder.BuildClassicExecuteMetaTxCalldata(BUYER, "0x1234", $"0x{r}{s}01");
+
+            // Assert: executeMetaTransaction(address,bytes,bytes32,bytes32,uint8) with the payload after the five head words.
+            Assert.AreEqual(
+                "0x0c53c51c"
+                + "00000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4e99999"
+                + "00000000000000000000000000000000000000000000000000000000000000a0"
+                + r
+                + s
+                + "000000000000000000000000000000000000000000000000000000000000001c"
+                + "0000000000000000000000000000000000000000000000000000000000000002"
+                + "1234000000000000000000000000000000000000000000000000000000000000",
+                calldata);
+        }
+
+        [Test]
+        public void SignTheClassicPayloadFieldForTheManaToken()
+        {
+            // Arrange
+            var chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
+
+            // Act
+            string json = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig.ManaTokenContract, chainConfig.ChainId, new BigInteger(3), BUYER, "0x1234");
+            var typedData = Newtonsoft.Json.Linq.JObject.Parse(json);
+
+            // Assert
+            Assert.AreEqual("Decentraland MANA(PoS)", typedData["domain"]!["name"]!.ToString());
+            Assert.AreEqual("1", typedData["domain"]!["version"]!.ToString());
+            Assert.AreEqual("0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0", typedData["domain"]!["verifyingContract"]!.ToString());
+            Assert.AreEqual("0x1234", typedData["message"]!["functionSignature"]!.ToString());
+            Assert.IsNull(typedData["message"]!["functionData"]);
+            Assert.AreEqual("functionSignature", typedData["types"]!["MetaTransaction"]![2]!["name"]!.ToString());
+        }
+
+        [Test]
+        public void JoinSelectorAndDataIntoCalldata()
+        {
+            // Act
+            string calldata = CreditsTradeEncoder.ToCalldata(new byte[] { 0x96, 0x1a, 0x54, 0x7e }, new byte[] { 0x00, 0x20 });
+
+            // Assert
+            Assert.AreEqual("0x961a547e0020", calldata);
+        }
     }
 }
