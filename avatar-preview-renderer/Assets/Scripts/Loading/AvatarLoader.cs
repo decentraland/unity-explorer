@@ -207,7 +207,8 @@ namespace Loading
                 go.SetActive(true);
                 outlineRenderers.Clear();
 
-                AvatarUtils.SetupWearable(go, colors, outlineRenderers, avatarRootBone, avatarBones);
+                AvatarUtils.SetupWearable(go, colors, outlineRenderers, avatarRootBone, avatarBones,
+                    outlineCompatible: ed.OutlineCompatible);
 
                 if (hiddenCategories.Contains(ed.Category))
                 {
