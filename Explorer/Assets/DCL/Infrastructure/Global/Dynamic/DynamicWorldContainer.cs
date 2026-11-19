@@ -496,7 +496,7 @@ namespace Global.Dynamic
             var manaUsdRateReader = new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
             var manaTokenReader = new ManaTokenReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
             var manaRail = new ManaRail(manaTokenReader, creditsMetaTxRelayer, creditsSettlementPoller, creditsChainConfig);
-            var paymentOptionsProvider = new PaymentOptionsProvider(marketplaceCreditsApiClient, manaTokenReader, manaUsdRateReader);
+            var paymentOptionsProvider = new PaymentOptionsProvider(marketplaceCreditsApiClient, manaTokenReader, manaUsdRateReader, creditsChainConfig);
             bool isCreditsPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
 
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(

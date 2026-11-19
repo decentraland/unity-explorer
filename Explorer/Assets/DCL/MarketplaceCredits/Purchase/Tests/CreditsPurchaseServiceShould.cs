@@ -123,7 +123,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
             new (shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
-                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader),
+                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig),
                 manaUsdRateReader, chainConfig, identityCache,
                 featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
@@ -947,6 +947,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task OfferTheMethodsTheBalancesCover()
         {
             // Arrange: 10 credits and plenty of MANA against a $2.50 trade worth 10 MANA.
+            ListTheTradeOnTheMarketplace();
             StubMana(HUNDRED_MANA, BigInteger.Zero);
 
             creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -1043,6 +1044,46 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(CreditsPurchaseError.EncodingFailed, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
             await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseACreditsPurchaseWhoseCreditDoesNotCoverItsCap()
+        {
+            // Arrange: the cap exceeds the credit by 1 MANA, which the CreditsManager would pull from the buyer.
+            AuthorizeCreditResponse authorization = CreateAuthorization();
+            authorization.maxCreditedValue = (BigInteger.Parse(authorization.credit.availableAmount) + ONE_MANA).ToString();
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(authorization));
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync();
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenTheManaApprovalThrows()
+        {
+            // Arrange: the CreditsManager holds no allowance and relaying the approval blows up.
+            LogAssert.Expect(LogType.Exception, "InvalidOperationException: relayer down");
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(MIXED_CREDITS_CENTS)));
+
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(_ => UniTask.FromException<RelayResult>(new InvalidOperationException("relayer down")));
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync(new PaymentOption(PaymentMethod.CreditsAndMana, MIXED_CREDITS_CENTS, 10, 6 * ONE_MANA));
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.UnknownError, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
         }
     }
 }

@@ -10,6 +10,8 @@ using System;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
 {
@@ -160,7 +162,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(RelayOutcome.SignatureTimedOut, result.Outcome);
             Assert.IsFalse(cts.IsCancellationRequested);
 
-            webRequestController.DidNotReceiveWithAnyArgs()
+            await webRequestController.DidNotReceiveWithAnyArgs()
                                 .SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<JObject, GenericPostRequest>, JObject>(default, default);
         }
 
@@ -228,6 +230,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [Test]
         public async Task FailBeforeRelayingWhenTheSignatureCannotBeSplit()
         {
+            // Arrange
+            LogAssert.Expect(LogType.Exception, "ArgumentException: Signature is 2 bytes, expected 65");
+
             // Act: the default fixture signature is two bytes long.
             RelayResult result = await relayer.RelayAsync(chainConfig.ManaTokenContract, BUYER, CALLDATA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
 

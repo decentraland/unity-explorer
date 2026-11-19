@@ -13,8 +13,6 @@ namespace DCL.MarketplaceCredits.Purchase
     // to avoid double spending.
     public class CreditsPurchaseService : ICreditsPurchaseService
     {
-        private const int CENTS_PER_CREDIT = 10;
-
         private readonly MarketplaceShopAPIClient shopAPIClient;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
         private readonly ManaUsdRateReader manaUsdRateReader;
@@ -146,14 +144,14 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new CreditsQuoteResult(CreditsPurchaseError.PriceUnavailable, e.Message);
             }
 
-            int usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(listing.manaWei!, rate), CENTS_PER_CREDIT);
+            int usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(listing.manaWei!, rate), PaymentOptionsCalculator.CENTS_PER_CREDIT);
             BigInteger requiredManaWei = CreditsTradeEncoder.AmountOrZero(listing.manaWei!);
 
             if (usdCents <= 0 || requiredManaWei <= BigInteger.Zero)
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Mint has no price");
 
             var target = new StoreMintTarget(listing.contractAddress, listing.itemId!, listing.manaWei!);
-            return CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForMint(target, usdCents, usdCents / CENTS_PER_CREDIT, requiredManaWei));
+            return CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForMint(target, usdCents, usdCents / PaymentOptionsCalculator.CENTS_PER_CREDIT, requiredManaWei));
         }
 
         private async UniTask<CreditsQuoteResult> QuoteInternalAsync(string tradeId, string buyer, CancellationToken ct)
@@ -202,7 +200,7 @@ namespace DCL.MarketplaceCredits.Purchase
                     return new CreditsQuoteResult(CreditsPurchaseError.PriceUnavailable, e.Message);
                 }
 
-                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(price.amount, rate), CENTS_PER_CREDIT);
+                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(price.amount, rate), PaymentOptionsCalculator.CENTS_PER_CREDIT);
                 requiredManaWei = CreditsTradeEncoder.AmountOrZero(price.amount);
 
                 if (requiredManaWei <= BigInteger.Zero)
@@ -212,7 +210,7 @@ namespace DCL.MarketplaceCredits.Purchase
             {
                 // A USD-pegged price is exact without the oracle; the MANA the trade draws is resolved at
                 // purchase time, so only warm the rate cache for the confirm click.
-                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.UsdWeiToCents(price.amount), CENTS_PER_CREDIT);
+                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.UsdWeiToCents(price.amount), PaymentOptionsCalculator.CENTS_PER_CREDIT);
                 requiredManaWei = BigInteger.Zero;
 
                 manaUsdRateReader.PrefetchAsync(trade.contract).Forget();
@@ -221,7 +219,7 @@ namespace DCL.MarketplaceCredits.Purchase
             if (usdCents <= 0)
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Trade has no price");
 
-            return CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForTrade(trade, usdCents, usdCents / CENTS_PER_CREDIT, requiredManaWei, isLegacyMana));
+            return CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForTrade(trade, usdCents, usdCents / PaymentOptionsCalculator.CENTS_PER_CREDIT, requiredManaWei, isLegacyMana));
         }
 
         private async UniTask<CreditsPurchaseResult> PurchaseInternalAsync(CreditsPurchaseQuote quote, PaymentOption option, string buyer, CancellationToken ct)
@@ -306,6 +304,22 @@ namespace DCL.MarketplaceCredits.Purchase
                 return Fail(CreditsPurchaseError.PriceChanged, message: $"Authorized for {authorization.usdCents} cents, buyer confirmed {quote.UsdCents}");
             }
 
+            BigInteger uncreditedWei;
+
+            try { uncreditedWei = CreditsTradeEncoder.UncreditedValue(authorization.maxCreditedValue, authorization.credit.availableAmount); }
+            catch (FormatException e)
+            {
+                await executor.ReleaseIntentAsync(authorization.credit.id);
+                return Fail(CreditsPurchaseError.EncodingFailed, message: e.Message);
+            }
+
+            // Anything the credit does not cover would be pulled from the buyer's MANA, which this method never confirms.
+            if (uncreditedWei.Sign > 0)
+            {
+                await executor.ReleaseIntentAsync(authorization.credit.id);
+                return Fail(CreditsPurchaseError.PriceChanged, message: "The credit does not cover the price and no MANA was confirmed");
+            }
+
             ExternalCall call;
 
             try { call = BuildExternalCall(quote, mint, buyer); }
@@ -382,7 +396,7 @@ namespace DCL.MarketplaceCredits.Purchase
             CreditsPurchaseError fundsError;
 
             try { fundsError = await PrepareManaAsync(buyer, chainConfig.CreditsManagerAddress, gapWei, ct); }
-            catch (OperationCanceledException)
+            catch (Exception)
             {
                 await executor.ReleaseIntentAsync(creditId);
                 throw;

@@ -15,6 +15,7 @@ namespace DCL.MarketplaceCredits.Purchase
         // How far the MANA a purchase draws may exceed what the buyer confirmed. A USD-pegged listing is
         // converted at the oracle rate when it settles, so its MANA amount moves between the quote and the purchase.
         private const int MANA_DRIFT_TOLERANCE_PERCENT = 2;
+        private const int PERCENT = 100;
 
         /// <summary>
         ///     priceManaWei is what the price costs in MANA right now; zero (rate unknown) leaves only credits.
@@ -112,7 +113,7 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         public static bool ExceedsConfirmedMana(BigInteger neededWei, BigInteger confirmedWei) =>
-            neededWei * 100 > confirmedWei * (100 + MANA_DRIFT_TOLERANCE_PERCENT);
+            neededWei * PERCENT > confirmedWei * (PERCENT + MANA_DRIFT_TOLERANCE_PERCENT);
 
         private static int WholeCreditCents(long balanceCents)
         {

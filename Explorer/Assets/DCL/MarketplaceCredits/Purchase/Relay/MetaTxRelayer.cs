@@ -39,7 +39,10 @@ namespace DCL.MarketplaceCredits.Purchase
         }
     }
 
-    // AI Generated on the base of the backend information
+    /// <summary>
+    ///     Relays a call as a gasless meta-transaction: reads the buyer's nonce on the contract, asks the wallet to
+    ///     sign the typed data and posts the signed transaction to the transactions server.
+    /// </summary>
     public class MetaTxRelayer
     {
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
@@ -96,41 +99,10 @@ namespace DCL.MarketplaceCredits.Purchase
                 nonce = minNonce;
 
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(contract, chainConfig.ChainId, nonce, buyer, calldata);
-            string signature;
+            (string signature, RelayResult? signFailure) = await SignAsync(buyer, typedDataJson, signCt);
 
-            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
-            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
-
-            try
-            {
-                var signRequest = new EthApiRequest
-                {
-                    id = Guid.NewGuid().GetHashCode(),
-                    method = ETH_SIGN_TYPED_DATA_METHOD,
-                    @params = new object[] { buyer, typedDataJson },
-                };
-
-                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
-                signature = signResponse.result?.ToString() ?? string.Empty;
-
-                if (string.IsNullOrEmpty(signature))
-                    return new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned");
-            }
-            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
-            {
-                return new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s");
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                bool userRejected = e.Message.IndexOf("reject", StringComparison.OrdinalIgnoreCase) >= 0
-                                    || e.Message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                if (!userRejected)
-                    ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-
-                return new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message);
-            }
+            if (signFailure != null)
+                return signFailure.Value;
 
             string txData;
 
@@ -189,6 +161,48 @@ namespace DCL.MarketplaceCredits.Purchase
         /// </summary>
         internal static bool IsProvenRejection(long responseCode) =>
             responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
+
+        /// <summary>
+        ///     Asks the wallet for the signature. Returns the failure when it was refused, failed or was not given
+        ///     within the timeout; rethrows a cancellation of <paramref name="signCt" />.
+        /// </summary>
+        private async UniTask<(string signature, RelayResult? failure)> SignAsync(string buyer, string typedDataJson, CancellationToken signCt)
+        {
+            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
+            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
+
+            try
+            {
+                var signRequest = new EthApiRequest
+                {
+                    id = Guid.NewGuid().GetHashCode(),
+                    method = ETH_SIGN_TYPED_DATA_METHOD,
+                    @params = new object[] { buyer, typedDataJson },
+                };
+
+                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
+                string signature = signResponse.result?.ToString() ?? string.Empty;
+
+                return string.IsNullOrEmpty(signature)
+                    ? (string.Empty, new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned"))
+                    : (signature, null);
+            }
+            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
+            {
+                return (string.Empty, new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s"));
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                bool userRejected = e.Message.IndexOf("reject", StringComparison.OrdinalIgnoreCase) >= 0
+                                    || e.Message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!userRejected)
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+
+                return (string.Empty, new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message));
+            }
+        }
 
         private UniTask<BigInteger> GetNonceAsync(string contractAddress, string buyer, CancellationToken ct) =>
             EthCallReader.ReadUint256Async(ethereumApi, chainConfig.ReadonlyNetwork, contractAddress, CreditsTradeEncoder.BuildGetNonceCalldata(buyer), ct);

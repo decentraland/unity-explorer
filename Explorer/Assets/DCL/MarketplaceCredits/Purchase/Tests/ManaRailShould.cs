@@ -128,7 +128,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             manaTokenReader.AllowanceAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                           .Returns<UniTask<BigInteger>>(_ => throw new InvalidOperationException("node down"));
+                           .Returns(_ => UniTask.FromException<BigInteger>(new InvalidOperationException("node down")));
 
             // Act
             ManaApprovalResult result = await EnsureStoreAllowanceAsync();

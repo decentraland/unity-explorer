@@ -296,9 +296,9 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         /// <summary>
-        ///     The MANA the buyer covers from their own balance: whatever the server's cap exceeds the credit's
-        ///     available amount by. Zero for the ephemeral credits this flow authorizes, which the credits-server
-        ///     sizes exactly to their trade.
+        ///     The MANA the buyer covers from their own balance: whatever the cap exceeds the credit's available
+        ///     amount by. Zero for a purchase paid in credits alone, whose credit the credits-server sizes exactly
+        ///     to the price; the MANA gap for a purchase paid in credits and MANA.
         /// </summary>
         public static BigInteger UncreditedValue(string maxCreditedValue, string availableAmount)
         {

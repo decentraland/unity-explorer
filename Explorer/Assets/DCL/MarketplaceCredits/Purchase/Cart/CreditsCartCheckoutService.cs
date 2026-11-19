@@ -20,7 +20,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
     /// </summary>
     public class CreditsCartCheckoutService : IDisposable
     {
-        private const int CENTS_PER_CREDIT = 10;
         private static readonly TimeSpan RELEASE_INTENT_TIMEOUT = TimeSpan.FromSeconds(15);
 
         private readonly ShopCart cart;
@@ -514,8 +513,15 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     continue;
                 }
 
-                BigInteger authorizedCap = BigInteger.Parse(response.maxCreditedValue)
-                                           + CreditsTradeEncoder.UncreditedValue(response.maxCreditedValue, response.credit.availableAmount);
+                // Anything the credit does not cover would be pulled from the buyer's MANA, which a credits group never confirms.
+                if (CreditsTradeEncoder.UncreditedValue(response.maxCreditedValue, response.credit.availableAmount).Sign > 0)
+                {
+                    await ReleaseGroupsAsync(groups, 0);
+                    group.Error = CreditsPurchaseError.PriceChanged;
+                    return BuildResult(groups, CartCheckoutOutcome.Failed, CreditsPurchaseError.PriceChanged, "The credits do not cover the group and no MANA was confirmed", -1, CartCheckoutStage.Reserving);
+                }
+
+                BigInteger authorizedCap = BigInteger.Parse(response.maxCreditedValue);
 
                 if (authorizedCap < group.RequiredManaWei)
                 {
@@ -851,7 +857,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     return -1;
 
                 long missingCents = Math.Max(0, required.Value - balance.Value);
-                return (int)((missingCents + CENTS_PER_CREDIT - 1) / CENTS_PER_CREDIT);
+                return (int)((missingCents + PaymentOptionsCalculator.CENTS_PER_CREDIT - 1) / PaymentOptionsCalculator.CENTS_PER_CREDIT);
             }
             catch (Exception) { return -1; }
         }

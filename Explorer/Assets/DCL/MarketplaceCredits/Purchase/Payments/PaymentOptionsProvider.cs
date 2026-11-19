@@ -16,9 +16,11 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
         private readonly ManaTokenReader manaTokenReader;
         private readonly ManaUsdRateReader manaUsdRateReader;
+        private readonly CreditsChainConfig chainConfig;
 
-        public PaymentOptionsProvider(MarketplaceCreditsAPIClient creditsAPIClient, ManaTokenReader manaTokenReader, ManaUsdRateReader manaUsdRateReader)
+        public PaymentOptionsProvider(MarketplaceCreditsAPIClient creditsAPIClient, ManaTokenReader manaTokenReader, ManaUsdRateReader manaUsdRateReader, CreditsChainConfig chainConfig)
         {
+            this.chainConfig = chainConfig;
             this.creditsAPIClient = creditsAPIClient;
             this.manaTokenReader = manaTokenReader;
             this.manaUsdRateReader = manaUsdRateReader;
@@ -34,10 +36,14 @@ namespace DCL.MarketplaceCredits.Purchase
 
         /// <summary>
         ///     The MANA one unit of the quote draws right now: carried by a MANA-priced listing, converted at the
-        ///     marketplace's oracle for a USD-pegged one. Zero when the rate cannot be read.
+        ///     marketplace's oracle for a USD-pegged one. Zero when the rate cannot be read, and for a trade that
+        ///     cannot be paid in MANA: one on an unknown marketplace or asking for more than a single MANA price.
         /// </summary>
         public async UniTask<BigInteger> ManaPriceOfAsync(CreditsPurchaseQuote quote, CancellationToken ct)
         {
+            if (quote.Trade != null && !(chainConfig.IsKnownMarketplace(quote.Trade.contract) && chainConfig.AsksOnlyForMana(quote.Trade)))
+                return BigInteger.Zero;
+
             if (quote.IsLiveRatePrice || quote.Trade == null)
                 return quote.RequiredManaWei;
 

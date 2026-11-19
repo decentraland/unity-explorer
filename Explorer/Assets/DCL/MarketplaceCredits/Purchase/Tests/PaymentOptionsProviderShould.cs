@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Chains;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -11,7 +12,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
     public class PaymentOptionsProviderShould
     {
         private const string BUYER = "0x99995f38fc9d786eab5c3a1b1c4e6ae5f4e99999";
-        private const string MARKETPLACE = "0x1b67d0e31eeb6b52d8eeed71d3616c2f5b33b8e7";
+        private const string OTHER_CONTRACT = "0x3333333333333333333333333333333333333333";
         private const int PRICE_CENTS = 250;
 
         private static readonly BigInteger ONE_MANA = BigInteger.Parse("1000000000000000000");
@@ -20,6 +21,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private MarketplaceCreditsAPIClient creditsAPIClient = null!;
         private ManaTokenReader manaTokenReader = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
+        private CreditsChainConfig chainConfig = null!;
         private PaymentOptionsProvider provider = null!;
 
         [SetUp]
@@ -35,7 +37,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             manaTokenReader.BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                            .Returns(UniTask.FromResult(100 * ONE_MANA));
 
-            provider = new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader);
+            manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                             .Returns(UniTask.FromResult(new ManaUsdRate(25_000_000, 8)));
+
+            chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
+            provider = new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig);
         }
 
         [Test]
@@ -43,7 +49,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-                            .Returns<UniTask<UserCreditsResponse>>(_ => throw new InvalidOperationException("credits-server down"));
+                            .Returns(_ => UniTask.FromException<UserCreditsResponse>(new InvalidOperationException("credits-server down")));
 
             // Act
             PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, CancellationToken.None);
@@ -58,7 +64,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             manaTokenReader.BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-                           .Returns<UniTask<BigInteger>>(_ => throw new InvalidOperationException("node down"));
+                           .Returns(_ => UniTask.FromException<BigInteger>(new InvalidOperationException("node down")));
 
             // Act
             BigInteger? balance = await provider.ManaBalanceAsync(BUYER, CancellationToken.None);
@@ -75,17 +81,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task GiveNoManaPriceWhenTheRateCannotBeRead()
         {
             // Arrange: a USD-pegged trade has no MANA price without the oracle.
-            var trade = new TradeDto
-            {
-                id = "trade-1",
-                contract = MARKETPLACE,
-                received = new[] { new TradeAssetDto { assetType = CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA, contractAddress = MARKETPLACE, amount = "2500000000000000000" } },
-            };
-
+            TradeDto trade = UsdPeggedTrade();
             CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForTrade(trade, PRICE_CENTS, 25, BigInteger.Zero, false);
 
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-                             .Returns<UniTask<ManaUsdRate>>(_ => throw new InvalidOperationException("oracle down"));
+                             .Returns(_ => UniTask.FromException<ManaUsdRate>(new InvalidOperationException("oracle down")));
 
             // Act
             BigInteger price = await provider.ManaPriceOfAsync(quote, CancellationToken.None);
@@ -98,7 +98,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task CarryTheManaPriceOfAMint()
         {
             // Arrange
-            CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForMint(new StoreMintTarget(MARKETPLACE, "1", TEN_MANA.ToString()), PRICE_CENTS, 25, TEN_MANA);
+            CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForMint(new StoreMintTarget(OTHER_CONTRACT, "1", TEN_MANA.ToString()), PRICE_CENTS, 25, TEN_MANA);
 
             // Act
             BigInteger price = await provider.ManaPriceOfAsync(quote, CancellationToken.None);
@@ -107,5 +107,58 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(TEN_MANA, price);
             await manaUsdRateReader.DidNotReceive().ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
+
+        [Test]
+        public async Task ConvertAUsdPeggedPriceAtTheOracleRate()
+        {
+            // Arrange: $2.50 at $0.25 per MANA.
+            CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForTrade(UsdPeggedTrade(), PRICE_CENTS, 25, BigInteger.Zero, false);
+
+            // Act
+            BigInteger price = await provider.ManaPriceOfAsync(quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(TEN_MANA, price);
+        }
+
+        [Test]
+        public async Task GiveNoManaPriceToATradePricedInAnotherToken()
+        {
+            // Arrange: the amount is in a token that is not MANA.
+            TradeDto trade = UsdPeggedTrade();
+            trade.received[0].assetType = CreditsTradeEncoder.ASSET_TYPE_ERC20;
+            trade.received[0].contractAddress = OTHER_CONTRACT;
+            CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForTrade(trade, PRICE_CENTS, 25, TEN_MANA, true);
+
+            // Act
+            BigInteger price = await provider.ManaPriceOfAsync(quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(BigInteger.Zero, price);
+        }
+
+        [Test]
+        public async Task GiveNoManaPriceToATradeOnAnUnknownMarketplace()
+        {
+            // Arrange
+            TradeDto trade = UsdPeggedTrade();
+            trade.contract = OTHER_CONTRACT;
+            CreditsPurchaseQuote quote = CreditsPurchaseQuote.ForTrade(trade, PRICE_CENTS, 25, BigInteger.Zero, false);
+
+            // Act
+            BigInteger price = await provider.ManaPriceOfAsync(quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(BigInteger.Zero, price);
+            await manaUsdRateReader.DidNotReceive().ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        private TradeDto UsdPeggedTrade() =>
+            new ()
+            {
+                id = "trade-1",
+                contract = chainConfig.OffChainMarketplaceAddress,
+                received = new[] { new TradeAssetDto { assetType = CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA, contractAddress = OTHER_CONTRACT, amount = "2500000000000000000" } },
+            };
     }
 }

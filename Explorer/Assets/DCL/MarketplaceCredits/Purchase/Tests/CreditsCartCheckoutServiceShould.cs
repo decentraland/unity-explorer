@@ -121,7 +121,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             manaTokenReader = Substitute.For<ManaTokenReader>(null, null);
 
             service = new CreditsCartCheckoutService(cart, quoteService, shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
-                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader),
+                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig),
                 manaUsdRateReader, chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
         }
 
@@ -725,6 +725,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task PriceTheWholeBasketInManaForItsPaymentOptions()
         {
             // Arrange: no credits; the $2.50 trade is worth 10 MANA at the rate and the three mints cost 15.
+            ListTheTradeOnTheMarketplace();
             StubMana(HUNDRED_MANA, BigInteger.Zero);
 
             creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -745,6 +746,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task OfferNoManaMethodWhenOneLineHasNoManaPrice()
         {
             // Arrange: the trade's MANA price cannot be resolved, although the mints carry theirs.
+            ListTheTradeOnTheMarketplace();
             StubMana(HUNDRED_MANA, BigInteger.Zero);
 
             creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -761,6 +763,25 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Assert
             Assert.AreEqual(0, options.Options.Count);
             Assert.IsNull(options.ManaShortfall);
+        }
+
+        [Test]
+        public async Task RefuseACreditsCheckoutWhoseCreditDoesNotCoverItsCap()
+        {
+            // Arrange: the cap is twice the credit, and the difference would be pulled from the buyer's MANA.
+            creditsAPIClient.AuthorizeUsdCreditGroupAsync(Arg.Any<IReadOnlyList<CheckoutLine>>(), Arg.Any<CancellationToken>())
+                            .Returns(call => UniTask.FromResult(Authorized(call.Arg<IReadOnlyList<CheckoutLine>>(), "200000000000000000000")));
+
+            // Act
+            CartReview review = await ReviewAsync();
+            CartCheckoutResult result = await service.CheckoutAsync(review, CartReview.CreditsOnly(review), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CartCheckoutOutcome.Failed, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.FirstError);
+            Assert.AreEqual(3, cart.Count);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_TRADE), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
     }
 }

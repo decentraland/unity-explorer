@@ -37,40 +37,6 @@ namespace DCL.MarketplaceCredits.Purchase
     }
 
     /// <summary>
-    ///     What a purchase is paid with. It decides the contract that settles it: credits and credits + MANA go
-    ///     through CreditsManager.useCredits, MANA alone goes straight to the marketplace or the CollectionStore.
-    /// </summary>
-    public enum PaymentMethod
-    {
-        Credits,
-        CreditsAndMana,
-        Mana,
-    }
-
-    /// <summary>
-    ///     One way of paying a price: the credits leg in cents (and in whole credits, for display) plus the MANA
-    ///     leg in wei. Either leg is zero when the method does not use it.
-    /// </summary>
-    public readonly struct PaymentOption
-    {
-        public readonly PaymentMethod Method;
-        public readonly int CreditsCents;
-        public readonly int Credits;
-        public readonly BigInteger ManaWei;
-
-        public PaymentOption(PaymentMethod method, int creditsCents, int credits, BigInteger manaWei)
-        {
-            Method = method;
-            CreditsCents = creditsCents;
-            Credits = credits;
-            ManaWei = manaWei;
-        }
-
-        public static PaymentOption CreditsOnly(in CreditsPurchaseQuote quote) =>
-            new (PaymentMethod.Credits, quote.UsdCents, quote.Credits, BigInteger.Zero);
-    }
-
-    /// <summary>
     ///     How a listing is bought. NOT a display detail — it picks the external call the CreditsManager makes,
     ///     and the two are mutually exclusive: an offchain trade has a signed order to accept, a CollectionStore
     ///     mint has nothing signed at all and is minted straight from the store contract.
