@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.Utility.Extensions;
 using MVC;
@@ -27,7 +28,7 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private LocalizeStringEvent title = null!;
         [SerializeField] private GameObject description = null!;
 
-        private StringVariable profileNameLabel => profileNameLabelField ??= (StringVariable)title.StringReference["back_profileName"];
+        private const string PROFILE_NAME_VARIABLE = "back_profileName";
 
         private StringVariable? profileNameLabelField;
         private int hideAnimHash = UIAnimationHashes.OUT;
@@ -42,7 +43,14 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Show(string profileName)
         {
-            profileNameLabel.Value = profileName;
+            if (profileNameLabelField == null && title.StringReference.TryGetValue(PROFILE_NAME_VARIABLE, out IVariable variable))
+                profileNameLabelField = (StringVariable)variable;
+
+            if (profileNameLabelField != null)
+                profileNameLabelField.Value = profileName;
+            else
+                ReportHub.LogError(ReportCategory.AUTHENTICATION, $"Localized title has no '{PROFILE_NAME_VARIABLE}' variable");
+
             JumpIntoWorldButton.interactable = true;
             DiffAccountButton.interactable = true;
 

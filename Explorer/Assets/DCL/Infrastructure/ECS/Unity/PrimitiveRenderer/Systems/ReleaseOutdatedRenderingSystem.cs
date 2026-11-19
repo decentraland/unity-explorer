@@ -11,6 +11,7 @@ using ECS.LifeCycle.Components;
 
 using ECS.Unity.Materials;
 using ECS.Unity.PrimitiveRenderer.Components;
+using System;
 using UnityEngine;
 
 
@@ -32,7 +33,11 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         internal ReleaseOutdatedRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.poolsRegistry = poolsRegistry;
-            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<MeshRenderer>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(MeshRenderer)}");
+
+            rendererPoolRegistry = pool;
         }
 
         protected override void Update(float t)

@@ -54,8 +54,8 @@ namespace MVC
         /// </summary>
         public void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView
         {
-            // throw an exception if the same combination of <TView, TInputData> was already added
-            controllers.Add(typeof(IController<TView, TInputData>), controller);
+            if (!controllers.TryAdd(typeof(IController<TView, TInputData>), controller))
+                throw new ArgumentException($"A controller for <{typeof(TView).Name}, {typeof(TInputData).Name}> is already registered, cannot add {controller.GetType().Name}");
         }
 
         public void SetAllViewsCanvasActive(bool isActive)
@@ -103,8 +103,11 @@ namespace MVC
 
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
-            // Find the controller
-            IController controller = controllers[typeof(IController<TView, TInputData>)];
+            if (!controllers.TryGetValue(typeof(IController<TView, TInputData>), out IController controller))
+            {
+                ReportHub.LogError(ReportCategory.MVC, $"No controller registered for <{typeof(TView).Name}, {typeof(TInputData).Name}>");
+                return;
+            }
 
             if (controller.State != ControllerState.ViewHidden)
             {

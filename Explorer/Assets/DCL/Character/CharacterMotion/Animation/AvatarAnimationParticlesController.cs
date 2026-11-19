@@ -27,7 +27,8 @@ namespace DCL.CharacterMotion.Animation
             {
                 if (!TryCreatePool(data, vfxParent, out ObjectPool<IVfx> pool)) continue;
 
-                poolLookup.Add(data.Type, pool);
+                if (!poolLookup.TryAdd(data.Type, pool))
+                    ReportHub.LogError(ReportCategory.AVATAR, $"Duplicate VFX config for {data.Type}");
             }
         }
 

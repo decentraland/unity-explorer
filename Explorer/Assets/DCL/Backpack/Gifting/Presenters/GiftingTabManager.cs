@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using DCL.UI;
 using DG.Tweening;
 using UnityEngine;
@@ -27,7 +28,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private bool isAnimating;
         private GiftingSection lastShownSection;
 
-        public IGiftingGridPresenter? ActivePresenter => presenters[lastShownSection];
+        public IGiftingGridPresenter? ActivePresenter => presenters.GetValueOrDefault(lastShownSection);
 
         public GiftingTabsManager(
             GiftingView view,
@@ -46,7 +47,11 @@ namespace DCL.Backpack.Gifting.Presenters
                 }
             };
 
-            tabs = view.TabSelectorMappedViews.ToDictionary(m => m.Section, m => m.TabSelectorView);
+            tabs = new Dictionary<GiftingSection, TabSelectorView>(view.TabSelectorMappedViews.Length);
+
+            foreach (GiftingTabSelectorMapping mapping in view.TabSelectorMappedViews)
+                if (!tabs.TryAdd(mapping.Section, mapping.TabSelectorView))
+                    ReportHub.LogError(ReportCategory.GIFTING, $"Duplicate gifting tab mapping for section {mapping.Section}");
 
             foreach (var (section, tabView) in tabs)
             {
@@ -75,7 +80,12 @@ namespace DCL.Backpack.Gifting.Presenters
             lastShownSection = GiftingSection.Wearables;
 
             // Activate and correctly position the default presenter
-            var defaultPresenter = presenters[lastShownSection];
+            if (!presenters.TryGetValue(lastShownSection, out IGiftingGridPresenter? defaultPresenter))
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, $"No gifting presenter is registered for section {lastShownSection}");
+                return;
+            }
+
             var defaultRt = defaultPresenter.GetRectTransform();
             defaultRt.gameObject.SetActive(true);
             defaultRt.anchoredPosition = new Vector2(0, defaultRt.anchoredPosition.y);
@@ -118,14 +128,18 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (isAnimating || newSection == lastShownSection) return;
 
+            if (!presenters.TryGetValue(lastShownSection, out IGiftingGridPresenter? lastPresenter)
+                || !presenters.TryGetValue(newSection, out IGiftingGridPresenter? newPresenter))
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, $"No gifting presenter is registered to switch from {lastShownSection} to {newSection}");
+                return;
+            }
+
             if (tabs.TryGetValue(lastShownSection, out var lastTabView))
                 SetTabAnimationState(lastTabView, false);
 
             if (tabs.TryGetValue(newSection, out var newTabView))
                 SetTabAnimationState(newTabView, true);
-            
-            var lastPresenter = presenters[lastShownSection];
-            var newPresenter = presenters[newSection];
 
             isAnimating = true;
             animationCts = animationCts.SafeRestart();
@@ -215,11 +229,11 @@ namespace DCL.Backpack.Gifting.Presenters
     ///     Used by the SuperScrollGridAdapter to bind specific ViewModels to cells.
     ///     Generic because the Adapter needs to know the exact struct type for performance.
     /// </summary>
-    public interface IGiftingGridPresenter<out TViewModel> : IGiftingGridPresenter
+    public interface IGiftingGridPresenter<TViewModel> : IGiftingGridPresenter
         where TViewModel : IGiftableItemViewModel
     {
         int ItemCount { get; }
-        TViewModel GetViewModel(int itemIndex);
+        bool TryGetViewModel(int itemIndex, [MaybeNullWhen(false)] out TViewModel viewModel);
         void RequestThumbnailLoad(int itemIndex);
     }
 }

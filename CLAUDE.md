@@ -151,4 +151,5 @@ Reviewers have repeatedly identified AI-generated code by these smells. Check yo
 ### Other project-specific rules
 
 * Use `ReportHub` instead of `Debug.Log` for all logging.
+* Do not write dictionary `Add` or indexer reads (`map[k]`): the in-repo analyzer reports them as `DCL0001` / `DCL0002`. Use `TryAdd` / `TryGetValue` with an explicit decision for the duplicate or miss, as described in [`docs/code-style-guidelines.md` § Throwing dictionary APIs](docs/code-style-guidelines.md#throwing-dictionary-apis).
 * Minimize GC pressure: reuse objects, use object pooling, avoid boxing/unboxing, use `StringBuilder` for string concatenation.

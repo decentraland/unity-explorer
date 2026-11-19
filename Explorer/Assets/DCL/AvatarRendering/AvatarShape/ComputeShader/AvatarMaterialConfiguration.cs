@@ -2,9 +2,11 @@
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -39,18 +41,27 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             ("Mask_Mouth", WearableCategories.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
         };
 
-        public static AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
+        private const string MISSING_TOON_POOL_MESSAGE = "No avatar material pool is registered for the toon shader, the renderer is skipped";
+        private const string MISSING_FACIAL_FEATURES_POOL_MESSAGE = "No avatar material pool is registered for the facial features shader, the renderer is skipped";
+
+        public static bool TrySetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
             AvatarShapeComponent avatarShapeComponent,
-            in FacialFeaturesTextures facialFeatures)
+            in FacialFeaturesTextures facialFeatures,
+            out AvatarCustomSkinningComponent.MaterialSetup materialSetup)
         {
-            TextureArraySlot?[] slots;
-            Material avatarMaterial;
-            int shaderId;
+            bool isFacialFeature = TryGetFacialFeature(meshRenderer, avatarShapeComponent, facialFeatures, out Dictionary<int, Texture>? facialTextures, out Color facialColor, out int defaultSlotIndexUsed);
+            int shaderId = isFacialFeature ? TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES : TextureArrayConstants.SHADERID_DCL_TOON;
 
-            (avatarMaterial, slots, shaderId) = TrySetupFacialFeature(meshRenderer, poolHandler, avatarShapeComponent, facialFeatures, out bool isFacialFeature);
+            if (!poolHandler.TryGetMaterialPool(shaderId, out PoolMaterialSetup poolMaterialSetup))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, isFacialFeature ? MISSING_FACIAL_FEATURES_POOL_MESSAGE : MISSING_TOON_POOL_MESSAGE);
+                materialSetup = default(AvatarCustomSkinningComponent.MaterialSetup);
+                return false;
+            }
 
-            if (!isFacialFeature)
-                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler);
+            (Material avatarMaterial, TextureArraySlot?[] slots) = facialTextures != null
+                ? DoFacialFeature(poolMaterialSetup, facialTextures, facialColor, defaultSlotIndexUsed)
+                : SetupRegularMaterial(originalMaterial, poolMaterialSetup);
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
@@ -58,14 +69,13 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             DebugMaterial(originalMaterial, avatarMaterial, meshRenderer);
 
-            return new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial, shaderId);
+            materialSetup = new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial, shaderId);
+            return true;
         }
 
-        private static (Material avatarMaterial, TextureArraySlot?[] slots, int shaderId) SetupRegularMaterial(
-            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler)
+        private static (Material avatarMaterial, TextureArraySlot?[] slots) SetupRegularMaterial(
+            Material originalMaterial, in PoolMaterialSetup poolMaterialSetup)
         {
-            int shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
-            PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
 
             var baseColor = originalMaterial.GetColor(BASE_COLOR);
@@ -85,7 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 ConfigureTransparent(originalMaterial, avatarMaterial, baseColor);
 
             TextureArraySlot?[] slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
-            return (avatarMaterial, slots, shaderId);
+            return (avatarMaterial, slots);
         }
 
         private static void ConfigureAlphaTest(Material originalMaterial, Material avatarMaterial, Color baseColor)
@@ -112,35 +122,43 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.renderQueue = (int)RenderQueue.Transparent;
         }
 
-        private static (Material, TextureArraySlot?[], int) TrySetupFacialFeature(
-            Renderer meshRenderer, IAvatarMaterialPoolHandler poolHandler, in AvatarShapeComponent avatarShapeComponent,
+        private static bool TryGetFacialFeature(
+            Renderer meshRenderer, in AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatures,
-            out bool result)
+            [NotNullWhen(true)] out Dictionary<int, Texture>? textures, out Color color, out int defaultSlotIndexUsed)
         {
             for (var i = 0; i < SUFFIX_CATEGORY_MAP.Length; i++)
             {
-                (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor) = SUFFIX_CATEGORY_MAP[i];
+                (string suffix, string category, int slotIndexUsed, GetFacialFeatureColor getColor) = SUFFIX_CATEGORY_MAP[i];
 
                 if (meshRenderer.name.EndsWith(suffix))
                 {
-                    result = true;
-                    return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndexUsed);
+                    if (!facialFeatures.Value.TryGetValue(category, out textures))
+                    {
+                        ReportHub.LogError(ReportCategory.AVATAR, $"Facial feature textures are missing for category {category}");
+                        break;
+                    }
+
+                    color = getColor(in avatarShapeComponent);
+                    defaultSlotIndexUsed = slotIndexUsed;
+                    return true;
                 }
             }
 
-            result = false;
-            return default((Material, TextureArraySlot?[], int));
+            textures = null;
+            color = default(Color);
+            defaultSlotIndexUsed = 0;
+            return false;
         }
 
-        private static (Material, TextureArraySlot?[], int) DoFacialFeature(IAvatarMaterialPoolHandler poolHandler, IReadOnlyDictionary<int, Texture> replacementTexture, Color color, int defaultSlotIndexUsed = 0)
+        private static (Material, TextureArraySlot?[]) DoFacialFeature(in PoolMaterialSetup poolMaterialSetup, IReadOnlyDictionary<int, Texture> replacementTexture, Color color, int defaultSlotIndexUsed)
         {
-            PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
             TextureArraySlot?[] slots = poolMaterialSetup.TextureArrayContainer.SetTextures(replacementTexture, avatarMaterial, defaultSlotIndexUsed);
             avatarMaterial.SetColor(BASE_COLOR, color);
             avatarMaterial.SetInt(Z_WRITE_MODE, 0);
             avatarMaterial.renderQueue = (int)RenderQueue.AlphaTest;
-            return (avatarMaterial, slots, TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES);
+            return (avatarMaterial, slots);
         }
 
         private static void SetAvatarColors(Material avatarMaterial, Material originalMaterial, AvatarShapeComponent avatarShapeComponent)

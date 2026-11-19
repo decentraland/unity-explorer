@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -35,7 +36,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             playerMarkerController.Initialize();
 
-            writer.Add(MapLayer.PlayerMarker, playerMarkerController);
+            if (!writer.TryAdd(MapLayer.PlayerMarker, playerMarkerController))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.PlayerMarker} is already installed");
             zoomScalingWriter.Add(playerMarkerController);
             return;
 

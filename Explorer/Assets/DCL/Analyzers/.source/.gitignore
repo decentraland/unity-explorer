@@ -1,0 +1,5 @@
+bin/
+obj/
+
+# Hand-written projects; Explorer/.gitignore ignores the *.csproj files Unity generates
+!*.csproj

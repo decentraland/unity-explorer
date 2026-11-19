@@ -290,8 +290,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             VisualElement root = canvas.rootVisualElement;
             root.Add(uiTransformComponent.Transform);
 
-            IComponentPool<UIInputComponent> pool = poolsRegistry.GetReferenceTypePool<UIInputComponent>();
-            UIInputComponent stale = pool.Get();
+            Assert.That(poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIInputComponent>? pool), Is.True);
+            UIInputComponent stale = pool!.Get();
             stale.Initialize(inputBlock, "Stale", string.Empty, string.Empty, Color.white);
             root.Add(stale.TextField);
             stale.TextField.Focus();

@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Emotes
                 return true;
             }
 
-            lastProcessedTimestamps.Add(walletId, timestamp);
+            lastProcessedTimestamps[walletId] = timestamp;
             return true;
         }
     }

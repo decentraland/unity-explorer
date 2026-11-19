@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -50,7 +51,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             pathRendererController.Initialize();
 
-            writer.Add(MapLayer.Path, pathRendererController);
+            if (!writer.TryAdd(MapLayer.Path, pathRendererController))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.Path} is already installed");
             zoomScalingWriter.Add(pathRendererController);
         }
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vendored third-party client: DCL.Analyzers findings here are not ours to fix -->
+<RuleSet Name="SocketIOClient" Description="Disables the DCL.Analyzers rules for vendored code" ToolsVersion="10.0">
+  <Rules AnalyzerId="DCL.Analyzers" RuleNamespace="DCL.Analyzers">
+    <Rule Id="DCL0001" Action="None" />
+    <Rule Id="DCL0002" Action="None" />
+  </Rules>
+</RuleSet>

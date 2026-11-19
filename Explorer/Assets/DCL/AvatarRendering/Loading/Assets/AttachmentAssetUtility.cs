@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -133,7 +134,8 @@ namespace DCL.AvatarRendering.Loading.Assets
             using var boneIndexLookupScope = DictionaryPool<Transform, int>.Get(out var boneIndexLookup);
 
             for (int i = 0; i < bones.Length; i++)
-                boneIndexLookup.Add(bones[i], i);
+                if (!boneIndexLookup.TryAdd(bones[i], i))
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable {wearable.name} lists bone {bones[i].name} more than once in its skin");
 
             for (int i = 0; i < bones.Length; i++)
             {

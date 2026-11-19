@@ -56,8 +56,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
-
             if (emoteReferences.legacy)
             {
                 if (!legacyAnimationsEnabled)
@@ -85,8 +83,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
-
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
 
             if (emoteReferences.legacy)
             {
@@ -197,9 +193,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private bool IsSameLoopingEmote(EmoteReferences? emoteInUse, GameObject mainAsset, bool currentlyLooping, bool isLooping) =>
             emoteInUse != null &&
-            emotesInUse.ContainsKey(emoteInUse) &&
-            pools.ContainsKey(mainAsset) &&
-            emotesInUse[emoteInUse] == pools[mainAsset] &&
+            emotesInUse.TryGetValue(emoteInUse, out GameObjectPool<EmoteReferences>? inUsePool) &&
+            pools.TryGetValue(mainAsset, out GameObjectPool<EmoteReferences>? assetPool) &&
+            inUsePool == assetPool &&
             currentlyLooping &&
             isLooping;
 
@@ -215,16 +211,20 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             view.StopLegacyAnimation();
 
-            if (!pools.ContainsKey(mainAsset))
+            if (!pools.TryGetValue(mainAsset, out GameObjectPool<EmoteReferences>? pool))
             {
-                if (IsValid(mainAsset))
-                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, forceBackfaceCullingEnabled), onRelease: releaseEmoteReferences));
-                else
+                if (!IsValid(mainAsset))
                     return null;
+
+                pool = new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, forceBackfaceCullingEnabled), onRelease: releaseEmoteReferences);
+                pools[mainAsset] = pool;
             }
 
-            EmoteReferences? emoteReferences = pools[mainAsset]!.Get();
+            EmoteReferences? emoteReferences = pool.Get();
             if (!emoteReferences) return null;
+
+            if (!emotesInUse.TryAdd(emoteReferences, pool))
+                ReportHub.LogError(ReportCategory.EMOTE, $"Emote references {emoteReferences.name} taken from the pool are already in use");
 
             Transform avatarTransform = view.GetTransform();
             Transform emoteTransform = emoteReferences.transform;

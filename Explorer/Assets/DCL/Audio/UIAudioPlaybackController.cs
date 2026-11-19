@@ -133,7 +133,7 @@ namespace DCL.Audio
             Tweener fadeTween = audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration).OnComplete(() => StartPlayingContinuousUIAudio(audioSource, audioClipConfig, cts.Token));
 
             var audioData = new ContinuousPlaybackAudioData(audioSource, fadeTween, cts);
-            audioDataPerAudioClipConfig.Add(audioClipConfig, audioData);
+            audioDataPerAudioClipConfig[audioClipConfig] = audioData;
         }
 
         private void StartPlayingContinuousUIAudio(AudioSource audioSource, AudioClipConfig audioClipConfig, CancellationToken ct)

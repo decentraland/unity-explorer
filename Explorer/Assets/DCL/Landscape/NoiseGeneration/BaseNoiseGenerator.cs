@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Config;
+﻿using DCL.Diagnostics;
+using DCL.Landscape.Config;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -30,30 +31,40 @@ namespace DCL.Landscape.NoiseGeneration
             jobHandleDictionary = new NativeHashMap<NoiseDataPointer, JobHandle>(5, Allocator.Persistent);
         }
 
-        private void CheckCache(NoiseDataPointer pointerKey)
+        private NativeArray<float> GetOrCreateResult(NoiseDataPointer pointerKey)
         {
-            if (!noiseResultDictionary.ContainsKey(pointerKey))
-                noiseResultDictionary.Add(pointerKey, noiseNativeArrayProvider.GetNoiseNativeArray(pointerKey.size));
+            if (noiseResultDictionary.TryGetValue(pointerKey, out NativeArray<float> result))
+                return result;
+
+            result = noiseNativeArrayProvider.GetNoiseNativeArray(pointerKey.size);
+            noiseResultDictionary[pointerKey] = result;
+            return result;
         }
 
         public JobHandle Schedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount = 32)
         {
-            CheckCache(noiseDataPointer);
+            GetOrCreateResult(noiseDataPointer);
 
-            if (jobHandleDictionary.ContainsKey(noiseDataPointer))
-                return jobHandleDictionary[noiseDataPointer];
+            if (jobHandleDictionary.TryGetValue(noiseDataPointer, out JobHandle scheduledHandle))
+                return scheduledHandle;
 
             JobHandle resultHandle = OnSchedule(noiseDataPointer, parentJobHandle, batchCount);
 
-            jobHandleDictionary.Add(noiseDataPointer, resultHandle);
+            jobHandleDictionary[noiseDataPointer] = resultHandle;
             return resultHandle;
         }
 
 
         protected abstract JobHandle OnSchedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount);
 
-        public NativeArray<float> GetResult(NoiseDataPointer noiseDataPointer) =>
-            noiseResultDictionary[noiseDataPointer];
+        public NativeArray<float> GetResult(NoiseDataPointer noiseDataPointer)
+        {
+            if (noiseResultDictionary.TryGetValue(noiseDataPointer, out NativeArray<float> result))
+                return result;
+
+            ReportHub.LogError(ReportCategory.LANDSCAPE, $"Noise result requested before scheduling (size {noiseDataPointer.size}, offset {noiseDataPointer.offsetX},{noiseDataPointer.offsetZ})");
+            return GetOrCreateResult(noiseDataPointer);
+        }
 
         public abstract bool IsRecursive(NoiseDataBase otherNoiseData);
 

@@ -15,8 +15,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture,
             int boneCount);
 
-        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
-            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);
+        private protected abstract bool TrySetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
+            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures, out AvatarCustomSkinningComponent.MaterialSetup materialSetup);
 
         protected void ResetTransforms(Transform currentTransform, Transform rootTransform)
         {

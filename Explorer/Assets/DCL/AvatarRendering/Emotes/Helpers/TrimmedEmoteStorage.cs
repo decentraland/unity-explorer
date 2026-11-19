@@ -61,7 +61,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             lock (lockObject)
             {
-                emotesCache.Add(urn, wearable);
+                emotesCache[urn] = wearable;
 
                 if (qualifiedForUnloading)
                     cacheKeysDictionary[urn] =

@@ -33,7 +33,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
 
                 if (response.Headers != null)
                     foreach (KeyValuePair<string, string> header in response.Headers)
-                        headersToJs.Add(header.Key, header.Value);
+                        headersToJs[header.Key] = header.Value;
 
                 return new ResponseToJs
                 {

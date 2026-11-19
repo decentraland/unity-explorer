@@ -104,7 +104,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
                 marker.SetData(placeInfo.title, position, placeInfo);
-                markers.Add(placeInfo.base_position_processed, marker);
+                markers[placeInfo.base_position_processed] = marker;
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if(isEnabled)

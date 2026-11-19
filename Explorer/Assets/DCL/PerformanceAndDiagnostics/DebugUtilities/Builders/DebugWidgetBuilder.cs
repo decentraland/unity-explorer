@@ -1,5 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -82,8 +83,10 @@ namespace DCL.DebugUtilities
             {
                 void CreateHint(DebugHintDef hintDef)
                 {
-                    VisualElement hint = factories[typeof(DebugHintDef)].Create(hintDef);
-                    widget.AddElement(hint);
+                    VisualElement? hint = CreateElement(factories, hintDef);
+
+                    if (hint != null)
+                        widget.AddElement(hint);
                 }
 
                 switch (def)
@@ -142,24 +145,29 @@ namespace DCL.DebugUtilities
         {
             DebugControl debugControl = controlFactoryMethod()!;
 
-            VisualElement CreateElement(IDebugElementDef def)
-            {
-                IDebugElementFactory factory = factories[def.GetType()];
-                VisualElement element = factory.Create(def);
-                return element;
-            }
+            VisualElement? leftElement = left != null ? CreateElement(factories, left) : null;
+            VisualElement? rightElement = right != null ? CreateElement(factories, right) : null;
 
-            if (left != null)
-                debugControl.Left.Add(CreateElement(left));
+            if (leftElement != null)
+                debugControl.Left.Add(leftElement);
             else
                 debugControl.Left.SetDisplayed(false);
 
-            if (right != null)
-                debugControl.Right.Add(CreateElement(right));
+            if (rightElement != null)
+                debugControl.Right.Add(rightElement);
             else
                 debugControl.Right.SetDisplayed(false);
 
             return debugControl;
+        }
+
+        private static VisualElement? CreateElement(IReadOnlyDictionary<Type, IDebugElementFactory> factories, IDebugElementDef def)
+        {
+            if (factories.TryGetValue(def.GetType(), out IDebugElementFactory factory))
+                return factory.Create(def);
+
+            ReportHub.LogError(ReportCategory.DEBUG, $"No debug element factory is registered for {def.GetType().Name}");
+            return null;
         }
 
         internal abstract record Placement

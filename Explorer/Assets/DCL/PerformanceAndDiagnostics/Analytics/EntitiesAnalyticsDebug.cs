@@ -1,5 +1,6 @@
 ﻿using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,11 +26,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 var counter = new BatchesCounter();
 
+                if (!counters.TryAdd(categoryName, counter))
+                {
+                    ReportHub.LogError(ReportCategory.ANALYTICS, $"Entities analytics category {categoryName} is already registered");
+                    return this;
+                }
+
                 Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Min)}", new DebugIntFieldDef(counter.Min));
                 Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Avg)}", new DebugIntFieldDef(counter.Avg));
                 Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Max)}", new DebugIntFieldDef(counter.Max));
-
-                counters.Add(categoryName, counter);
             }
 
             return this;

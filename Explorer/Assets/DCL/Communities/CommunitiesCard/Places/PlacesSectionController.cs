@@ -243,7 +243,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 else
                     foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
                     {
-                        userNames.Add(profile.UserId, profile.Name);
+                        userNames[profile.UserId] = profile.Name;
                         break;
                     }
             }

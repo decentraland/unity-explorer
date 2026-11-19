@@ -32,10 +32,13 @@ namespace DCL.Profiles
         {
             var key = new Key(id, version);
 
-            if (profiles.ContainsKey(key) == false)
-                profiles[key] = NewRandomProfile();
+            if (!profiles.TryGetValue(key, out Profile? profile))
+            {
+                profile = NewRandomProfile();
+                profiles[key] = profile;
+            }
 
-            return UniTask.FromResult<ProfileTier?>(profiles[key]);
+            return UniTask.FromResult<ProfileTier?>(profile);
         }
 
         private static Profile NewRandomProfile() =>

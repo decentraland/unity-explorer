@@ -3,6 +3,7 @@ using SuperScrollView;
 using System;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -67,12 +68,17 @@ namespace DCL.Backpack.Gifting.Presenters.Grid.Adapter
 
         private LoopGridViewItem? OnGetItemByRowColumn(LoopGridView grid, int itemIndex, int row, int col)
         {
-            if (dataProvider == null || itemIndex < 0 || itemIndex >= dataProvider?.ItemCount)
+            if (dataProvider == null || itemIndex < 0 || itemIndex >= dataProvider.ItemCount)
                 return null;
+
+            if (!dataProvider.TryGetViewModel(itemIndex, out TViewModel? viewModel))
+            {
+                ReportHub.LogError(ReportCategory.GIFTING, $"No gifting view model is registered at index {itemIndex}, the item is not shown");
+                return null;
+            }
 
             var item = grid.NewListViewItem("GiftingItem");
             var cellView = item.GetComponent<GiftingItemView>();
-            var viewModel = dataProvider.GetViewModel(itemIndex);
             
             cellView.Bind(viewModel, dataProvider.SelectedUrn == viewModel.Urn);
 

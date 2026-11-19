@@ -130,7 +130,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             {
                 closebyUsers.Add(avatarShape.ID);
                 var wrap = GetMarker();
-                markers.Add(avatarShape.ID, wrap);
+                markers[avatarShape.ID] = wrap;
                 mapCullingController.StartTracking(wrap, wrap);
             }
         }
@@ -175,7 +175,7 @@ namespace DCL.MapRenderer.MapLayers.Users
                 if (markers.TryGetValue(remotePlayerData.avatarId, out var marker)) continue;
 
                 var wrap = GetMarker();
-                markers.Add(remotePlayerData.avatarId, wrap);
+                markers[remotePlayerData.avatarId] = wrap;
                 wrap.UpdateMarkerPosition(remotePlayerData.avatarId, remotePlayerData.position);
                 mapCullingController.StartTracking(wrap, wrap);
             }

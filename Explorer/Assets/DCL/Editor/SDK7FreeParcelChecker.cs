@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -155,9 +154,9 @@ namespace DCL.Editor
             }
 
             string message;
-            if (FETCHED_PARCELS.Keys.ToList().Contains(userCoordinate))
+            if (FETCHED_PARCELS.TryGetValue(userCoordinate, out string occupyingScene))
             {
-                message = $"Parcel {userCoordinate} is occupied by {FETCHED_PARCELS[userCoordinate]}.";
+                message = $"Parcel {userCoordinate} is occupied by {occupyingScene}.";
                 resultLabel.style.color = new StyleColor(Color.red);
             }
             else

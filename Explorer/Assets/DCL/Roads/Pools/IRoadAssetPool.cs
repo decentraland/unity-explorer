@@ -5,7 +5,7 @@ namespace DCL.LOD
 {
     public interface IRoadAssetPool
     {
-        bool Get(string key, out Transform roadAsset);
+        bool Get(string key, out Transform? roadAsset);
 
         void Release(string key, Transform asset);
 

@@ -52,14 +52,22 @@ namespace DCL.MapRenderer
                     layers[pair.Key] = new MapLayerStatus(pair.Value);
                 }
 
-                layers[MapLayer.SatelliteAtlas].SharedActive = true;
-                layers[MapLayer.SearchResults].SharedActive = true;
-                layers[MapLayer.LiveEvents].SharedActive = false;
-                layers[MapLayer.Category].SharedActive = false;
-                layers[MapLayer.ParcelsAtlas].SharedActive = false;
+                SetSharedActive(MapLayer.SatelliteAtlas, true);
+                SetSharedActive(MapLayer.SearchResults, true);
+                SetSharedActive(MapLayer.LiveEvents, false);
+                SetSharedActive(MapLayer.Category, false);
+                SetSharedActive(MapLayer.ParcelsAtlas, false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.TEXTURES)); }
+        }
+
+        private void SetSharedActive(MapLayer layer, bool sharedActive)
+        {
+            if (layers!.TryGetValue(layer, out MapLayerStatus status))
+                status.SharedActive = sharedActive;
+            else
+                ReportHub.LogError(ReportCategory.TEXTURES, $"Map layer {layer} was not installed");
         }
 
         public IMapCameraController RentCamera(in MapCameraInput cameraInput)

@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace DCL.Optimization.Pools
@@ -44,14 +45,19 @@ namespace DCL.Optimization.Pools
             lock (pools) { return pools.TryGetValue(typeof(T), out componentPool); }
         }
 
-        public IComponentPool<T> GetReferenceTypePool<T>() where T: class
+        public bool TryGetReferenceTypePool<T>([MaybeNullWhen(false)] out IComponentPool<T> pool) where T: class
         {
-            lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
-        }
+            lock (pools)
+            {
+                if (pools.TryGetValue(typeof(T), out IComponentPool componentPool) && componentPool is IComponentPool<T> typedPool)
+                {
+                    pool = typedPool;
+                    return true;
+                }
 
-        public IComponentPool GetPool(Type type)
-        {
-            lock (pools) { return pools[type]; }
+                pool = null;
+                return false;
+            }
         }
 
         public GameObjectPool<T> AddGameObjectPool<T>(Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 1024, Action<T>? onGet = null) where T: Component
@@ -65,7 +71,7 @@ namespace DCL.Optimization.Pools
                 }
 
                 var newPool = new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize, onGet);
-                pools.Add(typeof(T), newPool);
+                pools[typeof(T)] = newPool;
                 return newPool;
             }
         }
@@ -80,7 +86,7 @@ namespace DCL.Optimization.Pools
                     return;
                 }
 
-                pools.Add(typeof(T), componentPool);
+                pools[typeof(T)] = componentPool;
             }
         }
     }

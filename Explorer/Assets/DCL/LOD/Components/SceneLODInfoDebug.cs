@@ -92,13 +92,14 @@ namespace DCL.LOD
             if (FailedLODs.ContainsKey(lodLevel))
                 return lod.renderers;
 
-            FailedLODs[lodLevel] =  new DebugCube[parcels.Count];
+            var failedCubes = new DebugCube[parcels.Count];
+            FailedLODs[lodLevel] = failedCubes;
             var renderers = new Renderer[parcels.Count];
             for (int i = 0; i < parcels.Count; i++)
             {
-                FailedLODs[lodLevel][i] = Object.Instantiate(LodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, lodGroupTransform);
-                FailedLODs[lodLevel][i].failingLODCubeMeshRenderer.sharedMaterial = failedMaterials[lodLevel];
-                renderers[i] = FailedLODs[lodLevel][i].failingLODCubeMeshRenderer;
+                failedCubes[i] = Object.Instantiate(LodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, lodGroupTransform);
+                failedCubes[i].failingLODCubeMeshRenderer.sharedMaterial = failedMaterials[lodLevel];
+                renderers[i] = failedCubes[i].failingLODCubeMeshRenderer;
             }
 
             return renderers;
@@ -110,14 +111,15 @@ namespace DCL.LOD
             if (OriginalColors.ContainsKey(lodLevel))
                 return;
 
-            OriginalColors[lodLevel] = new Color[lod.renderers.Length];
+            var originalColors = new Color[lod.renderers.Length];
+            OriginalColors[lodLevel] = originalColors;
             for (int j = 0; j < lod.renderers.Length; j++)
             {
                 var lodAssetRenderer = lod.renderers[j];
                 lodAssetRenderer.SafeGetMaterials(TEMP_MATERIALS);
                 foreach (var t in TEMP_MATERIALS)
                 {
-                    OriginalColors[lodLevel][j] = t.color;
+                    originalColors[j] = t.color;
                     t.color = LodSettingsAsset.LODDebugColors[lodLevel];
                 }
             }

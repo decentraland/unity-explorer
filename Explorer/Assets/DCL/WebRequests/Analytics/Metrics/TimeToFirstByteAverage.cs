@@ -42,7 +42,7 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
-            pendingRequests.Add(request, DateTime.Now);
+            pendingRequests[request] = DateTime.Now;
         }
 
         public override void OnRequestEnded<T>(T request, TimeSpan duration)

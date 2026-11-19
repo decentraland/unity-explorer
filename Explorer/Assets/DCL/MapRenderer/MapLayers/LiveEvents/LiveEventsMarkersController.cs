@@ -241,7 +241,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
                     marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
                     marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
-                    markers.Add(coords, marker);
+                    markers[coords] = marker;
 
                     if(isEnabled)
                         mapCullingController.StartTracking(marker, this);

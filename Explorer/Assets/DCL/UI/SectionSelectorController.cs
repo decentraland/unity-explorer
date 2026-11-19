@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -52,17 +53,23 @@ namespace DCL.UI
             if (!isOn || EnumUtils.Equals(section, previousSection))
                 return new UniTaskVoid();
 
+            if (!sections.TryGetValue(previousSection, out ISection? closingSection) || !sections.TryGetValue(section, out ISection? openingSection))
+            {
+                ReportHub.LogError(ReportCategory.UI, $"Section selector cannot switch from {previousSection} to {section}, one of them is not registered");
+                return new UniTaskVoid();
+            }
+
             SetAnimationState(true, selectorToggle);
 
             if (animate)
-                AnimatePanelsAsync(sections[previousSection], sections[section], section, ct);
+                AnimatePanelsAsync(closingSection, openingSection, section, ct);
             else
             {
-                sections[previousSection].Deactivate();
-                sections[section].Activate();
-                sections[previousSection].GetRectTransform().gameObject.SetActive(false);
-                sections[section].GetRectTransform().gameObject.SetActive(true);
-                SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[section].GetRectTransform());
+                closingSection.Deactivate();
+                openingSection.Activate();
+                closingSection.GetRectTransform().gameObject.SetActive(false);
+                openingSection.GetRectTransform().gameObject.SetActive(true);
+                SetPanelsPosition(closingSection.GetRectTransform(), openingSection.GetRectTransform());
                 previousSection = section;
             }
             return new UniTaskVoid();

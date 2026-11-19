@@ -269,7 +269,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 if (instanceGuard.Value == null) return;
 
-                Operation type = instanceGuard.Value.afterClean[operationId].Item1;
+                // The native side can complete before the operation is registered in afterClean
+                string type = instanceGuard.Value.afterClean.TryGetValue(operationId, out (Operation, List<MarshaledString>) entry) ? entry.Item1.ToString() : "Unknown";
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 

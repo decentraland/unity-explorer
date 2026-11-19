@@ -29,7 +29,6 @@ using DCL.WebRequests;
 using ECS;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -235,7 +234,11 @@ namespace DCL.Backpack
                 keyValuePair.Value.Deactivate();
 
             sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
-            tabsBySections = view.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+            tabsBySections = new Dictionary<BackpackSections, TabSelectorView>(view.TabSelectorMappedViews.Length);
+
+            foreach (BackpackPanelTabSelectorMapping map in view.TabSelectorMappedViews)
+                if (!tabsBySections.TryAdd(map.Section, map.TabSelectorViews))
+                    ReportHub.LogError(ReportCategory.BACKPACK, $"Duplicate backpack tab mapping for section {map.Section}");
 
             foreach ((BackpackSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
@@ -263,7 +266,12 @@ namespace DCL.Backpack
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
         {
             if(isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+            {
+                if (tabsBySections.TryGetValue(lastShownSection, out TabSelectorView? lastTab))
+                    sectionSelectorController.SetAnimationState(false, lastTab);
+                else
+                    ReportHub.LogError(ReportCategory.BACKPACK, $"No backpack tab is mapped for section {lastShownSection}");
+            }
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
@@ -368,7 +376,10 @@ namespace DCL.Backpack
             profileLoadingCts = profileLoadingCts.SafeRestart();
             AwaitForProfileAsync(profileLoadingCts.Token).Forget();
 
-            backpackSections[currentSection].Activate();
+            if (backpackSections.TryGetValue(currentSection, out ISection? current))
+                current.Activate();
+            else
+                ReportHub.LogError(ReportCategory.BACKPACK, $"No backpack section is registered for {currentSection}");
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnBeforeShow();
@@ -377,7 +388,10 @@ namespace DCL.Backpack
             foreach ((BackpackSections section, TabSelectorView? tab) in tabsBySections)
                 ToggleSection(section == BackpackSections.Avatar, tab, section, true);
 
-            sectionSelectorController.SetAnimationState(true, tabsBySections[BackpackSections.Avatar]);
+            if (tabsBySections.TryGetValue(BackpackSections.Avatar, out TabSelectorView? avatarTab))
+                sectionSelectorController.SetAnimationState(true, avatarTab);
+            else
+                ReportHub.LogError(ReportCategory.BACKPACK, $"No backpack tab is mapped for section {BackpackSections.Avatar}");
 
             cursor.Unlock();
 

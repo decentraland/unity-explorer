@@ -11,11 +11,11 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
-using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -46,7 +46,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>().EnsureNotNull();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIInputComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UIInputComponent)}");
+
+            inputTextsPool = pool;
+
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
             this.styleFontDefinitions = styleFontDefinitions;

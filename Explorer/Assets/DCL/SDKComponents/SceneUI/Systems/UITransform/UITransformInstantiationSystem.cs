@@ -11,6 +11,7 @@ using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -29,7 +30,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UITransformComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UITransformComponent)}");
+
+            transformsPool = pool;
         }
 
         protected override void Update(float t)

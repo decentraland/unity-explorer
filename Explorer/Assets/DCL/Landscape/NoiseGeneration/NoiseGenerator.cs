@@ -13,7 +13,7 @@ namespace DCL.Landscape.NoiseGeneration
         {
             if (noiseData == null) return default(JobHandle);
 
-            var noiseJob = new NoiseJob(noiseResultDictionary[noiseDataPointer],
+            var noiseJob = new NoiseJob(GetResult(noiseDataPointer),
                 in offsets,
                 noiseDataPointer.size,
                 noiseDataPointer.size,

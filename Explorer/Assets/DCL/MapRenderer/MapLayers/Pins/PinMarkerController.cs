@@ -84,7 +84,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (!markers.TryGetValue(entity, out IPinMarker pinMarker))
             {
                 marker = builder(objectsPool, mapCullingController);
-                markers.Add(entity, marker);
+                markers[entity] = marker;
             }
             else { marker = pinMarker; }
 
@@ -112,7 +112,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (!markers.TryGetValue(entity, out IPinMarker pinMarker))
             {
                 marker = builder(objectsPool, mapCullingController);
-                markers.Add(entity, marker);
+                markers[entity] = marker;
             }
             else marker = pinMarker;
 

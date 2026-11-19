@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.Rooms;
@@ -11,7 +12,6 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Profiles.Helpers;
-using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
@@ -58,9 +58,11 @@ namespace DCL.Multiplayer.Profiles.Entities
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
             remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
-            transformPool = componentPoolsRegistry
-                           .GetReferenceTypePool<Transform>()
-                           .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
+
+            if (!componentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? registeredTransformPool))
+                throw new System.InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            transformPool = registeredTransformPool;
         }
 
         public void TryCreateOrUpdate(IReadOnlyCollection<RemoteProfile> list, World world)
@@ -96,7 +98,11 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         private void Remove(string walletId, RoomSource roomSource, World world)
         {
-            IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(walletId);
+            if (!entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
+            {
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Cannot remove the remote entity of the unregistered wallet {walletId}");
+                return;
+            }
 
             if (!entityParticipantTable.Release(walletId, roomSource))
                 return;

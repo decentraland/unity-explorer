@@ -21,6 +21,14 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         public void SetUp()
         {
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
+
+            poolsRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<MeshRenderer>?>())
+                         .Returns(x =>
+                          {
+                              x[0] = Substitute.For<IComponentPool<MeshRenderer>>();
+                              return true;
+                          });
+
             system = new ReleaseOutdatedRenderingSystem(world, poolsRegistry);
         }
 

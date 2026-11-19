@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using MVC;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace DCL.UI.SuggestionPanel
         private readonly List<BaseInputSuggestionElement> usedPoolItems = new ();
 
         private InputSuggestionType currentSuggestionType;
+        private ObjectPool<BaseInputSuggestionElement>? currentSuggestionPool;
         private int currentIndex;
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
         private int firstVisibleSuggestionIndex;
@@ -58,8 +60,15 @@ namespace DCL.UI.SuggestionPanel
                     defaultCapacity: 10
                 );
 
-                suggestionItemsPools.Add(suggestionElement.GetSuggestionType(), suggestionPool);
-                suggestionDataPerType.Add(suggestionElement.GetSuggestionType(), suggestionElement.SuggestionElementData);
+                InputSuggestionType suggestionType = suggestionElement.GetSuggestionType();
+
+                if (!suggestionItemsPools.TryAdd(suggestionType, suggestionPool))
+                {
+                    ReportHub.LogError(ReportCategory.UI, $"Suggestion panel configuration has more than one element for {suggestionType}, the first one is kept");
+                    continue;
+                }
+
+                suggestionDataPerType[suggestionType] = suggestionElement.SuggestionElementData;
             }
         }
 
@@ -163,7 +172,14 @@ namespace DCL.UI.SuggestionPanel
 
             if (suggestionType == InputSuggestionType.None) return;
 
-            int maxVisibleSuggestions = suggestionDataPerType[suggestionType].MaxSuggestionAmount;
+            if (!suggestionDataPerType.TryGetValue(suggestionType, out SuggestionElementData suggestionData)
+                || !suggestionItemsPools.TryGetValue(suggestionType, out ObjectPool<BaseInputSuggestionElement>? suggestionPool))
+            {
+                ReportHub.LogError(ReportCategory.UI, $"Suggestion panel configuration has no element for {suggestionType}");
+                return;
+            }
+
+            int maxVisibleSuggestions = suggestionData.MaxSuggestionAmount;
 
             scrollViewComponent.vertical = foundSuggestions.Count > maxVisibleSuggestions;
 
@@ -172,33 +188,33 @@ namespace DCL.UI.SuggestionPanel
             if (foundSuggestions.Count == 0)
                 scrollViewHeight = configurationSo.noResultsHeight;
             else if (foundSuggestions.Count > 0 && foundSuggestions.Count <= maxVisibleSuggestions)
-                scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * foundSuggestions.Count) + configurationSo.padding;
+                scrollViewHeight = (suggestionData.SuggestionElementHeight * foundSuggestions.Count) + configurationSo.padding;
             else
             {
                 needToScroll = true;
                 firstVisibleSuggestionIndex = 0;
                 visibleSuggestionsCount = maxVisibleSuggestions;
                 lastVisibleSuggestionIndex = maxVisibleSuggestions - 1;
-                scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * maxVisibleSuggestions) + configurationSo.padding;
+                scrollViewHeight = (suggestionData.SuggestionElementHeight * maxVisibleSuggestions) + configurationSo.padding;
             }
 
             ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
 
             //if the suggestion type is different, we release all items from the pool,
             //otherwise, we only release the elements that are over the found suggestion amount.
-            if (currentSuggestionType != InputSuggestionType.None)
+            if (currentSuggestionPool != null)
             {
                 if (currentSuggestionType != suggestionType)
                 {
                     for (var i = 0; i < usedPoolItems.Count; i++)
-                        suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+                        currentSuggestionPool.Release(usedPoolItems[i]);
 
                     usedPoolItems.Clear();
                 }
                 else
                 {
                     for (int i = foundSuggestions.Count; i < usedPoolItems.Count; i++)
-                        suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+                        currentSuggestionPool.Release(usedPoolItems[i]);
 
                     for (int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
                         usedPoolItems.RemoveAt(i);
@@ -206,6 +222,7 @@ namespace DCL.UI.SuggestionPanel
             }
 
             currentSuggestionType = suggestionType;
+            currentSuggestionPool = suggestionPool;
 
             for (var i = 0; i < foundSuggestions.Count; i++)
             {
@@ -218,7 +235,7 @@ namespace DCL.UI.SuggestionPanel
                 }
                 else
                 {
-                    BaseInputSuggestionElement suggestionElement = suggestionItemsPools[suggestionType].Get();
+                    BaseInputSuggestionElement suggestionElement = suggestionPool.Get();
                     suggestionElement.Setup(elementData);
                     suggestionElement.gameObject.transform.SetAsLastSibling();
                     usedPoolItems.Add(suggestionElement);

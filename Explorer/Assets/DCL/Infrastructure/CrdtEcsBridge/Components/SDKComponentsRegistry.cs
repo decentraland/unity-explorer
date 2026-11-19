@@ -1,4 +1,5 @@
-﻿using DCL.Optimization.Pools;
+﻿using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using Google.Protobuf;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,15 @@ namespace CrdtEcsBridge.Components
 
         public SDKComponentsRegistry Add(SDKComponentBridge bridge)
         {
-            bridges.Add(bridge.Id, bridge);
-            bridgeByType.Add(bridge.ComponentType, bridge);
+            if (!bridges.TryAdd(bridge.Id, bridge))
+            {
+                ReportHub.LogError(ReportCategory.CRDT_ECS_BRIDGE, $"SDK component bridge with id {bridge.Id} is already registered");
+                return this;
+            }
+
+            if (!bridgeByType.TryAdd(bridge.ComponentType, bridge))
+                ReportHub.LogError(ReportCategory.CRDT_ECS_BRIDGE, $"SDK component bridge for type {bridge.ComponentType.Name} is already registered");
+
             return this;
         }
 

@@ -47,6 +47,19 @@ Two Rust plugins ship prebuilt native binaries committed to Git LFS: UUAV (`Expl
 
 The verifier, Gate B and their self-tests live once under `scripts/native-lock/` and take the plugin's lock with `--lock`; each plugin keeps only its build and Gate A shell scripts. The verify workflow re-hashes the shipped binaries and their build inputs against the lock; the rebuild workflow builds on hosted runners under the pinned toolchain and fails unless two builds produce identical bytes, then hands the binaries back as artifacts for a human to commit and relock. Neither commits. The design and the relock steps are documented in each plugin's README ([UUAV](../Explorer/Assets/Plugins/UUAV/README.md#ci-verification-of-the-shipped-binaries), [RustSegment](../Explorer/Assets/Plugins/RustSegment/README.md#ci-verification-of-the-shipped-binaries)); [`docs/uuav.md`](uuav.md) explains why the binaries are committed rather than built on demand.
 
+## In-repo Roslyn analyzers (DCL.Analyzers)
+
+`Explorer/Assets/DCL/Analyzers/DCL.Analyzers.dll` is a Roslyn analyzer built from `Explorer/Assets/DCL/Analyzers/.source/` and committed to Git LFS. Unity loads it into every compile of the project, so its rules (`DCL0001`/`DCL0002`, see [Throwing dictionary APIs](code-style-guidelines.md#throwing-dictionary-apis)) are compile errors everywhere the project compiles:
+
+| Where | What enforces it |
+|---|---|
+| Editor, IDE | The Unity compile; Rider/VS load the analyzer from the generated `.csproj` files. |
+| `test.yml` → Test (editmode/playmode) and the Unity builds | The Unity compile: a violation fails it. The test job also fails if the Editor log shows the analyzer could not load (`CS8034`) or threw (`AD0001`), since the compiler only warns about those and enforcement would silently stop. |
+| `test.yml` → Lint | InspectCode runs the analyzers referenced by the generated `.csproj` files, so violations appear in its report as errors. |
+| `dcl-analyzers-verify.yml` | On changes under `Explorer/Assets/DCL/Analyzers/`: runs the analyzer tests and rebuilds the DLL with the SDK pinned in `.source/global.json`, failing if the bytes differ from the committed DLL. The build is deterministic, so this ties the shipped DLL to the reviewed source. |
+
+To list violations without the Editor, run `bash scripts/lint/run-dcl-analyzers.sh [Assembly ...]` (needs one prior Unity compile for its response files). How to change the analyzer: [`.source/README.md`](../Explorer/Assets/DCL/Analyzers/.source/README.md).
+
 ## GitHub Workflow
 
 The workflow file (and any actions used by it) is mostly a wrapper of the Python handler which communicates with the [Unity DevOps Build API](https://build-api.cloud.unity3d.com/docs/1.0.0/index.html).
