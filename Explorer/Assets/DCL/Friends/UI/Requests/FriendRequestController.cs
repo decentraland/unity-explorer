@@ -399,10 +399,10 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.MessageCharacterCountText.text = $"{text.Length}/140";
 
         private void BlockUnwantedInputs() =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player, InputMapComponent.Kind.VoiceChat);
 
         private void UnblockUnwantedInputs() =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player, InputMapComponent.Kind.VoiceChat);
 
         private async UniTask ShowOperationConfirmationAsync(
             ViewState state,

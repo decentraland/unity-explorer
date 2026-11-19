@@ -20,6 +20,7 @@ namespace DCL.Backpack.Gifting.Presenters
             InputMapComponent.Kind.Shortcuts,
             InputMapComponent.Kind.Camera,
             InputMapComponent.Kind.InWorldCamera,
+            InputMapComponent.Kind.VoiceChat,
         };
 
         private const string TITLE_FORMAT = "Send a Gift to <color=#{0}>{1}</color>";

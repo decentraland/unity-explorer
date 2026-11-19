@@ -30,6 +30,7 @@ namespace DCL.Donations.UI
             InputMapComponent.Kind.Shortcuts,
             InputMapComponent.Kind.Camera,
             InputMapComponent.Kind.InWorldCamera,
+            InputMapComponent.Kind.VoiceChat,
         };
 
         private readonly IDonationsService donationsService;
