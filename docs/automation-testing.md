@@ -89,6 +89,24 @@ Non-release builds created by CI (for PRs and the dev branch) include AltTester 
 
 ---
 
+## Analytics
+
+`--alttester` silences analytics for the whole session. Instrumented builds come out of the same Unity
+Cloud Build configuration as releases, so they carry the production Segment write key, and they are not
+development builds — without this gate every panel the suite opens, every message it sends and every
+throwaway account it logs in with would reach Segment as ordinary user activity, tagged `runtime:
+release` and indistinguishable from a person's session.
+
+The gate is in `AnalyticsContainer.CreateAnalyticsService`, and it swaps only the transport for
+`IAnalyticsService.Null`. The controller, its trait plugins and every analytics decorator stay wired
+exactly as in a release build, so the suite still exercises the production analytics code paths — an
+exception thrown on one of them still fails a test — and nothing leaves the process.
+
+Sentry is separate and still reports: non-release builds send to the dev Sentry project
+(`SENTRY_DSN_DEV`), which is where automation crashes belong.
+
+---
+
 ## Visual Regression on PRs
 
 Release and hotfix PRs into `main` automatically run Visual alongside InWorld against the same build. A manual `In-World Tests` dispatch with a `filter` runs InWorld only. When configured as a required check, `InWorld suite result` gates build resolution and InWorld; Visual failures remain visible in the PR's CI status comment and Visual Allure report but are advisory until baselines are versioned per release. The gate finishes independently of Visual. The default explorer-automation baselines follow `dev`, which can be newer than a release cut or a hotfix from `main`.
