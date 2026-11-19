@@ -2,6 +2,15 @@ name: Unity Cloud Build Release
 
 on:
   workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type — use "patch" for hotfixes (e.g. 0.175.0 → 0.175.1), "minor" for regular releases (e.g. 0.175.0 → 0.176.0)'
+        required: false
+        default: minor
+        type: choice
+        options:
+          - minor
+          - patch
   push:
     branches:
       - main
@@ -23,6 +32,8 @@ jobs:
       - name: Get version
         id: get_version
         uses: ./.github/actions/version
+        with:
+          bump_type: ${{ inputs.bump_type || 'minor' }}
 
       - name: Write job summary
         run: |
