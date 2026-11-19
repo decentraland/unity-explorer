@@ -125,8 +125,8 @@ namespace DCL.Shop
             Favorites = new ShopFavorites(api, identityCache);
             presenter = new ShopItemCardPresenter(cart, buyHandler, api, webBrowser, urlsSource, identityCache, styling, thumbnailLoader, creators);
             OverviewController = new ShopOverviewController(view.OverviewView, catalog, presenter, creators, thumbnailLoader, api, cart);
-            WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, ShopCategoryTree.WEARABLE);
-            EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, ShopCategoryTree.EMOTE);
+            WearablesController = new ShopGridSectionController(view.WearablesView, api, presenter, creators, styling, ShopCategoryTree.WEARABLE);
+            EmotesController = new ShopGridSectionController(view.EmotesView, api, presenter, creators, styling, ShopCategoryTree.EMOTE);
             FavoritesController = new ShopFavoritesSectionController(view.FavoritesView, api, presenter, creators, Favorites);
             NamesController = new ShopNamesSectionController(view.NamesView, view.PreviewNametagRoot, view.PreviewNametag, nameClaimService, api, selfProfile, mvcManager, webBrowser, urlsSource);
             Preview = new ShopCharacterPreviewController(view.CharacterPreview, characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile);

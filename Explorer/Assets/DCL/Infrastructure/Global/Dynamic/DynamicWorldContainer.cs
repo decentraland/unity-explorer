@@ -12,6 +12,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions;
 using DCL.Communities;
 using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
@@ -125,6 +126,8 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
+        public SceneItemPurchaseFlow ItemPurchaseFlow { get; }
+
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
@@ -144,6 +147,7 @@ namespace Global.Dynamic
             VoiceChatContainer voiceChatContainer,
             UpscalingController upscalingController,
             LobbyStagePresetCatalog lobbyStagePresetCatalog,
+            SceneItemPurchaseFlow itemPurchaseFlow,
             ShopCart shopCart,
             CreditsCartCheckoutService cartCheckoutService,
             NameClaimService nameClaimService)
@@ -166,6 +170,7 @@ namespace Global.Dynamic
             this.voiceChatContainer = voiceChatContainer;
             this.upscalingController = upscalingController;
             this.lobbyStagePresetCatalog = lobbyStagePresetCatalog;
+            ItemPurchaseFlow = itemPurchaseFlow;
             this.shopCart = shopCart;
             this.cartCheckoutService = cartCheckoutService;
             this.nameClaimService = nameClaimService;
@@ -177,6 +182,7 @@ namespace Global.Dynamic
             cartCheckoutService.Dispose();
             shopCart.Dispose();
             nameClaimService.Dispose();
+            ItemPurchaseFlow.Dispose();
             lobbyStagePresetCatalog.Dispose();
             upscalingController.Dispose();
             voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
@@ -456,14 +462,16 @@ namespace Global.Dynamic
 
             IEmotesMessageBus multiplayerEmotesMessageBus = multiplayerContainer.EmotesMessageBus;
 
-            // Scene-world plugins that depend on comms/multiplayer services, which exist only in this container.
+            // Scene-world plugins that depend on services which exist only in this container.
             // They join StaticContainer.ECSWorldPlugins for initialization and scene-world injection.
             var worldPlugins = new List<IDCLWorldPlugin>
             {
+                new DCL.PluginSystem.World.MultiplayerPlugin(globalWorld, playerEntity, staticContainer.CharacterDataPropagationUtility, wearableContainer.WearableCatalog, wearableContainer.WearablesProvider),
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
+                new SceneWearablesPlugin(wearableContainer.WearableCatalog, globalWorld, localSceneDevelopment, bootstrapContainer.UseLocalAssetBundles),
                 new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
-                new AvatarNametagWorldPlugin(globalWorld, playerEntity, commsContainer.EntityParticipantTable),
+                new AvatarNametagWorldPlugin(globalWorld),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -477,6 +485,7 @@ namespace Global.Dynamic
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var itemPurchaseFlow = new SceneItemPurchaseFlow(uiShellContainer.MvcManager, marketplaceShopApiClient, staticContainer.ImageControllerProvider, bootstrapContainer.DecentralandUrlsSource);
             var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.EthereumNetwork);
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
@@ -587,7 +596,11 @@ namespace Global.Dynamic
             var userLogout = new UserLogout(identityCache, dynamicWorldDependencies.CompositeWeb3Provider, profileCache, initializationFlowContainer.InitializationFlow, globalWorld, playerEntity);
 
             // Read here because Settings needs the names and backdrops even in a session without the lobby plugin
-            LobbyPlugin.LobbyPluginSettings.StagePresetEntry[] stagePresets = dynamicWorldDependencies.SettingsContainer.GetSettings<LobbyPlugin.LobbyPluginSettings>().StagePresets;
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.LOBBY_BACKGROUNDS, FeatureFlagsStrings.CONFIG_VARIANT, out LobbyStagePresetAvailability.Config? stagePresetsConfig);
+
+            LobbyPlugin.LobbyPluginSettings.StagePresetEntry[] stagePresets = LobbyStagePresetAvailability.Resolve(
+                dynamicWorldDependencies.SettingsContainer.GetSettings<LobbyPlugin.LobbyPluginSettings>().StagePresets, stagePresetsConfig);
+
             var stagePresetNames = new string[stagePresets.Length];
 
             for (var i = 0; i < stagePresets.Length; i++)
@@ -1214,6 +1227,7 @@ namespace Global.Dynamic
                 voiceChatContainer,
                 upscaleController,
                 lobbyStagePresetCatalog,
+                itemPurchaseFlow,
                 shopCart,
                 cartCheckoutService,
                 nameClaimService

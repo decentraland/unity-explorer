@@ -14,15 +14,23 @@
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"b"}],"deletedEntities":[]}
 #
-# CRDT Uint8Array should return the bigger raw data. a.byteLength !== b.byteLength
+# CRDT Uint8Array should prefer length over byte order at equal timestamps
 # Messages sent over the wire
 {"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1} => {"state":1,"effect":2}
-{"type":1,"componentId":7,"entityId":11,"data":"aa","timestamp":1} => {"state":4,"effect":0}
+{"type":1,"componentId":7,"entityId":11,"data":"aa","timestamp":1} => {"state":5,"effect":3}
 # End of messages
 # Final CRDT State
-{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"b"}],"deletedEntities":[]}
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"aa"}],"deletedEntities":[]}
 #
-# CRDT Uint8Array should return the bigger raw data. a.byteLength === b.byteLength
+# CRDT Uint8Array should keep the longer data when the shorter data arrives last
+# Messages sent over the wire
+{"type":1,"componentId":7,"entityId":11,"data":"aa","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1} => {"state":4,"effect":0}
+# End of messages
+# Final CRDT State
+{"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"aa"}],"deletedEntities":[]}
+#
+# CRDT Uint8Array should prefer longer data with a shared prefix
 # Messages sent over the wire
 {"type":1,"componentId":7,"entityId":11,"data":"messi","timestamp":1} => {"state":1,"effect":2}
 {"type":1,"componentId":7,"entityId":11,"data":"messirve","timestamp":1} => {"state":5,"effect":3}

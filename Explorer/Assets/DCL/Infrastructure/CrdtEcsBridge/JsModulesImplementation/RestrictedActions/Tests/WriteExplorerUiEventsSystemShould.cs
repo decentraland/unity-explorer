@@ -17,15 +17,25 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     /// </summary>
     public class WriteExplorerUiEventsSystemShould : UnitySystemTestBase<WriteExplorerUiEventsSystem>
     {
+        private const string ITEM_URN = "urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222:3";
+
         private Queue<ExplorerUiEvent> events = null!;
+        private Queue<ExplorerItemPurchaseEvent> itemPurchaseEvents = null!;
         private IECSToCRDTWriter ecsToCRDTWriter = null!;
         private List<PBExplorerUiEventsResult> written = null!;
+        private List<PBExplorerItemPurchaseResult> writtenPurchases = null!;
+
+        // Every message of both components, in the order the system appended them.
+        private List<object> writtenInOrder = null!;
 
         [SetUp]
         public void SetUp()
         {
             events = new Queue<ExplorerUiEvent>();
+            itemPurchaseEvents = new Queue<ExplorerItemPurchaseEvent>();
             written = new List<PBExplorerUiEventsResult>();
+            writtenPurchases = new List<PBExplorerItemPurchaseResult>();
+            writtenInOrder = new List<object>();
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
             // The payload only exists inside the prepare delegate, so capture the delegate and run it the way
@@ -43,11 +53,30 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                                     .Invoke(result, info.ArgAt<ExplorerUiEvent>(3));
 
                                 written.Add(result);
+                                writtenInOrder.Add(result);
 
                                 return result;
                             });
 
-            system = new WriteExplorerUiEventsSystem(world, events, ecsToCRDTWriter);
+            ecsToCRDTWriter.AppendMessage(
+                                Arg.Any<Action<PBExplorerItemPurchaseResult, ExplorerItemPurchaseEvent>>(),
+                                Arg.Any<CRDTEntity>(),
+                                Arg.Any<int>(),
+                                Arg.Any<ExplorerItemPurchaseEvent>())
+                           .Returns(info =>
+                            {
+                                var result = new PBExplorerItemPurchaseResult();
+
+                                info.ArgAt<Action<PBExplorerItemPurchaseResult, ExplorerItemPurchaseEvent>>(0)
+                                    .Invoke(result, info.ArgAt<ExplorerItemPurchaseEvent>(3));
+
+                                writtenPurchases.Add(result);
+                                writtenInOrder.Add(result);
+
+                                return result;
+                            });
+
+            system = new WriteExplorerUiEventsSystem(world, events, itemPurchaseEvents, ecsToCRDTWriter);
         }
 
         [Test]
@@ -94,6 +123,50 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Sharing a drain would flatten these onto one tick and lose which call each belongs to.
             Assert.That(written.ConvertAll(static result => (result.Timestamp, result.RequestId)),
                 Is.EqualTo(new[] { (7u, 1u), (9u, 1u), (9u, 2u) }));
+        }
+
+        [TestCase(ExplorerItemPurchaseStatus.Purchased, PBExplorerItemPurchaseResult.StatusOneofCase.Purchased)]
+        [TestCase(ExplorerItemPurchaseStatus.Dismissed, PBExplorerItemPurchaseResult.StatusOneofCase.Dismissed)]
+        [TestCase(ExplorerItemPurchaseStatus.Failed, PBExplorerItemPurchaseResult.StatusOneofCase.Failed)]
+        public void WriteAPurchaseOutcomeToTheSceneRootEntity(ExplorerItemPurchaseStatus status, PBExplorerItemPurchaseResult.StatusOneofCase expectedCase)
+        {
+            // Arrange
+            var purchaseEvent = new ExplorerItemPurchaseEvent(ITEM_URN, status, 4, 90);
+            itemPurchaseEvents.Enqueue(purchaseEvent);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1)
+                           .AppendMessage(
+                                Arg.Any<Action<PBExplorerItemPurchaseResult, ExplorerItemPurchaseEvent>>(),
+                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
+                                90,
+                                purchaseEvent);
+
+            Assert.That(writtenPurchases, Has.Count.EqualTo(1));
+            Assert.That(writtenPurchases[0].Urn, Is.EqualTo(ITEM_URN));
+            Assert.That(writtenPurchases[0].Timestamp, Is.EqualTo(90u));
+            Assert.That(writtenPurchases[0].RequestId, Is.EqualTo(4u));
+            Assert.That(writtenPurchases[0].StatusCase, Is.EqualTo(expectedCase));
+            Assert.That(itemPurchaseEvents, Is.Empty);
+        }
+
+        [Test]
+        public void WriteAPurchaseOutcomeBeforeTheClosedEventOfItsModal()
+        {
+            // Arrange
+            events.Enqueue(new ExplorerUiEvent(ExplorerUi.EuItemPurchase, ExplorerUiEventKind.Closed, 4, 90));
+            itemPurchaseEvents.Enqueue(new ExplorerItemPurchaseEvent(ITEM_URN, ExplorerItemPurchaseStatus.Purchased, 4, 90));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(writtenInOrder, Has.Count.EqualTo(2));
+            Assert.That(writtenInOrder[0], Is.InstanceOf<PBExplorerItemPurchaseResult>());
+            Assert.That(writtenInOrder[1], Is.InstanceOf<PBExplorerUiEventsResult>());
         }
 
         [Test]

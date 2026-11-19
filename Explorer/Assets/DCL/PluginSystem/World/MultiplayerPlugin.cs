@@ -1,5 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.PluginSystem.World.Dependencies;
@@ -17,15 +19,21 @@ namespace DCL.PluginSystem.World
         private readonly Arch.Core.World globalWorld;
         private readonly Entity localPlayerEntity;
         private readonly CharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IWearablesProvider wearablesProvider;
 
         public MultiplayerPlugin(
             Arch.Core.World globalWorld,
             Entity localPlayerEntity,
-            CharacterDataPropagationUtility characterDataPropagationUtility)
+            CharacterDataPropagationUtility characterDataPropagationUtility,
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider)
         {
             this.globalWorld = globalWorld;
             this.localPlayerEntity = localPlayerEntity;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.wearableStorage = wearableStorage;
+            this.wearablesProvider = wearablesProvider;
         }
 
         public void Dispose() { }
@@ -36,7 +44,7 @@ namespace DCL.PluginSystem.World
 
             WritePlayerIdentityDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteSDKAvatarBaseSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
-            WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, wearableStorage, wearablesProvider);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
 

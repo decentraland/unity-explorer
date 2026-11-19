@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Styling;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
@@ -56,6 +57,7 @@ namespace DCL.Shop
             MarketplaceShopAPIClient api,
             ShopItemCardPresenter cards,
             ShopCreatorCache creatorNames,
+            IWearableStylingCatalog styling,
             string category)
         {
             this.view = view;
@@ -64,7 +66,7 @@ namespace DCL.Shop
             this.creatorNames = creatorNames;
             Filters = new ShopGridFilters(category);
 
-            view.CategoryDropdown?.Initialize();
+            view.CategoryPills?.Initialize(styling);
             view.InitializeGrid(ModelAt, BindCard);
 
             view.GridNearEnd += RequestNextPage;
@@ -74,8 +76,8 @@ namespace DCL.Shop
             view.CardBuyClicked += OnCardBuyClicked;
             view.CardClicked += OnCardClicked;
 
-            if (view.CategoryDropdown != null)
-                view.CategoryDropdown.Selected += OnSubCategorySelected;
+            if (view.CategoryPills != null)
+                view.CategoryPills.Selected += OnSubCategorySelected;
 
             cards.ListingResolved += OnListingResolved;
         }
@@ -89,8 +91,8 @@ namespace DCL.Shop
             view.CardBuyClicked -= OnCardBuyClicked;
             view.CardClicked -= OnCardClicked;
 
-            if (view.CategoryDropdown != null)
-                view.CategoryDropdown.Selected -= OnSubCategorySelected;
+            if (view.CategoryPills != null)
+                view.CategoryPills.Selected -= OnSubCategorySelected;
 
             cards.ListingResolved -= OnListingResolved;
 
@@ -106,7 +108,7 @@ namespace DCL.Shop
             view.gameObject.SetActive(true);
             lifeCts = lifeCts.SafeRestart();
             actionsCts = actionsCts.SafeRestartLinked(lifeCts.Token);
-            view.CategoryDropdown?.SetSelected(Filters.SubCategoryKey);
+            view.CategoryPills?.SetSelected(Filters.SubCategoryKey);
             RequestFirstPage();
         }
 
@@ -128,7 +130,7 @@ namespace DCL.Shop
             Filters.Reset();
             lastSearchedQuery = null;
             lastFilterSignature = null;
-            view.CategoryDropdown?.SetSelected(null);
+            view.CategoryPills?.SetSelected(null);
         }
 
         public void SetSearch(string text)
