@@ -1,9 +1,14 @@
+using System;
 using UnityEngine;
 
 namespace Global.AppArgs
 {
     public static class AppArgsExtensions
     {
+        public static bool TryGetPulseServer(this IAppArgs args, out string? host) =>
+            !args.TryGetValue(AppArgsFlags.PULSE_SERVER, out host)
+            || Uri.CheckHostName(host) is UriHostNameType.Dns or UriHostNameType.IPv4;
+
         public static bool HasDebugFlag(this IAppArgs args, bool checkDebugBuild = true) =>
             (checkDebugBuild && Debug.isDebugBuild) || args.HasFlag(AppArgsFlags.DEBUG);
 

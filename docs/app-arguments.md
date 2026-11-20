@@ -482,6 +482,24 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `pulse-server`
+
+Use `--pulse-server <host>` directly on the player command line to select a native Pulse relay independently of the service environment. Supply a DNS hostname or IPv4 address. The transport uses ENet on UDP port 7777. Use `--pulse true` to enable it regardless of the feature flag.
+
+### `realm-scene-pointers`
+
+Pass this switch directly on the player command line to look up scenes in the selected realm even when the environment enables asset-bundle fallback. Wearables and emotes still use the environment's registry. Omit the switch to keep the normal scene lookup behavior.
+
+For example, to use a custom realm's Pulse and LiveKit services alongside the staging services:
+
+```sh
+Decentraland.exe --dclenv zone --realm https://realm.example.org --gatekeeper-url https://realm.example.org/comms-gatekeeper --pulse true --pulse-server realtime.example.org --realm-scene-pointers
+```
+
+The realm's `/about` response selects the island adapter. The gatekeeper issues the credentials for the scene room.
+
+---
+
 ## Feature Flags Configuration
 
 ### `feature-flags-url`

@@ -14,6 +14,33 @@ namespace Global.AppArgs.Tests
             DeepLinkAllowlist.SetTrustedBaseDomain(null);
         }
 
+        [TestCase("relay.example.test", true)]
+        [TestCase("127.0.0.1", true)]
+        [TestCase("", false)]
+        [TestCase("https://relay.example.test", false)]
+        [TestCase("relay.example.test:7777", false)]
+        [TestCase("relay.example.test/path", false)]
+        [TestCase("::1", false)]
+        public void RequireAHostnameOrIpv4ForAnExplicitPulseServer(string value, bool valid)
+        {
+            var args = new ApplicationParametersParser(false, "--pulse-server", value);
+            Assert.AreEqual(valid, args.TryGetPulseServer(out string? host));
+            if (valid) Assert.AreEqual(value, host);
+        }
+
+        [Test]
+        public void KeepMixedRealmRoutingOutOfDeepLinks()
+        {
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "decentraland://?realm=http://localhost&pulse-server=relay.example.test&realm-scene-pointers=true" });
+
+            Assert.IsTrue(args.TryGetPulseServer(out string? host));
+            Assert.IsNull(host);
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS));
+            args.InitializeDeepLinks();
+            Assert.IsTrue(args.DeniedDeepLinkParams.ContainsKey(AppArgsFlags.PULSE_SERVER));
+            Assert.IsTrue(args.DeniedDeepLinkParams.ContainsKey(AppArgsFlags.REALM_SCENE_POINTERS));
+        }
+
         [Test]
         public void DeepLinkSigninWithHostSegmentParsesSignin()
         {

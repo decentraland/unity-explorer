@@ -307,6 +307,14 @@ namespace Global.Dynamic
                 return;
             }
 
+            bool useRealmScenePointers = applicationParametersParser.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS);
+            if (!applicationParametersParser.TryGetPulseServer(out string? pulseHost))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.PULSE_SERVER} requires a DNS hostname or IPv4 address without a scheme or port.");
+                ExitUtils.Exit();
+                return;
+            }
+
             // Fetched at most once, and only when a start-up decision below needs it.
             AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
                 UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));
@@ -334,6 +342,10 @@ namespace Global.Dynamic
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.PULSE_SERVER, pulseHost);
+
+            if (!useRealmScenePointers && applicationParametersParser.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.REALM_SCENE_POINTERS} from the deep link: it is only applied from the command line");
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -412,7 +424,9 @@ namespace Global.Dynamic
                 customBaseDomain,
                 cliAbgenPipeline,
                 cliGatewayPrefix,
-                cliAbgenLods);
+                cliAbgenLods,
+                pulseHost,
+                useRealmScenePointers);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();
