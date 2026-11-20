@@ -301,7 +301,7 @@ namespace DCL.Browser.DecentralandUrls
                 : regularHost;
         }
 
-        private bool AbgenLodsActive =>
+        private bool abgenLodsActive =>
             abgenLodsForced
             || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
 
@@ -310,7 +310,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             get
             {
-                if (!AbgenLodsActive)
+                if (!abgenLodsActive)
                     return null;
 
                 // The resolved base identifies the source; sanitised so it can travel in file names and hash payloads.
