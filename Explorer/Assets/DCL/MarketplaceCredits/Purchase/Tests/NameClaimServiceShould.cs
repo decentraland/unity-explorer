@@ -9,6 +9,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,7 +44,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private MarketplaceCreditsAPIClient creditsAPIClient = null!;
         private IEthereumApi ethereumApi = null!;
-        private CreditsManagerMetaTxRelayer metaTxRelayer = null!;
+        private MetaTxRelayer metaTxRelayer = null!;
         private PolygonSettlementPoller settlementPoller = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
         private AcrossBridgeStatusPoller bridgeStatusPoller = null!;
@@ -60,7 +61,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             creditsAPIClient = Substitute.For<MarketplaceCreditsAPIClient>(null, null);
             ethereumApi = Substitute.For<IEthereumApi>();
-            metaTxRelayer = Substitute.For<CreditsManagerMetaTxRelayer>(null, null, null, null);
+            metaTxRelayer = Substitute.For<MetaTxRelayer>(null, null, null, null);
             settlementPoller = Substitute.For<PolygonSettlementPoller>(null, null);
             manaUsdRateReader = Substitute.For<ManaUsdRateReader>(null, null);
             bridgeStatusPoller = Substitute.For<AcrossBridgeStatusPoller>(null, null);
@@ -80,7 +81,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             creditsAPIClient.AuthorizeUsdNameCreditAsync(Arg.Any<int>(), NAME, Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization(NAME_PRICE_WEI)));
 
-            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
 
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
@@ -96,7 +97,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             warmUpCts = new CancellationTokenSource();
             uiCts = new CancellationTokenSource();
 
-            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller), manaUsdRateReader, bridgeStatusPoller,
+            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig), manaUsdRateReader, bridgeStatusPoller,
                 chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
 
             recordedStages = new List<NameClaimStage>();
@@ -193,7 +194,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Arrange
             var relayedCalldata = string.Empty;
 
-            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Do<string>(calldata => relayedCalldata = calldata), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Do<string>(calldata => relayedCalldata = calldata), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
 
             // Act
@@ -224,7 +225,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
             Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
-            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -241,7 +242,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
             Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
-            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -294,7 +295,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task ReportPendingWithoutFollowingTheBridgeWhenTheBroadcastIsAmbiguous()
         {
             // Arrange: the relayer never answered, so there is no transaction hash to follow.
-            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "timeout")));
 
             // Act
@@ -310,7 +311,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task FollowTheBridgeWhenTheBuyerClosesAfterSigning()
         {
             // Arrange: the buyer closes the modal as soon as the payment is signed and relayed.
-            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(_ =>
                           {
                               uiCts.Cancel();
@@ -332,7 +333,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task ReleaseTheCreditAndCancelWhenTheBuyerClosesBeforeSigning()
         {
             // Arrange: the wallet prompt is cancelled by the modal closing.
-            metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
                          .Returns(_ => throw new OperationCanceledException());
 
             // Act
@@ -362,7 +363,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
             Assert.AreEqual(NameClaimError.AuthorizationFailed, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
-            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -383,7 +384,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(NameClaimError.Cancelled, result.Error);
             await creditsAPIClient.Received(1).AuthorizeUsdNameCreditAsync(Arg.Any<int>(), NAME, Arg.Is<CancellationToken>(token => token != uiCts.Token));
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
-            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
 
         [Test]

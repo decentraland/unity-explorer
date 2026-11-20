@@ -138,6 +138,14 @@ namespace DCL.Shop
             view.SearchBarDeselected += RestoreShortcutsInput;
             view.SearchChanged += OnSearchChanged;
             view.SortChanged += OnSortChanged;
+            view.Filters.Initialize(styling);
+            view.Filters.PriceRangeChanged += OnFilterPriceRangeChanged;
+            view.Filters.RaritySelected += OnFilterRaritySelected;
+            view.Filters.StatusChanged += OnFilterStatusChanged;
+            view.Filters.DealsChanged += OnFilterDealsChanged;
+            view.Filters.SmartChanged += OnFilterSmartChanged;
+            view.Filters.InputSelected += DisableShortcutsInput;
+            view.Filters.InputDeselected += RestoreShortcutsInput;
             view.NamesView.InputSelected += DisableShortcutsInput;
             NamesController.TabChanged += OnNamesTabChanged;
             view.NamesView.InputDeselected += RestoreShortcutsInput;
@@ -175,6 +183,13 @@ namespace DCL.Shop
             view.SearchBarDeselected -= RestoreShortcutsInput;
             view.SearchChanged -= OnSearchChanged;
             view.SortChanged -= OnSortChanged;
+            view.Filters.PriceRangeChanged -= OnFilterPriceRangeChanged;
+            view.Filters.RaritySelected -= OnFilterRaritySelected;
+            view.Filters.StatusChanged -= OnFilterStatusChanged;
+            view.Filters.DealsChanged -= OnFilterDealsChanged;
+            view.Filters.SmartChanged -= OnFilterSmartChanged;
+            view.Filters.InputSelected -= DisableShortcutsInput;
+            view.Filters.InputDeselected -= RestoreShortcutsInput;
             view.NamesView.InputSelected -= DisableShortcutsInput;
             NamesController.TabChanged -= OnNamesTabChanged;
             view.NamesView.InputDeselected -= RestoreShortcutsInput;
@@ -363,6 +378,18 @@ namespace DCL.Shop
                 view.SetSearchText(NamesController.Resale.SearchText);
                 view.SetSort(NamesController.Resale.Sort);
             }
+
+            RefreshFilters();
+        }
+
+        private void RefreshFilters()
+        {
+            ShopGridSectionController? filteredGrid = FilteredGridFor(CurrentSection);
+
+            view.SetFiltersVisible(filteredGrid != null);
+
+            if (filteredGrid != null)
+                view.Filters.ApplyState(filteredGrid.Filters, smartAvailable: CurrentSection == ShopSection.Wearables);
         }
 
         // A focused field that is hidden never reports its deselection, which would leave the shortcuts blocked
@@ -440,8 +467,31 @@ namespace DCL.Shop
             if (CurrentSection == ShopSection.Names)
                 NamesController.Resale.SetSearch(text);
             else
+            {
                 FilteredGridFor(CurrentSection)?.SetSearch(text);
+
+                // Searching switches the default status, which the panel shows
+                RefreshFilters();
+            }
         }
+
+        private void OnFilterPriceRangeChanged(int? minCredits, int? maxCredits) =>
+            FilteredGridFor(CurrentSection)?.SetPriceRange(minCredits, maxCredits);
+
+        private void OnFilterRaritySelected(string? rarity) =>
+            FilteredGridFor(CurrentSection)?.SetRarity(rarity);
+
+        private void OnFilterStatusChanged(ShopStatusFilter status)
+        {
+            FilteredGridFor(CurrentSection)?.SetStatus(status);
+            RefreshFilters();
+        }
+
+        private void OnFilterDealsChanged(bool deals) =>
+            FilteredGridFor(CurrentSection)?.SetDeals(deals);
+
+        private void OnFilterSmartChanged(bool smart) =>
+            FilteredGridFor(CurrentSection)?.SetSmart(smart);
 
         private void OnSortChanged(ShopSortOption sort)
         {

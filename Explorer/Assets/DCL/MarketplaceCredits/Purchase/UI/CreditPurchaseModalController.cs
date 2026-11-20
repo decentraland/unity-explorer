@@ -519,7 +519,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             try
             {
-                CreditsPurchaseResult result = await purchaseService.PurchaseAsync(confirmedQuote, ct);
+                CreditsPurchaseResult result = await purchaseService.PurchaseAsync(confirmedQuote, PaymentOption.CreditsOnly(confirmedQuote), ct);
 
                 // A Cancelled result after the modal closed would reopen the try-on preview on the hidden view.
                 if (ct.IsCancellationRequested)
@@ -784,6 +784,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 CreditsPurchaseError.SettlementPending => "settlement_pending",
                 CreditsPurchaseError.Cancelled => "cancelled",
                 CreditsPurchaseError.EncodingFailed => "encoding_failed",
+                CreditsPurchaseError.InsufficientMana => "insufficient_mana",
+                CreditsPurchaseError.ManaApprovalFailed => "mana_approval_failed",
                 _ => "unknown_error",
             };
 
@@ -793,6 +795,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             {
                 CreditsPurchaseState.ResolvingListing => "resolving_listing",
                 CreditsPurchaseState.Authorizing => "authorizing",
+                CreditsPurchaseState.ApprovingMana => "approving_mana",
                 CreditsPurchaseState.Signing => "signing",
                 CreditsPurchaseState.WaitingSettlement => "waiting_settlement",
                 _ => "purchase",

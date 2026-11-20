@@ -443,7 +443,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 
             try
             {
-                CartCheckoutResult result = await checkoutService.CheckoutAsync(reviewed, ct);
+                CartCheckoutResult result = await checkoutService.CheckoutAsync(reviewed, CartReview.CreditsOnly(reviewed), ct);
                 ReportResult(result);
 
                 // A popup closed during the checkout leaves the result on the service for the next time it opens.
@@ -670,7 +670,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
             viewInstance.PartialFailureStateContainer.SetActive(newState == ModalState.PartialFailure);
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
-            viewInstance.BuyCreditsButton.gameObject.SetActive(newState is ModalState.ConfirmChanges or ModalState.InsufficientCredits);
             viewInstance.CheckoutButton.interactable = newState == ModalState.Lines && cart.Count > 0;
 
             if (newState != ModalState.Processing)

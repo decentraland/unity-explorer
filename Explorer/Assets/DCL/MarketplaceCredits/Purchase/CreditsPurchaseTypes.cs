@@ -6,6 +6,7 @@ namespace DCL.MarketplaceCredits.Purchase
     {
         ResolvingListing,
         Authorizing,
+        ApprovingMana,
         Signing,
         WaitingSettlement,
         Success,
@@ -31,6 +32,8 @@ namespace DCL.MarketplaceCredits.Purchase
         Cancelled,
         EncodingFailed,
         UnknownError,
+        InsufficientMana,
+        ManaApprovalFailed,
     }
 
     /// <summary>

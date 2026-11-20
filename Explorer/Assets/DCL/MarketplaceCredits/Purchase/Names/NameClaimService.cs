@@ -19,7 +19,6 @@ namespace DCL.MarketplaceCredits.Purchase.Names
     /// </summary>
     public class NameClaimService : IDisposable
     {
-        private const int CENTS_PER_CREDIT = 10;
         private const string NAME_PRICE_MANA_WEI = "100000000000000000000";
         private const string ETH_CALL_METHOD = "eth_call";
         private const string LATEST_BLOCK = "latest";
@@ -131,10 +130,10 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             try
             {
                 ManaUsdRate rate = await manaUsdRateReader.ReadAsync(chainConfig.OffChainMarketplaceAddress, ct);
-                int usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(NAME_PRICE_MANA_WEI, rate), CENTS_PER_CREDIT);
+                int usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(NAME_PRICE_MANA_WEI, rate), PaymentOptionsCalculator.CENTS_PER_CREDIT);
 
                 return usdCents > 0
-                    ? new NameQuoteResult(new NameClaimQuote(usdCents, usdCents / CENTS_PER_CREDIT))
+                    ? new NameQuoteResult(new NameClaimQuote(usdCents, usdCents / PaymentOptionsCalculator.CENTS_PER_CREDIT))
                     : new NameQuoteResult(NameClaimError.PriceUnavailable);
             }
             catch (OperationCanceledException) { return new NameQuoteResult(NameClaimError.Cancelled); }
@@ -288,7 +287,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 return NameClaimResult.Failed(NameClaimError.RouteUnavailable, e.Message);
             }
 
-            UseCreditsOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
+            PurchaseOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
 
             // Without a transaction hash there is nothing to look the bridge deposit up by.
             if (outcome.Error == CreditsPurchaseError.SettlementPending && string.IsNullOrEmpty(outcome.TxHash))

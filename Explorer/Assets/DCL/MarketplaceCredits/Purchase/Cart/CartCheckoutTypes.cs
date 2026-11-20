@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace DCL.MarketplaceCredits.Purchase.Cart
 {
@@ -73,6 +74,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             OrderChanged = orderChanged;
             ReviewedAtUtc = reviewedAtUtc;
         }
+
+        public static PaymentOption CreditsOnly(CartReview review) =>
+            new (PaymentMethod.Credits, review.LiveTotalUsdCents, review.LiveTotalCredits, BigInteger.Zero);
     }
 
     public readonly struct CartReviewResult
@@ -105,6 +109,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
     {
         Reviewing,
         Reserving,
+        ApprovingMana,
         Signing,
         WaitingSettlement,
         Completed,
@@ -144,6 +149,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
     {
         public readonly string Key;
         public readonly CreditsListingKind Kind;
+        public readonly PaymentMethod Method;
         public readonly int UnitCount;
         public readonly int UsdCents;
         public readonly string? CreditId;
@@ -154,11 +160,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         public readonly CreditsPurchaseError Error;
         public readonly string? Message;
 
-        public CartGroupOutcome(string key, CreditsListingKind kind, int unitCount, int usdCents, string? creditId, string? txHash,
+        public CartGroupOutcome(string key, CreditsListingKind kind, PaymentMethod method, int unitCount, int usdCents, string? creditId, string? txHash,
             bool broadcast, bool settled, bool reverted, CreditsPurchaseError error, string? message)
         {
             Key = key;
             Kind = kind;
+            Method = method;
             UnitCount = unitCount;
             UsdCents = usdCents;
             CreditId = creditId;

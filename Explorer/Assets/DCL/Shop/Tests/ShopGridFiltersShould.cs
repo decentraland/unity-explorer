@@ -28,6 +28,28 @@ namespace DCL.Shop.Tests
         }
 
         [Test]
+        public void KeepOneRarityAtATimeAndClearDealsOnReset()
+        {
+            // Arrange
+            var filters = new ShopGridFilters(ShopCategoryTree.WEARABLE) { Deals = true };
+            filters.SetSingleRarity("epic");
+
+            // Act
+            filters.SetSingleRarity("rare");
+            string[] afterSecondPick = filters.Rarities.ToArray();
+            filters.SetSingleRarity(null);
+            int afterClear = filters.Rarities.Count;
+            string signatureWithDeals = filters.BuildAnalyticsSignature();
+            filters.Reset();
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { "rare" }, afterSecondPick);
+            Assert.AreEqual(0, afterClear);
+            Assert.IsFalse(filters.Deals);
+            Assert.AreNotEqual(signatureWithDeals, filters.BuildAnalyticsSignature(), "deals is part of the analytics signature");
+        }
+
+        [Test]
         public void KeepSearchAndSortPerInstance()
         {
             // Arrange
