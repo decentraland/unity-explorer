@@ -83,6 +83,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                         { "max_price_credits", filters.MaxPriceCredits },
                         { "status", ShopQueryMapper.ToAnalyticsStatus(filters.EffectiveStatus) },
                         { "smart", filters.Smart },
+                        { "deals", filters.Deals },
                         { "sort", ShopQueryMapper.ToAnalyticsSort(filters.Sort) },
                     }
                 },

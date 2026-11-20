@@ -26,6 +26,7 @@ namespace DCL.Shop
         [field: SerializeField] public SectionTab[] SectionTabs { get; private set; } = Array.Empty<SectionTab>();
         [field: SerializeField] public SearchBarView SearchBar { get; private set; } = null!;
         [field: SerializeField] public DropdownView SortDropdown { get; private set; } = null!;
+        [field: SerializeField] public ShopFiltersPanelView Filters { get; private set; } = null!;
         [field: SerializeField] public CreditsPanelView CreditsPanel { get; private set; } = null!;
         [field: SerializeField] public Button CartButton { get; private set; } = null!;
         [field: SerializeField] public GameObject CartBadge { get; private set; } = null!;
@@ -133,6 +134,10 @@ namespace DCL.Shop
         {
             ItemPanel.gameObject.SetActive(open);
             Main.offsetMax = new Vector2(-(mainRightInset + (open ? ItemPanelInset : 0f)), Main.offsetMax.y);
+
+            // The item panel starts below the pills row, so the row keeps the width the panel takes from the grid
+            if (WearablesView.CategoryPills != null)
+                WearablesView.CategoryPills.SetRightOverflow(open ? ItemPanelInset : 0f);
         }
 
         public void SetSearchAndSortVisible(bool visible)
@@ -140,6 +145,9 @@ namespace DCL.Shop
             SearchBar.gameObject.SetActive(visible);
             SortDropdown.gameObject.SetActive(visible);
         }
+
+        public void SetFiltersVisible(bool visible) =>
+            Filters.gameObject.SetActive(visible);
 
         /// <summary>
         ///     Offers only the first sort options of the dropdown, or all of them when no limit is given.

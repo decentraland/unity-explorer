@@ -670,7 +670,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
             viewInstance.PartialFailureStateContainer.SetActive(newState == ModalState.PartialFailure);
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
-            viewInstance.BuyCreditsButton.gameObject.SetActive(newState is ModalState.ConfirmChanges or ModalState.InsufficientCredits);
             viewInstance.CheckoutButton.interactable = newState == ModalState.Lines && cart.Count > 0;
 
             if (newState != ModalState.Processing)

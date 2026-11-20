@@ -151,6 +151,52 @@ namespace DCL.Shop
             RequestFirstPage();
         }
 
+        public void SetPriceRange(int? minCredits, int? maxCredits)
+        {
+            if (Filters.MinPriceCredits == minCredits && Filters.MaxPriceCredits == maxCredits)
+                return;
+
+            Filters.MinPriceCredits = minCredits;
+            Filters.MaxPriceCredits = maxCredits;
+            RequestFirstPage();
+        }
+
+        public void SetRarity(string? rarity)
+        {
+            if (Filters.Rarities.Count == (rarity == null ? 0 : 1) && (rarity == null || Filters.Rarities[0] == rarity))
+                return;
+
+            Filters.SetSingleRarity(rarity);
+            RequestFirstPage();
+        }
+
+        public void SetStatus(ShopStatusFilter status)
+        {
+            if (Filters.EffectiveStatus == status)
+                return;
+
+            Filters.ExplicitStatus = status;
+            RequestFirstPage();
+        }
+
+        public void SetSmart(bool smart)
+        {
+            if (Filters.Smart == smart)
+                return;
+
+            Filters.Smart = smart;
+            RequestFirstPage();
+        }
+
+        public void SetDeals(bool deals)
+        {
+            if (Filters.Deals == deals)
+                return;
+
+            Filters.Deals = deals;
+            RequestFirstPage();
+        }
+
         public void SetCompact(bool compact) =>
             view.SetColumns(compact ? ShopGridSectionView.COMPACT_COLUMNS : ShopGridSectionView.DEFAULT_COLUMNS);
 

@@ -37,6 +37,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private static readonly URLParameter GROUP_BY_ITEM = new ("groupBy", "item");
         private static readonly URLParameter EXCLUDE_SOCIAL_EMOTES = new ("includeSocialEmotes", "false");
         private static readonly URLParameter IS_SMART = new ("isSmart", "true");
+        private static readonly URLParameter DISCOUNTED = new ("discounted", "true");
         private static readonly URLParameter IS_WEARABLE_SMART = new ("isWearableSmart", "true");
         private static readonly URLParameter CATEGORY_ENS = new ("category", "ens");
         private static readonly URLParameter IS_ON_SALE = new ("isOnSale", "true");
@@ -237,6 +238,9 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (query.SmartOnly)
                 urlBuilder.AppendParameter(IS_SMART);
+
+            if (query.DealsOnly)
+                urlBuilder.AppendParameter(DISCOUNTED);
 
             urlBuilder.AppendParameter(LISTING_TYPE_PRIMARY);
             urlBuilder.AppendParameter(GROUP_BY_ITEM);
