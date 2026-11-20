@@ -138,6 +138,10 @@ namespace DCL.Shop
             // The item panel starts below the pills row, so the row keeps the width the panel takes from the grid
             if (WearablesView.CategoryPills != null)
                 WearablesView.CategoryPills.SetRightOverflow(open ? ItemPanelInset : 0f);
+
+            WearablesView.SetItemPanelOpen(open);
+            EmotesView.SetItemPanelOpen(open);
+            FavoritesView.SetItemPanelOpen(open);
         }
 
         public void SetSearchAndSortVisible(bool visible)

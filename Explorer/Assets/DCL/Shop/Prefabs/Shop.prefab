@@ -6813,6 +6813,9 @@ MonoBehaviour:
   <RetryButton>k__BackingField: {fileID: 7489088678032798068}
   <CategoryPills>k__BackingField: {fileID: 0}
   <BrowseButton>k__BackingField: {fileID: 617918982394544125}
+  <Scrollbar>k__BackingField: {fileID: 1820973511332017388}
+  <ScrollbarX>k__BackingField: -4
+  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &1076271797563916454
 GameObject:
   m_ObjectHideFlags: 0
@@ -6917,8 +6920,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 16, y: 16}
-  mItemSize: {x: 197, y: 299}
+  mItemPadding: {x: 18, y: 18}
+  mItemSize: {x: 202, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -8415,6 +8418,9 @@ MonoBehaviour:
   <RetryButton>k__BackingField: {fileID: 2763559896080026774}
   <CategoryPills>k__BackingField: {fileID: 0}
   <BrowseButton>k__BackingField: {fileID: 3361677069669452890}
+  <Scrollbar>k__BackingField: {fileID: 6373228236607751309}
+  <ScrollbarX>k__BackingField: -4
+  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &1381291566035426959
 GameObject:
   m_ObjectHideFlags: 0
@@ -14721,6 +14727,9 @@ MonoBehaviour:
   <RetryButton>k__BackingField: {fileID: 3700548390861509936}
   <CategoryPills>k__BackingField: {fileID: 3237346348268539340}
   <BrowseButton>k__BackingField: {fileID: 1248180781618673694}
+  <Scrollbar>k__BackingField: {fileID: 8398918132518300104}
+  <ScrollbarX>k__BackingField: -4
+  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &2302733231354462858
 GameObject:
   m_ObjectHideFlags: 0
@@ -27537,8 +27546,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 16, y: 16}
-  mItemSize: {x: 197, y: 299}
+  mItemPadding: {x: 18, y: 18}
+  mItemSize: {x: 202, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -30970,8 +30979,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 16, y: 16}
-  mItemSize: {x: 197, y: 299}
+  mItemPadding: {x: 18, y: 18}
+  mItemSize: {x: 203, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -37110,7 +37119,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -16
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_AnchoredPosition.y
