@@ -56,11 +56,17 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
         private readonly bool abgenLodsForced;
+        private readonly string? pulseHost;
+        private readonly bool useRealmScenePointers;
 
         /// <summary>
         ///     The domain <see cref="RawUrl" /> composes every host from.
         /// </summary>
         public string BaseDomain { get; }
+
+        private bool useRegistryForScenePointers =>
+            !useRealmScenePointers && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment
+                                   && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK);
 
         public DecentralandUrlsSource(
             DecentralandEnvironment environment,
@@ -72,7 +78,9 @@ namespace DCL.Browser.DecentralandUrls
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
-            bool abgenLodsForced = false)
+            bool abgenLodsForced = false,
+            string? pulseHost = null,
+            bool useRealmScenePointers = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -83,6 +91,8 @@ namespace DCL.Browser.DecentralandUrls
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
             this.abgenLodsForced = abgenLodsForced;
+            this.pulseHost = pulseHost;
+            this.useRealmScenePointers = useRealmScenePointers;
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -427,20 +437,20 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ReportUserForm => $"https://{BaseDomain}/report/players?player_address={{0}}&reported_address={{1}}",
                 DecentralandUrl.BannedUsers => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/users/{{0}}/bans",
                 DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
-                DecentralandUrl.Pulse => $"pulse-server.{BaseDomain}",
+                DecentralandUrl.Pulse => pulseHost ?? $"pulse-server.{BaseDomain}",
 
                 // Profiles are served by the regular registry regardless of the abgen pipeline flip
                 DecentralandUrl.Profiles => $"https://asset-bundle-registry.{BaseDomain}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"https://asset-bundle-registry.{BaseDomain}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.{BaseDomain}/worlds/{{0}}/scenes/{{1}}/comms",
 
-                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(useRegistryForScenePointers ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
                 DecentralandUrl.EntitiesActiveElements => ComposeRegistryUrl("/entities/active"),
 
-                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(useRegistryForScenePointers ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 // A local scene dev server stubs the catalyst endpoints it advertises - deployments are rejected

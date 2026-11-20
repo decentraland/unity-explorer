@@ -560,6 +560,32 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("http://127.0.0.1:8000/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
         }
 
+        [TestCase(false, "https://gateway.decentraland.zone/asset-bundle-registry-abgen/entities/active")]
+        [TestCase(true, "http://127.0.0.1:8000/content/entities/active")]
+        public void ResolveScenePointersIndependentlyOfStagingAssets(bool useRealmScenePointers, string expectedSceneUrl)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true, assetBundleFallback: true, abgenPipeline: true);
+            IRealmData realm = RealmOfKind(RealmKind.GenesisCity);
+            realm.Ipfs.EntitiesActiveEndpoint.Returns(URLDomain.FromString("http://127.0.0.1:8000/content/entities/active"));
+            var urls = new GatewayUrlsSource(DecentralandEnvironment.Zone, realm, ILaunchMode.PLAY, useRealmScenePointers: useRealmScenePointers);
+
+            Assert.AreEqual(expectedSceneUrl, urls.Url(DecentralandUrl.EntitiesActive));
+            Assert.AreEqual(useRealmScenePointers ? expectedSceneUrl : expectedSceneUrl + "?world_name={0}", urls.Url(DecentralandUrl.WorldEntitiesActive));
+            Assert.AreEqual("https://gateway.decentraland.zone/asset-bundle-registry-abgen/entities/active", urls.Url(DecentralandUrl.EntitiesActiveElements));
+            Assert.AreEqual("https://feature-flags.decentraland.zone", urls.Url(DecentralandUrl.FeatureFlags));
+        }
+
+        [TestCase(null, "pulse-server.decentraland.zone")]
+        [TestCase("relay.example.test", "relay.example.test")]
+        public void ResolvePulseWithoutChangingTheServiceDomain(string? overrideHost, string expectedHost)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            var urls = new GatewayUrlsSource(DecentralandEnvironment.Zone, RealmOfKind(RealmKind.GenesisCity), ILaunchMode.PLAY, pulseHost: overrideHost);
+
+            Assert.AreEqual(expectedHost, urls.Url(DecentralandUrl.Pulse));
+            Assert.AreEqual("https://gateway.decentraland.zone/auth-api", urls.Url(DecentralandUrl.ApiAuth));
+        }
+
         private static IRealmData RealmOfKind(RealmKind kind)
         {
             var ipfs = Substitute.For<IIpfsRealm>();
