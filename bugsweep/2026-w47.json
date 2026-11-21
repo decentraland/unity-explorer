@@ -1,0 +1,95 @@
+{
+ "status": "active",
+ "prUrl": null,
+ "requester": "U0ADNDHL1T7",
+ "originChannel": "C0BB9H2CS5D",
+ "since": "2026-11-14T12:01:57Z",
+ "collectedAt": "2026-11-21T12:01:17Z",
+ "groups": [],
+ "issues": [
+  {
+   "number": 10669,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10670,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10671,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10683,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10679,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10676,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10631,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10606,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10574,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10550,
+   "status": "pending",
+   "commit": null,
+   "note": null
+  },
+  {
+   "number": 10636,
+   "status": "skipped",
+   "commit": null,
+   "note": "already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit bd98244)"
+  },
+  {
+   "number": 10674,
+   "status": "skipped",
+   "commit": null,
+   "note": "same defect as #10653 (CRDT AddLwwMessage ArgumentOutOfRange from a pooled list re-released after dispose), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 03e8824); verify there before treating this as a regression"
+  },
+  {
+   "number": 10680,
+   "status": "skipped",
+   "commit": null,
+   "note": "same defect as #10633 (FMOD 'Error loading file' on Sound creation, only the clip name differs), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 804c6a3); verify there before treating this as a regression"
+  },
+  {
+   "number": 10685,
+   "status": "skipped",
+   "commit": null,
+   "note": "not Explorer client code: the error dialog is the launcher's (v1.24.3) and the workaround (disabling Smart App Control) points at code-signing/reputation of the released launcher and client binaries, which lives in the release signing pipeline (CI/infra the sweep does not modify) and the launcher repo"
+  }
+ ]
+}
