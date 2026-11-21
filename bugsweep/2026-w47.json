@@ -15,9 +15,9 @@
     },
     {
       "number": 10670,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Real gap, but the fix is a product decision, not a bug fix: Sentry event context shows the app started 2026-11-13T02:12Z with about 3 days of identity left, so AuthenticationScreenController.OnBeforeViewShow's existing \"force re-login if <24h left\" guard (#1667) correctly let it through; the 30-day identity then expired in-world after about 51h of uptime (05:06Z), and from then on every signed request (Events, Places, social RPC, comms) fails, because nothing re-checks expiry at runtime: ProxyIdentityCache only discards expired identities on the storage path, and the memory copy is returned as-is. Filtering at the Sentry gateway would hide a client stuck in a broken state it could recover from, so this is not noise. The real fix is in-world session-expiry handling, e.g. watch Identity.Expiration and either run the existing UserLogout.LogoutAsync flow back to the auth screen or show a re-"
     },
     {
       "number": 10671,
