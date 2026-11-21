@@ -39,9 +39,9 @@
     },
     {
       "number": 10676,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "SDK-internal, no client frames: the exception is thrown by the Sentry .NET SDK 4.9.0 own async envelope pipeline (Sentry.Protocol.Envelopes.EnvelopeItem.SerializeHeaderAsync -> AsyncTaskMethodBuilder.SetException, IL2CPP, 15 events from 1 user within 1s of app start in v0.197.0-alpha-main) and SentryReportHandler.BeforeSend already demotes exactly this InvalidOperationException message (TASK_ALREADY_COMPLETED_MESSAGE, added in #10275 and present in v0.197.0-alpha, pinned by SentryReportHandlerShould); the stored event carries no \"category\" tag and no demote/\"BeforeSend callback failed\" breadcrumb, so it never went through our BeforeSend (same signature as UNITY-EXPLORER-Q3T in Sentry CachingTransport on v0.194), and the bypass is inside the SDK (sentry-dotnet SentryClient.DoSendEvent always calls BeforeSend, so the escape path was not identified in client code) - no client root cause or "
     },
     {
       "number": 10631,
