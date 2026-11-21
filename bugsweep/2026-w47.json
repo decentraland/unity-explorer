@@ -57,9 +57,9 @@
     },
     {
       "number": 10574,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-verified on origin/dev 04c7a938b: the GPU skinning path maps joints by list position, not by name (AttachmentAssetUtility.BuildSpringBoneData treats skin joints 0..61 as the avatar skeleton and only 62+ as spring bones; ComputeSkinningBufferContainer.CopyAllBuffers offsets only indices >= BASE_BONE_COUNT), so a GLB whose exporter lists the spring chain in hierarchy order (right after Avatar_Head / Avatar_LeftHand) would get its links mapped onto base bones like the neck/shoulder, which matches the report; but the GLBs are still only in Slack, so the joint order cannot be confirmed, and the real fix (remapping weights and bind poses by name for every mesh) is a broad GPU skinning change that needs those files and an on-device check."
     },
     {
       "number": 10550,
