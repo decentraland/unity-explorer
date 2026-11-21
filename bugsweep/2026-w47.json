@@ -45,9 +45,9 @@
     },
     {
       "number": 10631,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-verified on origin/dev 04c7a938b: the popup text (\"This item isn't ready yet. Come back later.\") and the fishing-styled dialog exist nowhere in the client (no match in any .cs/.prefab/.asset/.json), so it is UI rendered by the Genesis Plaza scene itself; the issue still has no repro and the attached log has no entry tied to it, so this belongs to the scene/content owners (likely Halloween fishing leftover), not a client fix."
     },
     {
       "number": 10606,
