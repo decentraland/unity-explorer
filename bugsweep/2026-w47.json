@@ -63,9 +63,9 @@
     },
     {
       "number": 10550,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-verified on origin/dev 04c7a938b and js-sdk-toolchain: PulseRealm.EnsureResolvedAsync derives the local Pulse realm (\"lsd:\" + entity id) from the scene entity the preview returns for the parcel, and the preview's POST /content/entities/active (sdk-commands start/server/endpoints.ts) returns [] for a smart-wearable project; the realm key is a shared contract that sdk-commands and every other Explorer must derive identically, so a client-only fallback key would not match the preview's room. The fix belongs in js-sdk-toolchain (serve a scene-like entity, or define the wearable key in the contract), with any Explorer change following it."
     },
     {
       "number": 10636,
