@@ -9,9 +9,9 @@
   "issues": [
     {
       "number": 10669,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Already fixed by open PR https://github.com/decentraland/unity-explorer/pull/10668 (bugsweep W46, commit 409b0060f for #10643, which has the same Sentry stack, RenderGroundSystem.GetTerrainBounds:199 <- OnTerrainLoaded:220 <- LoadLandscapeStartupOperation:24): root cause confirmed independently. Landscape.LoadTerrainAsync raises TerrainLoaded even when TerrainGenerator.GenerateGenesisTerrainAndShowAsync returned early (WorldManifest.Empty from a failed manifest fetch or the Custom env) or WorldTerrainGenerator.GenerateTerrain skipped zero parcels, so TerrainModel stays null. That PR stops publishing the event in those cases, so it should also close #10669 and #8019. Link those issues to it instead of making a second change."
     },
     {
       "number": 10670,
