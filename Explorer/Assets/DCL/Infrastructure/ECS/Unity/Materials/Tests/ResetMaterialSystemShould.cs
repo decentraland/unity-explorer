@@ -67,6 +67,29 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
+        public void ResetPrimitiveMeshWhenMaterialUpdatedToEmpty()
+        {
+            world.Add(entity, new PBMaterial());
+
+            system.Update(0);
+
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), Arg.Any<Material>());
+            Assert.That(world.Has<MaterialComponent>(entity), Is.False);
+            Assert.That(world.Has<PBMaterial>(entity), Is.True);
+        }
+
+        [Test]
+        public void KeepPrimitiveMeshMaterialWhenMaterialIsNotEmpty()
+        {
+            world.Add(entity, new PBMaterial { Unlit = new PBMaterial.Types.UnlitMaterial() });
+
+            system.Update(0);
+
+            destroyMaterial.DidNotReceive()(in Arg.Any<MaterialData>(), Arg.Any<Material>());
+            Assert.That(world.Has<MaterialComponent>(entity), Is.True);
+        }
+
+        [Test]
         public void ResetGltfNodeMaterial()
         {
             // Arrange

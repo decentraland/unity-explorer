@@ -152,6 +152,26 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
+        public void LeaveMaterialToResetWhenUpdatedToEmpty()
+        {
+            PBMaterial material1 = CreatePBRMaterial1();
+
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
+
+            system.Update(0);
+
+            var emptyMaterial = new PBMaterial { IsDirty = true };
+            world.Set(e, emptyMaterial);
+
+            Assert.DoesNotThrow(() => system.Update(0));
+
+            Assert.IsFalse(world.Get<PBMaterial>(e).IsDirty);
+            Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
+            AssertPBRMaterial(material1, materialComponent);
+            destroyMaterial.DidNotReceive()(Arg.Any<MaterialData>(), Arg.Any<Material>());
+        }
+
+        [Test]
         public void ChangeFromPBRToBasic()
         {
             PBMaterial material1 = CreatePBRMaterial1();
