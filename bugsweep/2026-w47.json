@@ -51,9 +51,9 @@
     },
     {
       "number": 10606,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-verified on origin/dev 04c7a938b: the UUAV Rust source is in-repo (Explorer/Assets/Plugins/UUAV/native), and select_streams in native/src/playback/unit.rs:90 takes find_best_stream(VIDEO) without excluding AV_DISPOSITION_ATTACHED_PIC, so an mp3's mjpeg cover art becomes the video track and the hardware-only macOS decoder rejects it; but there is no C# workaround (uuav_player_open_media_async takes only a URL, no audio-only/disable-video option exists in NativeMethods.cs or the IPC protocol), and any native edit changes the source digest that uuav-verify.yml checks against scripts/uuav/uuav-binaries.lock.json, so the fix needs a uuav-native.yml rebuild of both platforms plus a human relock, which a sweep commit cannot produce."
     },
     {
       "number": 10574,
