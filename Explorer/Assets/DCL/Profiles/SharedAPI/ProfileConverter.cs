@@ -88,12 +88,12 @@ namespace DCL.Profiles
                 profile.GetCompact() = compact;
 
             profile.Description = jObject["description"]?.Value<string>() ?? "";
-            profile.TutorialStep = jObject["tutorialStep"]?.Value<int>() ?? 0;
+            profile.TutorialStep = jObject["tutorialStep"]?.Value<int?>() ?? 0;
             profile.Email = jObject["email"]?.Value<string>() ?? "";
 
             // profile.ethAddress = jObject["ethAddress"]?.Value<string>() ?? ""; NOT USED
-            profile.Version = jObject["version"]?.Value<int>() ?? 0;
-            profile.HasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
+            profile.Version = jObject["version"]?.Value<int?>() ?? 0;
+            profile.HasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool?>() ?? false;
 
             DeserializeAvatar(jObject["avatar"]!, ref profile);
 
@@ -108,7 +108,7 @@ namespace DCL.Profiles
             profile.RealName = jObject["realName"]?.Value<string>() ?? "";
             profile.Hobbies = jObject["hobbies"]?.Value<string>() ?? "";
 
-            long birthdate = jObject["birthDate"]?.Value<long>() ?? 0;
+            long birthdate = jObject["birthDate"]?.Value<long?>() ?? 0;
             profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).UtcDateTime : null;
 
             DeserializeLinks(jObject["links"]!, ref profile.links);
@@ -172,7 +172,7 @@ namespace DCL.Profiles
             {
                 foreach (JToken? item in root.Children())
                 {
-                    int slot = item["slot"]?.Value<int>() ?? 0;
+                    int slot = item["slot"]?.Value<int?>() ?? 0;
                     string urn = item["urn"]?.Value<string>() ?? "";
 
                     equippedEmotes[slot] = urn;

@@ -31,7 +31,7 @@ namespace DCL.Profiles
             if (!userId.Has)
                 throw new ProfileParseException(rawUserId ?? "<missing userId>", jToken.ToString());
 
-            bool hasClaimedName = jObject?["hasClaimedName"]?.Value<bool>() ?? false;
+            bool hasClaimedName = jObject?["hasClaimedName"]?.Value<bool?>() ?? false;
             string name = jObject?["name"]?.Value<string>() ?? "";
             var faceSnapshotUrl = URLAddress.FromString(jObject?["thumbnailUrl"]?.Value<string>() ?? "");
 
