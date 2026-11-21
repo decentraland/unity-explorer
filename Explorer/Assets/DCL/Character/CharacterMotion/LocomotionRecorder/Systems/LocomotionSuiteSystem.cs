@@ -16,6 +16,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -30,6 +31,11 @@ namespace DCL.CharacterMotion.LocomotionRecorder
     ///         (<see cref="CameraGroup" />) and the character rotated (<see cref="RotateCharacterSystem" />), so a sample holds
     ///         this frame's final pose. Velocity comes from the fixed ticks that ran this frame, which consumed the
     ///         previous frame's input; the recorded input is the one this frame's input systems produced.
+    ///     </para>
+    ///     <para>
+    ///         The group runs at the end of PreLateUpdate, after the Animator's update (DirectorUpdateAnimationBegin/End),
+    ///         so with animations on a sample holds the Animator state this frame shows; its parameters were last set on
+    ///         this frame's fixed ticks (<c>CharacterAnimationSystem</c>, PostPhysics).
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -48,6 +54,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
         /// <summary><c>JumpTrigger.TickWhenJumpWasConsumed</c> at the previous recorded frame: it changes on every tick that starts a jump.</summary>
         private int jumpConsumedTick;
+
+        private readonly List<AnimatorClipInfo> clipInfos = new (8);
+        private readonly List<LocomotionAnimClip> animClips = new (8);
 
         internal LocomotionSuiteSystem(World world, LocomotionSuiteSession session, Entity playerEntity, ILoadingStatus loadingStatus, IScenesCache scenesCache,
             IRealmData realmData) : base(world)
@@ -209,7 +218,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             Transform characterTransform = World.Get<CharacterTransform>(playerEntity).Transform;
 
             // The avatar model is parented to the character; read it when present so the yaw is the one on screen.
-            Transform avatarTransform = World.TryGet(playerEntity, out AvatarBase? avatarBase) && avatarBase != null ? avatarBase.transform : characterTransform;
+            World.TryGet(playerEntity, out AvatarBase? avatarBase);
+            Transform avatarTransform = avatarBase != null ? avatarBase.transform : characterTransform;
 
             // Frame 0's fixed ticks ran before its input, on the settle's idle input, so no jump can start there.
             int consumedTick = jumpInput.Trigger.TickWhenJumpWasConsumed;
@@ -236,6 +246,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 JumpTriggered = jumpTriggered,
                 JumpCount = World.Get<JumpState>(playerEntity).JumpCount,
                 Glide = World.Get<GlideState>(playerEntity).Value,
+                Anim = session.AnimationsEnabled ? LocomotionAnimationSample.Read(avatarBase != null ? avatarBase.AvatarAnimator : null, clipInfos, animClips) : default(LocomotionAnimationSample),
                 Expected = scenario.SampleAt(runTime),
             });
 

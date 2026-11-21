@@ -118,7 +118,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                   .Enum<LocomotionInputSeam>("input", "keyboard: a virtual keyboard read through the production input actions (default). "
                                                       + "component: the movement input component is written after the input system, no focus needed.")
                   .Enum<LocomotionDeltaTime>("dt", "real: measured frame time (default). fixed: every frame advances exactly 1/fps.")
-                  .Boolean("animations", "Own avatar animations during the suite. Default false; the toggle applies again after it.")
+                  .Boolean("animations", "Own avatar animations during the suite; on, each frame also records the Animator's base layer (extra.anim, anim_params, anim_state, anim_layers). Default false; the toggle applies again after it.")
                   .String("out", "Absolute output directory; traces go to <out>/unity/. Default: the client's persistent data path /locomotion-traces.");
 
         private McpToolResult Run(JObject arguments)

@@ -47,6 +47,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
         public GlideStateValue Glide;
 
+        /// <summary>The own avatar's Animator after this frame's animation update; read only on runs with animations on.</summary>
+        public LocomotionAnimationSample Anim;
+
         /// <summary>The scenario's input at <see cref="T" />, kept to count frames whose consumed input disagrees with it.</summary>
         public LocomotionInputStep Expected;
 
@@ -135,7 +138,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 if (i > 0 && frame.Dt > droppedThreshold)
                     dropped++;
 
-                AppendFrame(sb, i, in frame, scenario.HasCameraTrack);
+                AppendFrame(sb, i, in frame, scenario.HasCameraTrack, run.AnimationsEnabled);
             }
 
             sb.Append("{\"type\":\"footer\",\"frames\":").Append(frames.Count)
@@ -176,11 +179,16 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             if (scenario.HasCameraTrack)
                 sb.Append(",\"camera_control\":\"track\"");
 
+            // tells a recorded animation from the offline replay of the controller, which writes the same frame keys
+            if (run.AnimationsEnabled)
+                sb.Append(",\"anim_source\":\"capture: Animator base layer after the frame's animation update\"");
+
             sb.Append("}}\n");
         }
 
         /// <param name="cameraTrack">The run follows a camera track: the frame adds <c>extra.cam.yaw</c>, the yaw the track holds.</param>
-        private static void AppendFrame(StringBuilder sb, int index, in LocomotionFrameSample frame, bool cameraTrack)
+        /// <param name="animations">The run has animations on: the frame adds the Animator's state (<see cref="AppendAnimation" />).</param>
+        private static void AppendFrame(StringBuilder sb, int index, in LocomotionFrameSample frame, bool cameraTrack, bool animations)
         {
             sb.Append("{\"type\":\"frame\",\"i\":").Append(index)
               .Append(",\"t\":").AppendFloat(frame.T)
@@ -206,7 +214,59 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             if (cameraTrack)
                 sb.Append(",\"cam\":{\"yaw\":").AppendFloat(frame.CamYaw).Append('}');
 
+            if (animations)
+                AppendAnimation(sb, in frame.Anim);
+
             sb.Append("}}\n");
+        }
+
+        /// <summary>
+        ///     <c>anim</c> [{clip, w, t, speed}] (w and t to 4 decimals, speed to 3), <c>anim_params</c>, <c>anim_state</c>
+        ///     {state, next, progress, nt, next_nt, cur_w, next_w} and <c>anim_layers</c> {point, rotation}; <c>"anim":null</c>
+        ///     alone when the Animator did not run this frame.
+        /// </summary>
+        private static void AppendAnimation(StringBuilder sb, in LocomotionAnimationSample anim)
+        {
+            if (!anim.Present)
+            {
+                sb.Append(",\"anim\":null");
+                return;
+            }
+
+            sb.Append(",\"anim\":[");
+
+            for (var i = 0; i < anim.Clips.Length; i++)
+            {
+                LocomotionAnimClip clip = anim.Clips[i];
+
+                if (i > 0)
+                    sb.Append(',');
+
+                sb.Append("{\"clip\":").Append(JsonConvert.ToString(clip.Clip))
+                  .Append(",\"w\":").AppendRounded(clip.W, "0.0###")
+                  .Append(",\"t\":").AppendRounded(clip.T, "0.0###")
+                  .Append(",\"speed\":").AppendRounded(clip.Speed, "0.0##")
+                  .Append('}');
+            }
+
+            sb.Append("],\"anim_params\":{\"MovementBlend\":").AppendRounded(anim.MovementBlend, "0.0###")
+              .Append(",\"SlideBlend\":").AppendRounded(anim.SlideBlend, "0.0###")
+              .Append(",\"JumpCount\":").Append(anim.JumpCount)
+              .Append(",\"IsGrounded\":").Append(anim.IsGrounded ? "true" : "false")
+              .Append(",\"IsFalling\":").Append(anim.IsFalling ? "true" : "false")
+              .Append(",\"IsLongFall\":").Append(anim.IsLongFall ? "true" : "false")
+              .Append(",\"IsStunned\":").Append(anim.IsStunned ? "true" : "false")
+              .Append(",\"GlideBlend\":").AppendRounded(anim.GlideBlend, "0.0###")
+              .Append("},\"anim_state\":{\"state\":").Append(JsonConvert.ToString(LocomotionAnimationSample.StateName(anim.State)))
+              .Append(",\"next\":").Append(anim.Next != 0 ? JsonConvert.ToString(LocomotionAnimationSample.StateName(anim.Next)) : "null")
+              .Append(",\"progress\":").AppendFloat(anim.Progress)
+              .Append(",\"nt\":").AppendFloat(anim.StateTime)
+              .Append(",\"next_nt\":").AppendFloat(anim.NextTime)
+              .Append(",\"cur_w\":").AppendFloat(anim.CurrentClipWeight)
+              .Append(",\"next_w\":").AppendFloat(anim.NextClipWeight)
+              .Append("},\"anim_layers\":{\"point\":").AppendFloat(anim.PointLayerWeight)
+              .Append(",\"rotation\":").AppendFloat(anim.RotationLayerWeight)
+              .Append('}');
         }
 
         private static string KindName(MovementKind kind) =>
@@ -234,5 +294,10 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             float.IsNaN(value) || float.IsInfinity(value)
                 ? sb.Append("null")
                 : sb.Append(value.ToString("0.0######", CultureInfo.InvariantCulture));
+
+        private static StringBuilder AppendRounded(this StringBuilder sb, float value, string format) =>
+            float.IsNaN(value) || float.IsInfinity(value)
+                ? sb.Append("null")
+                : sb.Append(value.ToString(format, CultureInfo.InvariantCulture));
     }
 }
