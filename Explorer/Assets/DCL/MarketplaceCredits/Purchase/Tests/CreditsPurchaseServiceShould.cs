@@ -123,7 +123,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
             new (shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
-                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig),
+                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true),
                 manaUsdRateReader, chainConfig, identityCache,
                 featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
@@ -965,6 +965,26 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(6 * ONE_MANA, options.Options[0].ManaWei);
             Assert.AreEqual(PaymentMethod.Mana, options.Options[1].Method);
             Assert.AreEqual(TEN_MANA, options.Options[1].ManaWei);
+        }
+
+        [Test]
+        public async Task OfferNoManaAloneForAListingBelowTheRelayMinimum()
+        {
+            // Arrange: no credits and plenty of MANA against a mint that costs half a MANA.
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 0, credits = 0 } }));
+
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(manaWei: "500000000000000000"), CancellationToken.None);
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(quote.Quote, CancellationToken.None);
+
+            // Assert
+            Assert.IsTrue(quote.Success);
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.IsTrue(options.IsManaAloneRefused);
         }
 
         [Test]

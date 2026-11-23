@@ -270,6 +270,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0c3a6e9b2d5418a97d0b3e6c9a2f547
+    m_Address: ShopCartCheckoutPopup
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8432a9b8907c42d49bd4b0f72dfd4a00
     m_Address: Assets/DCL/Lobby/Presets/GameWorld_01.asset
     m_ReadOnly: 0

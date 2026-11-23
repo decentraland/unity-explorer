@@ -41,7 +41,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                              .Returns(UniTask.FromResult(new ManaUsdRate(25_000_000, 8)));
 
             chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
-            provider = new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig);
+            provider = new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true);
         }
 
         [Test]
@@ -52,11 +52,58 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(_ => UniTask.FromException<UserCreditsResponse>(new InvalidOperationException("credits-server down")));
 
             // Act
-            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, CancellationToken.None);
+            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, true, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(1, options.Options.Count);
             Assert.AreEqual(PaymentMethod.Mana, options.Options[0].Method);
+            Assert.IsNull(options.CreditsBalanceCents);
+            Assert.AreEqual(100 * ONE_MANA, options.ManaBalanceWei);
+        }
+
+        [Test]
+        public async Task CarryThePriceAndBothBalances()
+        {
+            // Act
+            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, true, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(PRICE_CENTS, options.PriceCents);
+            Assert.AreEqual(TEN_MANA, options.PriceManaWei);
+            Assert.AreEqual(PRICE_CENTS, options.CreditsBalanceCents);
+            Assert.AreEqual(100 * ONE_MANA, options.ManaBalanceWei);
+        }
+
+        [Test]
+        public async Task ReadTheManaBalanceForAPriceWithoutAManaEquivalent()
+        {
+            // Act
+            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, BigInteger.Zero, true, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(1, options.Options.Count);
+            Assert.AreEqual(PaymentMethod.Credits, options.Options[0].Method);
+            Assert.AreEqual(100 * ONE_MANA, options.ManaBalanceWei);
+        }
+
+        [Test]
+        public async Task OfferOnlyCreditsAndReadNoManaWhenManaPaymentsAreDisabled()
+        {
+            // Arrange
+            var creditsOnlyProvider = new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, false);
+            CreditsPurchaseQuote mint = CreditsPurchaseQuote.ForMint(new StoreMintTarget(OTHER_CONTRACT, "1", TEN_MANA.ToString()), PRICE_CENTS, 25, TEN_MANA);
+
+            // Act
+            BigInteger price = await creditsOnlyProvider.ManaPriceOfAsync(mint, CancellationToken.None);
+            PaymentOptions options = await creditsOnlyProvider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, true, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(BigInteger.Zero, price);
+            Assert.AreEqual(1, options.Options.Count);
+            Assert.AreEqual(PaymentMethod.Credits, options.Options[0].Method);
+            Assert.AreEqual(BigInteger.Zero, options.PriceManaWei);
+            Assert.IsNull(options.ManaBalanceWei);
+            await manaTokenReader.DidNotReceive().BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -68,13 +115,34 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             BigInteger? balance = await provider.ManaBalanceAsync(BUYER, CancellationToken.None);
-            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, CancellationToken.None);
+            PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, true, CancellationToken.None);
 
             // Assert
             Assert.IsNull(balance);
             Assert.AreEqual(1, options.Options.Count);
             Assert.AreEqual(PaymentMethod.Credits, options.Options[0].Method);
             Assert.IsNull(options.ManaShortfall);
+            Assert.IsNull(options.ManaBalanceWei);
+        }
+
+        [Test]
+        public void RelayManaAloneOnlyFromTheMinimumSaleValue()
+        {
+            // Arrange: a mint one wei under 1 MANA, one at exactly 1 MANA, and a USD-pegged trade at $2.50.
+            BigInteger belowMinimum = ONE_MANA - BigInteger.One;
+            CreditsPurchaseQuote cheapMint = CreditsPurchaseQuote.ForMint(new StoreMintTarget(OTHER_CONTRACT, "1", belowMinimum.ToString()), 30, 3, belowMinimum);
+            CreditsPurchaseQuote mintAtMinimum = CreditsPurchaseQuote.ForMint(new StoreMintTarget(OTHER_CONTRACT, "1", ONE_MANA.ToString()), 30, 3, ONE_MANA);
+            CreditsPurchaseQuote trade = CreditsPurchaseQuote.ForTrade(UsdPeggedTrade(), PRICE_CENTS, 25, BigInteger.Zero, false);
+
+            // Act
+            bool cheapMintRelayable = PaymentOptionsProvider.CanRelayManaAlone(cheapMint);
+            bool mintAtMinimumRelayable = PaymentOptionsProvider.CanRelayManaAlone(mintAtMinimum);
+            bool tradeRelayable = PaymentOptionsProvider.CanRelayManaAlone(trade);
+
+            // Assert
+            Assert.IsFalse(cheapMintRelayable);
+            Assert.IsTrue(mintAtMinimumRelayable);
+            Assert.IsTrue(tradeRelayable);
         }
 
         [Test]

@@ -1,23 +1,63 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace DCL.MarketplaceCredits.Purchase
 {
     /// <summary>
     ///     The ways a buyer can pay one price, in preference order: credits, credits + MANA, MANA. Empty when
-    ///     nothing the buyer holds covers it.
+    ///     nothing the buyer holds covers it. Carries the price and the balances the options were computed from.
     /// </summary>
     public sealed class PaymentOptions
     {
-        public static readonly PaymentOptions NONE = new (Array.Empty<PaymentOption>(), null);
+        public static readonly PaymentOptions NONE = new (Array.Empty<PaymentOption>(), null, 0, BigInteger.Zero, null, null, true);
 
         public readonly IReadOnlyList<PaymentOption> Options;
         public readonly ManaShortfall? ManaShortfall;
+        public readonly int PriceCents;
 
-        public PaymentOptions(IReadOnlyList<PaymentOption> options, ManaShortfall? manaShortfall)
+        /// <summary>Zero when the price has no MANA equivalent.</summary>
+        public readonly BigInteger PriceManaWei;
+
+        /// <summary>Null when the balance could not be read.</summary>
+        public readonly long? CreditsBalanceCents;
+
+        /// <summary>Null when the balance was not read or could not be read.</summary>
+        public readonly BigInteger? ManaBalanceWei;
+
+        /// <summary>
+        ///     False when MANA alone cannot pay this price whatever the balance: the purchase would go straight to
+        ///     the sale contract, and the relayer refuses the ones below its minimum sale value.
+        /// </summary>
+        public readonly bool IsManaAloneRelayable;
+
+        /// <summary>Whether the buyer holds the MANA this price costs and still may not pay with it alone.</summary>
+        public bool IsManaAloneRefused => !IsManaAloneRelayable && PriceManaWei.Sign > 0 && ManaBalanceWei is { } balanceWei && balanceWei >= PriceManaWei;
+
+        public PaymentOptions(IReadOnlyList<PaymentOption> options, ManaShortfall? manaShortfall, int priceCents, BigInteger priceManaWei,
+            long? creditsBalanceCents, BigInteger? manaBalanceWei, bool isManaAloneRelayable)
         {
+            IsManaAloneRelayable = isManaAloneRelayable;
             Options = options;
             ManaShortfall = manaShortfall;
+            PriceCents = priceCents;
+            PriceManaWei = priceManaWei;
+            CreditsBalanceCents = creditsBalanceCents;
+            ManaBalanceWei = manaBalanceWei;
+        }
+
+        /// <summary>The same price and balances with one method taken out of the offer.</summary>
+        public PaymentOptions Without(PaymentMethod method)
+        {
+            var remaining = new List<PaymentOption>(Options.Count);
+
+            foreach (PaymentOption option in Options)
+            {
+                if (option.Method != method)
+                    remaining.Add(option);
+            }
+
+            return new PaymentOptions(remaining, ManaShortfall, PriceCents, PriceManaWei, CreditsBalanceCents, ManaBalanceWei, IsManaAloneRelayable);
         }
 
         public bool TryGet(PaymentMethod method, out PaymentOption option)

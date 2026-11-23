@@ -159,9 +159,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             try
             {
                 BigInteger priceManaWei = BigInteger.Zero;
+                var isManaAloneRelayable = true;
 
                 foreach (ReviewedCartLine line in review.Buyable)
                 {
+                    isManaAloneRelayable &= PaymentOptionsProvider.CanRelayManaAlone(line.Quote);
                     BigInteger unitManaWei = await paymentOptionsProvider.ManaPriceOfAsync(line.Quote, ct);
 
                     // One line without a MANA price leaves the basket without one.
@@ -174,7 +176,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                     priceManaWei += unitManaWei * line.Quantity;
                 }
 
-                return await paymentOptionsProvider.ComputeAsync(identity.Address, review.LiveTotalUsdCents, priceManaWei, ct);
+                PaymentOptions options = await paymentOptionsProvider.ComputeAsync(identity.Address, review.LiveTotalUsdCents, priceManaWei, isManaAloneRelayable, ct);
+
+                if (!isManaAloneRelayable && options.TryGet(PaymentMethod.CreditsAndMana, out PaymentOption mixed) && !CanRelayEveryGroup(review, mixed.CreditsCents))
+                    return options.Without(PaymentMethod.CreditsAndMana);
+
+                return options;
             }
             catch (OperationCanceledException) { return PaymentOptions.NONE; }
             catch (Exception e)
@@ -650,6 +657,28 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         ///     every unit at its price, MANA only gives none, and the mixed method spreads the credits the buyer
         ///     confirmed over the units in order.
         /// </summary>
+        // A mixed payment leaves a group that received no credits to be paid with MANA alone, straight on its sale
+        // contract. This is whether the relayer takes every such group, for the credits leg the checkout would use.
+        private static bool CanRelayEveryGroup(CartReview review, int creditsCents)
+        {
+            List<CheckoutGroup> groups = GroupUnits(review);
+            AssignCredits(groups, PaymentMethod.CreditsAndMana, creditsCents);
+
+            foreach (CheckoutGroup group in groups)
+            {
+                if (group.Method != PaymentMethod.Mana)
+                    continue;
+
+                foreach (ReviewedCartLine unit in group.Units)
+                {
+                    if (!PaymentOptionsProvider.CanRelayManaAlone(unit.Quote))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
         private static void AssignCredits(List<CheckoutGroup> groups, PaymentMethod method, int creditsCents)
         {
             var unitCents = new List<int>();

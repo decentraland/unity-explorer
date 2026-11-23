@@ -553,15 +553,42 @@ namespace DCL.Shop
 
         private async UniTaskVoid ShowCartAsync(string source, CancellationToken ct)
         {
-            ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
-            var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER], Favorites);
+            try
+            {
+                if (HasCheckoutToShow())
+                {
+                    await mvcManager.ShowAsync(ShopCartCheckoutModalController.IssueCommand(), ct);
+                    return;
+                }
 
-            try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct); }
+                ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
+                var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER], Favorites);
+                await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct);
+            }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
             }
+        }
+
+        // A checkout that is still running, or whose result was never seen, is shown by the checkout popup. A
+        // cancelled one bought and held nothing: it is dropped so the cart opens as usual.
+        private bool HasCheckoutToShow()
+        {
+            if (cartCheckoutService.IsCheckoutInFlight)
+                return true;
+
+            CartCheckoutResult? lastResult = cartCheckoutService.LastResult;
+
+            if (lastResult == null)
+                return false;
+
+            if (lastResult.Outcome != CartCheckoutOutcome.Cancelled)
+                return true;
+
+            cartCheckoutService.AcknowledgeResult();
+            return false;
         }
 
         private async UniTaskVoid OpenBuyCreditsAsync(CancellationToken ct)

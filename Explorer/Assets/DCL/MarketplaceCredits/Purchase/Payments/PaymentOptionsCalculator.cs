@@ -19,20 +19,19 @@ namespace DCL.MarketplaceCredits.Purchase
 
         /// <summary>
         ///     priceManaWei is what the price costs in MANA right now; zero (rate unknown) leaves only credits.
+        ///     A null balance is one that could not be read: it pays for nothing and is recorded as unknown.
+        ///     isManaAloneRelayable false leaves MANA out as a method of its own: it can only top up credits.
         /// </summary>
-        public static PaymentOptions Compute(int priceCents, BigInteger priceManaWei, long balanceCents, BigInteger manaBalanceWei)
+        public static PaymentOptions Compute(int priceCents, BigInteger priceManaWei, long? creditsBalanceCents, BigInteger? manaBalance, bool isManaAloneRelayable = true)
         {
-            if (priceCents <= 0)
-                return PaymentOptions.NONE;
-
-            if (balanceCents < 0)
-                balanceCents = 0;
-
             if (priceManaWei.Sign < 0)
                 priceManaWei = BigInteger.Zero;
 
-            if (manaBalanceWei.Sign < 0)
-                manaBalanceWei = BigInteger.Zero;
+            if (priceCents <= 0)
+                return new PaymentOptions(Array.Empty<PaymentOption>(), null, 0, priceManaWei, creditsBalanceCents, manaBalance, isManaAloneRelayable);
+
+            long balanceCents = Math.Max(0L, creditsBalanceCents ?? 0L);
+            BigInteger manaBalanceWei = BigInteger.Max(BigInteger.Zero, manaBalance ?? BigInteger.Zero);
 
             var options = new List<PaymentOption>(3);
             var hasManaOption = false;
@@ -55,7 +54,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 }
             }
 
-            if (priceManaWei.Sign > 0 && manaBalanceWei >= priceManaWei)
+            if (isManaAloneRelayable && priceManaWei.Sign > 0 && manaBalanceWei >= priceManaWei)
             {
                 options.Add(new PaymentOption(PaymentMethod.Mana, 0, 0, priceManaWei));
                 hasManaOption = true;
@@ -63,10 +62,11 @@ namespace DCL.MarketplaceCredits.Purchase
 
             ManaShortfall? shortfall = null;
 
-            if (!hasManaOption && priceManaWei.Sign > 0 && manaBalanceWei.Sign > 0)
+            // MANA that would cover the price but may not pay alone is not a shortfall.
+            if (!hasManaOption && priceManaWei.Sign > 0 && manaBalanceWei.Sign > 0 && manaBalanceWei < priceManaWei)
                 shortfall = new ManaShortfall(manaBalanceWei, (int)(manaBalanceWei * priceCents / priceManaWei), priceCents);
 
-            return new PaymentOptions(options, shortfall);
+            return new PaymentOptions(options, shortfall, priceCents, priceManaWei, creditsBalanceCents, manaBalance, isManaAloneRelayable);
         }
 
         /// <summary>

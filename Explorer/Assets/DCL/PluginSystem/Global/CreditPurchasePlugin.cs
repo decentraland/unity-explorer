@@ -53,6 +53,7 @@ namespace DCL.PluginSystem.Global
 
         private CreditPurchaseModalController? creditPurchaseModalController;
         private ShopCartModalController? shopCartModalController;
+        private ShopCartCheckoutModalController? shopCartCheckoutModalController;
         private ICreditsTopUpService? creditsTopUpService;
         private CreditsTopUpModalController? creditsTopUpModalController;
         private NameClaimModalController? nameClaimModalController;
@@ -99,6 +100,7 @@ namespace DCL.PluginSystem.Global
         {
             creditPurchaseModalController?.Dispose();
             shopCartModalController?.Dispose();
+            shopCartCheckoutModalController?.Dispose();
             creditsTopUpModalController?.Dispose();
             creditsTopUpService?.Dispose();
             nameClaimModalController?.Dispose();
@@ -113,11 +115,11 @@ namespace DCL.PluginSystem.Global
             NFTColorsSO rarityColors = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
             NftTypeIconSO rarityBackgrounds = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct);
             NftTypeIconSO categoryIcons = await assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct);
+            bool isManaEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ManaPayments);
 
             creditPurchaseModalController = new CreditPurchaseModalController(
                 CreditPurchaseModalController.CreateLazily(viewAsset, null),
                 creditsPurchaseService,
-                marketplaceCreditsAPIClient,
                 web3IdentityCache,
                 webBrowser,
                 characterPreviewFactory,
@@ -131,7 +133,8 @@ namespace DCL.PluginSystem.Global
                 rarityBackgrounds,
                 categoryIcons,
                 OpenGetCreditsPanelAsync,
-                OpenBackpackPanelAsync);
+                OpenBackpackPanelAsync,
+                isManaEnabled);
 
             mvcManager.RegisterController(creditPurchaseModalController);
 
@@ -148,7 +151,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(creditsTopUpModalController);
 
-            await RegisterShopCartModalAsync(settings, rarityInfoPanelBackgrounds, ct);
+            await RegisterShopCartModalsAsync(settings, rarityInfoPanelBackgrounds, isManaEnabled, ct);
             await RegisterNameClaimModalAsync(settings, ct);
         }
 
@@ -172,29 +175,42 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(nameClaimModalController);
         }
 
-        private async UniTask RegisterShopCartModalAsync(CreditPurchaseSettings settings, NftTypeIconSO rarityInfoPanelBackgrounds, CancellationToken ct)
+        // The cart popup hands its checkout over to the checkout popup, so one is never registered without the other.
+        private async UniTask RegisterShopCartModalsAsync(CreditPurchaseSettings settings, NftTypeIconSO rarityInfoPanelBackgrounds, bool isManaEnabled, CancellationToken ct)
         {
-            if (!settings.ShopCartPopupPrefab.RuntimeKeyIsValid())
+            if (!settings.ShopCartPopupPrefab.RuntimeKeyIsValid() || !settings.ShopCartCheckoutPopupPrefab.RuntimeKeyIsValid())
             {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "ShopCartPopupPrefab is not assigned in the plugin settings: the shop cart modal is disabled.");
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "ShopCartPopupPrefab or ShopCartCheckoutPopupPrefab is not assigned in the plugin settings: the shop cart is disabled.");
                 return;
             }
 
             ShopCartModalView cartViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCartPopupPrefab, ct: ct)).GetComponent<ShopCartModalView>();
+            ShopCartCheckoutModalView checkoutViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ShopCartCheckoutPopupPrefab, ct: ct)).GetComponent<ShopCartCheckoutModalView>();
+            var spriteCache = new SpriteCache(webRequestController);
 
             shopCartModalController = new ShopCartModalController(
                 ShopCartModalController.CreateLazily(cartViewAsset, null),
                 shopCart,
+                spriteCache,
+                rarityInfoPanelBackgrounds,
+                OpenCartCheckoutAsync);
+
+            shopCartCheckoutModalController = new ShopCartCheckoutModalController(
+                ShopCartCheckoutModalController.CreateLazily(checkoutViewAsset, null),
+                shopCart,
                 cartCheckoutService,
-                marketplaceCreditsAPIClient,
-                web3IdentityCache,
-                new SpriteCache(webRequestController),
+                spriteCache,
                 rarityInfoPanelBackgrounds,
                 OpenGetCreditsFromCartAsync,
-                OpenBackpackPanelAsync);
+                OpenBackpackPanelAsync,
+                isManaEnabled);
 
             mvcManager.RegisterController(shopCartModalController);
+            mvcManager.RegisterController(shopCartCheckoutModalController);
         }
+
+        private UniTask OpenCartCheckoutAsync(CancellationToken ct) =>
+            mvcManager.ShowAsync(ShopCartCheckoutModalController.IssueCommand(), ct);
 
         private UniTask OpenGetCreditsFromCartAsync(CancellationToken ct)
         {
@@ -223,18 +239,19 @@ namespace DCL.PluginSystem.Global
         public class CreditPurchaseSettings : IDCLPluginSettings
         {
             [field: Header("Credit purchase")]
-            [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; } = null!;
-            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; } = null!;
 
             [field: Header("Shop cart")]
-            [field: SerializeField] internal AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ShopCartPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ShopCartCheckoutPopupPrefab { get; private set; } = null!;
 
             [field: Header("Shop names")]
-            [field: SerializeField] internal AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject NameClaimPopupPrefab { get; private set; } = null!;
         }
     }
 }

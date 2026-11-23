@@ -48,6 +48,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private const int ORACLE_DECIMALS = 8;
         private const int MANA_USD_RATE = 25_000_000;
+        private const string HALF_MANA_WEI = "500000000000000000";
 
         // Plenty for every group: 100 MANA.
         private const string GROUP_CAP_WEI = "100000000000000000000";
@@ -121,7 +122,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             manaTokenReader = Substitute.For<ManaTokenReader>(null, null);
 
             service = new CreditsCartCheckoutService(cart, quoteService, shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
-                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig),
+                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true),
                 manaUsdRateReader, chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
         }
 
@@ -482,6 +483,12 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                              return UniTask.FromResult(CreditsQuoteResult.Ok(CreditsPurchaseQuote.ForTrade(trade, TRADE_PRICE_CENTS, TRADE_PRICE_CREDITS, BigInteger.Zero, false)));
                          });
 
+        // Half a MANA at $0.25 per MANA is $0.125, charged as 2 whole credits.
+        private void PriceTheSecondCollectionBelowTheRelayMinimum() =>
+            quoteService.QuoteAsync(Arg.Is<ShopListingDto>(listing => listing.contractAddress == MINT_COLLECTION_B), Arg.Any<CancellationToken>())
+                        .Returns(_ => UniTask.FromResult(CreditsQuoteResult.Ok(
+                             CreditsPurchaseQuote.ForMint(new StoreMintTarget(MINT_COLLECTION_B, "2", HALF_MANA_WEI), 20, 2, BigInteger.Parse(HALF_MANA_WEI)))));
+
         private void StubMana(BigInteger balance, BigInteger allowance)
         {
             manaTokenReader.BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -740,6 +747,69 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(1, options.Options.Count);
             Assert.AreEqual(PaymentMethod.Mana, options.Options[0].Method);
             Assert.AreEqual(25 * ONE_MANA, options.Options[0].ManaWei);
+        }
+
+        [Test]
+        public async Task OfferNoManaAloneWhenOneUnitIsBelowTheRelayMinimum()
+        {
+            // Arrange: no credits and plenty of MANA, but one mint costs half a MANA.
+            ListTheTradeOnTheMarketplace();
+            PriceTheSecondCollectionBelowTheRelayMinimum();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 0, credits = 0 } }));
+
+            CartReview review = await ReviewAsync();
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(review, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.IsTrue(options.IsManaAloneRefused);
+        }
+
+        [Test]
+        public async Task DropTheMixedMethodWhenAGroupWithoutCreditsHoldsAUnitBelowTheRelayMinimum()
+        {
+            // Arrange: 10 credits are all taken by the trade, so the mints, the cheap one included, would be paid with MANA alone.
+            ListTheTradeOnTheMarketplace();
+            PriceTheSecondCollectionBelowTheRelayMinimum();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 100, credits = 10 } }));
+
+            CartReview review = await ReviewAsync();
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(review, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+        }
+
+        [Test]
+        public async Task KeepTheMixedMethodWhenCreditsReachTheGroupHoldingTheUnitBelowTheRelayMinimum()
+        {
+            // Arrange: 30 credits cover the trade and leave 5 for the mints, so both groups go through the CreditsManager.
+            ListTheTradeOnTheMarketplace();
+            PriceTheSecondCollectionBelowTheRelayMinimum();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = 300, credits = 30 } }));
+
+            CartReview review = await ReviewAsync();
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(review, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(1, options.Options.Count);
+            Assert.AreEqual(PaymentMethod.CreditsAndMana, options.Options[0].Method);
+            Assert.AreEqual(300, options.Options[0].CreditsCents);
         }
 
         [Test]

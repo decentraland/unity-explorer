@@ -89,7 +89,7 @@ namespace DCL.MarketplaceCredits.Purchase
             try
             {
                 BigInteger priceManaWei = await paymentOptionsProvider.ManaPriceOfAsync(quote, ct);
-                return await paymentOptionsProvider.ComputeAsync(identity.Address, quote.UsdCents, priceManaWei, ct);
+                return await paymentOptionsProvider.ComputeAsync(identity.Address, quote.UsdCents, priceManaWei, PaymentOptionsProvider.CanRelayManaAlone(quote), ct);
             }
             catch (OperationCanceledException) { return PaymentOptions.NONE; }
             catch (Exception e)

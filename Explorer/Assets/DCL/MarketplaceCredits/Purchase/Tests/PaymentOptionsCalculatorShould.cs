@@ -71,6 +71,58 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public void RecordThePriceAndTheBalancesItWasGiven()
+        {
+            // Act
+            PaymentOptions options = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, 4 * ONE_MANA);
+
+            // Assert
+            Assert.AreEqual(PRICE_CENTS, options.PriceCents);
+            Assert.AreEqual(PRICE_MANA_WEI, options.PriceManaWei);
+            Assert.AreEqual(300, options.CreditsBalanceCents);
+            Assert.AreEqual(4 * ONE_MANA, options.ManaBalanceWei);
+        }
+
+        [Test]
+        public void TreatAnUnknownBalanceAsNothingHeldAndKeepItUnknown()
+        {
+            // Act
+            PaymentOptions options = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, null, null);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.IsNull(options.CreditsBalanceCents);
+            Assert.IsNull(options.ManaBalanceWei);
+        }
+
+        [Test]
+        public void KeepTheBalancesOfAPriceThatIsNothing()
+        {
+            // Act
+            PaymentOptions options = PaymentOptionsCalculator.Compute(0, BigInteger.Zero, 300, ONE_MANA);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.AreEqual(300, options.CreditsBalanceCents);
+            Assert.AreEqual(ONE_MANA, options.ManaBalanceWei);
+        }
+
+        [Test]
+        public void LeaveManaOutAsAMethodOfItsOwnWhenTheRelayerWouldRefuseIt()
+        {
+            // Act: plenty of MANA both times, with 10 credits and then with none.
+            PaymentOptions withCredits = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 100, 20 * ONE_MANA, false);
+            PaymentOptions withoutCredits = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 0, 20 * ONE_MANA, false);
+
+            // Assert: MANA still tops up credits, and holding enough of it is not reported as a shortfall.
+            Assert.AreEqual(1, withCredits.Options.Count);
+            Assert.AreEqual(PaymentMethod.CreditsAndMana, withCredits.Options[0].Method);
+            Assert.AreEqual(0, withoutCredits.Options.Count);
+            Assert.IsNull(withoutCredits.ManaShortfall);
+            Assert.IsTrue(withoutCredits.IsManaAloneRefused);
+        }
+
+        [Test]
         public void OfferNoManaMethodWhenTheManaPriceIsUnknown()
         {
             // Act

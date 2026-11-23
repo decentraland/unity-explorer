@@ -56,6 +56,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },
                 { typeof(CreditPurchaseModalController), CreateAnalytics<CreditPurchaseModalController>(c => new CreditPurchaseAnalytics(analytics, c)) },
                 { typeof(ShopCartModalController), CreateAnalytics<ShopCartModalController>(c => new ShopCartAnalytics(analytics, c)) },
+                { typeof(ShopCartCheckoutModalController), CreateAnalytics<ShopCartCheckoutModalController>(c => new ShopCartCheckoutAnalytics(analytics, c)) },
                 { typeof(UpgradeGuestAccountPopupController), CreateAnalytics<UpgradeGuestAccountPopupController>(c => new UpgradeGuestAccountAnalytics(analytics, c, pendingGuestUpgrade)) },
             };
 

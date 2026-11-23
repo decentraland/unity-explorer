@@ -8,8 +8,8 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     /// <summary>
     ///     Reads what a buyer holds (credits and Polygon MANA) and what a quote costs in MANA, which is everything
-    ///     <see cref="PaymentOptionsCalculator" /> needs. A read that fails is reported as nothing held, so the
-    ///     method depending on it is not offered.
+    ///     <see cref="PaymentOptionsCalculator" /> needs. A balance that cannot be read is reported as unknown, so
+    ///     the method depending on it is not offered. With MANA payments disabled no price has a MANA equivalent.
     /// </summary>
     public class PaymentOptionsProvider
     {
@@ -17,30 +17,52 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly ManaTokenReader manaTokenReader;
         private readonly ManaUsdRateReader manaUsdRateReader;
         private readonly CreditsChainConfig chainConfig;
+        private readonly bool isManaEnabled;
 
-        public PaymentOptionsProvider(MarketplaceCreditsAPIClient creditsAPIClient, ManaTokenReader manaTokenReader, ManaUsdRateReader manaUsdRateReader, CreditsChainConfig chainConfig)
+        public PaymentOptionsProvider(MarketplaceCreditsAPIClient creditsAPIClient, ManaTokenReader manaTokenReader, ManaUsdRateReader manaUsdRateReader, CreditsChainConfig chainConfig,
+            bool isManaEnabled)
         {
             this.chainConfig = chainConfig;
+            this.isManaEnabled = isManaEnabled;
             this.creditsAPIClient = creditsAPIClient;
             this.manaTokenReader = manaTokenReader;
             this.manaUsdRateReader = manaUsdRateReader;
         }
 
-        public async UniTask<PaymentOptions> ComputeAsync(string buyer, int priceCents, BigInteger priceManaWei, CancellationToken ct)
+        public async UniTask<PaymentOptions> ComputeAsync(string buyer, int priceCents, BigInteger priceManaWei, bool isManaAloneRelayable, CancellationToken ct)
         {
-            long balanceCents = await CreditsBalanceCentsAsync(buyer, ct);
-            BigInteger manaBalanceWei = priceManaWei.Sign > 0 ? await ManaBalanceAsync(buyer, ct) ?? BigInteger.Zero : BigInteger.Zero;
+            if (!isManaEnabled)
+                return PaymentOptionsCalculator.Compute(priceCents, BigInteger.Zero, await CreditsBalanceCentsAsync(buyer, ct), null, isManaAloneRelayable);
 
-            return PaymentOptionsCalculator.Compute(priceCents, priceManaWei, balanceCents, manaBalanceWei);
+            (long? creditsBalanceCents, BigInteger? manaBalanceWei) = await UniTask.WhenAll(CreditsBalanceCentsAsync(buyer, ct), ManaBalanceAsync(buyer, ct));
+
+            return PaymentOptionsCalculator.Compute(priceCents, priceManaWei, creditsBalanceCents, manaBalanceWei, isManaAloneRelayable);
+        }
+
+        /// <summary>
+        ///     Whether the relayer takes one unit of the quote paid with MANA alone, which is a sale made straight on
+        ///     the marketplace or the CollectionStore: see <see cref="MetaTxRelayer.MIN_DIRECT_SALE_VALUE_WEI" />.
+        /// </summary>
+        public static bool CanRelayManaAlone(in CreditsPurchaseQuote quote)
+        {
+            string? amount = quote.Kind == CreditsListingKind.StoreMint
+                ? quote.Mint.PriceWei
+                : quote.Trade is { received: { Length: > 0 } } trade ? trade.received[0].amount : null;
+
+            return CreditsTradeEncoder.AmountOrZero(amount) >= MetaTxRelayer.MIN_DIRECT_SALE_VALUE_WEI;
         }
 
         /// <summary>
         ///     The MANA one unit of the quote draws right now: carried by a MANA-priced listing, converted at the
-        ///     marketplace's oracle for a USD-pegged one. Zero when the rate cannot be read, and for a trade that
-        ///     cannot be paid in MANA: one on an unknown marketplace or asking for more than a single MANA price.
+        ///     marketplace's oracle for a USD-pegged one. Zero when MANA payments are disabled, when the rate cannot
+        ///     be read, and for a trade that cannot be paid in MANA: one on an unknown marketplace or asking for more
+        ///     than a single MANA price.
         /// </summary>
         public async UniTask<BigInteger> ManaPriceOfAsync(CreditsPurchaseQuote quote, CancellationToken ct)
         {
+            if (!isManaEnabled)
+                return BigInteger.Zero;
+
             if (quote.Trade != null && !(chainConfig.IsKnownMarketplace(quote.Trade.contract) && chainConfig.AsksOnlyForMana(quote.Trade)))
                 return BigInteger.Zero;
 
@@ -60,7 +82,7 @@ namespace DCL.MarketplaceCredits.Purchase
             }
         }
 
-        private async UniTask<long> CreditsBalanceCentsAsync(string buyer, CancellationToken ct)
+        private async UniTask<long?> CreditsBalanceCentsAsync(string buyer, CancellationToken ct)
         {
             try
             {
@@ -71,7 +93,7 @@ namespace DCL.MarketplaceCredits.Purchase
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Credits balance unavailable: {e.Message}");
-                return 0;
+                return null;
             }
         }
 

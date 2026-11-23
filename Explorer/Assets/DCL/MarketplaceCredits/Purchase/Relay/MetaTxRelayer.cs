@@ -45,6 +45,14 @@ namespace DCL.MarketplaceCredits.Purchase
     /// </summary>
     public class MetaTxRelayer
     {
+        /// <summary>
+        ///     The transactions server refuses a sale relayed straight to the marketplace or the CollectionStore
+        ///     when any price in the call is below this (its MIN_SALE_VALUE_IN_WEI, checked per entry of a batch).
+        ///     It compares the amount as the call carries it: MANA wei for a mint and a MANA-priced trade, USD wei
+        ///     for a USD-pegged trade. Calls through the CreditsManager are not priced.
+        /// </summary>
+        public static readonly BigInteger MIN_DIRECT_SALE_VALUE_WEI = BigInteger.Pow(10, 18);
+
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
         private const int HTTP_INTERNAL_SERVER_ERROR = 500;
         private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromMinutes(5);
