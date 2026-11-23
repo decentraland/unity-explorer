@@ -326,10 +326,19 @@ namespace DCL.Profiles.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>The repository reads the answer from the list it handed to the request, so the profiles are written into that list, as the real request does.</summary>
         private void AnswerSinglePostWith(IList<Profile> profiles) =>
             webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>
                                  (Arg.Any<RequestEnvelope<GenericPostRequest, GenericPostArguments>>(), Arg.Any<GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>>())!
-                                .Returns(_ => UniTask.FromResult(profiles));
+                                .Returns(call =>
+                                 {
+                                     IList<Profile> target = call.ArgAt<GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>>(1).Target;
+
+                                     foreach (Profile profile in profiles)
+                                         target.Add(profile);
+
+                                     return UniTask.FromResult(target);
+                                 });
 
         private void AnswerSingleGetWith(Profile profile) =>
             webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
