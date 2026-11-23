@@ -301,6 +301,24 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://gateway.decentraland.org/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
         }
 
+        [Test]
+        public void ResolveDclDevLoginAndAssetsThroughTheDeployment()
+        {
+            InitializeFeatureFlags(optimizedAssets: true, abgenPipeline: true, abgenLods: true);
+            var urls = new GatewayUrlsSource(DecentralandEnvironment.Custom, new IRealmData.Fake(), ILaunchMode.PLAY, customBaseDomain: "dcl.dev", cliGatewayPrefix: "https://dcl.dev/");
+
+            Assert.AreEqual("https://dcl.dev/auth-api", urls.Url(DecentralandUrl.ApiAuth));
+            Assert.AreEqual("https://dcl.dev/auth/requests", urls.Url(DecentralandUrl.AuthSignatureWebApp));
+            Assert.AreEqual("https://dcl.dev/feature-flags", urls.Url(DecentralandUrl.FeatureFlags));
+            Assert.AreEqual("wss://dcl.dev/social-rpc", urls.Url(DecentralandUrl.ApiFriends));
+            Assert.AreEqual("https://dcl.dev/about", urls.Url(DecentralandUrl.PeerAbout));
+            Assert.AreEqual("https://dcl.dev/asset-bundle-registry/entities/active", urls.Url(DecentralandUrl.EntitiesActiveElements));
+            Assert.AreEqual("https://dcl.dev/ab-cdn", urls.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://dcl.dev/ab-cdn", urls.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.IsNull(urls.AbgenLodsCacheKey);
+            Assert.AreEqual("https://dcl.dev/notifications/notifications", urls.GetOriginalUrl("https://dcl.dev/notifications/notifications"));
+        }
+
         // Naming a gateway forces routing on, so the flag has no say either way.
         [TestCase(true, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]
         [TestCase(false, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]

@@ -64,6 +64,8 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         public string BaseDomain { get; }
 
+        protected virtual bool UseRemoteAssetFlags => true;
+
         private bool useRegistryForScenePointers =>
             !useRealmScenePointers && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment
                                    && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK);
@@ -237,6 +239,9 @@ namespace DCL.Browser.DecentralandUrls
             if (localAbBaseOverride is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, localAbBaseOverride);
 
+            if (!UseRemoteAssetFlags)
+                return dedicatedHost;
+
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
@@ -266,6 +271,9 @@ namespace DCL.Browser.DecentralandUrls
             if (abgenPipelineForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
 
+            if (!UseRemoteAssetFlags)
+                return regularHost;
+
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
@@ -291,6 +299,9 @@ namespace DCL.Browser.DecentralandUrls
             if (abgenLodsForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
 
+            if (!UseRemoteAssetFlags)
+                return regularHost;
+
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
@@ -303,7 +314,7 @@ namespace DCL.Browser.DecentralandUrls
 
         private bool abgenLodsActive =>
             abgenLodsForced
-            || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+            || (UseRemoteAssetFlags && !FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
 
         /// <inheritdoc />
         public string? AbgenLodsCacheKey

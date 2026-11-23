@@ -49,6 +49,14 @@ The prefs file is shared by every build on the machine, so this replaces the dev
 
 ## 4. Launch Unity
 
+Use the PR's CI player. For dcl.dev, Unity supplies the deployment settings:
+
+```powershell
+.\Decentraland.exe --gateway https://dcl.dev --mcp-port 8123
+```
+
+For a custom realm whose services come from a separate environment, supply its settings explicitly:
+
 ```bash
 Decentraland.exe --realm https://realm.example.org --position 100,100 \
   --gatekeeper-url https://realm.example.org/comms-gatekeeper \
@@ -56,7 +64,7 @@ Decentraland.exe --realm https://realm.example.org --position 100,100 \
   --debug --landscape-terrain-enabled false --skip-version-check --mcp-port 8123
 ```
 
-[`docs/app-arguments.md`](../../../docs/app-arguments.md) explains each argument. Leave the service environment at its default: `--gateway` and `--base-domain` stall at the splash screen on a deployment that serves its services under paths.
+See the [command-line reference](../../../docs/app-arguments.md) for the individual overrides.
 
 A "You are about to use a custom Catalyst" prompt waits at start-up, and the MCP port answers only after it: bring the window to the front and click **CONTINUE** with an operating-system click (the first click may only focus the window). Then drive the client through its MCP server ([`docs/mcp-automation.md`](../../../docs/mcp-automation.md)).
 

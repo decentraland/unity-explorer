@@ -115,6 +115,14 @@ For embedded links you will need to place value after `=` sign, instead of space
 --gateway https://gateway.localhost
 ```
 
+To sign in to dcl.dev, launch the CI player with a single argument:
+
+```powershell
+.\Decentraland.exe --gateway https://dcl.dev
+```
+
+Unity selects the dcl.dev realm on mainnet, opens wallet sign-in through its auth bridge, and fetches feature flags, Catalyst data and regular asset bundles through the gateway. It starts at parcel `100,100` with realm scene pointers, the deployment's gatekeeper and Pulse relay, and landscape terrain disabled. Explicit launch arguments such as `--position` take precedence.
+
 ---
 
 ### `base-domain`

@@ -3,6 +3,7 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using ECS;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using Utility;
@@ -99,6 +100,7 @@ namespace DCL.Browser
         // The origin --gateway named, already normalized by TryNormalizeGatewayPrefix, or null to use
         // gateway.{BaseDomain}. Naming one is itself the opt-in, so it also stands in for the flag.
         private readonly string? cliGatewayPrefix;
+        private readonly bool isDclDevGateway;
         private readonly List<string> resolvedNonClientHosts;
         private readonly string[] abgenOrigins;
         private readonly string gatewayPrefix;
@@ -108,6 +110,9 @@ namespace DCL.Browser
         // when the "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that
         // deployment's call.
         private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+
+        // The deployment mirrors the feature document but serves regular bundles and LODs.
+        protected override bool UseRemoteAssetFlags => !isDclDevGateway;
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -126,6 +131,7 @@ namespace DCL.Browser
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced, pulseHost, useRealmScenePointers)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
+            isDclDevGateway = DclDevGateway.IsOrigin(cliGatewayPrefix);
 
             resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
 
@@ -198,6 +204,21 @@ namespace DCL.Browser
 
         protected override UrlData RawUrl(DecentralandUrl decentralandUrl)
         {
+            if (isDclDevGateway)
+            {
+                switch (decentralandUrl)
+                {
+                    case DecentralandUrl.FeatureFlags: return DclDevGateway.FEATURE_FLAGS_URL;
+                    case DecentralandUrl.ApiFriends: return "wss://dcl.dev/social-rpc";
+                    case DecentralandUrl.PeerAbout: return DclDevGateway.ORIGIN + "/about";
+                    case DecentralandUrl.PeerContent: return DclDevGateway.ORIGIN + "/content/contents";
+                    case DecentralandUrl.Servers: return DclDevGateway.ORIGIN + "/lambdas/contracts/servers";
+                    case DecentralandUrl.Blocklist: return DclDevGateway.ORIGIN + "/config/denylist.json";
+                    case DecentralandUrl.SocialServiceMutes: return DclDevGateway.ORIGIN + "/social-api/v1/mutes";
+                    case DecentralandUrl.ReferralProgress: return DclDevGateway.ORIGIN + "/social-api/v1/referral-progress";
+                }
+            }
+
             UrlData serviceUrl = base.RawUrl(decentralandUrl);
 
             if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
@@ -262,7 +283,8 @@ namespace DCL.Browser
 
         public override string GetOriginalUrl(string url)
         {
-            if (!enabled || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
+            // dcl.dev verifies signatures against the public path, including the service prefix.
+            if (isDclDevGateway || !enabled || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
             string original = ReverseGatewayTransform(url);

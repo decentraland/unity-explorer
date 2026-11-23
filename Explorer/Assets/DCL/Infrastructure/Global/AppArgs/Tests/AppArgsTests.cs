@@ -29,6 +29,54 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void SelectDclDevBeforeResolvingStartupServices()
+        {
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "--gateway", "https://DCL.DEV:443/" });
+            IReadOnlyDictionary<string, string> values = args.Args();
+            Assert.AreEqual("dcl.dev", values[AppArgsFlags.BASE_DOMAIN]);
+            Assert.AreEqual("https://dcl.dev", values[AppArgsFlags.REALM]);
+            Assert.AreEqual("https://dcl.dev/feature-flags", values[AppArgsFlags.FeatureFlags.URL]);
+            Assert.AreEqual("https://dcl.dev/comms-gatekeeper", values[AppArgsFlags.GATEKEEPER_URL]);
+            Assert.AreEqual("dcl-one-poc-rt.decentraland.zone", values[AppArgsFlags.PULSE_SERVER]);
+            Assert.AreEqual("true", values[AppArgsFlags.PULSE_MULTIPLAYER]);
+            Assert.AreEqual("100,100", values[AppArgsFlags.POSITION]);
+            Assert.AreEqual("false", values[AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED]);
+            Assert.IsTrue(args.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY));
+            Assert.IsTrue(args.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS));
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.SKIP_AUTH_SCREEN));
+        }
+
+        [Test]
+        public void PreferExplicitDclDevLaunchArguments()
+        {
+            var args = new ApplicationParametersParser(false, "--position", "1,2", "--gateway", "https://dcl.dev", "--pulse", "false");
+            Assert.AreEqual("1,2", args.Args()[AppArgsFlags.POSITION]);
+            Assert.AreEqual("false", args.Args()[AppArgsFlags.PULSE_MULTIPLAYER]);
+        }
+
+        [TestCase("https://gateway.localhost")]
+        [TestCase("http://dcl.dev")]
+        [TestCase("https://dcl.dev.example")]
+        [TestCase("https://dcl.dev:8080")]
+        [TestCase("https://dcl.dev/other")]
+        public void KeepOtherGatewaysIndependentOfDclDev(string gateway)
+        {
+            var args = new ApplicationParametersParser(false, "--gateway", gateway);
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.BASE_DOMAIN));
+            Assert.IsFalse(args.HasLaunchDestination());
+        }
+
+        [Test]
+        public void NeverSelectDclDevDefaultsFromADeepLink()
+        {
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "decentraland://?gateway=https://dcl.dev" });
+            args.InitializeDeepLinks();
+            args.ApplyDeniedDeepLinkParams();
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.BASE_DOMAIN));
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.PULSE_SERVER));
+        }
+
+        [Test]
         public void KeepMixedRealmRoutingOutOfDeepLinks()
         {
             var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "decentraland://?realm=http://localhost&pulse-server=relay.example.test&realm-scene-pointers=true" });
