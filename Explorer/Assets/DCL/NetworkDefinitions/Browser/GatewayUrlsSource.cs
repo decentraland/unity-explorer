@@ -215,6 +215,8 @@ namespace DCL.Browser
                     case DecentralandUrl.PeerContent: return DclDevGateway.ORIGIN + "/content/contents";
                     case DecentralandUrl.Servers: return DclDevGateway.ORIGIN + "/lambdas/contracts/servers";
                     case DecentralandUrl.Blocklist: return DclDevGateway.ORIGIN + "/config/denylist.json";
+                    case DecentralandUrl.MarketplaceServer: return DclDevGateway.ORIGIN + "/marketplace-api";
+                    case DecentralandUrl.Faqs: return DclDevGateway.ORIGIN + "/docs/player/faqs/decentraland-101/";
                     case DecentralandUrl.SocialServiceMutes: return DclDevGateway.ORIGIN + "/social-api/v1/mutes";
                     case DecentralandUrl.ReferralProgress: return DclDevGateway.ORIGIN + "/social-api/v1/referral-progress";
                 }

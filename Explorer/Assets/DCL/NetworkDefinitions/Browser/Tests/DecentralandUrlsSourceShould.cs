@@ -312,6 +312,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://dcl.dev/feature-flags", urls.Url(DecentralandUrl.FeatureFlags));
             Assert.AreEqual("wss://dcl.dev/social-rpc", urls.Url(DecentralandUrl.ApiFriends));
             Assert.AreEqual("https://dcl.dev/about", urls.Url(DecentralandUrl.PeerAbout));
+            Assert.AreEqual("https://dcl.dev/marketplace-api", urls.Url(DecentralandUrl.MarketplaceServer));
+            Assert.AreEqual("https://dcl.dev/docs/player/faqs/decentraland-101/", urls.Url(DecentralandUrl.Faqs));
             Assert.AreEqual("https://dcl.dev/asset-bundle-registry/entities/active", urls.Url(DecentralandUrl.EntitiesActiveElements));
             Assert.AreEqual("https://ab-cdn.decentraland.org", urls.Url(DecentralandUrl.AssetBundlesCDN));
             Assert.AreEqual("https://ab-cdn.decentraland.org", urls.Url(DecentralandUrl.LodAssetBundlesCDN));
