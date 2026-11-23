@@ -22,6 +22,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly UseCreditsExecutor executor;
         private readonly ManaRail manaRail;
         private readonly PaymentOptionsProvider paymentOptionsProvider;
+        private readonly RelayedPurchaseGate purchaseGate;
         private readonly bool isFeatureEnabled;
 
         public event Action<CreditsPurchaseState>? StateChanged;
@@ -32,6 +33,7 @@ namespace DCL.MarketplaceCredits.Purchase
             UseCreditsExecutor executor,
             ManaRail manaRail,
             PaymentOptionsProvider paymentOptionsProvider,
+            RelayedPurchaseGate purchaseGate,
             ManaUsdRateReader manaUsdRateReader,
             CreditsChainConfig chainConfig,
             IWeb3IdentityCache identityCache,
@@ -48,6 +50,7 @@ namespace DCL.MarketplaceCredits.Purchase
             this.executor = executor;
             this.manaRail = manaRail;
             this.paymentOptionsProvider = paymentOptionsProvider;
+            this.purchaseGate = purchaseGate;
         }
 
         public async UniTask<CreditsQuoteResult> QuoteAsync(ShopListingDto listing, CancellationToken ct)
@@ -108,6 +111,11 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (identity == null)
                 return new CreditsPurchaseResult(CreditsPurchaseError.UnknownError, message: "No web3 identity");
+
+            using RelayedPurchaseGate.Lease? lease = purchaseGate.TryEnter();
+
+            if (lease == null)
+                return new CreditsPurchaseResult(CreditsPurchaseError.PurchaseInProgress);
 
             try { return await PurchaseInternalAsync(quote, option, identity.Address, ct); }
             catch (OperationCanceledException)
@@ -379,60 +387,40 @@ namespace DCL.MarketplaceCredits.Purchase
                 return Fail(CreditsPurchaseError.PriceChanged, message: $"Authorized for {authorization.usdCents} cents, buyer confirmed {option.CreditsCents}");
             }
 
-            if (!BigInteger.TryParse(authorization.credit.availableAmount, out BigInteger creditValueWei))
+            if (!PaymentOptionsCalculator.TrySizeMixedPayment(authorization.credit.availableAmount, option.CreditsCents, quote.UsdCents, requiredManaWei, out BigInteger gapWei, out string maxCreditedValue))
             {
                 await executor.ReleaseIntentAsync(creditId);
                 return Fail(CreditsPurchaseError.EncodingFailed, message: $"Credit {creditId} carries an unreadable amount");
             }
 
-            BigInteger gapWei = PaymentOptionsCalculator.ManaGap(quote.UsdCents - option.CreditsCents, quote.UsdCents, requiredManaWei, creditValueWei);
+            ManaApprovalResult funds;
 
-            if (PaymentOptionsCalculator.ExceedsConfirmedMana(gapWei, option.ManaWei))
-            {
-                await executor.ReleaseIntentAsync(creditId);
-                return Fail(CreditsPurchaseError.PriceChanged, message: $"The purchase needs {gapWei} MANA wei, buyer confirmed {option.ManaWei}");
-            }
-
-            CreditsPurchaseError fundsError;
-
-            try { fundsError = await PrepareManaAsync(buyer, chainConfig.CreditsManagerAddress, gapWei, ct); }
+            try { funds = await manaRail.PrepareAsync(buyer, new[] { new ManaSpend(chainConfig.CreditsManagerAddress, gapWei) }, option.ManaWei, SetState, ct, ct); }
             catch (Exception)
             {
                 await executor.ReleaseIntentAsync(creditId);
                 throw;
             }
 
-            if (fundsError != CreditsPurchaseError.None)
+            if (!funds.Success)
             {
                 await executor.ReleaseIntentAsync(creditId);
-                return Fail(fundsError);
+                return Fail(funds.Error, message: funds.Message);
             }
 
             var request = new UseCreditsRequest(buyer, QuoteLabel(quote), call.Target, call.Selector, call.Data,
-                authorization.credit, (creditValueWei + gapWei).ToString(), requiredManaWei, BigInteger.MinusOne);
+                authorization.credit, maxCreditedValue, requiredManaWei, BigInteger.MinusOne);
 
             return ToResult(await executor.ExecuteAsync(request, SetState, ct, ct));
         }
 
-        /// <summary>
-        ///     No credits: the marketplace (trade) or the CollectionStore (mint) is called directly and pulls the
-        ///     price from the buyer's MANA, so nothing is reserved on the credits-server.
-        /// </summary>
+        /// <summary>No credits: the marketplace or the CollectionStore is called directly and pulls the price from the buyer's MANA.</summary>
         private async UniTask<CreditsPurchaseResult> PurchaseWithManaAsync(CreditsPurchaseQuote quote, StoreMintTarget mint, PaymentOption option, BigInteger requiredManaWei, string buyer, CancellationToken ct)
         {
-            if (PaymentOptionsCalculator.ExceedsConfirmedMana(requiredManaWei, option.ManaWei))
-                return Fail(CreditsPurchaseError.PriceChanged, message: $"The purchase needs {requiredManaWei} MANA wei, buyer confirmed {option.ManaWei}");
+            if (quote.Trade != null && !chainConfig.CanPayInMana(quote.Trade))
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade {quote.Trade.id} on {quote.Trade.contract} cannot be paid in MANA");
 
-            MetaTxContract target;
-
-            if (quote.Kind == CreditsListingKind.StoreMint)
-                target = chainConfig.CollectionStoreContract;
-            else if (!chainConfig.IsKnownMarketplace(quote.Trade!.contract))
-                return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade {quote.Trade!.id} names an unknown marketplace {quote.Trade!.contract}");
-            else if (!chainConfig.AsksOnlyForMana(quote.Trade!))
-                return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade {quote.Trade!.id} asks the buyer for more than its MANA price");
-            else
-                target = chainConfig.MarketplaceContract(quote.Trade!.contract);
+            MetaTxContract target = chainConfig.ManaSaleContract(quote.Trade);
 
             string calldata;
 
@@ -447,30 +435,13 @@ namespace DCL.MarketplaceCredits.Purchase
                 return Fail(CreditsPurchaseError.EncodingFailed, message: e.Message);
             }
 
-            CreditsPurchaseError fundsError = await PrepareManaAsync(buyer, target.Address, requiredManaWei, ct);
+            ManaApprovalResult funds = await manaRail.PrepareAsync(buyer, new[] { new ManaSpend(target.Address, requiredManaWei) }, option.ManaWei, SetState, ct, ct);
 
-            if (fundsError != CreditsPurchaseError.None)
-                return Fail(fundsError);
+            if (!funds.Success)
+                return Fail(funds.Error, message: funds.Message);
 
             var request = new ManaPurchaseRequest(buyer, QuoteLabel(quote), target, calldata, BigInteger.MinusOne);
             return ToResult(await manaRail.ExecuteAsync(request, SetState, ct, ct));
-        }
-
-        /// <summary>
-        ///     Checks the buyer holds the MANA and that the spender may pull it, asking for the approval when it may
-        ///     not. A balance that cannot be read is not treated as a shortfall.
-        /// </summary>
-        private async UniTask<CreditsPurchaseError> PrepareManaAsync(string buyer, string spender, BigInteger manaWei, CancellationToken ct)
-        {
-            BigInteger? balance = await paymentOptionsProvider.ManaBalanceAsync(buyer, ct);
-
-            if (balance < manaWei)
-                return CreditsPurchaseError.InsufficientMana;
-
-            SetState(CreditsPurchaseState.ApprovingMana);
-
-            ManaApprovalResult approval = await manaRail.EnsureAllowanceAsync(buyer, spender, manaWei, BigInteger.MinusOne, ct, ct);
-            return approval.Error;
         }
 
         private ExternalCall BuildExternalCall(in CreditsPurchaseQuote quote, in StoreMintTarget mint, string buyer)

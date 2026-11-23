@@ -68,6 +68,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private CancellationTokenSource warmUpCts = null!;
         private CancellationTokenSource uiCts = null!;
         private ShopCart cart = null!;
+        private RelayedPurchaseGate purchaseGate = null!;
         private CreditsCartCheckoutService service = null!;
 
         [SetUp]
@@ -121,9 +122,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             chainConfig = new CreditsChainConfig(EthereumNetwork.Sepolia);
             manaTokenReader = Substitute.For<ManaTokenReader>(null, null);
 
+            purchaseGate = new RelayedPurchaseGate();
+
             service = new CreditsCartCheckoutService(cart, quoteService, shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
                 new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true),
-                manaUsdRateReader, chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
+                purchaseGate, manaUsdRateReader, chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
         }
 
         [TearDown]
@@ -270,6 +273,46 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             Assert.AreEqual(CartCheckoutOutcome.Completed, result.Outcome);
             Assert.AreEqual(1, completions);
+        }
+
+        [Test]
+        public async Task RefuseACheckoutWhileAnotherRelayedPurchaseIsRunning()
+        {
+            // Arrange: a single-item purchase or NAME claim holds the gate.
+            using RelayedPurchaseGate.Lease? held = purchaseGate.TryEnter();
+            CartReview review = await ReviewAsync();
+
+            // Act
+            CartCheckoutResult result = await service.CheckoutAsync(review, CartReview.CreditsOnly(review), CancellationToken.None);
+
+            // Assert: nothing was reserved or signed, and the cart is untouched.
+            Assert.AreEqual(CartCheckoutOutcome.Failed, result.Outcome);
+            Assert.AreEqual(CreditsPurchaseError.PurchaseInProgress, result.FirstError);
+            Assert.IsFalse(service.IsCheckoutInFlight);
+            Assert.AreEqual(3, cart.Count);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditGroupAsync(Arg.Any<IReadOnlyList<CheckoutLine>>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task HoldTheGateUntilTheCheckoutEnds()
+        {
+            // Arrange: the checkout is held while its first group settles.
+            var settlementGate = new UniTaskCompletionSource<SettlementOutcome>();
+
+            settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+                            .Returns(settlementGate.Task);
+
+            CartReview review = await ReviewAsync();
+            UniTask<CartCheckoutResult> running = service.CheckoutAsync(review, CartReview.CreditsOnly(review), CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(purchaseGate.TryEnter());
+
+            settlementGate.TrySetResult(SettlementOutcome.Confirmed);
+            await running;
+
+            Assert.IsNotNull(purchaseGate.TryEnter());
         }
 
         [Test]

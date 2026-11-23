@@ -15,8 +15,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
     ///     Reviews every cart line against its live listing, groups the units by the transaction that settles them
     ///     (one per marketplace contract, one for all CollectionStore mints), reserves one credit per group that
     ///     spends credits, grants the MANA allowances the payment needs, then signs and settles the groups one at
-    ///     a time. Each group settles with the method its share of the credits implies: all of its price is
-    ///     credits, part of it is credits and the rest MANA, or none of it is credits and it is paid in MANA.
+    ///     a time.
     /// </summary>
     public class CreditsCartCheckoutService : IDisposable
     {
@@ -33,6 +32,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         private readonly UseCreditsExecutor executor;
         private readonly ManaRail manaRail;
         private readonly PaymentOptionsProvider paymentOptionsProvider;
+        private readonly RelayedPurchaseGate purchaseGate;
         private readonly bool isFeatureEnabled;
         private readonly CancellationTokenSource lifetimeCts = new ();
 
@@ -57,6 +57,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             UseCreditsExecutor executor,
             ManaRail manaRail,
             PaymentOptionsProvider paymentOptionsProvider,
+            RelayedPurchaseGate purchaseGate,
             ManaUsdRateReader manaUsdRateReader,
             CreditsChainConfig chainConfig,
             IWeb3IdentityCache identityCache,
@@ -75,6 +76,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             this.executor = executor;
             this.manaRail = manaRail;
             this.paymentOptionsProvider = paymentOptionsProvider;
+            this.purchaseGate = purchaseGate;
         }
 
         public void Dispose() =>
@@ -145,10 +147,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return CartReviewResult.Ok(new CartReview(buyable, dropped, totalCredits, totalCents, units, groupKeys.Count, orderChanged, DateTime.UtcNow));
         }
 
-        /// <summary>
-        ///     The payment methods the buyer's credits and Polygon MANA support for the whole reviewed basket.
-        ///     Reads only.
-        /// </summary>
+        /// <summary>The payment methods the buyer's credits and Polygon MANA support for the whole reviewed basket.</summary>
         public async UniTask<PaymentOptions> GetPaymentOptionsAsync(CartReview review, CancellationToken ct)
         {
             IWeb3Identity? identity = identityCache.Identity;
@@ -192,8 +191,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         }
 
         /// <summary>
-        ///     Pays the reviewed basket with the given option, normally one returned by
-        ///     <see cref="GetPaymentOptionsAsync" />; its MANA amount is what the buyer confirmed.
+        ///     Pays the reviewed basket with the given option; its MANA amount is what the buyer confirmed.
         ///     uiCt is honoured while the credits are reserved and the MANA approvals are granted, where it releases
         ///     every reserved credit; once the first group is being signed every group runs to a terminal state on
         ///     the service's own lifetime.
@@ -214,6 +212,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
             if (IsCheckoutInFlight)
                 return EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.UnknownError, "A checkout is already in progress");
+
+            using RelayedPurchaseGate.Lease? lease = purchaseGate.TryEnter();
+
+            if (lease == null)
+                return Finish(EarlyFailure(review, CartCheckoutOutcome.Failed, CreditsPurchaseError.PurchaseInProgress, null));
 
             IsCheckoutInFlight = true;
 
@@ -293,8 +296,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             if (reserveFailure != null)
                 return reserveFailure;
 
-            // Phase A2: every allowance the MANA legs need, before any purchase is signed. A failure here still
-            // releases all the credits.
+            // Phase A2: every allowance the MANA legs need, before any purchase is signed.
             CartCheckoutResult? manaFailure;
 
             try { manaFailure = await PrepareManaAsync(groups, option, buyer, unitCount, uiCt); }
@@ -503,7 +505,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
 
                 if (group.Method == PaymentMethod.CreditsAndMana)
                 {
-                    if (!BigInteger.TryParse(response.credit.availableAmount, out BigInteger creditValueWei))
+                    if (!PaymentOptionsCalculator.TrySizeMixedPayment(response.credit.availableAmount, group.CreditsCents, group.UsdCents, group.RequiredManaWei, out group.ManaGapWei, out group.MaxCreditedValue))
                     {
                         await ReleaseGroupsAsync(groups, 0);
                         group.Error = CreditsPurchaseError.EncodingFailed;
@@ -511,11 +513,6 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                             $"Credit {response.credit.id} carries an unreadable amount", -1, CartCheckoutStage.Reserving);
                     }
 
-                    // Adding the gap to maxCreditedValue is what makes useCredits pull it from the buyer's MANA.
-                    BigInteger gapWei = PaymentOptionsCalculator.ManaGap(group.UsdCents - group.CreditsCents, group.UsdCents, group.RequiredManaWei, creditValueWei);
-
-                    group.ManaGapWei = gapWei;
-                    group.MaxCreditedValue = (creditValueWei + gapWei).ToString();
                     unitsReserved += group.Units.Count;
                     continue;
                 }
@@ -553,79 +550,43 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         }
 
         /// <summary>
-        ///     Checks the buyer holds the MANA the groups will draw and grants the allowances that are missing:
-        ///     the CreditsManager for the gaps of the mixed groups, the marketplace or the store of each group paid
-        ///     in MANA. Returns the failed result after releasing every reserved credit, or null when the groups can
-        ///     be signed.
+        ///     Prepares the MANA the groups will draw: the CreditsManager pulls the gaps of the mixed groups, the
+        ///     marketplace or the store pulls each group paid in MANA. Returns the failed result after releasing
+        ///     every reserved credit, or null when the groups can be signed.
         /// </summary>
         private async UniTask<CartCheckoutResult?> PrepareManaAsync(List<CheckoutGroup> groups, PaymentOption option, string buyer, int unitCount, CancellationToken uiCt)
         {
+            var spends = new List<ManaSpend>();
             BigInteger gapsWei = BigInteger.Zero;
-            BigInteger totalWei = BigInteger.Zero;
 
             foreach (CheckoutGroup group in groups)
             {
                 if (group.Method == PaymentMethod.Mana)
-                    totalWei += group.RequiredManaWei;
+                    spends.Add(new ManaSpend(ManaTargetOf(group).Address, group.RequiredManaWei));
                 else
                     gapsWei += group.ManaGapWei;
             }
 
-            totalWei += gapsWei;
+            if (gapsWei.Sign > 0)
+                spends.Insert(0, new ManaSpend(chainConfig.CreditsManagerAddress, gapsWei));
 
-            if (totalWei.Sign == 0)
+            if (spends.Count == 0)
                 return null;
-
-            if (PaymentOptionsCalculator.ExceedsConfirmedMana(totalWei, option.ManaWei))
-                return await FailBeforeSigningAsync(groups, CreditsPurchaseError.PriceChanged, $"The cart needs {totalWei} MANA wei, buyer confirmed {option.ManaWei}");
-
-            // A balance that cannot be read is not treated as a shortfall.
-            BigInteger? balance = await paymentOptionsProvider.ManaBalanceAsync(buyer, uiCt);
-
-            if (balance < totalWei)
-                return await FailBeforeSigningAsync(groups, CreditsPurchaseError.InsufficientMana, null);
-
-            SetProgress(new CartCheckoutProgress(CartCheckoutStage.ApprovingMana, 0, groups.Count, unitCount, unitCount));
 
             confirmationCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCts.Token, uiCt);
 
             try
             {
-                // Every approval is a meta-transaction of the MANA token, so they share one nonce sequence.
-                BigInteger minNonce = BigInteger.MinusOne;
+                ManaApprovalResult funds = await manaRail.PrepareAsync(buyer, spends, option.ManaWei, state => OnExecutorStateChanged(state, 0, groups.Count, unitCount),
+                    confirmationCts.Token, lifetimeCts.Token);
 
-                if (gapsWei.Sign > 0)
-                {
-                    ManaApprovalResult approval = await manaRail.EnsureAllowanceAsync(buyer, chainConfig.CreditsManagerAddress, gapsWei, minNonce, confirmationCts.Token, lifetimeCts.Token);
-
-                    if (!approval.Success)
-                        return await FailBeforeSigningAsync(groups, approval.Error, approval.Message);
-
-                    if (approval.Nonce.Sign >= 0)
-                        minNonce = approval.Nonce + BigInteger.One;
-                }
-
-                foreach (CheckoutGroup group in groups)
-                {
-                    if (group.Method != PaymentMethod.Mana)
-                        continue;
-
-                    ManaApprovalResult approval = await manaRail.EnsureAllowanceAsync(buyer, ManaTargetOf(group).Address, group.RequiredManaWei, minNonce, confirmationCts.Token, lifetimeCts.Token);
-
-                    if (!approval.Success)
-                        return await FailBeforeSigningAsync(groups, approval.Error, approval.Message);
-
-                    if (approval.Nonce.Sign >= 0)
-                        minNonce = approval.Nonce + BigInteger.One;
-                }
+                return funds.Success ? null : await FailBeforeSigningAsync(groups, funds.Error, funds.Message);
             }
             finally
             {
                 confirmationCts.Dispose();
                 confirmationCts = null;
             }
-
-            return null;
         }
 
         private async UniTask<CartCheckoutResult> FailBeforeSigningAsync(List<CheckoutGroup> groups, CreditsPurchaseError error, string? message)
@@ -640,7 +601,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         {
             foreach (TradeDto trade in group.Trades)
             {
-                if (!chainConfig.IsKnownMarketplace(trade.contract) || !chainConfig.AsksOnlyForMana(trade))
+                if (!chainConfig.CanPayInMana(trade))
                     return false;
             }
 
@@ -648,17 +609,12 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         }
 
         private MetaTxContract ManaTargetOf(CheckoutGroup group) =>
-            group.Kind == CreditsListingKind.StoreMint
-                ? chainConfig.CollectionStoreContract
-                : chainConfig.MarketplaceContract(group.Trades[0].contract);
+            chainConfig.ManaSaleContract(group.Kind == CreditsListingKind.StoreMint ? null : group.Trades[0]);
 
         /// <summary>
-        ///     Decides what each unit pays in credits and, from that, the method of each group: credits only keeps
-        ///     every unit at its price, MANA only gives none, and the mixed method spreads the credits the buyer
-        ///     confirmed over the units in order.
+        ///     Whether the relayer takes every group a mixed payment with this credits leg leaves without credits:
+        ///     such a group is paid with MANA alone, straight on its sale contract.
         /// </summary>
-        // A mixed payment leaves a group that received no credits to be paid with MANA alone, straight on its sale
-        // contract. This is whether the relayer takes every such group, for the credits leg the checkout would use.
         private static bool CanRelayEveryGroup(CartReview review, int creditsCents)
         {
             List<CheckoutGroup> groups = GroupUnits(review);
@@ -679,6 +635,11 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
             return true;
         }
 
+        /// <summary>
+        ///     Decides what each unit pays in credits and, from that, the method of each group: credits only keeps
+        ///     every unit at its price, MANA only gives none, and the mixed method spreads the confirmed credits
+        ///     over the units in order.
+        /// </summary>
         private static void AssignCredits(List<CheckoutGroup> groups, PaymentMethod method, int creditsCents)
         {
             var unitCents = new List<int>();
@@ -895,6 +856,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         {
             switch (state)
             {
+                case CreditsPurchaseState.ApprovingMana:
+                    SetProgress(new CartCheckoutProgress(CartCheckoutStage.ApprovingMana, groupIndex, groupCount, unitCount, unitCount));
+                    break;
                 case CreditsPurchaseState.Signing:
                     SetProgress(new CartCheckoutProgress(CartCheckoutStage.Signing, groupIndex, groupCount, unitCount, unitCount));
                     break;
@@ -1030,8 +994,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 ChainId = chainId;
             }
 
-            // One CheckoutLine per unit that spends credits: what it pays in credits, the trade when there is one,
-            // and the item pair whenever it is known so the purchase history can name the line.
+            // One CheckoutLine per unit that spends credits.
             public IReadOnlyList<CheckoutLine> BuildCheckoutLines()
             {
                 var lines = new List<CheckoutLine>(Units.Count);

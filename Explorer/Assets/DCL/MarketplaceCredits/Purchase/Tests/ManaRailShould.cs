@@ -44,6 +44,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(SettlementOutcome.Confirmed));
 
+            manaTokenReader.BalanceOfAsync(BUYER, Arg.Any<CancellationToken>())
+                           .Returns(UniTask.FromResult(100 * ONE_MANA));
+
             manaRail = new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig);
         }
 
@@ -51,8 +54,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             manaTokenReader.AllowanceAsync(BUYER, chainConfig.CollectionStoreAddress, Arg.Any<CancellationToken>())
                            .Returns(UniTask.FromResult(allowance));
 
-        private UniTask<ManaApprovalResult> EnsureStoreAllowanceAsync() =>
-            manaRail.EnsureAllowanceAsync(BUYER, chainConfig.CollectionStoreAddress, 5 * ONE_MANA, BigInteger.MinusOne, CancellationToken.None, CancellationToken.None);
+        private UniTask<ManaApprovalResult> PrepareStorePaymentAsync() =>
+            manaRail.PrepareAsync(BUYER, new[] { new ManaSpend(chainConfig.CollectionStoreAddress, 5 * ONE_MANA) }, 5 * ONE_MANA, recordedStates.Add, CancellationToken.None, CancellationToken.None);
 
         private UniTask<PurchaseOutcome> BuyFromTheStoreAsync() =>
             manaRail.ExecuteAsync(new ManaPurchaseRequest(BUYER, "mint", chainConfig.CollectionStoreContract, "0xabcdef", BigInteger.MinusOne),
@@ -65,10 +68,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StubAllowance(5 * ONE_MANA);
 
             // Act
-            ManaApprovalResult result = await EnsureStoreAllowanceAsync();
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
 
             // Assert
             Assert.IsTrue(result.Success);
+            CollectionAssert.IsEmpty(recordedStates);
             await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
         }
 
@@ -79,15 +83,76 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StubAllowance(ONE_MANA);
 
             // Act
-            ManaApprovalResult result = await EnsureStoreAllowanceAsync();
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
 
             // Assert
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(new BigInteger(4), result.Nonce);
+            CollectionAssert.AreEqual(new[] { CreditsPurchaseState.ApprovingMana }, recordedStates);
 
             await metaTxRelayer.Received(1).RelayAsync(
                 Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.ManaTokenContract.Address && contract.IsClassic),
                 BUYER, Arg.Is<string>(calldata => calldata.StartsWith(APPROVE_SELECTOR)), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task CarryTheNonceFromOneApprovalToTheNext()
+        {
+            // Arrange: neither spender holds an allowance; the first approval is signed with nonce 4.
+            manaTokenReader.AllowanceAsync(BUYER, Arg.Any<string>(), Arg.Any<CancellationToken>())
+                           .Returns(UniTask.FromResult(BigInteger.Zero));
+
+            var spends = new[] { new ManaSpend(chainConfig.CreditsManagerAddress, ONE_MANA), new ManaSpend(chainConfig.CollectionStoreAddress, ONE_MANA) };
+
+            // Act
+            ManaApprovalResult result = await manaRail.PrepareAsync(BUYER, spends, 2 * ONE_MANA, recordedStates.Add, CancellationToken.None, CancellationToken.None);
+
+            // Assert
+            Assert.IsTrue(result.Success);
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), BUYER, Arg.Any<string>(), Arg.Is<BigInteger>(nonce => nonce.Sign < 0), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), BUYER, Arg.Any<string>(), new BigInteger(5), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAPaymentAboveWhatTheBuyerConfirmed()
+        {
+            // Act: 5 MANA needed, 4 confirmed.
+            ManaApprovalResult result = await manaRail.PrepareAsync(BUYER, new[] { new ManaSpend(chainConfig.CollectionStoreAddress, 5 * ONE_MANA) }, 4 * ONE_MANA,
+                recordedStates.Add, CancellationToken.None, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
+            await manaTokenReader.DidNotReceive().AllowanceAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAPaymentTheBalanceCannotCover()
+        {
+            // Arrange
+            manaTokenReader.BalanceOfAsync(BUYER, Arg.Any<CancellationToken>())
+                           .Returns(UniTask.FromResult(ONE_MANA));
+
+            // Act
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.InsufficientMana, result.Error);
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ContinueWhenTheBalanceCannotBeRead()
+        {
+            // Arrange
+            StubAllowance(5 * ONE_MANA);
+
+            manaTokenReader.BalanceOfAsync(BUYER, Arg.Any<CancellationToken>())
+                           .Returns(_ => UniTask.FromException<BigInteger>(new InvalidOperationException("node down")));
+
+            // Act
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
+
+            // Assert
+            Assert.IsTrue(result.Success);
         }
 
         [Test]
@@ -100,7 +165,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SignatureRejected, message: "rejected")));
 
             // Act
-            ManaApprovalResult result = await EnsureStoreAllowanceAsync();
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.SignatureRejected, result.Error);
@@ -117,7 +182,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(settlement));
 
             // Act
-            ManaApprovalResult result = await EnsureStoreAllowanceAsync();
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.ManaApprovalFailed, result.Error);
@@ -131,7 +196,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                            .Returns(_ => UniTask.FromException<BigInteger>(new InvalidOperationException("node down")));
 
             // Act
-            ManaApprovalResult result = await EnsureStoreAllowanceAsync();
+            ManaApprovalResult result = await PrepareStorePaymentAsync();
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.ManaApprovalFailed, result.Error);

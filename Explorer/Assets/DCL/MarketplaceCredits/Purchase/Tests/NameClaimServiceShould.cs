@@ -52,6 +52,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private IWeb3IdentityCache identityCache = null!;
         private CancellationTokenSource warmUpCts = null!;
         private CancellationTokenSource uiCts = null!;
+        private RelayedPurchaseGate purchaseGate = null!;
         private NameClaimService service = null!;
         private List<NameClaimStage> recordedStages = null!;
         private List<NameClaimResult> completedResults = null!;
@@ -97,7 +98,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             warmUpCts = new CancellationTokenSource();
             uiCts = new CancellationTokenSource();
 
-            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig), manaUsdRateReader, bridgeStatusPoller,
+            purchaseGate = new RelayedPurchaseGate();
+
+            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig), purchaseGate, manaUsdRateReader, bridgeStatusPoller,
                 chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
 
             recordedStages = new List<NameClaimStage>();
@@ -209,6 +212,40 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CollectionAssert.AreEqual(new[] { NameClaimStage.Preparing, NameClaimStage.Signing, NameClaimStage.Confirming, NameClaimStage.Registering }, recordedStages);
             Assert.AreEqual(1, completedResults.Count);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAClaimWhileAnotherRelayedPurchaseIsRunning()
+        {
+            // Arrange: a single-item purchase or cart checkout holds the gate.
+            using RelayedPurchaseGate.Lease? held = purchaseGate.TryEnter();
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+
+            // Assert: nothing was reserved or signed.
+            Assert.AreEqual(NameClaimError.PurchaseInProgress, result.Error);
+            Assert.IsNull(service.InFlightName);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdNameCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task FreeTheGateOnceThePaymentSettledWhileTheBridgeIsFollowed()
+        {
+            // Arrange: the bridge never answers during the test.
+            var bridgeGate = new UniTaskCompletionSource<AcrossFillOutcome>();
+            bridgeStatusPoller.WaitForFillAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(bridgeGate.Task);
+
+            // Act
+            UniTask<NameClaimResult> running = service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+
+            // Assert: the claim is still running, and another purchase may relay.
+            Assert.AreEqual(NAME, service.InFlightName);
+            Assert.IsNotNull(purchaseGate.TryEnter());
+
+            bridgeGate.TrySetResult(AcrossFillOutcome.Registered);
+            await running;
         }
 
         [Test]

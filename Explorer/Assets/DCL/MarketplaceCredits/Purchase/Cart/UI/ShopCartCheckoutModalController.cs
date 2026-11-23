@@ -16,8 +16,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
 {
     /// <summary>
     ///     The cart checkout popup: the cart reviewed against its live listings, the choice between credits and
-    ///     MANA, and the checkout that reserves, signs and settles it through
-    ///     <see cref="CreditsCartCheckoutService" />, with its progress and result.
+    ///     MANA, and the progress and result of the checkout.
     /// </summary>
     public class ShopCartCheckoutModalController : ControllerBase<ShopCartCheckoutModalView>
     {
@@ -675,6 +674,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 CreditsPurchaseError.TransactionReverted => "The purchase failed. Nothing was spent.",
                 CreditsPurchaseError.RelayerUnavailable => "The purchase service is temporarily unavailable. Please try again later.",
                 CreditsPurchaseError.FeatureDisabled => "Buying items is not available right now.",
+                CreditsPurchaseError.PurchaseInProgress => "Another purchase is still processing. Wait for it to finish and try again.",
                 _ => "The purchase failed. Nothing was spent.",
             };
     }

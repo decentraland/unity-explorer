@@ -114,11 +114,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                            .Returns(_ => UniTask.FromException<BigInteger>(new InvalidOperationException("node down")));
 
             // Act
-            BigInteger? balance = await provider.ManaBalanceAsync(BUYER, CancellationToken.None);
             PaymentOptions options = await provider.ComputeAsync(BUYER, PRICE_CENTS, TEN_MANA, true, CancellationToken.None);
 
             // Assert
-            Assert.IsNull(balance);
             Assert.AreEqual(1, options.Options.Count);
             Assert.AreEqual(PaymentMethod.Credits, options.Options[0].Method);
             Assert.IsNull(options.ManaShortfall);

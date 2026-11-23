@@ -65,6 +65,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private IWeb3IdentityCache identityCache = null!;
         private CreditsFeatureAccess creditsFeatureAccess = null!;
         private CancellationTokenSource warmUpCts = null!;
+        private RelayedPurchaseGate purchaseGate = null!;
         private CreditsPurchaseService service = null!;
         private List<CreditsPurchaseState> recordedStates = null!;
 
@@ -106,6 +107,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             warmUpCts = new CancellationTokenSource();
             creditsFeatureAccess = new CreditsFeatureAccess(identityCache, warmUpCts.Token);
 
+            purchaseGate = new RelayedPurchaseGate();
             service = CreateService(isFeatureEnabled: true);
 
             recordedStates = new List<CreditsPurchaseState>();
@@ -124,7 +126,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
             new (shopAPIClient, creditsAPIClient, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
                 new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true),
-                manaUsdRateReader, chainConfig, identityCache,
+                purchaseGate, manaUsdRateReader, chainConfig, identityCache,
                 featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
         /// <summary>The listing row a trade is quoted from — the quote resolves the trade through its id.</summary>
@@ -254,6 +256,31 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 recordedStates);
             await creditsAPIClient.Received(1).ReportIntentSubmissionAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), TX_HASH, Arg.Any<CancellationToken>());
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAPurchaseWhileAnotherRelayedPurchaseIsRunning()
+        {
+            // Arrange: a cart checkout or NAME claim holds the gate.
+            using RelayedPurchaseGate.Lease? held = purchaseGate.TryEnter();
+
+            // Act
+            CreditsPurchaseResult result = await QuoteAndPurchaseAsync();
+
+            // Assert: nothing was reserved or signed.
+            Assert.AreEqual(CreditsPurchaseError.PurchaseInProgress, result.Error);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task FreeTheGateWhenThePurchaseEnds()
+        {
+            // Act
+            await QuoteAndPurchaseAsync();
+
+            // Assert
+            Assert.IsNotNull(purchaseGate.TryEnter());
         }
 
         [Test]

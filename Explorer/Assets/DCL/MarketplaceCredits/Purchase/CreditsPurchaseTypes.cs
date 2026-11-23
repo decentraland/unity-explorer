@@ -34,6 +34,9 @@ namespace DCL.MarketplaceCredits.Purchase
         UnknownError,
         InsufficientMana,
         ManaApprovalFailed,
+
+        /// <summary>Another relayed purchase (single item, cart or NAME) is still being signed or settled.</summary>
+        PurchaseInProgress,
     }
 
     /// <summary>

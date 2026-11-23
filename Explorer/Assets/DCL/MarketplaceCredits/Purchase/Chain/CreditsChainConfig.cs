@@ -25,8 +25,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private const string POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS = "0xa40b1d129b8906888720686f3a01921ddf37716f";
         private const string AMOY_OFFCHAIN_MARKETPLACE_ADDRESS = "0x1b67d0e31eeb6b52d8eeed71d3616c2f5b33b8e7";
 
-        // The newer marketplace deployment. A trade names the marketplace it was signed against, so both are valid
-        // settlement targets.
+        // The newer marketplace deployment; a trade names the one it was signed against.
         private const string POLYGON_OFFCHAIN_MARKETPLACE_V3_ADDRESS = "0xe38ef22abe871513555cba89adfe45ab4f548ada";
         private const string AMOY_OFFCHAIN_MARKETPLACE_V3_ADDRESS = "0x36fd1434a6c4b8ade80c9847c1d15033ce34488c";
 
@@ -119,10 +118,7 @@ namespace DCL.MarketplaceCredits.Purchase
             CollectionStoreContract = new MetaTxContract(CollectionStoreAddress, COLLECTION_STORE_EIP712_NAME, COLLECTION_STORE_EIP712_VERSION, true);
         }
 
-        /// <summary>
-        ///     Whether the address is one of the offchain marketplace deployments of this chain. A trade arrives
-        ///     from the API naming its own marketplace, and that address ends up holding a MANA allowance.
-        /// </summary>
+        /// <summary>Whether the address is one of the offchain marketplace deployments of this chain.</summary>
         public bool IsKnownMarketplace(string address) =>
             string.Equals(address, OffChainMarketplaceAddress, StringComparison.OrdinalIgnoreCase)
             || string.Equals(address, offChainMarketplaceV3Address, StringComparison.OrdinalIgnoreCase);
@@ -146,6 +142,14 @@ namespace DCL.MarketplaceCredits.Purchase
                        _ => false,
                    };
         }
+
+        /// <summary>Whether a purchase of the trade can be paid with the buyer's MANA alone, straight on its marketplace.</summary>
+        public bool CanPayInMana(TradeDto trade) =>
+            IsKnownMarketplace(trade.contract) && AsksOnlyForMana(trade);
+
+        /// <summary>The contract a purchase paid with MANA alone is relayed to: the trade's marketplace, or the CollectionStore for a mint (no trade).</summary>
+        public MetaTxContract ManaSaleContract(TradeDto? trade) =>
+            trade == null ? CollectionStoreContract : MarketplaceContract(trade.contract);
 
         public MetaTxContract MarketplaceContract(string address) =>
             new (address, OFFCHAIN_MARKETPLACE_EIP712_NAME, OFFCHAIN_MARKETPLACE_EIP712_VERSION, false);

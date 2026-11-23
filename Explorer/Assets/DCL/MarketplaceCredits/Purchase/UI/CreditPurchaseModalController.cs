@@ -642,6 +642,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 case CreditsPurchaseError.TransactionReverted:
                     ShowFailure("The purchase failed on-chain. Nothing was spent.", allowRetry: true);
                     break;
+                case CreditsPurchaseError.PurchaseInProgress:
+                    ShowFailure("Another purchase is still processing. Wait for it to finish and try again.", allowRetry: true);
+                    break;
                 case CreditsPurchaseError.RelayerUnavailable:
                     ShowFailure("The purchase service is temporarily unavailable. Please try again later.", allowRetry: true);
                     break;
@@ -810,6 +813,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 CreditsPurchaseError.ManaApprovalFailed => "transaction_failed",
                 CreditsPurchaseError.RelayerUnavailable => "service_unavailable",
                 CreditsPurchaseError.AuthorizationFailed => "service_unavailable",
+                CreditsPurchaseError.PurchaseInProgress => "purchase_in_progress",
                 _ => ANALYTICS_ERROR_UNKNOWN,
             };
 
@@ -835,6 +839,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 CreditsPurchaseError.EncodingFailed => "encoding_failed",
                 CreditsPurchaseError.InsufficientMana => "insufficient_mana",
                 CreditsPurchaseError.ManaApprovalFailed => "mana_approval_failed",
+                CreditsPurchaseError.PurchaseInProgress => "purchase_in_progress",
                 _ => "unknown_error",
             };
 

@@ -341,6 +341,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 case NameClaimError.TransactionReverted:
                     ShowResult(FAILED_TITLE, "The payment failed on-chain. Your credits were not spent.", allowRetry: true);
                     break;
+                case NameClaimError.PurchaseInProgress:
+                    ShowResult(FAILED_TITLE, "Another purchase is still processing. Wait for it to finish and try again.", allowRetry: true);
+                    break;
                 case NameClaimError.NotRegistered:
                     ShowResult(FAILED_TITLE, "The payment went through but the NAME could not be registered. Please contact support.", allowRetry: false);
                     break;

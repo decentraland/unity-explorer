@@ -51,6 +51,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         NotRegistered,
         Cancelled,
         UnknownError,
+
+        /// <summary>Another relayed purchase (single item, cart or NAME) is still being signed or settled.</summary>
+        PurchaseInProgress,
     }
 
     public readonly struct NameClaimQuote

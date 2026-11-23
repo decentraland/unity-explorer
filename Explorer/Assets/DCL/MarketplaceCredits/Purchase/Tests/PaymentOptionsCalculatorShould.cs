@@ -154,6 +154,36 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public void SizeAMixedPaymentFromItsCredit()
+        {
+            // Act: 100 of 250 cents in credits on a 10 MANA price; the credit is worth 4 MANA.
+            bool sized = PaymentOptionsCalculator.TrySizeMixedPayment((4 * ONE_MANA).ToString(), 100, 250, 10 * ONE_MANA, out BigInteger gapWei, out string maxCreditedValue);
+
+            // Assert: the remainder's share, and the cap that lets it be pulled on top of the credit.
+            Assert.IsTrue(sized);
+            Assert.AreEqual(6 * ONE_MANA, gapWei);
+            Assert.AreEqual((10 * ONE_MANA).ToString(), maxCreditedValue);
+        }
+
+        [Test]
+        public void RaiseTheGapWhenTheCreditIsWorthLessThanItsShare()
+        {
+            // Act: the credit is worth 3 MANA where its share of the price is 4.
+            PaymentOptionsCalculator.TrySizeMixedPayment((3 * ONE_MANA).ToString(), 100, 250, 10 * ONE_MANA, out BigInteger gapWei, out string maxCreditedValue);
+
+            // Assert
+            Assert.AreEqual(7 * ONE_MANA, gapWei);
+            Assert.AreEqual((10 * ONE_MANA).ToString(), maxCreditedValue);
+        }
+
+        [Test]
+        public void RefuseToSizeAMixedPaymentFromAnUnreadableCredit()
+        {
+            // Assert
+            Assert.IsFalse(PaymentOptionsCalculator.TrySizeMixedPayment("not-a-number", 100, 250, 10 * ONE_MANA, out _, out _));
+        }
+
+        [Test]
         public void TolerateASmallManaDriftOnly()
         {
             // Assert

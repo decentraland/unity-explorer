@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 
@@ -8,8 +9,7 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     /// <summary>
     ///     The MANA side of a purchase: granting a contract the allowance to pull the buyer's MANA, and settling a
-    ///     purchase that spends no credits directly against the marketplace or the CollectionStore. Everything is
-    ///     relayed, so the buyer signs and never pays gas.
+    ///     purchase that spends no credits directly against the marketplace or the CollectionStore.
     /// </summary>
     public class ManaRail
     {
@@ -29,12 +29,52 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         /// <summary>
-        ///     Does nothing when the spender's allowance already covers requiredWei; otherwise asks the buyer to
-        ///     sign an unlimited approval and waits for it to be mined. <paramref name="signCt" /> is rethrown when
-        ///     cancelled before the signature. An approval that was broadcast but not seen confirmed fails as
-        ///     <see cref="CreditsPurchaseError.ManaApprovalFailed" />.
+        ///     Everything the MANA of a payment needs before its purchase is signed: the total stays within what
+        ///     the buyer confirmed, the buyer holds it, and every spender may pull its share, asking for the
+        ///     approvals that are missing. A balance that cannot be read is not treated as a shortfall.
+        ///     setState receives <see cref="CreditsPurchaseState.ApprovingMana" /> before each approval request.
+        ///     <paramref name="signCt" /> is rethrown when cancelled before a signature.
         /// </summary>
-        public async UniTask<ManaApprovalResult> EnsureAllowanceAsync(string buyer, string spender, BigInteger requiredWei, BigInteger minNonce, CancellationToken signCt, CancellationToken settleCt)
+        public async UniTask<ManaApprovalResult> PrepareAsync(string buyer, IReadOnlyList<ManaSpend> spends, BigInteger confirmedWei, Action<CreditsPurchaseState> setState,
+            CancellationToken signCt, CancellationToken settleCt)
+        {
+            BigInteger totalWei = BigInteger.Zero;
+
+            foreach (ManaSpend spend in spends)
+                totalWei += spend.Wei;
+
+            if (PaymentOptionsCalculator.ExceedsConfirmedMana(totalWei, confirmedWei))
+                return new ManaApprovalResult(CreditsPurchaseError.PriceChanged, $"The payment needs {totalWei} MANA wei, buyer confirmed {confirmedWei}", BigInteger.MinusOne);
+
+            BigInteger? balance = await manaTokenReader.TryBalanceOfAsync(buyer, signCt);
+
+            if (balance < totalWei)
+                return new ManaApprovalResult(CreditsPurchaseError.InsufficientMana, null, BigInteger.MinusOne);
+
+            // Every approval is a meta-transaction of the MANA token, so they share one nonce sequence.
+            BigInteger minNonce = BigInteger.MinusOne;
+
+            foreach (ManaSpend spend in spends)
+            {
+                ManaApprovalResult approval = await EnsureAllowanceAsync(buyer, spend.Spender, spend.Wei, minNonce, setState, signCt, settleCt);
+
+                if (!approval.Success)
+                    return approval;
+
+                if (approval.Nonce.Sign >= 0)
+                    minNonce = approval.Nonce + BigInteger.One;
+            }
+
+            return new ManaApprovalResult(CreditsPurchaseError.None, null, BigInteger.MinusOne);
+        }
+
+        /// <summary>
+        ///     Does nothing when the spender's allowance already covers requiredWei; otherwise asks the buyer to
+        ///     sign an unlimited approval and waits for it to be mined. An approval that was broadcast but not
+        ///     seen confirmed fails as <see cref="CreditsPurchaseError.ManaApprovalFailed" />.
+        /// </summary>
+        private async UniTask<ManaApprovalResult> EnsureAllowanceAsync(string buyer, string spender, BigInteger requiredWei, BigInteger minNonce, Action<CreditsPurchaseState> setState,
+            CancellationToken signCt, CancellationToken settleCt)
         {
             BigInteger allowance;
 
@@ -48,6 +88,8 @@ namespace DCL.MarketplaceCredits.Purchase
 
             if (allowance >= requiredWei)
                 return new ManaApprovalResult(CreditsPurchaseError.None, null, BigInteger.MinusOne);
+
+            setState(CreditsPurchaseState.ApprovingMana);
 
             RelayResult relay = await metaTxRelayer.RelayAsync(manaTokenContract, buyer, CreditsTradeEncoder.BuildUnlimitedApproveCalldata(spender), minNonce, signCt, settleCt);
 

@@ -83,5 +83,18 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Act & Assert
             Assert.ThrowsAsync<InvalidOperationException>(async () => await reader.BalanceOfAsync(BUYER, CancellationToken.None));
         }
+
+        [Test]
+        public async Task ReportAnUnreadableBalanceAsUnknown()
+        {
+            // Arrange
+            StubResult(null);
+
+            // Act
+            BigInteger? balance = await reader.TryBalanceOfAsync(BUYER, CancellationToken.None);
+
+            // Assert
+            Assert.IsNull(balance);
+        }
     }
 }

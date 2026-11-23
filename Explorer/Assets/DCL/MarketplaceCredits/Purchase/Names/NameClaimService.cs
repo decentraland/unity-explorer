@@ -36,6 +36,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         private readonly IWeb3IdentityCache identityCache;
         private readonly CreditsFeatureAccess creditsFeatureAccess;
         private readonly UseCreditsExecutor executor;
+        private readonly RelayedPurchaseGate purchaseGate;
         private readonly bool isFeatureEnabled;
         private readonly CancellationTokenSource disposalCts = new ();
 
@@ -61,6 +62,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             MarketplaceCreditsAPIClient creditsAPIClient,
             IEthereumApi ethereumApi,
             UseCreditsExecutor executor,
+            RelayedPurchaseGate purchaseGate,
             ManaUsdRateReader manaUsdRateReader,
             AcrossBridgeStatusPoller bridgeStatusPoller,
             CreditsChainConfig chainConfig,
@@ -77,6 +79,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
             this.executor = executor;
+            this.purchaseGate = purchaseGate;
         }
 
         public void Dispose() =>
@@ -155,12 +158,17 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             if (InFlightName != null)
                 return NameClaimResult.Failed(NameClaimError.UnknownError, "A claim is already in progress");
 
+            using RelayedPurchaseGate.Lease? paymentLease = purchaseGate.TryEnter();
+
+            if (paymentLease == null)
+                return NameClaimResult.Failed(NameClaimError.PurchaseInProgress);
+
             InFlightName = name;
             LastResultName = null;
 
             NameClaimResult result;
 
-            try { result = await ClaimInternalAsync(name, quote, ct); }
+            try { result = await ClaimInternalAsync(name, quote, paymentLease, ct); }
             catch (OperationCanceledException) { result = NameClaimResult.Failed(NameClaimError.Cancelled); }
             catch (Exception e)
             {
@@ -207,7 +215,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                    };
         }
 
-        private async UniTask<NameClaimResult> ClaimInternalAsync(string name, NameClaimQuote quote, CancellationToken ct)
+        private async UniTask<NameClaimResult> ClaimInternalAsync(string name, NameClaimQuote quote, RelayedPurchaseGate.Lease paymentLease, CancellationToken ct)
         {
             if (!IsAvailable)
                 return NameClaimResult.Failed(NameClaimError.FeatureDisabled);
@@ -288,6 +296,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             }
 
             PurchaseOutcome outcome = await executor.ExecuteAsync(request, OnPaymentStateChanged, ct, disposalCts.Token);
+
+            // The bridge wait that follows relays nothing and runs for minutes.
+            paymentLease.Dispose();
 
             // Without a transaction hash there is nothing to look the bridge deposit up by.
             if (outcome.Error == CreditsPurchaseError.SettlementPending && string.IsNullOrEmpty(outcome.TxHash))

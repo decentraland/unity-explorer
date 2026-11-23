@@ -92,6 +92,41 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.IsFalse(config.AsksOnlyForMana(TradeReceiving()));
         }
 
+        [Test]
+        public void AllowManaOnlyForASingleManaPriceOnAKnownMarketplace()
+        {
+            // Arrange
+            var config = new CreditsChainConfig(EthereumNetwork.Sepolia);
+            TradeAssetDto mana = Asset(CreditsTradeEncoder.ASSET_TYPE_ERC20, config.ManaTokenContract.Address);
+
+            TradeDto payable = TradeReceiving(mana);
+            payable.contract = config.OffChainMarketplaceAddress;
+
+            TradeDto unknownMarketplace = TradeReceiving(mana);
+            unknownMarketplace.contract = OTHER_TOKEN;
+
+            TradeDto extraAsset = TradeReceiving(mana, Asset(CreditsTradeEncoder.ASSET_TYPE_ERC721, OTHER_TOKEN));
+            extraAsset.contract = config.OffChainMarketplaceAddress;
+
+            // Assert
+            Assert.IsTrue(config.CanPayInMana(payable));
+            Assert.IsFalse(config.CanPayInMana(unknownMarketplace));
+            Assert.IsFalse(config.CanPayInMana(extraAsset));
+        }
+
+        [Test]
+        public void RelayAManaSaleToTheTradesMarketplaceOrTheStore()
+        {
+            // Arrange
+            var config = new CreditsChainConfig(EthereumNetwork.Sepolia);
+            TradeDto trade = TradeReceiving();
+            trade.contract = config.OffChainMarketplaceAddress;
+
+            // Assert
+            Assert.AreEqual(config.OffChainMarketplaceAddress, config.ManaSaleContract(trade).Address);
+            Assert.AreEqual(config.CollectionStoreAddress, config.ManaSaleContract(null).Address);
+        }
+
         private static TradeAssetDto Asset(int assetType, string contractAddress) =>
             new () { assetType = assetType, contractAddress = contractAddress, amount = "1", tokenId = "1" };
 

@@ -93,6 +93,25 @@ namespace DCL.MarketplaceCredits.Purchase
             BigInteger.Max(ManaForRemainder(remainderCents, priceCents, requiredManaWei), requiredManaWei - creditValueWei);
 
         /// <summary>
+        ///     Sizes a mixed payment from the credit authorized for its credits leg: the MANA gap, and the
+        ///     maxCreditedValue (credit plus gap) under which useCredits pulls that gap from the buyer's MANA.
+        ///     False when the credit's amount cannot be read.
+        /// </summary>
+        public static bool TrySizeMixedPayment(string creditAvailableAmount, int creditsCents, int priceCents, BigInteger requiredManaWei, out BigInteger gapWei, out string maxCreditedValue)
+        {
+            if (!BigInteger.TryParse(creditAvailableAmount, out BigInteger creditValueWei))
+            {
+                gapWei = BigInteger.Zero;
+                maxCreditedValue = string.Empty;
+                return false;
+            }
+
+            gapWei = ManaGap(priceCents - creditsCents, priceCents, requiredManaWei, creditValueWei);
+            maxCreditedValue = (creditValueWei + gapWei).ToString();
+            return true;
+        }
+
+        /// <summary>
         ///     Spreads a credit balance over the units of a cart, in order: each unit takes what its price needs
         ///     from what is left, in whole credits. The result has one entry per unit.
         /// </summary>
