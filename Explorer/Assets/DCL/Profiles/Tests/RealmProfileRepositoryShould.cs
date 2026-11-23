@@ -254,6 +254,94 @@ namespace DCL.Profiles.Tests
             Assert.That(profile, Is.Null);
         }
 
+        [Test]
+        public async Task FallBackToTheAnnouncedCatalystWhenTheCentralizedEndpointLacksTheProfile()
+        {
+            // Arrange: the centralized endpoint answers without the profile, the peer's catalyst has it
+            repository = NewRepository(true);
+            AnswerSinglePostWith(new List<Profile>());
+            AnswerSingleGetWith(dtos[0]);
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            Assert.That(profile!.Value.UserId.Value, Is.EqualTo(dtos[0].UserId.Value));
+            ReceivedSingleGetsTo($"{LAMBDAS.Value}/profiles/{dtos[0].UserId.Value}", 1);
+        }
+
+        [Test]
+        public async Task NotAskTheCatalystWhenTheCentralizedEndpointHasTheProfile()
+        {
+            // Arrange
+            repository = NewRepository(true);
+            AnswerSinglePostWith(new List<Profile> { dtos[0] });
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            webRequestController.DidNotReceive()
+                                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                     (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
+        }
+
+        [Test]
+        public async Task FallBackToTheCatalystWhenACentralizedBatchLacksTheProfile()
+        {
+            // Arrange
+            repository = NewRepository(true);
+            AnswerSingleGetWith(dtos[0]);
+            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId, 0, LAMBDAS, CancellationToken.None);
+            AssertBatch(1, 1);
+
+            // Act: the centralized batch answered without the profile
+            repository.ResolveProfile(dtos[0].UserId, null, true);
+            Profile? profile = await task.Timeout(TimeSpan.FromSeconds(1));
+
+            // Assert
+            Assert.That(profile, Is.Not.Null);
+            ReceivedSingleGetsTo($"{LAMBDAS.Value}/profiles/{dtos[0].UserId.Value}", 1);
+        }
+
+        [Test]
+        public async Task LeaveAProfileMissingWhenItsCatalystFallbackFails()
+        {
+            // Arrange: missing from the centralized endpoint, and the catalyst cannot be reached
+            repository = NewRepository(true);
+            AnswerSinglePostWith(new List<Profile>());
+            FailSingleGetWith(new Exception("catalyst unreachable"));
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert: still missing, as the centralized endpoint alone answered, and nothing reported
+            Assert.That(profile, Is.Null);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        private void AnswerSinglePostWith(IList<Profile> profiles) =>
+            webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>
+                                 (Arg.Any<RequestEnvelope<GenericPostRequest, GenericPostArguments>>(), Arg.Any<GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>>())!
+                                .Returns(_ => UniTask.FromResult(profiles));
+
+        private void AnswerSingleGetWith(Profile profile) =>
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
+                                .Returns(_ => UniTask.FromResult(profile));
+
+        private void ReceivedSingleGetsTo(string url, int count) =>
+            webRequestController.Received(count)
+                                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                     (Arg.Is<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(envelope => envelope.CommonArguments.URL.Value == url),
+                                      Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
+
         private RealmProfileRepository NewRepository(bool useCentralizedProfiles) =>
             new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
 

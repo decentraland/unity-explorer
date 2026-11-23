@@ -310,7 +310,20 @@ namespace DCL.Profiles
                         // ⚠️ The following produces potentially a very long-living task ⚠️
                         // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
                         bool versionMismatch = versionSpecified && result != null && result.Value.Version < version;
-                        return (result == null || versionMismatch) && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+
+                        if ((result == null || versionMismatch) && delayBatchResolution)
+                            return await EnforceSingleGetAsync();
+
+                        // The single GET above ends in the same fallback; without it, a profile the centralized batch lacks is asked of the catalyst once
+                        if (result == null && useCentralizedProfiles && !forceCatalyst && tier == ProfileTier.Kind.Full)
+                        {
+                            result = await GetFromCatalystFallbackAsync(id, version, fromCatalyst, ct);
+
+                            if (result != null)
+                                ResolveProfile(id, result, false);
+                        }
+
+                        return result;
                     }
                 }
                 finally
@@ -376,6 +389,8 @@ namespace DCL.Profiles
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
+                    else
+                        profile = await GetFromCatalystFallbackAsync(id, version, fromCatalyst, ct);
                 }
                 else
                 {
@@ -410,6 +425,18 @@ namespace DCL.Profiles
                 ResolveException(id, e);
                 throw;
             }
+        }
+
+        /// <summary>
+        ///     The centralized endpoint indexes the profiles its own network deploys. A profile deployed only to another catalyst — the
+        ///     realm a custom deployment serves, or the lambdas a peer announces — is missing there, so it is asked of that catalyst
+        ///     once: the announced lambdas, else the realm's. A profile missing from both, or a catalyst that cannot answer, stays
+        ///     missing without a report, as the centralized answer alone left it.
+        /// </summary>
+        private async UniTask<ProfileTier?> GetFromCatalystFallbackAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
+        {
+            try { return await ProfilesRequest.GetAsync(webRequestController, GetUrl(id, fromCatalyst), id, version, false, ct); }
+            catch (Exception e) when (e is not OperationCanceledException) { return null; }
         }
 
         private static void ReportProfileNotFound(string id, URLDomain? fromCatalyst) =>
