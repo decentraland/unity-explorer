@@ -218,7 +218,9 @@ namespace DCL.Browser
                     case DecentralandUrl.Servers: return DclDevGateway.ORIGIN + "/lambdas/contracts/servers";
                     case DecentralandUrl.Blocklist: return DclDevGateway.ORIGIN + "/config/denylist.json";
                     case DecentralandUrl.MarketplaceServer: return DclDevGateway.ORIGIN + "/marketplace-api";
+                    case DecentralandUrl.Market: return DclDevGateway.ORIGIN + "/marketplace";
                     case DecentralandUrl.Faqs: return DclDevGateway.ORIGIN + "/docs/player/faqs/decentraland-101/";
+                    case DecentralandUrl.MinimumSpecs: return Url(DecentralandUrl.Faqs) + "#what-hardware-do-i-need-to-run-decentraland";
                     case DecentralandUrl.SocialServiceMutes: return DclDevGateway.ORIGIN + "/social-api/v1/mutes";
                     case DecentralandUrl.ReferralProgress: return DclDevGateway.ORIGIN + "/social-api/v1/referral-progress";
                 }

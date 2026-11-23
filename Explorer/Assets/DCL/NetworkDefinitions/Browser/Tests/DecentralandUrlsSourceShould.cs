@@ -322,7 +322,9 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("wss://dcl.dev/social-rpc", urls.Url(DecentralandUrl.ApiFriends));
             Assert.AreEqual("https://dcl.dev/about", urls.Url(DecentralandUrl.PeerAbout));
             Assert.AreEqual("https://dcl.dev/marketplace-api", urls.Url(DecentralandUrl.MarketplaceServer));
+            Assert.AreEqual("https://dcl.dev/marketplace", urls.Url(DecentralandUrl.Market));
             Assert.AreEqual("https://dcl.dev/docs/player/faqs/decentraland-101/", urls.Url(DecentralandUrl.Faqs));
+            Assert.AreEqual("https://dcl.dev/docs/player/faqs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland", urls.Url(DecentralandUrl.MinimumSpecs));
             Assert.AreEqual("https://dcl.dev/asset-bundle-registry/profiles", urls.Url(DecentralandUrl.Profiles));
             Assert.AreEqual("https://dcl.dev/asset-bundle-registry/profiles/metadata", urls.Url(DecentralandUrl.ProfilesMetadata));
             Assert.AreEqual("https://dcl.dev/lambdas", urls.Url(DecentralandUrl.Lambdas));
