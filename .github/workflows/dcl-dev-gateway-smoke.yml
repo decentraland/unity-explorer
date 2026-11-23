@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        screen: ["personal", "social", "world"]
+        screen: ["auth", "personal", "social", "world"]
     env:
       AUDIT_BUILD_URL: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28109-2820e4a/Decentraland_windows64.zip
       AUDIT_SLICE: ${{ matrix.screen }}

@@ -27,8 +27,9 @@ session=None
 
 def capture(label):
     label=re.sub(r"[^a-zA-Z0-9._-]","-",label)
-    result,_=rpc("tools/call",{"name":"screenshot","arguments":{"maxWidth":1280,"quality":86}},session)
-    image=next(b for b in result["content"] if b["type"]=="image")
+    result,_=rpc("tools/call",{"name":"screenshot","arguments":{"maxWidth":1280,"quality":"jpg"}},session)
+    image=next((b for b in result["content"] if b["type"]=="image"),None)
+    if image is None: raise RuntimeError("Player screenshot: "+str(result.get("content"))[:260])
     path=out/(label+".jpg")
     path.write_bytes(base64.b64decode(image["data"]))
     return path

@@ -45,9 +45,9 @@ def image_facts(value):
     if not isinstance(value, str) or not value:
         return {"representation": "missing"}
     parts = urlsplit(value)
-    if parts.scheme == "https" and parts.hostname == "dcl.dev":
+    if parts.scheme == "https" and parts.hostname in {"dcl.dev", "profile-images.decentraland.org", "profile-images.dcl.dev"}:
         local = value
-        representation = "dcl.dev URL"
+        representation = "HTTPS URL: " + parts.hostname
     elif re.fullmatch(r"(Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[a-z2-7]{25,110})", value):
         local = ORIGIN + "/content/contents/" + value
         representation = "bare content ID"
@@ -92,6 +92,12 @@ def social_readback(a, b, facts):
     profiles = [r for r in data.get("avatars", []) if (r.get("userId") or "").lower() == peer]
     facts["catalyst_profile"] = {"http": status, "fixture_found": bool(profiles), "face256": image_facts(
         profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None)}
+    status, active = request_json("POST", "/content/entities/active", data={"pointers": [peer]})
+    entities = active if isinstance(active, list) else []
+    profiles = (entities[0].get("metadata", {}).get("avatars", []) if entities else [])
+    face = profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None
+    facts["active_profile_entity"] = {"http": status, "profile_count": len(profiles),
+                                       "has_face256": bool(face), "face256": image_facts(face)}
 
 
 def send_key(vk):
@@ -214,13 +220,18 @@ class Session:
         self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
         self.click([friends + r".*friendsbutton(?:/button)?$"])
         self.snap("friends-accepted", friends, 3)
-        facts["visible_friend_rows"] = sum(bool(re.search(r"/friendlistuser[^/]*/(?:.*/)?chatbutton$", self.path(e)))
-                                          for e in self.controls)
+        friend_row = [r"/friendlistuser[^/]*$", r"/friendlistuser[^/]*/(?:.*/)?(?:mainbutton|userbutton)$"]
+        facts["visible_friend_rows"] = sum(any(re.search(pattern, self.path(e)) for pattern in friend_row)
+                                           for e in self.controls)
         if pair and facts.get("membership", {}).get("contains_fixture") and facts["membership"]["count"] == 1:
+            node = self.choose(friend_row)
+            if node:
+                self.tool(self.session, "ui_hover", {"path": node["path"]})
+                time.sleep(.4)
             if self.click([r"/friendlistuser[^/]*/(?:.*/)?chatbutton$"]):
                 self.snap("direct-message", r"/chatpanel/|/chatinputbox/"); self.close(r"/chatpanel")
                 self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
-            if self.click([r"/friendlistuser[^/]*$", r"/friendlistuser[^/]*/(?:.*/)?(?:mainbutton|userbutton)$"]):
+            if self.click(friend_row):
                 self.snap("friend-passport", r"/passport/")
                 self.close(r"/passport")
         self.close(friends)
@@ -255,7 +266,7 @@ class Session:
     def communities(self):
         self.open([r"/sidebarcommunitiesbutton(?:/button)?$", r"/communities(?:/button)?$"], ord("O"))
         self.snap("communities-browse", r"/communitiessection/|/communitiesbrowser", 3)
-        if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/(?:header|button)$"]):
+        if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.*viewbutton$", r"/communityresultcard/(?:header|button)$"]):
             self.snap("community-announcements", r"/communitycard/")
             for label in ("Members", "Places", "Photos"):
                 if self.click([r"/communitycard/.*" + label.lower() + r"sectionbutton(?:/button)?$"]):
