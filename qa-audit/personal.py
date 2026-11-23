@@ -77,7 +77,7 @@ def run(session, tool, capture, output_dir):
         for _ in range(3):
             state = elements()
             modal_close = find((r"PerformanceIssuePrompt/.*/CloseButton$", r"AltTesterPrefab/AltDialog/Dialog/CloseButton$",
-                                r"(?:PhotoDetailUI|BackpackModal|ExplorePanel|ControlsPanel|ScreencaptureHUD|BugReport|EmotesWheel|CreditsTopUpModal).*?/(?:Button_Close|CloseButton|ExitButton)(?:/|$)"),
+                                r"(?:PhotoDetailUI|BackpackModal|ExplorePanel|ControlsPanel|ScreencaptureHUD|BugReport|EmotesWheel|CreditsTopUpModal).*?/(?:Button_Close|CloseButton|ExitButton)(?:/|$)", r"^PopupCloser/Button$"),
                                row=state)
             if modal_close and click("Close visible client panel", modal_close):
                 continue
@@ -288,14 +288,19 @@ def run(session, tool, capture, output_dir):
         dismiss()
 
     def support():
-        opened = open_hotkey("H", "ControlsPanel|ControlsView|KeyboardControls")
-        snap("controls-help", "Controls", 1)
-        if opened:
+        if section != "faq":
+            opened = open_hotkey("H", "ControlsPanel|ControlsView|KeyboardControls")
+            snap("controls-help", "Controls", 1)
+            if opened:
+                dismiss()
+        else:
             dismiss()
         for name, pattern, screen in (
             ("audio-menu", r"/Audio(?:Settings)?Button(?:/|$)", "AudioMenu|AudioSlider"),
             ("system-menu", r"/SettingsButton(?:/|$)", "SystemMenu"),
         ):
+            if section == "faq" and name != "system-menu":
+                continue
             target = find((pattern,), scope="Sidebar")
             if click("Open " + name, target):
                 snap(name, screen)
@@ -338,15 +343,15 @@ def run(session, tool, capture, output_dir):
                     if click("Open bug report form", find((r"ReportBug", r"BugReport"), ["Report a bug"], "systemmenu")):
                         snap("bug-report-form", "BugReport")
                 else:
-                    click("Close " + name, target)
+                    click("Close " + name, find((r"^PopupCloser/Button$",)) or target)
         dismiss()
 
     section = os.environ.get("AUDIT_SECTION", "").strip().lower()
     drivers = (backpack, wheel, settings, camera, shop, support)
-    if section and section not in {driver.__name__ for driver in drivers}:
+    if section and section != "faq" and section not in {driver.__name__ for driver in drivers}:
         raise ValueError("Unknown personal screen section " + section)
     for driver in drivers:
-        if section and section != driver.__name__ and not (section == "backpack" and driver == wheel):
+        if section and section != driver.__name__ and not (section == "backpack" and driver == wheel) and not (section == "faq" and driver == support):
             continue
         try:
             driver()

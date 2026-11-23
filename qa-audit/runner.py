@@ -180,8 +180,12 @@ def wait_world(process,auth_only):
             if jump and "lobby" not in seen:
                 capture("existing-account-lobby");paths("existing-account-lobby",els);click(jump);seen.add("lobby")
         else:
-            s=tool(session,"get_player_state",{})
-            state=tool(session,"get_scene_state",{})
+            try:
+                s=tool(session,"get_player_state",{})
+                state=tool(session,"get_scene_state",{})
+            except (RuntimeError,OSError):
+                time.sleep(2)
+                continue
             if s.get("address") and state.get("loadingScreenOn") is False and (state.get("scene") or {}).get("isReady") and not any("authentication.mainscreen/" in k for k in keys):
                 good+=1
                 if good>=3:
