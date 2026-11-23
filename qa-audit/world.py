@@ -140,15 +140,17 @@ def run(session, tool, capture, output_dir):
     if match(r"/EventCard(_Big|_Small|_Banner|\(Clone\)).*"):
         record("18-event-details",lambda:press(r"/EventCard(?:_Big|_Small|_Banner)(?:\(Clone\))?(?:$|/MainButton$|/.*(InfoButton|DetailButton)$)"),r"/EventDetailPanel")
     close(events_marker)
-    def travel():
-        try: call("teleport",x=-1,y=-1,waitForReady=False)
+    def travel(x,y):
+        try: call("teleport",x=x,y=y,waitForReady=False)
         except (ValueError,TypeError): pass  # This tool returns text when the request is accepted.
         deadline=time.monotonic()+52
         while time.monotonic()<deadline:
             state=call("get_scene_state")
-            if state.get("currentParcel")=={"x":-1,"y":-1} and (state.get("scene") or {}).get("isReady"): return
+            if state.get("currentParcel")=={"x":x,"y":y} and (state.get("scene") or {}).get("isReady"): return
             time.sleep(2)
-        raise TimeoutError("The second parcel did not report a ready scene within 52 seconds")
-    record("19-second-scene",travel,wait=2)
+        raise TimeoutError(f"Parcel {x},{y} did not report a ready scene within 52 seconds")
+    record("19-second-scene",lambda:travel(-1,-1),wait=2)
     snapshot_scene("second-scene")
+    record("20-metazoo-bundles",lambda:travel(95,98),wait=8)
+    snapshot_scene("metazoo")
     return rows

@@ -1,5 +1,4 @@
 """Exercise visible social UI in a signed-in CI player. Writes only sanitized QA evidence."""
-import ctypes
 import hashlib
 import json
 import os
@@ -90,8 +89,12 @@ def social_readback(a, b, facts):
                                   "picture": image_facts(rows[0].get("avatarUrl") if rows else None)}
     status, data = request_json("GET", "/lambdas/profiles/" + peer)
     profiles = [r for r in data.get("avatars", []) if (r.get("userId") or "").lower() == peer]
-    facts["catalyst_profile"] = {"http": status, "fixture_found": bool(profiles), "face256": image_facts(
-        profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None)}
+    face = profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None
+    facts["catalyst_profile"] = {"http": status, "fixture_found": bool(profiles), "face256": image_facts(face)}
+    if face:
+        uri = urlsplit(face)
+        if uri.hostname == "profile-images.decentraland.org" and uri.path.startswith("/entities/"):
+            facts["same_image_on_gateway"] = image_facts(ORIGIN + "/profile-images" + uri.path)
     status, active = request_json("POST", "/content/entities/active", data={"pointers": [peer]})
     entities = active if isinstance(active, list) else []
     profiles = (entities[0].get("metadata", {}).get("avatars", []) if entities else [])
@@ -101,16 +104,8 @@ def social_readback(a, b, facts):
 
 
 def send_key(vk):
-    # The CI runner has one active player. Only send OS input if it is the foreground window.
-    user32 = ctypes.windll.user32
-    title = ctypes.create_unicode_buffer(300)
-    user32.GetWindowTextW(user32.GetForegroundWindow(), title, len(title))
-    if "decentraland" not in title.value.lower():
-        return False
-    user32.keybd_event(vk, 0, 0, 0)
-    time.sleep(.12)
-    user32.keybd_event(vk, 0, 2, 0)
-    time.sleep(.55)
+    from audit_input import key
+    key({0x1b: "ESCAPE", 0x0d: "ENTER"}.get(vk, chr(vk)))
     return True
 
 
@@ -132,9 +127,24 @@ class Session:
 
     @staticmethod
     def path(node):
-        return re.sub(r"\[\d+\]", "", node.get("path", "")).lower()
+        return "/" + re.sub(r"\[\d+\]", "", node.get("path", "")).strip("/").lower()
+
+    def clear_transients(self):
+        # MCP is listening while the player still shows the loading screen. Ignore behind-screen controls.
+        for _ in range(70):
+            nodes = self.elements()
+            covering = next((n for n in nodes if re.search(r"/(?:altdialog/dialog|performanceissueprompt/.+)/closebutton$",
+                                                          self.path(n)) and not n.get("occluded")), None)
+            if covering:
+                self.tool(self.session, "ui_click", {"path": covering["path"]})
+                time.sleep(.45)
+                continue
+            if not any("/sceneloadingscreen/content/" in self.path(n) for n in nodes):
+                return
+            time.sleep(1)
 
     def choose(self, patterns, wait=2, label=None):
+        self.clear_transients()
         end = time.monotonic() + wait
         while True:
             elements = self.elements()
@@ -177,8 +187,10 @@ class Session:
         return bool(matched)
 
     def close(self, scope):
-        if not self.click([scope + r".*/(?:button_close|closebutton|close|background_close)$"], .4):
-            send_key(0x1B)
+        if not any(re.search(scope, self.path(n), re.I) for n in self.elements()):
+            return
+        if not self.click([scope + r".*/(?:button_close|closebutton|\[btn\] close|close|background_close)$"], .5):
+            send_key(0x1b)
 
     def open(self, patterns, key=None):
         if self.click(patterns):
@@ -204,7 +216,7 @@ class Session:
         self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
         self.snap("friends-initial", friends)
         self.click([friends + r".*requestsbutton(?:/button)?$"])
-        self.snap("friend-requests", r"/requestspanel/|/requestsbutton(?:/|$)")
+        self.snap("friend-requests", r"/requestspanel/", 2)
         if pair and not has_friend and owned_request:
             facts["clicked_accept"] = self.click([r"/requestuser[^/]*/(?:.*/)?acceptbutton$"])
             social_readback(a, b, facts)
@@ -214,7 +226,7 @@ class Session:
         if pair:
             social_readback(a, b, facts)
         self.click([friends + r".*blockedbutton(?:/button)?$"])
-        self.snap("blocked", r"/blockedpanel/|/blockedbutton(?:/|$)")
+        self.snap("blocked", r"/blockedpanel/")
         # Reopen so Unity does a fresh RPC page fetch even if acceptance used the HTTP companion route.
         self.close(friends)
         self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
@@ -229,18 +241,20 @@ class Session:
                 self.tool(self.session, "ui_hover", {"path": node["path"]})
                 time.sleep(.4)
             if self.click([r"/friendlistuser[^/]*/(?:.*/)?chatbutton$"]):
-                self.snap("direct-message", r"/chatpanel/|/chatinputbox/"); self.close(r"/chatpanel")
+                self.choose([r"/chatpanel/.*(?:privatevoicecall_button|chatconversationstoolbarviewitem_private)$"], 4)
+                self.snap("direct-message", r"/chatpanel/.*(?:chatnputboxmask|chatconversationstoolbarviewitem_private|privatevoicecall_button)")
+                self.close(r"/chatpanel")
                 self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
             if self.click(friend_row):
-                self.snap("friend-passport", r"/passport/")
+                self.snap("friend-passport", r"/passport/", 8)
                 self.close(r"/passport")
         self.close(friends)
 
     def passport(self):
-        self.open([r"/sidebarprofilebutton(?:/button)?$", r"/profilewidget$"])
+        self.open([r"/sidebarprofilebutton/openprofilebutton$", r"/sidebarprofilebutton(?:/button)?$", r"/profilewidget$"])
         self.snap("profile-menu", r"/profilemenu|/previewprofilebutton$")
         self.click([r"/previewprofilebutton(?:/button)?$", r"/viewprofilebutton$"])
-        self.snap("own-passport-overview", r"/passport/", 2)
+        self.snap("own-passport-overview", r"/passport/", 8)
         for label in ("Badges", "Photos", "Creations"):
             pat = r"/passport/.*" + label.lower() + r"sectionbutton(?:/button)?$"
             if self.click([pat]):
@@ -248,9 +262,10 @@ class Session:
         self.close(r"/passport")
 
     def chat(self):
-        self.open([r"/sidebarchatbutton(?:/button)?$", r"/chatbutton(?:/button)?$"], 0x0D)
+        self.open([r"/sidebarchatbutton(?:/button)?$"], 0x0D)
+        self.click([r"/chatconversationstoolbarviewitem$"], .6)
         self.snap("nearby-chat", r"/chatinputbox/.+|/chatconversationstoolbar")
-        if self.click([r"/chatinputbox/.*emojibutton$"]):
+        if self.click([r"/chatinputbox/.*emojibutton$", r"/chatpanel/.*reactionbutton$"]):
             self.snap("chat-emoji", r"/emoji[^/]*/")
             self.click([r"/chatinputbox/.*emojibutton$"], .4)
         if self.click([r"/(?:\[btn\]\s*)?members$", r"/nearbyinfocontainer[^/]*/.*membersbutton$"]):
@@ -264,8 +279,13 @@ class Session:
         self.click([r"/(?:sidebar)?notificationsbutton(?:/button)?$"], .4) or self.close(r"/notificationsmenu")
 
     def communities(self):
-        self.open([r"/sidebarcommunitiesbutton(?:/button)?$", r"/communities(?:/button)?$"], ord("O"))
-        self.snap("communities-browse", r"/communitiessection/|/communitiesbrowser", 3)
+        self.clear_transients()
+        send_key(ord("O"))
+        if not self.choose([r"/communitiessection/.*(?:invitesandrequestsbutton|searchbar|communityresultcard)$"], 2):
+            self.click([r"/discoverbutton$", r"/communitiestab$"])
+            self.click([r"/discovermenu/.*/communities(?:/button)?$", r"/communities(?:/button)?$", r"/communitiestab$"])
+        self.choose([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.+viewbutton$"], 15)
+        self.snap("communities-browse", r"/communitiessection/|/communitiesbrowser", 2)
         if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.*viewbutton$", r"/communityresultcard/(?:header|button)$"]):
             self.snap("community-announcements", r"/communitycard/")
             for label in ("Members", "Places", "Photos"):
@@ -298,6 +318,7 @@ def run(session, tool, capture, output_dir):
     for name, fn in [("friends", lambda: driver.friends(pair)), ("notifications", driver.notifications),
                      ("chat", driver.chat), ("passport", driver.passport), ("communities", driver.communities)]:
         try:
+            driver.clear_transients()
             fn()
         except Exception as e:
             driver.report["screens"].append({"screen": name, "driver_error": type(e).__name__})

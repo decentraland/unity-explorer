@@ -76,6 +76,10 @@ def run(session, tool, capture, output_dir):
     def dismiss():
         for _ in range(3):
             state = elements()
+            modal_close = find((r"(?:PhotoDetailUI|BackpackModal|ExplorePanel|ControlsPanel|ScreencaptureHUD|BugReport|EmotesWheel|CreditsTopUpModal).*?/(?:Button_Close|CloseButton)(?:/|$)",),
+                               row=state)
+            if modal_close and click("Close visible client panel", modal_close):
+                continue
             if find((r"/ShopButton(?:/|$)", r"/DiscoverButton(?:/|$)", r"/SidebarProfileButton(?:/|$)"),
                     row=state) is not None and not any(
                 re.search(r"/(?:PhotoDetailUI|EmotesWheel|ScreencaptureHUD|Settings\(Clone\)|Backpack\(Clone\)|CameraReel\(Clone\)|Shop\(Clone\)|ControlsPanel)(?:/|\()", e.get("path", ""), re.I)
@@ -95,6 +99,24 @@ def run(session, tool, capture, output_dir):
             target = find(buttons)
             if target and click(f"Open via HUD after {shortcut} shortcut", target) and has(expected):
                 return True
+        rail = {
+            "I": (r"/SidebarProfileButton/OpenProfileButton$", r"(?:ProfileMenu|SidebarProfileMenu).*?/[^/]*Backpack(?:/|$)", r".*Backpack.*"),
+            "P": (r"/SettingsButton$", r"/SystemMenu/.*/Settings(?:/|$)", r"Settings.*"),
+            "K": (r"/GalleryButton$", r"/GalleryMenu/.*/Gallery(?:/|$)", r"Gallery.*"),
+            "C": (r"/GalleryButton$", r"/(?:GalleryMenu|CameraMenu)/.*/TakeShot(?:/|$)", r".*Take.*(?:Shot|Photo).*"),
+            "H": (r"/SettingsButton$", r"/SystemMenu/.*/Controls(?:/|$)", r"Controls.*"),
+        }.get(shortcut)
+        if rail:
+            parent, option, label = rail
+            entry = find((option,), (label,), scope="Sidebar")
+            if not entry:
+                click("Open navigation menu for " + shortcut, find((parent,), scope="Sidebar"))
+                entry = find((option,), (label,), scope="Sidebar")
+            if click("Open section from navigation menu " + shortcut, entry):
+                for _ in range(4):
+                    if has(expected):
+                        return True
+                    time.sleep(.7)
         record(action="open", shortcut=shortcut, result="Expected screen marker not visible", marker=expected)
         return False
 
@@ -134,7 +156,7 @@ def run(session, tool, capture, output_dir):
         if click("Open sort options", find([r"/FilterSelector(?:\(Clone\))?(?:/|$)"], [r"Filter\s*&\s*Sort"], "backpack")):
             snap("backpack-filter-sort", "Filter", .8)
             click("Close sort options", find([r"/FilterSelector(?:\(Clone\))?(?:/|$)"], [r"Filter\s*&\s*Sort"], "backpack"))
-        search = find((r"SearchBar",), scope="backpack", kinds=("input",))
+        search = find((r"SearchBar",), scope="backpack", kinds=("inputField", "input"))
         if search:
             try:
                 tool(session, "ui_set_text", {"path": search["path"], "text": "qa-no-such-wearable-1281"})

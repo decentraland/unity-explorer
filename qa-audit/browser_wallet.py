@@ -12,6 +12,21 @@ def wallet_handoff(url, account, out):
     with sync_playwright() as p:
         browser=p.chromium.launch(channel="msedge",headless=True)
         page=browser.new_page(viewport={"width":1280,"height":720})
+        trace=[]
+        def record(req,detail):
+            parsed=urlsplit(req.url)
+            if "identit" in parsed.path or "auth-api" in parsed.netloc:
+                path=re.sub(r"[a-fA-F0-9-]{32,}","<id>",parsed.path)
+                trace.append({"method":req.method,"origin":parsed.netloc,"path":path,"result":detail})
+        page.on("requestfailed",lambda r:record(r,r.failure))
+        page.on("response",lambda r:record(r.request,r.status))
+        if os.environ.get("AUDIT_SLICE")=="authcontrol":
+            def corrected(route):
+                response=route.fetch()
+                body=response.text().replace("https://auth-api.dcl.dev","https://dcl.dev/auth-api")
+                headers={k:v for k,v in response.headers.items() if k.lower() not in ("content-encoding","content-length")}
+                route.fulfill(status=response.status,headers=headers,body=body)
+            page.route("https://dcl.dev/auth/requests/**",corrected)
         def request(source, args):
             if urlsplit(source["frame"].url).netloc!="dcl.dev": raise ValueError("Unexpected origin")
             method=args["method"]
@@ -58,4 +73,5 @@ def wallet_handoff(url, account, out):
             page.screenshot(path=str(out/"auth-browser-outcome.jpg"),type="jpeg")
             raise
         finally:
+            (out/"browser-network.json").write_text(json.dumps(trace,indent=2))
             browser.close()

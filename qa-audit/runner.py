@@ -24,8 +24,25 @@ slice_name=os.environ["AUDIT_SLICE"]
 out=Path("evidence")/slice_name
 out.mkdir(parents=True,exist_ok=True)
 session=None
+fresh=slice_name in ("auth","authcontrol","guest")
+
+def clear_overlays():
+    els=rows()
+    for end in ("AltTesterPrefab/AltDialog/Dialog/CloseButton","PerformanceIssuePrompt/Panel/DontShowThisAgainToggle","PerformanceIssuePrompt/Panel/ButtonsRow/ButtonsRow/CloseButton"):
+        e=next((x for x in els if x.get("path","").endswith(end)),None)
+        if e:
+            try: tool(session,"ui_click",{"path":e["path"]})
+            except Exception: pass
+    for e in els:
+        path=e.get("path","").lower()
+        if ("tutorial" in path or "onboard" in path or "tour" in path) and e.get("kind")=="button" and re.search("skip|dismiss|close",path):
+            try: tool(session,"ui_click",{"path":e["path"]})
+            except Exception: pass
+            break
 
 def capture(label):
+    clear_overlays()
+    time.sleep(.55)
     label=re.sub(r"[^a-zA-Z0-9._-]","-",label)
     result,_=rpc("tools/call",{"name":"screenshot","arguments":{"maxWidth":1280,"quality":"jpg"}},session)
     image=next((b for b in result["content"] if b["type"]=="image"),None)
@@ -60,10 +77,12 @@ def initialize(process):
 
 def launch(exe,folder,log):
     args=[str(exe),"-force-d3d11","-force-driver-type-warp","-screen-fullscreen","0","-screen-width","1280","-screen-height","720","-logFile",str(log),
-          "--gateway","https://dcl.dev","--skip-minimum-specs-screen","--mcp-port","8123","--alttester"]
+          "--gateway","https://dcl.dev","--skip-minimum-specs-screen","--mcp-port","8123"]
+    if slice_name in ("auth","authcontrol","personal"): args.append("--alttester")
     process=subprocess.Popen(args,cwd=folder)
     os.environ["AUDIT_PLAYER_PID"]=str(process.pid)
     initialize(process)
+    clear_overlays()
     return process
 
 def stop(process):
@@ -75,12 +94,29 @@ def wallet_login(process,acct):
     seen=set()
     for _ in range(75):
         els=rows()
+        if slice_name=="guest":
+            guest=button(els,"PlayAsGuest")
+            if guest:
+                capture("guest-welcome"); click(guest); return
+            time.sleep(1);continue
         if urlfile.exists():
             url=urlfile.read_text(encoding="utf-8-sig").strip()
             assert urlsplit(url).netloc=="dcl.dev" and "bridgeOnly" in url
             capture("auth-wallet-pending")
             wallet_handoff(url,acct,out)
             return
+        if button(els,"Metamask") and "method_probe" not in seen:
+            capture("auth-login-methods");paths("auth-login-methods",els)
+            email=next((x for x in els if x.get("kind")=="inputField" and "Email" in x.get("path","")),None)
+            if email:
+                tool(session,"ui_set_text",{"path":email["path"],"text":"invalid"})
+                capture("auth-invalid-email")
+                tool(session,"ui_set_text",{"path":email["path"],"text":""})
+            more=button(els,"MoreOptions")
+            if more:
+                click(more);capture("auth-more-methods");paths("auth-more-methods",rows())
+            seen.add("method_probe")
+            els=rows()
         for token,shot in (("Metamask","auth-wallet-choices"),("LogInOrSignup","auth-welcome"),("MoreOptions","auth-login-methods")):
             match=button(els,token)
             if match and token not in seen:
@@ -95,6 +131,7 @@ def wait_world(process,auth_only):
     for i in range(120):
         if process.poll() is not None: raise RuntimeError("Player exited during sign-in")
         els=rows()
+        if i%5==0: clear_overlays()
         keys=[e.get("path","").lower() for e in els]
         if any("selectavatar" in k and "continue" in k for k in keys):
             if "avatar" not in seen:
@@ -111,7 +148,8 @@ def wait_world(process,auth_only):
                 capture("existing-account-lobby");paths("existing-account-lobby",els);click(jump);seen.add("lobby")
         else:
             s=tool(session,"get_player_state",{})
-            if s.get("address") and not any("authenticationscreen" in k for k in keys):
+            state=tool(session,"get_scene_state",{})
+            if s.get("address") and state.get("loadingScreenOn") is False and (state.get("scene") or {}).get("isReady") and not any("authentication.mainscreen/" in k for k in keys):
                 good+=1
                 if good>=3:
                     capture("world-entry");paths("world-entry",els)
@@ -140,18 +178,18 @@ def main():
         subprocess.run(["curl.exe","-fsSL","--retry","3","--max-time","260","-o",str(zip_path),os.environ["AUDIT_BUILD_URL"]],check=True)
         with ZipFile(zip_path) as z:z.extractall(root)
         primary,friend=wallets(root)
-        if slice_name!="auth": deploy_profile(primary)
+        if not fresh: deploy_profile(primary)
         if slice_name=="social": deploy_profile(friend)
-        if slice_name!="auth":
+        if not fresh:
             test_account.unity_login(SimpleNamespace(wallets=Path(os.environ["DCL_AUDIT_WALLETS"]),label="primary",hours=72,slot=0,prefs_dir=None))
         log=root/"Player.log"
         p=launch(exe,root,log)
         try:
-            if slice_name=="auth": wallet_login(p,primary)
-            result=wait_world(p,slice_name=="auth")
+            if fresh: wallet_login(p,primary)
+            result=wait_world(p,fresh)
             (out/"login-result.txt").write_text(result)
             print("Authenticated state:",result,flush=True)
-            if slice_name!="auth":
+            if not fresh:
                 importlib.import_module(slice_name).run(session,tool,capture,out)
         except Exception:
             try: capture("last-screen"); paths("last-screen",rows())
