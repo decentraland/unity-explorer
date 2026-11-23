@@ -285,9 +285,7 @@ namespace DCL.Profiles.Tests
 
             // Assert
             Assert.That(profile, Is.Not.Null);
-            webRequestController.DidNotReceive()
-                                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
-                                     (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
+            ReceivedNoSingleGets();
         }
 
         [Test]
@@ -296,11 +294,11 @@ namespace DCL.Profiles.Tests
             // Arrange
             repository = NewRepository(true);
             AnswerSingleGetWith(dtos[0]);
-            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId, 0, LAMBDAS, CancellationToken.None);
+            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None);
             AssertBatch(1, 1);
 
             // Act: the centralized batch answered without the profile
-            repository.ResolveProfile(dtos[0].UserId, null, true);
+            repository.ResolveProfile(dtos[0].UserId.Value, null, true);
             Profile? profile = await task.Timeout(TimeSpan.FromSeconds(1));
 
             // Assert
@@ -344,6 +342,11 @@ namespace DCL.Profiles.Tests
             webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
                                  (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
                                 .Returns(_ => UniTask.FromResult(profile));
+
+        private void ReceivedNoSingleGets() =>
+            webRequestController.DidNotReceive()
+                                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                     (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
 
         private void ReceivedSingleGetsTo(string url, int count) =>
             webRequestController.Received(count)
