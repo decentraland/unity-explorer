@@ -30,7 +30,7 @@ if slice_name=="world_abgen":
 out=Path("evidence")/slice_name
 out.mkdir(parents=True,exist_ok=True)
 session=None
-fresh=slice_name in ("auth","authcontrol","guest","guestcomplete")
+fresh=slice_name in ("auth","authcontrol","guest","guestcomplete") or module_name=="provider"
 
 def clear_overlays():
     els=rows()
@@ -89,7 +89,7 @@ def initialize(process):
 def launch(exe,folder,log):
     args=[str(exe),"-force-d3d11","-force-driver-type-warp","-screen-fullscreen","0","-screen-width","1920","-screen-height","1080","--resolution","1920x1080","--windowed-mode","-logFile",str(log),
           "--gateway","https://dcl.dev","--skip-minimum-specs-screen","--mcp-port","8123"]
-    if slice_name in ("auth","authcontrol") or module_name=="personal": args.append("--alttester")
+    if slice_name in ("auth","authcontrol") or module_name in ("personal","provider"): args.append("--alttester")
     if slice_name=="world_abgen": args.extend(["--abgen-pipeline","--abgen-lods"])
     process=subprocess.Popen(args,cwd=folder)
     os.environ["AUDIT_PLAYER_PID"]=str(process.pid)
@@ -235,6 +235,9 @@ def main():
         log=root/"Player.log"
         p=launch(exe,root,log)
         try:
+            if module_name=="provider":
+                import provider
+                return provider.run(sys.modules[__name__],slice_name.split("_",1)[1])
             if fresh: wallet_login(p,primary)
             result=wait_world(p,fresh)
             (out/"login-result.txt").write_text(result)

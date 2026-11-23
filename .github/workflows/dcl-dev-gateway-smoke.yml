@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        screen: ["auth", "authcontrol", "guestcomplete", "personal", "personal_backpack", "personal_support", "social_friends", "social_chat", "social_passport", "social_communities", "social_notifications", "social_pair", "world_map", "world_places", "world_events", "world_scenes", "world_abgen"]
+        screen: ["provider_google", "provider_discord", "provider_apple", "provider_x", "provider_walletconnect", "provider_coinbase", "provider_fortmatic"]
     env:
       AUDIT_BUILD_URL: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28112-7469fb4/Decentraland_windows64.zip
       AUDIT_SLICE: ${{ matrix.screen }}
