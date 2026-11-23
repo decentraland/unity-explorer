@@ -76,7 +76,8 @@ def run(session, tool, capture, output_dir):
     def dismiss():
         for _ in range(3):
             state = elements()
-            modal_close = find((r"(?:PhotoDetailUI|BackpackModal|ExplorePanel|ControlsPanel|ScreencaptureHUD|BugReport|EmotesWheel|CreditsTopUpModal).*?/(?:Button_Close|CloseButton)(?:/|$)",),
+            modal_close = find((r"PerformanceIssuePrompt/.*/CloseButton$", r"AltTesterPrefab/AltDialog/Dialog/CloseButton$",
+                                r"(?:PhotoDetailUI|BackpackModal|ExplorePanel|ControlsPanel|ScreencaptureHUD|BugReport|EmotesWheel|CreditsTopUpModal).*?/(?:Button_Close|CloseButton|ExitButton)(?:/|$)"),
                                row=state)
             if modal_close and click("Close visible client panel", modal_close):
                 continue
@@ -90,6 +91,14 @@ def run(session, tool, capture, output_dir):
 
     def open_hotkey(shortcut, expected, *buttons):
         dismiss()
+        if shortcut == "I":
+            # The settings and backpack share ExplorePanel's top-level tab bar.
+            if click("Open rail gear", find((r"/UpperLayout/SettingsButton$",))):
+                click("Open full Settings", find((r"SystemMenu/TopMenuLayout/Settings$",), scope="Sidebar"))
+            if click("Open Backpack tab", find((r"/Header/TabSelector/BackpackTab$",))):
+                time.sleep(2)
+                if has(expected):
+                    return True
         press(shortcut)
         for _ in range(3):
             if has(expected):
@@ -129,7 +138,12 @@ def run(session, tool, capture, output_dir):
             if not click(f"Open {section} settings", find([section + "SectionButton"], [section, section + "s"], r"settings")):
                 continue
             rows = snap("settings-" + section.lower(), section + r"Section/")
-            scroll = find((section + r"Section/.+",), scope="settings", kinds=("scroll",), row=rows)
+            if section in {"Chat", "Controls"}:
+                toggle = find((section + r"Section/.*Toggle",), scope="settings", kinds=("toggle",), row=rows)
+                if toggle and click("Change " + section + " toggle on disposable QA player", toggle):
+                    snap("settings-" + section.lower() + "-changed", section + r"Section/")
+                    click("Restore " + section + " toggle", toggle)
+            scroll = find((section + r"Section/.+", r"Settings(?:\(Clone\))?/.+"), scope="settings", kinds=("scroll",), row=rows)
             if scroll and section in {"General", "Graphics", "Controls", "Chat"}:
                 try:
                     result = tool(session, "ui_scroll", {"path": scroll["path"], "dy": 8})
@@ -170,6 +184,8 @@ def run(session, tool, capture, output_dir):
         if click("Open backpack emotes", find([r"(TabSelector|SectionTabs?)/.*Emotes", r"/Emotes/(?:Button|Tab)$"], [r"Emotes"], "backpack")):
             snap("backpack-emotes", r"(SlotContainer|EmoteGrid|Emotes/)", 3)
         dismiss()
+
+    def wheel():
         if open_hotkey("B", "EmoteWheel|EmotesWheel", "EmotesButton"):
             rows = snap("emote-wheel", "Emote.*Wheel", 2)
             slot = find((r"Wheel.*Slot(?:_?1\b|\b)",), scope="Wheel", row=rows)
@@ -198,7 +214,23 @@ def run(session, tool, capture, output_dir):
         open_hotkey("K", "CameraReel|ReelGallery")
         rows = snap("camera-reel-after", "CameraReel|ReelGallery", 5)
         thumbnail = find((r"/ThumbnailElement(?:\(Clone\)|\[\d+\])?(?:/|$)", r"ReelThumbnail(?:\(Clone\))?/"), scope="CameraReel|ReelGallery", row=rows)
-        if click("Open captured image", thumbnail):
+        detail_open = click("Open captured image", thumbnail)
+        if not detail_open and has("CameraReelGallery"):
+            # Virtualized thumbnail rows sometimes expose only the surrounding scroll view.
+            # Open the first populated gallery cell at the observed normalized player coordinates.
+            listing = tool(session, "ui_list", {"stack":"ugui"})["elements"]
+            thumbnail = find((r"ThumbnailElement|ReelThumbnail|ImageContainer.*/Image",), scope="CameraReelGallery", row=listing)
+            if thumbnail:
+                detail_open = click("Open virtualized gallery thumbnail", thumbnail)
+            if not detail_open:
+                try:
+                    result = tool(session, "ui_drag", {"fromX":.094, "fromY":.216, "toX":.094, "toY":.216, "durationFrames":2, "path":"device"})
+                    record(action="Click first gallery cell", result=result)
+                    time.sleep(1.4)
+                    detail_open = has("PhotoDetail")
+                except Exception as exc:
+                    record(action="Click first gallery cell", result=str(exc)[:180])
+        if detail_open:
             snap("photo-detail", "PhotoDetail", 2)
             if click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
                 clipboard = subprocess.run(["powershell.exe", "-NoProfile", "-Command", "Get-Clipboard -Raw"],
@@ -294,7 +326,7 @@ def run(session, tool, capture, output_dir):
                                     dest = (out / ("personal-system-" + label.lower().replace(" ", "-") + "-browser.png")).resolve()
                                     try:
                                         subprocess.run([str(edge), "--headless=new", "--disable-gpu", "--no-first-run",
-                                            "--disable-extensions", "--hide-scrollbars", "--window-size=1280,800",
+                                            "--disable-extensions", "--hide-scrollbars", "--window-size=1920,1080",
                                             "--user-data-dir=" + profile, "--screenshot=" + str(dest), public],
                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=18, check=False)
                                         if dest.is_file():
@@ -309,7 +341,13 @@ def run(session, tool, capture, output_dir):
                     click("Close " + name, target)
         dismiss()
 
-    for driver in (backpack, settings, camera, shop, support):
+    section = os.environ.get("AUDIT_SECTION", "").strip().lower()
+    drivers = (backpack, wheel, settings, camera, shop, support)
+    if section and section not in {driver.__name__ for driver in drivers}:
+        raise ValueError("Unknown personal screen section " + section)
+    for driver in drivers:
+        if section and section != driver.__name__ and not (section == "backpack" and driver == wheel):
+            continue
         try:
             driver()
         except Exception as exc:

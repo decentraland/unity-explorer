@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import struct
 import subprocess
 import sys
 import tempfile
@@ -49,11 +50,16 @@ def capture(label):
     clear_overlays()
     time.sleep(.55)
     label=re.sub(r"[^a-zA-Z0-9._-]","-",label)
-    result,_=rpc("tools/call",{"name":"screenshot","arguments":{"maxWidth":1280,"quality":"jpg"}},session)
+    result,_=rpc("tools/call",{"name":"screenshot","arguments":{"maxWidth":1920,"quality":"png"}},session)
     image=next((b for b in result["content"] if b["type"]=="image"),None)
     if image is None: raise RuntimeError("Player screenshot: "+str(result.get("content"))[:260])
-    path=out/(label+".jpg")
-    path.write_bytes(base64.b64decode(image["data"]))
+    path=out/(label+".png")
+    data=base64.b64decode(image["data"],validate=True)
+    if not data.startswith(bytes.fromhex("89504e470d0a1a0a")):
+        raise RuntimeError("The player returned a different encoding")
+    width,height=struct.unpack(">II",data[16:24])
+    print(f"Captured {label} at {width}x{height}",flush=True)
+    path.write_bytes(data)
     return path
 
 def rows():
@@ -81,7 +87,7 @@ def initialize(process):
     raise RuntimeError("Player did not initialize MCP")
 
 def launch(exe,folder,log):
-    args=[str(exe),"-force-d3d11","-force-driver-type-warp","-screen-fullscreen","0","-screen-width","1280","-screen-height","720","-logFile",str(log),
+    args=[str(exe),"-force-d3d11","-force-driver-type-warp","-screen-fullscreen","0","-screen-width","1920","-screen-height","1080","--resolution","1920x1080","--windowed-mode","-logFile",str(log),
           "--gateway","https://dcl.dev","--skip-minimum-specs-screen","--mcp-port","8123"]
     if slice_name in ("auth","authcontrol") or module_name=="personal": args.append("--alttester")
     if slice_name=="world_abgen": args.extend(["--abgen-pipeline","--abgen-lods"])
@@ -200,6 +206,17 @@ def report_errors(log, name):
     (out/(name+"-errors.txt")).write_text("\n".join(sorted(lines)[:240]),encoding="utf-8")
 
 def main():
+    import win32api, win32con, pywintypes
+    try:
+        for i in range(1000):
+            mode=win32api.EnumDisplaySettings(None,i)
+            if (mode.PelsWidth,mode.PelsHeight)==(1920,1080) and mode.BitsPerPel==32:
+                win32api.ChangeDisplaySettings(mode,0)
+                break
+    except pywintypes.error:
+        pass
+    current=win32api.EnumDisplaySettings(None,win32con.ENUM_CURRENT_SETTINGS)
+    print("Hosted display",current.PelsWidth,current.PelsHeight,flush=True)
     with tempfile.TemporaryDirectory(dir=os.environ["RUNNER_TEMP"]) as td:
         root=Path(td); zip_path=root/"windows.zip";exe=root/"Decentraland.exe"
         subprocess.run(["curl.exe","-fsSL","--retry","3","--max-time","260","-o",str(zip_path),os.environ["AUDIT_BUILD_URL"]],check=True)
@@ -212,6 +229,9 @@ def main():
             social.prepare_fixture(out,os.environ.get("AUDIT_SECTION",""))
         if not fresh:
             test_account.unity_login(SimpleNamespace(wallets=Path(os.environ["DCL_AUDIT_WALLETS"]),label="primary",hours=72,slot=0,prefs_dir=None))
+        if slice_name=="social_pair":
+            import social_pair
+            return social_pair.run_clients(exe,root,out)
         log=root/"Player.log"
         p=launch(exe,root,log)
         try:

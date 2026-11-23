@@ -13,7 +13,7 @@ from urllib.request import Request, urlopen
 
 
 def rpc(method, params, session=None, notify=False):
-    uri = "http://127.0.0.1:8123/unity-explorer-mcp"
+    uri = f"http://127.0.0.1:{os.environ.get('AUDIT_MCP_PORT', '8123')}/unity-explorer-mcp"
     headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream",
                "MCP-Protocol-Version": "2025-06-18"}
     body = {"jsonrpc": "2.0", "method": method, "params": params}

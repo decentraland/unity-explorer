@@ -101,6 +101,24 @@ def social_readback(a, b, facts):
     face = profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None
     facts["active_profile_entity"] = {"http": status, "profile_count": len(profiles),
                                        "has_face256": bool(face), "face256": image_facts(face)}
+    status, feed = request_json("GET", "/notifications/notifications?limit=50", a)
+    facts["notifications"] = {"http": status, "response_type": type(feed).__name__,
+                              "entries": len(feed) if isinstance(feed, list) else None,
+                              "types": sorted({str(n.get("type")) for n in feed if isinstance(n, dict)}) if isinstance(feed, list) else []}
+
+
+def prepare_fixture(output_dir, section):
+    pair = owns_pair()
+    if not pair or section == "communities":
+        return
+    primary, friend = pair
+    status, _ = request_json("POST", "/social-api/v1/friendship-requests", friend, {"address": primary["address"]})
+    facts = {"request_before_login_http": status}
+    if section in ("passport", "chat", "pair"):
+        status, _ = request_json("PATCH", "/social-api/v1/friendship-requests/" + friend["address"], primary,
+                                 {"intention": "accepted"})
+        facts["accept_before_login_http"] = status
+    Path(output_dir, "social-seed.json").write_text(json.dumps(facts), encoding="utf-8")
 
 
 def send_key(vk):
@@ -114,7 +132,7 @@ class Session:
         self.session, self.tool, self.capture = session, tool, capture
         self.output = Path(output_dir)
         self.output.mkdir(parents=True, exist_ok=True)
-        self.report = {"fixture": {}, "screens": []}
+        self.report = {"fixture": {}, "screens": [], "actions": []}
         self.controls = []
 
     def flush(self):
@@ -150,8 +168,9 @@ class Session:
             elements = self.elements()
             for pattern in patterns:
                 hits = [node for node in elements if re.search(pattern, self.path(node), re.I)
-                        and not node.get("occluded", False)
+                        and not node.get("disabled", False)
                         and node.get("kind") not in ("scroll", "scrollrect")]
+                hits.sort(key=lambda node: bool(node.get("occluded", False)))
                 if label:
                     hits = [n for n in hits if label in str(n.get("label", "")).lower()]
                 if hits:
@@ -165,7 +184,10 @@ class Session:
         if node is None:
             return False
         try:
-            self.tool(self.session, "ui_click", {"path": node["path"]})
+            result = self.tool(self.session, "ui_click", {"path": node["path"]})
+            self.report["actions"].append({"clicked":self.path(node), "ok": result.get("ok"), "blocked_by":result.get("blockedBy")})
+            if result.get("ok") is False:
+                return False
             time.sleep(.65)
             return True
         except Exception:
@@ -180,7 +202,7 @@ class Session:
         record = {"screen": name, "view_controls_found": bool(matched), "controls": unique}
         self.report["screens"].append(record)
         self.flush()
-        shot = self.capture("social-" + name)
+        shot = self.capture(("social-" if matched else "unreached-") + name)
         if shot:
             record["screenshot"] = Path(shot).name
         self.flush()
@@ -189,13 +211,22 @@ class Session:
     def close(self, scope):
         if not any(re.search(scope, self.path(n), re.I) for n in self.elements()):
             return
-        if not self.click([scope + r".*/(?:button_close|closebutton|\[btn\] close|close|background_close)$"], .5):
+        if not self.click([scope + r".*/(?:button_close|closebutton|\[btn\] close|close|background_close)$", r"^/popupcloser/button$"], .5):
             send_key(0x1b)
 
     def open(self, patterns, key=None):
         if self.click(patterns):
             return True
         return bool(key and send_key(key))
+
+    def hover(self, patterns):
+        node = self.choose(patterns, 5)
+        if node:
+            result = self.tool(self.session, "ui_hover", {"path": node["path"]})
+            self.report["actions"].append({"hovered":self.path(node), "ok": result.get("ok")})
+            time.sleep(.7)
+            return result.get("ok") is not False
+        return False
 
     def friends(self, pair):
         facts = self.report["fixture"]
@@ -205,7 +236,7 @@ class Session:
             old = data.get("data", {}).get("results", [])
             has_friend = any(r.get("address", "").lower() == b["address"].lower() for r in old)
             facts["initial_membership_http"] = status
-            if not has_friend:
+            if not has_friend and not (self.output / "social-seed.json").exists():
                 result, _ = request_json("POST", "/social-api/v1/friendship-requests", b, {"address": a["address"]})
                 facts["request_http"] = result
             status, data = request_json("GET", "/social-api/v2/friendship-requests?direction=received", a)
@@ -218,6 +249,7 @@ class Session:
         self.click([friends + r".*requestsbutton(?:/button)?$"])
         self.snap("friend-requests", r"/requestspanel/", 2)
         if pair and not has_friend and owned_request:
+            self.hover([r"/requestuser$"])
             facts["clicked_accept"] = self.click([r"/requestuser[^/]*/(?:.*/)?acceptbutton$"])
             social_readback(a, b, facts)
             if not facts["membership"]["contains_fixture"]:
@@ -231,26 +263,31 @@ class Session:
         self.close(friends)
         self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
         self.click([friends + r".*friendsbutton(?:/button)?$"])
-        self.snap("friends-accepted", friends, 3)
+        self.choose([r"/friendlistuser$"], 10)
+        self.snap("friends-accepted", r"/friendlistuser$", 1)
         friend_row = [r"/friendlistuser[^/]*$", r"/friendlistuser[^/]*/(?:.*/)?(?:mainbutton|userbutton)$"]
         facts["visible_friend_rows"] = sum(any(re.search(pattern, self.path(e)) for pattern in friend_row)
                                            for e in self.controls)
-        if pair and facts.get("membership", {}).get("contains_fixture") and facts["membership"]["count"] == 1:
-            node = self.choose(friend_row)
-            if node:
-                self.tool(self.session, "ui_hover", {"path": node["path"]})
-                time.sleep(.4)
-            if self.click([r"/friendlistuser[^/]*/(?:.*/)?chatbutton$"]):
-                self.choose([r"/chatpanel/.*(?:privatevoicecall_button|chatconversationstoolbarviewitem_private)$"], 4)
-                self.snap("direct-message", r"/chatpanel/.*(?:chatnputboxmask|chatconversationstoolbarviewitem_private|privatevoicecall_button)")
-                self.close(r"/chatpanel")
-                self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
-            if self.click(friend_row):
-                self.snap("friend-passport", r"/passport/", 8)
-                self.close(r"/passport")
         self.close(friends)
 
-    def passport(self):
+    def open_owned_friend(self, pair):
+        if not pair:
+            return False
+        social_readback(*pair, self.report["fixture"])
+        membership = self.report["fixture"]["membership"]
+        if not membership.get("contains_fixture") or membership.get("count") != 1:
+            return False
+        if not self.choose([r"/friendspanel/.*/tabs/friendsbutton$"], .1):
+            self.open([r"/sidebarview/bottomlayout/friendsbutton$"], ord("L"))
+        self.click([r"/friendspanel/.*/tabs/friendsbutton$"])
+        row = self.choose([r"/friendlistuser$"], 15)
+        if not row:
+            self.snap("friend-list-attempt", r"/friendlistuser$")
+            return False
+        self.snap("owned-friend-row", r"/friendlistuser$")
+        return True
+
+    def passport(self, pair):
         self.open([r"/sidebarprofilebutton/openprofilebutton$", r"/sidebarprofilebutton(?:/button)?$", r"/profilewidget$"])
         self.snap("profile-menu", r"/profilemenu|/previewprofilebutton$")
         self.click([r"/previewprofilebutton(?:/button)?$", r"/viewprofilebutton$"])
@@ -260,32 +297,42 @@ class Session:
             if self.click([pat]):
                 self.snap("own-passport-" + label.lower(), r"/passport/")
         self.close(r"/passport")
+        if self.open_owned_friend(pair) and self.click([r"/friendlistuser$"]):
+            self.snap("friend-passport", r"/passport/", 7)
+            for label in ("Badges", "Photos", "Creations"):
+                if self.click([r"/passport/.*" + label.lower() + r"sectionbutton$"]):
+                    self.snap("friend-passport-" + label.lower(), r"/passport/")
+            self.close(r"/passport")
 
-    def chat(self):
+    def chat(self, pair):
         self.open([r"/sidebarchatbutton(?:/button)?$"], 0x0D)
         self.click([r"/chatconversationstoolbarviewitem$"], .6)
-        self.snap("nearby-chat", r"/chatinputbox/.+|/chatconversationstoolbar")
+        self.snap("nearby-chat", r"/chatpanel/.*(?:/chatinputbox/|/chatconversationstoolbar)")
         if self.click([r"/chatinputbox/.*emojibutton$", r"/chatpanel/.*reactionbutton$"]):
             self.snap("chat-emoji", r"/emoji[^/]*/")
             self.click([r"/chatinputbox/.*emojibutton$"], .4)
         if self.click([r"/(?:\[btn\]\s*)?members$", r"/nearbyinfocontainer[^/]*/.*membersbutton$"]):
-            self.snap("chat-members", r"/member|participant|channelinfo")
-            self.close(r"/(?:channel|member)")
+            self.snap("chat-members", r"/chatmemberlist/|/memberlistview/")
+            self.click([r"/chatmemberlist/.*close", r"/(?:\[btn\]\s*)?members$"])
         self.close(r"/chatpanel")
+        if self.open_owned_friend(pair):
+            self.hover([r"/friendlistuser$"])
+            if self.click([r"/friendlistuser/.*/chatbutton$"]):
+                self.snap("direct-message", r"/chatpanel/.*(?:/chatinputbox/|private)", 4)
 
     def notifications(self):
         self.open([r"/(?:sidebar)?notificationsbutton(?:/button)?$"])
-        self.snap("notifications", r"/notificationsmenu(?:/|$)", 1.6)
+        self.choose([r"/notificationsmenu/.*(?:friendsnotification|notificationitem)$"], 12)
+        self.snap("notifications", r"/notificationsmenu(?:/|$)", 3)
         self.click([r"/(?:sidebar)?notificationsbutton(?:/button)?$"], .4) or self.close(r"/notificationsmenu")
 
     def communities(self):
         self.clear_transients()
-        send_key(ord("O"))
-        if not self.choose([r"/communitiessection/.*(?:invitesandrequestsbutton|searchbar|communityresultcard)$"], 2):
-            self.click([r"/discoverbutton$", r"/communitiestab$"])
-            self.click([r"/discovermenu/.*/communities(?:/button)?$", r"/communities(?:/button)?$", r"/communitiestab$"])
+        self.click([r"/upperlayout/discoverbutton$"])
+        if not self.click([r"/discovermenu/.*communit(?:y|ies)(?:button)?(?:/button)?$", r"/communities(?:/button)?$", r"/communitiestab$"]):
+            send_key(ord("O"))
         self.choose([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.+viewbutton$"], 15)
-        self.snap("communities-browse", r"/communitiessection/|/communitiesbrowser", 2)
+        self.snap("communities-browse", r"/communit(?:y|ies)(?:section|browser|resultcard)", 2)
         if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.*viewbutton$", r"/communityresultcard/(?:header|button)$"]):
             self.snap("community-announcements", r"/communitycard/")
             for label in ("Members", "Places", "Photos"):
@@ -315,8 +362,12 @@ def run(session, tool, capture, output_dir):
     except Exception as e:
         pair = None
         driver.report["fixture"]["reason"] = "Unavailable: " + type(e).__name__
+    selected = os.getenv("AUDIT_SECTION", "").lower()
+    driver.report["section"] = selected or "all"
     for name, fn in [("friends", lambda: driver.friends(pair)), ("notifications", driver.notifications),
-                     ("chat", driver.chat), ("passport", driver.passport), ("communities", driver.communities)]:
+                     ("chat", lambda: driver.chat(pair)), ("passport", lambda: driver.passport(pair)), ("communities", driver.communities)]:
+        if selected and selected != name:
+            continue
         try:
             driver.clear_transients()
             fn()

@@ -11,7 +11,7 @@ def wallet_handoff(url, account, out):
     request_id=urlsplit(url).path.split("/")[-1]
     with sync_playwright() as p:
         browser=p.chromium.launch(channel="msedge",headless=True)
-        page=browser.new_page(viewport={"width":1280,"height":720})
+        page=browser.new_page(viewport={"width":1440,"height":900},device_scale_factor=2)
         trace=[]
         def record(req,detail):
             parsed=urlsplit(req.url)
@@ -46,7 +46,7 @@ def wallet_handoff(url, account, out):
         signin=page.get_by_role("button",name="Sign in with wallet")
         try:
             signin.wait_for(timeout=20000)
-            page.screenshot(path=str(out/"auth-browser-wallet.jpg"),type="jpeg")
+            page.screenshot(path=str(out/"auth-browser-wallet.png"),type="png")
             captures=[]
             cdp=page.context.new_cdp_session(page)
             cdp.send("Page.enable")
@@ -60,7 +60,7 @@ def wallet_handoff(url, account, out):
                 if callback:
                     query=parse_qs(urlsplit(callback).query)
                     assert query.get("authRequestId")==[request_id] and query.get("signin")
-                    page.screenshot(path=str(out/"auth-browser-return.jpg"),type="jpeg")
+                    page.screenshot(path=str(out/"auth-browser-return.png"),type="png")
                     target=Path(os.environ["LOCALAPPDATA"])/"DecentralandLauncherLight"/"deeplink-bridge.json"
                     target.parent.mkdir(parents=True,exist_ok=True)
                     tmp=target.with_suffix(".tmp")
@@ -70,7 +70,7 @@ def wallet_handoff(url, account, out):
                     return
             raise RuntimeError("Browser supplied no matching callback")
         except Exception:
-            page.screenshot(path=str(out/"auth-browser-outcome.jpg"),type="jpeg")
+            page.screenshot(path=str(out/"auth-browser-outcome.png"),type="png")
             raise
         finally:
             (out/"browser-network.json").write_text(json.dumps(trace,indent=2))

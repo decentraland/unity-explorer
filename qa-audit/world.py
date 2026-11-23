@@ -131,13 +131,18 @@ def run(session, tool, capture, output_dir):
         if match(r"/FiltersContainer/"):
             try: press(r"/OpenLayersPanel(/|$)")
             except Exception: pass
-        for _ in range(4):
+        for _ in range(8):
+            if not match(r"/Zoom/Plus(/|$)"): break
             press(r"/Zoom/Plus(/|$)")
+            time.sleep(.8)
 
-    def choose_satellite():
+    def layers():
         if not match(r"/FiltersContainer/.*/Satellite(/|$)"):
             press(r"/OpenLayersPanel(/|$)")
-        press(r"/FiltersContainer/.*/Satellite(/|$)")
+
+    def choose_type(name):
+        layers()
+        press(r"/FiltersContainer/.*/"+name+r"(?:/|$)")
 
     map_marker=r"(?:^|/)(OpenLayersPanel|PlacesAndEventsPanel|NavigationPanel)(?:/|$)"
     places_marker=r"(?:^|/)(Places_Header|PlacesResults|TabSelector/(Explore|Favorites|Recent|MyPlaces))(?:/|$)"
@@ -152,12 +157,21 @@ def run(session, tool, capture, output_dir):
     snapshot_scene("spawn")
     record("01-hud-spawn",wait=2)
     def map_screens():
-        record("02-map-parcels",lambda:open_panel("m",map_marker),map_marker,3)
-        record("03-map-layers",lambda:press(r"/OpenLayersPanel(/|$)"),r"/FiltersContainer/")
-        record("04-map-satellite",choose_satellite,map_marker,3)
-        record("05-map-satellite-zoom",zoom,map_marker,4)
+        record("02-map-on-open",lambda:open_panel("m",map_marker),map_marker,3)
+        record("02b-map-parcels",lambda:choose_type("Parcel"),r"/FiltersContainer/",3)
+        record("03-map-layers",layers,r"/FiltersContainer/")
+        record("04-map-satellite",lambda:choose_type("Satellite"),map_marker,3)
+        record("05-map-satellite-zoom",zoom,map_marker,10)
+        from rpc_base import rpc
+        try:
+            stats,_=rpc("tools/call",{"name":"get_performance_stats","arguments":{"sampleSeconds":3}},session)
+            metrics=stats.get("structuredContent") or [v.get("text","") for v in stats.get("content",[]) if v["type"]=="text"]
+            (output_dir/"world-map-frame-stats.json").write_text(json.dumps(metrics,indent=2),encoding="utf-8")
+        except Exception as ex: print("Map frame sample unavailable:",str(ex)[:120],flush=True)
         def map_search():
-            press(r"/(SearchBar|SearchPlaces)(/|$).*",operation="ui_set_text",text="Genesis")
+            field = r"/Navmap/PlacesAndEventsPanel/SearchBarContainer/SearchBar$"
+            press(field)
+            press(field,operation="ui_set_text",text="Genesis",submit=True)
         record("06-map-search",map_search,map_marker,3)
         def leave_map():
             if match(map_marker):
@@ -195,13 +209,13 @@ def run(session, tool, capture, output_dir):
         def travel(x,y,expected_base):
             try: call("teleport",x=x,y=y,waitForReady=False)
             except (ValueError,TypeError): pass  # This tool returns text when the request is accepted.
-            deadline=time.monotonic()+52
+            deadline=time.monotonic()+130
             while time.monotonic()<deadline:
                 state=call("get_scene_state")
                 scene=state.get("scene") or {}
-                if not state.get("loadingScreenOn") and scene.get("baseParcel")==expected_base and scene.get("isReady"): return
+                if not state.get("loadingScreenOn") and scene.get("baseParcel")==expected_base and scene.get("isReady") and scene.get("assetsLoadingConcluded"): return
                 time.sleep(2)
-            raise TimeoutError(f"Parcel {x},{y} did not report a ready scene within 52 seconds")
+            raise TimeoutError(f"Parcel {x},{y} did not report completed loading within 130 seconds")
         def fixed_view(x,y,z,tx,ty,tz):
             call("set_camera_pose",x=x,y=y,z=z,lookAtX=tx,lookAtY=ty,lookAtZ=tz,fov=65)
         record("19-second-scene",lambda:travel(-1,-1,{"x":-3,"y":-2}),wait=8)
