@@ -43,21 +43,21 @@ def deploy_profile(account):
     label=account["label"]
     names=("f_sweater","f_jeans","bun_shoes","standard_hair","f_eyes_01","f_eyebrows_00","f_mouth_00")
     color=lambda r,g,b: {"color":{"r":r,"g":g,"b":b,"a":1}}
-    face,body=picture(label,False),picture(label,True)
+    if label=="friend":
+        names=("f_sweater","f_jeans","bun_shoes","two_tails","f_eyes_01","f_eyebrows_00","f_mouth_00")
     avatar={"bodyShape":prefix+"BaseFemale","wearables":[prefix+n for n in names],"emotes":[{"slot":i,"urn":n} for i,n in enumerate(("wave","clap","dance"))],
-            "snapshots":{"face256":cid(face),"body":cid(body)},"eyes":color(.2,.35,.55),"skin":color(.6,.45,.35),"hair":color(.3,.2,.12)}
+            "eyes":color(.2,.35,.55),"skin":color(.6,.45,.35),"hair":color(.8,.28,.12) if label=="friend" else color(.3,.2,.12)}
     addr=account["address"].lower()
     profile={"name":"AuditFriend" if label=="friend" else "AuditExplorer","userId":addr,"ethAddress":addr,"version":1,
              "hasClaimedName":False,"hasConnectedWeb3":True,"description":"Temporary Unity QA profile.","tutorialStep":256,"avatar":avatar}
-    entity={"version":"v3","type":"profile","pointers":[addr],"timestamp":int(time.time()*1000),"metadata":{"avatars":[profile]},
-            "content":[{"file":"face256.png","hash":cid(face)},{"file":"body.png","hash":cid(body)}]}
+    entity={"version":"v3","type":"profile","pointers":[addr],"timestamp":int(time.time()*1000),"metadata":{"avatars":[profile]}}
     enc=json.dumps(entity,separators=(",",":")).encode()
     eid=cid(enc)
     chain=[{"type":"SIGNER","payload":addr,"signature":""},{"type":"ECDSA_SIGNED_ENTITY","payload":eid,"signature":ethkeys.personal_sign(int(account["privateKey"],16),eid)}]
     fields={"entityId":eid}
     for i,link in enumerate(chain):
         for k,v in link.items(): fields[f"authChain[{i}][{k}]"]=v
-    files={k:(k,b,"application/octet-stream") for k,b in [(eid,enc),(cid(face),face),(cid(body),body)]}
+    files={eid:(eid,enc,"application/octet-stream")}
     for attempt in range(3):
         resp=requests.post("https://dcl.dev/content/entities",data=fields,files=files,timeout=45)
         if resp.status_code not in (429,503): break

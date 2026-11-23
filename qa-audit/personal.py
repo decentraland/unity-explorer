@@ -2,6 +2,8 @@
 import json
 import os
 import re
+import subprocess
+import tempfile
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -176,6 +178,17 @@ def run(session, tool, capture, output_dir):
         thumbnail = find((r"/ThumbnailElement(?:\(Clone\)|\[\d+\])?(?:/|$)", r"ReelThumbnail(?:\(Clone\))?/"), scope="CameraReel|ReelGallery", row=rows)
         if click("Open captured image", thumbnail):
             snap("photo-detail", "PhotoDetail", 2)
+            if click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
+                clipboard = subprocess.run(["powershell.exe", "-NoProfile", "-Command", "Get-Clipboard -Raw"],
+                                           capture_output=True, text=True, timeout=8).stdout.strip()
+                link = urlsplit(clipboard)
+                if link.scheme == "https" and link.netloc in {"reels.dcl.dev", "dcl.dev"} and not link.query:
+                    try:
+                        with urlopen(Request(clipboard, headers={"User-Agent": "Mozilla/5.0"}), timeout=10) as resp:
+                            record(action="Visit copied photo link", origin=link.netloc, status=resp.status)
+                    except URLError as exc:
+                        record(action="Visit copied photo link", origin=link.netloc, error=str(exc)[:200])
+                    snap("photo-copied-link", "PhotoDetail")
         else:
             record(screen="photo-detail", result="No enabled gallery thumbnail after shutter attempt", reel_opened=opened, camera_opened=active)
         dismiss()
@@ -187,6 +200,9 @@ def run(session, tool, capture, output_dir):
             click("Open Shop from main navigation", find((r"/ShopTab", r"TabSelector.*Shop"), ["Shop"]))
         rows = snap("shop", "ShopMenu|Shop.*(?:SearchBar|CartButton)|ExploreWearablesBanner", 4)
         if find((r"ExploreWearablesBanner", r"ExploreEmotesBanner"), row=rows):
+            if click("Open Credits top-up screen", find((r"/BuyCreditsButton(?:/|$)",), scope="Shop", row=rows)):
+                snap("credits-top-up", "TopUp|Credit", 2)
+                click("Close credits top-up", find((r"TopUp.*Close",), scope="Credit"))
             for group in ("Wearables", "Emotes"):
                 if not has(r"Explore" + group + r"Banner"):
                     click("Reopen shop menu", find((r"/ShopButton(?:/|$)",), ["Shop"]))
@@ -230,6 +246,41 @@ def run(session, tool, capture, output_dir):
             if click("Open " + name, target):
                 snap(name, screen)
                 if name == "system-menu":
+                    for label, link_path in (("FAQ", r"/FAQ(?:/|$)"), ("Contact Support", r"/ContactSupport(?:/|$)"), ("Discord", r"/Discord(?:/|$)")):
+                        if not has("SystemMenu/.+(FAQ|Discord|ContactSupport)"):
+                            click("Reopen system menu", find((r"/SettingsButton(?:/|$)",), scope="Sidebar"))
+                        link = find((link_path,), [label], "SystemMenu")
+                        if not link:
+                            continue
+                        file = Path(os.environ.get("USERPROFILE", "")) / "AppData/LocalLow/Decentraland/Explorer/auth-url.txt"
+                        previous = file.stat().st_mtime_ns if file.exists() else None
+                        if not click("Open " + label, link) or not file.exists() or file.stat().st_mtime_ns == previous:
+                            continue
+                        destination = urlsplit(file.read_text(encoding="utf-8-sig").strip())
+                        if destination.scheme != "https" or destination.hostname not in {"dcl.dev", "docs.dcl.dev", "docs.decentraland.org", "discord.gg"}:
+                            continue
+                        public = urlunsplit((destination.scheme, destination.netloc, destination.path, "", ""))
+                        try:
+                            with urlopen(Request(public, headers={"User-Agent": "Mozilla/5.0"}), timeout=10) as resp:
+                                record(action="Visit " + label, emitted_url=public, final_url=resp.geturl(), status=resp.status)
+                        except URLError as exc:
+                            record(action="Visit " + label, emitted_url=public, error=str(exc)[:200])
+                            edge = Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
+                            if edge.is_file():
+                                # Capture the browser's own error page with no saved auth or browser state.
+                                with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
+                                    dest = (out / ("personal-system-" + label.lower().replace(" ", "-") + "-browser.png")).resolve()
+                                    try:
+                                        subprocess.run([str(edge), "--headless=new", "--disable-gpu", "--no-first-run",
+                                            "--disable-extensions", "--hide-scrollbars", "--window-size=1280,800",
+                                            "--user-data-dir=" + profile, "--screenshot=" + str(dest), public],
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=18, check=False)
+                                        if dest.is_file():
+                                            record(action="Browser error screenshot", emitted_url=public, screenshot=dest.name)
+                                    except (OSError, subprocess.TimeoutExpired):
+                                        pass
+                    if not has("SystemMenu/.+(FAQ|Discord|ContactSupport)"):
+                        click("Reopen System menu for report form", find((r"/SettingsButton(?:/|$)",), scope="Sidebar"))
                     if click("Open bug report form", find((r"ReportBug", r"BugReport"), ["Report a bug"], "systemmenu")):
                         snap("bug-report-form", "BugReport")
                 else:
