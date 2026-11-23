@@ -339,7 +339,7 @@ class Session:
     def passport(self, pair):
         self.open([r"/sidebarprofilebutton/openprofilebutton$", r"/sidebarprofilebutton(?:/button)?$", r"/profilewidget$"])
         self.snap("profile-menu", r"/profilemenu|/previewprofilebutton$")
-        self.click([r"/previewprofilebutton(?:/button)?$", r"/viewprofilebutton$"])
+        self.click([r"/profilemenu/midmenulayout/profile$", r"/previewprofilebutton(?:/button)?$", r"/viewprofilebutton$"])
         self.snap("own-passport-overview", r"/passport/", 8)
         for label in ("Badges", "Photos", "Creations"):
             pat = r"/passport/.*" + label.lower() + r"sectionbutton(?:/button)?$"

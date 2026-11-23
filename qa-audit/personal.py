@@ -25,6 +25,49 @@ def run(session, tool, capture, output_dir):
         (out / "personal-observations.json").write_text(
             json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    def capture_broken_destination(public, stem):
+        from playwright.sync_api import Error, sync_playwright
+        with sync_playwright() as service:
+            browser = service.chromium.launch(channel="msedge", headless=True)
+            page = browser.new_page(viewport={"width":1440,"height":900}, device_scale_factor=2, locale="en-US")
+            try:
+                page.goto(public, wait_until="domcontentloaded", timeout=18000)
+            except Error as exc:
+                record(action="Browser navigation failed", host=urlsplit(public).hostname,
+                       reason=next((line[:180] for line in str(exc).splitlines() if "net::" in line), "Navigation failed"))
+            try:
+                page.wait_for_function("document.body && /DNS|site can.t be reached|page isn.t working|network|can.t reach this page|ERR_NAME_NOT_RESOLVED/i.test(document.body.innerText)",timeout=6500)
+            except Error:
+                page.wait_for_timeout(1500)
+            dest = out / ("personal-" + stem + "-browser.png")
+            page.screenshot(path=str(dest), animations="disabled")
+            record(action="Browser destination screenshot", host=urlsplit(public).hostname, screenshot=dest.name,
+                   body=page.locator("body").inner_text(timeout=5000)[:500])
+            browser.close()
+
+    def clipboard_text():
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        user32.GetClipboardData.restype = wintypes.HANDLE
+        kernel32.GlobalLock.argtypes = [wintypes.HANDLE]
+        kernel32.GlobalLock.restype = ctypes.c_void_p
+        kernel32.GlobalUnlock.argtypes = [wintypes.HANDLE]
+        for _ in range(24):
+            if user32.OpenClipboard(None):
+                try:
+                    handle = user32.GetClipboardData(13)
+                    if handle:
+                        ptr = kernel32.GlobalLock(handle)
+                        if ptr:
+                            try:
+                                return ctypes.wstring_at(ptr).strip()
+                            finally:
+                                kernel32.GlobalUnlock(handle)
+                finally:
+                    user32.CloseClipboard()
+            time.sleep(.2)
+        return ""
+
     def elements():
         return tool(session, "ui_list", {"stack": "ugui", "checkOcclusion": True})["elements"]
 
@@ -305,16 +348,16 @@ def run(session, tool, capture, output_dir):
         if detail_open:
             snap("photo-detail", "PhotoDetail", 2)
             if click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
-                clipboard = subprocess.run(["powershell.exe", "-NoProfile", "-Command", "Get-Clipboard -Raw"],
-                                           capture_output=True, text=True, timeout=8).stdout.strip()
+                clipboard = clipboard_text()
                 link = urlsplit(clipboard)
                 if link.scheme == "https" and link.netloc in {"reels.dcl.dev", "dcl.dev"} and not link.query:
+                    snap("photo-copied-link", "PhotoDetail")
                     try:
                         with urlopen(Request(clipboard, headers={"User-Agent": "Mozilla/5.0"}), timeout=10) as resp:
                             record(action="Visit copied photo link", origin=link.netloc, status=resp.status)
                     except URLError as exc:
                         record(action="Visit copied photo link", origin=link.netloc, error=str(exc)[:200])
-                    snap("photo-copied-link", "PhotoDetail")
+                        capture_broken_destination(clipboard, "photo-link")
         else:
             record(screen="photo-detail", result="No enabled gallery thumbnail after shutter attempt", reel_opened=opened, camera_opened=active)
         dismiss()
@@ -396,20 +439,7 @@ def run(session, tool, capture, output_dir):
                                 record(action="Visit " + label, emitted_url=public, final_url=resp.geturl(), status=resp.status)
                         except URLError as exc:
                             record(action="Visit " + label, emitted_url=public, error=str(exc)[:200])
-                            edge = Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
-                            if edge.is_file():
-                                # Capture the browser's own error page with no saved auth or browser state.
-                                with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
-                                    dest = (out / ("personal-system-" + label.lower().replace(" ", "-") + "-browser.png")).resolve()
-                                    try:
-                                        subprocess.run([str(edge), "--headless=new", "--disable-gpu", "--no-first-run",
-                                            "--disable-extensions", "--hide-scrollbars", "--window-size=1920,1080",
-                                            "--user-data-dir=" + profile, "--screenshot=" + str(dest), public],
-                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=18, check=False)
-                                        if dest.is_file():
-                                            record(action="Browser error screenshot", emitted_url=public, screenshot=dest.name)
-                                    except (OSError, subprocess.TimeoutExpired):
-                                        pass
+                            capture_broken_destination(public,"system-" + label.lower().replace(" ", "-"))
                     if not has("SystemMenu/.+(FAQ|Discord|ContactSupport)"):
                         click("Reopen System menu for report form", find((r"/SettingsButton(?:/|$)",), scope="Sidebar"))
                     if click("Open bug report form", find((r"ReportBug", r"BugReport"), ["Report a bug"], "systemmenu")):

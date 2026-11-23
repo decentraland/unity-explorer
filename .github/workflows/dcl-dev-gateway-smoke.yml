@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        screen: ["social_friends", "social_pair", "social_communities", "personal_inventory", "world_map", "world_places", "authcontrol", "provider_discord", "provider_x", "provider_fortmatic", "provider_coinbase", "provider_walletconnect", "provider_otpform"]
+        screen: ["personal_faq", "personal_camera", "social_passport"]
     env:
       AUDIT_BUILD_URL: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28112-7469fb4/Decentraland_windows64.zip
       AUDIT_SLICE: ${{ matrix.screen }}
@@ -33,5 +33,24 @@ jobs:
         if: always()
         with:
           name: unity-audit-${{ matrix.screen }}
+          path: evidence/
+          retention-days: 10
+
+  macos:
+    name: macOS gateway startup
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      AUDIT_BUILD_URL: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28112-7469fb4/Decentraland_macos.zip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: qa-audit
+      - run: python3 -B qa-audit/mac_login.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-audit-macos
           path: evidence/
           retention-days: 10
