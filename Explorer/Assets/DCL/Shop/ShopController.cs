@@ -322,6 +322,7 @@ namespace DCL.Shop
             {
                 isItemPanelOpen = true;
                 view.SetItemPanelOpen(true);
+                view.AlignItemPanelTop(CurrentSection);
                 SetCompact(true);
             }
 

@@ -23,6 +23,7 @@ namespace DCL.Shop
         [field: SerializeField] public SkeletonLoadingView GridSkeleton { get; private set; } = null!;
         [field: SerializeField] public GridLayoutGroup GhostGrid { get; private set; } = null!;
         [field: SerializeField] public GameObject LoadingMoreSpinner { get; private set; } = null!;
+        [field: SerializeField] private float CompactColumnSpacing { get; set; } = 25f;
 
         [field: Header("States")]
         [field: SerializeField] public GameObject EmptyContainer { get; private set; } = null!;
@@ -32,6 +33,7 @@ namespace DCL.Shop
 
         private Func<int, TModel?>? modelAt;
         private Action<TCard, TModel>? bindCard;
+        private Vector2 defaultSpacing;
         private int itemCount;
         private bool gridInitialized;
 
@@ -53,6 +55,7 @@ namespace DCL.Shop
 
             modelAt = modelAtIndex;
             bindCard = bind;
+            defaultSpacing = Grid.ItemPadding;
             Grid.InitGridView(0, OnGetItem);
             Grid.ScrollRect.SetScrollSensitivityBasedOnPlatform();
             gridInitialized = true;
@@ -172,8 +175,13 @@ namespace DCL.Shop
 
         private void ApplyColumns()
         {
+            // The compact layout has its own column spacing; the rows keep theirs
+            var spacing = new Vector2(CurrentColumns == COMPACT_COLUMNS ? CompactColumnSpacing : defaultSpacing.x, defaultSpacing.y);
+
             Grid.SetGridFixedGroupCount(GridFixedType.ColumnCountFixed, CurrentColumns);
+            Grid.SetItemPadding(spacing);
             GhostGrid.constraintCount = CurrentColumns;
+            GhostGrid.spacing = spacing;
         }
     }
 }

@@ -6807,15 +6807,13 @@ MonoBehaviour:
   <GridSkeleton>k__BackingField: {fileID: 7409428348704520180}
   <GhostGrid>k__BackingField: {fileID: 7714261675539946255}
   <LoadingMoreSpinner>k__BackingField: {fileID: 2459082268937381507}
+  <CompactColumnSpacing>k__BackingField: 25
   <EmptyContainer>k__BackingField: {fileID: 8943146301856241988}
   <EmptyBody>k__BackingField: {fileID: 1586843024546085747}
   <ErrorContainer>k__BackingField: {fileID: 7188499776689262932}
   <RetryButton>k__BackingField: {fileID: 7489088678032798068}
   <CategoryPills>k__BackingField: {fileID: 0}
   <BrowseButton>k__BackingField: {fileID: 617918982394544125}
-  <Scrollbar>k__BackingField: {fileID: 1820973511332017388}
-  <ScrollbarX>k__BackingField: -4
-  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &1076271797563916454
 GameObject:
   m_ObjectHideFlags: 0
@@ -6920,8 +6918,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 18, y: 18}
-  mItemSize: {x: 202, y: 299}
+  mItemPadding: {x: 20, y: 20}
+  mItemSize: {x: 197, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -7187,7 +7185,7 @@ MonoBehaviour:
   <PreviewNametag>k__BackingField: {fileID: 515765156109614886}
   <Main>k__BackingField: {fileID: 4368370685161165654}
   <ItemPanel>k__BackingField: {fileID: 3371296928338458225}
-  <ItemPanelInset>k__BackingField: 398
+  <ItemPanelInset>k__BackingField: 416
   <OverviewView>k__BackingField: {fileID: 81781385298668022}
   <WearablesView>k__BackingField: {fileID: 4022962445899241435}
   <EmotesView>k__BackingField: {fileID: 2999328696611195026}
@@ -8412,15 +8410,13 @@ MonoBehaviour:
   <GridSkeleton>k__BackingField: {fileID: 2131598231075849274}
   <GhostGrid>k__BackingField: {fileID: 948532952823892996}
   <LoadingMoreSpinner>k__BackingField: {fileID: 3894713345718676475}
+  <CompactColumnSpacing>k__BackingField: 25
   <EmptyContainer>k__BackingField: {fileID: 3526975876870864489}
   <EmptyBody>k__BackingField: {fileID: 3880273185529244090}
   <ErrorContainer>k__BackingField: {fileID: 780800566435730681}
   <RetryButton>k__BackingField: {fileID: 2763559896080026774}
   <CategoryPills>k__BackingField: {fileID: 0}
   <BrowseButton>k__BackingField: {fileID: 3361677069669452890}
-  <Scrollbar>k__BackingField: {fileID: 6373228236607751309}
-  <ScrollbarX>k__BackingField: -4
-  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &1381291566035426959
 GameObject:
   m_ObjectHideFlags: 0
@@ -14439,7 +14435,7 @@ MonoBehaviour:
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 197, y: 299}
-  m_Spacing: {x: 16, y: 16}
+  m_Spacing: {x: 20, y: 20}
   m_Constraint: 1
   m_ConstraintCount: 6
 --- !u!1 &2253745379815392604
@@ -14721,15 +14717,13 @@ MonoBehaviour:
   <GridSkeleton>k__BackingField: {fileID: 4411701717442474563}
   <GhostGrid>k__BackingField: {fileID: 2799456872179525974}
   <LoadingMoreSpinner>k__BackingField: {fileID: 910891510785603620}
+  <CompactColumnSpacing>k__BackingField: 25
   <EmptyContainer>k__BackingField: {fileID: 986331738479820292}
   <EmptyBody>k__BackingField: {fileID: 4186728708726841930}
   <ErrorContainer>k__BackingField: {fileID: 1529444207059452041}
   <RetryButton>k__BackingField: {fileID: 3700548390861509936}
   <CategoryPills>k__BackingField: {fileID: 3237346348268539340}
   <BrowseButton>k__BackingField: {fileID: 1248180781618673694}
-  <Scrollbar>k__BackingField: {fileID: 8398918132518300104}
-  <ScrollbarX>k__BackingField: -4
-  <ScrollbarXWithItemPanel>k__BackingField: -22
 --- !u!1 &2302733231354462858
 GameObject:
   m_ObjectHideFlags: 0
@@ -16815,8 +16809,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 130, y: -151}
-  m_SizeDelta: {x: 260, y: 90}
+  m_AnchoredPosition: {x: 120, y: -151}
+  m_SizeDelta: {x: 240, y: 90}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &2063259186556773220
 MonoBehaviour:
@@ -16832,7 +16826,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding:
     m_Left: 20
-    m_Right: 0
+    m_Right: 20
     m_Top: 16
     m_Bottom: 16
   m_ChildAlignment: 0
@@ -21151,8 +21145,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -24}
-  m_SizeDelta: {x: 240, y: 16}
+  m_AnchoredPosition: {x: 120, y: -24}
+  m_SizeDelta: {x: 200, y: 16}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1566368038478807326
 CanvasRenderer:
@@ -23523,7 +23517,7 @@ MonoBehaviour:
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 197, y: 299}
-  m_Spacing: {x: 16, y: 16}
+  m_Spacing: {x: 20, y: 20}
   m_Constraint: 1
   m_ConstraintCount: 6
 --- !u!1 &3608005172798743526
@@ -25269,7 +25263,7 @@ MonoBehaviour:
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 197, y: 299}
-  m_Spacing: {x: 16, y: 16}
+  m_Spacing: {x: 20, y: 20}
   m_Constraint: 1
   m_ConstraintCount: 6
 --- !u!1 &3932849929724425070
@@ -25609,6 +25603,7 @@ MonoBehaviour:
   <GridSkeleton>k__BackingField: {fileID: 790976084132300817}
   <GhostGrid>k__BackingField: {fileID: 6959968937622328219}
   <LoadingMoreSpinner>k__BackingField: {fileID: 646807514216960974}
+  <CompactColumnSpacing>k__BackingField: 25
   <EmptyContainer>k__BackingField: {fileID: 6081985803489474515}
   <EmptyBody>k__BackingField: {fileID: 240993805602366277}
   <ErrorContainer>k__BackingField: {fileID: 7164413374748001875}
@@ -27471,8 +27466,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 18, y: 18}
-  mItemSize: {x: 202, y: 299}
+  mItemPadding: {x: 20, y: 20}
+  mItemSize: {x: 197, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -27949,6 +27944,7 @@ GameObject:
   m_Component:
   - component: {fileID: 234994008262892267}
   - component: {fileID: 2581872218198972312}
+  - component: {fileID: 5918340277164025931}
   m_Layer: 5
   m_Name: Pills
   m_TagString: Untagged
@@ -27973,8 +27969,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -42}
-  m_SizeDelta: {x: 240, y: 32}
+  m_AnchoredPosition: {x: 120, y: -42}
+  m_SizeDelta: {x: 200, y: 32}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &2581872218198972312
 MonoBehaviour:
@@ -30979,8 +30975,8 @@ MonoBehaviour:
     m_Right: 8
     m_Top: 8
     m_Bottom: 48
-  mItemPadding: {x: 18, y: 18}
-  mItemSize: {x: 203, y: 299}
+  mItemPadding: {x: 20, y: 20}
+  mItemSize: {x: 197, y: 299}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -37067,7 +37063,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_SizeDelta.x
@@ -37075,7 +37071,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 849.3463
+      value: -106
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_LocalScale.x
@@ -37123,7 +37119,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -64.58386
+      value: -82
       objectReference: {fileID: 0}
     - target: {fileID: 4125966871813632001, guid: e4af9b1cd0c344bba9f0a1b2c3d4e5f6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -39908,3 +39904,23 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
   m_PrefabInstance: {fileID: 6464867426745816075}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5918340277164025931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4512549525372203959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 0
+  m_MinHeight: -1
+  m_PreferredWidth: 200
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1

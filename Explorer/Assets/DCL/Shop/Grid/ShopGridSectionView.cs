@@ -15,11 +15,6 @@ namespace DCL.Shop
         [field: SerializeField] public ShopCategoryPillsView? CategoryPills { get; private set; }
         [field: SerializeField] public Button BrowseButton { get; private set; } = null!;
 
-        [field: Header("Scrollbar")]
-        [field: SerializeField] public RectTransform? Scrollbar { get; private set; }
-        [field: SerializeField] public float ScrollbarX { get; private set; } = -4f;
-        [field: SerializeField] public float ScrollbarXWithItemPanel { get; private set; } = -22f;
-
         public event Action? BrowseClicked;
         public event Action<ShopItemCardView>? CardAddToCartClicked;
         public event Action<ShopItemCardView>? CardBuyClicked;
@@ -27,12 +22,6 @@ namespace DCL.Shop
 
         public void SetEmpty(bool on, string? query) =>
             ShowEmpty(on, query != null ? string.Format(EMPTY_SEARCH_FORMAT, query) : EMPTY_FILTERS_TEXT);
-
-        public void SetItemPanelOpen(bool open)
-        {
-            if (Scrollbar != null)
-                Scrollbar.anchoredPosition = new Vector2(open ? ScrollbarXWithItemPanel : ScrollbarX, Scrollbar.anchoredPosition.y);
-        }
 
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
         protected override void Awake()
