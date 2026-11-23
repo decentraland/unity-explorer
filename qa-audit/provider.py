@@ -10,9 +10,27 @@ def run(host,name):
     file=Path(os.environ["USERPROFILE"])/"AppData/LocalLow/Decentraland/Explorer/auth-url.txt"
     selected=False
     expanded=False
-    entered=False
+    clicked=0
     for _ in range(100):
         items=host.rows()
+        if name=="otpform":
+            if selected:
+                if time.monotonic()-clicked>22:
+                    host.capture("email-after-submit")
+                    host.paths("email-after-submit",items)
+                    return
+                time.sleep(1)
+                continue
+            field=next((e for e in items if e.get("kind")=="inputField" and "EmailInputField" in e.get("path","")),None)
+            if field:
+                host.tool(host.session,"ui_set_text",{"path":field["path"],"text":"unity-gateway-qa@example.invalid"})
+                host.capture("email-valid-format")
+                items=host.rows()
+                next_button=next((e for e in items if e.get("kind")=="button" and ("Email" in e.get("path","") and e.get("label","").lower()=="next")),None)
+                if next_button: host.click(next_button)
+                else: host.tool(host.session,"ui_set_text",{"path":field["path"],"text":"unity-gateway-qa@example.invalid","submit":True})
+                selected=True;clicked=time.monotonic()
+                continue
         if selected and file.is_file():
             url=file.read_text(encoding="utf-8-sig").strip()
             parts=urlsplit(url)
@@ -27,16 +45,17 @@ def run(host,name):
                 (host.out/"provider.json").write_text(json.dumps(details))
                 browser.close()
             return
-        if not selected:
+        if not selected or time.monotonic()-clicked>6:
             target=next((item for item in items if item.get("path","").lower().endswith("/"+name+".button") and item.get("kind")=="button"),None)
             if target:
                 time.sleep(.8)
                 host.capture("provider-native")
-                host.click(target);selected=True
-            elif not entered and (welcome:=host.button(items,"LogInOrSignup")):
-                host.click(welcome);entered=True
-            elif not expanded and (more:=host.button(items,"MoreOptions.Button")):
+                host.click(target);selected=True;clicked=time.monotonic()
+            elif (welcome:=host.button(items,"LogInOrSignup")):
+                time.sleep(1);host.click(welcome);expanded=False
+            elif (not expanded or time.monotonic()-clicked>8) and (more:=host.button(items,"MoreOptions.Button")):
                 host.click(more);expanded=True
+                clicked=time.monotonic()
         time.sleep(1.1)
     host.capture("provider-last")
     host.paths("provider-last",host.rows())

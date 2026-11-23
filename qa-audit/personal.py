@@ -1,4 +1,6 @@
 """Screen-level evidence collection on the hosted CI player using its actual UI."""
+import ctypes
+from ctypes import wintypes
 import json
 import os
 import re
@@ -69,6 +71,36 @@ def run(session, tool, capture, output_dir):
         key(name)
         time.sleep(.65)
         record(action="key", key=name)
+
+    def cell_click(x, y, label):
+        user32 = ctypes.windll.user32
+        target = int(os.environ["AUDIT_PLAYER_PID"])
+        callback = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        windows = []
+        @callback
+        def choose(hwnd, _):
+            pid = wintypes.DWORD()
+            bounds = wintypes.RECT()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value == target and user32.IsWindowVisible(hwnd) and user32.GetClientRect(hwnd, ctypes.byref(bounds)):
+                windows.append((bounds.right * bounds.bottom, hwnd, bounds.right, bounds.bottom))
+            return True
+        user32.EnumWindows(choose, 0)
+        if not windows:
+            return False
+        _, hwnd, width, height = max(windows, key=lambda item: item[0])
+        user32.ShowWindow(hwnd, 5)
+        user32.SetForegroundWindow(hwnd)
+        point = wintypes.POINT(round(width*x), round(height*y))
+        user32.ClientToScreen(hwnd, ctypes.byref(point))
+        user32.SetCursorPos(point.x, point.y)
+        time.sleep(.45)
+        user32.mouse_event(2, 0, 0, 0, 0)
+        time.sleep(.18)
+        user32.mouse_event(4, 0, 0, 0, 0)
+        time.sleep(1.3)
+        record(action=label, client_width=width, client_height=height, relative_to_client=[x, y])
+        return True
 
     def has(pattern):
         return any(re.search(pattern, e.get("path", ""), re.I) for e in elements() if not e.get("occluded"))
@@ -185,6 +217,43 @@ def run(session, tool, capture, output_dir):
             snap("backpack-emotes", r"(SlotContainer|EmoteGrid|Emotes/)", 3)
         dismiss()
 
+    def inventory():
+        marker = r"Backpack.*/(?:AvatarSlot|TabSelector|SearchBar|ToggleOutfits)"
+        if not open_hotkey("I", marker):
+            snap("inventory-unreached")
+            return
+        click("Open upper-body wearables", find([r"AvatarSlotTop(?:/|$)"], scope="Backpack"))
+        snap("inventory-tops-early", marker)
+        snap("inventory-tops-30s", marker, 30)
+        snap("inventory-tops-60s", marker, 30)
+        cell_click(.50,.37,"Select the first upper-body item")
+        snap("inventory-wearable-selected", marker)
+        cell_click(.423,.180,"Open Saved Outfits")
+        snap("inventory-saved-outfits", wait=2)
+        if has("Outfit"):
+            cell_click(.423,.180,"Close Saved Outfits")
+        if not has(r"Backpack.*/(?:TabSelector|AvatarSlot)"):
+            press("ESC")
+        if not has(marker):
+            open_hotkey("I", marker)
+        if click("Open Emotes", find([r"TabSelector/.*Emotes"], ["Emotes"], "backpack")):
+            snap("inventory-emotes-early", wait=.8)
+            snap("inventory-emotes-30s", wait=30)
+            snap("inventory-emotes-60s", wait=30)
+            cell_click(.50,.37,"Select the first owned emote")
+            snap("inventory-emote-selected", wait=2)
+        temp = Path(os.environ.get("RUNNER_TEMP","."))
+        logs = list(temp.glob("*/Player.log"))
+        for log in sorted(logs, key=lambda p:p.stat().st_mtime, reverse=True)[:1]:
+            lines=[]
+            for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+                if re.search(r"(?i)(assetbundle|thumbnail|wearable|emote|ab-cdn|/content/contents)",line) and re.search(r"(?i)(?:HTTP/1\.[01] [45]\d\d|failed to|cannot|timed out|could not|Curl error|HTTP/2 [45]\d\d|404 Not Found)",line):
+                    line=re.sub(r"(?i)(https?://[^\s?'\"<>]+)\?[^\s'\"<>]*",r"\1?[redacted]",line)
+                    line=re.sub(r"0x[0-9a-fA-F]{40,}", "[redacted]",line)
+                    if not re.search("(?i)(authorization|signature|identity|private.?key|bearer|access.?token)",line) and line not in lines:
+                        lines.append(line[:900])
+            record(action="Asset request error observations", lines=lines[:35])
+
     def wheel():
         if open_hotkey("B", "EmoteWheel|EmotesWheel", "EmotesButton"):
             rows = snap("emote-wheel", "Emote.*Wheel", 2)
@@ -230,6 +299,9 @@ def run(session, tool, capture, output_dir):
                     detail_open = has("PhotoDetail")
                 except Exception as exc:
                     record(action="Click first gallery cell", result=str(exc)[:180])
+        if not detail_open and has("CameraReelGallery"):
+            cell_click(.085,.20,"Select first populated gallery thumbnail")
+            detail_open = has("PhotoDetail")
         if detail_open:
             snap("photo-detail", "PhotoDetail", 2)
             if click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
@@ -347,10 +419,12 @@ def run(session, tool, capture, output_dir):
         dismiss()
 
     section = os.environ.get("AUDIT_SECTION", "").strip().lower()
-    drivers = (backpack, wheel, settings, camera, shop, support)
+    drivers = (backpack, wheel, settings, camera, shop, support, inventory)
     if section and section != "faq" and section not in {driver.__name__ for driver in drivers}:
         raise ValueError("Unknown personal screen section " + section)
     for driver in drivers:
+        if not section and driver == inventory:
+            continue
         if section and section != driver.__name__ and not (section == "backpack" and driver == wheel) and not (section == "faq" and driver == support):
             continue
         try:

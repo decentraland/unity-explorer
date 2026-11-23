@@ -115,9 +115,7 @@ class Player:
         self.select()
         if not self.driver.open_owned_friend((account, peer)):
             return False
-        if not self.driver.hover([r"/friendlistuser$"]):
-            return False
-        if not self.driver.click([r"/friendlistuser/(?:.*/)?chatbutton$"]):
+        if not self.driver.row_action(r"/friendlistuser$", r"/friendlistuser/(?:.*/)?chatbutton$"):
             return False
         end = time.monotonic() + 20
         while time.monotonic() < end:

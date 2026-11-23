@@ -23,7 +23,7 @@ def run(session, tool, capture, output_dir):
 
     def match(pattern, elements=None, kind=None):
         for e in controls() if elements is None else elements:
-            if e.get("disabled") or (kind and e.get("kind") != kind):
+            if e.get("disabled") or e.get("occluded") or (kind and e.get("kind") != kind):
                 continue
             if re.search(pattern, e.get("path", ""), re.I):
                 return e
@@ -44,7 +44,7 @@ def run(session, tool, capture, output_dir):
                 if isinstance(result,dict) and result.get("ok") is False:
                     raise RuntimeError(str(result.get("blockedBy") or result.get("warning") or "unconsumed input"))
                 active.append(e["path"])
-                time.sleep(.65)
+                time.sleep(1.4)
                 return
             except Exception as ex:
                 failures.append(str(ex)[:160])
@@ -84,7 +84,7 @@ def run(session, tool, capture, output_dir):
 
     def close(expected):
         if match(expected):
-            try: press(r"(ExploreSectionModal|Navmap|PlaceDetailPanel|EventDetailPanel).*/(CloseButton|Close|BackButton)$")
+            try: press(r"(ExploreSectionModal|Navmap|PlaceDetailPanel|EventDetailPanel).*/(CloseButton|Button_Close|Close|BackButton)$")
             except Exception: key("esc")
             time.sleep(.8)
 
@@ -173,6 +173,21 @@ def run(session, tool, capture, output_dir):
             press(field)
             press(field,operation="ui_set_text",text="Genesis",submit=True)
         record("06-map-search",map_search,map_marker,3)
+        def select_search_result():
+            items=controls()
+            candidates=[item for item in items if "genesis" in item.get("label","").lower() and item.get("kind")=="button" and not item.get("occluded")]
+            if candidates:
+                press("^"+re.escape(candidates[0]["path"])+"$")
+            else:
+                press(r"/SearchPlaces/.*/PlaceSearchEntry(?:\(Clone\))?(?:\[\d+\])?$")
+        record("06b-map-place-overview",select_search_result,r"/(StartNavigation|ExitNavigation|JumpIn)$",4)
+        if match(r"/(StartNavigation|ExitNavigation|JumpIn)$"):
+            for tab in ("Photos","Events","Overview"):
+                picker=r"/PlacesAndEventsPanel/.*/"+tab+r"$"
+                if match(picker): record("06c-map-place-"+tab.lower(),lambda p=picker:press(p),map_marker,3)
+            if match(r"/StartNavigation$"):
+                record("06d-map-route",lambda:press(r"/StartNavigation$"),r"/(ExitNavigation|DestinationInfoElement)/?",2)
+                if match(r"/ExitNavigation$"): press(r"/ExitNavigation$")
         def leave_map():
             if match(map_marker):
                 key("m")

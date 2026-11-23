@@ -155,8 +155,8 @@ def wait_world(process,auth_only):
                 if drop:
                     click(drop);capture("onboarding-body-type");options=rows()
                     paths("onboarding-body-type",options)
-                    choice=next((e for e in options if re.search(r"dropdown.*/(.*female|.*woman|.*bodytypeb)",e.get("path",""),re.I) and e.get("kind")=="button"),None)
-                    if choice: click(choice);time.sleep(8);capture("onboarding-second-body")
+                    choice=next((e for e in options if e.get("path","").endswith("/BodyTypeOptionB") and e.get("kind")=="button"),None)
+                    if choice: click(choice);time.sleep(35);capture("onboarding-second-body")
                     else: click(drop)
                 cont=button(els,"ContinueButton")
                 if cont: click(cont)

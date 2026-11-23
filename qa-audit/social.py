@@ -228,6 +228,56 @@ class Session:
             return result.get("ok") is not False
         return False
 
+    def row_action(self, row_pattern, button_pattern):
+        # MCP's next UI gesture ends a parked semantic hover. Keep the real OS pointer
+        # inside the row through mouse-down so Unity keeps its hover-only buttons active.
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        pid = int(os.environ["AUDIT_PLAYER_PID"])
+        hwnds = []
+        callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        @callback_type
+        def window(hwnd, _):
+            actual = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+            if actual.value == pid and user32.IsWindowVisible(hwnd):
+                hwnds.append(hwnd)
+            return True
+        user32.EnumWindows(window, 0)
+        if not hwnds:
+            return False
+        hwnd = hwnds[0]
+        rect = wintypes.RECT()
+        user32.GetClientRect(hwnd, ctypes.byref(rect))
+        user32.SetForegroundWindow(hwnd)
+        def move(target):
+            center = target["center"]
+            x, y = center["x"], center["y"]
+            if not (0 < x < 1 and 0 < y < 1):
+                return False
+            point = wintypes.POINT(round(rect.right*x), round(rect.bottom*y))
+            user32.ClientToScreen(hwnd, ctypes.byref(point))
+            user32.SetCursorPos(point.x, point.y)
+            at = wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(at))
+            return abs(at.x-point.x) <= 2 and abs(at.y-point.y) <= 2
+        row = self.choose([row_pattern], 5)
+        if row and move(row):
+            time.sleep(.6)
+            button = self.choose([button_pattern], 3)
+            if button and move(button):
+                time.sleep(.18)
+                user32.mouse_event(2, 0, 0, 0, 0)
+                time.sleep(.12)
+                user32.mouse_event(4, 0, 0, 0, 0)
+                time.sleep(.7)
+                self.report["actions"].append({"physical_click": self.path(button)})
+                return True
+        if self.hover([row_pattern]):
+            return self.click([button_pattern])
+        return False
+
     def friends(self, pair):
         facts = self.report["fixture"]
         if pair:
@@ -249,8 +299,7 @@ class Session:
         self.click([friends + r".*requestsbutton(?:/button)?$"])
         self.snap("friend-requests", r"/requestspanel/", 2)
         if pair and not has_friend and owned_request:
-            self.hover([r"/requestuser$"])
-            facts["clicked_accept"] = self.click([r"/requestuser[^/]*/(?:.*/)?acceptbutton$"])
+            facts["clicked_accept"] = self.row_action(r"/requestuser$", r"/requestuser[^/]*/(?:.*/)?acceptbutton$")
             social_readback(a, b, facts)
             if not facts["membership"]["contains_fixture"]:
                 status, _ = request_json("PATCH", "/social-api/v1/friendship-requests/" + b["address"], a, {"intention": "accepted"})
@@ -316,8 +365,7 @@ class Session:
             self.click([r"/chatmemberlist/.*close", r"/(?:\[btn\]\s*)?members$"])
         self.close(r"/chatpanel")
         if self.open_owned_friend(pair):
-            self.hover([r"/friendlistuser$"])
-            if self.click([r"/friendlistuser/.*/chatbutton$"]):
+            if self.row_action(r"/friendlistuser$", r"/friendlistuser/(?:.*/)?chatbutton$"):
                 self.snap("direct-message", r"/chatpanel/.*(?:/chatinputbox/|private)", 4)
 
     def notifications(self):
@@ -334,10 +382,10 @@ class Session:
         self.choose([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.+viewbutton$"], 15)
         self.snap("communities-browse", r"/communit(?:y|ies)(?:section|browser|resultcard)", 2)
         if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.*viewbutton$", r"/communityresultcard/(?:header|button)$"]):
-            self.snap("community-announcements", r"/communitycard/")
+            self.snap("community-announcements", r"/communitycard/", 22)
             for label in ("Members", "Places", "Photos"):
                 if self.click([r"/communitycard/.*" + label.lower() + r"sectionbutton(?:/button)?$"]):
-                    self.snap("community-" + label.lower(), r"/communitycard/")
+                    self.snap("community-" + label.lower(), r"/communitycard/", 24 if label == "Members" else 2)
             self.close(r"/communitycard")
         if self.click([r"/invitesandrequestsbutton(?:/button)?$"]):
             self.snap("community-invites-requests", r"/invitesandrequestssection|/invitesandrequestsbutton")
