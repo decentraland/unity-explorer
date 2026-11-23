@@ -1,0 +1,20 @@
+name: DCL dev gateway sign-in smoke
+on:
+  push:
+    branches: [qa/dcl-dev-gateway-login-ed38dde]
+permissions:
+  contents: read
+jobs:
+  sign-in:
+    runs-on: windows-2025
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Open the wallet sign-in flow in the PR's published player
+        run: python -B scripts/check_dcl_dev_signin.py
