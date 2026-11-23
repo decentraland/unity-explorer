@@ -384,8 +384,8 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
 
-            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
-            bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
+            bool cliAbgenPipeline = DclDevGateway.UseAssetFlag(applicationParametersParser, AppArgsFlags.ABGEN_PIPELINE);
+            bool cliAbgenLods = DclDevGateway.UseAssetFlag(applicationParametersParser, AppArgsFlags.ABGEN_LODS);
 
             // Local scene development: the embedded abgen server becomes the optimized-assets source. It is started to
             // health before the URL sources are built, so the override is set only when it is actually serving.

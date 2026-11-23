@@ -40,6 +40,8 @@ namespace Global.AppArgs.Tests
             Assert.AreEqual("dcl-one-poc-rt.decentraland.zone", values[AppArgsFlags.PULSE_SERVER]);
             Assert.AreEqual("true", values[AppArgsFlags.PULSE_MULTIPLAYER]);
             Assert.AreEqual("100,100", values[AppArgsFlags.POSITION]);
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
             Assert.AreEqual("false", values[AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED]);
             Assert.IsTrue(args.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY));
             Assert.IsTrue(args.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS));
@@ -64,6 +66,25 @@ namespace Global.AppArgs.Tests
             var args = new ApplicationParametersParser(false, "--gateway", gateway);
             Assert.IsFalse(args.HasFlag(AppArgsFlags.BASE_DOMAIN));
             Assert.IsFalse(args.HasLaunchDestination());
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
+        }
+
+        [TestCase(AppArgsFlags.ABGEN_PIPELINE, AppArgsFlags.ABGEN_LODS)]
+        [TestCase(AppArgsFlags.ABGEN_LODS, AppArgsFlags.ABGEN_PIPELINE)]
+        public void AllowEachDclDevAssetDefaultToBeDisabledIndependently(string disabled, string enabled)
+        {
+            var args = new ApplicationParametersParser(false, "--gateway", "https://dcl.dev", "--" + disabled, "false");
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, disabled));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, enabled));
+        }
+
+        [Test]
+        public void PreservePresenceBasedAssetFlagsOnOtherGateways()
+        {
+            var args = new ApplicationParametersParser(false, "--gateway", "https://gateway.localhost", "--abgen-pipeline", "false", "--abgen-lods");
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
         }
 
         [Test]

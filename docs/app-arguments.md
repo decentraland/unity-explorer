@@ -121,7 +121,7 @@ To sign in to dcl.dev, launch the CI player with a single argument:
 .\Decentraland.exe --gateway https://dcl.dev
 ```
 
-Unity selects the dcl.dev realm on mainnet and uses its auth bridge, feature flags, Catalyst and asset registry. It downloads Unity bundles, LODs and satellite map tiles from the public Decentraland CDNs. It starts at parcel `100,100` with realm scene pointers, the deployment's gatekeeper and Pulse relay, and landscape terrain disabled. Explicit launch arguments such as `--position` take precedence.
+Unity selects the dcl.dev realm on mainnet and uses its auth bridge, feature flags, Catalyst and profile registry. It resolves scene pointers against the realm and uses the public ABGen registry and CDN for converted assets, LODs and satellite map tiles. It starts at parcel `100,100` with the deployment's gatekeeper and Pulse relay, and landscape terrain disabled. Explicit launch arguments such as `--position` take precedence. To test the legacy asset pipeline on dcl.dev, add `--abgen-pipeline false --abgen-lods false`. Each switch overrides its corresponding default independently.
 
 ---
 

@@ -129,7 +129,9 @@ namespace DCL.Browser
             bool abgenLodsForced = false,
             string? pulseHost = null,
             bool useRealmScenePointers = false)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced, pulseHost, useRealmScenePointers)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced,
+                // A running local sidecar supplies its own LOD descriptors and bundles.
+                abgenLodsForced && (string.IsNullOrEmpty(localAbBaseUrl) || !DclDevGateway.IsOrigin(cliGatewayPrefix)), pulseHost, useRealmScenePointers)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
             isDclDevGateway = DclDevGateway.IsOrigin(cliGatewayPrefix);
