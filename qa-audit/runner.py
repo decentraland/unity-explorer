@@ -21,10 +21,15 @@ import test_account
 from types import SimpleNamespace
 
 slice_name=os.environ["AUDIT_SLICE"]
+module_name=slice_name.split("_",1)[0]
+if module_name in ("personal","social","world") and "_" in slice_name:
+    os.environ["AUDIT_SECTION"]=slice_name.split("_",1)[1]
+if slice_name=="world_abgen":
+    os.environ["AUDIT_SECTION"]="scenes"
 out=Path("evidence")/slice_name
 out.mkdir(parents=True,exist_ok=True)
 session=None
-fresh=slice_name in ("auth","authcontrol","guest")
+fresh=slice_name in ("auth","authcontrol","guest","guestcomplete")
 
 def clear_overlays():
     els=rows()
@@ -78,7 +83,8 @@ def initialize(process):
 def launch(exe,folder,log):
     args=[str(exe),"-force-d3d11","-force-driver-type-warp","-screen-fullscreen","0","-screen-width","1280","-screen-height","720","-logFile",str(log),
           "--gateway","https://dcl.dev","--skip-minimum-specs-screen","--mcp-port","8123"]
-    if slice_name in ("auth","authcontrol","personal"): args.append("--alttester")
+    if slice_name in ("auth","authcontrol") or module_name=="personal": args.append("--alttester")
+    if slice_name=="world_abgen": args.extend(["--abgen-pipeline","--abgen-lods"])
     process=subprocess.Popen(args,cwd=folder)
     os.environ["AUDIT_PLAYER_PID"]=str(process.pid)
     initialize(process)
@@ -94,7 +100,7 @@ def wallet_login(process,acct):
     seen=set()
     for _ in range(75):
         els=rows()
-        if slice_name=="guest":
+        if slice_name.startswith("guest"):
             guest=button(els,"PlayAsGuest")
             if guest:
                 capture("guest-welcome"); click(guest); return
@@ -136,11 +142,32 @@ def wait_world(process,auth_only):
         if any("selectavatar" in k and "continue" in k for k in keys):
             if "avatar" not in seen:
                 capture("onboarding-avatar"); paths("onboarding-avatar",els); seen.add("avatar")
+                slot=button(els,"MaleAvatarsContainer/Slot2")
+                if slot:
+                    click(slot);time.sleep(12);capture("onboarding-avatar-selected")
+                drop=button(els,"BodyTypeDropdown")
+                if drop:
+                    click(drop);capture("onboarding-body-type");options=rows()
+                    paths("onboarding-body-type",options)
+                    choice=next((e for e in options if re.search(r"dropdown.*/(.*female|.*woman|.*bodytypeb)",e.get("path",""),re.I) and e.get("kind")=="button"),None)
+                    if choice: click(choice);time.sleep(8);capture("onboarding-second-body")
+                    else: click(drop)
                 cont=button(els,"ContinueButton")
                 if cont: click(cont)
         elif any("terms" in k and "toggle" in k for k in keys):
+            if "joining" in seen:
+                time.sleep(2);continue
             capture("onboarding-profile");paths("onboarding-profile",els)
-            if auth_only: return "wallet-authenticated; new-account profile editor"
+            if slice_name=="guestcomplete":
+                field=next(e for e in els if "TextInput.Name" in e["path"] and e["kind"]=="inputField")
+                tool(session,"ui_set_text",{"path":field["path"],"text":"AuditGuest","submit":True})
+                terms=next(e for e in els if "TermsOfUse.Toggle" in e["path"])
+                click(terms)
+                new=rows();paths("onboarding-ready",new);capture("onboarding-ready")
+                jump=button(new,"JumpIn")
+                if not jump: raise RuntimeError("Onboarding Jump In remained disabled")
+                click(jump);seen.add("joining");continue
+            if auth_only: return ("guest" if slice_name.startswith("guest") else "wallet-authenticated")+"; new-account profile editor"
             raise RuntimeError("Prepared profile was not found by Unity")
         elif any("jumpin" in k for k in keys):
             jump=button(els,"JumpIn")
@@ -179,7 +206,10 @@ def main():
         with ZipFile(zip_path) as z:z.extractall(root)
         primary,friend=wallets(root)
         if not fresh: deploy_profile(primary)
-        if slice_name=="social": deploy_profile(friend)
+        if module_name=="social":
+            deploy_profile(friend)
+            import social
+            social.prepare_fixture(out,os.environ.get("AUDIT_SECTION",""))
         if not fresh:
             test_account.unity_login(SimpleNamespace(wallets=Path(os.environ["DCL_AUDIT_WALLETS"]),label="primary",hours=72,slot=0,prefs_dir=None))
         log=root/"Player.log"
@@ -190,7 +220,7 @@ def main():
             (out/"login-result.txt").write_text(result)
             print("Authenticated state:",result,flush=True)
             if not fresh:
-                importlib.import_module(slice_name).run(session,tool,capture,out)
+                importlib.import_module(module_name).run(session,tool,capture,out)
         except Exception:
             try: capture("last-screen"); paths("last-screen",rows())
             except Exception: pass

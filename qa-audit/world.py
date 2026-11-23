@@ -1,5 +1,6 @@
 """Exercise the public world, map and discovery screens of the running CI player."""
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -8,6 +9,9 @@ from audit_input import key
 
 def run(session, tool, capture, output_dir):
     output_dir = Path(output_dir)
+    section = os.getenv("AUDIT_SECTION", "").strip().lower()
+    if section not in ("", "all", "map", "places", "events", "scenes"):
+        raise ValueError("Unknown world audit section " + section)
     rows = []
     active = []
 
@@ -15,7 +19,7 @@ def run(session, tool, capture, output_dir):
         return tool(session, name, args)
 
     def controls():
-        return call("ui_list", stack="ugui").get("elements", [])
+        return call("ui_list", stack="ugui",checkOcclusion=True).get("elements", [])
 
     def match(pattern, elements=None, kind=None):
         for e in controls() if elements is None else elements:
@@ -28,6 +32,7 @@ def run(session, tool, capture, output_dir):
     def press(pattern, operation="ui_click", **args):
         elements = controls()
         candidates = [e for e in elements if re.search(pattern, e.get("path",""), re.I) and not e.get("disabled")]
+        candidates.sort(key=lambda e:bool(e.get("occluded")))
         if operation == "ui_set_text":
             candidates = [e for e in candidates if "input" in e.get("kind","").lower()]
         if not candidates:
@@ -48,6 +53,12 @@ def run(session, tool, capture, output_dir):
     def record(label, action=None, expect=None, wait=1.8):
         active.clear()
         errors = []
+        if match(r"^PerformanceIssuePrompt/.*/CloseButton$"):
+            try:
+                if match(r"^PerformanceIssuePrompt/.*/DontShowThisAgainToggle$"):
+                    press(r"^PerformanceIssuePrompt/.*/DontShowThisAgainToggle$")
+                press(r"^PerformanceIssuePrompt/.*/CloseButton$")
+            except Exception: pass
         if action:
             try: action()
             except Exception as ex: errors.append(str(ex)[:300])
@@ -78,14 +89,41 @@ def run(session, tool, capture, output_dir):
             time.sleep(.8)
 
     def open_panel(shortcut, marker):
-        if not match(marker):
-            key(shortcut)
-            time.sleep(1.2)
+        tab = {"m":"Map", "x":"Events", "z":"Places"}[shortcut]
+        tab_path = r"/Header/TabSelector/"+tab+"Tab$"
+        if match(marker): return
+        if match(tab_path):
+            press(tab_path)
+            return
+        key(shortcut)
+        time.sleep(1.2)
+        if match(marker): return
+        if shortcut=='m':
+            try: press(r"/Minimap/.*/MinimapRendererButton$")
+            except Exception: pass
+            if not match(marker):
+                try: press(r"/UpperLayout/MapButton$")
+                except Exception: pass
+        else:
+            entry = r"/DiscoverMenu/(?:.*/)?"+tab+r"(?:/|$)"
+            try:
+                if not match(entry): press(r"/UpperLayout/DiscoverButton$")
+                press(entry)
+            except Exception: pass
+        if match(marker): return
+        if not match(tab_path):
+            press(r"/UpperLayout/SettingsButton$")
+            press(r"/SystemMenu/(?:.*/)?Settings(?:Button)?$")
+        press(tab_path)
 
     def snapshot_scene(label):
         result={}
         for name in ("get_scene_state","get_scene_content_stats","get_scene_content_breakdown"):
             try: result[name]=call(name)
+            except ValueError:
+                from rpc_base import rpc
+                response,_=rpc("tools/call",{"name":name,"arguments":{}},session)
+                result[name]=[b.get("text","")[:8000] for b in response.get("content",[]) if b["type"]=="text"]
             except Exception as ex: result[name]={"error":str(ex)[:250]}
         (output_dir/("world-scene-"+label+".json")).write_text(json.dumps(result,indent=2),encoding="utf-8")
 
@@ -101,56 +139,80 @@ def run(session, tool, capture, output_dir):
             press(r"/OpenLayersPanel(/|$)")
         press(r"/FiltersContainer/.*/Satellite(/|$)")
 
-    map_marker=r"/(OpenLayersPanel|PlacesAndEventsPanel|NavigationPanel)(/|$)"
-    places_marker=r"/(Places_Header|PlacesResults|TabSelector/(Explore|Favorites|Recent|MyPlaces))(/|$)"
-    events_marker=r"/(EventsCalendar|EventsByDay|Day[1-5]SelectorButton|GoToTodayButton)(/|$)"
+    map_marker=r"(?:^|/)(OpenLayersPanel|PlacesAndEventsPanel|NavigationPanel)(?:/|$)"
+    places_marker=r"(?:^|/)(Places_Header|PlacesResults|TabSelector/(Explore|Favorites|Recent|MyPlaces))(?:/|$)"
+    events_marker=r"(?:^|/)(EventsCalendar|EventsByDay|Day[1-5]SelectorButton|GoToTodayButton)(?:/|$)"
+    place_detail=r"(?:^|/)(PlaceDetailPanel|PlaceDetails|DetailPanel)(?:/|$)"
+    event_detail=r"(?:^|/)(EventDetailPanel|EventDetails)(?:/|$)"
+    until=time.monotonic()+90
+    while time.monotonic()<until:
+        state=call("get_scene_state")
+        if not state.get("loadingScreenOn") and (state.get("scene") or {}).get("isReady"): break
+        time.sleep(2)
     snapshot_scene("spawn")
     record("01-hud-spawn",wait=2)
-    record("02-map-parcels",lambda:open_panel("m",map_marker),map_marker,3)
-    record("03-map-layers",lambda:press(r"/OpenLayersPanel(/|$)"),r"/FiltersContainer/")
-    record("04-map-satellite",choose_satellite,map_marker,3)
-    record("05-map-satellite-zoom",zoom,map_marker,4)
-    def map_search():
-        press(r"/(SearchBar|SearchPlaces)(/|$).*",operation="ui_set_text",text="Genesis")
-    record("06-map-search",map_search,map_marker,3)
-    def leave_map():
-        if match(map_marker):
-            key("m")
-            time.sleep(.8)
-        close(map_marker)
-    leave_map()
-    record("07-places-browse",lambda:open_panel("z",places_marker),places_marker,4)
-    record("08-place-details",lambda:press(r"/(PlaceCard(?:\(Clone\))?)(?:$|/MainButton$|/.*InfoButton$)"),r"/PlaceDetailPanel|/PlaceDetails|/DetailPanel",2)
-    if match(r"/PlaceDetailPanel|/PlaceDetails|/DetailPanel"):
-        close(r"/PlaceDetailPanel|/PlaceDetails|/DetailPanel")
-        open_panel("z",places_marker)
-    record("09-places-favorites",lambda:press(r"/TabSelector/Favorites(?:/|$)"),places_marker)
-    record("10-places-recent",lambda:press(r"/TabSelector/Recent(?:/|$)"),places_marker)
-    record("11-places-mine",lambda:press(r"/TabSelector/MyPlaces(?:/|$)"),places_marker)
-    def place_search():
-        press(r"/TabSelector/Explore(?:/|$)")
-        press(r"/SearchBar(?:/|$).*",operation="ui_set_text",text="Genesis")
-    record("12-places-search",place_search,places_marker,3)
-    record("13-places-filters",lambda:press(r"/Places_FilterSelector(?:/[^/]*)?$"),places_marker)
-    close(places_marker)
-    record("14-events-calendar",lambda:open_panel("x",events_marker),events_marker,4)
-    record("15-events-next-page",lambda:press(r"/EventsCalendar.*/RightArrowButton(?:/|$)"),events_marker)
-    record("16-events-by-day",lambda:press(r"/Day[1-5]SelectorButton(?:/|$)"),r"/(EventsByDay|GoToNextDayButton)(/|$)",3)
-    record("17-events-next-day",lambda:press(r"/GoToNextDayButton(?:/|$)"),r"/(EventsByDay|GoToNextDayButton)(/|$)")
-    if match(r"/EventCard(_Big|_Small|_Banner|\(Clone\)).*"):
-        record("18-event-details",lambda:press(r"/EventCard(?:_Big|_Small|_Banner)(?:\(Clone\))?(?:$|/MainButton$|/.*(InfoButton|DetailButton)$)"),r"/EventDetailPanel")
-    close(events_marker)
-    def travel(x,y):
-        try: call("teleport",x=x,y=y,waitForReady=False)
-        except (ValueError,TypeError): pass  # This tool returns text when the request is accepted.
-        deadline=time.monotonic()+52
-        while time.monotonic()<deadline:
-            state=call("get_scene_state")
-            if state.get("currentParcel")=={"x":x,"y":y} and (state.get("scene") or {}).get("isReady"): return
-            time.sleep(2)
-        raise TimeoutError(f"Parcel {x},{y} did not report a ready scene within 52 seconds")
-    record("19-second-scene",lambda:travel(-1,-1),wait=2)
-    snapshot_scene("second-scene")
-    record("20-metazoo-bundles",lambda:travel(95,98),wait=8)
-    snapshot_scene("metazoo")
+    def map_screens():
+        record("02-map-parcels",lambda:open_panel("m",map_marker),map_marker,3)
+        record("03-map-layers",lambda:press(r"/OpenLayersPanel(/|$)"),r"/FiltersContainer/")
+        record("04-map-satellite",choose_satellite,map_marker,3)
+        record("05-map-satellite-zoom",zoom,map_marker,4)
+        def map_search():
+            press(r"/(SearchBar|SearchPlaces)(/|$).*",operation="ui_set_text",text="Genesis")
+        record("06-map-search",map_search,map_marker,3)
+        def leave_map():
+            if match(map_marker):
+                key("m")
+                time.sleep(.8)
+            close(map_marker)
+        leave_map()
+
+    def places_screens():
+        record("07-places-browse",lambda:open_panel("z",places_marker),places_marker,4)
+        record("08-place-details",lambda:press(r"/PlaceCard(?:\[\d+\]|\(Clone\))?(?:$|/MainButton$|/.*Info(?:Button)?$)"),place_detail,2)
+        if match(place_detail):
+            close(place_detail)
+            open_panel("z",places_marker)
+        record("09-places-favorites",lambda:press(r"/TabSelector/Favorites(?:/|$)"),places_marker)
+        record("10-places-recent",lambda:press(r"/TabSelector/Recent(?:/|$)"),places_marker)
+        record("11-places-mine",lambda:press(r"/TabSelector/MyPlaces(?:/|$)"),places_marker)
+        def place_search():
+            press(r"/TabSelector/Explore(?:/|$)")
+            press(r"/SearchBar(?:/|$).*",operation="ui_set_text",text="Genesis")
+        record("12-places-search",place_search,places_marker,3)
+        record("13-places-filters",lambda:press(r"/Places_FilterSelector(?:/[^/]*)?$"),places_marker)
+        close(places_marker)
+
+    def events_screens():
+        record("14-events-calendar",lambda:open_panel("x",events_marker),events_marker,4)
+        record("15-events-next-page",lambda:press(r"/EventsCalendar.*/RightArrowButton(?:/|$)"),events_marker)
+        record("16-events-by-day",lambda:press(r"/Day[1-5]SelectorButton(?:/|$)"),r"/(EventsByDay|GoToNextDayButton)(/|$)",3)
+        record("17-events-next-day",lambda:press(r"/GoToNextDayButton(?:/|$)"),r"/(EventsByDay|GoToNextDayButton)(/|$)")
+        if match(r"/EventCard(_Big|_Small|_Banner|\(Clone\)).*"):
+            record("18-event-details",lambda:press(r"/EventCard(?:_Big|_Small|_Banner)(?:\[\d+\]|\(Clone\))?(?:$|/MainButton$|/.*(Info|Detail)(?:Button)?$)"),event_detail)
+        close(events_marker)
+
+    def scene_screens():
+        def travel(x,y,expected_base):
+            try: call("teleport",x=x,y=y,waitForReady=False)
+            except (ValueError,TypeError): pass  # This tool returns text when the request is accepted.
+            deadline=time.monotonic()+52
+            while time.monotonic()<deadline:
+                state=call("get_scene_state")
+                scene=state.get("scene") or {}
+                if not state.get("loadingScreenOn") and scene.get("baseParcel")==expected_base and scene.get("isReady"): return
+                time.sleep(2)
+            raise TimeoutError(f"Parcel {x},{y} did not report a ready scene within 52 seconds")
+        def fixed_view(x,y,z,tx,ty,tz):
+            call("set_camera_pose",x=x,y=y,z=z,lookAtX=tx,lookAtY=ty,lookAtZ=tz,fov=65)
+        record("19-second-scene",lambda:travel(-1,-1,{"x":-3,"y":-2}),wait=8)
+        snapshot_scene("second-scene")
+        record("19b-genesis-overview",lambda:fixed_view(5,24,-30,5,3,24),wait=2)
+        try: call("set_camera_mode",mode="third_person")
+        except Exception: pass
+        record("20-metazoo-bundles",lambda:travel(95,98,{"x":95,"y":98}),wait=8)
+        snapshot_scene("metazoo")
+        record("20b-metazoo-overview",lambda:fixed_view(1528,21,1575,1556,3,1605),wait=2)
+
+    for name, execute in (("map",map_screens),("places",places_screens),("events",events_screens),("scenes",scene_screens)):
+        if section in ("", "all", name): execute()
     return rows
