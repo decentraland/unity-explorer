@@ -111,8 +111,9 @@ namespace DCL.Browser
         // deployment's call.
         private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
-        // The deployment mirrors the feature document but serves regular bundles and LODs.
+        // The deployment mirrors the feature document and uses the public CDN for Unity assets.
         protected override bool useRemoteAssetFlags => !isDclDevGateway;
+        protected override string assetCdnDomain => isDclDevGateway ? IDecentralandUrlsSource.ORG_DOMAIN : BaseDomain;
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,

@@ -313,10 +313,26 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("wss://dcl.dev/social-rpc", urls.Url(DecentralandUrl.ApiFriends));
             Assert.AreEqual("https://dcl.dev/about", urls.Url(DecentralandUrl.PeerAbout));
             Assert.AreEqual("https://dcl.dev/asset-bundle-registry/entities/active", urls.Url(DecentralandUrl.EntitiesActiveElements));
-            Assert.AreEqual("https://dcl.dev/ab-cdn", urls.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://dcl.dev/ab-cdn", urls.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://ab-cdn.decentraland.org", urls.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://ab-cdn.decentraland.org", urls.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://lod-generator-unity-cdn.decentraland.org", urls.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org/SatelliteMaps", urls.Url(DecentralandUrl.SatelliteMapTiles));
             Assert.IsNull(urls.AbgenLodsCacheKey);
             Assert.AreEqual("https://dcl.dev/notifications/notifications", urls.GetOriginalUrl("https://dcl.dev/notifications/notifications"));
+        }
+
+        [Test]
+        public void PreferExplicitAssetSourcesForDclDev()
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            var local = new GatewayUrlsSource(DecentralandEnvironment.Custom, new IRealmData.Fake(), ILaunchMode.PLAY, customBaseDomain: "dcl.dev", cliGatewayPrefix: "https://dcl.dev/", localAbBaseUrl: "http://127.0.0.1:5147");
+            Assert.AreEqual("http://127.0.0.1:5147", local.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("http://127.0.0.1:5147", local.Url(DecentralandUrl.LodGeneratorCDN));
+
+            var abgen = new GatewayUrlsSource(DecentralandEnvironment.Custom, new IRealmData.Fake(), ILaunchMode.PLAY, customBaseDomain: "dcl.dev", cliGatewayPrefix: "https://dcl.dev/", abgenPipelineForced: true, abgenLodsForced: true);
+            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", abgen.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org", abgen.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://abgen-cdn.decentraland.org/LOD", abgen.Url(DecentralandUrl.LodGeneratorCDN));
         }
 
         // Naming a gateway forces routing on, so the flag has no say either way.

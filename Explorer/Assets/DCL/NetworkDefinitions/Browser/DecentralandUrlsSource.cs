@@ -65,6 +65,7 @@ namespace DCL.Browser.DecentralandUrls
         public string BaseDomain { get; }
 
         protected virtual bool useRemoteAssetFlags => true;
+        protected virtual string assetCdnDomain => BaseDomain;
 
         private bool useRegistryForScenePointers =>
             !useRealmScenePointers && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment
@@ -294,7 +295,7 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         private UrlData ResolveAbgenLodsUrl(UrlData regularHost, string abgenSubPath)
         {
-            string abgenHost = $"https://abgen-cdn.{BaseDomain}{abgenSubPath}";
+            string abgenHost = $"https://abgen-cdn.{assetCdnDomain}{abgenSubPath}";
 
             if (abgenLodsForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
@@ -397,14 +398,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://{BaseDomain}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.{BaseDomain}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
-                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
+                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{assetCdnDomain}", $"https://abgen-cdn.{assetCdnDomain}")),
 
                 // LOD bundles ({base}/LOD/{level}/{sceneId}_{level}_{platform}) and ISS descriptors
                 // ({base}/lods-unity/manifests/{sceneId}_InitialSceneState.json) come from the regular pipeline unless the
                 // abgen-lods flip moves both onto an abgen source, which nests them under ABGEN_LODS_DESCRIPTOR_SUBPATH;
                 // they never follow the asset-bundle abgen flip on their own.
-                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"), string.Empty),
-                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
+                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{assetCdnDomain}"), string.Empty),
+                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{assetCdnDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
@@ -416,7 +417,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.{BaseDomain}",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.{BaseDomain}",
-                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{BaseDomain}")),
+                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{assetCdnDomain}")),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://{BaseDomain}/marketplace/names/claim",
@@ -433,7 +434,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.{BaseDomain}/v2/communities",
                 DecentralandUrl.ReferralProgress => $"https://social-api.{BaseDomain}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.{BaseDomain}/social/communities/{{0}}/raw-thumbnail.png",
-                DecentralandUrl.SatelliteMapTiles => $"https://abgen-cdn.{BaseDomain}/SatelliteMaps",
+                DecentralandUrl.SatelliteMapTiles => $"https://abgen-cdn.{assetCdnDomain}/SatelliteMaps",
                 DecentralandUrl.Members => $"https://social-api.{BaseDomain}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.{BaseDomain}/v2/members",
                 DecentralandUrl.CommunityProfileLink => $"https://{BaseDomain}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
