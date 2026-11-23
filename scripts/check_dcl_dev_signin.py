@@ -9,7 +9,7 @@ import time
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
 
-import launch_dcl_dev as launch
+from zipfile import ZipFile
 
 
 def rpc(method, params, session=None, notify=False):
@@ -85,19 +85,29 @@ def wait_for_signin(process, log):
     raise RuntimeError("Player did not reach wallet sign-in")
 
 
+build_url = 'https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28109-2820e4a/Decentraland_windows64.zip'
+
 with tempfile.TemporaryDirectory(dir=os.environ["RUNNER_TEMP"]) as tmp:
     folder = Path(tmp)
-    exe = launch.extract_player(folder, None)
+    archive = folder / "windows.zip"
+    subprocess.run(["curl.exe", "-fsSL", "--retry", "3", "--max-time", "180", "-o", str(archive), build_url], check=True)
+    with ZipFile(archive) as bundle:
+        bundle.extractall(folder)
     log = folder / "Player.log"
-    with launch.session_flags() as flags:
-        launch.check_deployment(flags)
-        args = [exe, "-force-d3d11", "-force-driver-type-warp", "-screen-fullscreen", "0",
-                "-logFile", log, *launch.player_arguments(flags), "--skip-minimum-specs-screen",
-                "--mcp-port", "8123", "--alttester"]
-        p = subprocess.Popen(args, cwd=folder)
-        try:
-            wait_for_signin(p, log)
-        finally:
-            if p.poll() is None:
-                p.terminate()
-            p.wait(timeout=30)
+    args = [folder / "Decentraland.exe", "-force-d3d11", "-force-driver-type-warp", "-screen-fullscreen", "0",
+            "-logFile", log, "--gateway", "https://dcl.dev", "--skip-minimum-specs-screen", "--mcp-port", "8123", "--alttester"]
+    player = subprocess.Popen(args, cwd=folder)
+    try:
+        wait_for_signin(player, log)
+        content = log.read_text(encoding="utf-8", errors="replace")
+        for expected in ("ApiAuth: https://dcl.dev/auth-api", "FeatureFlags: https://dcl.dev/feature-flags",
+                         "ApiFriends: wss://dcl.dev/social-rpc", "PeerAbout: https://dcl.dev/about",
+                         "AssetBundlesCDN: https://dcl.dev/ab-cdn",
+                         "EntitiesActiveElements: https://dcl.dev/asset-bundle-registry/entities/active",
+                         "GateKeeperSceneAdapter: https://dcl.dev/comms-gatekeeper/get-scene-adapter"):
+            assert expected in content, f"Missing Unity startup endpoint: {expected}"
+            print(expected)
+    finally:
+        if player.poll() is None:
+            player.terminate()
+        player.wait(timeout=30)
