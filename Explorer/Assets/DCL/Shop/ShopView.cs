@@ -29,6 +29,8 @@ namespace DCL.Shop
         [field: SerializeField] public SearchBarView SearchBar { get; private set; } = null!;
         [field: SerializeField] public DropdownView SortDropdown { get; private set; } = null!;
         [field: SerializeField] public ShopFiltersPanelView Filters { get; private set; } = null!;
+        [field: SerializeField] public GameObject ManaPanel { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text ManaBalanceText { get; private set; } = null!;
         [field: SerializeField] public CreditsPanelView CreditsPanel { get; private set; } = null!;
         [field: SerializeField] public Button CartButton { get; private set; } = null!;
         [field: SerializeField] public GameObject CartBadge { get; private set; } = null!;
@@ -195,6 +197,15 @@ namespace DCL.Shop
             SearchBar.inputField.SetTextWithoutNotify(text);
             SearchBar.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(text));
         }
+
+        public void ShowManaBalance(string balance)
+        {
+            ManaBalanceText.text = balance;
+            ManaPanel.SetActive(true);
+        }
+
+        public void HideManaBalance() =>
+            ManaPanel.SetActive(false);
 
         public void SetCartBadge(int units)
         {

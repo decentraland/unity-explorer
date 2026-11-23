@@ -791,6 +791,7 @@ namespace Global.Dynamic
                     shopCart,
                     creditsPurchaseService,
                     cartCheckoutService,
+                    manaTokenReader,
                     nameClaimService,
                     lobbyStagePresetSetting
                 ),
