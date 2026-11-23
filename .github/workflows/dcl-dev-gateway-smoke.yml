@@ -1,20 +1,37 @@
-name: DCL dev gateway sign-in smoke
+name: Unity dcl.dev screen audit
 on:
   push:
     branches: [qa/dcl-dev-gateway-login-ed38dde]
 permissions:
   contents: read
 jobs:
-  sign-in:
+  audit:
+    name: Audit ${{ matrix.screen }}
     runs-on: windows-2025
-    timeout-minutes: 12
+    timeout-minutes: 42
+    strategy:
+      fail-fast: false
+      matrix:
+        screen: ["auth", "personal", "social"]
+    env:
+      AUDIT_BUILD_URL: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28109-2820e4a/Decentraland_windows64.zip
+      AUDIT_SLICE: ${{ matrix.screen }}
+      PYTHONUNBUFFERED: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          sparse-checkout: scripts
+          sparse-checkout: |
+            qa-audit
+            .claude/skills/pulse-face-to-face/scripts
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Open the wallet sign-in flow in the PR's published player
-        run: python -B scripts/check_dcl_dev_signin.py
+      - run: python -m pip install requests pillow playwright
+      - run: python -B qa-audit/runner.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unity-audit-${{ matrix.screen }}
+          path: evidence/
+          retention-days: 10
