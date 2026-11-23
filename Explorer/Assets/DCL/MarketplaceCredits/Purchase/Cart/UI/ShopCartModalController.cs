@@ -84,7 +84,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         }
 
         protected override void OnBeforeViewShow() =>
-            viewInstance?.PositionBelow(inputData.AnchorBottomRight, ANCHOR_GAP);
+            viewInstance?.SetAnchor(inputData.AnchorBottomRight, ANCHOR_GAP);
 
         protected override void OnViewShow()
         {
