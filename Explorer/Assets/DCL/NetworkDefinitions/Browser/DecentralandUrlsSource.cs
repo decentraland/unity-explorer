@@ -64,7 +64,7 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         public string BaseDomain { get; }
 
-        protected virtual bool UseRemoteAssetFlags => true;
+        protected virtual bool useRemoteAssetFlags => true;
 
         private bool useRegistryForScenePointers =>
             !useRealmScenePointers && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment
@@ -239,7 +239,7 @@ namespace DCL.Browser.DecentralandUrls
             if (localAbBaseOverride is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, localAbBaseOverride);
 
-            if (!UseRemoteAssetFlags)
+            if (!useRemoteAssetFlags)
                 return dedicatedHost;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
@@ -271,7 +271,7 @@ namespace DCL.Browser.DecentralandUrls
             if (abgenPipelineForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
 
-            if (!UseRemoteAssetFlags)
+            if (!useRemoteAssetFlags)
                 return regularHost;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
@@ -299,7 +299,7 @@ namespace DCL.Browser.DecentralandUrls
             if (abgenLodsForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
 
-            if (!UseRemoteAssetFlags)
+            if (!useRemoteAssetFlags)
                 return regularHost;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
@@ -314,7 +314,7 @@ namespace DCL.Browser.DecentralandUrls
 
         private bool abgenLodsActive =>
             abgenLodsForced
-            || (UseRemoteAssetFlags && !FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+            || (useRemoteAssetFlags && !FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
 
         /// <inheritdoc />
         public string? AbgenLodsCacheKey

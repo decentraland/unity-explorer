@@ -112,7 +112,7 @@ namespace DCL.Browser
         private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
         // The deployment mirrors the feature document but serves regular bundles and LODs.
-        protected override bool UseRemoteAssetFlags => !isDclDevGateway;
+        protected override bool useRemoteAssetFlags => !isDclDevGateway;
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,

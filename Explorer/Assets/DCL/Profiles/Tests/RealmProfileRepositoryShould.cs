@@ -63,7 +63,7 @@ namespace DCL.Profiles.Tests
             for (int i = 0; i < dtos.Count; i++)
             {
                 Action? callback = onProfilesResolved[i] = Substitute.For<Action>();
-                tasks[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
+                tasks[i] = repository.GetAsync(dtos[i].UserId.Value, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
             }
 
             // Not resolved yet
@@ -74,7 +74,7 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, dtos.Count);
 
             foreach (Profile profileJsonDto in dtos)
-                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto, false);
+                repository.ResolveProfile(profileJsonDto.UserId.Value, profileJsonDto, false);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -92,7 +92,7 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, dtos.Count);
 
             foreach (Profile? profileJsonDto in dtos)
-                repository.ResolveProfile(profileJsonDto.UserId, profileJsonDto, false);
+                repository.ResolveProfile(profileJsonDto.UserId.Value, profileJsonDto, false);
 
             List<Profile>? profiles = await task;
 
@@ -109,14 +109,14 @@ namespace DCL.Profiles.Tests
             var tasks1 = new UniTask[FIRST_IT];
 
             for (int i = 0; i < FIRST_IT; i++)
-                tasks1[i] = repository.GetAsync(dtos[i].UserId, 0, URLDomain.FromString("http://test1"), cts.Token).SuppressCancellationThrow();
+                tasks1[i] = repository.GetAsync(dtos[i].UserId.Value, 0, URLDomain.FromString("http://test1"), cts.Token).SuppressCancellationThrow();
 
             const int SECOND_IT = 10;
 
             var tasks2 = new UniTask[SECOND_IT];
 
             for (int i = FIRST_IT; i < SECOND_IT + FIRST_IT; i++)
-                tasks2[i - FIRST_IT] = repository.GetAsync(dtos[i].UserId, 0, URLDomain.FromString("http://test2"), cts.Token).SuppressCancellationThrow();
+                tasks2[i - FIRST_IT] = repository.GetAsync(dtos[i].UserId.Value, 0, URLDomain.FromString("http://test2"), cts.Token).SuppressCancellationThrow();
 
             ProfilesBatchRequest[] batches = AssertBatch(2, FIRST_IT + SECOND_IT);
 
@@ -138,7 +138,7 @@ namespace DCL.Profiles.Tests
             for (int i = 0; i < 2; i++)
             {
                 Action? callback = onProfilesResolved[i] = Substitute.For<Action>();
-                tasks[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
+                tasks[i] = repository.GetAsync(dtos[i].UserId.Value, 0, LAMBDAS, CancellationToken.None).ContinueWith(_ => callback());
             }
 
             Profile? second = dtos[0];
@@ -156,10 +156,10 @@ namespace DCL.Profiles.Tests
             AssertBatch(1, 2);
 
             // The first profile to resolve
-            repository.ResolveProfile(dtos[0].UserId, dtos[0], false);
+            repository.ResolveProfile(dtos[0].UserId.Value, dtos[0], false);
 
             // The second profile to force through Single GET
-            repository.ResolveProfile(dtos[1].UserId, null, false);
+            repository.ResolveProfile(dtos[1].UserId.Value, null, false);
 
             await UniTask.WhenAll(tasks).Timeout(TimeSpan.FromSeconds(1));
 
@@ -472,7 +472,7 @@ namespace DCL.Profiles.Tests
             var tasks1 = new UniTask[FIRST_IT];
 
             for (int i = 0; i < FIRST_IT; i++)
-                tasks1[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
+                tasks1[i] = repository.GetAsync(dtos[i].UserId.Value, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
 
             // Make tasks ongoing
 
@@ -487,7 +487,7 @@ namespace DCL.Profiles.Tests
             var tasks2 = new UniTask[SECOND_IT];
 
             for (int i = 0; i < SECOND_IT; i++)
-                tasks2[i] = repository.GetAsync(dtos[i].UserId, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
+                tasks2[i] = repository.GetAsync(dtos[i].UserId.Value, 0, LAMBDAS, cts.Token).SuppressCancellationThrow();
 
             // 5 of them are the same so they should be added to the ongoing Batch
             // 7 are new so they are added to the new batch
