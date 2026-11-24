@@ -4,7 +4,6 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,21 +54,6 @@ namespace SceneRuntime.Factory.Tests
             
             // Assert
             Assert.AreEqual(data, deserializedResult);
-        }
-
-        private class Owner : IMemoryOwner<byte>
-        {
-            public Owner(Memory<byte> memory)
-            {
-                Memory = memory;
-            }
-
-            public void Dispose()
-            {
-                //ignore
-            }
-
-            public Memory<byte> Memory { get; }
         }
 
         [Test]
