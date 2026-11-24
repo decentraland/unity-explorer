@@ -307,7 +307,6 @@ namespace Global.Dynamic
                 return;
             }
 
-            bool cliHasRealmScenePointers = applicationParametersParser.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS);
             bool useRealmScenePointers = applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.REALM_SCENE_POINTERS, fallback: false, requireDebug: false);
 
             if (!applicationParametersParser.IsPulseServerArgValid(out string? pulseHost))
@@ -349,7 +348,7 @@ namespace Global.Dynamic
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.PULSE_SERVER, pulseHost);
 
-            if (!cliHasRealmScenePointers && applicationParametersParser.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS))
+            if (applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.REALM_SCENE_POINTERS, fallback: false, requireDebug: false) != useRealmScenePointers)
                 ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.REALM_SCENE_POINTERS} from the deep link: it is only applied from the command line");
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));

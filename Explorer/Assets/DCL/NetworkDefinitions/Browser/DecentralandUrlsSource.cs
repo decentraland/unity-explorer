@@ -68,6 +68,11 @@ namespace DCL.Browser.DecentralandUrls
         public bool UsesRealmScenePointers => useRealmScenePointers;
 
         protected virtual bool useRemoteAssetFlags => true;
+
+        /// <summary>
+        ///     The domain the converted-asset hosts are composed under: the asset-bundle, LOD and satellite-tile CDNs and the
+        ///     abgen registry. The regular asset-bundle registry and the profile endpoints stay on <see cref="BaseDomain" />.
+        /// </summary>
         protected virtual string assetCdnDomain => BaseDomain;
 
         private bool useRegistryForScenePointers =>
