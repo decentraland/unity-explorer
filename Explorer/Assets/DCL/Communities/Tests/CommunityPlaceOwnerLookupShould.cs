@@ -144,7 +144,7 @@ namespace DCL.Communities.Tests
         }
 
         [Test]
-        public void KeepBothResolvedNamesWhenAnOTHER_OWNERLookupFails()
+        public void KeepBothResolvedNamesWhenAnotherOwnerLookupFails()
         {
             const string OTHER_OWNER = "0x2222222222222222222222222222222222222222";
             const string UNAVAILABLE_OWNER = "0x3333333333333333333333333333333333333333";
