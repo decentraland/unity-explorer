@@ -32,7 +32,8 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     Everything the MANA of a payment needs before its purchase is signed: the total stays within what
         ///     the buyer confirmed, the buyer holds it, and every spender may pull its share, asking for the
         ///     approvals that are missing. A balance that cannot be read is not treated as a shortfall.
-        ///     setState receives <see cref="CreditsPurchaseState.ApprovingMana" /> before each approval request.
+        ///     setState receives <see cref="CreditsPurchaseState.ApprovingMana" /> before each approval request and
+        ///     <see cref="CreditsPurchaseState.ConfirmingManaApproval" /> once it is relayed.
         ///     <paramref name="signCt" /> is rethrown when cancelled before a signature.
         /// </summary>
         public async UniTask<ManaApprovalResult> PrepareAsync(string buyer, IReadOnlyList<ManaSpend> spends, BigInteger confirmedWei, Action<CreditsPurchaseState> setState,
@@ -103,10 +104,15 @@ namespace DCL.MarketplaceCredits.Purchase
                 return new ManaApprovalResult(error, relay.Message, relay.Nonce);
             }
 
+            setState(CreditsPurchaseState.ConfirmingManaApproval);
+
             SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(relay.TxHash!, SETTLEMENT_TIMEOUT, settleCt);
 
             if (settlement == SettlementOutcome.Confirmed)
+            {
+                ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"MANA approval {relay.TxHash} for {spender} confirmed");
                 return new ManaApprovalResult(CreditsPurchaseError.None, null, relay.Nonce);
+            }
 
             ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA approval {relay.TxHash} for {spender} ended as {settlement}");
             return new ManaApprovalResult(CreditsPurchaseError.ManaApprovalFailed, $"Approval {settlement}", relay.Nonce);

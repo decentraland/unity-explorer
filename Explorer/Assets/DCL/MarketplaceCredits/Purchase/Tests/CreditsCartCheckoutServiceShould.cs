@@ -733,6 +733,25 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task ReportAManaApprovalBeingConfirmedBeforeTheGroupsAreSigned()
+        {
+            // Arrange
+            ListTheTradeOnTheMarketplace();
+            StubMana(HUNDRED_MANA, BigInteger.Zero);
+            var stages = new List<CartCheckoutStage>();
+            service.StateChanged += progress => stages.Add(progress.Stage);
+
+            // Act
+            CartReview review = await ReviewAsync();
+            await service.CheckoutAsync(review, new PaymentOption(PaymentMethod.Mana, 0, 0, 25 * ONE_MANA), CancellationToken.None);
+
+            // Assert
+            int confirming = stages.IndexOf(CartCheckoutStage.ConfirmingMana);
+            Assert.Greater(confirming, stages.IndexOf(CartCheckoutStage.ApprovingMana));
+            Assert.Less(confirming, stages.IndexOf(CartCheckoutStage.Signing));
+        }
+
+        [Test]
         public async Task RefuseAManaCheckoutThatGrewPastWhatTheBuyerConfirmed()
         {
             // Arrange: the buyer confirmed 20 MANA, the cart draws 25.

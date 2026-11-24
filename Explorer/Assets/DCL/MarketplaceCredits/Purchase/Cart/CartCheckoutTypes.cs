@@ -110,6 +110,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
         Reviewing,
         Reserving,
         ApprovingMana,
+
+        /// <summary>A MANA approval is signed and its confirmation is being waited for.</summary>
+        ConfirmingMana,
         Signing,
         WaitingSettlement,
         Completed,

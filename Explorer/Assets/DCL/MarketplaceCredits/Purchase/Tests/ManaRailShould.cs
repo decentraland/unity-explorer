@@ -87,7 +87,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert
             Assert.IsTrue(result.Success);
-            CollectionAssert.AreEqual(new[] { CreditsPurchaseState.ApprovingMana }, recordedStates);
+            CollectionAssert.AreEqual(new[] { CreditsPurchaseState.ApprovingMana, CreditsPurchaseState.ConfirmingManaApproval }, recordedStates);
 
             await metaTxRelayer.Received(1).RelayAsync(
                 Arg.Is<MetaTxContract>(contract => contract.Address == chainConfig.ManaTokenContract.Address && contract.IsClassic),

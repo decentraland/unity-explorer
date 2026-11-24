@@ -107,10 +107,15 @@ namespace DCL.MarketplaceCredits.Purchase
                 nonce = minNonce;
 
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(contract, chainConfig.ChainId, nonce, buyer, calldata);
+
+            // The size matters: the server relaying the request to the browser drops the ones above its message limit without answering.
+            ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: nonce {nonce}, requesting the signature of {typedDataJson.Length} characters of typed data");
             (string signature, RelayResult? signFailure) = await SignAsync(buyer, typedDataJson, signCt);
 
             if (signFailure != null)
                 return signFailure.Value;
+
+            ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: signed, relaying");
 
             string txData;
 
@@ -143,6 +148,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 if (string.IsNullOrEmpty(txHash))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
 
+                ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: relayed as {txHash}");
                 return new RelayResult(RelayOutcome.Broadcast, txHash, nonce: nonce);
             }
             catch (OperationCanceledException)

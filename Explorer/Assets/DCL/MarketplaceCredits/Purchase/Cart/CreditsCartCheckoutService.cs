@@ -859,6 +859,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart
                 case CreditsPurchaseState.ApprovingMana:
                     SetProgress(new CartCheckoutProgress(CartCheckoutStage.ApprovingMana, groupIndex, groupCount, unitCount, unitCount));
                     break;
+                case CreditsPurchaseState.ConfirmingManaApproval:
+                    SetProgress(new CartCheckoutProgress(CartCheckoutStage.ConfirmingMana, groupIndex, groupCount, unitCount, unitCount));
+                    break;
                 case CreditsPurchaseState.Signing:
                     SetProgress(new CartCheckoutProgress(CartCheckoutStage.Signing, groupIndex, groupCount, unitCount, unitCount));
                     break;

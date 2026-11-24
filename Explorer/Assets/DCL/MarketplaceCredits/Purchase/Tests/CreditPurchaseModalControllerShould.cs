@@ -91,6 +91,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [TestCase(CreditsPurchaseState.ResolvingListing, "resolving_listing")]
         [TestCase(CreditsPurchaseState.Authorizing, "authorizing")]
         [TestCase(CreditsPurchaseState.ApprovingMana, "approving_mana")]
+        [TestCase(CreditsPurchaseState.ConfirmingManaApproval, "approving_mana")]
         [TestCase(CreditsPurchaseState.Signing, "signing")]
         [TestCase(CreditsPurchaseState.WaitingSettlement, "waiting_settlement")]
         [TestCase(CreditsPurchaseState.Success, "purchase")]

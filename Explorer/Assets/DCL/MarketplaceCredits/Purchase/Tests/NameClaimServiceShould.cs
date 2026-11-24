@@ -519,7 +519,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 Arg.Any<CancellationToken>());
 
             CollectionAssert.AreEqual(
-                new[] { NameClaimStage.Preparing, NameClaimStage.ApprovingMana, NameClaimStage.Signing, NameClaimStage.Confirming, NameClaimStage.Registering }, recordedStages);
+                new[]
+                {
+                    NameClaimStage.Preparing, NameClaimStage.ApprovingMana, NameClaimStage.ConfirmingMana, NameClaimStage.Signing, NameClaimStage.Confirming,
+                    NameClaimStage.Registering,
+                }, recordedStages);
         }
 
         [Test]

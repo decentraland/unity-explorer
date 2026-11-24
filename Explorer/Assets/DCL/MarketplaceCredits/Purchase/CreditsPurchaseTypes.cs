@@ -7,6 +7,9 @@ namespace DCL.MarketplaceCredits.Purchase
         ResolvingListing,
         Authorizing,
         ApprovingMana,
+
+        /// <summary>The MANA approval is signed and relayed, and its confirmation is being waited for.</summary>
+        ConfirmingManaApproval,
         Signing,
         WaitingSettlement,
         Success,

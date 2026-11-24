@@ -19,6 +19,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
         /// <summary>The buyer is asked to let CreditsManager pull the MANA part of the price.</summary>
         ApprovingMana,
+
+        /// <summary>That approval is signed and its confirmation is being waited for. The payment is signed next.</summary>
+        ConfirmingMana,
         Signing,
         Confirming,
         Registering,

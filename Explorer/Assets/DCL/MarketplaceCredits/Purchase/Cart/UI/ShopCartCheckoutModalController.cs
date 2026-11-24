@@ -44,6 +44,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         private const string CONFIRMATIONS_FORMAT = "{0} confirmations needed";
         private const string RESERVING_FORMAT = "Reserving your credits ({0}/{1})...";
         private const string APPROVING_MANA = "Waiting for you to authorize MANA...";
+        private const string CONFIRMING_MANA = "MANA authorized. Waiting for it to complete, then you will be asked to confirm the purchase...";
         private const string CONFIRMING_SINGLE = "Waiting for your confirmation...";
         private const string CONFIRMING_FORMAT = "Waiting for your confirmation ({0} of {1})...";
         private const string SETTLING_SINGLE = "Completing your purchase...";
@@ -562,6 +563,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                                                    {
                                                        CartCheckoutStage.Reserving => string.Format(RESERVING_FORMAT, progress.UnitsReserved, progress.UnitCount),
                                                        CartCheckoutStage.ApprovingMana => APPROVING_MANA,
+                                                       CartCheckoutStage.ConfirmingMana => CONFIRMING_MANA,
                                                        CartCheckoutStage.Signing => many ? string.Format(CONFIRMING_FORMAT, progress.GroupIndex, progress.GroupCount) : CONFIRMING_SINGLE,
                                                        CartCheckoutStage.WaitingSettlement => many ? string.Format(SETTLING_FORMAT, progress.GroupIndex, progress.GroupCount) : SETTLING_SINGLE,
                                                        _ => viewInstance.ProgressStatusText.text,
@@ -646,6 +648,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 CartCheckoutStage.Reviewing => ANALYTICS_STEP_REVIEW,
                 CartCheckoutStage.Reserving => "reserving",
                 CartCheckoutStage.ApprovingMana => "approving_mana",
+                CartCheckoutStage.ConfirmingMana => "approving_mana",
                 CartCheckoutStage.Signing => "signing",
                 CartCheckoutStage.WaitingSettlement => "waiting_settlement",
                 _ => ANALYTICS_STEP_CHECKOUT,

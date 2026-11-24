@@ -268,7 +268,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             // The window mode is only needed for the wallet signatures, not for the settlement and bridge waits after the payment's one.
             void ReleaseWindowModeOncePaymentSigned(NameClaimStage stage)
             {
-                if (!windowModeHeld || stage is NameClaimStage.Preparing or NameClaimStage.ApprovingMana or NameClaimStage.Signing)
+                if (!windowModeHeld || stage is NameClaimStage.Preparing or NameClaimStage.ApprovingMana or NameClaimStage.ConfirmingMana or NameClaimStage.Signing)
                     return;
 
                 windowModeHeld = false;
@@ -396,6 +396,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                                                    {
                                                        NameClaimStage.Preparing => "Reserving your credits...",
                                                        NameClaimStage.ApprovingMana => "Waiting for you to authorize MANA...",
+                                                       NameClaimStage.ConfirmingMana => "MANA authorized. Waiting for it to confirm, then you will be asked to sign the payment...",
                                                        NameClaimStage.Signing => "Waiting for your signature in the browser",
                                                        NameClaimStage.Confirming => "Confirming the payment...",
                                                        NameClaimStage.Registering => "Registering your NAME. This can take a few minutes...",

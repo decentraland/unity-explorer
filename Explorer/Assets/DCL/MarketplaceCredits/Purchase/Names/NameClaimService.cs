@@ -404,6 +404,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 case CreditsPurchaseState.ApprovingMana:
                     SetStage(NameClaimStage.ApprovingMana);
                     break;
+                case CreditsPurchaseState.ConfirmingManaApproval:
+                    SetStage(NameClaimStage.ConfirmingMana);
+                    break;
                 case CreditsPurchaseState.Signing:
                     SetStage(NameClaimStage.Signing);
                     break;
