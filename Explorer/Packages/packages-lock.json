@@ -161,6 +161,13 @@
       "dependencies": {},
       "url": "https://package.openupm.com"
     },
+    "com.netpyoung.webp": {
+      "version": "0.3.22",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
       "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,

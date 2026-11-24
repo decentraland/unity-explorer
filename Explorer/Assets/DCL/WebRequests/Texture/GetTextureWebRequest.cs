@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
 using System;
+using System.IO;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -73,34 +74,43 @@ namespace DCL.WebRequests
             {
                 string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
 
-                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest) : ExecuteNoCompressionAsync(webRequest);
+                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest) : ExecuteNoCompressionAsync(webRequest, ct);
             }
 
-            private UniTask<Texture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest)
+            private async UniTask<Texture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 Texture2D texture;
 
                 if (webRequest.UnityWebRequest.downloadHandler is DownloadHandlerTexture) { texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest); }
                 else
                 {
-                    // If there's no DownloadHandlerTexture the texture needs to be created from scratch with the
-                    // downloaded tex data
-                    var data = webRequest.UnityWebRequest.downloadHandler?.data;
+                    byte[] data = webRequest.UnityWebRequest.downloadHandler?.data ?? throw new InvalidDataException($"Texture content is empty: {webRequest.url}");
+                    bool linear = webRequest.textureType == TextureType.NormalMap;
 
-                    if (data == null)
-                        throw new Exception("Texture content is empty");
+                    if (WebpTextureDecoder.HasSignature(data))
+                        texture = await WebpTextureDecoder.DecodeAsync(data, linear, webRequest.url, ct);
+                    else
+                    {
+                        texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, linear);
 
-                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false,
-                        linear: webRequest.textureType == TextureType.NormalMap);
-
-                    if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
+                        try
+                        {
+                            if (!texture.LoadImage(data))
+                                throw new InvalidDataException($"Failed to load image from data: {webRequest.url}");
+                        }
+                        catch
+                        {
+                            UnityObjectUtils.SafeDestroy(texture);
+                            throw;
+                        }
+                    }
                 }
 
                 texture.wrapMode = wrapMode;
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult<Texture2D?>(texture);
+                return texture;
             }
 
             private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest)

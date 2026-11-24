@@ -19,6 +19,7 @@
     "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
     "com.gurbu.gpui-pro.terrain": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
     "com.mackysoft.serializereference-extensions": "1.7.0",
+    "com.netpyoung.webp": "0.3.22",
     "com.nickkhalow.chrome-devtool-protocol-unity": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
     "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
     "com.unity.2d.sprite": "1.0.0",
@@ -88,7 +89,8 @@
         "com.madsbangh.easybuttons",
         "com.brunomikoski",
         "com.mackysoft",
-        "com.alttester.sdk"
+        "com.alttester.sdk",
+        "com.netpyoung.webp"
       ]
     }
   ],
