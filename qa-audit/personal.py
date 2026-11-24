@@ -345,21 +345,55 @@ def run(session, tool, capture, output_dir):
         if not detail_open and has("CameraReelGallery"):
             cell_click(.085,.20,"Select first populated gallery thumbnail")
             detail_open = has("PhotoDetail")
-        if detail_open:
-            snap("photo-detail", "PhotoDetail", 2)
-            if click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
-                clipboard = clipboard_text()
-                link = urlsplit(clipboard)
-                if link.scheme == "https" and link.netloc in {"reels.dcl.dev", "dcl.dev"} and not link.query:
-                    snap("photo-copied-link", "PhotoDetail")
-                    try:
-                        with urlopen(Request(clipboard, headers={"User-Agent": "Mozilla/5.0"}), timeout=10) as resp:
-                            record(action="Visit copied photo link", origin=link.netloc, status=resp.status)
-                    except URLError as exc:
-                        record(action="Visit copied photo link", origin=link.netloc, error=str(exc)[:200])
-                        capture_broken_destination(clipboard, "photo-link")
-        else:
-            record(screen="photo-detail", result="No enabled gallery thumbnail after shutter attempt", reel_opened=opened, camera_opened=active)
+        if not detail_open:
+            raise AssertionError("Could not open the new QA photo")
+        snap("photo-detail", "PhotoDetail", 2)
+        if not click("Copy photo link", find((r"/CopyButton(?:/|$)",), scope="PhotoDetail")):
+            raise AssertionError("Photo Detail Copy Link button missing")
+        copied = clipboard_text()
+        match = re.fullmatch(r"https://dcl\.dev/reels/([0-9a-f-]{36})", copied)
+        if not match:
+            raise AssertionError("Photo Detail did not copy a dcl.dev viewer link")
+        photo_id = match.group(1)
+        snap("photo-copied-link", "PhotoDetail")
+        if not click("Share photo to X", find((r"/ShareButton(?:/|$)",), scope="PhotoDetail")):
+            raise AssertionError("Photo Detail Share to X button missing")
+        from urllib.parse import parse_qs
+        intent = urlsplit(clipboard_text())
+        assert (intent.scheme, intent.netloc, intent.path) == ("https", "x.com", "/intent/post")
+        assert parse_qs(intent.query).get("url") == [copied]
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(channel="msedge")
+            page = browser.new_page()
+            response = page.goto(copied, wait_until="domcontentloaded", timeout=60000)
+            assert response.status == 200
+            image = page.locator(f'img[src*="{photo_id}"]').first
+            image.wait_for()
+            image.evaluate("(img) => img.decode()")
+            title = image.get_attribute("alt")
+            assert title and image.evaluate("(img) => img.naturalWidth") > 0
+            metadata_response = page.request.get(f"https://dcl.dev/camera-reel-service/api/images/{photo_id}/metadata")
+            assert metadata_response.ok
+            metadata = metadata_response.json()
+            assert metadata["id"] == photo_id
+            address = metadata["metadata"]["userAddress"]
+            assert re.fullmatch(r"0x[0-9a-fA-F]{40}", address)
+            gallery = page.request.get("https://dcl.dev/reels/list/" + address)
+            assert gallery.ok
+            listed = photo_id.lower() in gallery.text().lower()
+            assert listed == metadata["isPublic"]
+            if not listed:
+                assert "noindex" in response.headers.get("x-robots-tag", "")
+            page.screenshot(path=str(out/"photo-browser.png"))
+            browser.close()
+        (out/"photo-result.json").write_text(json.dumps({
+            "clipboard":copied,"xDestination":parse_qs(intent.query)["url"][0],
+            "viewerHttpStatus":response.status,"alt":title,"isPublic":metadata["isPublic"],
+            "appearedInSignedOutGallery":listed
+        },indent=2),encoding="utf-8")
+        print("Photo Detail clipboard, X intent, decoded image and gallery visibility passed.",flush=True)
+
         dismiss()
 
     def shop():
@@ -465,4 +499,6 @@ def run(session, tool, capture, output_dir):
                 snap(driver.__name__ + "-interrupted")
             except Exception:
                 pass
+    if not (out/"photo-result.json").is_file():
+        raise AssertionError("Native Photo Detail check did not finish")
     return records
