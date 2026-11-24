@@ -56,11 +56,28 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? localAbBaseOverride;
         private readonly bool abgenPipelineForced;
         private readonly bool abgenLodsForced;
+        private readonly string? pulseHost;
+        private readonly bool useRealmScenePointers;
 
         /// <summary>
         ///     The domain <see cref="RawUrl" /> composes every host from.
         /// </summary>
         public string BaseDomain { get; }
+
+        /// <inheritdoc />
+        public bool UsesRealmScenePointers => useRealmScenePointers;
+
+        protected virtual bool useRemoteAssetFlags => true;
+
+        /// <summary>
+        ///     The domain the converted-asset hosts are composed under: the asset-bundle, LOD and satellite-tile CDNs and the
+        ///     abgen registry. The regular asset-bundle registry and the profile endpoints stay on <see cref="BaseDomain" />.
+        /// </summary>
+        protected virtual string assetCdnDomain => BaseDomain;
+
+        private bool useRegistryForScenePointers =>
+            !useRealmScenePointers && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment
+                                   && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK);
 
         public DecentralandUrlsSource(
             DecentralandEnvironment environment,
@@ -72,7 +89,9 @@ namespace DCL.Browser.DecentralandUrls
             string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false,
-            bool abgenLodsForced = false)
+            bool abgenLodsForced = false,
+            string? pulseHost = null,
+            bool useRealmScenePointers = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -82,7 +101,11 @@ namespace DCL.Browser.DecentralandUrls
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
-            this.abgenLodsForced = abgenLodsForced;
+
+            // A running local sidecar outranks the forced abgen LOD source, as it does the forced abgen pipeline.
+            this.abgenLodsForced = abgenLodsForced && string.IsNullOrEmpty(localAbBaseOverride);
+            this.pulseHost = pulseHost;
+            this.useRealmScenePointers = useRealmScenePointers;
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -227,6 +250,9 @@ namespace DCL.Browser.DecentralandUrls
             if (localAbBaseOverride is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, localAbBaseOverride);
 
+            if (!useRemoteAssetFlags)
+                return dedicatedHost;
+
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
@@ -256,6 +282,9 @@ namespace DCL.Browser.DecentralandUrls
             if (abgenPipelineForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
 
+            if (!useRemoteAssetFlags)
+                return regularHost;
+
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
@@ -276,10 +305,13 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         private UrlData ResolveAbgenLodsUrl(UrlData regularHost, string abgenSubPath)
         {
-            string abgenHost = $"https://abgen-cdn.{BaseDomain}{abgenSubPath}";
+            string abgenHost = $"https://abgen-cdn.{assetCdnDomain}{abgenSubPath}";
 
             if (abgenLodsForced)
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+
+            if (!useRemoteAssetFlags)
+                return regularHost;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
@@ -291,16 +323,16 @@ namespace DCL.Browser.DecentralandUrls
                 : regularHost;
         }
 
-        private bool AbgenLodsActive =>
+        private bool abgenLodsActive =>
             abgenLodsForced
-            || (!FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
+            || (useRemoteAssetFlags && !FeatureFlagsConfiguration.Instance.IsEmpty && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_LODS));
 
         /// <inheritdoc />
         public string? AbgenLodsCacheKey
         {
             get
             {
-                if (!AbgenLodsActive)
+                if (!abgenLodsActive)
                     return null;
 
                 // The resolved base identifies the source; sanitised so it can travel in file names and hash payloads.
@@ -376,14 +408,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://{BaseDomain}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.{BaseDomain}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
-                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
+                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{assetCdnDomain}", $"https://abgen-cdn.{assetCdnDomain}")),
 
                 // LOD bundles ({base}/LOD/{level}/{sceneId}_{level}_{platform}) and ISS descriptors
                 // ({base}/lods-unity/manifests/{sceneId}_InitialSceneState.json) come from the regular pipeline unless the
                 // abgen-lods flip moves both onto an abgen source, which nests them under ABGEN_LODS_DESCRIPTOR_SUBPATH;
                 // they never follow the asset-bundle abgen flip on their own.
-                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"), string.Empty),
-                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
+                DecentralandUrl.LodAssetBundlesCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://ab-cdn.{assetCdnDomain}"), string.Empty),
+                DecentralandUrl.LodGeneratorCDN => ResolveAbgenLodsUrl(ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{assetCdnDomain}"), ABGEN_LODS_DESCRIPTOR_SUBPATH),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
@@ -395,7 +427,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.{BaseDomain}",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.{BaseDomain}",
-                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{BaseDomain}")),
+                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{assetCdnDomain}")),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://{BaseDomain}/marketplace/names/claim",
@@ -412,7 +444,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.{BaseDomain}/v2/communities",
                 DecentralandUrl.ReferralProgress => $"https://social-api.{BaseDomain}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.{BaseDomain}/social/communities/{{0}}/raw-thumbnail.png",
-                DecentralandUrl.SatelliteMapTiles => $"https://abgen-cdn.{BaseDomain}/SatelliteMaps",
+                DecentralandUrl.SatelliteMapTiles => $"https://abgen-cdn.{assetCdnDomain}/SatelliteMaps",
                 DecentralandUrl.Members => $"https://social-api.{BaseDomain}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.{BaseDomain}/v2/members",
                 DecentralandUrl.CommunityProfileLink => $"https://{BaseDomain}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
@@ -427,20 +459,20 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ReportUserForm => $"https://{BaseDomain}/report/players?player_address={{0}}&reported_address={{1}}",
                 DecentralandUrl.BannedUsers => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/users/{{0}}/bans",
                 DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
-                DecentralandUrl.Pulse => $"pulse-server.{BaseDomain}",
+                DecentralandUrl.Pulse => pulseHost ?? $"pulse-server.{BaseDomain}",
 
                 // Profiles are served by the regular registry regardless of the abgen pipeline flip
                 DecentralandUrl.Profiles => $"https://asset-bundle-registry.{BaseDomain}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"https://asset-bundle-registry.{BaseDomain}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.{BaseDomain}/worlds/{{0}}/scenes/{{1}}/comms",
 
-                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(useRegistryForScenePointers ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
                 DecentralandUrl.EntitiesActiveElements => ComposeRegistryUrl("/entities/active"),
 
-                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(useRegistryForScenePointers ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 // A local scene dev server stubs the catalyst endpoints it advertises - deployments are rejected

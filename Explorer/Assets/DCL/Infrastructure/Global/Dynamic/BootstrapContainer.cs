@@ -271,7 +271,7 @@ namespace Global.Dynamic
 #if UNITY_EDITOR
                 true,
 #else
-                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
+                appArgs.ResolveFeatureFlagArg(AppArgsFlags.AUTH_BRIDGE_ONLY, fallback: false, requireDebug: false),
 #endif
                 referrer
             );

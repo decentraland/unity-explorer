@@ -307,6 +307,18 @@ namespace Global.Dynamic
                 return;
             }
 
+            bool useRealmScenePointers = applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.REALM_SCENE_POINTERS, fallback: false, requireDebug: false);
+
+            if (!applicationParametersParser.IsPulseServerArgValid(out string? pulseHost))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.PULSE_SERVER} requires a DNS hostname or IPv4 address without a scheme or port.");
+                ExitUtils.Exit();
+                return;
+            }
+
+            if (pulseHost != null)
+                ReportHub.Log(ReportCategory.STARTUP, $"Pulse relay: {pulseHost}. It receives this identity's signed handshake, which is not bound to the relay's host");
+
             // Fetched at most once, and only when a start-up decision below needs it.
             AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
                 UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));
@@ -334,6 +346,10 @@ namespace Global.Dynamic
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.PULSE_SERVER, pulseHost);
+
+            if (applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.REALM_SCENE_POINTERS, fallback: false, requireDebug: false) != useRealmScenePointers)
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.REALM_SCENE_POINTERS} from the deep link: it is only applied from the command line");
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -372,8 +388,8 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
 
-            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
-            bool cliAbgenLods = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_LODS);
+            bool cliAbgenPipeline = DclDevGateway.UseAssetFlag(applicationParametersParser, AppArgsFlags.ABGEN_PIPELINE, cliGatewayPrefix);
+            bool cliAbgenLods = DclDevGateway.UseAssetFlag(applicationParametersParser, AppArgsFlags.ABGEN_LODS, cliGatewayPrefix);
 
             // Local scene development: the embedded abgen server becomes the optimized-assets source. It is started to
             // health before the URL sources are built, so the override is set only when it is actually serving.
@@ -412,7 +428,9 @@ namespace Global.Dynamic
                 customBaseDomain,
                 cliAbgenPipeline,
                 cliGatewayPrefix,
-                cliAbgenLods);
+                cliAbgenLods,
+                pulseHost,
+                useRealmScenePointers);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();
@@ -961,7 +979,7 @@ namespace Global.Dynamic
 
             if (!Application.isEditor)
                 runVersionControl = !applicationParametersParser.HasDebugFlag() &&
-                                    !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK) &&
+                                    !applicationParametersParser.ResolveFeatureFlagArg(AppArgsFlags.SKIP_VERSION_CHECK, fallback: false, requireDebug: false) &&
                                     !applicationParametersParser.HasFlag(AppArgsFlags.AUTOPILOT);
 
             if (!runVersionControl)

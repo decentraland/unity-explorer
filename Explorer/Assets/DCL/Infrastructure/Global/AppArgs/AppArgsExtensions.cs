@@ -1,9 +1,18 @@
+using System;
 using UnityEngine;
 
 namespace Global.AppArgs
 {
     public static class AppArgsExtensions
     {
+        /// <summary>
+        ///     False when --pulse-server is present but is not a bare DNS hostname or IPv4 address;
+        ///     <paramref name="host" /> is null when the flag is absent.
+        /// </summary>
+        public static bool IsPulseServerArgValid(this IAppArgs args, out string? host) =>
+            !args.TryGetValue(AppArgsFlags.PULSE_SERVER, out host)
+            || Uri.CheckHostName(host) is UriHostNameType.Dns or UriHostNameType.IPv4;
+
         public static bool HasDebugFlag(this IAppArgs args, bool checkDebugBuild = true) =>
             (checkDebugBuild && Debug.isDebugBuild) || args.HasFlag(AppArgsFlags.DEBUG);
 

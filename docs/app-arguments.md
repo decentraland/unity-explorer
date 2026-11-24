@@ -115,6 +115,16 @@ For embedded links you will need to place value after `=` sign, instead of space
 --gateway https://gateway.localhost
 ```
 
+To sign in to dcl.dev, launch the CI player with a single argument:
+
+```powershell
+.\Decentraland.exe --gateway https://dcl.dev
+```
+
+Unity selects the dcl.dev realm on mainnet and uses its auth bridge, feature flags, Catalyst and profile registry. It resolves scene pointers against the realm and uses the public ABGen registry and CDN for converted assets, LODs and satellite map tiles. It starts at parcel `100,100` with the deployment's gatekeeper and Pulse relay, and landscape terrain disabled. Explicit launch arguments such as `--position` take precedence. To test the legacy asset pipeline on dcl.dev, add `--abgen-pipeline false --abgen-lods false`. Each switch overrides its corresponding default independently. The same holds for the other switches this launch turns on: `--realm-scene-pointers false`, `--login-bridge-only false` and `--skip-version-check false` each turn their default off.
+
+Not every host of this launch follows the base domain. See [what the dcl.dev launch takes from elsewhere](custom-base-domain.md#what-the-dcldev-launch-takes-from-elsewhere).
+
 ---
 
 ### `base-domain`
@@ -479,6 +489,26 @@ decentraland://?force-open-backpack=true
 --pulse true
 --pulse false
 ```
+
+---
+
+### `pulse-server`
+
+Use `--pulse-server <host>` directly on the player command line to select a native Pulse relay independently of the service environment. Supply a DNS hostname or IPv4 address. The transport uses ENet on UDP port 7777. Use `--pulse true` to enable it regardless of the feature flag. The relay receives a signed handshake that is not bound to its host, so point it only at relays you trust with your identity.
+
+### `realm-scene-pointers`
+
+Pass this switch directly on the player command line to look up scenes in the selected realm even when the environment enables asset-bundle fallback. Wearables and emotes still use the environment's registry. Omit the switch, or pass `--realm-scene-pointers false`, to keep the normal scene lookup behavior.
+
+For example, to use a custom realm's Pulse and LiveKit services alongside the staging services:
+
+```sh
+Decentraland.exe --dclenv zone --realm https://realm.example.org --gatekeeper-url https://realm.example.org/comms-gatekeeper --pulse true --pulse-server realtime.example.org --realm-scene-pointers
+```
+
+The realm's `/about` response selects the island adapter. The gatekeeper issues the credentials for the scene room.
+
+The switch also covers profiles. A realm hosted outside the environment's base domain and gateway, as in this example, deploys profiles the environment's profile registry does not index. With the switch on, when the registry lacks a profile, the client asks that realm's Catalyst for it once. Without the switch, or for a realm inside the base domain or the gateway, the client never sends this request. The Catalyst a peer announces is never contacted.
 
 ---
 
