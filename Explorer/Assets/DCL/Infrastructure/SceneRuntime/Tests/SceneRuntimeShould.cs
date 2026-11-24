@@ -185,6 +185,58 @@ namespace SceneRuntime.Tests
                 Assert.DoesNotThrow(() => sceneRuntime.SetIsDisposing());
             });
 
+        // A scene that imports ~system/SceneRewards must load in the explorer, which never pays: the call resolves a refusal.
+        [UnityTest]
+        public IEnumerator SceneRewards_ResolveNotAvailable() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var code = @"
+            const sceneRewards = require('~system/SceneRewards')
+            exports.onStart = async function() {
+                const response = await sceneRewards.grantReward({ programId: '', recipient: '', outcomeId: 'match-1' })
+                probe.Record(sceneRewards.GrantRewardError.GRE_NOT_AVAILABLE, response.ok, response.error)
+            };
+            exports.onUpdate = async function(dt) {};
+        ";
+
+                var sceneRuntimeFactory = NewSceneRuntimeFactory();
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                sceneRuntime.ExecuteSceneJson();
+
+                var probe = new GrantRewardProbe();
+                sceneRuntime.engine.AddHostObject("probe", probe);
+
+                await sceneRuntime.StartScene();
+
+                for (var i = 0; i < 10 && !probe.Recorded; ++i)
+                {
+                    await UniTask.Yield();
+                    await sceneRuntime.UpdateScene(0.01f);
+                }
+
+                Assert.IsTrue(probe.Recorded, "grantReward did not resolve");
+                Assert.AreEqual(1d, probe.NotAvailable, "GrantRewardError.GRE_NOT_AVAILABLE");
+                Assert.IsFalse(probe.Ok, "response.ok");
+                Assert.AreEqual(probe.NotAvailable, probe.Error, "response.error");
+            });
+
+        public class GrantRewardProbe
+        {
+            public bool Recorded { get; private set; }
+            public double NotAvailable { get; private set; }
+            public bool Ok { get; private set; }
+            public double Error { get; private set; }
+
+            [UsedImplicitly]
+            public void Record(double notAvailable, bool ok, double error)
+            {
+                Recorded = true;
+                NotAvailable = notAvailable;
+                Ok = ok;
+                Error = error;
+            }
+        }
+
         public class TestUtilCheckOk
         {
             private bool value;
