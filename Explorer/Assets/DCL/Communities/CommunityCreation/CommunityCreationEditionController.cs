@@ -10,7 +10,6 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -35,7 +34,6 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error getting places. Please try again.";
-        private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
         private const string INCOMPATIBLE_IMAGE_GENERAL_ERROR = "Invalid image file selected. Please check file type and size.";
@@ -53,7 +51,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly IPlacesAPIService placesAPIService;
         private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
-        private readonly IProfileRepository profileRepository;
+        private readonly CommunityPlaceOwnerNames ownerNames;
         private readonly IWeb3IdentityCache identityCache;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
@@ -70,8 +68,6 @@ namespace DCL.Communities.CommunityCreation
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
         private CommunityVisibility? originalCommunityVisibilityForEdition;
 
-        private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
-
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private class CommunityPlace
@@ -79,15 +75,13 @@ namespace DCL.Communities.CommunityCreation
             public readonly string Id;
             public readonly bool IsWorld;
             public readonly string Name;
-            public readonly string OwnerId;
-            public string OwnerName;
+            public readonly string OwnerName;
 
-            public CommunityPlace(string id, bool isWorld, string name, string ownerId, string ownerName)
+            public CommunityPlace(string id, bool isWorld, string name, string ownerName)
             {
                 Id = id;
                 IsWorld = isWorld;
                 Name = name;
-                OwnerId = ownerId;
                 OwnerName = ownerName;
             }
         }
@@ -114,7 +108,7 @@ namespace DCL.Communities.CommunityCreation
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.profileRepository = profileRepository;
+            ownerNames = new CommunityPlaceOwnerNames(profileRepository);
             this.identityCache = identityCache;
 
             FileBrowser.Instance.AllowSyncCalls = true;
@@ -138,8 +132,12 @@ namespace DCL.Communities.CommunityCreation
         {
             lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache);
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
+            if (!inputData.CanCreateCommunities)
+                return;
+
+            ownerNames.Clear();
+            thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
             loadPanelCts = loadPanelCts.SafeRestart();
@@ -190,13 +188,17 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCreationPanelAsLoading(true);
             await LoadLandsAndWorldsAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!string.IsNullOrEmpty(inputData.CommunityId))
             {
                 // EDITION MODE
                 await LoadCommunityDataAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
             }
 
-            viewInstance!.SetCreationPanelAsLoading(false);
+            if (!ct.IsCancellationRequested)
+                viewInstance.SetCreationPanelAsLoading(false);
         }
 
         private void GoToAnyLinkFromGetNameDescription(string id)
@@ -276,17 +278,28 @@ namespace DCL.Communities.CommunityCreation
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new ();
 
-            if ((await selfProfile.ProfileAsync(ct)).IsOk(out Profile? ownProfile))
+            ProfileReadResult profile = await selfProfile.ProfileAsync(ct);
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (profile.IsOk(out Profile? ownProfile))
             {
                 // Lands owned or managed by the user
-                var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)
+                var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId.Value, ct)
                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!placesResult.Success)
                 {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
                     return;
                 }
+
+                await ownerNames.LoadAsync(placesResult.Value.Data, ct);
+                if (ct.IsCancellationRequested)
+                    return;
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.Data)
                 {
@@ -299,39 +312,7 @@ namespace DCL.Communities.CommunityCreation
                             placeInfo.id,
                             isWorld,
                             placeText,
-                            placeInfo.owner,
-                            string.Empty));
-                }
-
-                // Owners' names
-                using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-                foreach (var communityPlace in currentCommunityPlaces)
-                {
-                    if (userIds.Value.Contains(communityPlace.OwnerId))
-                        continue;
-
-                    userIds.Value.Add(communityPlace.OwnerId);
-                }
-
-                List<Profile.CompactInfo>? getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
-
-                if (getAvatarsDetailsResult.Count > 0)
-                {
-                    foreach (var communityPlace in currentCommunityPlaces)
-                    {
-                        foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
-                        {
-                            if (!string.Equals(communityPlace.OwnerId, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
-                                continue;
-
-                            communityPlace.OwnerName = profile.Name;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                            ownerNames.GetName(placeInfo.owner)));
                 }
             }
 
@@ -425,22 +406,9 @@ namespace DCL.Communities.CommunityCreation
 
                 if (getPlacesDetailsResult.Value is { Data: { Count: > 0 } })
                 {
-                    // Owners' names
-                    using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-                    foreach (var communityPlace in getPlacesDetailsResult.Value.Data)
-                    {
-                        if (userIds.Value.Contains(communityPlace.owner))
-                            continue;
-
-                        userIds.Value.Add(communityPlace.owner);
-                    }
-
-                    List<Profile.CompactInfo>? getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
-
-                    if (getAvatarsDetailsResult.Count == 0)
-                    {
-                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
-                    }
+                    await ownerNames.LoadAsync(getPlacesDetailsResult.Value.Data, ct);
+                    if (ct.IsCancellationRequested)
+                        return;
 
                     foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.Data)
                     {
@@ -459,25 +427,13 @@ namespace DCL.Communities.CommunityCreation
                             }
                         }
 
-                        string ownerName = string.Empty;
-
-                        foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
-                        {
-                            if (!string.Equals(placeInfo.owner, profile.UserId, StringComparison.CurrentCultureIgnoreCase))
-                                continue;
-
-                            ownerName = profile.Name;
-                            break;
-                        }
-
                         AddPlaceTag(new CommunityPlace(
                             placeInfo.id,
                             !string.IsNullOrEmpty(placeInfo.world_name),
                             string.IsNullOrEmpty(placeInfo.world_name) ?
                                 $"{placeInfo.title} ({placeInfo.base_position})" :
                                 $"{placeInfo.title} ({placeInfo.world_name})",
-                            placeInfo.owner,
-                            ownerName), isRemovalAllowed, updateScrollPosition: false);
+                            ownerNames.GetName(placeInfo.owner)), isRemovalAllowed, updateScrollPosition: false);
                     }
                 }
             }
