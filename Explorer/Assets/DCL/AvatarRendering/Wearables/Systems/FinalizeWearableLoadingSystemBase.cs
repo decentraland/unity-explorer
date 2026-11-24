@@ -72,6 +72,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     using (var list = promise.Result.Value.Asset.ConsumeAttachments())
                         foreach (WearableDTO assetEntity in list.Value)
                         {
+                            // Left in failedDTOList, so the pointer finalizes as failed below
+                            if (!HasCategory(assetEntity))
+                            {
+                                ReportHub.LogWarning(GetReportData(), $"Wearable DTO {assetEntity.Metadata.id} has no category and cannot be resolved as a wearable");
+                                continue;
+                            }
+
                             if (wearableStorage.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
                                 continue;
 
@@ -91,6 +98,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 World.Destroy(entity);
             }
         }
+
+        /// <summary>
+        ///     A pointer can resolve to an entity that is not a wearable (e.g. an emote URN among a profile's wearables): it has no <c>data</c> block,
+        ///     so the default <see cref="WearableDTO.WearableMetadataDto.DataDto" /> carries no category and the DTO cannot be classified.
+        /// </summary>
+        internal static bool HasCategory(WearableDTO dto) =>
+            !string.IsNullOrEmpty(dto.metadata.data.category);
 
         protected void SetAsFailed(IWearable wearable, in BodyShape bodyShape)
         {

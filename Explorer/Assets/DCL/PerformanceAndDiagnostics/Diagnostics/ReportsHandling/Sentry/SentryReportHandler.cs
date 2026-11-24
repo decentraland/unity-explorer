@@ -62,6 +62,10 @@ namespace DCL.Diagnostics.Sentry
         // Status 0 means Thirdweb's bundler request got no HTTP answer at all: the player's network, not a client defect (#7713, #10570)
         private const string THIRDWEB_BUNDLER_UNREACHABLE_MESSAGE = "Bundler Request Failed. Error: 0 - ";
 
+        // A catalyst that never answered the own-profile GET within its deadline, retries included: the self-profile FSM backs off
+        // and retries (#10609). Duplicated from SelfProfileCmdExecutor, which this assembly cannot reference
+        private const string SELF_PROFILE_TIMEOUT_MESSAGE_PREFIX = "Self profile request timed out";
+
         // Beyond this many held networking failures, an error storm falls back to the last confirmed connectivity state
         private const int MAX_HELD_NETWORK_FAILURES = 32;
 
@@ -350,6 +354,8 @@ namespace DCL.Diagnostics.Sentry
 
                 case InvalidOperationException when exception.Message.StartsWith(TASK_ALREADY_COMPLETED_MESSAGE, StringComparison.Ordinal)
                                                     || exception.Message.StartsWith(INSECURE_CONNECTION_MESSAGE, StringComparison.Ordinal):
+
+                case TimeoutException when exception.Message.StartsWith(SELF_PROFILE_TIMEOUT_MESSAGE_PREFIX, StringComparison.Ordinal):
                     return true;
             }
 

@@ -75,6 +75,11 @@ namespace DCL.MapRenderer.ConsumerUtils
 
             Vector2Int resolution = GetPixelPerfectTextureResolution();
 
+            // The rect covers no screen pixels (window minimized, panel collapsed, layout pending): keep the current texture,
+            // and leave lastResolution untouched so the real size resizes it once it comes back
+            if (resolution.x <= 0 || resolution.y <= 0)
+                return;
+
             if (resolution == lastResolution)
                 return;
 

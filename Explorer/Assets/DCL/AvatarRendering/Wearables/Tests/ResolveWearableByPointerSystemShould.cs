@@ -121,6 +121,25 @@ namespace DCL.AvatarRendering.Wearables.Tests
         }
 
         [Test]
+        public void NotResolveADTOWithoutCategory()
+        {
+            var dto = new WearableDTO { metadata = new WearableDTO.WearableMetadataDto { id = testUrn } };
+
+            Assert.IsFalse(FinalizeWearableLoadingSystemBase.HasCategory(dto));
+        }
+
+        [Test]
+        public void ResolveADTOWithCategory()
+        {
+            var dto = new WearableDTO
+            {
+                metadata = new WearableDTO.WearableMetadataDto { id = testUrn, data = new WearableDTO.WearableMetadataDto.DataDto { category = WearableCategories.Categories.UPPER_BODY } },
+            };
+
+            Assert.IsTrue(FinalizeWearableLoadingSystemBase.HasCategory(dto));
+        }
+
+        [Test]
         public void ResolveWearable()
         {
             LogAssert.ignoreFailingMessages = true;
