@@ -8,8 +8,9 @@ namespace Global.AppArgs
         private const string DOMAIN = "dcl.dev";
         public const string ORIGIN = "https://" + DOMAIN;
         public const string FEATURE_FLAGS_URL = ORIGIN + "/feature-flags";
-        public const string GATEKEEPER_URL = ORIGIN + "/comms-gatekeeper";
         public const string SOCIAL_RPC_URL = "wss://" + DOMAIN + "/social-rpc";
+
+        private const string GATEKEEPER_URL = ORIGIN + "/comms-gatekeeper";
 
         /// <summary>The Pulse relay dcl.dev pairs with; owned by the deployment, not by a Decentraland environment.</summary>
         private const string PULSE_HOST = "dcl-one-poc-rt.decentraland.zone";

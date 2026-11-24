@@ -392,22 +392,56 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public async Task LeaveAFailedRealmCatalystFallbackUnreportedWhenTheCallerReportsFailures()
+        public async Task PassAFailedRealmCatalystFallbackToTheCallerThatReportsFailures()
         {
             // Arrange
             repository = NewRepository(true);
             HostTheRealmOutsideTheCentralizedNetwork();
             AnswerSinglePostWith(new List<Profile>());
-            FailSingleGetWith(new Exception("catalyst unreachable"));
+            var error = new Exception("catalyst unreachable");
+            FailSingleGetWith(error);
 
             // Act
-            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
-                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+            Exception? thrown = await SingleGetFailureAsync(IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures);
             await FinalizeUnobservedExceptionsAsync();
 
-            // Assert
-            Assert.That(profile, Is.Null);
+            // Assert: the caller takes the failure, and nothing is reported here
+            Assert.That(thrown, Is.SameAs(error));
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task MakeAConcurrentRequestWaitForTheRealmCatalystFallback()
+        {
+            // Arrange: the centralized batch lacks the profile, and the realm's catalyst has not answered yet
+            repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
+            var catalystAnswer = new UniTaskCompletionSource<Profile>();
+
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
+                                .Returns(_ => catalystAnswer.Task);
+
+            UniTask<Profile?> first = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
+            AssertBatch(1, 1);
+            repository.ResolveProfile(dtos[0].UserId.Value, null, true);
+
+            // Act: the same profile is requested again while the fallback is in flight
+            UniTask<Profile?> second = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
+
+            // Assert: the second request starts no batch of its own until the fallback has answered
+            Assert.That(repository.ConsumePendingBatch(), Is.Empty);
+
+            catalystAnswer.TrySetResult(dtos[0]);
+            Profile? firstProfile = await first.Timeout(TimeSpan.FromSeconds(1));
+
+            AssertBatch(1, 1);
+            repository.ResolveProfile(dtos[0].UserId.Value, dtos[0], true);
+            Profile? secondProfile = await second.Timeout(TimeSpan.FromSeconds(1));
+
+            Assert.That(firstProfile, Is.Not.Null);
+            Assert.That(secondProfile, Is.Not.Null);
+            ReceivedSingleGets(1);
         }
 
         /// <summary>

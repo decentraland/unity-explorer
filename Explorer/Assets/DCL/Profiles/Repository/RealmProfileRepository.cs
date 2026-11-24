@@ -314,12 +314,18 @@ namespace DCL.Profiles
                         if ((result == null || versionMismatch) && delayBatchResolution)
                             return await EnforceSingleGetAsync();
 
-                        if (result == null && useCentralizedProfiles && tier == ProfileTier.Kind.Full)
+                        if (result == null && useCentralizedProfiles && tier == ProfileTier.Kind.Full && IsRealmOutsideTheCentralizedNetwork())
                         {
-                            result = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
+                            // Registered as ongoing, as a single GET is, so a concurrent request for the same profile waits for this one
+                            lock (ongoingBatches)
+                                AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
 
-                            if (result != null)
-                                ResolveProfile(id, result, false);
+                            try { result = ResolveProfile(id, await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct), false); }
+                            catch (Exception e)
+                            {
+                                ResolveException(id, e);
+                                throw;
+                            }
                         }
 
                         return result;
@@ -388,7 +394,7 @@ namespace DCL.Profiles
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
-                    else
+                    else if (IsRealmOutsideTheCentralizedNetwork())
                         profile = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
                 }
                 else
@@ -430,24 +436,21 @@ namespace DCL.Profiles
         ///     The centralized endpoint indexes the profiles deployed to its own network. A realm the launch declared to be
         ///     outside that network holds profiles the endpoint lacks, so a profile missing there is asked of the realm's
         ///     catalyst once. Only of the realm's: the lambdas a peer announces are never contacted, and an answer carrying
-        ///     another id is dropped. A profile the realm lacks too, or a catalyst that cannot answer, leaves the profile missing.
+        ///     another id is dropped. A profile the realm lacks too leaves the profile missing. A catalyst that cannot answer is
+        ///     reported here and leaves the profile missing, unless the caller reports failures itself: then the failure is its to take.
+        ///     Call only when <see cref="IsRealmOutsideTheCentralizedNetwork" /> holds.
         /// </summary>
         private async UniTask<ProfileTier?> GetFromRealmCatalystFallbackAsync(string id, int version, bool reportFailures, CancellationToken ct)
         {
-            if (!IsRealmOutsideTheCentralizedNetwork())
-                return null;
-
             try
             {
                 ProfileTier? profile = await ProfilesRequest.GetAsync(webRequestController, GetUrl(id, null), id, version, false, ct);
                 return profile != null && string.Equals(profile.Value.UserId.Value, id, StringComparison.OrdinalIgnoreCase) ? profile : null;
             }
             catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND }) { return null; }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (Exception e) when (reportFailures && e is not OperationCanceledException)
             {
-                if (reportFailures)
-                    ReportHub.LogException(e, ReportCategory.PROFILE);
-
+                ReportHub.LogException(e, ReportCategory.PROFILE);
                 return null;
             }
         }
