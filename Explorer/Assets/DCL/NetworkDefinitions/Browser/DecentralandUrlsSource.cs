@@ -424,6 +424,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.{BaseDomain}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.{BaseDomain}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.{BaseDomain}/api/places",
+                // Preserve the existing share URL for custom deployments that host the standalone Reels viewer.
                 DecentralandUrl.CameraReelLink when environment == DecentralandEnvironment.Custom => $"https://reels.{BaseDomain}",
                 DecentralandUrl.CameraReelLink => $"https://{BaseDomain}/reels",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
