@@ -444,6 +444,36 @@ namespace DCL.Profiles.Tests
             ReceivedSingleGets(1);
         }
 
+        [Test]
+        public async Task LetAConcurrentRequestGoOnWhenTheRealmCatalystFallbackIsCancelled()
+        {
+            // Arrange: a second request for the same profile waits for the fallback the first one started
+            repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
+            var catalystAnswer = new UniTaskCompletionSource<Profile>();
+
+            webRequestController.SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                 (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>())!
+                                .Returns(_ => catalystAnswer.Task);
+
+            UniTask<Profile?> first = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
+            AssertBatch(1, 1);
+            repository.ResolveProfile(dtos[0].UserId.Value, null, true);
+            UniTask<Profile?> second = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
+
+            // Act: the first request's fallback ends cancelled
+            catalystAnswer.TrySetCanceled();
+            (bool firstCancelled, Profile? _) = await first.SuppressCancellationThrow().Timeout(TimeSpan.FromSeconds(1));
+
+            // Assert: the second request is not cancelled with it, and goes on to a fetch of its own
+            AssertBatch(1, 1);
+            repository.ResolveProfile(dtos[0].UserId.Value, dtos[0], true);
+            Profile? secondProfile = await second.Timeout(TimeSpan.FromSeconds(1));
+
+            Assert.That(firstCancelled, Is.True);
+            Assert.That(secondProfile, Is.Not.Null);
+        }
+
         /// <summary>
         ///     Puts the realm's catalyst at <see cref="LAMBDAS" />, a host outside the base domain the centralized endpoint answers for,
         ///     in a launch that resolves scene pointers against the realm.

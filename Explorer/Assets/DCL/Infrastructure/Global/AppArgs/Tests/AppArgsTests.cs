@@ -91,6 +91,14 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(disabled.ResolveFeatureFlagArg(flag, fallback: false, requireDebug: false));
         }
 
+        [TestCase(AppArgsFlags.AUTH_BRIDGE_ONLY)]
+        [TestCase(AppArgsFlags.SKIP_VERSION_CHECK)]
+        public void ReadSwitchValuesOutsideDclDev(string flag)
+        {
+            Assert.IsTrue(new ApplicationParametersParser(false, "--" + flag).ResolveFeatureFlagArg(flag, fallback: false, requireDebug: false));
+            Assert.IsFalse(new ApplicationParametersParser(false, "--" + flag, "false").ResolveFeatureFlagArg(flag, fallback: false, requireDebug: false));
+        }
+
         [Test]
         public void KeepDclDevAssetDefaultsWhenAnAcceptedDeepLinkNamesAnotherGateway()
         {

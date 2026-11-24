@@ -321,6 +321,12 @@ namespace DCL.Profiles
                                 AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
 
                             try { result = ResolveProfile(id, await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct), false); }
+                            catch (OperationCanceledException)
+                            {
+                                // Releases the waiters without the cancellation: it belongs to this caller's token, not to theirs
+                                ResolveProfile(id, null, false);
+                                throw;
+                            }
                             catch (Exception e)
                             {
                                 ResolveException(id, e);
@@ -433,12 +439,8 @@ namespace DCL.Profiles
         }
 
         /// <summary>
-        ///     The centralized endpoint indexes the profiles deployed to its own network. A realm the launch declared to be
-        ///     outside that network holds profiles the endpoint lacks, so a profile missing there is asked of the realm's
-        ///     catalyst once. Only of the realm's: the lambdas a peer announces are never contacted, and an answer carrying
-        ///     another id is dropped. A profile the realm lacks too leaves the profile missing. A catalyst that cannot answer is
-        ///     reported here and leaves the profile missing, unless the caller reports failures itself: then the failure is its to take.
-        ///     Call only when <see cref="IsRealmOutsideTheCentralizedNetwork" /> holds.
+        ///     Asks the realm's own catalyst for a profile the centralized endpoint lacks. Null when the catalyst lacks it or answers
+        ///     with another id. With <paramref name="reportFailures" /> a failure is reported here and yields null; otherwise it propagates.
         /// </summary>
         private async UniTask<ProfileTier?> GetFromRealmCatalystFallbackAsync(string id, int version, bool reportFailures, CancellationToken ct)
         {
