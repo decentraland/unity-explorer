@@ -19,7 +19,6 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -110,8 +109,6 @@ namespace DCL.Communities.CommunityCreation
             this.mvcManager = mvcManager;
             ownerNames = new CommunityPlaceOwnerNames(profileRepository);
             this.identityCache = identityCache;
-
-            FileBrowser.Instance.AllowSyncCalls = true;
         }
 
         protected override void OnViewInstantiated()
@@ -240,8 +237,10 @@ namespace DCL.Communities.CommunityCreation
         {
             viewInstance!.backgroundCloseButton.enabled = false;
 
-            FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
-            byte[] data = FileBrowser.Instance.CurrentOpenSingleFileData;
+            FileBrowser fileBrowser = FileBrowser.Instance;
+            fileBrowser.AllowSyncCalls = true;
+            fileBrowser.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
+            byte[] data = fileBrowser.CurrentOpenSingleFileData;
 
             // Due to a bug in the file browser (for Mac), we need to wait 2 frames after we close it to ensure we don't click accidentally in the background close button.
             // TODO: Investigate how to fix this properly.

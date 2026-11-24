@@ -55,15 +55,20 @@ namespace DCL.Communities.Tests
         [TearDown]
         public void TearDown()
         {
+            NotificationsBusController.Reset();
             if (wizard != null)
             {
-                wizard.CancelButtonClicked?.Invoke();
-                wizardLifetime.GetAwaiter().GetResult();
-                creation.Dispose();
-                Object.DestroyImmediate(wizard.gameObject);
+                try
+                {
+                    wizard.CancelButtonClicked?.Invoke();
+                    wizardLifetime.GetAwaiter().GetResult();
+                }
+                finally
+                {
+                    creation.Dispose();
+                    Object.DestroyImmediate(wizard.gameObject);
+                }
             }
-
-            NotificationsBusController.Reset();
         }
 
         [Test]
@@ -72,7 +77,7 @@ namespace DCL.Communities.Tests
             OpenCreate(false);
 
             Assert.That(NamePromptVisible(), Is.True);
-            self.DidNotReceive().ProfileAsync(Arg.Any<CancellationToken>());
+            _ = self.DidNotReceive().ProfileAsync(Arg.Any<CancellationToken>());
             Assert.That(warnings, Is.Empty);
         }
 
@@ -82,7 +87,7 @@ namespace DCL.Communities.Tests
             OpenCreate(true);
 
             Assert.That(NamePromptVisible(), Is.False);
-            places.Received(1).GetDestinationsByOwnerAsync(OWNER, Arg.Any<CancellationToken>());
+            _ = places.Received(1).GetDestinationsByOwnerAsync(OWNER, Arg.Any<CancellationToken>());
             Assert.That(warnings, Is.Empty);
         }
 
@@ -100,7 +105,7 @@ namespace DCL.Communities.Tests
             {
                 using var card = new PlacesSectionController(view, new ThumbnailLoader(null), null!, places, null!, null!, null!, null!, profiles, null!, null!, null!);
                 card.ShowPlaces(new CommunityData { id = "community" }, new[] { "place" }, section.Token);
-                profiles.Received(1).GetAsync(OWNER, 0, null, section.Token, true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact);
+                _ = profiles.Received(1).GetAsync(OWNER, 0, null, section.Token, true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact);
 
                 section.Cancel();
                 card.Reset();
@@ -139,21 +144,21 @@ namespace DCL.Communities.Tests
         }
 
         [Test]
-        public void KeepBothResolvedNamesWhenAnotherOwnerLookupFails()
+        public void KeepBothResolvedNamesWhenAnOTHER_OWNERLookupFails()
         {
-            const string otherOwner = "0x2222222222222222222222222222222222222222";
-            const string unavailableOwner = "0x3333333333333333333333333333333333333333";
+            const string OTHER_OWNER = "0x2222222222222222222222222222222222222222";
+            const string UNAVAILABLE_OWNER = "0x3333333333333333333333333333333333333333";
             var names = new CommunityPlaceOwnerNames(profiles);
             ReturnProfile(OWNER, "Alice");
-            ReturnProfile(otherOwner, "Bob");
-            profiles.GetAsync(unavailableOwner, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
+            ReturnProfile(OTHER_OWNER, "Bob");
+            profiles.GetAsync(UNAVAILABLE_OWNER, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
                     .Returns(UniTask.FromException<ProfileTier?>(new InvalidOperationException("Profile service unavailable")));
 
-            names.LoadAsync(new[] { Place(OWNER), Place(otherOwner), Place(unavailableOwner) }, CancellationToken.None).GetAwaiter().GetResult();
+            names.LoadAsync(new[] { Place(OWNER), Place(OTHER_OWNER), Place(UNAVAILABLE_OWNER) }, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.That(names.GetName(OWNER), Is.EqualTo("Alice"));
-            Assert.That(names.GetName(otherOwner), Is.EqualTo("Bob"));
-            Assert.That(names.GetName(unavailableOwner), Is.Empty);
+            Assert.That(names.GetName(OTHER_OWNER), Is.EqualTo("Bob"));
+            Assert.That(names.GetName(UNAVAILABLE_OWNER), Is.Empty);
             Assert.That(warnings, Is.Empty);
         }
 
@@ -170,8 +175,8 @@ namespace DCL.Communities.Tests
             self.ProfileAsync(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(ProfileReadResult.FromOk(Profile.NewRandomProfile(OWNER))));
             places.GetDestinationsByOwnerAsync(OWNER, Arg.Any<CancellationToken>()).Returns(Response());
-            wizard = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(WIZARD)).GetComponent<CommunityCreationEditionView>();
-            creation = new CommunityCreationEditionController(() => wizard, null!, Substitute.For<IInputBlock>(), null!, places, self, null!, profiles, null!);
+            creation = new CommunityCreationEditionController(
+                () => wizard = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(WIZARD)).GetComponent<CommunityCreationEditionView>(), null!, Substitute.For<IInputBlock>(), null!, places, self, null!, profiles, null!);
             wizardLifetime = creation.LaunchViewLifeCycleAsync(default, new CommunityCreationEditionParameter(eligible, string.Empty, null), CancellationToken.None);
         }
 
