@@ -1,8 +1,7 @@
 // Responses should always correspond to the protocol definitions at
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/scene_rewards.proto
 
-// The protocol enum, exposed to scenes as a runtime value like the generated ts-proto enum: both forward
-// name->value and reverse value->name mappings, UNRECOGNIZED included.
+// The protocol enum as a runtime value, shaped like the generated ts-proto enum.
 function makeEnum(entries) {
     const e = {};
     for (const [name, value] of entries) { e[name] = value; e[value] = name; }

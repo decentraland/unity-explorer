@@ -206,13 +206,8 @@ namespace SceneRuntime.Tests
                 var probe = new GrantRewardProbe();
                 sceneRuntime.engine.AddHostObject("probe", probe);
 
+                // StartScene awaits onStart, so the awaited grantReward has resolved by the time it returns.
                 await sceneRuntime.StartScene();
-
-                for (var i = 0; i < 10 && !probe.Recorded; ++i)
-                {
-                    await UniTask.Yield();
-                    await sceneRuntime.UpdateScene(0.01f);
-                }
 
                 Assert.IsTrue(probe.Recorded, "grantReward did not resolve");
                 Assert.AreEqual(1d, probe.NotAvailable, "GrantRewardError.GRE_NOT_AVAILABLE");
