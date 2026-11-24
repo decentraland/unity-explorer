@@ -19,7 +19,7 @@ Done when you hold the realm URL, realm name, Pulse host, gatekeeper URL and par
 
 ## 2. One account per client
 
-Two clients on one account fight: the second sign-in takes the rooms and the first shows "this identity is connected elsewhere". Create an account per client, in a file outside the repository:
+Two clients on one account fight: the second sign-in takes the rooms and the first shows "this identity is connected elsewhere". Create an account per client, in a file outside the repository (the script refuses a path inside it):
 
 ```bash
 python -I .claude/skills/pulse-face-to-face/scripts/test_account.py create <wallets.json> unity-1
@@ -94,7 +94,7 @@ For a crowd, dcl-one's `comms-e2e` scenario `crowd-visit` sends bots to the same
 | Symptom | Cause | Check or fix |
 |---|---|---|
 | Unity shows the welcome screen after `unity-login` | The stored identity has a day or less left, which the client treats as expired | Keep `--hours` above 24 (default 168) |
-| Unity receives the other on Pulse and in the rooms, draws nothing | No profile reached it. Launch with `--use-log-matrix` and category `PROFILE` ([`docs/override-debug-log-matrix.md`](../../../docs/override-debug-log-matrix.md)): `ProfileRepository: get finished … profile:` ends empty | The account has no profile on the realm's catalyst (step 2), or the build reads profiles only from the centralized endpoint (`use-centralized-profiles`) and lacks the catalyst fallback: update the build |
+| Unity receives the other on Pulse and in the rooms, draws nothing | No profile reached it. Launch with `--use-log-matrix` and category `PROFILE` ([`docs/override-debug-log-matrix.md`](../../../docs/override-debug-log-matrix.md)): `ProfileRepository: get finished … profile:` ends empty | The account has no profile on the realm's catalyst (step 2), or the realm is outside the environment and the launch lacks `--realm-scene-pointers`: with centralized profiles (`use-centralized-profiles`) the client asks the realm's catalyst only under that switch |
 | Web client lists a player it does not draw; `/foreign_movement` says "Waiting for the player profile" | Same: no profile on the catalyst the web client reads | Step 2 |
 | "this identity is connected elsewhere" | Two clients share an account | Step 2, then reload the displaced client |
 | Pulse handshake refused, "timestamp is ahead of this server" | The machine's clock runs ahead of the server's by more than its window | Compare the clock with NTP; dcl-one's Pulse tolerates 60 s |

@@ -14,6 +14,10 @@ server, and no key, identity or signature is printed: commands answer with label
       Writes the web client's console line `/hud_login <identity> ...` to <out-file>, for a
       driver to send. The file is a credential: delete it after sending.
 
+<wallets.json> and <out-file> are refused when they lie inside this repository, where they could be
+committed. The wallets file, the saved identity and the sign-in line are written for their owner
+only (mode 0600).
+
 Only the Windows prefs location was exercised; pass --prefs-dir elsewhere if the default is off."""
 import argparse
 import base64
@@ -29,6 +33,22 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ethkeys  # noqa: E402
 
 IDENTITY_KEY = 'Web3Authentication.Identity'
+REPOSITORY = pathlib.Path(__file__).resolve().parents[4]
+
+
+def outside_repository(value: str) -> pathlib.Path:
+    path = pathlib.Path(value).resolve()
+    if path.is_relative_to(REPOSITORY):
+        raise argparse.ArgumentTypeError(f'{value} is inside the repository ({REPOSITORY}): keys and identities stay outside it')
+    return path
+
+
+def write_secret(path: pathlib.Path, text: str):
+    """Writes a file that holds a key or an identity, for its owner only. On Windows the mode
+    changes nothing: the file keeps the access list of its folder."""
+    with open(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w', encoding='utf-8') as file:
+        file.write(text)
+    os.chmod(path, 0o600)
 
 
 def random_key() -> int:
@@ -110,7 +130,7 @@ def create(args):
     data['accounts'].append({'label': args.label, 'address': ethkeys.address_of(key),
                              'privateKey': '0x' + key.to_bytes(32, 'big').hex()})
     args.wallets.parent.mkdir(parents=True, exist_ok=True)
-    args.wallets.write_text(json.dumps(data, indent=1), encoding='utf-8')
+    write_secret(args.wallets, json.dumps(data, indent=1))
     print(f'{args.label} {data["accounts"][-1]["address"]}')
 
 
@@ -136,7 +156,7 @@ def unity_login(args):
     if IDENTITY_KEY in strings:
         note = 'replaced an identity'
         if not backup.exists():
-            backup.write_text(strings[IDENTITY_KEY], encoding='utf-8')
+            write_secret(backup, strings[IDENTITY_KEY])
             note = f'the identity stored before is saved in {backup.name}'
     strings[IDENTITY_KEY] = json.dumps(stored, separators=(',', ':'))
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -160,8 +180,8 @@ def unity_restore(args):
 def web_login_line(args):
     identity = build_identity(account_of(args.wallets, args.label), args.hours)
     encoded = base64.b64encode(json.dumps(identity, separators=(',', ':')).encode()).decode()
-    args.out.write_text(f'/hud_login {encoded} --name {args.name} --look {args.look} --realm {args.realm} '
-                        f'--position {args.position}\n', encoding='utf-8')
+    write_secret(args.out, f'/hud_login {encoded} --name {args.name} --look {args.look} --realm {args.realm} '
+                           f'--position {args.position}\n')
     print(f'{args.out.name}: the sign-in line of {args.label} {account_of(args.wallets, args.label)["address"]}')
 
 
@@ -170,12 +190,12 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
 
     command = commands.add_parser('create')
-    command.add_argument('wallets', type=pathlib.Path)
+    command.add_argument('wallets', type=outside_repository)
     command.add_argument('label')
     command.set_defaults(run=create)
 
     command = commands.add_parser('unity-login')
-    command.add_argument('wallets', type=pathlib.Path)
+    command.add_argument('wallets', type=outside_repository)
     command.add_argument('label')
     command.add_argument('--slot', type=int, default=0)
     command.add_argument('--hours', type=float, default=168)
@@ -183,15 +203,15 @@ def main():
     command.set_defaults(run=unity_login)
 
     command = commands.add_parser('unity-restore')
-    command.add_argument('wallets', type=pathlib.Path)
+    command.add_argument('wallets', type=outside_repository)
     command.add_argument('--slot', type=int, default=0)
     command.add_argument('--prefs-dir', type=pathlib.Path)
     command.set_defaults(run=unity_restore)
 
     command = commands.add_parser('web-login-line')
-    command.add_argument('wallets', type=pathlib.Path)
+    command.add_argument('wallets', type=outside_repository)
     command.add_argument('label')
-    command.add_argument('out', type=pathlib.Path)
+    command.add_argument('out', type=outside_repository)
     command.add_argument('--name', required=True)
     command.add_argument('--look', type=int, required=True)
     command.add_argument('--realm', required=True)
