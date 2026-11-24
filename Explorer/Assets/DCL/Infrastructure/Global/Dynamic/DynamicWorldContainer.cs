@@ -1014,6 +1014,8 @@ namespace Global.Dynamic
                         appArgs,
                         new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                         chatContainer.ChatMessagesBus,
+                        chatContainer.ChatHistory,
+                        chatContainer.MessageReactionServiceSlot,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
                         staticContainer.LoadingStatus,

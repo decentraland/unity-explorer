@@ -2,6 +2,8 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.McpServer.Core;
@@ -40,6 +42,8 @@ namespace DCL.McpServer.Systems
         private readonly ILoadingStatus loadingStatus;
 
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IChatHistory chatHistory;
+        private readonly MessageReactionServiceSlot messageReactionServiceSlot;
         private readonly ExposedCameraData exposedCameraData;
 
         private readonly Arch.Core.World globalWorld;
@@ -65,6 +69,8 @@ namespace DCL.McpServer.Systems
             IAppArgs appArgs,
             IGlobalWorldActions globalWorldActions,
             IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
+            MessageReactionServiceSlot messageReactionServiceSlot,
             IScenesCache scenesCache,
             ICurrentSceneInfo currentSceneInfo,
             ILoadingStatus loadingStatus,
@@ -86,6 +92,8 @@ namespace DCL.McpServer.Systems
 
             this.globalWorldActions = globalWorldActions;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
+            this.messageReactionServiceSlot = messageReactionServiceSlot;
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.loadingStatus = loadingStatus;
@@ -135,6 +143,8 @@ namespace DCL.McpServer.Systems
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
                           .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus))
+                          .Add(new GetChatHistoryTool(chatHistory))
+                          .Add(new ReactToChatMessageTool(chatHistory, messageReactionServiceSlot))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity, coroutineRunner))
                           .Add(new ListSceneEntitiesTool(scenesCache))
                           .Add(new GetEntityDetailsTool(worldInfoHub))

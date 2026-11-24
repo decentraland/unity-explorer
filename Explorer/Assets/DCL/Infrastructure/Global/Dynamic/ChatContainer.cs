@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -55,6 +56,11 @@ namespace Global.Dynamic
         public StreamReactionsChatCommand StreamReactionsChatCommand { get; }
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
+
+        /// <summary>
+        ///     Filled by ChatPlugin once the reactions feature exists; read by the MCP tools, which are built earlier.
+        /// </summary>
+        public MessageReactionServiceSlot MessageReactionServiceSlot { get; } = new ();
 
         private ChatContainer(
             ChatHistory chatHistory,
@@ -229,6 +235,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
+                MessageReactionServiceSlot,
                 CurrentChannelService);
 
         public void Dispose()

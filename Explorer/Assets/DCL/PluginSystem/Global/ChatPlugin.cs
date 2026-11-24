@@ -97,6 +97,7 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
+        private readonly MessageReactionServiceSlot messageReactionServiceSlot;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -145,6 +146,7 @@ namespace DCL.PluginSystem.Global
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
+            MessageReactionServiceSlot messageReactionServiceSlot,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -184,6 +186,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
+            this.messageReactionServiceSlot = messageReactionServiceSlot;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -194,6 +197,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             streamReactionsChatCommand.Detach();
+            messageReactionServiceSlot.Detach();
 
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
@@ -232,6 +236,7 @@ namespace DCL.PluginSystem.Global
                 pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
+            messageReactionServiceSlot.Attach(messageReactionService);
 
             // Hand the debug /streamreactions command a live control now that the reactions feature exists.
             streamReactionsChatCommand.Attach(reactions.StreamControl);
