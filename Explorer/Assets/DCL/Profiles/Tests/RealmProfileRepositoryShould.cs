@@ -28,9 +28,11 @@ namespace DCL.Profiles.Tests
         internal static readonly string TEST_PROFILES_JSON = $"{Application.dataPath + "/../TestResources/Profiles/Test_profiles.json"}";
 
         private static readonly URLDomain LAMBDAS = URLDomain.FromString("https://test-url.com/lambdas");
+        private static readonly URLDomain PEER_ANNOUNCED_LAMBDAS = URLDomain.FromString("https://peer-announced.example.test/lambdas");
 
         private RealmProfileRepository repository = null!;
         private IWebRequestController webRequestController = null!;
+        private IDecentralandUrlsSource urlsSource = null!;
         private IProfileCache profileCache = null!;
 
         // 19 profiles
@@ -48,6 +50,7 @@ namespace DCL.Profiles.Tests
         public void SetUp()
         {
             webRequestController = Substitute.For<IWebRequestController>();
+            urlsSource = Substitute.For<IDecentralandUrlsSource>();
             profileCache = Substitute.For<IProfileCache>();
             repository = NewRepository(false);
 
@@ -255,21 +258,23 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public async Task FallBackToTheAnnouncedCatalystWhenTheCentralizedEndpointLacksTheProfile()
+        public async Task FallBackToTheRealmCatalystWhenTheCentralizedEndpointLacksTheProfile()
         {
-            // Arrange: the centralized endpoint answers without the profile, the peer's catalyst has it
+            // Arrange: the centralized endpoint answers without the profile, the realm's catalyst has it, the peer announces a catalyst of its own
             repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
             AnswerSinglePostWith(new List<Profile>());
             AnswerSingleGetWith(dtos[0]);
 
             // Act
-            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None, false,
                 IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
 
-            // Assert
+            // Assert: asked of the realm's catalyst, and of no other host
             Assert.That(profile, Is.Not.Null);
             Assert.That(profile!.Value.UserId.Value, Is.EqualTo(dtos[0].UserId.Value));
             ReceivedSingleGetsTo($"{LAMBDAS.Value}/profiles/{dtos[0].UserId.Value}", 1);
+            ReceivedSingleGets(1);
         }
 
         [Test]
@@ -277,6 +282,7 @@ namespace DCL.Profiles.Tests
         {
             // Arrange
             repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
             AnswerSinglePostWith(new List<Profile> { dtos[0] });
 
             // Act
@@ -289,12 +295,13 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public async Task FallBackToTheCatalystWhenACentralizedBatchLacksTheProfile()
+        public async Task FallBackToTheRealmCatalystWhenACentralizedBatchLacksTheProfile()
         {
             // Arrange
             repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
             AnswerSingleGetWith(dtos[0]);
-            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None);
+            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
             AssertBatch(1, 1);
 
             // Act: the centralized batch answered without the profile
@@ -304,24 +311,118 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(profile, Is.Not.Null);
             ReceivedSingleGetsTo($"{LAMBDAS.Value}/profiles/{dtos[0].UserId.Value}", 1);
+            ReceivedSingleGets(1);
+        }
+
+        [TestCase("https://peer.decentraland.org/lambdas", null, true)]
+        [TestCase("https://gateway.localhost/peer/lambdas", "https://gateway.localhost/", true)]
+        [TestCase("https://test-url.com/lambdas", null, false)]
+        public async Task NotFallBackUnlessTheLaunchDeclaresARealmOutsideTheCentralizedNetwork(string realmLambdas, string? gatewayOrigin, bool usesRealmScenePointers)
+        {
+            // Arrange: the profile is missing from the centralized endpoint; the realm's catalyst is one that endpoint answers for, or the launch never declared the realm
+            repository = NewRepository(true);
+            HostTheRealmAt(realmLambdas, gatewayOrigin, usesRealmScenePointers);
+            AnswerSinglePostWith(new List<Profile>());
+            AnswerSingleGetWith(dtos[0]);
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+
+            // Assert
+            Assert.That(profile, Is.Null);
+            ReceivedNoSingleGets();
         }
 
         [Test]
-        public async Task LeaveAProfileMissingWhenItsCatalystFallbackFails()
+        public async Task NotFallBackForACentralizedBatchWhenTheRealmBelongsToTheCentralizedNetwork()
         {
-            // Arrange: missing from the centralized endpoint, and the catalyst cannot be reached
+            // Arrange
             repository = NewRepository(true);
+            HostTheRealmAt("https://peer.decentraland.org/lambdas", null, true);
+            AnswerSingleGetWith(dtos[0]);
+            UniTask<Profile?> task = repository.GetAsync(dtos[0].UserId.Value, 0, PEER_ANNOUNCED_LAMBDAS, CancellationToken.None);
+            AssertBatch(1, 1);
+
+            // Act: the centralized batch answered without the profile
+            repository.ResolveProfile(dtos[0].UserId.Value, null, true);
+            Profile? profile = await task.Timeout(TimeSpan.FromSeconds(1));
+
+            // Assert
+            Assert.That(profile, Is.Null);
+            ReceivedNoSingleGets();
+        }
+
+        [Test]
+        public async Task DropARealmCatalystAnswerThatCarriesAnotherId()
+        {
+            // Arrange: the realm's catalyst answers the request for one wallet with the profile of another
+            repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
             AnswerSinglePostWith(new List<Profile>());
-            FailSingleGetWith(new Exception("catalyst unreachable"));
+            AnswerSingleGetWith(dtos[1]);
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+
+            // Assert
+            Assert.That(profile, Is.Null);
+        }
+
+        [Test]
+        public async Task ReportAFailedRealmCatalystFallbackAndLeaveTheProfileMissing()
+        {
+            // Arrange: missing from the centralized endpoint, and the realm's catalyst cannot be reached
+            repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
+            AnswerSinglePostWith(new List<Profile>());
+            var error = new Exception("catalyst unreachable");
+            FailSingleGetWith(error);
+            LogAssert.Expect(LogType.Exception, new Regex(Regex.Escape(error.Message)));
 
             // Act
             ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
                 IProfileRepository.FetchBehaviour.EnforceSingleGet, ProfileTier.Kind.Full);
             await FinalizeUnobservedExceptionsAsync();
 
-            // Assert: still missing, as the centralized endpoint alone answered, and nothing reported
+            // Assert: still missing, as the centralized endpoint alone answered
             Assert.That(profile, Is.Null);
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public async Task LeaveAFailedRealmCatalystFallbackUnreportedWhenTheCallerReportsFailures()
+        {
+            // Arrange
+            repository = NewRepository(true);
+            HostTheRealmOutsideTheCentralizedNetwork();
+            AnswerSinglePostWith(new List<Profile>());
+            FailSingleGetWith(new Exception("catalyst unreachable"));
+
+            // Act
+            ProfileTier? profile = await repository.GetAsync(dtos[0].UserId.Value, 0, LAMBDAS, CancellationToken.None, false,
+                IProfileRepository.FetchBehaviour.EnforceSingleGet | IProfileRepository.FetchBehaviour.CallerReportsFailures, ProfileTier.Kind.Full);
+            await FinalizeUnobservedExceptionsAsync();
+
+            // Assert
+            Assert.That(profile, Is.Null);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>
+        ///     Puts the realm's catalyst at <see cref="LAMBDAS" />, a host outside the base domain the centralized endpoint answers for,
+        ///     in a launch that resolves scene pointers against the realm.
+        /// </summary>
+        private void HostTheRealmOutsideTheCentralizedNetwork() =>
+            HostTheRealmAt(LAMBDAS.Value, null, true);
+
+        private void HostTheRealmAt(string realmLambdas, string? gatewayOrigin, bool usesRealmScenePointers)
+        {
+            urlsSource.UsesRealmScenePointers.Returns(usesRealmScenePointers);
+            urlsSource.BaseDomain.Returns(IDecentralandUrlsSource.ORG_DOMAIN);
+            urlsSource.GatewayOrigin.Returns(gatewayOrigin);
+            urlsSource.Url(DecentralandUrl.Lambdas).Returns(realmLambdas);
         }
 
         /// <summary>The repository reads the answer from the list it handed to the request, so the profiles are written into that list, as the real request does.</summary>
@@ -348,6 +449,11 @@ namespace DCL.Profiles.Tests
                                 .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
                                      (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
 
+        private void ReceivedSingleGets(int count) =>
+            webRequestController.Received(count)
+                                .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
+                                     (Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(), Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
+
         private void ReceivedSingleGetsTo(string url, int count) =>
             webRequestController.Received(count)
                                 .SendAsync<GenericGetRequest, GenericGetArguments, GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>, Profile>
@@ -355,7 +461,7 @@ namespace DCL.Profiles.Tests
                                       Arg.Any<GenericDownloadHandlerUtils.CreateFromJsonOp<Profile, GenericGetRequest>>());
 
         private RealmProfileRepository NewRepository(bool useCentralizedProfiles) =>
-            new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
+            new (webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), urlsSource, profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), useCentralizedProfiles);
 
         private void FailSinglePostWith(Exception error) =>
             webRequestController.SendAsync<GenericPostRequest, GenericPostArguments, GenericDownloadHandlerUtils.OverwriteFromJsonAsyncOp<IList<Profile>, GenericPostRequest>, IList<Profile>>

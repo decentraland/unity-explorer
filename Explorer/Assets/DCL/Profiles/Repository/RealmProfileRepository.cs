@@ -314,10 +314,9 @@ namespace DCL.Profiles
                         if ((result == null || versionMismatch) && delayBatchResolution)
                             return await EnforceSingleGetAsync();
 
-                        // The single GET above ends in the same fallback; without it, a profile the centralized batch lacks is asked of the catalyst once
                         if (result == null && useCentralizedProfiles && !forceCatalyst && tier == ProfileTier.Kind.Full)
                         {
-                            result = await GetFromCatalystFallbackAsync(id, version, fromCatalyst, ct);
+                            result = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
 
                             if (result != null)
                                 ResolveProfile(id, result, false);
@@ -390,7 +389,7 @@ namespace DCL.Profiles
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
                     else
-                        profile = await GetFromCatalystFallbackAsync(id, version, fromCatalyst, ct);
+                        profile = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
                 }
                 else
                 {
@@ -428,15 +427,50 @@ namespace DCL.Profiles
         }
 
         /// <summary>
-        ///     The centralized endpoint indexes the profiles its own network deploys. A profile deployed only to another catalyst — the
-        ///     realm a custom deployment serves, or the lambdas a peer announces — is missing there, so it is asked of that catalyst
-        ///     once: the announced lambdas, else the realm's. A profile missing from both, or a catalyst that cannot answer, stays
-        ///     missing without a report, as the centralized answer alone left it.
+        ///     The centralized endpoint indexes the profiles deployed to its own network. A realm the launch declared to be
+        ///     outside that network holds profiles the endpoint lacks, so a profile missing there is asked of the realm's
+        ///     catalyst once. Only of the realm's: the lambdas a peer announces are never contacted, and an answer carrying
+        ///     another id is dropped. A profile the realm lacks too, or a catalyst that cannot answer, leaves the profile missing.
         /// </summary>
-        private async UniTask<ProfileTier?> GetFromCatalystFallbackAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
+        private async UniTask<ProfileTier?> GetFromRealmCatalystFallbackAsync(string id, int version, bool reportFailures, CancellationToken ct)
         {
-            try { return await ProfilesRequest.GetAsync(webRequestController, GetUrl(id, fromCatalyst), id, version, false, ct); }
-            catch (Exception e) when (e is not OperationCanceledException) { return null; }
+            if (!IsRealmOutsideTheCentralizedNetwork())
+                return null;
+
+            try
+            {
+                ProfileTier? profile = await ProfilesRequest.GetAsync(webRequestController, GetUrl(id, null), id, version, false, ct);
+                return profile != null && string.Equals(profile.Value.UserId.Value, id, StringComparison.OrdinalIgnoreCase) ? profile : null;
+            }
+            catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND }) { return null; }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                if (reportFailures)
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///     True when the launch resolves scene pointers against the realm and the realm's catalyst is hosted outside both
+        ///     the base domain and the gateway, which are the hosts the centralized endpoint answers for. False while no
+        ///     realm is configured.
+        /// </summary>
+        private bool IsRealmOutsideTheCentralizedNetwork()
+        {
+            if (!urlsSource.UsesRealmScenePointers)
+                return false;
+
+            string lambdas = urlsSource.Url(DecentralandUrl.Lambdas);
+
+            if (!Uri.TryCreate(lambdas, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            if (urlsSource.GatewayOrigin is { Length: > 0 } gateway && lambdas.StartsWith(gateway, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return !IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, urlsSource.BaseDomain);
         }
 
         private static void ReportProfileNotFound(string id, URLDomain? fromCatalyst) =>
