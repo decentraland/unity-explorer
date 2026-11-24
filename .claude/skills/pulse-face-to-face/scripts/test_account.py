@@ -114,7 +114,7 @@ def read_prefs(path: pathlib.Path) -> dict:
 
 def write_prefs(path: pathlib.Path, prefs: dict):
     staging = path.with_name(path.name + '.new')
-    staging.write_text(json.dumps(prefs, separators=(',', ':')), encoding='utf-8')
+    write_secret(staging, json.dumps(prefs, separators=(',', ':')))
     os.replace(staging, path)
 
 

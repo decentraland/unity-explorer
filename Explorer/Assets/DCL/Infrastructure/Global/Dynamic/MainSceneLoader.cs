@@ -317,6 +317,9 @@ namespace Global.Dynamic
                 return;
             }
 
+            if (pulseHost != null)
+                ReportHub.Log(ReportCategory.STARTUP, $"Pulse relay: {pulseHost} (--{AppArgsFlags.PULSE_SERVER}). It receives this identity's signed handshake, which is not bound to the relay's host");
+
             // Fetched at most once, and only when a start-up decision below needs it.
             AsyncLazy<FeatureFlagsConfiguration?> startupFeatureFlags =
                 UniTask.Lazy(() => StartupFeatureFlagsFetcher.FetchAsync(FeatureFlagsDocumentUrl(applicationParametersParser), ct));

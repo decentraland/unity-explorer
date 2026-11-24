@@ -314,7 +314,7 @@ namespace DCL.Profiles
                         if ((result == null || versionMismatch) && delayBatchResolution)
                             return await EnforceSingleGetAsync();
 
-                        if (result == null && useCentralizedProfiles && !forceCatalyst && tier == ProfileTier.Kind.Full)
+                        if (result == null && useCentralizedProfiles && tier == ProfileTier.Kind.Full)
                         {
                             result = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
 
