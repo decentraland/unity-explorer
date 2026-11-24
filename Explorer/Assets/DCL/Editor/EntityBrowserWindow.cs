@@ -146,7 +146,7 @@ namespace DCL.Editor
                 if (!componentUiStates.TryGetValue((entityId, componentType.Id), out var uiState))
                 {
                     uiState = new ComponentUIState(componentType.Type);
-                    componentUiStates.Add((entityId, componentType.Id), uiState);
+                    componentUiStates[(entityId, componentType.Id)] = uiState;
                 }
 
                 object component = null;
@@ -194,7 +194,7 @@ namespace DCL.Editor
                     if (!entityUiStates.TryGetValue(entityId, out var uiState))
                     {
                         uiState = new EntityUIState(entityId);
-                        entityUiStates.Add(entityId, uiState);
+                        entityUiStates[entityId] = uiState;
                     }
 
                     uiState.Foldout = EditorGUILayout.Foldout(uiState.Foldout, uiState.NiceName);
@@ -222,7 +222,7 @@ namespace DCL.Editor
                              .Select(i => (i, GetNiceName(i)))
                              .ToArray();
 
-                FIELD_CACHE.Add(type, fields);
+                FIELD_CACHE[type] = fields;
             }
 
             foreach ((FieldInfo field, string niceName) in fields)
@@ -346,7 +346,7 @@ namespace DCL.Editor
                     niceName = $"{niceName.Substring(0, niceName.IndexOf('`'))}<{string.Join(", ", args)}>";
                 }
 
-                TYPE_NICE_NAME_CACHE.Add(type, niceName);
+                TYPE_NICE_NAME_CACHE[type] = niceName;
             }
 
             return niceName;

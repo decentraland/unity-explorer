@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;
@@ -79,7 +80,8 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         public DebugMetricsAnalyticsHandler AddTrackedMetric<T>() where T: RequestMetricBase, new()
         {
-            requestMetricTypes.Add(typeof(T), () => new T());
+            if (!requestMetricTypes.TryAdd(typeof(T), () => new T()))
+                ReportHub.LogError(ReportCategory.DEBUG, $"Metric {typeof(T).Name} is already tracked");
             return this;
         }
 
@@ -94,7 +96,7 @@ namespace DCL.WebRequests.Analytics.Metrics
                     if (!requestTypesWithMetrics.TryGetValue(debugRequestType.Type, out List<RequestMetricBase> metrics))
                     {
                         metrics = new List<RequestMetricBase>();
-                        requestTypesWithMetrics.Add(debugRequestType.Type, metrics);
+                        requestTypesWithMetrics[debugRequestType.Type] = metrics;
                     }
 
                     instance.CreateDebugMenu(debugWidgetBuilder, debugRequestType);

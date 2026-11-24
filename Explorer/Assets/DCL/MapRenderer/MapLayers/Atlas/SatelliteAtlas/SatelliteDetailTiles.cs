@@ -236,7 +236,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 // Sorts after every tile that a camera shows.
                 tile.DistanceSqToCamera = float.MaxValue;
-                tiles.Add(id, tile);
+                tiles[id] = tile;
                 pending.Add(id);
             }
 
@@ -314,7 +314,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 return;
 
             tile = new Tile(views.Rent()) { LastUsed = refreshStamp, Url = url };
-            tiles.Add(id, tile);
+            tiles[id] = tile;
 
             // A failed tile that returns to view before its retry wait ends waits for the rest of that wait.
             if (failedUrls.TryGetValue(url, out float failedBefore) && Now() - failedBefore < RETRY_FAILED_TILE_AFTER_SECONDS)

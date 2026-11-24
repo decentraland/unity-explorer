@@ -19,6 +19,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
@@ -41,7 +42,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider) : base(world)
         {
-            imagesPool = poolsRegistry.GetReferenceTypePool<DCLImage>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<DCLImage>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(DCLImage)}");
+
+            imagesPool = pool;
+
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;

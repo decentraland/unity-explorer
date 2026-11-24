@@ -85,6 +85,9 @@ namespace SceneRunner
         {
             MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
 
+            if (IsDisposeStarted())
+                return;
+
             SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
 #if ALTTESTER
@@ -103,6 +106,9 @@ namespace SceneRunner
         /// </remarks>
         public async UniTask DisposeAsync()
         {
+            if (IsDisposeStarted())
+                return;
+
             // Because of multithreading Disposing is not synced with the update loop
             // so just mark it as disposed and let the update loop handle the disposal
             SceneStateProvider.State.Set(SceneState.Disposing);
@@ -125,6 +131,12 @@ namespace SceneRunner
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
+
+        /// <summary>
+        ///     Only the first dispose call tears down <see cref="deps" />: disposing them twice releases their pooled members twice.
+        /// </summary>
+        private bool IsDisposeStarted() =>
+            SceneStateProvider.State.Value() is SceneState.Disposing or SceneState.Disposed;
 
         private void DisposeInternal() =>
             deps.Dispose();

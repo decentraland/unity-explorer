@@ -10,7 +10,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
-using DCL.Utilities.Extensions;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -55,10 +54,11 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            IComponentPool<PBRaycastResult> raycastResultPool = sharedDependencies
-                                                               .ComponentPoolsRegistry
-                                                               .GetReferenceTypePool<PBRaycastResult>()
-                                                               .EnsureNotNull();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<RaycastHit>? raycastHitPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(RaycastHit)}");
+
+            if (!sharedDependencies.ComponentPoolsRegistry.TryGetReferenceTypePool(out IComponentPool<PBRaycastResult>? raycastResultPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(PBRaycastResult)}");
 
             InitializeRaycastSystem.InjectToWorld(ref builder);
 
@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.World
                     sceneDeps.SceneData,
                     raycastBudget,
                     settings.RaycastBucketThreshold,
-                    sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
+                    raycastHitPool,
                     raycastResultPool,
                     sceneDeps.EntityCollidersSceneCache,
                     systemsDependencies.EntityCollidersGlobalCache,
@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.World
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
                 globalInputEvents,
-                poolsRegistry.GetReferenceTypePool<RaycastHit>()
+                raycastHitPool
             );
 
             sceneIsCurrentListeners.Add(InteractionHighlightSystem.InjectToWorld(ref builder, interactionData,

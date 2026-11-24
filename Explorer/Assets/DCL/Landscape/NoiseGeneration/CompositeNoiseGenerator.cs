@@ -27,7 +27,7 @@ namespace DCL.Landscape.NoiseGeneration
             if (compositeNoiseData == null) return default(JobHandle);
             compositeNoiseData.settings.ValidateValues();
 
-            NativeArray<float> targetNativeArray = noiseResultDictionary[noiseDataPointer];
+            NativeArray<float> targetNativeArray = GetResult(noiseDataPointer);
 
             var noiseJob = new NoiseJob(targetNativeArray,
                 in offsets,

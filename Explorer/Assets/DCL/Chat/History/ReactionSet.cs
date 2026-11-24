@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System.Collections.Generic;
 
 namespace DCL.Chat.History
@@ -78,7 +79,14 @@ namespace DCL.Chat.History
             for (int i = 0; i < insertionOrder.Count; i++)
             {
                 int emojiIndex = insertionOrder[i];
-                result.Add((emojiIndex, reactions[emojiIndex].Count));
+
+                if (!reactions.TryGetValue(emojiIndex, out HashSet<string>? wallets))
+                {
+                    ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Reaction insertion order has emoji {emojiIndex} with no reactors entry");
+                    continue;
+                }
+
+                result.Add((emojiIndex, wallets.Count));
             }
         }
 

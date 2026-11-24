@@ -3,6 +3,7 @@ using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
+using DCL.Diagnostics;
 using ECS.LifeCycle.Components;
 using System;
 using System.Collections.Generic;
@@ -172,7 +173,11 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                 foreach (BatchState batchState in componentsBatch.Values)
                 {
-                    CRDTReconciliationEffect finalState = MERGE_MATRIX[batchState.reconciliationState];
+                    if (!MERGE_MATRIX.TryGetValue(batchState.reconciliationState, out CRDTReconciliationEffect finalState))
+                    {
+                        ReportHub.LogError(ReportCategory.CRDT_ECS_BRIDGE, $"No merge rule for reconciliation state ({batchState.reconciliationState.First}, {batchState.reconciliationState.Last}) of component {batchState.crdtMessage.ComponentId}");
+                        finalState = CRDTReconciliationEffect.NoChanges;
+                    }
 
                     // just override with the final state
                     batchState.reconciliationState = new ReconciliationState(finalState, finalState);

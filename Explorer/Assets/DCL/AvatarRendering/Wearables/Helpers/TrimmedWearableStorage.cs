@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             lock (lockObject)
             {
-                wearablesCache.Add(urn, wearable);
+                wearablesCache[urn] = wearable;
 
                 if (qualifiedForUnloading)
                     cacheKeysDictionary[urn] =

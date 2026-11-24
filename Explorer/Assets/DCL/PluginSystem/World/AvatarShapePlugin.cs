@@ -7,6 +7,7 @@ using DCL.Utility;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,7 +23,11 @@ namespace DCL.PluginSystem.World
         {
             this.globalWorld = globalWorld;
             this.launchMode = launchMode;
-            this.globalTransformPool = poolRegistry.GetReferenceTypePool<Transform>();
+
+            if (!poolRegistry.TryGetReferenceTypePool(out IComponentPool<Transform>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(Transform)}");
+
+            globalTransformPool = pool;
         }
 
         public void Dispose()

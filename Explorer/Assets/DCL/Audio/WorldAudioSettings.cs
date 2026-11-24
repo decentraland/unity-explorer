@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,7 +17,11 @@ namespace DCL.Audio
         {
             audioClipConfigs.Clear();
 
-            foreach (AudioClipTypeAndConfigKeyValuePair clipConfig in audioClipConfigsList) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
+            foreach (AudioClipTypeAndConfigKeyValuePair clipConfig in audioClipConfigsList)
+            {
+                if (!audioClipConfigs.TryAdd(clipConfig.Key, clipConfig.Value))
+                    ReportHub.LogError(ReportCategory.AUDIO, $"Audio settings list the world audio clip type {clipConfig.Key} more than once, the first entry is used");
+            }
         }
 
         public AudioClipDayNightVariants GetAudioClipConfigForType(WorldAudioClipType type)

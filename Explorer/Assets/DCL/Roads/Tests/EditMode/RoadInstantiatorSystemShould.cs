@@ -55,14 +55,14 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
         IRoadAssetPool roadAssetPool = Substitute.For<IRoadAssetPool>();
         existingInstantiatedRoad = new GameObject(EXISTING_ROAD_KEY).transform;
 
-        roadAssetPool.Get(EXISTING_ROAD_KEY, out Arg.Any<Transform>())
+        roadAssetPool.Get(EXISTING_ROAD_KEY, out Arg.Any<Transform?>())
                      .Returns(x =>
                       {
                           x[1] = existingInstantiatedRoad;
                           return true;
                       });
 
-        roadAssetPool.Get(NON_EXISTING_ROAD_KEY, out Arg.Any<Transform>())
+        roadAssetPool.Get(NON_EXISTING_ROAD_KEY, out Arg.Any<Transform?>())
                      .Returns(x =>
                       {
                           x[1] = existingInstantiatedRoad;

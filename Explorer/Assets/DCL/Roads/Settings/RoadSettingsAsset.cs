@@ -59,7 +59,12 @@ namespace DCL.Roads.Settings
                 if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
                     ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Can't find prefab {roadDescription.RoadModel}, using default");
-                    prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
+
+                    if (!loadedPrefabs.TryGetValue(RoadAssetsPool.DEFAULT_ROAD_KEY, out prefab))
+                    {
+                        ReportHub.LogError(ReportCategory.GPU_INSTANCING, $"Default road prefab {RoadAssetsPool.DEFAULT_ROAD_KEY} is missing, skipping road at {roadDescription.RoadCoordinate}");
+                        continue;
+                    }
                 }
 
                 var rotation = roadDescription.Rotation;
@@ -138,7 +143,7 @@ namespace DCL.Roads.Settings
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
                     matrices = new HashSet<PerInstanceBuffer>();
-                    targetDict.Add(candidate, matrices);
+                    targetDict[candidate] = matrices;
                 }
 
                 foreach (PerInstanceBuffer instanceData in candidate.InstancesBuffer)

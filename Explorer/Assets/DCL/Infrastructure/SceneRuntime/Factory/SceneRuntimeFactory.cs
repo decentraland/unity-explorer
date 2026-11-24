@@ -133,9 +133,14 @@ namespace SceneRuntime.Factory
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
                 ct);
 
-        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
+        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct)
+        {
+            string moduleSource = WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct));
+
+            if (!moduleDictionary.TryAdd(moduleName, moduleSource))
+                ReportHub.LogError(ReportCategory.SCENE_FACTORY, $"JS module '{moduleName}' is requested twice, keeping the first one");
+        }
 
         private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
         {

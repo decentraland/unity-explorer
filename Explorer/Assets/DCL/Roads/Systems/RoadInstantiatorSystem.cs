@@ -73,17 +73,20 @@ namespace DCL.Roads.Systems
                         $"Road with model for {roadDescription.RoadModel} at {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.ToString()} does not exist, loading default");
                 }
 
-                //HACK: Since all original scene dont have the correct pivot, we move it here
-                roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
-                roadAsset.localRotation = roadDescription.Rotation;
-                roadAsset.gameObject.SetActive(true);
+                if (roadAsset != null)
+                {
+                    //HACK: Since all original scene dont have the correct pivot, we move it here
+                    roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
+                    roadAsset.localRotation = roadDescription.Rotation;
+                    roadAsset.gameObject.SetActive(true);
 
 #if UNITY_EDITOR
-                roadAsset.gameObject.name = $"{roadAsset.gameObject.name}_{roadDescription.RoadCoordinate.x},{roadDescription.RoadCoordinate.y}";
+                    roadAsset.gameObject.name = $"{roadAsset.gameObject.name}_{roadDescription.RoadCoordinate.x},{roadDescription.RoadCoordinate.y}";
 #endif
 
-                roadInfo.CurrentAsset = roadAsset;
-                roadInfo.CurrentKey = roadDescription.RoadModel;
+                    roadInfo.CurrentAsset = roadAsset;
+                    roadInfo.CurrentKey = roadDescription.RoadModel;
+                }
             }
             else
             {

@@ -39,7 +39,10 @@ namespace DCL.Landscape.Jobs
             if (!treeInstances.TryGetValue(key, out TreeInstance treeInstanceValue))
                 return;
 
-            TreeRadiusPair treeRadiusPair = radius[treeInstanceValue.prototypeIndex];
+            // No invalidation result is written for a tree without a radius entry
+            if (!radius.TryGetValue(treeInstanceValue.prototypeIndex, out TreeRadiusPair treeRadiusPair))
+                return;
+
             float radiusWithScale = treeRadiusPair.radius * treeInstanceValue.widthScale;
             bool isValid = CheckAssetSpatialAvailability((int)math.ceil(radiusWithScale), treeRadiusPair.secondaryRadius, key.x, key.y, treeInstanceValue.prototypeIndex, true);
             treeInvalidationMap.TryAdd(key, !isValid);
@@ -68,7 +71,9 @@ namespace DCL.Landscape.Jobs
                     if (!treeInstances.TryGetValue(pointer, out TreeInstance otherInstance))
                         continue;
 
-                    TreeRadiusPair treeRadiusPair = radius[otherInstance.prototypeIndex];
+                    if (!radius.TryGetValue(otherInstance.prototypeIndex, out TreeRadiusPair treeRadiusPair))
+                        continue;
+
                     float otherRadius = treeRadiusPair.secondaryRadius;
 
                     // if we want certain assets to not overlap with other types, we can do an overlap matrix like the collisions one and implement that logic here

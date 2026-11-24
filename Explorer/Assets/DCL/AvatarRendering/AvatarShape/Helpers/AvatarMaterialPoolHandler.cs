@@ -2,6 +2,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using UnityEngine;
 using Utility;
@@ -59,19 +60,24 @@ namespace DCL.AvatarRendering.AvatarShape
                                      _ => TextureArrayConstants.SHADERID_DCL_PBR,
                                  };
 
-                materialDictionary.Add(materialID, materialSetup);
+                if (!materialDictionary.TryAdd(materialID, materialSetup))
+                    ReportHub.LogError(ReportCategory.AVATAR, $"Duplicate avatar material pool for shader id {materialID} ({material.shader.name})");
             }
         }
 
         public IReadOnlyCollection<PoolMaterialSetup> GetAllMaterialsPools() =>
             materialDictionary.Values;
 
-        public PoolMaterialSetup GetMaterialPool(int shaderName) =>
-            materialDictionary[shaderName];
+        public bool TryGetMaterialPool(int shaderName, out PoolMaterialSetup setup) =>
+            materialDictionary.TryGetValue(shaderName, out setup);
 
         public void Release(AvatarCustomSkinningComponent.MaterialSetup materialSetup)
         {
-            var setup = materialDictionary[materialSetup.shaderId];
+            if (!materialDictionary.TryGetValue(materialSetup.shaderId, out PoolMaterialSetup setup))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"Cannot release avatar material: no pool is registered for shader id {materialSetup.shaderId}");
+                return;
+            }
 
             setup.Pool.Release(materialSetup.usedMaterial);
             setup.TextureArrayContainer.ReleaseSlots(materialSetup.usedTextureArraySlots);

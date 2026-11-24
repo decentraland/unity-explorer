@@ -9,14 +9,16 @@ namespace DCL.Translation
 {
     public static class LoremIpsumGenerator
     {
+        // Default/English uses the classic Lorem Ipsum words.
+        private static readonly string[] ENGLISH_WORDS =
+        {
+            "lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua"
+        };
+
         // A dictionary to hold word banks for each supported language.
         private static readonly Dictionary<LanguageCode, string[]> LanguageWords = new ()
         {
-            // Default/English uses the classic Lorem Ipsum words.
-            [LanguageCode.EN] = new[]
-            {
-                "lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", "sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua"
-            },
+            [LanguageCode.EN] = ENGLISH_WORDS,
 
             // Spanish-sounding words
             [LanguageCode.ES] = new[]
@@ -78,7 +80,7 @@ namespace DCL.Translation
         {
             // Try to get the specific word bank; if it doesn't exist, fall back to English.
             if (!LanguageWords.TryGetValue(language, out string[]? wordsToUse))
-                wordsToUse = LanguageWords[LanguageCode.EN];
+                wordsToUse = ENGLISH_WORDS;
 
             // Some languages (like Chinese and Japanese) don't typically use spaces between characters.
             bool useSpaces = language != LanguageCode.ZH && language != LanguageCode.JA;

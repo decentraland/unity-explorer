@@ -237,7 +237,7 @@ The following interfaces are frequently mocked across the test suite. Each entry
 | `ISceneData` | `ECSTestUtils.SceneDataSub()` -- maps content paths to URLs |
 | `ISceneStateProvider` | `sceneStateProvider.IsCurrent.Returns(true)` |
 | `IPerformanceBudget` | `budget.TrySpendBudget().Returns(true)` |
-| `IComponentPoolsRegistry` | `poolsRegistry.GetReferenceTypePool<T>().Returns(pool)` |
+| `IComponentPoolsRegistry` | `poolsRegistry.TryGetReferenceTypePool(out Arg.Any<IComponentPool<T>>()).Returns(x => { x[0] = pool; return true; })` |
 | `IECSToCRDTWriter` | `Substitute.For<IECSToCRDTWriter>()` -- then verify with `.Received()` |
 | `IFinalizeWorldSystem` | `Substitute.For<IFinalizeWorldSystem>()` -- verify `FinalizeComponents` called |
 | `IRealmData` | `Substitute.For<IRealmData>()` |
@@ -257,7 +257,7 @@ ecsToCRDTWriter.Received(1).PutMessage(...);
 pool.Received(100).Release(Arg.Is<object>(o => o.GetType() == typeof(TestComponent1)));
 
 // Verify a specific count of calls to a registry lookup
-componentsPoolRegistry.Received(100).GetPool(typeof(TestComponent1));
+componentsPoolRegistry.Received(100).TryGetPool(typeof(TestComponent1), out Arg.Any<IComponentPool>());
 ```
 
 Use `Arg.Any<T>()` for arguments you do not care about and `Arg.Is<T>(predicate)` for arguments that must match a condition.

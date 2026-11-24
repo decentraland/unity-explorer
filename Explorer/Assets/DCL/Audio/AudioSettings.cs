@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -25,7 +26,8 @@ namespace DCL.Audio
 
             foreach (AudioCategorySettingsKeyValuePair audioCategory in audioCategorySettings)
             {
-                if (audioCategory.value != null) { audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value); }
+                if (audioCategory.value != null && !audioCategorySettingsDictionary.TryAdd(audioCategory.key, audioCategory.value))
+                    ReportHub.LogError(ReportCategory.AUDIO, $"Audio settings list the audio category {audioCategory.key} more than once, the first entry is used");
             }
         }
 

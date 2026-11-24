@@ -68,7 +68,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             poolsRegistry = new ComponentPoolsRegistry();
             poolsRegistry.AddGameObjectPool(() => sdkEntityTriggerArea, onRelease: area => area.Dispose());
-            sdkEntityTriggerAreaPool = poolsRegistry.GetReferenceTypePool<SDKEntityTriggerArea>();
+            Assert.That(poolsRegistry.TryGetReferenceTypePool(out IComponentPool<SDKEntityTriggerArea>? pool), Is.True);
+            sdkEntityTriggerAreaPool = pool!;
 
             system = new SDKEntityTriggerAreaHandlerSystem(world, sdkEntityTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 

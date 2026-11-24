@@ -56,5 +56,25 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             // Act-Assert
             Assert.That(memoryBudget.TrySpendBudget(), Is.EqualTo(canSpendBudget));
         }
+
+        [Test]
+        public void TreatLowMemoryAsNormalWithoutAbundanceThreshold()
+        {
+            // Arrange
+            var thresholdsWithoutAbundance = new Dictionary<MemoryUsageStatus, float>
+            {
+                { MemoryUsageStatus.Warning, 0.65f },
+                { MemoryUsageStatus.Full, 0.75f },
+            };
+
+            var budget = new MemoryBudget(systemMemoryCap, profiler, thresholdsWithoutAbundance);
+            profiler.SystemUsedMemoryInBytes.Returns(100 * BYTES_IN_MEGABYTE);
+            systemMemoryCap.MemoryCapInMB.Returns(1000);
+
+            // Act-Assert
+            Assert.That(budget.TrySpendBudget(), Is.True);
+            Assert.That(budget.IsInAbundance(), Is.False);
+            Assert.That(budget.IsMemoryNormal(), Is.True);
+        }
     }
 }

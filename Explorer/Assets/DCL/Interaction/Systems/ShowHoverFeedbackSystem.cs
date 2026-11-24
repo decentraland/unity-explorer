@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.CharacterCamera.Components;
+using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Systems;
 using ECS.Abstract;
@@ -29,7 +30,8 @@ namespace DCL.Interaction.HoverCanvas.Systems
             inputButtonSettingsMap = new Dictionary<Guid, HoverCanvasSettings.InputButtonSettings>(settings.Count);
 
             foreach (HoverCanvasSettings.InputButtonSettings inputButtonSettings in settings)
-                inputButtonSettingsMap.Add(inputButtonSettings.PlayerInputAction.action.id, inputButtonSettings);
+                if (!inputButtonSettingsMap.TryAdd(inputButtonSettings.PlayerInputAction.action.id, inputButtonSettings))
+                    ReportHub.LogError(ReportCategory.INPUT, $"Hover canvas settings contain more than one entry for input action '{inputButtonSettings.PlayerInputAction.action.name}'");
         }
 
         protected override void Update(float t)

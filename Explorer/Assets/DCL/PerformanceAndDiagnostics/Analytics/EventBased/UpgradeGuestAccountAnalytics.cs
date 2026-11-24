@@ -53,7 +53,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnUpgradeFailed(GuestUpgradeTrigger trigger, string reason)
         {
             JObject payload = TriggerPayload(trigger);
-            payload.Add("reason", reason);
+            payload["reason"] = reason;
 
             analytics.Track(Authentication.GUEST_UPGRADE_FAILED, payload);
         }

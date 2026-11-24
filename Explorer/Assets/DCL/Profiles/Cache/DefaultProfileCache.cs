@@ -26,8 +26,9 @@ namespace DCL.Profiles
 
         public ProfileTier? GetByUserName(string userName)
         {
-            if (userNameToIdMap.TryGetValue(userName, out string? profileId))
-                return profiles[profileId];
+            if (userNameToIdMap.TryGetValue(userName, out string? profileId)
+                && profiles.TryGetValue(profileId, out ProfileTier profile))
+                return profile;
 
             return null;
         }

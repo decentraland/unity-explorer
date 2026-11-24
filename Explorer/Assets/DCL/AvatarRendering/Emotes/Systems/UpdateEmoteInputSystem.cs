@@ -49,7 +49,12 @@ namespace DCL.AvatarRendering.Emotes
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
         {
-            int emoteIndex = actionNameById[obj.action.name];
+            if (!actionNameById.TryGetValue(obj.action.name, out int emoteIndex))
+            {
+                ReportHub.LogError(GetReportData(), $"Emote slot action {obj.action.name} is not registered");
+                return;
+            }
+
             triggeredEmote = emoteIndex;
             triggeredEmoteSource = EmoteTriggerSource.Shortcut;
         }

@@ -177,7 +177,11 @@ namespace DCL.PluginSystem.Global
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder);
-            PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
+
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<SDKTransform>? sdkTransformPool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(SDKTransform)}");
+
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder, sdkTransformPool);
 #endif
         }
 

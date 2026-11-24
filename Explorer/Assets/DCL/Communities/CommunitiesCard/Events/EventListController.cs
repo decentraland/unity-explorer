@@ -220,7 +220,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             placeInfoCache.Clear();
 
             foreach (var place in placesResponse.Value.Data)
-                placeInfoCache.Add(place.id, place);
+                if (!placeInfoCache.TryAdd(place.id, place))
+                    ReportHub.LogError(ReportCategory.COMMUNITIES, $"Places response contains place {place.id} more than once");
 
             foreach (var item in eventResponse.Value.data.events)
             {

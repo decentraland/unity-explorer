@@ -42,7 +42,7 @@ namespace DCL.Landscape
                 if (!parcelMap.TryGetValue(parcel, out List<TreeInstanceData> treeInstancesInParcel))
                 {
                     treeInstancesInParcel = new List<TreeInstanceData>();
-                    parcelMap.Add(parcel, treeInstancesInParcel);
+                    parcelMap[parcel] = treeInstancesInParcel;
                     minParcel = min(minParcel, parcel);
                     maxParcel = max(maxParcel, parcel);
                 }

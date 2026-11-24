@@ -39,7 +39,12 @@ namespace DCL.Optimization.Pools.Tests
 
             IComponentPoolsRegistry componentsPoolRegistry = Substitute.For<IComponentPoolsRegistry>();
             IComponentPool pool = Substitute.For<IComponentPool>();
-            componentsPoolRegistry.GetPool(typeof(TestComponent1)).Returns(pool);
+            componentsPoolRegistry.TryGetPool(typeof(TestComponent1), out Arg.Any<IComponentPool>())
+                                  .Returns(x =>
+                                   {
+                                       x[1] = pool;
+                                       return true;
+                                   });
 
             for (var i = 0; i < 100; i++)
                 world.Create(new TestProvider(new TestComponent1()), new DeleteEntityIntention());
@@ -49,7 +54,7 @@ namespace DCL.Optimization.Pools.Tests
 
             system.Update(0);
 
-            componentsPoolRegistry.Received(100).GetPool(typeof(TestComponent1));
+            componentsPoolRegistry.Received(100).TryGetPool(typeof(TestComponent1), out Arg.Any<IComponentPool>());
             pool.Received(100).Release(Arg.Is<object>(o => o.GetType() == typeof(TestComponent1)));
         }
     }

@@ -215,7 +215,7 @@ namespace DCL.Backpack
                 backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 loadingResults[i] = backpackItemView;
-                usedPoolItems.Add(i.ToString(), backpackItemView);
+                usedPoolItems[i.ToString()] = backpackItemView;
             }
         }
 
@@ -240,9 +240,9 @@ namespace DCL.Backpack
                 if (usedPoolItems.ContainsKey(wearable.GetUrn()))
                     continue;
 
-                BackpackItemView backpackItemView = loadingResults[i];
+                BackpackItemView backpackItemView = loadingResults[i]!;
                 usedPoolItems.Remove(i);
-                usedPoolItems.Add(wearable.GetUrn(), backpackItemView);
+                usedPoolItems[wearable.GetUrn()] = backpackItemView;
 
                 if (wearableStorage.TryGetLatestTransferredAt(gridWearables[i].GetUrn(), out DateTime latestTransferredAt))
                 {

@@ -23,14 +23,15 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         }
 
         public IWearable? Wearable(string category) =>
-            wearables[category];
+            wearables.GetValueOrDefault(category);
 
         public (Color, Color, Color) GetColors() =>
             (hairColor, eyesColor, bodyshapeColor);
 
         public bool IsEquipped(ITrimmedWearable wearable)
         {
-            return wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
+            return wearables.TryGetValue(wearable.GetCategory(), out IWearable? equipped)
+                   && equipped?.DTO.id == wearable.TrimmedDTO.id;
         }
 
         public void Equip(IWearable wearable) =>
@@ -83,7 +84,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             wearables.Clear();
 
             foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
-                wearables.Add(category, null);
+                wearables[category] = null;
         }
     }
 }

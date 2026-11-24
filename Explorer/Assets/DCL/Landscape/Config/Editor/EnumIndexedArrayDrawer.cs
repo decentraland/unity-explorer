@@ -19,7 +19,7 @@ namespace DCL.Landscape.Config.Editor
             if (!ENUM_NAME_CACHE.TryGetValue(enumType, out string[] enumNames))
             {
                 enumNames = Enum.GetNames(enumType);
-                ENUM_NAME_CACHE.Add(enumType, enumNames);
+                ENUM_NAME_CACHE[enumType] = enumNames;
             }
 
             // Feels like a hack, but I could not find a better way to find the index of the current

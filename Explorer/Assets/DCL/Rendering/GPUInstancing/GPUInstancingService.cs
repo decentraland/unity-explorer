@@ -199,7 +199,7 @@ namespace DCL.Rendering.GPUInstancing
                 if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
                 {
                     buffers = new GPUInstancingBuffers();
-                    candidatesBuffersTable.Add(candidate, buffers);
+                    candidatesBuffersTable[candidate] = buffers;
                 }
 
                 int _nInstanceCount = candidate.InstancesBuffer.Count;

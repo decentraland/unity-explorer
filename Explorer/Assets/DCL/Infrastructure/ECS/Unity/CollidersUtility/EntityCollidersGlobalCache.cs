@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -20,7 +21,8 @@ namespace DCL.Interaction.Utility
 
         public void AddSceneInfo(IEntityCollidersSceneCache entityCollidersSceneCache, SceneEcsExecutor sceneEcsExecutor)
         {
-            scenesInfo.Add(entityCollidersSceneCache, sceneEcsExecutor);
+            if (!scenesInfo.TryAdd(entityCollidersSceneCache, sceneEcsExecutor))
+                ReportHub.LogError(ReportCategory.SCENE_LOADING, "Scene colliders cache is already registered, keeping the existing scene executor");
         }
 
         public void RemoveSceneInfo(IEntityCollidersSceneCache entityCollidersSceneCache)

@@ -1,4 +1,5 @@
-﻿using DCL.Profiling;
+﻿using DCL.Diagnostics;
+using DCL.Profiling;
 using System.Collections.Generic;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
 
@@ -19,7 +20,9 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly IBudgetProfiler profiler;
-        private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
+        private readonly float fullThreshold;
+        private readonly float warningThreshold;
+        private readonly float abundanceThreshold;
 
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
         public bool SimulateLackOfAbundance;
@@ -33,7 +36,20 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             this.systemMemoryCap = systemMemoryCap;
             this.profiler = profiler;
-            this.memoryThreshold = memoryThreshold;
+            fullThreshold = GetRequiredThreshold(memoryThreshold, Full);
+            warningThreshold = GetRequiredThreshold(memoryThreshold, Warning);
+
+            // Without an Abundance threshold the budget never reports abundance
+            abundanceThreshold = memoryThreshold.GetValueOrDefault(Abundance, 0f);
+        }
+
+        private static float GetRequiredThreshold(IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold, MemoryUsageStatus status)
+        {
+            if (memoryThreshold.TryGetValue(status, out float threshold))
+                return threshold;
+
+            ReportHub.LogError(ReportCategory.ENGINE, $"Memory threshold for {status} is not configured, the {status} status is disabled");
+            return float.MaxValue;
         }
 
         private MemoryUsageStatus GetMemoryUsageStatus()
@@ -46,9 +62,9 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             cachedStatus = usedMemory switch
                            {
-                               _ when usedMemory > totalSystemMemory * memoryThreshold[Full] => Full,
-                               _ when usedMemory > totalSystemMemory * memoryThreshold[Warning] => Warning,
-                               _ when usedMemory < totalSystemMemory * memoryThreshold[Abundance] => Abundance,
+                               _ when usedMemory > totalSystemMemory * fullThreshold => Full,
+                               _ when usedMemory > totalSystemMemory * warningThreshold => Warning,
+                               _ when usedMemory < totalSystemMemory * abundanceThreshold => Abundance,
                                _ => Normal,
                            };
 
@@ -59,7 +75,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         public (int warning, int full) GetMemoryRanges()
         {
             long totalSizeInMB = GetTotalSystemMemoryInMB();
-            return ((int) (totalSizeInMB * memoryThreshold[Warning]), (int)(totalSizeInMB * memoryThreshold[Full]));
+            return ((int) (totalSizeInMB * warningThreshold), (int)(totalSizeInMB * fullThreshold));
         }
 
         public bool TrySpendBudget() =>
@@ -76,10 +92,10 @@ namespace DCL.Optimization.PerformanceBudgeting
 
             // ReSharper disable once PossibleLossOfFraction
             long CalculateSystemMemoryForWarningThreshold() => // Increase the threshold halfway between warning and full
-                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * GetHalfwayBetweenLimits(Full, Warning)));
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (warningThreshold * GetHalfwayBetweenLimits()));
 
-            float GetHalfwayBetweenLimits(MemoryUsageStatus upperLimit, MemoryUsageStatus bottomLimit) =>
-                1 + ((memoryThreshold[upperLimit] - memoryThreshold[bottomLimit])/2f);
+            float GetHalfwayBetweenLimits() =>
+                1 + ((fullThreshold - warningThreshold)/2f);
         }
 
         public bool IsInAbundance()

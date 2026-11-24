@@ -44,7 +44,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
                 instances.Add(new PerInstanceBuffer(localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset));
             }
             else
-                candidatesTable.Add(newCandidate, new List<PerInstanceBuffer> { new (localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset) });
+                candidatesTable[newCandidate] = new List<PerInstanceBuffer> { new (localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset) };
         }
     }
 }

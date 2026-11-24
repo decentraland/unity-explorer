@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -49,7 +50,8 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider, web3IdentityCache);
             await controller.InitializeAsync(cancellationToken);
-            writer.Add(MapLayer.HotUsersMarkers, controller);
+            if (!writer.TryAdd(MapLayer.HotUsersMarkers, controller))
+                ReportHub.LogError(ReportCategory.UI, $"Map layer {MapLayer.HotUsersMarkers} is already installed");
             zoomScalingLayers.Add(controller);
         }
 

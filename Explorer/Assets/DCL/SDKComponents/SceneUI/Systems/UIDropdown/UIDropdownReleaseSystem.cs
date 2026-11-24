@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using System;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 {
@@ -25,7 +26,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         internal UIDropdownReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            componentPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIDropdownComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UIDropdownComponent)}");
+
+            componentPool = pool;
         }
 
         protected override void Update(float t)

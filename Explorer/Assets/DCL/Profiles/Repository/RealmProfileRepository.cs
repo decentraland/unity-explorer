@@ -246,7 +246,7 @@ namespace DCL.Profiles
 
             var cs = new UniTaskCompletionSource<ProfileTier?>();
 
-            batch.Value.PendingRequests.Add(userId, new ProfilesBatchRequest.Input(cs, partition));
+            batch.Value.PendingRequests[userId] = new ProfilesBatchRequest.Input(cs, partition);
             return cs;
         }
 

@@ -6,11 +6,11 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
-using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -49,7 +49,10 @@ namespace DCL.SDKComponents.AudioSources
             this.sceneStateProvider = sceneStateProvider;
             this.settings = settings;
 
-            audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<AudioSource>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(AudioSource)}");
+
+            audioSourcesPool = pool;
 
             if (audioMixer != null)
                 worldGroup = audioMixer.FindMatchingGroups("World");

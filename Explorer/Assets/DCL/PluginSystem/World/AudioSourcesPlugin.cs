@@ -38,8 +38,7 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: audioSource => audioSource.clip = null);
-            cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
+            cacheCleaner.Register(componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: audioSource => audioSource.clip = null));
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);

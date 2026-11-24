@@ -777,6 +777,34 @@ jobs:
             exit 1
           fi
 
+      # DCL rule violations fail the compile, but an analyzer that cannot load (CS8034, e.g. an
+      # LFS pointer instead of the DLL) or throws (AD0001) is only a compiler warning: enforcement
+      # would switch off while the build stays green. Assemblies restored from the Library cache
+      # are not recompiled and log nothing, so this only sees assemblies compiled in this run.
+      - name: Fail if the DCL analyzers did not run
+        if: always() && (steps.testRunner.outcome == 'success' || steps.testRunner.outcome == 'failure')
+        env:
+          ARTIFACTS_PATH: ${{ steps.testRunner.outputs.artifactsPath }}
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          LOG=""
+          for candidate in "$ARTIFACTS_PATH/$TEST_MODE.log" "artifacts/$TEST_MODE.log"; do
+            if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+              LOG="$candidate"
+              break
+            fi
+          done
+          if [ -z "$LOG" ]; then
+            echo "::warning::No Unity Editor log found, cannot check that the DCL analyzers ran."
+            exit 0
+          fi
+          # No pipe here: a run step without an explicit shell has no pipefail, so a pipe would take the last command's status
+          if grep -E '(CS8034|AD0001).*DCL\.Analyzers' "$LOG"; then
+            echo "::error::The DCL Roslyn analyzers did not run in this compile (see above), so DCL0001/DCL0002 were not enforced. Check that Explorer/Assets/DCL/Analyzers/DCL.Analyzers.dll was pulled from LFS."
+            exit 1
+          fi
+          echo "No analyzer load failures for DCL.Analyzers in $LOG."
+
       - name: Dump Unity Editor log on failure
         if: always() && steps.testRunner.outcome != 'success'
         env:

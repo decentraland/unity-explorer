@@ -36,9 +36,14 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (messageCase == ServerMessage.MessageOneofCase.None)
                 return false;
 
+            if (!POOL.TryGet(messageCase, out ServerMessage? packet))
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse received a packet of unknown kind {messageCase}, dropping it");
+                return false;
+            }
+
             try
             {
-                ServerMessage packet = POOL.Get(messageCase);
                 packet.MergeFrom(data);
                 message = new IncomingMessage(from, packet);
                 return true;

@@ -4,7 +4,6 @@ using DCL.WebRequests.CustomDownloadHandlers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace DCL.WebRequests
@@ -87,20 +86,20 @@ namespace DCL.WebRequests
             HeaderOrNull(key, caseInsensitive) ?? defaultHeader;
 
         public readonly IReadOnlyDictionary<string, string> AsDictionary() =>
-            values?.ToDictionary(e => e.Name, e => e.Value) ?? EMPTY_HEADERS;
+            values != null ? AsMutableDictionary() : EMPTY_HEADERS;
 
-        public readonly Dictionary<string, string> AsMutableDictionary() =>
-            values?.ToDictionary(e => e.Name, e => e.Value) ?? new Dictionary<string, string>();
+        public readonly Dictionary<string, string> AsMutableDictionary()
+        {
+            var headers = new Dictionary<string, string>(values?.Count ?? 0);
+            CopyTo(headers);
+            return headers;
+        }
 
         public readonly PoolExtensions.Scope<Dictionary<string, string>> AsPooledDictionary(out Dictionary<string, string> headers)
         {
             PoolExtensions.Scope<Dictionary<string, string>> pooledObject = ThreadSafeDictionaryPool<string, string>.SHARED.AutoScope();
             headers = pooledObject.Value;
-
-            if (values != null)
-                foreach (WebRequestHeader webRequestHeader in values)
-                    headers.Add(webRequestHeader.Name, webRequestHeader.Value);
-
+            CopyTo(headers);
             return pooledObject;
         }
 
@@ -127,6 +126,15 @@ namespace DCL.WebRequests
                 POOL.Release(values);
                 values = null;
             }
+        }
+
+        private readonly void CopyTo(Dictionary<string, string> headers)
+        {
+            if (values == null) return;
+
+            // A repeated header keeps its last value
+            foreach (WebRequestHeader webRequestHeader in values)
+                headers[webRequestHeader.Name] = webRequestHeader.Value;
         }
     }
 

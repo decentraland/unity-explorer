@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests.Dumper;
 using System;
@@ -62,7 +63,8 @@ namespace DCL.WebRequests.RequestsHub
             InitializeRequest<T, TWebRequest> invokeWithTransformedUrl
                 = (string url, ref T arguments) => requestDelegate.Invoke(UrlsSource.TransformUrl(url), ref arguments);
 
-            target.Add(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl);
+            if (!target.TryAdd(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl))
+                ReportHub.LogError(ReportCategory.GENERIC_WEB_REQUEST, $"Request delegate for <{typeof(T).Name}, {typeof(TWebRequest).Name}> is already registered");
         }
 
         public InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()

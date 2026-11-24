@@ -13,6 +13,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
@@ -42,7 +43,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions, ISceneData sceneData, IPartitionComponent scenePartition) : base(world)
         {
-            dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
+            if (!poolsRegistry.TryGetReferenceTypePool(out IComponentPool<UIDropdownComponent>? pool))
+                throw new InvalidOperationException($"No component pool registered for {nameof(UIDropdownComponent)}");
+
+            dropdownsPool = pool;
+
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.styleFontDefinitions = styleFontDefinitions;
             this.sceneData = sceneData;

@@ -78,7 +78,7 @@ namespace DCL.DebugUtilities
                 return Result<DebugWidgetBuilder>.SuccessResult(widget);
 
             var w = new DebugWidgetBuilder(name);
-            widgetBuilders.Add(name, w);
+            widgetBuilders[name] = w;
             return Result<DebugWidgetBuilder>.SuccessResult(w);
         }
 
@@ -100,7 +100,7 @@ namespace DCL.DebugUtilities
                 widget.name = name;
                 widget.visible = false;
 
-                widgets.Add(widget.name, widget);
+                widgets[widget.name] = widget;
                 Container.containerRoot.Add(widget);
             }
 

@@ -75,9 +75,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             };
 
             if (scope == ChatChannel.ChatChannelType.USER)
-                props.Add("receiver_id", evt.ConversationId);
+                props["receiver_id"] = evt.ConversationId;
             else if (scope == ChatChannel.ChatChannelType.COMMUNITY)
-                props.Add("community_id", evt.ConversationId);
+                props["community_id"] = evt.ConversationId;
 
             analytics.Track(AnalyticsEvents.AutoTranslate.SWITCH_AUTOTRANSLATE, props);
         }

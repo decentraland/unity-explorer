@@ -197,7 +197,7 @@ namespace DCL.Landscape
                             NoiseDataBase treeNoiseData = treeAsset.noiseData;
 
                             var treeRadiusPair = new TreeRadiusPair { radius = treeAsset.radius, secondaryRadius = treeAsset.secondaryRadius };
-                            treeRadiusMap.Add(treeAssetIndex, treeRadiusPair);
+                            treeRadiusMap[treeAssetIndex] = treeRadiusPair;
 
                             INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
                             var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkMinParcel.x, chunkMinParcel.y);
