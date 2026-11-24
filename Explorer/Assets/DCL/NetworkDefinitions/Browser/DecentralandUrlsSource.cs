@@ -64,6 +64,9 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         public string BaseDomain { get; }
 
+        /// <inheritdoc />
+        public bool UsesRealmScenePointers => useRealmScenePointers;
+
         protected virtual bool useRemoteAssetFlags => true;
         protected virtual string assetCdnDomain => BaseDomain;
 
@@ -93,7 +96,9 @@ namespace DCL.Browser.DecentralandUrls
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
-            this.abgenLodsForced = abgenLodsForced;
+
+            // A running local sidecar outranks the forced abgen LOD source, as it does the forced abgen pipeline.
+            this.abgenLodsForced = abgenLodsForced && string.IsNullOrEmpty(localAbBaseOverride);
             this.pulseHost = pulseHost;
             this.useRealmScenePointers = useRealmScenePointers;
 

@@ -15,6 +15,24 @@ namespace DCL.Browser
     {
         private const string GATEWAY_SUBDOMAIN = "gateway";
         private const int HTTPS_PREFIX_LENGTH = 8; // "https://".Length
+        private const string DCL_DEV_FAQS_URL = DclDevGateway.ORIGIN + "/docs/player/faqs/decentraland-101/";
+
+        // The urls dcl.dev serves under a path the subdomain-to-path gateway transform does not produce.
+        private static readonly IReadOnlyDictionary<DecentralandUrl, string> DCL_DEV_URLS = new Dictionary<DecentralandUrl, string>(EnumUtils.GetEqualityComparer<DecentralandUrl>())
+        {
+            [DecentralandUrl.FeatureFlags] = DclDevGateway.FEATURE_FLAGS_URL,
+            [DecentralandUrl.ApiFriends] = DclDevGateway.SOCIAL_RPC_URL,
+            [DecentralandUrl.PeerAbout] = DclDevGateway.ORIGIN + "/about",
+            [DecentralandUrl.PeerContent] = DclDevGateway.ORIGIN + "/content/contents",
+            [DecentralandUrl.Servers] = DclDevGateway.ORIGIN + "/lambdas/contracts/servers",
+            [DecentralandUrl.Blocklist] = DclDevGateway.ORIGIN + "/config/denylist.json",
+            [DecentralandUrl.MarketplaceServer] = DclDevGateway.ORIGIN + "/marketplace-api",
+            [DecentralandUrl.Market] = DclDevGateway.ORIGIN + "/marketplace",
+            [DecentralandUrl.Faqs] = DCL_DEV_FAQS_URL,
+            [DecentralandUrl.MinimumSpecs] = DCL_DEV_FAQS_URL + "#what-hardware-do-i-need-to-run-decentraland",
+            [DecentralandUrl.SocialServiceMutes] = DclDevGateway.ORIGIN + "/social-api/v1/mutes",
+            [DecentralandUrl.ReferralProgress] = DclDevGateway.ORIGIN + "/social-api/v1/referral-progress",
+        };
 
         private static readonly HashSet<DecentralandUrl> SUPPORTED_URLS = new (EnumUtils.GetEqualityComparer<DecentralandUrl>())
         {
@@ -111,7 +129,7 @@ namespace DCL.Browser
         // deployment's call.
         private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
-        // The deployment mirrors the feature document and uses the public CDN for Unity assets.
+        // Under dcl.dev the launch arguments alone select the asset sources, and the converted-asset hosts are decentraland.org's.
         protected override bool useRemoteAssetFlags => !isDclDevGateway;
         protected override string assetCdnDomain => isDclDevGateway ? IDecentralandUrlsSource.ORG_DOMAIN : BaseDomain;
 
@@ -129,9 +147,7 @@ namespace DCL.Browser
             bool abgenLodsForced = false,
             string? pulseHost = null,
             bool useRealmScenePointers = false)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced,
-                // A running local sidecar supplies its own LOD descriptors and bundles.
-                abgenLodsForced && (string.IsNullOrEmpty(localAbBaseUrl) || !DclDevGateway.IsOrigin(cliGatewayPrefix)), pulseHost, useRealmScenePointers)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced, abgenLodsForced, pulseHost, useRealmScenePointers)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
             isDclDevGateway = DclDevGateway.IsOrigin(cliGatewayPrefix);
@@ -207,24 +223,8 @@ namespace DCL.Browser
 
         protected override UrlData RawUrl(DecentralandUrl decentralandUrl)
         {
-            if (isDclDevGateway)
-            {
-                switch (decentralandUrl)
-                {
-                    case DecentralandUrl.FeatureFlags: return DclDevGateway.FEATURE_FLAGS_URL;
-                    case DecentralandUrl.ApiFriends: return "wss://dcl.dev/social-rpc";
-                    case DecentralandUrl.PeerAbout: return DclDevGateway.ORIGIN + "/about";
-                    case DecentralandUrl.PeerContent: return DclDevGateway.ORIGIN + "/content/contents";
-                    case DecentralandUrl.Servers: return DclDevGateway.ORIGIN + "/lambdas/contracts/servers";
-                    case DecentralandUrl.Blocklist: return DclDevGateway.ORIGIN + "/config/denylist.json";
-                    case DecentralandUrl.MarketplaceServer: return DclDevGateway.ORIGIN + "/marketplace-api";
-                    case DecentralandUrl.Market: return DclDevGateway.ORIGIN + "/marketplace";
-                    case DecentralandUrl.Faqs: return DclDevGateway.ORIGIN + "/docs/player/faqs/decentraland-101/";
-                    case DecentralandUrl.MinimumSpecs: return Url(DecentralandUrl.Faqs) + "#what-hardware-do-i-need-to-run-decentraland";
-                    case DecentralandUrl.SocialServiceMutes: return DclDevGateway.ORIGIN + "/social-api/v1/mutes";
-                    case DecentralandUrl.ReferralProgress: return DclDevGateway.ORIGIN + "/social-api/v1/referral-progress";
-                }
-            }
+            if (isDclDevGateway && DCL_DEV_URLS.TryGetValue(decentralandUrl, out string dclDevUrl))
+                return dclDevUrl;
 
             UrlData serviceUrl = base.RawUrl(decentralandUrl);
 
@@ -290,7 +290,7 @@ namespace DCL.Browser
 
         public override string GetOriginalUrl(string url)
         {
-            // dcl.dev verifies signatures against the public path, including the service prefix.
+            // A dcl.dev url is signed as requested: the path it carries, service prefix included, already is the public one.
             if (isDclDevGateway || !enabled || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 

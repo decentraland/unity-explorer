@@ -24,7 +24,7 @@ namespace Global.AppArgs.Tests
         public void RequireAHostnameOrIpv4ForAnExplicitPulseServer(string value, bool valid)
         {
             var args = new ApplicationParametersParser(false, "--pulse-server", value);
-            Assert.AreEqual(valid, args.TryGetPulseServer(out string? host));
+            Assert.AreEqual(valid, args.IsPulseServerArgValid(out string? host));
             if (valid) Assert.AreEqual(value, host);
         }
 
@@ -40,8 +40,8 @@ namespace Global.AppArgs.Tests
             Assert.AreEqual("dcl-one-poc-rt.decentraland.zone", values[AppArgsFlags.PULSE_SERVER]);
             Assert.AreEqual("true", values[AppArgsFlags.PULSE_MULTIPLAYER]);
             Assert.AreEqual("100,100", values[AppArgsFlags.POSITION]);
-            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
-            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE, values[AppArgsFlags.GATEWAY]));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS, values[AppArgsFlags.GATEWAY]));
             Assert.AreEqual("false", values[AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED]);
             Assert.IsTrue(args.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY));
             Assert.IsTrue(args.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS));
@@ -66,8 +66,8 @@ namespace Global.AppArgs.Tests
             var args = new ApplicationParametersParser(false, "--gateway", gateway);
             Assert.IsFalse(args.HasFlag(AppArgsFlags.BASE_DOMAIN));
             Assert.IsFalse(args.HasLaunchDestination());
-            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
-            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE, gateway));
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS, gateway));
         }
 
         [TestCase(AppArgsFlags.ABGEN_PIPELINE, AppArgsFlags.ABGEN_LODS)]
@@ -75,16 +75,41 @@ namespace Global.AppArgs.Tests
         public void AllowEachDclDevAssetDefaultToBeDisabledIndependently(string disabled, string enabled)
         {
             var args = new ApplicationParametersParser(false, "--gateway", "https://dcl.dev", "--" + disabled, "false");
-            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, disabled));
-            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, enabled));
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, disabled, DclDevGateway.ORIGIN));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, enabled, DclDevGateway.ORIGIN));
+        }
+
+        [TestCase(AppArgsFlags.REALM_SCENE_POINTERS)]
+        [TestCase(AppArgsFlags.AUTH_BRIDGE_ONLY)]
+        [TestCase(AppArgsFlags.SKIP_VERSION_CHECK)]
+        public void AllowEachDclDevSwitchToBeDisabled(string flag)
+        {
+            var defaults = new ApplicationParametersParser(false, "--gateway", "https://dcl.dev");
+            Assert.IsTrue(defaults.ResolveFeatureFlagArg(flag, fallback: false, requireDebug: false));
+
+            var disabled = new ApplicationParametersParser(false, "--gateway", "https://dcl.dev", "--" + flag, "false");
+            Assert.IsFalse(disabled.ResolveFeatureFlagArg(flag, fallback: false, requireDebug: false));
+        }
+
+        [Test]
+        public void KeepDclDevAssetDefaultsWhenAnAcceptedDeepLinkNamesAnotherGateway()
+        {
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "--gateway", "https://dcl.dev", "--abgen-pipeline", "false", "decentraland://?gateway=https://gateway.example.test" });
+            string cliGateway = args.Args()[AppArgsFlags.GATEWAY];
+            args.InitializeDeepLinks();
+            args.ApplyDeniedDeepLinkParams();
+
+            Assert.IsFalse(DclDevGateway.IsOrigin(args.Args()[AppArgsFlags.GATEWAY]));
+            Assert.IsFalse(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE, cliGateway));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS, cliGateway));
         }
 
         [Test]
         public void PreservePresenceBasedAssetFlagsOnOtherGateways()
         {
             var args = new ApplicationParametersParser(false, "--gateway", "https://gateway.localhost", "--abgen-pipeline", "false", "--abgen-lods");
-            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE));
-            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_PIPELINE, "https://gateway.localhost"));
+            Assert.IsTrue(DclDevGateway.UseAssetFlag(args, AppArgsFlags.ABGEN_LODS, "https://gateway.localhost"));
         }
 
         [Test]
@@ -102,7 +127,7 @@ namespace Global.AppArgs.Tests
         {
             var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[] { "decentraland://?realm=http://localhost&pulse-server=relay.example.test&realm-scene-pointers=true" });
 
-            Assert.IsTrue(args.TryGetPulseServer(out string? host));
+            Assert.IsTrue(args.IsPulseServerArgValid(out string? host));
             Assert.IsNull(host);
             Assert.IsFalse(args.HasFlag(AppArgsFlags.REALM_SCENE_POINTERS));
             args.InitializeDeepLinks();
