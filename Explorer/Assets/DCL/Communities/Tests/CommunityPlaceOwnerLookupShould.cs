@@ -7,6 +7,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -31,32 +32,38 @@ namespace DCL.Communities.Tests
         private SelfProfile self = null!;
         private CommunityCreationEditionView wizard = null!;
         private CommunityCreationEditionController creation = null!;
-
         private UniTask wizardLifetime;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
         {
             warnings.Clear();
+            NotificationsBusController.Initialize(new NotificationsBusController());
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_SERVER_ERROR, RecordWarning);
             places = Substitute.For<IPlacesAPIService>();
             profiles = Substitute.For<IProfileRepository>();
-            self = Substitute.For<SelfProfile>();
-            self.ProfileAsync(Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult(ProfileReadResult.FromOk(Profile.NewRandomProfile(OWNER))));
-            OwnedPlaces();
-            wizard = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(WIZARD)).GetComponent<CommunityCreationEditionView>();
-            creation = new CommunityCreationEditionController(() => wizard, null!, Substitute.For<IInputBlock>(), null!, places, self, null!, profiles, null!);
         }
 
         [TearDown]
         public void TearDown()
         {
-            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeReceived(NotificationType.INTERNAL_SERVER_ERROR, RecordWarning);
-            wizard.CancelButtonClicked?.Invoke();
-            wizardLifetime.GetAwaiter().GetResult();
-            creation.Dispose();
-            Object.DestroyImmediate(wizard.gameObject);
+            if (wizard != null)
+            {
+                wizard.CancelButtonClicked?.Invoke();
+                wizardLifetime.GetAwaiter().GetResult();
+                creation.Dispose();
+                Object.DestroyImmediate(wizard.gameObject);
+            }
+
+            NotificationsBusController.Reset();
         }
 
         [Test]
@@ -113,7 +120,7 @@ namespace DCL.Communities.Tests
             profiles.GetAsync(OWNER, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
                     .Returns(UniTask.FromException<ProfileTier?>(new InvalidOperationException("Profile service unavailable")));
 
-            names.LoadAsync(new[] { new PlacesData.PlaceInfo(Vector2Int.zero) { owner = OWNER } }, CancellationToken.None).GetAwaiter().GetResult();
+            names.LoadAsync(new[] { Place(OWNER) }, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.That(warnings, Is.EqualTo(new[] { "There was an error getting owners names. Please try again." }));
         }
@@ -125,20 +132,51 @@ namespace DCL.Communities.Tests
             profiles.GetAsync(OWNER, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
                     .Returns(UniTask.FromResult<ProfileTier?>(null));
 
-            names.LoadAsync(new[] { new PlacesData.PlaceInfo(Vector2Int.zero) { owner = OWNER } }, CancellationToken.None).GetAwaiter().GetResult();
+            names.LoadAsync(new[] { Place(OWNER) }, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.That(names.GetName(OWNER), Is.Empty);
             Assert.That(warnings, Is.Empty);
         }
 
-        private void OpenCreate(bool eligible) =>
+        [Test]
+        public void KeepBothResolvedNamesWhenAnotherOwnerLookupFails()
+        {
+            const string otherOwner = "0x2222222222222222222222222222222222222222";
+            const string unavailableOwner = "0x3333333333333333333333333333333333333333";
+            var names = new CommunityPlaceOwnerNames(profiles);
+            ReturnProfile(OWNER, "Alice");
+            ReturnProfile(otherOwner, "Bob");
+            profiles.GetAsync(unavailableOwner, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
+                    .Returns(UniTask.FromException<ProfileTier?>(new InvalidOperationException("Profile service unavailable")));
+
+            names.LoadAsync(new[] { Place(OWNER), Place(otherOwner), Place(unavailableOwner) }, CancellationToken.None).GetAwaiter().GetResult();
+
+            Assert.That(names.GetName(OWNER), Is.EqualTo("Alice"));
+            Assert.That(names.GetName(otherOwner), Is.EqualTo("Bob"));
+            Assert.That(names.GetName(unavailableOwner), Is.Empty);
+            Assert.That(warnings, Is.Empty);
+        }
+
+        private void ReturnProfile(string owner, string name) =>
+            profiles.GetAsync(owner, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
+                    .Returns(UniTask.FromResult<ProfileTier?>(ProfileTier.FromCompact(new Profile.CompactInfo(UserId.New(owner).Unwrap(), name))));
+
+        private static PlacesData.PlaceInfo Place(string owner) =>
+            new (Vector2Int.zero) { owner = owner };
+
+        private void OpenCreate(bool eligible)
+        {
+            self = Substitute.For<SelfProfile>();
+            self.ProfileAsync(Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(ProfileReadResult.FromOk(Profile.NewRandomProfile(OWNER))));
+            places.GetDestinationsByOwnerAsync(OWNER, Arg.Any<CancellationToken>()).Returns(Response());
+            wizard = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(WIZARD)).GetComponent<CommunityCreationEditionView>();
+            creation = new CommunityCreationEditionController(() => wizard, null!, Substitute.For<IInputBlock>(), null!, places, self, null!, profiles, null!);
             wizardLifetime = creation.LaunchViewLifeCycleAsync(default, new CommunityCreationEditionParameter(eligible, string.Empty, null), CancellationToken.None);
+        }
 
         private bool NamePromptVisible() =>
             ((GameObject)new SerializedObject(wizard).FindProperty("getNamePanel").objectReferenceValue).activeSelf;
-
-        private void OwnedPlaces(params PlacesData.PlaceInfo[] owned) =>
-            places.GetDestinationsByOwnerAsync(OWNER, Arg.Any<CancellationToken>()).Returns(Response(owned));
 
         private static UniTask<PlacesData.IPlacesAPIResponse> Response(params PlacesData.PlaceInfo[] data) =>
             UniTask.FromResult<PlacesData.IPlacesAPIResponse>(new PlacesData.PlacesAPIResponse { ok = true, total = data.Length, data = new List<PlacesData.PlaceInfo>(data) });
