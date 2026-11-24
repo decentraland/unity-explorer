@@ -56,6 +56,7 @@ namespace DCL.Shop
         private readonly IMVCManager mvcManager;
         private readonly ICreditsPurchaseService purchaseService;
         private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
         private readonly ManaTokenReader manaTokenReader;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ShopCatalogService catalog;
@@ -128,6 +129,7 @@ namespace DCL.Shop
             this.mvcManager = mvcManager;
             this.purchaseService = purchaseService;
             this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
             this.manaTokenReader = manaTokenReader;
             this.identityCache = identityCache;
             this.openBuyCreditsAsync = openBuyCreditsAsync;
@@ -181,6 +183,7 @@ namespace DCL.Shop
             cart.ItemAdded += OnCartItemAdded;
             purchaseService.StateChanged += OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted += OnCartCheckoutCompleted;
+            nameClaimService.StageChanged += OnNameClaimStageChanged;
 
             view.SetItemPanelOpen(false);
             view.HideManaBalance();
@@ -225,6 +228,7 @@ namespace DCL.Shop
             Cart.ItemAdded -= OnCartItemAdded;
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted -= OnCartCheckoutCompleted;
+            nameClaimService.StageChanged -= OnNameClaimStageChanged;
 
             OverviewController.Dispose();
             WearablesController.Dispose();
@@ -583,6 +587,13 @@ namespace DCL.Shop
         {
             if (result.AnyBought)
                 InvalidateAndReload();
+        }
+
+        private void OnNameClaimStageChanged(NameClaimStage stage)
+        {
+            // Registering starts once the payment settled, and a payment topped up with MANA drew from the balance.
+            if (stage == NameClaimStage.Registering && isSectionActivated)
+                RefreshManaBalance();
         }
 
         private void InvalidateAndReload()

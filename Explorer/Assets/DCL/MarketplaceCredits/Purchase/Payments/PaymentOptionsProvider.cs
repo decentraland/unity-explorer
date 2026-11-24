@@ -28,14 +28,14 @@ namespace DCL.MarketplaceCredits.Purchase
             this.manaUsdRateReader = manaUsdRateReader;
         }
 
-        public async UniTask<PaymentOptions> ComputeAsync(string buyer, int priceCents, BigInteger priceManaWei, bool isManaAloneRelayable, CancellationToken ct)
+        public async UniTask<PaymentOptions> ComputeAsync(string buyer, int priceCents, BigInteger priceManaWei, bool canManaPayAlone, CancellationToken ct)
         {
             if (!isManaEnabled)
-                return PaymentOptionsCalculator.Compute(priceCents, BigInteger.Zero, await CreditsBalanceCentsAsync(buyer, ct), null, isManaAloneRelayable);
+                return PaymentOptionsCalculator.Compute(priceCents, BigInteger.Zero, await CreditsBalanceCentsAsync(buyer, ct), null, canManaPayAlone);
 
             (long? creditsBalanceCents, BigInteger? manaBalanceWei) = await UniTask.WhenAll(CreditsBalanceCentsAsync(buyer, ct), manaTokenReader.TryBalanceOfAsync(buyer, ct));
 
-            return PaymentOptionsCalculator.Compute(priceCents, priceManaWei, creditsBalanceCents, manaBalanceWei, isManaAloneRelayable);
+            return PaymentOptionsCalculator.Compute(priceCents, priceManaWei, creditsBalanceCents, manaBalanceWei, canManaPayAlone);
         }
 
         /// <summary>

@@ -152,10 +152,10 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(creditsTopUpModalController);
 
             await RegisterShopCartModalsAsync(settings, rarityInfoPanelBackgrounds, isManaEnabled, ct);
-            await RegisterNameClaimModalAsync(settings, ct);
+            await RegisterNameClaimModalAsync(settings, isManaEnabled, ct);
         }
 
-        private async UniTask RegisterNameClaimModalAsync(CreditPurchaseSettings settings, CancellationToken ct)
+        private async UniTask RegisterNameClaimModalAsync(CreditPurchaseSettings settings, bool isManaEnabled, CancellationToken ct)
         {
             if (!settings.NameClaimPopupPrefab.RuntimeKeyIsValid())
             {
@@ -168,9 +168,9 @@ namespace DCL.PluginSystem.Global
             nameClaimModalController = new NameClaimModalController(
                 NameClaimModalController.CreateLazily(nameClaimViewAsset, null),
                 nameClaimService,
-                marketplaceCreditsAPIClient,
                 web3IdentityCache,
-                OpenGetCreditsPanelAsync);
+                OpenGetCreditsPanelAsync,
+                isManaEnabled);
 
             mvcManager.RegisterController(nameClaimModalController);
         }

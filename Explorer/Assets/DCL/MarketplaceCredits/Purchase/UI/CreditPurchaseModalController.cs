@@ -365,13 +365,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             if (viewInstance == null)
                 return;
 
-            viewInstance.BalanceCreditsText.text = options.CreditsBalanceCents is { } balanceCents
-                ? PaymentAmountFormat.Credits(balanceCents / PaymentOptionsCalculator.CENTS_PER_CREDIT)
-                : PaymentAmountFormat.UNKNOWN;
-
-            viewInstance.BalanceManaText.text = options.ManaBalanceWei is { } balanceWei
-                ? PaymentAmountFormat.ManaBalance(balanceWei)
-                : PaymentAmountFormat.UNKNOWN;
+            viewInstance.BalanceCreditsText.text = PaymentAmountFormat.CreditsBalance(options.CreditsBalanceCents);
+            viewInstance.BalanceManaText.text = PaymentAmountFormat.ManaBalance(options.ManaBalanceWei);
         }
 
         private async UniTask LoadCreatorNameAsync(CancellationToken ct)

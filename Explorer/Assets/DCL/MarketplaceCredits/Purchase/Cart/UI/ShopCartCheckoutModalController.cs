@@ -302,15 +302,9 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
             viewInstance.TotalItemsText.text = reviewed.UnitCount == 1 ? TOTAL_SINGULAR : string.Format(TOTAL_FORMAT, reviewed.UnitCount);
             viewInstance.InsufficientText.text = InsufficientCopy(options);
 
-            viewInstance.BalanceCreditsText.text = options.CreditsBalanceCents is { } balanceCents
-                ? PaymentAmountFormat.Credits(balanceCents / PaymentOptionsCalculator.CENTS_PER_CREDIT)
-                : PaymentAmountFormat.UNKNOWN;
-
+            viewInstance.BalanceCreditsText.text = PaymentAmountFormat.CreditsBalance(options.CreditsBalanceCents);
             viewInstance.BalanceManaGroup.SetActive(isManaEnabled);
-
-            viewInstance.BalanceManaText.text = options.ManaBalanceWei is { } balanceWei
-                ? PaymentAmountFormat.ManaBalance(balanceWei)
-                : PaymentAmountFormat.UNKNOWN;
+            viewInstance.BalanceManaText.text = PaymentAmountFormat.ManaBalance(options.ManaBalanceWei);
 
             viewInstance.ChangesNoticeText.gameObject.SetActive(reviewed.OrderChanged);
 

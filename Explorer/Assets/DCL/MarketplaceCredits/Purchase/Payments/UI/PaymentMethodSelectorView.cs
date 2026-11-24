@@ -19,6 +19,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public Action? SelectionChanged;
 
         private PaymentOptions options = PaymentOptions.NONE;
+        private string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE;
 
         public PaymentSelection Selection { get; private set; } = new (PaymentOptions.NONE);
 
@@ -29,10 +30,15 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             ManaRow.Button.onClick.AddListener(OnManaClicked);
         }
 
-        /// <summary>Starts a fresh selection on the preferred option. The MANA row is hidden when MANA cannot be offered at all.</summary>
-        public void Show(PaymentOptions paymentOptions, bool isManaEnabled)
+        /// <summary>
+        ///     Starts a fresh selection on the preferred option. The MANA row is hidden when MANA cannot be offered
+        ///     at all. manaAloneRefusedNote replaces the rate when the options rule MANA out as a method of its own
+        ///     and leave the row unavailable.
+        /// </summary>
+        public void Show(PaymentOptions paymentOptions, bool isManaEnabled, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
         {
             options = paymentOptions;
+            this.manaAloneRefusedNote = manaAloneRefusedNote;
             Selection = new PaymentSelection(paymentOptions);
             ManaRow.gameObject.SetActive(isManaEnabled);
             Render();
@@ -67,20 +73,20 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             CreditsRow.Render(
                 Selection.CreditsAvailable,
                 Selection.CreditsTicked,
-                options.CreditsBalanceCents is { } balanceCents ? PaymentAmountFormat.Credits(balanceCents / PaymentOptionsCalculator.CENTS_PER_CREDIT) : PaymentAmountFormat.UNKNOWN,
+                PaymentAmountFormat.CreditsBalance(options.CreditsBalanceCents),
                 options.PriceCents > 0 ? PaymentAmountFormat.Credits(Selection.CreditsAmount) : PaymentAmountFormat.UNKNOWN);
 
             ManaRow.Render(
                 Selection.ManaAvailable,
                 Selection.ManaTicked,
-                options.ManaBalanceWei is { } balanceWei ? PaymentAmountFormat.ManaBalance(balanceWei) : PaymentAmountFormat.UNKNOWN,
+                PaymentAmountFormat.ManaBalance(options.ManaBalanceWei),
                 hasManaPrice ? PaymentAmountFormat.ManaPrice(Selection.ManaAmountWei) : PaymentAmountFormat.UNKNOWN);
 
             RateText.gameObject.SetActive(hasManaPrice);
 
-            // A MANA row greyed out by the relayer's minimum says so where the rate would be.
+            // A MANA row greyed out because MANA may not pay alone says so where the rate would be.
             if (hasManaPrice)
-                RateText.text = options.IsManaAloneRelayable || Selection.ManaAvailable ? PaymentAmountFormat.Rate(options.PriceCents, options.PriceManaWei) : MANA_ALONE_REFUSED_NOTE;
+                RateText.text = options.CanManaPayAlone || Selection.ManaAvailable ? PaymentAmountFormat.Rate(options.PriceCents, options.PriceManaWei) : manaAloneRefusedNote;
         }
     }
 }

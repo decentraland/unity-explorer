@@ -518,6 +518,8 @@ namespace Global.Dynamic
                 marketplaceCreditsApiClient,
                 dynamicWorldDependencies.CompositeWeb3Provider,
                 useCreditsExecutor,
+                manaRail,
+                paymentOptionsProvider,
                 relayedPurchaseGate,
                 manaUsdRateReader,
                 new AcrossBridgeStatusPoller(staticContainer.WebRequestsContainer.WebRequestController, creditsChainConfig),

@@ -13,9 +13,10 @@ using Utility;
 namespace DCL.MarketplaceCredits.Purchase.Names
 {
     /// <summary>
-    ///     Claims a NAME with credits. Port of the shop web app's lib/names.ts registerNameWithUsdCredits: the
-    ///     credits pay on Polygon through CreditsManager.useCredits, whose external call is a route the
-    ///     credits-server signs, and a bridge then registers the NAME on Ethereum for the signed-in address.
+    ///     Claims a NAME with credits, alone or topped up with the buyer's Polygon MANA. Port of the shop web
+    ///     app's lib/names.ts registerNameWithUsdCredits: the payment goes through CreditsManager.useCredits on
+    ///     Polygon, whose external call is a route the credits-server signs, and a bridge then registers the
+    ///     NAME on Ethereum for the signed-in address.
     /// </summary>
     public class NameClaimService : IDisposable
     {
@@ -36,6 +37,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         private readonly IWeb3IdentityCache identityCache;
         private readonly CreditsFeatureAccess creditsFeatureAccess;
         private readonly UseCreditsExecutor executor;
+        private readonly ManaRail manaRail;
+        private readonly PaymentOptionsProvider paymentOptionsProvider;
         private readonly RelayedPurchaseGate purchaseGate;
         private readonly bool isFeatureEnabled;
         private readonly CancellationTokenSource disposalCts = new ();
@@ -62,6 +65,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             MarketplaceCreditsAPIClient creditsAPIClient,
             IEthereumApi ethereumApi,
             UseCreditsExecutor executor,
+            ManaRail manaRail,
+            PaymentOptionsProvider paymentOptionsProvider,
             RelayedPurchaseGate purchaseGate,
             ManaUsdRateReader manaUsdRateReader,
             AcrossBridgeStatusPoller bridgeStatusPoller,
@@ -79,6 +84,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
             this.executor = executor;
+            this.manaRail = manaRail;
+            this.paymentOptionsProvider = paymentOptionsProvider;
             this.purchaseGate = purchaseGate;
         }
 
@@ -148,12 +155,34 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         }
 
         /// <summary>
-        ///     Runs the claim to a final result and never throws. Cancelling <paramref name="ct" /> stops the
+        ///     How the signed-in buyer can pay the quoted price: with credits, or with credits topped up with
+        ///     MANA. Never throws: a balance that cannot be read pays for nothing.
+        /// </summary>
+        public virtual async UniTask<PaymentOptions> GetPaymentOptionsAsync(NameClaimQuote quote, CancellationToken ct)
+        {
+            IWeb3Identity? identity = identityCache.Identity;
+
+            if (!IsAvailable || identity == null)
+                return PaymentOptions.NONE;
+
+            // useCredits reverts without a credit, so MANA is never offered as a method of its own.
+            try { return await paymentOptionsProvider.ComputeAsync(identity.Address, quote.UsdCents, NAME_PRICE, canManaPayAlone: false, ct); }
+            catch (OperationCanceledException) { return PaymentOptions.NONE; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                return PaymentOptions.NONE;
+            }
+        }
+
+        /// <summary>
+        ///     Runs the claim to a final result and never throws. <paramref name="option" /> is the payment the
+        ///     buyer confirmed: credits, or credits plus MANA. Cancelling <paramref name="ct" /> stops the
         ///     claim only before the payment is signed, releasing the reserved credit; from the signature on the
         ///     payment and the bridge are followed to the end on the service's own lifetime. Every result but a
         ///     cancellation is kept in <see cref="LastResult" /> until it is acknowledged.
         /// </summary>
-        public virtual async UniTask<NameClaimResult> ClaimAsync(string name, NameClaimQuote quote, CancellationToken ct)
+        public virtual async UniTask<NameClaimResult> ClaimAsync(string name, NameClaimQuote quote, PaymentOption option, CancellationToken ct)
         {
             if (InFlightName != null)
                 return NameClaimResult.Failed(NameClaimError.UnknownError, "A claim is already in progress");
@@ -168,7 +197,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
             NameClaimResult result;
 
-            try { result = await ClaimInternalAsync(name, quote, paymentLease, ct); }
+            try { result = await ClaimInternalAsync(name, quote, option, paymentLease, ct); }
             catch (OperationCanceledException) { result = NameClaimResult.Failed(NameClaimError.Cancelled); }
             catch (Exception e)
             {
@@ -215,7 +244,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                    };
         }
 
-        private async UniTask<NameClaimResult> ClaimInternalAsync(string name, NameClaimQuote quote, RelayedPurchaseGate.Lease paymentLease, CancellationToken ct)
+        private async UniTask<NameClaimResult> ClaimInternalAsync(string name, NameClaimQuote quote, PaymentOption option, RelayedPurchaseGate.Lease paymentLease, CancellationToken ct)
         {
             if (!IsAvailable)
                 return NameClaimResult.Failed(NameClaimError.FeatureDisabled);
@@ -227,6 +256,16 @@ namespace DCL.MarketplaceCredits.Purchase.Names
 
             if (NameRules.Validate(name) != NameValidation.Valid)
                 return NameClaimResult.Failed(NameClaimError.NameUnavailable, "Invalid name");
+
+            if (option.Method == PaymentMethod.Mana)
+                return NameClaimResult.Failed(NameClaimError.UnknownError, "A NAME cannot be paid with MANA alone");
+
+            bool isMixed = option.Method == PaymentMethod.CreditsAndMana;
+
+            if (isMixed && (option.CreditsCents <= 0 || option.CreditsCents >= quote.UsdCents))
+                return NameClaimResult.Failed(NameClaimError.PriceChanged, $"A credits leg of {option.CreditsCents} cents does not split a price of {quote.UsdCents}");
+
+            int creditsCents = isMixed ? option.CreditsCents : quote.UsdCents;
 
             SetStage(NameClaimStage.Preparing);
 
@@ -242,7 +281,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names
             AuthorizeCreditResponse authorization;
 
             // On the service lifetime: a credit reserved while the buyer was closing the modal is still known here.
-            try { authorization = await creditsAPIClient.AuthorizeUsdNameCreditAsync(quote.UsdCents, name, disposalCts.Token); }
+            try { authorization = await creditsAPIClient.AuthorizeUsdNameCreditAsync(creditsCents, name, disposalCts.Token); }
             catch (UnityWebRequestException e)
             {
                 return NameClaimResult.Failed(
@@ -256,14 +295,15 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 return NameClaimResult.Failed(NameClaimError.Cancelled);
             }
 
-            bool coversPrice;
+            BigInteger creditCapWei;
+            BigInteger manaGapWei;
 
-            // The credit must cover the whole price, by its cap and by what is left of it: a shortfall would be drawn from the buyer's own MANA.
             try
             {
-                coversPrice = authorization.usdCents <= quote.UsdCents
-                              && BigInteger.Parse(authorization.maxCreditedValue) >= NAME_PRICE
-                              && BigInteger.Parse(authorization.credit.availableAmount) >= NAME_PRICE;
+                creditCapWei = BigInteger.Parse(authorization.maxCreditedValue);
+
+                // What the credit leaves of the price is drawn from the buyer's own MANA.
+                manaGapWei = CreditsTradeEncoder.UncreditedValue(NAME_PRICE_MANA_WEI, authorization.credit.availableAmount);
             }
             catch (Exception e)
             {
@@ -272,10 +312,33 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 return NameClaimResult.Failed(NameClaimError.AuthorizationFailed, e.Message);
             }
 
-            if (!coversPrice)
+            // A credits claim confirmed no MANA, so its credit must cover the whole price, by its cap and by what is left of it.
+            if (authorization.usdCents > creditsCents || (!isMixed && (creditCapWei < NAME_PRICE || manaGapWei.Sign > 0)))
             {
                 await executor.ReleaseIntentAsync(authorization.credit.id);
                 return NameClaimResult.Failed(NameClaimError.PriceChanged, $"Authorized {authorization.usdCents} cents for {authorization.maxCreditedValue} wei, {authorization.credit.availableAmount} wei available");
+            }
+
+            if (isMixed)
+            {
+                ManaApprovalResult funds;
+
+                try
+                {
+                    funds = await manaRail.PrepareAsync(identity.Address, new[] { new ManaSpend(chainConfig.CreditsManagerAddress, manaGapWei) }, option.ManaWei,
+                        OnPaymentStateChanged, ct, disposalCts.Token);
+                }
+                catch (Exception)
+                {
+                    await executor.ReleaseIntentAsync(authorization.credit.id);
+                    throw;
+                }
+
+                if (!funds.Success)
+                {
+                    await executor.ReleaseIntentAsync(authorization.credit.id);
+                    return NameClaimResult.Failed(MapPaymentError(funds.Error), funds.Message);
+                }
             }
 
             UseCreditsRequest request;
@@ -329,6 +392,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names
                 CreditsPurchaseError.SignatureTimedOut => NameClaimError.SignatureTimedOut,
                 CreditsPurchaseError.RelayerUnavailable => NameClaimError.RelayerUnavailable,
                 CreditsPurchaseError.TransactionReverted => NameClaimError.TransactionReverted,
+                CreditsPurchaseError.InsufficientMana => NameClaimError.InsufficientMana,
+                CreditsPurchaseError.ManaApprovalFailed => NameClaimError.ManaApprovalFailed,
                 _ => NameClaimError.UnknownError,
             };
 
@@ -336,6 +401,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         {
             switch (state)
             {
+                case CreditsPurchaseState.ApprovingMana:
+                    SetStage(NameClaimStage.ApprovingMana);
+                    break;
                 case CreditsPurchaseState.Signing:
                     SetStage(NameClaimStage.Signing);
                     break;

@@ -26,18 +26,19 @@ namespace DCL.MarketplaceCredits.Purchase
         public readonly BigInteger? ManaBalanceWei;
 
         /// <summary>
-        ///     False when MANA alone cannot pay this price whatever the balance: the purchase would go straight to
-        ///     the sale contract, and the relayer refuses the ones below its minimum sale value.
+        ///     False when MANA alone cannot pay this price whatever the balance: a sale made straight on its
+        ///     contract that the relayer refuses for being below its minimum value, or a purchase that only
+        ///     CreditsManager can settle, which needs a credit.
         /// </summary>
-        public readonly bool IsManaAloneRelayable;
+        public readonly bool CanManaPayAlone;
 
         /// <summary>Whether the buyer holds the MANA this price costs and still may not pay with it alone.</summary>
-        public bool IsManaAloneRefused => !IsManaAloneRelayable && PriceManaWei.Sign > 0 && ManaBalanceWei is { } balanceWei && balanceWei >= PriceManaWei;
+        public bool IsManaAloneRefused => !CanManaPayAlone && PriceManaWei.Sign > 0 && ManaBalanceWei is { } balanceWei && balanceWei >= PriceManaWei;
 
         public PaymentOptions(IReadOnlyList<PaymentOption> options, ManaShortfall? manaShortfall, int priceCents, BigInteger priceManaWei,
-            long? creditsBalanceCents, BigInteger? manaBalanceWei, bool isManaAloneRelayable)
+            long? creditsBalanceCents, BigInteger? manaBalanceWei, bool canManaPayAlone)
         {
-            IsManaAloneRelayable = isManaAloneRelayable;
+            CanManaPayAlone = canManaPayAlone;
             Options = options;
             ManaShortfall = manaShortfall;
             PriceCents = priceCents;
@@ -57,7 +58,7 @@ namespace DCL.MarketplaceCredits.Purchase
                     remaining.Add(option);
             }
 
-            return new PaymentOptions(remaining, ManaShortfall, PriceCents, PriceManaWei, CreditsBalanceCents, ManaBalanceWei, IsManaAloneRelayable);
+            return new PaymentOptions(remaining, ManaShortfall, PriceCents, PriceManaWei, CreditsBalanceCents, ManaBalanceWei, CanManaPayAlone);
         }
 
         public bool TryGet(PaymentMethod method, out PaymentOption option)

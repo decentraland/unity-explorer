@@ -15,6 +15,22 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public string GroupCreditsByThousands(long credits) =>
             PaymentAmountFormat.Credits(credits);
 
+        [TestCase(7009L, ExpectedResult = "700")]
+        [TestCase(0L, ExpectedResult = "0")]
+        [TestCase(null, ExpectedResult = PaymentAmountFormat.UNKNOWN)]
+        public string ShowACreditsBalanceInWholeCreditsAndAnUnreadOneAsUnknown(long? balanceCents) =>
+            PaymentAmountFormat.CreditsBalance(balanceCents);
+
+        [Test]
+        public void ShowAnUnreadManaBalanceAsUnknown()
+        {
+            // Act
+            string balance = PaymentAmountFormat.ManaBalance(null);
+
+            // Assert
+            Assert.AreEqual(PaymentAmountFormat.UNKNOWN, balance);
+        }
+
         [Test]
         public void GroupWholeManaByThousandsAndDropEmptyDecimals()
         {

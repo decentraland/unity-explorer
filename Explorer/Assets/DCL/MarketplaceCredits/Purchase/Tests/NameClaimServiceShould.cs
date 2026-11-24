@@ -39,14 +39,28 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const int NAME_PRICE_CENTS = 2500;
         private const int NAME_PRICE_CREDITS = 250;
 
+        // A buyer holding 60 credits pays the other $19 with MANA: 76 MANA at the quoted rate. The credits-server
+        // sizes the $6 credit at 24 MANA plus its 2% headroom.
+        private const int MIXED_CREDITS_CENTS = 600;
+        private const int MIXED_CREDITS = 60;
+        private const string MIXED_CREDIT_WEI = "24480000000000000000";
+        private const string SHRUNK_CREDIT_WEI = "20000000000000000000";
+        private const string APPROVE_SELECTOR = "0x095ea7b3";
+
         private static readonly string ROUTE_SALT = "0x" + new string('5', 64);
         private static readonly string ROUTE_SIGNATURE = "0x" + new string('d', 130);
+        private static readonly BigInteger ONE_MANA = BigInteger.Pow(10, 18);
+        private static readonly BigInteger MIXED_MANA_WEI = 76 * ONE_MANA;
+        private static readonly NameClaimQuote QUOTE = new (NAME_PRICE_CENTS, NAME_PRICE_CREDITS);
+        private static readonly PaymentOption CREDITS_ONLY = new (PaymentMethod.Credits, NAME_PRICE_CENTS, NAME_PRICE_CREDITS, BigInteger.Zero);
+        private static readonly PaymentOption CREDITS_AND_MANA = new (PaymentMethod.CreditsAndMana, MIXED_CREDITS_CENTS, MIXED_CREDITS, MIXED_MANA_WEI);
 
         private MarketplaceCreditsAPIClient creditsAPIClient = null!;
         private IEthereumApi ethereumApi = null!;
         private MetaTxRelayer metaTxRelayer = null!;
         private PolygonSettlementPoller settlementPoller = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
+        private ManaTokenReader manaTokenReader = null!;
         private AcrossBridgeStatusPoller bridgeStatusPoller = null!;
         private CreditsChainConfig chainConfig = null!;
         private IWeb3IdentityCache identityCache = null!;
@@ -65,6 +79,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             metaTxRelayer = Substitute.For<MetaTxRelayer>(null, null, null, null);
             settlementPoller = Substitute.For<PolygonSettlementPoller>(null, null);
             manaUsdRateReader = Substitute.For<ManaUsdRateReader>(null, null);
+            manaTokenReader = Substitute.For<ManaTokenReader>(null, null);
             bridgeStatusPoller = Substitute.For<AcrossBridgeStatusPoller>(null, null);
             chainConfig = new CreditsChainConfig(EthereumNetwork.Mainnet);
             identityCache = Substitute.For<IWeb3IdentityCache>();
@@ -100,8 +115,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             purchaseGate = new RelayedPurchaseGate();
 
-            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig), purchaseGate, manaUsdRateReader, bridgeStatusPoller,
-                chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
+            service = new NameClaimService(creditsAPIClient, ethereumApi, new UseCreditsExecutor(creditsAPIClient, metaTxRelayer, settlementPoller, chainConfig),
+                new ManaRail(manaTokenReader, metaTxRelayer, settlementPoller, chainConfig), new PaymentOptionsProvider(creditsAPIClient, manaTokenReader, manaUsdRateReader, chainConfig, true),
+                purchaseGate, manaUsdRateReader, bridgeStatusPoller, chainConfig, identityCache, new CreditsFeatureAccess(identityCache, warmUpCts.Token), true);
 
             recordedStages = new List<NameClaimStage>();
             completedResults = new List<NameClaimResult>();
@@ -201,7 +217,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Registered, result.Status);
@@ -211,6 +227,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             StringAssert.Contains(ROUTE_SIGNATURE.Substring(2), relayedCalldata);
             CollectionAssert.AreEqual(new[] { NameClaimStage.Preparing, NameClaimStage.Signing, NameClaimStage.Confirming, NameClaimStage.Registering }, recordedStages);
             Assert.AreEqual(1, completedResults.Count);
+            await creditsAPIClient.Received(1).AuthorizeUsdNameCreditAsync(NAME_PRICE_CENTS, NAME, Arg.Any<CancellationToken>());
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
 
@@ -221,7 +238,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             using RelayedPurchaseGate.Lease? held = purchaseGate.TryEnter();
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert: nothing was reserved or signed.
             Assert.AreEqual(NameClaimError.PurchaseInProgress, result.Error);
@@ -238,7 +255,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             bridgeStatusPoller.WaitForFillAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(bridgeGate.Task);
 
             // Act
-            UniTask<NameClaimResult> running = service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            UniTask<NameClaimResult> running = service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert: the claim is still running, and another purchase may relay.
             Assert.AreEqual(NAME, service.InFlightName);
@@ -256,7 +273,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(CreateAuthorization(UNDER_SIZED_WEI)));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
@@ -273,7 +290,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(CreateAuthorization(NAME_PRICE_WEI, UNDER_SIZED_WEI)));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
@@ -290,7 +307,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                               .Returns(UniTask.FromResult(AcrossFillOutcome.NotRegistered));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
@@ -306,7 +323,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                               .Returns(UniTask.FromResult(AcrossFillOutcome.Unknown));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Pending, result.Status);
@@ -320,7 +337,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(SettlementOutcome.Pending));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Registered, result.Status);
@@ -336,7 +353,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                          .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "timeout")));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Pending, result.Status);
@@ -356,7 +373,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                           });
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), uiCts.Token);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, uiCts.Token);
 
             // Assert: settlement and the bridge ran on the service lifetime, and the result waits to be read.
             Assert.AreEqual(NameClaimStatus.Registered, result.Status);
@@ -374,7 +391,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                          .Returns(_ => throw new OperationCanceledException());
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
@@ -394,7 +411,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(CreateAuthorization("not-a-number")));
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimStatus.Failed, result.Status);
@@ -415,7 +432,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                              });
 
             // Act
-            NameClaimResult result = await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), uiCts.Token);
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, uiCts.Token);
 
             // Assert: the request did not run on the buyer's token, so its credit is known and released.
             Assert.AreEqual(NameClaimError.Cancelled, result.Error);
@@ -425,10 +442,198 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task OfferCreditsToppedUpWithManaWhenCreditsFallShort()
+        {
+            // Arrange: 60 credits and far more MANA than the NAME costs.
+            StubCredits(MIXED_CREDITS_CENTS);
+            StubMana(500 * ONE_MANA, BigInteger.Zero);
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(QUOTE, CancellationToken.None);
+
+            // Assert: the credits are spent first and MANA is never a method of its own.
+            Assert.AreEqual(1, options.Options.Count);
+            Assert.AreEqual(PaymentMethod.CreditsAndMana, options.Options[0].Method);
+            Assert.AreEqual(MIXED_CREDITS_CENTS, options.Options[0].CreditsCents);
+            Assert.AreEqual(MIXED_MANA_WEI, options.Options[0].ManaWei);
+        }
+
+        [Test]
+        public async Task OfferNothingToABuyerHoldingOnlyMana()
+        {
+            // Arrange
+            StubCredits(0);
+            StubMana(500 * ONE_MANA, BigInteger.Zero);
+
+            // Act
+            PaymentOptions options = await service.GetPaymentOptionsAsync(QUOTE, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(0, options.Options.Count);
+            Assert.IsTrue(options.IsManaAloneRefused);
+        }
+
+        [Test]
+        public async Task ReserveOnlyTheCreditsLegAndDrawTheRestFromMana()
+        {
+            // Arrange: CreditsManager may already pull the buyer's MANA.
+            StubMana(500 * ONE_MANA, 100 * ONE_MANA);
+            AuthorizeTheCreditsLeg(MIXED_CREDIT_WEI);
+            var relayedCalldata = string.Empty;
+
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Do<string>(calldata => relayedCalldata = calldata), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert: maxUncreditedValue is what the credit leaves of the price, maxCreditedValue stays the price.
+            Assert.AreEqual(NameClaimStatus.Registered, result.Status);
+            await creditsAPIClient.Received(1).AuthorizeUsdNameCreditAsync(MIXED_CREDITS_CENTS, NAME, Arg.Any<CancellationToken>());
+            StringAssert.Contains(Word(BigInteger.Parse(NAME_PRICE_WEI) - BigInteger.Parse(MIXED_CREDIT_WEI)) + Word(BigInteger.Parse(NAME_PRICE_WEI)), relayedCalldata);
+            CollectionAssert.DoesNotContain(recordedStages, NameClaimStage.ApprovingMana);
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task AskForTheManaApprovalBeforeThePayment()
+        {
+            // Arrange: CreditsManager holds no allowance yet.
+            StubMana(500 * ONE_MANA, BigInteger.Zero);
+            AuthorizeTheCreditsLeg(MIXED_CREDIT_WEI);
+            var relayedTo = new List<string>();
+
+            metaTxRelayer.RelayAsync(Arg.Do<MetaTxContract>(contract => relayedTo.Add(contract.Address)), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimStatus.Registered, result.Status);
+            CollectionAssert.AreEqual(new[] { chainConfig.ManaTokenContract.Address, chainConfig.CreditsManagerContract.Address }, relayedTo);
+            await manaTokenReader.Received(1).AllowanceAsync(BUYER, chainConfig.CreditsManagerAddress, Arg.Any<CancellationToken>());
+
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), BUYER, Arg.Is<string>(calldata => calldata.StartsWith(APPROVE_SELECTOR)), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(),
+                Arg.Any<CancellationToken>());
+
+            CollectionAssert.AreEqual(
+                new[] { NameClaimStage.Preparing, NameClaimStage.ApprovingMana, NameClaimStage.Signing, NameClaimStage.Confirming, NameClaimStage.Registering }, recordedStages);
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenTheBuyerLacksTheManaOfAMixedClaim()
+        {
+            // Arrange
+            StubMana(10 * ONE_MANA, 100 * ONE_MANA);
+            AuthorizeTheCreditsLeg(MIXED_CREDIT_WEI);
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimError.InsufficientMana, result.Error);
+            await AssertTheCreditWasReleasedAndNothingRelayedAsync();
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenTheManaGapOutgrowsWhatTheBuyerConfirmed()
+        {
+            // Arrange: the credit is worth 20 MANA, leaving 80 where 76 were confirmed.
+            StubMana(500 * ONE_MANA, 100 * ONE_MANA);
+            AuthorizeTheCreditsLeg(SHRUNK_CREDIT_WEI);
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
+            await AssertTheCreditWasReleasedAndNothingRelayedAsync();
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenMoreThanTheCreditsLegWasReserved()
+        {
+            // Arrange: the server reserved the whole price where 60 credits were confirmed.
+            StubMana(500 * ONE_MANA, 100 * ONE_MANA);
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
+            await AssertTheCreditWasReleasedAndNothingRelayedAsync();
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditWhenTheManaApprovalIsRejected()
+        {
+            // Arrange
+            StubMana(500 * ONE_MANA, BigInteger.Zero);
+            AuthorizeTheCreditsLeg(MIXED_CREDIT_WEI);
+
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SignatureRejected)));
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert: the payment itself was never put up for signature.
+            Assert.AreEqual(NameClaimError.SignatureRejected, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.Received(1).RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+            await bridgeStatusPoller.DidNotReceive().WaitForFillAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ReleaseTheCreditAndCancelWhenTheBuyerClosesDuringTheManaApproval()
+        {
+            // Arrange: the approval prompt is cancelled by the modal closing.
+            StubMana(500 * ONE_MANA, BigInteger.Zero);
+            AuthorizeTheCreditsLeg(MIXED_CREDIT_WEI);
+
+            metaTxRelayer.RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>())
+                         .Returns(_ => throw new OperationCanceledException());
+
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, CREDITS_AND_MANA, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimError.Cancelled, result.Error);
+            Assert.IsNull(service.LastResultName);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseToPayANameWithManaAlone()
+        {
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, new PaymentOption(PaymentMethod.Mana, 0, 0, 100 * ONE_MANA), CancellationToken.None);
+
+            // Assert: nothing was asked of the server.
+            Assert.AreEqual(NameClaimStatus.Failed, result.Status);
+            await creditsAPIClient.DidNotReceive().GetNameRouteAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdNameCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAMixedClaimWhoseCreditsLegLeavesNothingForMana()
+        {
+            // Act
+            NameClaimResult result = await service.ClaimAsync(NAME, QUOTE, new PaymentOption(PaymentMethod.CreditsAndMana, NAME_PRICE_CENTS, NAME_PRICE_CREDITS, ONE_MANA),
+                CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(NameClaimError.PriceChanged, result.Error);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdNameCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task KeepTheResultUntilItIsAcknowledged()
         {
             // Act
-            await service.ClaimAsync(NAME, new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            await service.ClaimAsync(NAME, QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.IsNull(service.InFlightName);
@@ -446,12 +651,39 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task RejectAMalformedNameBeforeAskingForARoute()
         {
             // Act
-            NameClaimResult result = await service.ClaimAsync("not valid", new NameClaimQuote(NAME_PRICE_CENTS, NAME_PRICE_CREDITS), CancellationToken.None);
+            NameClaimResult result = await service.ClaimAsync("not valid", QUOTE, CREDITS_ONLY, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(NameClaimError.NameUnavailable, result.Error);
             await creditsAPIClient.DidNotReceive().GetNameRouteAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
+
+        private void StubCredits(long balanceCents) =>
+            creditsAPIClient.GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new UserCreditsResponse { usd = new UsdCredits { balanceCents = balanceCents, credits = (int)(balanceCents / PaymentOptionsCalculator.CENTS_PER_CREDIT) } }));
+
+        private void StubMana(BigInteger balance, BigInteger allowance)
+        {
+            manaTokenReader.BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                           .Returns(UniTask.FromResult(balance));
+
+            manaTokenReader.AllowanceAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                           .Returns(UniTask.FromResult(allowance));
+        }
+
+        private void AuthorizeTheCreditsLeg(string creditWei) =>
+            creditsAPIClient.AuthorizeUsdNameCreditAsync(Arg.Any<int>(), NAME, Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(creditWei, usdCents: MIXED_CREDITS_CENTS)));
+
+        private async UniTask AssertTheCreditWasReleasedAndNothingRelayedAsync()
+        {
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayAsync(Arg.Any<MetaTxContract>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<BigInteger>(), Arg.Any<CancellationToken>(), Arg.Any<CancellationToken>());
+        }
+
+        // A uint256 as it is laid out in ABI-encoded calldata.
+        private static string Word(BigInteger value) =>
+            value.ToString("x").TrimStart('0').PadLeft(64, '0');
 
         private static NameCreditRouteResponse CreateRoute() =>
             new ()
@@ -467,7 +699,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 customExternalCallSignature = ROUTE_SIGNATURE,
             };
 
-        private static AuthorizeCreditResponse CreateAuthorization(string manaCapWei, string? availableWei = null) =>
+        private static AuthorizeCreditResponse CreateAuthorization(string manaCapWei, string? availableWei = null, int usdCents = NAME_PRICE_CENTS) =>
             new ()
             {
                 credit = new AuthorizedCredit
@@ -480,7 +712,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                     contract = "0x8b3a40ca1b6f5cafc99d112a4d02e897d1fd8cc5",
                 },
                 maxCreditedValue = manaCapWei,
-                usdCents = NAME_PRICE_CENTS,
+                usdCents = usdCents,
                 oracleRate = MANA_USD_RATE.ToString(),
             };
     }

@@ -28,8 +28,13 @@ namespace DCL.MarketplaceCredits.Purchase
         public static string ManaPrice(BigInteger wei) =>
             Mana(wei, AMOUNT_DECIMALS, true);
 
-        public static string ManaBalance(BigInteger wei) =>
-            Mana(wei, AMOUNT_DECIMALS, false);
+        /// <summary>A balance held in cents, in whole credits. A null balance is one that could not be read.</summary>
+        public static string CreditsBalance(long? balanceCents) =>
+            balanceCents is { } cents ? Credits(cents / PaymentOptionsCalculator.CENTS_PER_CREDIT) : UNKNOWN;
+
+        /// <summary>A null balance is one that could not be read.</summary>
+        public static string ManaBalance(BigInteger? wei) =>
+            wei is { } balance ? Mana(balance, AMOUNT_DECIMALS, false) : UNKNOWN;
 
         /// <summary>
         ///     "1 Credit = X MANA" for a price of priceCents that costs priceManaWei. A rate too small for two
