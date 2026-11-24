@@ -17,6 +17,12 @@ namespace DCL.WebRequests
 {
     public class WebRequestController : IWebRequestController
     {
+#if UNITY_STANDALONE_WIN
+        private static readonly bool qaLocalEventPosters =
+            Array.IndexOf(Environment.GetCommandLineArgs(), "--qa-local-event-posters") >= 0;
+        private static readonly System.Text.RegularExpressions.Regex qaPublicPoster = new (
+            @"\Ahttps://dcl\.dev/(?:events-assets-099ac00/(?:poster|poster-vertical)/[A-Za-z0-9][A-Za-z0-9._-]{0,199}|events/assets/event-default\.webp)\z");
+#endif
         private const string DATE_HEADER = "Date";
 
         private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
@@ -74,6 +80,27 @@ namespace DCL.WebRequests
 
                 try
                 {
+#if UNITY_STANDALONE_WIN
+                    if (qaLocalEventPosters && typeof(TWebRequest) == typeof(GetTextureWebRequest) &&
+                        wr.method == UnityWebRequest.kHttpVerbGET && !envelope.signInfo.HasValue &&
+                        envelope.headersInfo.Value.Count == 0 && qaPublicPoster.IsMatch(envelope.CommonArguments.URL))
+                    {
+                        string query = "?url=" + Uri.EscapeDataString(envelope.CommonArguments.URL);
+                        if (wr.url == "https://dcl.dev/metamorph-api/convert" + query)
+                        {
+                            wr.url = "http://127.0.0.1:18210/metamorph-api/convert" + query;
+                            wr.redirectLimit = 0;
+                            using (await budget.AcquireAsync(envelope.Ct))
+                            {
+                                attemptNumber++;
+                                // Drop only cookies for the fixed QA host before sending. Skip trace-header injection.
+                                UnityWebRequest.ClearCookieCache(new Uri("http://127.0.0.1/"));
+                                await request.SendRequestAsync(envelope.Ct, expectedContentLength, progressReporter);
+                            }
+                            return await op.ExecuteAsync(request, envelope.Ct);
+                        }
+                    }
+#endif
                     analyticsContainer.OnBeforeBudgeting(in envelope, request);
 
                     // Budget the web request itself only:
