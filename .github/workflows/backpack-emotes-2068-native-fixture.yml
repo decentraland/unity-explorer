@@ -40,6 +40,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
+          ref: 24cbdef3b35d332e8d25e96a79dd98d496bb8b2e
           fetch-depth: 0
           lfs: true
           submodules: recursive
@@ -60,6 +61,12 @@ jobs:
           git add .
           git reset --hard
           
+      - name: Verify product revision and install the screenshot-only Editor fixture
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "24cbdef3b35d332e8d25e96a79dd98d496bb8b2e"
+          git show "$GITHUB_SHA:Explorer/Assets/DCL/Tests/Editor/BackpackEmoteGridControllerShould.cs" | sed 's/public class BackpackEmoteGridControllerShould/public class BackpackCatalogCapture/' > Explorer/Assets/DCL/Tests/Editor/BackpackCatalogCapture.cs
+
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -144,7 +151,7 @@ jobs:
           testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64 -testFilter DCL.Tests.Editor.BackpackEmoteGridControllerShould.CaptureControlledRetryScreens -force-glcore -burst-disable-compilation -accept-apiupdate
+          customParameters: -buildTarget StandaloneLinux64 -testFilter DCL.Tests.Editor.BackpackCatalogCapture.CaptureControlledRetryScreens -force-glcore -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
 
