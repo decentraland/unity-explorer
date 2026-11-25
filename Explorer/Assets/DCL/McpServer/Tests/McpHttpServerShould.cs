@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using UnityEngine.TestTools;
 
 namespace DCL.McpServer.Tests
 {
@@ -52,6 +53,28 @@ namespace DCL.McpServer.Tests
         [TestCase("://missing-scheme")]
         public void RejectMalformedOrigins(string origin) =>
             Assert.That(IsAllowed(origin), Is.False);
+
+        [Test]
+        public void ReturnFalseWhenPortIsHeldByAnotherListener()
+        {
+            var holder = new TcpListener(IPAddress.Loopback, 0);
+            holder.Start();
+            int heldPort = ((IPEndPoint)holder.LocalEndpoint).Port;
+
+            var registry = new McpToolsRegistry();
+            registry.Build();
+            var server = new McpHttpServer(registry, heldPort);
+
+            LogAssert.ignoreFailingMessages = true;
+
+            try { Assert.That(server.TryStart(), Is.False); }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+                server.Dispose();
+                holder.Stop();
+            }
+        }
     }
 
     /// <summary>

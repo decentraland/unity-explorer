@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -68,7 +69,7 @@ namespace DCL.McpServer.Core
             newListener.Prefixes.Add($"{EndpointUrl}/"); // HttpListener requires the trailing slash
 
             try { newListener.Start(); }
-            catch (Exception e) when (e is HttpListenerException or InvalidOperationException)
+            catch (Exception e) when (e is HttpListenerException or SocketException or InvalidOperationException)
             {
                 ReportHub.LogError(ReportCategory.MCP, $"Cannot start the MCP server on port {port} (already in use? pass a different --mcp-port): {e.Message}");
                 newListener.Close();
