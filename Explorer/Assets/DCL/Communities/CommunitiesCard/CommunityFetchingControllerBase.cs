@@ -68,7 +68,11 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.RefreshGrid(currentSectionFetchData, membersData.PageNumber > 1);
             }
-            finally { isFetching = false; }
+            finally
+            {
+                if (!ct.IsCancellationRequested || ct == cancellationToken)
+                    isFetching = false;
+            }
         }
 
         protected abstract UniTask<int> FetchDataAsync(CancellationToken ct);
