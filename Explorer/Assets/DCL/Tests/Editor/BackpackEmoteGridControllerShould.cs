@@ -94,8 +94,8 @@ namespace DCL.Tests.Editor
             var icons = AssetDatabase.LoadAssetAtPath<NftTypeIconSO>("Assets/DCL/ScriptableObjectsConfigurations/NftRarityBackgrounds.asset");
             var colors = AssetDatabase.LoadAssetAtPath<NFTColorsSO>("Assets/DCL/ScriptableObjectsConfigurations/NftRarityColors.asset");
             sort = backpack.GetComponentInChildren<BackpackSortDropdownView>(true);
-            grid = new BackpackEmoteGridController(section, new BackpackCommandBus(), eventBus, icons, colors, icons,
-                Substitute.For<IEquippedEmotes>(), new BackpackSortController(sort),
+            grid = new BackpackEmoteGridController(section, new BackpackCommandBus(), eventBus, icons, colors, AssetDatabase.LoadAssetAtPath<NftTypeIconSO>("Assets/DCL/ScriptableObjectsConfigurations/NftCategoryIcons.asset"),
+                new EquippedEmotes(), new BackpackSortController(sort),
                 pageButton, pool, provider, thumbnails, new UnityAppWebBrowser(Substitute.For<IDecentralandUrlsSource>()), storage, Substitute.For<IPendingTransferService>());
         }
 
@@ -175,7 +175,99 @@ namespace DCL.Tests.Editor
             Assert.That(section.GridView.NoSearchResults.activeSelf, Is.True);
         }
 
+        [Test]
+        public void CaptureControlledRetryScreens()
+        {
+            const int width = 1600, height = 900;
+            var root = new GameObject("QA emotes canvas", typeof(RectTransform), typeof(Canvas));
+            var cameraObject = new GameObject("QA emotes camera", typeof(Camera));
+            var camera = cameraObject.GetComponent<Camera>();
+            var target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+            var oldTarget = RenderTexture.active;
+            var previousParent = section.transform.parent;
+            try
+            {
+                Assert.That(SystemInfo.graphicsDeviceType, Is.Not.EqualTo(UnityEngine.Rendering.GraphicsDeviceType.Null));
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = new Color32(50, 45, 55, 255);
+                camera.transform.position = new Vector3(0, 0, -1000);
+                camera.orthographic = true;
+                camera.orthographicSize = height / 2f;
+                camera.nearClipPlane = 1;
+                camera.farClipPlane = 2000;
+                camera.cullingMask = 1 << 5;
+                target.Create();
+                camera.targetTexture = target;
+
+                var canvas = root.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                canvas.worldCamera = camera;
+                root.GetComponent<RectTransform>().sizeDelta = new Vector2(width, height);
+                section.transform.SetParent(root.transform, false);
+                section.gameObject.SetActive(true);
+                grid.Activate();
+                Assert.That(section.CatalogRetry.gameObject.activeInHierarchy, Is.True);
+                Capture("01-empty-retry");
+
+                availableBaseCount = 2;
+                section.CatalogRetry.onClick.Invoke();
+                Assert.That(VisibleItems().Count(), Is.EqualTo(2));
+                Assert.That(section.CatalogRetry.gameObject.activeSelf, Is.False);
+                Capture("02-partial-names");
+
+                eventBus.SendFilter(null, null, "Emote 17");
+                Assert.That(section.CatalogRetry.gameObject.activeInHierarchy, Is.True);
+                Assert.That(section.GridView.NoSearchResults.activeInHierarchy, Is.False);
+                Capture("03-incomplete-search-retry");
+
+                availableBaseCount = emotes.Count;
+                section.CatalogRetry.onClick.Invoke();
+                Assert.That(VisibleItems().Single().ThumbnailName.text, Is.EqualTo("Emote 17"));
+                Capture("04-recovered-match");
+
+                eventBus.SendFilter(null, null, null);
+                Assert.That(VisibleItems().Count(), Is.EqualTo(16));
+                Assert.That(VisibleItems().All(item => item.ThumbnailName.gameObject.activeInHierarchy && !item.WearableThumbnail.enabled), Is.True);
+                Capture("05-recovered-first-page");
+
+                void Capture(string state)
+                {
+                    Canvas.ForceUpdateCanvases();
+                    UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)section.transform);
+                    Canvas.ForceUpdateCanvases();
+                    foreach (var label in section.GetComponentsInChildren<TMPro.TMP_Text>())
+                        label.ForceMeshUpdate();
+                    camera.Render();
+                    RenderTexture.active = target;
+                    var frame = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    try
+                    {
+                        frame.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                        frame.Apply();
+                        var folder = System.IO.Path.Combine(Application.dataPath, "../../native-evidence");
+                        System.IO.Directory.CreateDirectory(folder);
+                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, state + ".png"), frame.EncodeToPNG());
+                        var visible = VisibleItems().Where(item => item.ThumbnailName.gameObject.activeInHierarchy).Select(item => item.ThumbnailName.text);
+                        System.IO.File.AppendAllText(System.IO.Path.Combine(folder, "states.txt"),
+                            $"{state}\tunity={Application.unityVersion}\tdevice={SystemInfo.graphicsDeviceName}\tretry={section.CatalogRetry.gameObject.activeInHierarchy}\tlabels={string.Join(",", visible)}\n");
+                    }
+                    finally { Object.DestroyImmediate(frame); }
+                }
+            }
+            finally
+            {
+                section.transform.SetParent(previousParent, false);
+                camera.targetTexture = null;
+                RenderTexture.active = oldTarget;
+                target.Release();
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(cameraObject);
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private IEnumerable<BackpackEmoteGridItemView> VisibleItems() =>
             section.GridView.GetComponentsInChildren<BackpackEmoteGridItemView>(true).Where(item => item.FullBackpackItem.activeSelf);
     }
 }
+
