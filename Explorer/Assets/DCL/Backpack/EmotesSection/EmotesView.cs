@@ -13,7 +13,7 @@ namespace DCL.Backpack
         public BackpackGridView GridView { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CatalogRetry { get; private set; }
+        public Button CatalogRetry { get; private set; } = null!;
 
         [field: SerializeField]
         public BackpackEmoteBreadCrumbView BreadCrumb { get; private set; } = null!;

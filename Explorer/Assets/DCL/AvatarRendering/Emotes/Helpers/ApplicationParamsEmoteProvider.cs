@@ -17,13 +17,13 @@ namespace DCL.AvatarRendering.Emotes
     {
         private readonly IAppArgs appArgs;
         private readonly IEmoteProvider source;
-        private readonly string builderDTOsUrl;
+        private readonly string builderCatalogUrl;
 
-        public ApplicationParamsEmoteProvider(IAppArgs appArgs, IEmoteProvider source, string builderDTOsUrl)
+        public ApplicationParamsEmoteProvider(IAppArgs appArgs, IEmoteProvider source, string builderCatalogUrl)
         {
             this.appArgs = appArgs;
             this.source = source;
-            this.builderDTOsUrl = builderDTOsUrl;
+            this.builderCatalogUrl = builderCatalogUrl;
         }
 
         public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetTrimmedByParamsAsync(
@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.Emotes
                     // localBuffer accumulates the loaded emotes
                     await source.GetTrimmedByParamsAsync(requestOptions, ct, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
+                            builderCatalogUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);

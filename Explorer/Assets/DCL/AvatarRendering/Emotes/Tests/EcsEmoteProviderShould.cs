@@ -1,5 +1,4 @@
 using Arch.Core;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;

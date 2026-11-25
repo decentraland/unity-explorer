@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool Equals(GetEmotesByPointersIntention other) =>
             Equals(Pointers, other.Pointers);
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is GetEmotesByPointersIntention other && Equals(other);
 
         public override int GetHashCode() =>

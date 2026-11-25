@@ -212,7 +212,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableStorage.TryGetElement(command.Id, out IWearable? wearable))
+            if (!wearableStorage.TryGetElement(command.Id, out IWearable wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
                 return;

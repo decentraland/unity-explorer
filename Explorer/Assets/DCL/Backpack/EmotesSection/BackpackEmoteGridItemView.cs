@@ -7,14 +7,14 @@ namespace DCL.Backpack.EmotesSection
     public class BackpackEmoteGridItemView : BackpackItemView
     {
         [field: SerializeField]
-        public TMP_Text EquippedSlotLabel { get; private set; }
+        public TMP_Text EquippedSlotLabel { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text ThumbnailName { get; private set; }
+        public TMP_Text ThumbnailName { get; private set; } = null!;
 
-        public void ShowMetadata(string name)
+        public void ShowMetadata(string displayName)
         {
-            ThumbnailName.text = name;
+            ThumbnailName.text = displayName;
             SetThumbnail(null);
             LoadingView.FinishLoadingAnimation(FullBackpackItem);
         }
