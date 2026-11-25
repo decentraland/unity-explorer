@@ -210,19 +210,14 @@ namespace DCL.Backpack.CharacterPreview
             {
                 URN urn = emote.GetUrn().Shorten();
 
-                // An avatar with an empty emote wheel never received an equip, so the set does not exist yet
-                previewAvatarModel.Emotes ??= new HashSet<URN>();
-
-                // Ensure assets are loaded for the emote
-                if (previewAvatarModel.Emotes.Add(urn))
+                if (previewAvatarModel.Emotes?.Contains(urn) != true)
                 {
-                    try { await ShowLoadingSpinnerAndUpdateAvatarAsync(ct); }
-                    catch (OperationCanceledException) { }
-                    finally
-                    {
-                        // Remove the emote so it stays original
-                        previewAvatarModel.Emotes.Remove(urn);
-                    }
+                    // Preview against a copy so overlapping selections cannot change the equipped wheel.
+                    CharacterPreviewAvatarModel model = previewAvatarModel;
+                    model.Emotes = model.Emotes == null ? new HashSet<URN>() : new HashSet<URN>(model.Emotes);
+                    model.Emotes.Add(urn);
+                    try { await ShowLoadingSpinnerAndUpdateAvatarAsync(model, ct); }
+                    catch (OperationCanceledException) { return; }
                 }
 
                 if (!ct.IsCancellationRequested)

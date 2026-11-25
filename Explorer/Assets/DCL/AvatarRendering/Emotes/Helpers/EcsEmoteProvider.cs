@@ -75,12 +75,12 @@ namespace DCL.AvatarRendering.Emotes
 
             ct.ThrowIfCancellationRequested();
 
-            if (promise.Result == null) return (results, 0);
-            if (!promise.Result.HasValue) return (results, 0);
-            if (!promise.Result!.Value.Succeeded) return (results, 0);
+            var response = promise.Result!.Value;
+            if (!response.Succeeded)
+                throw response.Exception!;
 
-            results.AddRange(promise.Result.Value.Asset.Emotes);
-            return (results, promise.Result.Value.Asset.TotalAmount);
+            results.AddRange(response.Asset.Emotes);
+            return (results, response.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(

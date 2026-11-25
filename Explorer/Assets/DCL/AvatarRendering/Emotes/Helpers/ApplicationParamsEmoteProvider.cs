@@ -41,15 +41,9 @@ namespace DCL.AvatarRendering.Emotes
 
                 results ??= new List<ITrimmedEmote>();
 
-                var localBuffer = ListPool<IEmote>.Get();
-
-                await UniTask.WhenAll(GetByPointersAsync(pointers, BodyShape.MALE, ct, localBuffer),
-                    GetByPointersAsync(pointers, BodyShape.FEMALE, ct, localBuffer));
-
-                foreach (var emote in localBuffer)
-                    results.Add(emote);
-
-                ListPool<IEmote>.Release(localBuffer);
+                using var bufferScope = ListPool<IEmote>.Get(out var localBuffer);
+                await source.GetMetadataByPointersAsync(pointers, ct, localBuffer);
+                results.AddRange(localBuffer);
 
                 return (results, results.Count);
             }
@@ -59,7 +53,7 @@ namespace DCL.AvatarRendering.Emotes
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
                 results ??= new List<ITrimmedEmote>();
-                var localBuffer = ListPool<ITrimmedEmote>.Get();
+                using var bufferScope = ListPool<ITrimmedEmote>.Get(out var localBuffer);
                 for (var i = 0; i < collections.Length; i++)
                 {
                     if (!BuilderCollectionIds.IsValid(collections[i], ReportCategory.EMOTE))
@@ -85,7 +79,6 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 int count = localBuffer.Count;
-                ListPool<ITrimmedEmote>.Release(localBuffer);
 
                 return (results, count);
             }

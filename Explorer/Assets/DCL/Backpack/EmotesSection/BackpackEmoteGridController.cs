@@ -14,6 +14,7 @@ using DCL.UI;
 using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using DCL.Diagnostics;
 using UnityEngine.Pool;
@@ -27,6 +28,8 @@ namespace DCL.Backpack.EmotesSection
     {
         private const int CURRENT_PAGE_SIZE = 16;
         private const string EMOTE_CATEGORY = "emote";
+
+        private static readonly bool TRACE_TIMINGS = Environment.GetEnvironmentVariable("DCL_BACKPACK_EMOTE_TIMINGS") == "1";
 
         private readonly BackpackGridView view;
         private readonly Button catalogRetry;
@@ -146,6 +149,10 @@ namespace DCL.Backpack.EmotesSection
         {
             loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
 
+            var timing = new CatalogTiming(pageNumber);
+            if (TRACE_TIMINGS)
+                timing.Log("page-start", timing.Start, string.Empty);
+
             currentPage = pageNumber;
             catalogRetry.gameObject.SetActive(false);
             view.NoSearchResults.SetActive(false);
@@ -161,6 +168,7 @@ namespace DCL.Backpack.EmotesSection
 
                 try
                 {
+                    long stageStart = CatalogTiming.Timestamp();
                     var result = await emoteProvider.GetTrimmedByParamsAsync(
                         new IEmoteProvider.OwnedEmotesRequestOptions(
                             pageNum: pageNumber,
@@ -172,6 +180,9 @@ namespace DCL.Backpack.EmotesSection
                         ct,
                         emotes
                     ).SuppressToResultAsync(ReportCategory.BACKPACK);
+
+                    if (TRACE_TIMINGS)
+                        timing.Log("owned", stageStart, $"count={emotes.Count} success={result.Success} canceled={ct.IsCancellationRequested}");
 
                     if (ct.IsCancellationRequested) return;
 
@@ -188,12 +199,16 @@ namespace DCL.Backpack.EmotesSection
                     {
                         using var baseScope = ListPool<IEmote>.Get(out List<IEmote> baseEmotes);
                         IReadOnlyList<URN> pointers = emoteStorage.BaseEmotesUrns;
+                        stageStart = CatalogTiming.Timestamp();
                         var baseResult = await emoteProvider.GetMetadataByPointersAsync(pointers, ct, baseEmotes)
                                                             .SuppressToResultAsync(ReportCategory.BACKPACK);
 
+                        if (TRACE_TIMINGS)
+                            timing.Log("base-metadata", stageStart, $"count={baseEmotes.Count} requested={pointers.Count} success={baseResult.Success} canceled={ct.IsCancellationRequested}");
+
                         if (ct.IsCancellationRequested) return;
 
-                        catalogFailed |= !baseResult.Success || (pointers.Count > 0 && baseEmotes.Count == 0);
+                        catalogFailed |= !baseResult.Success || baseEmotes.Count < pointers.Count;
 
                         if (!string.IsNullOrEmpty(currentSearch))
                             baseEmotes.RemoveAll(emote => !emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
@@ -233,10 +248,14 @@ namespace DCL.Backpack.EmotesSection
                         view.RegularResults.SetActive(true);
                     }
 
-                    SetGridElements(emotes, ct);
+                    stageStart = CatalogTiming.Timestamp();
+                    SetGridElements(emotes, ct, timing);
 
                     if (reconfigurePageSelector)
                         pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
+
+                    if (TRACE_TIMINGS)
+                        timing.Log("cards-bound", stageStart, $"count={emotes.Count} total={totalAmount}");
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e)
@@ -269,7 +288,7 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes, CancellationToken ct)
+        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes, CancellationToken ct, CatalogTiming timing)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = emotes.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -314,7 +333,7 @@ namespace DCL.Backpack.EmotesSection
 
                 backpackItemView.SetEquipButtonsState();
                 backpackItemView.ShowMetadata(emotes[i].GetName());
-                WaitForThumbnailAsync(emotes[i], backpackItemView, ct).Forget();
+                WaitForThumbnailAsync(emotes[i], backpackItemView, ct, timing).Forget();
             }
         }
 
@@ -370,12 +389,58 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(1, true);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(ITrimmedEmote emote, BackpackEmoteGridItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(ITrimmedEmote emote, BackpackEmoteGridItemView itemView, CancellationToken ct, CatalogTiming timing)
         {
+            long stageStart = CatalogTiming.Timestamp();
+            // The ECS provider combines scheduling, cache access, transport and texture extraction in one wait.
+            string source = string.Empty;
+            if (TRACE_TIMINGS)
+                source = emote.ThumbnailAssetResult switch
+                {
+                    { IsInitialized: true, Succeeded: true } => "memory",
+                    { IsInitialized: false } => "in-flight",
+                    _ => "load",
+                };
+
             var result = await thumbnailProvider.GetAsync(emote, ct).SuppressToResultAsync(ReportCategory.THUMBNAILS);
 
             if (result.Success && !ct.IsCancellationRequested)
                 itemView.SetThumbnail(result.Value);
+
+            if (TRACE_TIMINGS)
+            {
+                string outcome;
+                if (ct.IsCancellationRequested)
+                    outcome = "canceled";
+                else if (!result.Success)
+                    outcome = "error";
+                else
+                    outcome = itemView.WearableThumbnail.enabled ? "artwork" : "fallback";
+
+                timing.Log("thumbnail", stageStart, $"urn={emote.GetUrn()} source={source} outcome={outcome}");
+            }
+        }
+
+        private readonly struct CatalogTiming
+        {
+            public readonly long Start;
+            private readonly int page;
+
+            public CatalogTiming(int page)
+            {
+                this.page = page;
+                Start = Timestamp();
+            }
+
+            public static long Timestamp() => TRACE_TIMINGS ? Stopwatch.GetTimestamp() : 0;
+
+            public void Log(string stage, long stageStart, string details)
+            {
+                long now = Stopwatch.GetTimestamp();
+                double elapsedMs = (now - Start) * 1000d / Stopwatch.Frequency;
+                double stageMs = (now - stageStart) * 1000d / Stopwatch.Frequency;
+                ReportHub.LogProductionInfo(FormattableString.Invariant($"[BackpackEmoteTiming] request={Start} page={page} stage={stage} elapsedMs={elapsedMs:F3} stageMs={stageMs:F3} {details}"), ReportHandler.DebugLog);
+            }
         }
 
         private void ClearPoolElements()
