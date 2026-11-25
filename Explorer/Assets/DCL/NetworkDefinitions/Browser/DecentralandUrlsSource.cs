@@ -424,7 +424,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.{BaseDomain}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.{BaseDomain}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.{BaseDomain}/api/places",
-                DecentralandUrl.CameraReelLink => $"https://reels.{BaseDomain}",
+                // Custom deployments default to the standalone Reels viewer on its own subdomain.
+                DecentralandUrl.CameraReelLink when environment == DecentralandEnvironment.Custom => $"https://reels.{BaseDomain}",
+                DecentralandUrl.CameraReelLink => $"https://{BaseDomain}/reels",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.{BaseDomain}",
                 DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{assetCdnDomain}")),

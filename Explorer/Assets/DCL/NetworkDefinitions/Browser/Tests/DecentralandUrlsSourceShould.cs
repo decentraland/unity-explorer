@@ -336,6 +336,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://dcl.dev/about", urls.Url(DecentralandUrl.PeerAbout));
             Assert.AreEqual("https://dcl.dev/marketplace-api", urls.Url(DecentralandUrl.MarketplaceServer));
             Assert.AreEqual("https://dcl.dev/marketplace", urls.Url(DecentralandUrl.Market));
+            Assert.AreEqual("https://dcl.dev/reels", urls.Url(DecentralandUrl.CameraReelLink));
             Assert.AreEqual("https://dcl.dev/docs/player/faqs/decentraland-101/", urls.Url(DecentralandUrl.Faqs));
             Assert.AreEqual("https://dcl.dev/docs/player/faqs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland", urls.Url(DecentralandUrl.MinimumSpecs));
             Assert.AreEqual("https://dcl.dev/asset-bundle-registry/profiles", urls.Url(DecentralandUrl.Profiles));
@@ -383,6 +384,18 @@ namespace DCL.Browser.DecentralandUrls.Tests
             var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: gatewayPrefix);
 
             Assert.AreEqual(expected, urlsSource.Url(DecentralandUrl.ApiPlaces));
+        }
+
+        [TestCase(DecentralandEnvironment.Org, true, "https://decentraland.org/reels")]
+        [TestCase(DecentralandEnvironment.Org, false, "https://decentraland.org/reels")]
+        [TestCase(DecentralandEnvironment.Zone, true, "https://decentraland.zone/reels")]
+        [TestCase(DecentralandEnvironment.Zone, false, "https://decentraland.zone/reels")]
+        public void ResolveThePublicReelViewer(DecentralandEnvironment environment, bool useGateway, string expected)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: useGateway);
+            GatewayUrlsSource urls = GatewayUrlsSource.CreateForTest(environment, ILaunchMode.PLAY);
+
+            Assert.AreEqual(expected, urls.Url(DecentralandUrl.CameraReelLink));
         }
 
         [Test]
@@ -539,6 +552,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase(DecentralandUrl.PeerContent, "https://peer." + CUSTOM_DOMAIN + "/content/contents")]
         [TestCase(DecentralandUrl.Servers, "https://peer." + CUSTOM_DOMAIN + "/lambdas/contracts/servers")]
         [TestCase(DecentralandUrl.FeatureFlags, "https://feature-flags." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.CameraReelLink, "https://reels." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.Gatekeeper, "https://comms-gatekeeper." + CUSTOM_DOMAIN)]
         [TestCase(DecentralandUrl.GateKeeperSceneAdapter, "https://comms-gatekeeper." + CUSTOM_DOMAIN + "/get-scene-adapter")]
         [TestCase(DecentralandUrl.LocalGateKeeperSceneAdapter, "https://comms-gatekeeper-local." + CUSTOM_DOMAIN + "/get-scene-adapter")]

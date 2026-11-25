@@ -28,6 +28,7 @@ namespace DCL.Browser
             [DecentralandUrl.Blocklist] = DclDevGateway.ORIGIN + "/config/denylist.json",
             [DecentralandUrl.MarketplaceServer] = DclDevGateway.ORIGIN + "/marketplace-api",
             [DecentralandUrl.Market] = DclDevGateway.ORIGIN + "/marketplace",
+            [DecentralandUrl.CameraReelLink] = DclDevGateway.ORIGIN + "/reels",
             [DecentralandUrl.Faqs] = DCL_DEV_FAQS_URL,
             [DecentralandUrl.MinimumSpecs] = DCL_DEV_FAQS_URL + "#what-hardware-do-i-need-to-run-decentraland",
             [DecentralandUrl.SocialServiceMutes] = DclDevGateway.ORIGIN + "/social-api/v1/mutes",
