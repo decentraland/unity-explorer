@@ -103,6 +103,7 @@ namespace DCL.FeatureFlags
         public const string LSD_FORCED_AB = "alfa-lsd-forced-ab";
         public const string BUG_REPORT = "alfa-bug-report";
         public const string IN_GAME_SHOP = "alfa-in-game-shop";
+        public const string MANA_PAYMENTS = "alfa-mana-payments";
 
         public static class Endpoints
         {

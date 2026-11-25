@@ -8,7 +8,6 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Optimization.Pools;
 using DCL.Places;
 using DCL.PlacesAPIService;
 using DCL.PrivateWorlds;
@@ -18,7 +17,6 @@ using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
@@ -36,11 +34,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
 
         private const int PAGE_SIZE = 10;
-        private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
         private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
-        private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
 
         private readonly PlacesSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
@@ -48,11 +44,10 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly IProfileRepository profileRepository;
-        private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
+        private readonly CommunityPlaceOwnerNames ownerNames;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
 
-        private string[] communityPlaceIds;
+        private string[] communityPlaceIds = Array.Empty<string>();
 
         protected override SectionFetchData<PlaceData> currentSectionFetchData => placesFetchData;
 
@@ -81,7 +76,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.placesAPIService = placesAPIService;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
-            this.profileRepository = profileRepository;
+            ownerNames = new CommunityPlaceOwnerNames(profileRepository);
             this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource, null, null, homePlaceEventBus);
 
             view.InitGrid(thumbnailLoader, cancellationToken);
@@ -219,8 +214,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetDestinationsByIdsAsync(slice, ct)
                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (ct.IsCancellationRequested)
-                return 0;
+            ct.ThrowIfCancellationRequested();
 
             if (!response.Success)
             {
@@ -229,30 +223,14 @@ namespace DCL.Communities.CommunitiesCard.Places
                 return placesFetchData.TotalToFetch;
             }
 
-            using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-            foreach (var place in response.Value.Data)
-               if (!userNames.ContainsKey(place.owner))
-                   userIds.Value.Add(place.owner);
-
-            if (userIds.Value.Count > 0)
-            {
-                List<Profile.CompactInfo> getAvatarsDetailsResult = await profileRepository.GetCompactAsync(userIds.Value, ct);
-
-                if (getAvatarsDetailsResult.Count == 0)
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
-                else
-                    foreach (Profile.CompactInfo profile in getAvatarsDetailsResult)
-                    {
-                        userNames.Add(profile.UserId, profile.Name);
-                        break;
-                    }
-            }
+            await ownerNames.LoadAsync(response.Value.Data, ct);
+            ct.ThrowIfCancellationRequested();
 
             foreach (var place in response.Value.Data)
                 placesFetchData.Items.Add(new PlaceData
                 {
                     PlaceInfo = place,
-                    OwnerName = userNames.GetValueOrDefault(place.owner, string.Empty)
+                    OwnerName = ownerNames.GetName(place.owner)
                 });
 
             return response.Value.Total;
@@ -260,9 +238,17 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void ShowPlaces(CommunityData community, string[] placeIds, CancellationToken token)
         {
+            bool sameVisit = token == cancellationToken;
             cancellationToken = token;
 
-            if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
+            if (communityData is not null && community.id.Equals(communityData.Value.id))
+            {
+                int loadedPages = placesFetchData.TotalFetched / PAGE_SIZE;
+                if (sameVisit || (loadedPages > 0 && placesFetchData.PageNumber == loadedPages))
+                    return;
+
+                placesFetchData.PageNumber = loadedPages;
+            }
 
             communityData = community;
             communityPlaceIds = placeIds;

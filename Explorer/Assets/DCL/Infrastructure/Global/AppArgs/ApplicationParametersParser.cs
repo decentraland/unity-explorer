@@ -51,6 +51,7 @@ namespace Global.AppArgs
         private ApplicationParametersParser(bool useInEditorFlags, bool deferDeepLinks, params string[] args)
         {
             ParseApplicationParameters(args);
+            DclDevGateway.ApplyLaunchDefaults(appParameters);
 
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();

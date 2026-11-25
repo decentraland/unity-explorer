@@ -165,6 +165,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICreditsPurchaseService creditsPurchaseService;
         private readonly NameClaimService nameClaimService;
         private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly ManaTokenReader manaTokenReader;
         private readonly LobbyStagePresetSetting lobbyStagePresetSetting;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
@@ -275,6 +276,7 @@ namespace DCL.PluginSystem.Global
             ShopCart shopCart,
             ICreditsPurchaseService creditsPurchaseService,
             CreditsCartCheckoutService cartCheckoutService,
+            ManaTokenReader manaTokenReader,
             NameClaimService nameClaimService,
             LobbyStagePresetSetting lobbyStagePresetSetting
             )
@@ -351,6 +353,7 @@ namespace DCL.PluginSystem.Global
             this.shopCart = shopCart;
             this.creditsPurchaseService = creditsPurchaseService;
             this.cartCheckoutService = cartCheckoutService;
+            this.manaTokenReader = manaTokenReader;
             this.nameClaimService = nameClaimService;
             this.lobbyStagePresetSetting = lobbyStagePresetSetting;
         }
@@ -618,7 +621,7 @@ namespace DCL.PluginSystem.Global
             ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
 
             shopController = new ShopController(shopView, cursor, inputBlock, mvcManager, marketplaceShopAPIClient, shopCart, creditsPurchaseService, cartCheckoutService,
-                nameClaimService, shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
+                manaTokenReader, nameClaimService, shopBuyHandler, shopStyling, shopRarityInfoPanelBackgrounds, shopThumbnailLoader, profileRepositoryWrapper, webBrowser, decentralandUrlsSource, web3IdentityCache,
                 characterPreviewFactory, world, characterPreviewEventBus, wearableStorage, selfProfile, wearablesProvider, emoteProvider, OpenBuyCreditsAsync);
 
             EnableShopCreditsPanelAsync(shopView.CreditsPanel, shopController.OpenBuyCredits, ct)

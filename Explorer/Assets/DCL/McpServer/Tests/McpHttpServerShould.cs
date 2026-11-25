@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using UnityEngine.TestTools;
 
 namespace DCL.McpServer.Tests
 {
@@ -52,6 +53,54 @@ namespace DCL.McpServer.Tests
         [TestCase("://missing-scheme")]
         public void RejectMalformedOrigins(string origin) =>
             Assert.That(IsAllowed(origin), Is.False);
+
+        [Test]
+        public void MoveToTheNextPortWhenTheFirstIsHeld()
+        {
+            var holder = new TcpListener(IPAddress.Loopback, 0);
+            holder.Start();
+            int heldPort = ((IPEndPoint)holder.LocalEndpoint).Port;
+
+            McpHttpServer server = NewServer(heldPort, 10);
+
+            try
+            {
+                Assert.That(server.TryStart(), Is.True);
+                Assert.That(server.EndpointUrl, Does.Not.Contain($":{heldPort}/"));
+            }
+            finally
+            {
+                server.Dispose();
+                holder.Stop();
+            }
+        }
+
+        [Test]
+        public void ReturnFalseWhenEveryPortIsHeld()
+        {
+            var holder = new TcpListener(IPAddress.Loopback, 0);
+            holder.Start();
+            int heldPort = ((IPEndPoint)holder.LocalEndpoint).Port;
+
+            McpHttpServer server = NewServer(heldPort, 1);
+
+            LogAssert.ignoreFailingMessages = true;
+
+            try { Assert.That(server.TryStart(), Is.False); }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+                server.Dispose();
+                holder.Stop();
+            }
+        }
+
+        private static McpHttpServer NewServer(int port, int portAttempts)
+        {
+            var registry = new McpToolsRegistry();
+            registry.Build();
+            return new McpHttpServer(registry, port, portAttempts);
+        }
     }
 
     /// <summary>
@@ -82,7 +131,7 @@ namespace DCL.McpServer.Tests
             var registry = new McpToolsRegistry();
             registry.Build();
 
-            server = new McpHttpServer(registry, port);
+            server = new McpHttpServer(registry, port, 1);
             cts = new CancellationTokenSource();
 
             Assert.That(server.TryStart(), Is.True, "the test server failed to start");

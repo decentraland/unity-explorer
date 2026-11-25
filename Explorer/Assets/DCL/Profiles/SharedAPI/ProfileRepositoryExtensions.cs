@@ -1,8 +1,9 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS.Prioritization.Components;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -75,24 +76,28 @@ namespace DCL.Profiles
             return results;
         }
 
-        public static async UniTask<List<Profile.CompactInfo>> GetCompactAsync(this IProfileRepository profileRepository, IReadOnlyList<string> ids, CancellationToken ct)
-        {
-            // Tolerate or fix this allocation?
-            var results = new List<Profile.CompactInfo>(ids.Count);
+        public static async UniTask<List<Profile.CompactInfo>> GetCompactAsync(this IProfileRepository profileRepository, IReadOnlyList<string> ids, CancellationToken ct) =>
+            (await profileRepository.GetCompactWithFailuresAsync(ids, ct)).Profiles;
 
-            // Pool is inside WhenAll
+        public static async UniTask<(List<Profile.CompactInfo> Profiles, bool HadErrors)> GetCompactWithFailuresAsync(
+            this IProfileRepository profileRepository, IReadOnlyCollection<string> ids, CancellationToken ct)
+        {
+            var results = new List<Profile.CompactInfo>(ids.Count);
+            bool hadErrors = false;
             await UniTask.WhenAll(ids.Select(WaitForProfileAsync));
+            return (results, hadErrors);
 
             async UniTask WaitForProfileAsync(string id)
             {
-                Result<Profile.CompactInfo?> profile = await profileRepository.GetCompactAsync(id, ct)
-                                                                              .SuppressToResultAsync();
-
-                if (profile is { Success: true, Value: not null })
-                    results.Add(profile.Value.Value);
+                try
+                {
+                    Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(id, ct);
+                    if (profile.HasValue)
+                        results.Add(profile.Value);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception) { hadErrors = true; }
             }
-
-            return results;
         }
 
         /// <summary>

@@ -6,6 +6,10 @@ namespace DCL.MarketplaceCredits.Purchase
     {
         ResolvingListing,
         Authorizing,
+        ApprovingMana,
+
+        /// <summary>The MANA approval is signed and relayed, and its confirmation is being waited for.</summary>
+        ConfirmingManaApproval,
         Signing,
         WaitingSettlement,
         Success,
@@ -31,6 +35,11 @@ namespace DCL.MarketplaceCredits.Purchase
         Cancelled,
         EncodingFailed,
         UnknownError,
+        InsufficientMana,
+        ManaApprovalFailed,
+
+        /// <summary>Another relayed purchase (single item, cart or NAME) is still being signed or settled.</summary>
+        PurchaseInProgress,
     }
 
     /// <summary>

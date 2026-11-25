@@ -24,12 +24,15 @@ using DCL.Passport.Modules;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using BigInteger = System.Numerics.BigInteger;
 
 namespace DCL.Shop
 {
@@ -38,6 +41,9 @@ namespace DCL.Shop
         private const int COUNTDOWN_TICK_MS = 1000;
         private const int BOTTOM_RIGHT_CORNER = 3;
         private const string FAVORITE_ERROR_MESSAGE = "Your favorites could not be updated. Please try again.";
+
+        // 0.01 MANA, the smallest balance the header counter can show as a number other than zero
+        private static readonly BigInteger MIN_SHOWN_MANA_WEI = BigInteger.Pow(10, 16);
 
         // Hidden until those sections ship; the tabs stay in the prefab so they only need removing from this list
         private static readonly ShopSection[] UNRELEASED_SECTIONS = { ShopSection.Lands };
@@ -50,6 +56,9 @@ namespace DCL.Shop
         private readonly IMVCManager mvcManager;
         private readonly ICreditsPurchaseService purchaseService;
         private readonly CreditsCartCheckoutService cartCheckoutService;
+        private readonly NameClaimService nameClaimService;
+        private readonly ManaTokenReader manaTokenReader;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly ShopCatalogService catalog;
         private readonly ShopCreatorCache creators;
         private readonly ShopItemCardPresenter presenter;
@@ -57,6 +66,8 @@ namespace DCL.Shop
 
         private CancellationTokenSource? countdownCts;
         private CancellationTokenSource? modalCts;
+        private CancellationTokenSource? manaBalanceCts;
+        private string? manaBalanceOwner;
         private bool isSectionActivated;
         private bool isSectionShown;
         private bool isItemPanelOpen;
@@ -92,6 +103,7 @@ namespace DCL.Shop
             ShopCart cart,
             ICreditsPurchaseService purchaseService,
             CreditsCartCheckoutService cartCheckoutService,
+            ManaTokenReader manaTokenReader,
             NameClaimService nameClaimService,
             CreditPurchaseBuyHandler buyHandler,
             IWearableStylingCatalog styling,
@@ -117,6 +129,9 @@ namespace DCL.Shop
             this.mvcManager = mvcManager;
             this.purchaseService = purchaseService;
             this.cartCheckoutService = cartCheckoutService;
+            this.nameClaimService = nameClaimService;
+            this.manaTokenReader = manaTokenReader;
+            this.identityCache = identityCache;
             this.openBuyCreditsAsync = openBuyCreditsAsync;
             Cart = cart;
 
@@ -138,6 +153,14 @@ namespace DCL.Shop
             view.SearchBarDeselected += RestoreShortcutsInput;
             view.SearchChanged += OnSearchChanged;
             view.SortChanged += OnSortChanged;
+            view.Filters.Initialize(styling);
+            view.Filters.PriceRangeChanged += OnFilterPriceRangeChanged;
+            view.Filters.RaritySelected += OnFilterRaritySelected;
+            view.Filters.StatusChanged += OnFilterStatusChanged;
+            view.Filters.DealsChanged += OnFilterDealsChanged;
+            view.Filters.SmartChanged += OnFilterSmartChanged;
+            view.Filters.InputSelected += DisableShortcutsInput;
+            view.Filters.InputDeselected += RestoreShortcutsInput;
             view.NamesView.InputSelected += DisableShortcutsInput;
             NamesController.TabChanged += OnNamesTabChanged;
             view.NamesView.InputDeselected += RestoreShortcutsInput;
@@ -160,8 +183,10 @@ namespace DCL.Shop
             cart.ItemAdded += OnCartItemAdded;
             purchaseService.StateChanged += OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted += OnCartCheckoutCompleted;
+            nameClaimService.StageChanged += OnNameClaimStageChanged;
 
             view.SetItemPanelOpen(false);
+            view.HideManaBalance();
 
             foreach (ShopSection section in UNRELEASED_SECTIONS)
                 view.SetSectionTabVisible(section, false);
@@ -175,6 +200,13 @@ namespace DCL.Shop
             view.SearchBarDeselected -= RestoreShortcutsInput;
             view.SearchChanged -= OnSearchChanged;
             view.SortChanged -= OnSortChanged;
+            view.Filters.PriceRangeChanged -= OnFilterPriceRangeChanged;
+            view.Filters.RaritySelected -= OnFilterRaritySelected;
+            view.Filters.StatusChanged -= OnFilterStatusChanged;
+            view.Filters.DealsChanged -= OnFilterDealsChanged;
+            view.Filters.SmartChanged -= OnFilterSmartChanged;
+            view.Filters.InputSelected -= DisableShortcutsInput;
+            view.Filters.InputDeselected -= RestoreShortcutsInput;
             view.NamesView.InputSelected -= DisableShortcutsInput;
             NamesController.TabChanged -= OnNamesTabChanged;
             view.NamesView.InputDeselected -= RestoreShortcutsInput;
@@ -196,6 +228,7 @@ namespace DCL.Shop
             Cart.ItemAdded -= OnCartItemAdded;
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             cartCheckoutService.CheckoutCompleted -= OnCartCheckoutCompleted;
+            nameClaimService.StageChanged -= OnNameClaimStageChanged;
 
             OverviewController.Dispose();
             WearablesController.Dispose();
@@ -208,6 +241,7 @@ namespace DCL.Shop
             creators.Dispose();
             countdownCts.SafeCancelAndDispose();
             modalCts.SafeCancelAndDispose();
+            manaBalanceCts.SafeCancelAndDispose();
         }
 
         public void Activate()
@@ -224,6 +258,7 @@ namespace DCL.Shop
             view.SetViewActive(true);
             view.SetCartButtonVisible(purchasesEnabled);
             view.SetCartBadge(Cart.TotalUnits);
+            RefreshManaBalance();
 
             WearablesController.ResetFilters();
             EmotesController.ResetFilters();
@@ -252,6 +287,7 @@ namespace DCL.Shop
             FavoritesController.Deactivate();
             DeactivateNames();
             countdownCts.SafeCancelAndDispose();
+            manaBalanceCts.SafeCancelAndDispose();
             view.SetViewActive(false);
         }
 
@@ -307,6 +343,7 @@ namespace DCL.Shop
             {
                 isItemPanelOpen = true;
                 view.SetItemPanelOpen(true);
+                view.AlignItemPanelTop(CurrentSection);
                 SetCompact(true);
             }
 
@@ -363,6 +400,18 @@ namespace DCL.Shop
                 view.SetSearchText(NamesController.Resale.SearchText);
                 view.SetSort(NamesController.Resale.Sort);
             }
+
+            RefreshFilters();
+        }
+
+        private void RefreshFilters()
+        {
+            ShopGridSectionController? filteredGrid = FilteredGridFor(CurrentSection);
+
+            view.SetFiltersVisible(filteredGrid != null);
+
+            if (filteredGrid != null)
+                view.Filters.ApplyState(filteredGrid.Filters, smartAvailable: CurrentSection == ShopSection.Wearables);
         }
 
         // A focused field that is hidden never reports its deselection, which would leave the shortcuts blocked
@@ -440,8 +489,31 @@ namespace DCL.Shop
             if (CurrentSection == ShopSection.Names)
                 NamesController.Resale.SetSearch(text);
             else
+            {
                 FilteredGridFor(CurrentSection)?.SetSearch(text);
+
+                // Searching switches the default status, which the panel shows
+                RefreshFilters();
+            }
         }
+
+        private void OnFilterPriceRangeChanged(int? minCredits, int? maxCredits) =>
+            FilteredGridFor(CurrentSection)?.SetPriceRange(minCredits, maxCredits);
+
+        private void OnFilterRaritySelected(string? rarity) =>
+            FilteredGridFor(CurrentSection)?.SetRarity(rarity);
+
+        private void OnFilterStatusChanged(ShopStatusFilter status)
+        {
+            FilteredGridFor(CurrentSection)?.SetStatus(status);
+            RefreshFilters();
+        }
+
+        private void OnFilterDealsChanged(bool deals) =>
+            FilteredGridFor(CurrentSection)?.SetDeals(deals);
+
+        private void OnFilterSmartChanged(bool smart) =>
+            FilteredGridFor(CurrentSection)?.SetSmart(smart);
 
         private void OnSortChanged(ShopSortOption sort)
         {
@@ -466,6 +538,45 @@ namespace DCL.Shop
         private void OnCartItemAdded(ShopCartLine line, ShopCartSource source) =>
             view.PlayCartBump();
 
+        /// <summary>
+        ///     Reads the Polygon MANA of the current identity into the header counter, which stays hidden for an
+        ///     empty balance and while MANA payments are off.
+        /// </summary>
+        private void RefreshManaBalance()
+        {
+            manaBalanceCts = manaBalanceCts.SafeRestart();
+
+            IWeb3Identity? identity = identityCache.Identity;
+            string? owner = identity == null ? null : (string)identity.Address;
+
+            // The balance left on screen while the new one loads must belong to the same account
+            if (owner != manaBalanceOwner)
+                view.HideManaBalance();
+
+            manaBalanceOwner = owner;
+
+            if (owner == null || !FeaturesRegistry.Instance.IsEnabled(FeatureId.ManaPayments))
+            {
+                view.HideManaBalance();
+                return;
+            }
+
+            RefreshManaBalanceAsync(owner, manaBalanceCts.Token).Forget();
+        }
+
+        private async UniTaskVoid RefreshManaBalanceAsync(string owner, CancellationToken ct)
+        {
+            Result<BigInteger> balance = await manaTokenReader.BalanceOfAsync(owner, ct).SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (balance.Success && balance.Value >= MIN_SHOWN_MANA_WEI)
+                view.ShowManaBalance(PaymentAmountFormat.ManaBalance(balance.Value));
+            else
+                view.HideManaBalance();
+        }
+
         private void OnPurchaseStateChanged(CreditsPurchaseState state)
         {
             if (state == CreditsPurchaseState.Success)
@@ -478,12 +589,21 @@ namespace DCL.Shop
                 InvalidateAndReload();
         }
 
+        private void OnNameClaimStageChanged(NameClaimStage stage)
+        {
+            // Registering starts once the payment settled, and a payment topped up with MANA drew from the balance.
+            if (stage == NameClaimStage.Registering && isSectionActivated)
+                RefreshManaBalance();
+        }
+
         private void InvalidateAndReload()
         {
             catalog.Invalidate();
 
             if (!isSectionActivated)
                 return;
+
+            RefreshManaBalance();
 
             OverviewController.Reload();
             SectionFor(CurrentSection)?.Reload();
@@ -503,15 +623,42 @@ namespace DCL.Shop
 
         private async UniTaskVoid ShowCartAsync(string source, CancellationToken ct)
         {
-            ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
-            var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER], Favorites);
+            try
+            {
+                if (HasCheckoutToShow())
+                {
+                    await mvcManager.ShowAsync(ShopCartCheckoutModalController.IssueCommand(), ct);
+                    return;
+                }
 
-            try { await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct); }
+                ((RectTransform)view.CartButton.transform).GetWorldCorners(cornersCache);
+                var parameter = new ShopCartModalParams(source, cornersCache[BOTTOM_RIGHT_CORNER], Favorites);
+                await mvcManager.ShowAsync(ShopCartModalController.IssueCommand(parameter), ct);
+            }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
             }
+        }
+
+        // A checkout that is still running, or whose result was never seen, is shown by the checkout popup. A
+        // cancelled one bought and held nothing: it is dropped so the cart opens as usual.
+        private bool HasCheckoutToShow()
+        {
+            if (cartCheckoutService.IsCheckoutInFlight)
+                return true;
+
+            CartCheckoutResult? lastResult = cartCheckoutService.LastResult;
+
+            if (lastResult == null)
+                return false;
+
+            if (lastResult.Outcome != CartCheckoutOutcome.Cancelled)
+                return true;
+
+            cartCheckoutService.AcknowledgeResult();
+            return false;
         }
 
         private async UniTaskVoid OpenBuyCreditsAsync(CancellationToken ct)

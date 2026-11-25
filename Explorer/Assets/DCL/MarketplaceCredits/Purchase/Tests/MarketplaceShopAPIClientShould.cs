@@ -38,6 +38,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 Search = " cool hat ",
                 Sort = ShopSort.MostExpensive,
                 SmartOnly = true,
+                DealsOnly = true,
             };
 
             // Act
@@ -46,7 +47,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Assert
             Assert.AreEqual(
                 $"{MARKETPLACE}/v3/catalog/unified?first=48&skip=96&category=wearable&wearableCategory=hat,helmet&rarity=epic,mythic"
-                + "&minPriceCredits=10&maxPriceCredits=500&search=cool%20hat&sortBy=most_expensive&isSmart=true&listingType=primary&groupBy=item",
+                + "&minPriceCredits=10&maxPriceCredits=500&search=cool%20hat&sortBy=most_expensive&isSmart=true&discounted=true&listingType=primary&groupBy=item",
                 url);
         }
 
