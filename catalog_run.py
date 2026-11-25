@@ -1,6 +1,7 @@
 """Run the Backpack scenario only on an ephemeral GitHub Actions Windows runner."""
 
 import base64
+import ctypes
 from datetime import datetime, timezone
 from io import BytesIO
 import json
@@ -19,6 +20,7 @@ import win32api
 import win32con
 import win32gui
 import win32process
+import requests
 
 from catalog_frames import catalog_cells, clap_detail, wearable_cards
 
@@ -52,8 +54,9 @@ class Player:
             if process.poll() is not None:
                 raise RuntimeError("Player exited before its automation interface was ready")
             try:
-                _, self.session = rpc("initialize", {"protocolVersion": "2025-06-18",
+                initialized, self.session = rpc("initialize", {"protocolVersion": "2025-06-18",
                     "capabilities": {}, "clientInfo": {"name": "backpack-emotes-2068", "version": "1"}})
+                METRICS["unity_server_info"] = initialized.get("serverInfo", {})
                 rpc("notifications/initialized", {}, self.session, notify=True)
                 break
             except (OSError, RuntimeError):
@@ -98,7 +101,14 @@ class Player:
         block = next(b for b in payload["content"] if b["type"] == "image")
         data = base64.b64decode(block["data"], validate=True)
         image = Image.open(BytesIO(data)).convert("RGB")
-        assert image.size == (1920, 1080), image.size
+        METRICS["native_capture_size"] = list(image.size)
+        if image.size != (1920,1080):
+            if abs(image.width/image.height - 16/9) > .01:
+                (OUT / "unexpected-native-resolution.png").write_bytes(data)
+                raise RuntimeError(f"Unexpected player aspect ratio {image.size}")
+            # Retain the original PNG bytes while using the same normalized
+            # geometry for measurement on a smaller 16:9 hardware desktop.
+            image = image.resize((1920,1080),Image.Resampling.LANCZOS)
         return start, end, image, data
 
     def save_screen(self, label):
@@ -108,6 +118,21 @@ class Player:
         return image
 
     def cell(self, x=.50, y=.335):
+        if METRICS["renderer"] == "T4":
+            # The Azure GPU desktop can keep the Win32 pointer pinned even when
+            # Unity renders normally. Ask Unity's own raycaster which card is
+            # under the image point, then send it exactly one left click.
+            hit = self.call("ui_drag", fromX=x, fromY=y, toX=x, toY=y,
+                            path="device", durationFrames=2, rightButton=True)
+            target = hit.get("pointerOver", {}).get("start", "")
+            start = CLOCK()
+            if "/Emotes/FullContainer/" in target and re.search(r"/(?:BackpackItem|BackpackEmoteGridItem)(?:\[|\(|/|$)", target):
+                result = self.call("ui_click", path=target)
+                record(action="catalog_cell", image_point=[x,y], path=target,
+                       click_ok=result.get("ok"), monotonic_start=start, monotonic_end=CLOCK())
+            else:
+                record(action="catalog_cell_pending", image_point=[x,y], hit=target, monotonic_start=start)
+            return start
         windows = []
         def collect(hwnd, _):
             if win32gui.IsWindowVisible(hwnd) and win32process.GetWindowThreadProcessId(hwnd)[1] == self.process.pid:
@@ -184,6 +209,7 @@ class Player:
         checkpoint_at = iter([2, 5, 10, 20, 30, 60, 90, 120])
         checkpoint = next(checkpoint_at, None)
         last_click = -5
+        stale_details = False
         while CLOCK() - start < deadline:
             a, b, img, raw = self.screenshot()
             lo, hi = round(a-start, 3), round(b-start, 3)
@@ -222,10 +248,18 @@ class Player:
             record(page=name, sample=sample)
             if "full_icons_by_s" in page and "two_page_controls_s" in page and (not select or "clap_details_by_s" in page):
                 break
+            if select and details and not page["click_seconds"] and not stale_details:
+                # A reopened inspector can retain the last item. Require a real
+                # change back to Clap before attributing the result to this click.
+                stale_details = True
+                page["cleared_preexisting_details_at_s"] = round(self.cell(.579,.335)-start, 3)
             if select and not details and CLOCK()-start-last_click >= 2.5:
                 last_click = self.cell()-start
                 page["click_seconds"].append(round(last_click, 3))
             time.sleep(.45 if hi<12 else 1.4)
+        if page["samples"] and "full_icons_by_s" not in page:
+            (OUT / (name+"-last-observation.png")).write_bytes(raw)
+            page["last_observation_s"] = hi
         print(name, {k:v for k,v in page.items() if k!="samples"}, flush=True)
         return page
 
@@ -237,8 +271,15 @@ class Player:
             image = self.save_screen(f"wearables-upper-{sec}s")
             record(control="upper-body", observation_by_s=round(CLOCK()-start, 3), icon_slots=wearable_cards(image))
         start = self.click(r"Backpack/Header/TabSelector/Emotes$")
-        self.page("cold-page1", start, 16, select=True)
+        cold = self.page("cold-page1", start, 16, select=True)
         if self.button(r"/Emotes/FullContainer/PageSelector/PagesContainer/PageButton", "2"):
+            if "full_icons_by_s" not in cold and cold["samples"]:
+                missing = sorted(set(range(1,17)) - set(cold["samples"][-1]["icon_slots"]))
+                if missing:
+                    slot = missing[0]-1
+                    self.cell(.50+.079*(slot%4), .335+.144*(slot//4))
+                    time.sleep(4)
+                    self.save_screen(f"selected-card-without-silhouette-slot-{slot+1}")
             # Capture the real avatar through several frames following a fresh Clap selection.
             cry_start = self.cell(.579, .335)
             # Cry is a configured base emote that the prepared account never equipped.
@@ -269,6 +310,9 @@ class Player:
             self.click(r"ExplorePanelUI/AnimationContainer/Header/CloseButton$")
             key("B")
             time.sleep(.6)
+            if not self.button(r"EmotesWheelHUD/Content/Slot1/Container/RarityContainer$"):
+                self.click(r"/SidebarView/BottomLayout/EmotesButton$")
+                time.sleep(.6)
             self.save_screen("wheel-open")
             self.click(r"EmotesWheelHUD/Content/Slot1/Container/RarityContainer$")
             for i in range(3):
@@ -286,12 +330,35 @@ class Player:
 
 def renderer_and_timings(log):
     lines = []
+    timing = []
     if log.exists():
         for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
-            if re.search(r"^\s*(?:Renderer:|Vendor:|VRAM:|Driver:)|\[BackpackEmoteCatalog\]", line) and not re.search(r"(?i)(token|signature|0x[0-9a-f]{40}|https?://.*?\?)", line):
+            if re.search(r"^\s*(?:Renderer:|Vendor:|VRAM:|Driver:)", line):
                 lines.append(line[:700])
+            if "[BackpackEmoteTiming]" in line and not re.search(r"(?i)(token=|signature|0x[0-9a-f]{40}|https?://.*?\?)", line):
+                timing.append(line[line.index("[BackpackEmoteTiming]"):][:800])
     (OUT/"player-renderer-and-timings.txt").write_text("\n".join(lines), encoding="utf-8")
+    (OUT/"backpack-emote-timings.txt").write_text("\n".join(timing), encoding="utf-8")
     return lines
+
+
+def wait_for_archive(url):
+    # CI may finish installing the runner while the official build is still
+    # uploading. Verify the source returns an actual ZIP before downloading it.
+    until = CLOCK()+720
+    separator = "&" if "?" in url else "?"
+    while CLOCK()<until:
+        probe = f"{url}{separator}qa-probe={os.environ['GITHUB_RUN_ID']}-{int(CLOCK())}"
+        try:
+            with requests.get(probe,headers={"Range":"bytes=0-3","User-Agent":"curl/8.9"},timeout=12,stream=True) as r:
+                if r.status_code in (200,206) and r.raw.read(4)==b"PK\x03\x04":
+                    record(official_zip_available_utc=datetime.now(timezone.utc).isoformat(),
+                           archive_etag=r.headers.get("ETag"), archive_content_range=r.headers.get("Content-Range"))
+                    return
+        except requests.RequestException:
+            pass
+        time.sleep(10)
+    raise RuntimeError("The exact official Windows archive did not become available")
 
 
 def main():
@@ -302,6 +369,11 @@ def main():
     assert re.fullmatch(r"[0-9a-f]{40}", sha)
     assert url.startswith("https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/")
     assert re.search(r"/(?:pr|wd)-\d+-"+sha[:7]+r"/Decentraland_windows64\.zip(?:\?ci=\d+)?$", url)
+    frequency, counter = ctypes.c_longlong(), ctypes.c_longlong()
+    ctypes.windll.kernel32.QueryPerformanceFrequency(ctypes.byref(frequency))
+    ctypes.windll.kernel32.QueryPerformanceCounter(ctypes.byref(counter))
+    METRICS["clock"] = {"windows_counter_hz": frequency.value, "windows_counter": counter.value,
+                        "python_monotonic_s": CLOCK(), "python_clock": time.get_clock_info("monotonic").implementation}
     try:
         for i in range(1000):
             mode = win32api.EnumDisplaySettings(None, i)
@@ -313,6 +385,7 @@ def main():
     with tempfile.TemporaryDirectory(dir=os.environ["RUNNER_TEMP"]) as temp:
         root = Path(temp)
         archive = root/"player.zip"
+        wait_for_archive(url)
         subprocess.run(["curl.exe", "-fsSL", "--retry", "3", "--max-time", "500", "-o", str(archive), url], check=True)
         with archive.open("rb") as stream:
             from hashlib import file_digest

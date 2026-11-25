@@ -11,6 +11,7 @@ permissions:
   contents: read
 jobs:
   player:
+    if: contains(github.event.head_commit.message, 'original WARP')
     name: Backpack on WARP
     runs-on: windows-2025
     timeout-minutes: 36
@@ -18,31 +19,32 @@ jobs:
       AUDIT_BUILD_URL: 'https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28116-7308da1/Decentraland_windows64.zip?ci=45226322119'
       PRODUCT_SHA: '7308da1b8caca66a9dd338ca98b5487553278206'
       CATALOG_RENDERER: WARP
+      DCL_BACKPACK_EMOTE_TIMINGS: '1'
       PYTHONUNBUFFERED: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /catalog_run.py
-            /catalog_frames.py
-            /clap-title-mask.png
-      - uses: actions/checkout@v4
-        with:
-          ref: 7a86e3f306739333ebd7a065059f05b72d46a424
-          persist-credentials: false
-          path: reference
-          sparse-checkout: |
-            qa-audit
-            .claude/skills/pulse-face-to-face/scripts
+      - name: Fetch named immutable QA and fixture files
+        shell: powershell
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $origin = 'https://raw.githubusercontent.com/decentraland/unity-explorer'
+          foreach ($name in @('catalog_run.py','catalog_frames.py','clap-title-mask.png')) {
+            Invoke-WebRequest -UseBasicParsing -Uri "$origin/$env:GITHUB_SHA/$name" -OutFile $name
+          }
+          $mask = (Get-FileHash -LiteralPath clap-title-mask.png -Algorithm SHA256).Hash
+          if ($mask -ne 'FCD527AE772411A69CE05FA15FA8A7AE37DDA0BC2F9342A6E6ACFF48B7F233AA') { throw 'Unexpected reference glyph hash' }
+          $fixture = '7a86e3f306739333ebd7a065059f05b72d46a424'
+          foreach ($name in @('qa-audit/audit_input.py','qa-audit/fixtures.py','qa-audit/rpc_base.py','.claude/skills/pulse-face-to-face/scripts/test_account.py','.claude/skills/pulse-face-to-face/scripts/ethkeys.py')) {
+            $path = Join-Path 'reference' $name
+            New-Item -Path (Split-Path -Parent $path) -ItemType Directory -Force | Out-Null
+            Invoke-WebRequest -UseBasicParsing -Uri "$origin/$fixture/$name" -OutFile $path
+          }
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m pip install requests pillow pywin32
       - name: Record Windows display adapters
-        shell: pwsh
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Path evidence -Force | Out-Null
           Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion,VideoProcessor | ConvertTo-Json | Set-Content evidence/windows-display-adapters.json
