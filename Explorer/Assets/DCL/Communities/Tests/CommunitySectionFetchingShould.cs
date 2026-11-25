@@ -106,6 +106,25 @@ namespace DCL.Communities.Tests
             Assert.That(section.Items, Is.EqualTo(new[] { 40, 40 }));
         }
 
+        [TestCase(null, false)]
+        [TestCase(0, true)]
+        public void ShowTheEmptyStateOnlyForACompletedEmptyPage(int? total, bool showEmptyState)
+        {
+            // Arrange
+            var view = Substitute.For<ICommunityFetchingView<int>>();
+            using var section = new Section(view);
+            UniTask page = section.Fetch();
+            view.ClearReceivedCalls();
+
+            // Act
+            section.Pending.TrySetResult(total);
+            page.GetAwaiter().GetResult();
+
+            // Assert
+            view.Received(1).SetEmptyStateActive(showEmptyState);
+            view.DidNotReceive().SetEmptyStateActive(!showEmptyState);
+        }
+
         private sealed class Section : CommunityFetchingControllerBase<int, ICommunityFetchingView<int>>
         {
             internal readonly List<int> RequestedPages = new ();

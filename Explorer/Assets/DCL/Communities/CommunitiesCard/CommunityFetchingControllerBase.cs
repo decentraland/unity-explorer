@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 completed = true;
 
-                EndLoading(data.TotalToFetch == 0);
+                EndLoading(data.TotalFetched > 0 && data.TotalToFetch == 0);
                 view.RefreshGrid(data, data.PageNumber > 1);
             }
             finally
