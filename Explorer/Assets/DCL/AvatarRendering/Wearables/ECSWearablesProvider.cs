@@ -160,11 +160,7 @@ namespace DCL.AvatarRendering.Wearables
             }
             finally
             {
-                if (!promise.IsConsumed && !promise.TryConsume(world, out _))
-                {
-                    world.Get<GetWearablesByPointersIntention>(promise.Entity).HideWearablesResolution.Release();
-                    promise.ForgetLoading(world);
-                }
+                ConsumeOrCancelPromise(ref promise);
 
                 if (promise.Result is { Succeeded: true } result)
                 {
@@ -207,19 +203,32 @@ namespace DCL.AvatarRendering.Wearables
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories, dtoOnly),
                 PartitionComponent.TOP_PRIORITY);
 
-            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            try
+            {
+                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+                if (promise.Result is not { Succeeded: true } result) return null;
 
-            if (!promise.TryGetResult(world, out var result))
-                return null;
+                results ??= new List<IWearable>();
+                results.AddRange(result.Asset.Wearables);
+                return results;
+            }
+            finally
+            {
+                if (dtoOnly)
+                {
+                    ConsumeOrCancelPromise(ref promise);
+                    if (promise.Result is { Succeeded: true } result) result.Asset.Dispose();
+                    promise.LoadingIntention.Dispose();
+                }
+            }
+        }
 
-            if (!result.Succeeded)
-                return null;
+        private void ConsumeOrCancelPromise(ref WearablePromise promise)
+        {
+            if (promise.IsConsumed || promise.TryConsume(world, out _)) return;
 
-            results ??= new List<IWearable>();
-
-            results.AddRange(result.Asset.Wearables);
-
-            return results;
+            world.Get<GetWearablesByPointersIntention>(promise.Entity).HideWearablesResolution.Release();
+            promise.ForgetLoading(world);
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)

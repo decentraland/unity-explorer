@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
@@ -43,7 +44,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableStorage = new WearableStorage();
             shirt = wearableStorage.GetOrAddByDTO(CreateDTO());
 
-            system = new ResolveWearablePromisesSystem(world, wearableStorage, Substitute.For<IDecentralandUrlsSource>(), URLSubdirectory.EMPTY);
+            var urls = Substitute.For<IDecentralandUrlsSource>();
+            urls.Url(DecentralandUrl.EntitiesActiveElements).Returns("http://localhost/entities/active");
+            system = new ResolveWearablePromisesSystem(world, wearableStorage, urls, URLSubdirectory.EMPTY);
         }
 
         [Test]
@@ -184,6 +187,47 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 asset.Dispose();
                 UnityEngine.Object.DestroyImmediate(gameObject);
             }
+        }
+
+        [Test]
+        public void ReleaseThePublishedBundleReferenceWhenTheParentWasCancelled()
+        {
+            shirt.DTO!.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+            Entity parent = CreateIntention(dtoOnly: false);
+            system.Update(0);
+            Entity child = SingleRequest<GetAssetBundleIntention>();
+            var bundle = new AssetBundleData(null, Array.Empty<AssetBundleData>());
+            bundle.AddReference();
+            world.Add(child, new StreamableLoadingResult<AssetBundleData>(bundle));
+            world.Get<GetWearablesByPointersIntention>(parent).CancellationTokenSource.Cancel();
+
+            using var finalize = new FinalizeAssetBundleWearableLoadingSystem(world, wearableStorage, Substitute.For<IRealmData>(), new AbgenConversionMetrics());
+            try
+            {
+                finalize.Update(0);
+                finalize.Update(0);
+                Assert.That(bundle.referenceCount, Is.Zero);
+                Assert.That(world.IsAlive(child), Is.False);
+                Assert.That(shirt.IsLoading, Is.False);
+                Assert.That(shirt.WearableAssetResults[BodyShape.MALE].Results![0], Is.Null);
+            }
+            finally { bundle.Dispose(true); }
+        }
+
+        [Test]
+        public async Task RequestTheRegistryDefinitionAgainAfterACachedDtoFailure()
+        {
+            shirt.Model = new StreamableLoadingResult<WearableDTO>(ReportData.UNSPECIFIED, new Exception("Registry unavailable"));
+            var provider = new ECSWearablesProvider(Substitute.For<IWeb3IdentityCache>(), world, wearableStorage);
+            using var ct = new CancellationTokenSource();
+            UniTask<IWearable?> attempt = provider.GetForEquipAsync(WEARABLE_URN, BodyShape.MALE, ct.Token);
+
+            system.Update(0);
+            Entity request = SingleRequest<GetWearableDTOByPointersIntention>();
+            CollectionAssert.AreEqual(new URN[] { WEARABLE_URN }, world.Get<GetWearableDTOByPointersIntention>(request).Pointers);
+
+            ct.Cancel();
+            Assert.That((await attempt.SuppressCancellationThrow()).IsCanceled, Is.True);
         }
 
         private Entity SingleRequest<T>()

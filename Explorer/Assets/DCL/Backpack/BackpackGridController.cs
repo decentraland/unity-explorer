@@ -115,6 +115,7 @@ namespace DCL.Backpack
         public void Dispose()
         {
             wearableEquip.Cancel();
+            pageFetchCancellationToken.SafeCancelAndDispose();
             breadcrumbController.Dispose();
 
             eventBus.EquipWearableEvent -= OnEquip;
@@ -451,16 +452,10 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId)
+        private void SelectItem(int _, string itemId)
         {
             if (wearableEquip.IsBusy) return;
-            CancellationToken ct = pageFetchCancellationToken!.Token;
-            SetLoadingSlot(slot, true);
-            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId, () =>
-            {
-                if (!ct.IsCancellationRequested && !wearableEquip.IsBusy)
-                    SetLoadingSlot(slot, false);
-            }));
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId, pageFetchCancellationToken!.Token));
         }
 
         private void OnUnequip(IWearable unequippedWearable)

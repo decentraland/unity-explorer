@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
@@ -69,12 +70,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackSelectWearableCommand
     {
         public readonly string Id;
-        public readonly Action? EndAction;
+        public readonly CancellationToken CancellationToken;
 
-        public BackpackSelectWearableCommand(string id, Action? endAction = null)
+        public BackpackSelectWearableCommand(string id, CancellationToken cancellationToken)
         {
             Id = id;
-            EndAction = endAction;
+            CancellationToken = cancellationToken;
         }
     }
 

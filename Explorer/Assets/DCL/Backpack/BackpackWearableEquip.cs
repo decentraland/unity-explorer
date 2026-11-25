@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
@@ -47,6 +49,8 @@ namespace DCL.Backpack
             pendingSlot = slot;
             CancellationToken ct = attempt.Token;
             bool applied = false;
+            AttachmentAssetBase? mainAsset = null;
+            AttachmentAssetBase? mask = null;
             try
             {
                 setLoading(slot, true);
@@ -57,6 +61,18 @@ namespace DCL.Backpack
                 IWearable? wearable = await provider.GetForEquipAsync(itemId, bodyShape, ct);
                 if (ct.IsCancellationRequested || wearable == null) return;
 
+                // Authorization can outlive a cache unload. Pin the resolved assets until the command has run.
+                BodyShape targetBody = WearableComponentsUtils.GetBodyShapeForEquip(wearable.GetUrn(), bodyShape);
+                var assets = wearable.WearableAssetResults[targetBody].Results;
+                mainAsset = assets?[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]?.Asset;
+                if (mainAsset == null) return;
+                mainAsset.AddReference();
+                if (assets!.Length > WearablePolymorphicBehaviour.MASK_ASSET_INDEX)
+                {
+                    mask = assets[WearablePolymorphicBehaviour.MASK_ASSET_INDEX]?.Asset;
+                    mask?.AddReference();
+                }
+
                 await AuthorizeSmartWearableAsync(wearable, ct);
                 if (ct.IsCancellationRequested || equipped.Wearable(WearableCategories.Categories.BODY_SHAPE)?.GetUrn().Equals(shape.GetUrn()) != true) return;
 
@@ -66,6 +82,8 @@ namespace DCL.Backpack
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.WEARABLE); }
             finally
             {
+                mask?.Dereference();
+                mainAsset?.Dereference();
                 if (pending == attempt)
                 {
                     pending = null;

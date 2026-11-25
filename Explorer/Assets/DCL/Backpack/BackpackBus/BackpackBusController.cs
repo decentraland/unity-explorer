@@ -32,6 +32,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly CancellationTokenSource fetchWearableCts = new ();
         private readonly CancellationTokenSource fetchEmoteCts = new ();
         private CancellationTokenSource equipOutfitCts = new ();
+        private CancellationTokenSource? selectionCts;
 
         private readonly ReportData emoteReportData = new (ReportCategory.EMOTE);
         private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
@@ -121,12 +122,44 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => SelectWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
+            SelectWearableAsync(command).Forget();
 
-        private void SelectWearable(IWearable wearable, BackpackSelectWearableCommand command)
+        private async UniTask SelectWearableAsync(BackpackSelectWearableCommand command)
         {
-            backpackEventBus.SendWearableSelect(wearable);
-            command.EndAction?.Invoke();
+            using var selection = CancellationTokenSource.CreateLinkedTokenSource(command.CancellationToken, fetchWearableCts.Token);
+            selectionCts?.Cancel();
+            selectionCts = selection;
+            CancellationToken ct = selection.Token;
+
+            try
+            {
+                if (ct.IsCancellationRequested) return;
+                URN pointer = new URN(command.Id).Shorten();
+                if (wearableStorage.TryGetElement(pointer, out IWearable cached) && cached.Model.Succeeded)
+                {
+                    backpackEventBus.SendWearableSelect(cached);
+                    return;
+                }
+
+                IWearable? body = equippedWearables.Wearable(Runtime.Wearables.WearableCategories.Categories.BODY_SHAPE);
+                if (body == null) return;
+                var wearables = await wearablesProvider.GetDTOsByPointersAsync(new[] { pointer }, BodyShape.FromStringSafe(body.GetUrn()), ct);
+                if (ct.IsCancellationRequested || wearables == null) return;
+
+                await UniTask.SwitchToMainThread(ct);
+                foreach (IWearable wearable in wearables)
+                    if (wearable.Model.Succeeded && wearable.GetUrn().Shorten().Equals(pointer))
+                    {
+                        backpackEventBus.SendWearableSelect(wearable);
+                        return;
+                    }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+            catch (Exception e) { ReportHub.LogException(e, wearableReportData); }
+            finally
+            {
+                if (selectionCts == selection) selectionCts = null;
+            }
         }
 
         private bool HandleEquipWearableCommand(BackpackEquipWearableCommand command)

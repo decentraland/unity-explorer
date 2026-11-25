@@ -109,8 +109,9 @@ namespace ECS.StreamableLoading.Tests
             }
         }
 
-        [Test]
-        public async Task RecordAsIrrecoverableWhenTheLoadFailsWithADefinitive404()
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task RecordAsIrrecoverableWhenTheLoadFailsWithADefinitive404(bool retryCachedFailure)
         {
             // Arrange
             using var mockedReportScope = new MockedReportScope();
@@ -136,7 +137,11 @@ namespace ECS.StreamableLoading.Tests
                     CommonArguments = new CommonLoadingArguments($"http://127.0.0.1:{port}/missing-asset-bundle", attempts: 1),
                 };
 
-                var promise = AssetPromise<StubAsset, StubIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+                var key = new IntentionsComparer<StubIntention>.SourcedIntentionId(intention, intention.CommonArguments.CurrentSource);
+                if (retryCachedFailure)
+                    cache.IrrecoverableFailures.Add(key, new StreamableLoadingResult<StubAsset>(ReportData.UNSPECIFIED, new Exception("Earlier 404")));
+
+                var promise = AssetPromise<StubAsset, StubIntention>.Create(world, intention.WithRetryCachedFailures(retryCachedFailure), PartitionComponent.TOP_PRIORITY);
                 world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
 
                 // Act — a real UnityWebRequest is sent to the local listener, which answers 404 Not Found; this
@@ -158,6 +163,7 @@ namespace ECS.StreamableLoading.Tests
                 StreamableLoadingResult<StubAsset> result = world.Get<StreamableLoadingResult<StubAsset>>(promise.Entity);
                 Assert.That(result.Succeeded, Is.False, "The request should have failed with a 404");
 
+                Assert.That(cache.IrrecoverableFailures[key]!.Value.Exception, Is.SameAs(result.Exception));
                 Assert.That(cache.IrrecoverableFailures.Count, Is.EqualTo(1),
                     "A genuine, definitive 4xx failure (per WebRequestUtils.IsIrrecoverableError) must still be "
                     + "cached as irrecoverable — the fix only stops caching transient/general failures");
@@ -179,18 +185,21 @@ namespace ECS.StreamableLoading.Tests
             }
         }
 
-        [Test]
-        public async Task RefreshACachedFailureOnlyOnAnExplicitRetry()
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public async Task RefreshACachedFailureOnlyAfterAnExplicitRetrySucceeds(bool retryFails, bool cancelRetry)
         {
             using var mockedReportScope = new MockedReportScope();
             using var world = World.Create();
             world.Create(new SceneShortInfo(Vector2Int.zero, "TEST"));
             var cache = new RecordingCache();
-            using var system = new TransientFailureTestLoadSystem(world, cache);
+            using var system = new TransientFailureTestLoadSystem(world, cache) { FailuresLeft = retryFails ? 1 : 0, CancelDuringLoad = cancelRetry };
             system.Initialize();
             var intention = NewIntention();
             var key = new IntentionsComparer<StubIntention>.SourcedIntentionId(intention, intention.CommonArguments.CurrentSource);
-            cache.IrrecoverableFailures.Add(key, new StreamableLoadingResult<StubAsset>(ReportData.UNSPECIFIED, new Exception("Cached 404")));
+            var cachedError = new Exception("Cached 404");
+            cache.IrrecoverableFailures.Add(key, new StreamableLoadingResult<StubAsset>(ReportData.UNSPECIFIED, cachedError));
 
             var first = AssetPromise<StubAsset, StubIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             world.Get<StreamableLoadingState>(first.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
@@ -200,8 +209,16 @@ namespace ECS.StreamableLoading.Tests
             var retry = AssetPromise<StubAsset, StubIntention>.Create(world, intention.WithRetryCachedFailures(true), PartitionComponent.TOP_PRIORITY);
             world.Get<StreamableLoadingState>(retry.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
             system.Update(0);
-            Assert.That((await retry.ToUniTaskAsync(world)).Result!.Value.Succeeded, Is.True);
-            Assert.That(cache.IrrecoverableFailures, Is.Empty);
+            Assert.That((await retry.ToUniTaskAsync(world)).Result!.Value.Succeeded, Is.EqualTo(!retryFails && !cancelRetry));
+            if (retryFails || cancelRetry)
+            {
+                var ordinary = AssetPromise<StubAsset, StubIntention>.Create(world, NewIntention(), PartitionComponent.TOP_PRIORITY);
+                world.Get<StreamableLoadingState>(ordinary.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+                system.Update(0);
+                Assert.That((await ordinary.ToUniTaskAsync(world)).Result!.Value.Exception, Is.SameAs(cachedError));
+            }
+            else
+                Assert.That(cache.IrrecoverableFailures, Is.Empty);
             Assert.That(system.FlowInternalCallCount, Is.EqualTo(1));
         }
 
@@ -277,6 +294,7 @@ namespace ECS.StreamableLoading.Tests
         private class TransientFailureTestLoadSystem : LoadSystemBase<StubAsset, StubIntention>
         {
             public int FailuresLeft;
+            public bool CancelDuringLoad;
             public int FlowInternalCallCount { get; private set; }
 
             internal TransientFailureTestLoadSystem(World world, IStreamableCache<StubAsset, StubIntention> cache) : base(world, cache) { }
@@ -285,6 +303,7 @@ namespace ECS.StreamableLoading.Tests
                 StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
             {
                 FlowInternalCallCount++;
+                if (CancelDuringLoad) intention.CancellationTokenSource.Cancel();
 
                 if (FailuresLeft > 0)
                 {

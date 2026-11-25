@@ -5,9 +5,11 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using NSubstitute;
@@ -110,6 +112,30 @@ namespace DCL.Backpack.Tests
             events.DidNotReceiveWithAnyArgs().SendEquipWearable(default!, default);
             Assert.That(warnings.Count, Is.EqualTo(1));
             Assert.That(busy, Is.EqualTo(new[] { (SLOT, true), (SLOT, false) }));
+        }
+
+        [Test]
+        public void KeepTheModelAliveDuringSmartWearableAuthorization()
+        {
+            var storage = new WearableStorage();
+            storage.AddWearable(SHIRT, shirt, true);
+            var budget = Substitute.For<IPerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            shirt.DTO.Returns(_ =>
+            {
+                storage.Unload(budget);
+                return null;
+            });
+            provider.GetForEquipAsync(SHIRT, BodyShape.FEMALE, Arg.Any<CancellationToken>())
+                    .Returns(UniTask.FromResult<IWearable?>(shirt));
+
+            equip.EquipAsync(SLOT, SHIRT).GetAwaiter().GetResult();
+
+            events.Received(1).SendEquipWearable(shirt, true);
+            Assert.That(warnings, Is.Empty);
+            Assert.That(shirtModel.ReferenceCount, Is.Zero);
+            storage.Unload(budget);
+            Assert.That(shirt.WearableAssetResults[BodyShape.FEMALE].Results![0], Is.Null);
         }
 
         [Test]

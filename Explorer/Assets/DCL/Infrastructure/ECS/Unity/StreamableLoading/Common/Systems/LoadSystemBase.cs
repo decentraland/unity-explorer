@@ -170,9 +170,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
 
                     // If the given URL failed irrecoverably just return the failure
-                    if (intention.CommonArguments.RetryCachedFailures)
-                        cache.IrrecoverableFailures.SyncRemove(intentionId);
-                    else if (cache.IrrecoverableFailures.TryGetValue(intentionId,
+                    if (!intention.CommonArguments.RetryCachedFailures && cache.IrrecoverableFailures.SyncTryGetValue(intentionId,
                             out StreamableLoadingResult<TAsset>? failure))
                     {
                         result = failure;
@@ -317,11 +315,8 @@ namespace ECS.StreamableLoading.Common.Systems
                     // If result is null, it means we are about to start a fresh download loop
                     ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Miss - Starting Download for: {intention.CommonArguments.URL}");
 
-                    result = await RepeatLoopAsync(intention, state, partition, intentionId, ct);
+                    result = await intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, GetReportData(), ct);
                 }
-
-                // // Try load from cache first
-                // result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -332,11 +327,25 @@ namespace ECS.StreamableLoading.Common.Systems
                 // the disk write should run to completion, otherwise a short-lived consumer (e.g. an entity
                 // destroyed mid-write) interrupts the stream and the entry is lost
                 if (result is { Succeeded: true })
+                {
+                    if (intention.CommonArguments.RetryCachedFailures)
+                        cache.IrrecoverableFailures.SyncRemove(intentionId);
+
                     genericCache
                        .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), cancellationTokenSource.Token)
                        .Forget(static e =>
                             ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
                         );
+                }
+                else if (result is { IsInitialized: true } && IsIrrecoverableFailure(result.Value))
+                {
+                    var failures = cache.IrrecoverableFailures;
+                    lock (failures)
+                    {
+                        if (failures.ContainsKey(intentionId)) failures[intentionId] = result;
+                        else failures.Add(intentionId, result);
+                    }
+                }
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
@@ -394,19 +403,6 @@ namespace ECS.StreamableLoading.Common.Systems
             return null;
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention,
-            StreamableLoadingState state, IPartitionComponent partition,
-            IntentionsComparer<TIntention>.SourcedIntentionId intentionId, CancellationToken ct)
-        {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition,
-                cachedInternalFlowDelegate, GetReportData(), ct);
-
-            return result is { Succeeded: false, IsInitialized: true } && IsIrrecoverableFailure(result.Value)
-                ? SetIrrecoverableFailure(intention,
-                    intentionId, result.Value)
-                : result;
-        }
-
         /// <summary>
         ///     Only failures that are guaranteed to repeat — a definitive HTTP client error such as 404 —
         ///     may be cached for the rest of the session; transient failures (aborted requests, timeouts,
@@ -424,12 +420,5 @@ namespace ECS.StreamableLoading.Common.Systems
             return false;
         }
 
-        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention,
-            IntentionsComparer<TIntention>.SourcedIntentionId intentionId, StreamableLoadingResult<TAsset> failure)
-        {
-            bool result = cache.IrrecoverableFailures.SyncTryAdd(intentionId, failure);
-            if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
-            return failure;
-        }
     }
 }
