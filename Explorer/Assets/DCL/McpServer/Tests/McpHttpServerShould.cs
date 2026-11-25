@@ -55,15 +55,34 @@ namespace DCL.McpServer.Tests
             Assert.That(IsAllowed(origin), Is.False);
 
         [Test]
-        public void ReturnFalseWhenPortIsHeldByAnotherListener()
+        public void MoveToTheNextPortWhenTheFirstIsHeld()
         {
             var holder = new TcpListener(IPAddress.Loopback, 0);
             holder.Start();
             int heldPort = ((IPEndPoint)holder.LocalEndpoint).Port;
 
-            var registry = new McpToolsRegistry();
-            registry.Build();
-            var server = new McpHttpServer(registry, heldPort);
+            McpHttpServer server = NewServer(heldPort, 10);
+
+            try
+            {
+                Assert.That(server.TryStart(), Is.True);
+                Assert.That(server.EndpointUrl, Does.Not.Contain($":{heldPort}/"));
+            }
+            finally
+            {
+                server.Dispose();
+                holder.Stop();
+            }
+        }
+
+        [Test]
+        public void ReturnFalseWhenEveryPortIsHeld()
+        {
+            var holder = new TcpListener(IPAddress.Loopback, 0);
+            holder.Start();
+            int heldPort = ((IPEndPoint)holder.LocalEndpoint).Port;
+
+            McpHttpServer server = NewServer(heldPort, 1);
 
             LogAssert.ignoreFailingMessages = true;
 
@@ -74,6 +93,13 @@ namespace DCL.McpServer.Tests
                 server.Dispose();
                 holder.Stop();
             }
+        }
+
+        private static McpHttpServer NewServer(int port, int portAttempts)
+        {
+            var registry = new McpToolsRegistry();
+            registry.Build();
+            return new McpHttpServer(registry, port, portAttempts);
         }
     }
 
@@ -105,7 +131,7 @@ namespace DCL.McpServer.Tests
             var registry = new McpToolsRegistry();
             registry.Build();
 
-            server = new McpHttpServer(registry, port);
+            server = new McpHttpServer(registry, port, 1);
             cts = new CancellationTokenSource();
 
             Assert.That(server.TryStart(), Is.True, "the test server failed to start");

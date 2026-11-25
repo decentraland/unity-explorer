@@ -27,8 +27,11 @@ namespace DCL.McpServer.Core
         // of the status. This caps how much of an oversized/refused body is read before the rejection is sent.
         private const int DRAIN_CAP_BYTES = 8 * 1024 * 1024;
 
+        private const int MAX_PORT = 65535;
+
         private readonly McpJsonRpcDispatcher dispatcher;
-        private readonly int port;
+        private readonly int firstPort;
+        private readonly int lastPort;
 
         // The session maps to the Explorer process, not to a client: this server is stateless and drives one
         // shared world, so every request operates on the same state and there is nothing session-scoped to isolate.
@@ -39,14 +42,21 @@ namespace DCL.McpServer.Core
 
         private HttpListener? listener;
 
-        /// <summary>The localhost URL the server listens on, e.g. <c>http://127.0.0.1:8123/unity-explorer-mcp</c>.</summary>
-        public string EndpointUrl { get; }
+        /// <summary>
+        ///     The localhost URL the server listens on, e.g. <c>http://127.0.0.1:8123/unity-explorer-mcp</c>.
+        ///     Before a successful <see cref="TryStart" /> it points at the first candidate port.
+        /// </summary>
+        public string EndpointUrl { get; private set; }
 
-        public McpHttpServer(McpToolsRegistry toolsRegistry, int port)
+        /// <param name="toolsRegistry">Tools exposed over JSON-RPC.</param>
+        /// <param name="port">First port to try.</param>
+        /// <param name="portAttempts">How many consecutive ports, starting at <paramref name="port" />, <see cref="TryStart" /> tries before giving up.</param>
+        public McpHttpServer(McpToolsRegistry toolsRegistry, int port, int portAttempts)
         {
             this.dispatcher = new McpJsonRpcDispatcher(toolsRegistry, Application.version);
-            this.port = port;
-            EndpointUrl = string.Format(IDecentralandUrlsSource.LOCAL_MCP_ENDPOINT_URL, port);
+            firstPort = port;
+            lastPort = Math.Min(port + Math.Max(portAttempts, 1) - 1, MAX_PORT);
+            EndpointUrl = UrlFor(port);
         }
 
         public void Dispose()
@@ -63,23 +73,44 @@ namespace DCL.McpServer.Core
             listener = null;
         }
 
+        /// <summary>
+        ///     Binds the first free port in the configured range, so another process (e.g. a second Explorer)
+        ///     holding the first port moves this server to the next one instead of disabling it.
+        /// </summary>
         public bool TryStart()
         {
-            var newListener = new HttpListener();
-            newListener.Prefixes.Add($"{EndpointUrl}/"); // HttpListener requires the trailing slash
+            string lastError = string.Empty;
 
-            try { newListener.Start(); }
-            catch (Exception e) when (e is HttpListenerException or SocketException or InvalidOperationException)
+            for (int candidate = firstPort; candidate <= lastPort; candidate++)
             {
-                ReportHub.LogError(ReportCategory.MCP, $"Cannot start the MCP server on port {port} (already in use? pass a different --mcp-port): {e.Message}");
-                newListener.Close();
-                return false;
+                string url = UrlFor(candidate);
+                var newListener = new HttpListener();
+                newListener.Prefixes.Add($"{url}/"); // HttpListener requires the trailing slash
+
+                try { newListener.Start(); }
+                catch (Exception e) when (e is HttpListenerException or SocketException or InvalidOperationException)
+                {
+                    newListener.Close();
+                    lastError = e.Message;
+                    continue;
+                }
+
+                listener = newListener;
+                EndpointUrl = url;
+
+                ReportHub.Log(LogType.Log, ReportCategory.MCP, candidate == firstPort
+                    ? $"MCP server listening on {url}"
+                    : $"MCP port {firstPort} is in use, MCP server listening on {url}");
+
+                return true;
             }
 
-            listener = newListener;
-            ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on {EndpointUrl}");
-            return true;
+            ReportHub.LogError(ReportCategory.MCP, $"Cannot start the MCP server: ports {firstPort}-{lastPort} are all in use (pass a different --mcp-port): {lastError}");
+            return false;
         }
+
+        private static string UrlFor(int port) =>
+            string.Format(IDecentralandUrlsSource.LOCAL_MCP_ENDPOINT_URL, port);
 
         public async UniTaskVoid RunAsync(CancellationToken ct)
         {

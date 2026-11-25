@@ -422,7 +422,7 @@ decentraland://?force-open-backpack=true
 
 ### `mcp-port`
 **Type:** String (integer port, 1024–65535)
-**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`); if that port is taken it moves to the next free one among the following 9. Pass distinct ports when running multiple instances via `--multi-instance` to keep their addresses stable.
 
 **Usage:**
 ```bash
