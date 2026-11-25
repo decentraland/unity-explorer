@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.CharacterPreview;
 using System;
 using System.Collections.Generic;
@@ -47,15 +48,11 @@ namespace DCL.Backpack.BackpackBus
 
     public readonly struct BackpackEquipWearableCommand
     {
-        public readonly string Id;
-        public readonly bool IsManuallyEquipped; // True when the wearable is equipped 'manually' from the user in the backpack UI
-        public readonly Action? EndAction;
+        public readonly IWearable Wearable;
 
-        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped, Action? endAction = null)
+        public BackpackEquipWearableCommand(IWearable wearable)
         {
-            Id = id;
-            IsManuallyEquipped = isManuallyEquipped;
-            EndAction = endAction;
+            Wearable = wearable;
         }
     }
 

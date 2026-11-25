@@ -179,6 +179,32 @@ namespace ECS.StreamableLoading.Tests
             }
         }
 
+        [Test]
+        public async Task RefreshACachedFailureOnlyOnAnExplicitRetry()
+        {
+            using var mockedReportScope = new MockedReportScope();
+            using var world = World.Create();
+            world.Create(new SceneShortInfo(Vector2Int.zero, "TEST"));
+            var cache = new RecordingCache();
+            using var system = new TransientFailureTestLoadSystem(world, cache);
+            system.Initialize();
+            var intention = NewIntention();
+            var key = new IntentionsComparer<StubIntention>.SourcedIntentionId(intention, intention.CommonArguments.CurrentSource);
+            cache.IrrecoverableFailures.Add(key, new StreamableLoadingResult<StubAsset>(ReportData.UNSPECIFIED, new Exception("Cached 404")));
+
+            var first = AssetPromise<StubAsset, StubIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            world.Get<StreamableLoadingState>(first.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+            system.Update(0);
+            Assert.That((await first.ToUniTaskAsync(world)).Result!.Value.Succeeded, Is.False);
+
+            var retry = AssetPromise<StubAsset, StubIntention>.Create(world, intention.WithRetryCachedFailures(true), PartitionComponent.TOP_PRIORITY);
+            world.Get<StreamableLoadingState>(retry.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+            system.Update(0);
+            Assert.That((await retry.ToUniTaskAsync(world)).Result!.Value.Succeeded, Is.True);
+            Assert.That(cache.IrrecoverableFailures, Is.Empty);
+            Assert.That(system.FlowInternalCallCount, Is.EqualTo(1));
+        }
+
         private static async Task ServeOneNotFoundResponseAsync(HttpListener listener)
         {
             HttpListenerContext context = await listener.GetContextAsync().ConfigureAwait(false);

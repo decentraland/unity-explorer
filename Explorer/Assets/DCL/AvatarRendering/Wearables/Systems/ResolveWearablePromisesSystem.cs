@@ -108,6 +108,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (missingPointers.Count > 0)
             {
+                WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
                 CreateMissingPointersPromise(missingPointers, ref wearablesByPointersIntention, partitionComponent);
                 return;
             }
@@ -130,13 +131,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
 
                         if (visibleWearable.IsLoading) continue;
-                        if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
-                        if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
+                        if (IsWaitingForAssets(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
 
                         resolvedResults++;
 
                         // Reference must be added only once when the wearable is resolved
-                        if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+                        if (visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Results?[0] is { Succeeded: true }
+                            && BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
 
                             // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
                             visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
@@ -171,7 +172,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
-        private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private bool IsWaitingForAssets(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
@@ -192,7 +193,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return true;
             }
 
-            return false;
+            return !component.HasEssentialAssetsResolved(intention.BodyShape);
         }
     }
 }

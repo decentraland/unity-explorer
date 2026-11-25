@@ -227,7 +227,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         parentEntityID: wearable.DTO.id,
-                        cancellationTokenSource: intention.CancellationTokenSource),
+                        cancellationTokenSource: intention.CancellationTokenSource).WithRetryCachedFailures(intention.RetryCachedFailures),
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
@@ -250,14 +250,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
             if (IsGlb(content))
-                CreateRawGltfPromise(content, wearable, intention.BodyShape, index, partitionComponent, world);
+                CreateRawGltfPromise(content, wearable, intention.BodyShape, index, partitionComponent, world, intention.RetryCachedFailures);
             else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format
             {
                 var promise = TexturePromise.Create(world,
                     new GetTextureIntention
                     {
                         // If cancellation token source was not provided a new one will be created
-                        CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
+                        CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource) { RetryCachedFailures = intention.RetryCachedFailures },
                         ReportSource = nameof(WearablePolymorphicBehaviour),
                     },
                     partitionComponent);
@@ -292,12 +292,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private static bool IsGlb(ContentDefinition content) =>
             content.file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase);
 
-        private static void CreateRawGltfPromise<T>(ContentDefinition content, T wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world)
+        private static void CreateRawGltfPromise<T>(ContentDefinition content, T wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world, bool retryCachedFailures = false)
             where T: IAvatarAttachment
         {
             // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
             var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
-            var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
+            var promise = RawGltfPromise.Create(world, getGltf.WithRetryCachedFailures(retryCachedFailures), partitionComponent);
             world.Create(promise, wearable, bodyShape, index);
         }
 
@@ -378,6 +378,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
             return true;
         }
+
+        public static bool HasUsableMainAsset(this IWearable wearable, BodyShape bodyShape) =>
+            wearable.WearableAssetResults[bodyShape].Results?[MAIN_ASSET_INDEX]?.Asset switch
+            {
+                AttachmentRegularAsset model => model.MainAsset != null,
+                AttachmentTextureAsset texture => texture.Texture != null,
+                _ => false,
+            };
 
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)
         {

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -99,11 +99,12 @@ namespace Global.Dynamic
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, identityCache), builderDtosUrl.Value);
 
+            var wearableStorage = new WearableStorage();
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld), builderDtosUrl.Value);
+                new ECSWearablesProvider(identityCache, globalWorld, wearableStorage), builderDtosUrl.Value);
 
             return new WearableContainer(
-                new WearableStorage(),
+                wearableStorage,
                 new TrimmedWearableStorage(),
                 trimmedEmoteCatalog,
                 emoteProvider,

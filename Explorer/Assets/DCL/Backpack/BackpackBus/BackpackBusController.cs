@@ -129,39 +129,29 @@ namespace DCL.Backpack.BackpackBus
             command.EndAction?.Invoke();
         }
 
-        private void HandleEquipWearableCommand(BackpackEquipWearableCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
-
-        private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
+        private bool HandleEquipWearableCommand(BackpackEquipWearableCommand command)
         {
-            string? category = null;
+            IWearable wearable = command.Wearable;
+            string category = wearable.GetCategory();
+            if (string.IsNullOrEmpty(category)) return false;
 
-            try
-            {
-                category = wearable.GetCategory();
-            }
-            catch (Exception)
-            {
-                // Sometimes the wearable has no available category thus asking for it provokes NRE
-            }
+            IWearable? currentBody = equippedWearables.Wearable(Runtime.Wearables.WearableCategories.Categories.BODY_SHAPE);
+            if (currentBody == null) return false;
 
-            if (category == null)
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {command.Id}");
-                return;
-            }
+            BodyShape targetBody = WearableComponentsUtils.GetBodyShapeForEquip(wearable.GetUrn(), BodyShape.FromStringSafe(currentBody.GetUrn()));
+            if (!wearable.HasUsableMainAsset(targetBody)) return false;
 
             IWearable? wearableToUnequip = equippedWearables.Wearable(category);
 
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
-            backpackEventBus.SendEquipWearable(wearable, command.IsManuallyEquipped);
+            backpackEventBus.SendEquipWearable(wearable, true);
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);
 
-            command.EndAction?.Invoke();
+            return true;
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)

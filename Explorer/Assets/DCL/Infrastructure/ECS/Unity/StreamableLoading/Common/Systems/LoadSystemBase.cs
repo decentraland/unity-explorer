@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -170,7 +170,9 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
 
                     // If the given URL failed irrecoverably just return the failure
-                    if (cache.IrrecoverableFailures.TryGetValue(intentionId,
+                    if (intention.CommonArguments.RetryCachedFailures)
+                        cache.IrrecoverableFailures.SyncRemove(intentionId);
+                    else if (cache.IrrecoverableFailures.TryGetValue(intentionId,
                             out StreamableLoadingResult<TAsset>? failure))
                     {
                         result = failure;

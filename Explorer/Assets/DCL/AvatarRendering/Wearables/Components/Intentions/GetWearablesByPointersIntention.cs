@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         ///     Resolves as soon as every DTO is loaded, without loading the wearables' assets
         /// </summary>
         public readonly bool DtoOnly;
+        public bool RetryCachedFailures;
 
         /// <summary>
         ///     How many pointers were missing when resolution began
@@ -35,6 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.All, bool dtoOnly = false)
         {
+            RetryCachedFailures = false;
             Pointers = pointers;
             DtoOnly = dtoOnly;
             BodyShape = bodyShape;
