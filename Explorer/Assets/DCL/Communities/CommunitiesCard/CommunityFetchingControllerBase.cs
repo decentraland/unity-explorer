@@ -58,12 +58,18 @@ namespace DCL.Communities.CommunitiesCard
                 view.SetLoadingMoreBadgeActive(data.PageNumber > 1);
                 view.SetEmptyStateActive(false);
 
-                int total = await FetchDataAsync(fetch.Token);
+                int? total = await FetchDataAsync(fetch.Token);
                 if (fetch.IsCancellationRequested)
                     return;
 
-                data.TotalToFetch = total;
-                data.TotalFetched = data.PageNumber * pageSize;
+                if (total.HasValue)
+                {
+                    data.TotalToFetch = total.Value;
+                    data.TotalFetched = data.PageNumber * pageSize;
+                }
+                else
+                    data.PageNumber--;
+
                 completed = true;
 
                 EndLoading(data.TotalToFetch == 0);
@@ -94,7 +100,8 @@ namespace DCL.Communities.CommunitiesCard
             view.SetEmptyStateActive(showEmptyState);
         }
 
-        protected abstract UniTask<int> FetchDataAsync(CancellationToken ct);
+        /// <returns>The total available results, or null when the page request failed and can be retried.</returns>
+        protected abstract UniTask<int?> FetchDataAsync(CancellationToken ct);
 
         protected void RefreshGrid(bool redraw) =>
             view.RefreshGrid(currentSectionFetchData, redraw);

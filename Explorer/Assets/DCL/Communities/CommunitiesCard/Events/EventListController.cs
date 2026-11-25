@@ -179,7 +179,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                     thumbnailLoader.Cache)));
         }
 
-        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
+        protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
         {
             Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetCommunityEventsAsync(communityData!.Value.id, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -189,10 +189,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             if (!eventResponse.Success)
             {
-                //If the request fails, we restore the previous page number in order to retry the same request next time
-                eventsFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_FETCHING_ERROR_MESSAGE));
-                return eventsFetchData.TotalToFetch;
+                return null;
             }
 
             if (eventResponse.Value.data.total == 0)
@@ -211,10 +209,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             if (!placesResponse.Success)
             {
-                //If the request fails, we restore the previous page number in order to retry the same request next time
-                eventsFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE));
-                return eventsFetchData.TotalToFetch;
+                return null;
             }
 
             placeInfoCache.Clear();

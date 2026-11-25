@@ -519,7 +519,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             RefreshGrid(true);
         }
 
-        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
+        protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
         {
             SectionFetchData<ICommunityMemberData> membersData = currentSectionFetchData;
 
@@ -539,11 +539,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ct.ThrowIfCancellationRequested();
 
             if (!response.Success)
-            {
-                //If the request fails, we restore the previous page number in order to retry the same request next time
-                membersData.PageNumber--;
-                return membersData.TotalToFetch;
-            }
+                return null;
 
             foreach (var member in response.Value.members)
                 if (!membersData.Items.Contains(member))
