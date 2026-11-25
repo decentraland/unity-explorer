@@ -57,16 +57,16 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private GetCommunityResponse.CommunityData? communityData;
 
-        private int requestAmount;
+        private int? requestAmount;
 
-        private int RequestsAmount
+        private int? RequestsAmount
         {
             get => requestAmount;
 
             set
             {
                 requestAmount = value;
-                view.UpdateRequestsCounter(value);
+                view.UpdateRequestsCounter(value.GetValueOrDefault());
             }
         }
 
@@ -219,7 +219,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 SectionFetchData<ICommunityMemberData> sectionData = currentSectionFetchData;
 
-                if (sectionData.PageNumber == 0)
+                if (sectionData.TotalFetched == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
                 else
                     view.SetEmptyStateActive(sectionData.Items.Count == 0);
@@ -451,7 +451,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             panelLifecycleTask?.TrySetResult();
 
-            RequestsAmount = 0;
+            panelLifecycleTask = null;
+            RequestsAmount = null;
 
             base.Reset();
         }
@@ -565,36 +566,41 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 try
                 {
+                    bool sameVisit = cancellationToken == ct;
                     cancellationToken = ct;
 
-                    if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
+                    if (communityData is not null && community.id.Equals(communityData.Value.id))
+                    {
+                        if (sameVisit) return;
+                    }
+                    else
+                    {
+                        communityData = community;
+                        view.SetSectionButtonsActive(community.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
+                        panelLifecycleTask = new UniTaskCompletionSource();
+                        view.SetCommunityData(community, panelLifecycleTask.Task);
+                    }
 
-                    communityData = community;
-                    view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
-                    panelLifecycleTask = new UniTaskCompletionSource();
-                    view.SetCommunityData(community, panelLifecycleTask!.Task);
+                    if (currentSectionFetchData.TotalFetched == 0)
+                        tasks.Add(FetchNewDataAsync(ct));
 
-                    tasks.Add(FetchNewDataAsync(ct));
-
-                    if (community.privacy == CommunityPrivacy.@private && communityData?.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
+                    if (RequestsAmount == null && community.privacy == CommunityPrivacy.@private && community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
                         tasks.Add(FetchRequestsToJoinAsync(ct));
 
                     await UniTask.WhenAll(tasks);
                 }
 
-                // Fixes https://github.com/decentraland/unity-explorer/issues/6317
-                catch (OperationCanceledException) { communityData = null; }
+                catch (OperationCanceledException) { }
                 finally { ListPool<UniTask>.Release(tasks); }
             }
 
             async UniTask FetchRequestsToJoinAsync(CancellationToken ctkn)
             {
-                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
+                var panel = panelLifecycleTask;
+                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(community.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
                                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                ct.ThrowIfCancellationRequested();
-
-                if (!response.Success)
+                if (ctkn.IsCancellationRequested || panel != panelLifecycleTask || !response.Success)
                     return;
 
                 RequestsAmount = response.Value.total;
