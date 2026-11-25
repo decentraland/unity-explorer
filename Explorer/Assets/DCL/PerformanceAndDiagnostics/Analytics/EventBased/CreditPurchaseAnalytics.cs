@@ -60,18 +60,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_BUY_CREDITS_PROMPTED, props);
         }
 
-        private void OnPurchaseStarted(ShopListingDto listing, CreditsPurchaseQuote quote)
+        private void OnPurchaseStarted(ShopListingDto listing, CreditsPurchaseQuote quote, PaymentMethod method)
         {
             JObject props = BuildItemProps(listing);
             AddQuoteProps(props, quote);
+            props.Add(ShopCartCheckoutAnalytics.PAYMENT_TYPE_KEY, ShopCartCheckoutAnalytics.PaymentTypeOf(method));
             analytics.Track(AnalyticsEvents.MarketplaceCredits.SHOP_STARTED_PURCHASE, props);
         }
 
-        private void OnPurchaseCompleted(ShopListingDto listing, CreditsPurchaseQuote quote, string txHash, float durationSec)
+        private void OnPurchaseCompleted(ShopListingDto listing, CreditsPurchaseQuote quote, PaymentMethod method, string txHash, float durationSec)
         {
             double priceUsd = quote.UsdCents / 100.0;
             JObject props = BuildItemProps(listing);
             AddQuoteProps(props, quote);
+            props.Add(ShopCartCheckoutAnalytics.PAYMENT_TYPE_KEY, ShopCartCheckoutAnalytics.PaymentTypeOf(method));
 
             // Web-parity reconciliation shape (single-item purchase, so value == item price).
             props.Add("items", new JArray

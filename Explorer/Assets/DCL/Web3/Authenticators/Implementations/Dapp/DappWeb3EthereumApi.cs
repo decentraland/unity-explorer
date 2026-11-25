@@ -25,6 +25,7 @@ namespace DCL.Web3.Authenticators
 
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
+        private const int RPC_MAX_RESPONSE_SIZE = 16 * 1024 * 1024;
 
         private readonly UnityAppWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
@@ -39,9 +40,9 @@ namespace DCL.Web3.Authenticators
 
         // Allow only one web3 operation at a time
         private readonly DCLSemaphoreSlim mutex = new ();
-        private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
+        private byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
@@ -306,11 +307,29 @@ namespace DCL.Web3.Authenticators
 
             while (!ct.IsCancellationRequested && rpcWebSocket?.State == WebSocketState.Open)
             {
-                WebSocketReceiveResult result = await rpcWebSocket.ReceiveAsync(rpcByteBuffer, ct);
+                var length = 0;
+                WebSocketReceiveResult result;
+
+                // A message larger than the buffer is delivered over several reads: a transaction receipt with
+                // many logs is one.
+                do
+                {
+                    if (length == rpcByteBuffer.Length)
+                    {
+                        if (length >= RPC_MAX_RESPONSE_SIZE)
+                            throw new Web3Exception($"RPC {request.method} answered with more than {RPC_MAX_RESPONSE_SIZE} bytes");
+
+                        Array.Resize(ref rpcByteBuffer, length * 2);
+                    }
+
+                    result = await rpcWebSocket.ReceiveAsync(rpcByteBuffer.AsMemory(length), ct);
+                    length += result.Count;
+                }
+                while (!result.EndOfMessage && result.MessageType != WebSocketMessageType.Close);
 
                 if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
                 {
-                    string resJson = Encoding.UTF8.GetString(rpcByteBuffer, 0, result.Count);
+                    string resJson = Encoding.UTF8.GetString(rpcByteBuffer, 0, length);
                     EthApiResponse response = JsonConvert.DeserializeObject<EthApiResponse>(resJson);
 
                     // An error frame is ours even when its id is missing (servers echo null for requests they

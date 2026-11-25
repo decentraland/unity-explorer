@@ -47,6 +47,13 @@ namespace DCL.Shop
                 pills[i].SetSelected(pillKeys[i] == key);
         }
 
+        /// <summary>Lets the row run past the right edge of its parent by the given width.</summary>
+        public void SetRightOverflow(float width)
+        {
+            var row = (RectTransform)transform;
+            row.offsetMax = new Vector2(width, row.offsetMax.y);
+        }
+
         private void AddPill(ButtonWithSelectableStateView pill, string? key)
         {
             var pillTransform = (RectTransform)pill.transform;

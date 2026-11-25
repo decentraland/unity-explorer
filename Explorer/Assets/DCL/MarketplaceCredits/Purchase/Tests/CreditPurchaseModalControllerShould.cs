@@ -22,7 +22,6 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             controller = new CreditPurchaseModalController(
                 () => null!,
                 purchaseService,
-                Substitute.For<MarketplaceCreditsAPIClient>(null, null),
                 Substitute.For<IWeb3IdentityCache>(),
                 null!,
                 null!,
@@ -36,7 +35,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 null!,
                 null!,
                 _ => UniTask.CompletedTask,
-                _ => UniTask.CompletedTask);
+                _ => UniTask.CompletedTask,
+                true);
         }
 
         [TearDown]
@@ -47,6 +47,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         [TestCase(CreditsPurchaseError.Cancelled, "user_rejected")]
         [TestCase(CreditsPurchaseError.SignatureTimedOut, "signature_timeout")]
         [TestCase(CreditsPurchaseError.InsufficientCredits, "insufficient_credits")]
+        [TestCase(CreditsPurchaseError.InsufficientMana, "insufficient_mana")]
+        [TestCase(CreditsPurchaseError.ManaApprovalFailed, "transaction_failed")]
         [TestCase(CreditsPurchaseError.ListingNotAvailable, "not_for_sale")]
         [TestCase(CreditsPurchaseError.OwnListing, "not_for_sale")]
         [TestCase(CreditsPurchaseError.FeatureDisabled, "not_for_sale")]
@@ -88,6 +90,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         [TestCase(CreditsPurchaseState.ResolvingListing, "resolving_listing")]
         [TestCase(CreditsPurchaseState.Authorizing, "authorizing")]
+        [TestCase(CreditsPurchaseState.ApprovingMana, "approving_mana")]
+        [TestCase(CreditsPurchaseState.ConfirmingManaApproval, "approving_mana")]
         [TestCase(CreditsPurchaseState.Signing, "signing")]
         [TestCase(CreditsPurchaseState.WaitingSettlement, "waiting_settlement")]
         [TestCase(CreditsPurchaseState.Success, "purchase")]

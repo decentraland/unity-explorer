@@ -35,6 +35,7 @@ namespace DCL.Shop
         public int? MaxPriceCredits;
         public ShopStatusFilter? ExplicitStatus;
         public bool Smart;
+        public bool Deals;
         public ShopSortOption Sort = ShopSortOption.Newest;
         public string SearchText = string.Empty;
 
@@ -65,6 +66,7 @@ namespace DCL.Shop
             MaxPriceCredits = null;
             ExplicitStatus = null;
             Smart = false;
+            Deals = false;
             Sort = ShopSortOption.Newest;
             SearchText = string.Empty;
         }
@@ -83,6 +85,14 @@ namespace DCL.Shop
 
             Rarities.Add(rarity);
             Rarities.Sort(CANONICAL_RARITY_ORDER);
+        }
+
+        public void SetSingleRarity(string? rarity)
+        {
+            Rarities.Clear();
+
+            if (rarity != null)
+                Rarities.Add(rarity);
         }
 
         private static int CanonicalRarityIndex(string rarity)
@@ -105,7 +115,7 @@ namespace DCL.Shop
                 sb.Append(rarity).Append(',');
 
             sb.Append('|').Append(MinPriceCredits).Append('|').Append(MaxPriceCredits).Append('|')
-              .Append(EffectiveStatus).Append('|').Append(Smart).Append('|').Append(Sort);
+              .Append(EffectiveStatus).Append('|').Append(Smart).Append('|').Append(Deals).Append('|').Append(Sort);
 
             return sb.ToString();
         }

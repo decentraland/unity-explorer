@@ -351,6 +351,20 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `mana-payments`
+**Type:** Boolean (`true` / `false`)
+**Description:** Overrides the `alfa-mana-payments` feature flag: enabled, the buy popup and the cart checkout popup offer Polygon MANA (alone or combined with credits) next to credits and show the MANA balance; disabled, they offer credits only. On by default in the Editor.
+
+Enabling it requires [`--debug`](#debug); `--mana-payments false` disables it in any build.
+
+**Usage:**
+```bash
+--debug --mana-payments true
+--mana-payments false
+```
+
+---
+
 ## Performance & Caching Flags
 
 ### `disable-disk-cache`

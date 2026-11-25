@@ -70,33 +70,6 @@ namespace DCL.MarketplaceCredits.Purchase
         }
     }
 
-    public readonly struct UseCreditsOutcome
-    {
-        public readonly CreditsPurchaseError Error;
-        public readonly string? TxHash;
-        public readonly string? Message;
-        public readonly bool Broadcast;
-        public readonly bool Settled;
-        public readonly bool Reverted;
-        public readonly BigInteger Nonce;
-
-        public bool Success => Error == CreditsPurchaseError.None;
-
-        public UseCreditsOutcome(CreditsPurchaseError error, string? txHash, string? message, bool broadcast, bool settled, bool reverted, BigInteger nonce)
-        {
-            Error = error;
-            TxHash = txHash;
-            Message = message;
-            Broadcast = broadcast;
-            Settled = settled;
-            Reverted = reverted;
-            Nonce = nonce;
-        }
-
-        public static UseCreditsOutcome Failure(CreditsPurchaseError error, string? message = null) =>
-            new (error, null, message, false, false, false, BigInteger.MinusOne);
-    }
-
     public class UseCreditsExecutor
     {
         private const long EXTERNAL_CALL_TTL_SECONDS = 60 * 60 * 24;
@@ -105,11 +78,13 @@ namespace DCL.MarketplaceCredits.Purchase
         private static readonly TimeSpan REPORT_SUBMISSION_TIMEOUT = TimeSpan.FromSeconds(15);
 
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
-        private readonly CreditsManagerMetaTxRelayer metaTxRelayer;
+        private readonly MetaTxRelayer metaTxRelayer;
         private readonly PolygonSettlementPoller settlementPoller;
+        private readonly MetaTxContract creditsManagerContract;
 
-        public UseCreditsExecutor(MarketplaceCreditsAPIClient creditsAPIClient, CreditsManagerMetaTxRelayer metaTxRelayer, PolygonSettlementPoller settlementPoller)
+        public UseCreditsExecutor(MarketplaceCreditsAPIClient creditsAPIClient, MetaTxRelayer metaTxRelayer, PolygonSettlementPoller settlementPoller, CreditsChainConfig chainConfig)
         {
+            creditsManagerContract = chainConfig.CreditsManagerContract;
             this.creditsAPIClient = creditsAPIClient;
             this.metaTxRelayer = metaTxRelayer;
             this.settlementPoller = settlementPoller;
@@ -122,7 +97,7 @@ namespace DCL.MarketplaceCredits.Purchase
         ///     releases the intent and rethrows; an unanswered signature request releases it and fails with
         ///     <see cref="CreditsPurchaseError.SignatureTimedOut" />. The relay and the settlement wait run on <paramref name="settleCt" />.
         /// </summary>
-        public async UniTask<UseCreditsOutcome> ExecuteAsync(UseCreditsRequest request, Action<CreditsPurchaseState> setState, CancellationToken signCt, CancellationToken settleCt)
+        public async UniTask<PurchaseOutcome> ExecuteAsync(UseCreditsRequest request, Action<CreditsPurchaseState> setState, CancellationToken signCt, CancellationToken settleCt)
         {
             AuthorizedCredit credit = request.Credit;
             string useCreditsCalldata;
@@ -166,12 +141,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
             RelayResult relay;
 
-            try
-            {
-                relay = request.MinNonce.Sign < 0
-                    ? await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, signCt, settleCt)
-                    : await metaTxRelayer.RelayUseCreditsAsync(request.Buyer, useCreditsCalldata, request.MinNonce, signCt, settleCt);
-            }
+            try { relay = await metaTxRelayer.RelayAsync(creditsManagerContract, request.Buyer, useCreditsCalldata, request.MinNonce, signCt, settleCt); }
             catch (OperationCanceledException)
             {
                 await ReleaseIntentAsync(credit.id);
@@ -192,7 +162,7 @@ namespace DCL.MarketplaceCredits.Purchase
                     return Fail(setState, CreditsPurchaseError.SignatureTimedOut, relay.Message);
                 case RelayOutcome.AmbiguousBroadcast:
                     setState(CreditsPurchaseState.Failed);
-                    return new UseCreditsOutcome(CreditsPurchaseError.SettlementPending, null, relay.Message, true, false, false, relay.Nonce);
+                    return new PurchaseOutcome(CreditsPurchaseError.SettlementPending, null, relay.Message, true, false, false, relay.Nonce);
                 case RelayOutcome.RelayerRejected:
                     ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Relayer refused {request.Label}: {relay.Message}");
                     await ReleaseIntentAsync(credit.id);
@@ -216,14 +186,14 @@ namespace DCL.MarketplaceCredits.Purchase
             {
                 case SettlementOutcome.Confirmed:
                     setState(CreditsPurchaseState.Success);
-                    return new UseCreditsOutcome(CreditsPurchaseError.None, txHash, null, true, true, false, relay.Nonce);
+                    return new PurchaseOutcome(CreditsPurchaseError.None, txHash, null, true, true, false, relay.Nonce);
                 case SettlementOutcome.Reverted:
                     await ReleaseIntentAsync(credit.id);
                     setState(CreditsPurchaseState.Failed);
-                    return new UseCreditsOutcome(CreditsPurchaseError.TransactionReverted, txHash, null, true, false, true, relay.Nonce);
+                    return new PurchaseOutcome(CreditsPurchaseError.TransactionReverted, txHash, null, true, false, true, relay.Nonce);
                 default:
                     setState(CreditsPurchaseState.Failed);
-                    return new UseCreditsOutcome(CreditsPurchaseError.SettlementPending, txHash, null, true, false, false, relay.Nonce);
+                    return new PurchaseOutcome(CreditsPurchaseError.SettlementPending, txHash, null, true, false, false, relay.Nonce);
             }
         }
 
@@ -238,10 +208,10 @@ namespace DCL.MarketplaceCredits.Purchase
             }
         }
 
-        private static UseCreditsOutcome Fail(Action<CreditsPurchaseState> setState, CreditsPurchaseError error, string? message)
+        private static PurchaseOutcome Fail(Action<CreditsPurchaseState> setState, CreditsPurchaseError error, string? message)
         {
             setState(CreditsPurchaseState.Failed);
-            return UseCreditsOutcome.Failure(error, message);
+            return PurchaseOutcome.Failure(error, message);
         }
 
         private async UniTaskVoid ReportSubmissionAsync(string creditId, string txHash)

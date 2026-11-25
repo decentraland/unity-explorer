@@ -5,14 +5,16 @@ using MVC;
 using Plugins.NativeWindowManager;
 using System;
 using System.Threading;
+using TMPro;
 using Utility;
 
 namespace DCL.MarketplaceCredits.Purchase.Names.UI
 {
     /// <summary>
-    ///     Confirms a NAME claim: shows the credits price against the balance, runs the claim and reports how
-    ///     it ended. Closing the modal once the payment is signed does not stop the claim: reopening it for the
-    ///     same NAME shows the progress and then the result.
+    ///     Confirms a NAME claim: shows the price against what the buyer holds, takes the payment they tick
+    ///     (credits, or credits topped up with MANA), runs the claim and reports how it ended. Closing the modal
+    ///     once the payment is signed does not stop the claim: reopening it for the same NAME shows the progress
+    ///     and then the result.
     /// </summary>
     public class NameClaimModalController : ControllerBase<NameClaimModalView, NameClaimModalParams>
     {
@@ -20,13 +22,18 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         {
             Loading,
             ReadyToConfirm,
-            InsufficientCredits,
+            InsufficientFunds,
             Claiming,
+            Success,
             Result,
         }
 
-        private const string CANNOT_AFFORD_TEXT = "Add <b>{0} Credits</b> to claim this NAME.";
-        private const string SUCCESS_TITLE = "NAME claimed!";
+        private const string BUY_TITLE = "Buy Name";
+        private const string INSUFFICIENT_FUNDS_TITLE = "Insufficient Funds";
+        private const string MISSING_CREDITS_TEXT = "You will need to buy <b>{0} Credits</b> to purchase this NAME.";
+        private const string INSUFFICIENT_FUNDS_TEXT = "Your Credits and MANA are not enough for this NAME. Buy Credits or add MANA to continue.";
+        private const string MANA_ALONE_REFUSED_TEXT = "A NAME needs at least 1 Credit: MANA can only cover the rest. Buy Credits to continue.";
+        private const string MANA_ALONE_REFUSED_NOTE = "A NAME cannot be paid with MANA alone";
         private const string PENDING_TITLE = "Registration in progress";
         private const string FAILED_TITLE = "The NAME was not claimed";
         private const string SUCCESS_TEXT = "<b>{0}</b> is yours. You can set it as your name from your profile.";
@@ -34,9 +41,9 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         private const string PENDING_TEXT = "Your payment was sent and <b>{0}</b> is still being registered. It can take a few minutes: check your names later.";
 
         private readonly NameClaimService claimService;
-        private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
+        private readonly bool isManaEnabled;
         private readonly CancellationTokenSource disposalCts = new ();
 
         private ModalState currentState;
@@ -48,14 +55,14 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         public NameClaimModalController(
             ViewFactoryMethod viewFactory,
             NameClaimService claimService,
-            MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
-            Func<CancellationToken, UniTask> openGetCreditsPanelAsync) : base(viewFactory)
+            Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
+            bool isManaEnabled) : base(viewFactory)
         {
             this.claimService = claimService;
-            this.creditsApiClient = creditsApiClient;
             this.identityCache = identityCache;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
+            this.isManaEnabled = isManaEnabled;
             claimService.StageChanged += OnClaimStageChanged;
         }
 
@@ -73,7 +80,10 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
 
             if (viewInstance != null)
             {
-                viewInstance.NameText.text = inputData.Name;
+                foreach (TMP_Text nameText in viewInstance.NameTexts)
+                    nameText.text = inputData.Name;
+
+                viewInstance.BalanceManaGroup.SetActive(isManaEnabled);
                 viewInstance.ConfirmButton.onClick.AddListener(OnConfirmClicked);
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
@@ -93,7 +103,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 ShowClaimResult(finished);
             }
             else
-                LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+                LoadQuoteAndOptionsAsync(lifeCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -118,24 +128,25 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             await UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
+                viewInstance.ContinueShoppingButton.OnClickAsync(ct),
                 viewInstance.DoneButton.OnClickAsync(ct),
                 viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
-        private async UniTaskVoid LoadQuoteAndBalanceAsync(CancellationToken ct)
+        private async UniTaskVoid LoadQuoteAndOptionsAsync(CancellationToken ct)
         {
             SetUiState(ModalState.Loading);
 
             if (viewInstance != null)
             {
                 viewInstance.PriceCreditsText.text = string.Empty;
-                viewInstance.BalanceCreditsText.text = string.Empty;
+                viewInstance.BalanceCreditsText.text = PaymentAmountFormat.UNKNOWN;
+                viewInstance.BalanceManaText.text = PaymentAmountFormat.UNKNOWN;
                 viewInstance.PriceLoadingSpinner.SetActive(true);
+                viewInstance.PaymentSelector.Clear(isManaEnabled);
             }
 
-            IWeb3Identity? identity = identityCache.Identity;
-
-            if (identity == null)
+            if (identityCache.Identity == null)
             {
                 ShowResult(FAILED_TITLE, "You need to be signed in to claim a NAME.", allowRetry: false);
                 return;
@@ -162,34 +173,57 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 viewInstance.PriceCreditsText.text = $"≈{quote.Credits}";
             }
 
-            try
+            PaymentOptions options = await claimService.GetPaymentOptionsAsync(quote, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            bool canPay = options.Options.Count > 0;
+
+            if (!canPay)
             {
-                UserCreditsResponse credits = await creditsApiClient.GetUserCreditsAsync(identity.Address, ct);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                bool canAfford = credits.usd.credits >= quote.Credits;
-
-                if (viewInstance != null)
+                // Nothing payable and no credits balance means the balance read failed, not that the buyer is short.
+                if (options.CreditsBalanceCents is not { } balanceCents)
                 {
-                    viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
-                    viewInstance.CannotAffordText.text = string.Format(CANNOT_AFFORD_TEXT, quote.Credits - credits.usd.credits);
+                    ShowResult(FAILED_TITLE, "Could not load your balance.", allowRetry: true);
+                    return;
                 }
 
-                SetUiState(canAfford ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
+                if (viewInstance != null)
+                    viewInstance.CannotAffordText.text = InsufficientCopy(options, balanceCents);
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                ShowResult(FAILED_TITLE, "Could not load your credits balance.", allowRetry: true);
-            }
+
+            ShowBalances(options);
+            viewInstance?.PaymentSelector.Show(options, isManaEnabled, MANA_ALONE_REFUSED_NOTE);
+            SetUiState(canPay ? ModalState.ReadyToConfirm : ModalState.InsufficientFunds);
+        }
+
+        private string InsufficientCopy(PaymentOptions options, long balanceCents)
+        {
+            if (options.IsManaAloneRefused)
+                return MANA_ALONE_REFUSED_TEXT;
+
+            if (options.ManaShortfall != null)
+                return INSUFFICIENT_FUNDS_TEXT;
+
+            return string.Format(MISSING_CREDITS_TEXT, PaymentAmountFormat.Credits(quote.Credits - (balanceCents / PaymentOptionsCalculator.CENTS_PER_CREDIT)));
+        }
+
+        private void ShowBalances(PaymentOptions options)
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.BalanceCreditsText.text = PaymentAmountFormat.CreditsBalance(options.CreditsBalanceCents);
+            viewInstance.BalanceManaText.text = PaymentAmountFormat.ManaBalance(options.ManaBalanceWei);
         }
 
         private void OnConfirmClicked()
         {
-            if (currentState != ModalState.ReadyToConfirm || lifeCts == null)
+            if (currentState != ModalState.ReadyToConfirm || viewInstance == null || lifeCts == null)
+                return;
+
+            if (!viewInstance.PaymentSelector.Selection.TryGetSelected(out PaymentOption option))
                 return;
 
             if (claimService.InFlightName != null)
@@ -198,7 +232,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 return;
             }
 
-            ClaimAsync(lifeCts.Token).Forget();
+            ClaimAsync(option, lifeCts.Token).Forget();
         }
 
         private void OnRetryClicked()
@@ -206,7 +240,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             if (currentState != ModalState.Result || lifeCts == null)
                 return;
 
-            LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+            LoadQuoteAndOptionsAsync(lifeCts.Token).Forget();
         }
 
         private void OnGetCreditsClicked()
@@ -225,28 +259,28 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             }
         }
 
-        private async UniTaskVoid ClaimAsync(CancellationToken ct)
+        private async UniTaskVoid ClaimAsync(PaymentOption option, CancellationToken ct)
         {
             SetUiState(ModalState.Claiming);
             NativeWindowManager.RequestTemporaryWindowMode();
             var windowModeHeld = true;
 
-            // The window mode is only needed for the wallet signature, not for the settlement and bridge waits after it.
-            void ReleaseWindowModeOnceSigned(NameClaimStage stage)
+            // The window mode is only needed for the wallet signatures, not for the settlement and bridge waits after the payment's one.
+            void ReleaseWindowModeOncePaymentSigned(NameClaimStage stage)
             {
-                if (!windowModeHeld || stage is NameClaimStage.Preparing or NameClaimStage.Signing)
+                if (!windowModeHeld || stage is NameClaimStage.Preparing or NameClaimStage.ApprovingMana or NameClaimStage.ConfirmingMana or NameClaimStage.Signing)
                     return;
 
                 windowModeHeld = false;
                 NativeWindowManager.ReleaseTemporaryWindowMode();
             }
 
-            claimService.StageChanged += ReleaseWindowModeOnceSigned;
+            claimService.StageChanged += ReleaseWindowModeOncePaymentSigned;
 
-            try { await claimService.ClaimAsync(inputData.Name, quote, ct); }
+            try { await claimService.ClaimAsync(inputData.Name, quote, option, ct); }
             finally
             {
-                claimService.StageChanged -= ReleaseWindowModeOnceSigned;
+                claimService.StageChanged -= ReleaseWindowModeOncePaymentSigned;
 
                 if (windowModeHeld)
                     NativeWindowManager.ReleaseTemporaryWindowMode();
@@ -267,19 +301,22 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             switch (result.Status)
             {
                 case NameClaimStatus.Registered:
-                    ShowResult(SUCCESS_TITLE, string.Format(SUCCESS_TEXT, inputData.Name), allowRetry: false);
+                    SetUiState(ModalState.Success);
+
+                    if (viewInstance != null)
+                        viewInstance.SuccessText.text = string.Format(SUCCESS_TEXT, inputData.Name);
 
                     if (lifeCts != null)
-                        RefreshBalanceAsync(lifeCts.Token).Forget();
+                        RefreshBalancesAsync(lifeCts.Token).Forget();
 
                     break;
                 case NameClaimStatus.Pending:
                     ShowResult(PENDING_TITLE, string.Format(PENDING_TEXT, inputData.Name), allowRetry: false);
                     break;
                 case NameClaimStatus.Failed when result.Error == NameClaimError.Cancelled:
-                    // The quote and balance on screen may predate the cancelled claim, or be missing after a reopen.
+                    // The quote and balances on screen may predate the cancelled claim, or be missing after a reopen.
                     if (lifeCts != null)
-                        LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+                        LoadQuoteAndOptionsAsync(lifeCts.Token).Forget();
 
                     break;
                 default:
@@ -288,28 +325,16 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             }
         }
 
-        private async UniTaskVoid RefreshBalanceAsync(CancellationToken ct)
+        private async UniTaskVoid RefreshBalancesAsync(CancellationToken ct)
         {
-            IWeb3Identity? identity = identityCache.Identity;
+            PaymentOptions options = await claimService.GetPaymentOptionsAsync(quote, ct);
 
-            if (identity == null)
-                return;
-
-            try
-            {
-                UserCreditsResponse credits = await creditsApiClient.GetUserCreditsAsync(identity.Address, ct);
-
-                if (!ct.IsCancellationRequested && viewInstance != null)
-                    viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Balance refresh after a NAME claim failed: {e.Message}");
-            }
+            // A failed read keeps the balances the popup already has.
+            if (!ct.IsCancellationRequested && options.CreditsBalanceCents != null)
+                ShowBalances(options);
         }
 
-        // Retry is offered only for failures that provably never spent the credits.
+        // Retry is offered only for failures that provably never spent anything.
         private void ShowError(NameClaimError error)
         {
             switch (error)
@@ -329,17 +354,26 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 case NameClaimError.InsufficientCredits:
                     ShowResult(FAILED_TITLE, "You do not have enough credits to claim this NAME.", allowRetry: true);
                     break;
+                case NameClaimError.InsufficientMana:
+                    ShowResult(FAILED_TITLE, "You do not have enough MANA to claim this NAME.", allowRetry: true);
+                    break;
+                case NameClaimError.ManaApprovalFailed:
+                    ShowResult(FAILED_TITLE, "MANA could not be authorized for this claim. Nothing was spent.", allowRetry: true);
+                    break;
                 case NameClaimError.PriceChanged:
                     ShowResult(FAILED_TITLE, "The price changed. Review it and try again.", allowRetry: true);
                     break;
                 case NameClaimError.SignatureRejected:
-                    ShowResult(FAILED_TITLE, "The signature was rejected. Your credits were not spent.", allowRetry: true);
+                    ShowResult(FAILED_TITLE, "The signature was rejected. Nothing was spent.", allowRetry: true);
                     break;
                 case NameClaimError.SignatureTimedOut:
-                    ShowResult(FAILED_TITLE, "The confirmation timed out. Your credits were not spent.", allowRetry: true);
+                    ShowResult(FAILED_TITLE, "The confirmation timed out. Nothing was spent.", allowRetry: true);
                     break;
                 case NameClaimError.TransactionReverted:
-                    ShowResult(FAILED_TITLE, "The payment failed on-chain. Your credits were not spent.", allowRetry: true);
+                    ShowResult(FAILED_TITLE, "The payment failed on-chain. Nothing was spent.", allowRetry: true);
+                    break;
+                case NameClaimError.PurchaseInProgress:
+                    ShowResult(FAILED_TITLE, "Another purchase is still processing. Wait for it to finish and try again.", allowRetry: true);
                     break;
                 case NameClaimError.NotRegistered:
                     ShowResult(FAILED_TITLE, "The payment went through but the NAME could not be registered. Please contact support.", allowRetry: false);
@@ -348,7 +382,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                     SetUiState(ModalState.ReadyToConfirm);
                     break;
                 default:
-                    ShowResult(FAILED_TITLE, "The claim failed. Your credits were not spent.", allowRetry: true);
+                    ShowResult(FAILED_TITLE, "The claim failed. Nothing was spent.", allowRetry: true);
                     break;
             }
         }
@@ -361,6 +395,8 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             viewInstance.ProgressStatusText.text = stage switch
                                                    {
                                                        NameClaimStage.Preparing => "Reserving your credits...",
+                                                       NameClaimStage.ApprovingMana => "Waiting for you to authorize MANA...",
+                                                       NameClaimStage.ConfirmingMana => "MANA authorized. Waiting for it to confirm, then you will be asked to sign the payment...",
                                                        NameClaimStage.Signing => "Waiting for your signature in the browser",
                                                        NameClaimStage.Confirming => "Confirming the payment...",
                                                        NameClaimStage.Registering => "Registering your NAME. This can take a few minutes...",
@@ -388,11 +424,23 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             if (viewInstance == null)
                 return;
 
-            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.Loading or ModalState.ReadyToConfirm);
-            viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
-            viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.InsufficientCredits);
+            bool insufficient = newState == ModalState.InsufficientFunds;
+            bool confirming = insufficient || newState is ModalState.Loading or ModalState.ReadyToConfirm;
+
+            viewInstance.ConfirmStateContainer.SetActive(confirming);
             viewInstance.ProgressStateContainer.SetActive(newState == ModalState.Claiming);
+            viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
             viewInstance.ResultStateContainer.SetActive(newState == ModalState.Result);
+
+            viewInstance.TitleText.text = insufficient ? INSUFFICIENT_FUNDS_TITLE : BUY_TITLE;
+            viewInstance.InsufficientIcon.SetActive(insufficient);
+            viewInstance.CannotAffordText.gameObject.SetActive(insufficient);
+            viewInstance.ConfirmButton.gameObject.SetActive(!insufficient);
+            viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
+            viewInstance.GetCreditsButton.gameObject.SetActive(insufficient);
+
+            // The confirmation has its own Cancel button.
+            viewInstance.CloseButton.gameObject.SetActive(!confirming);
         }
     }
 }

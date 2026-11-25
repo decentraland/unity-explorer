@@ -146,6 +146,8 @@ namespace Global.AppArgs
 
         public const string IN_GAME_SHOP = "in-game-shop";
 
+        public const string MANA_PAYMENTS = "mana-payments";
+
         public const string SCENE_ITEM_PURCHASE = "scene-item-purchase";
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";

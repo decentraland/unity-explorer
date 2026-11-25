@@ -29,6 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase
         public string? Search;
         public ShopSort Sort;
         public bool SmartOnly;
+        public bool DealsOnly;
         public bool? IsOnSale;
     }
 

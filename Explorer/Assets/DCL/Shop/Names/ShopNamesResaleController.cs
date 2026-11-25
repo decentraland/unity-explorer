@@ -5,8 +5,10 @@ using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -28,6 +30,12 @@ namespace DCL.Shop
         private const string EMPTY_TEXT = "No NAMEs on sale.";
         private const string EMPTY_SEARCH_FORMAT = "No NAMEs on sale found for '{0}'.";
         private const string LOAD_ERROR_MESSAGE = "There was an error loading the NAMEs on sale. Please try again.";
+        private const string REDIRECT_TITLE = "You will be redirected to the web Marketplace";
+        private const string REDIRECT_BODY_FORMAT = "Continuing will open the link in your browser.\n\n<color=#32CEFF><noparse>{0}</noparse></color>";
+        private const string REDIRECT_CANCEL_TEXT = "CANCEL";
+        private const string REDIRECT_CONTINUE_TEXT = "CONTINUE";
+        private const int REDIRECT_SHOWN_URL_MAX_LENGTH = 40;
+        private const string REDIRECT_SHOWN_URL_ELLIPSIS = "...";
 
         private readonly ShopNamesGridView view;
         private readonly MarketplaceShopAPIClient api;
@@ -239,8 +247,33 @@ namespace DCL.Shop
 
         private void OnCardViewClicked(ShopNameCardView card)
         {
-            if (card.Model != null)
-                webBrowser.OpenUrlMainThreadOnly($"{urlsSource.Url(DecentralandUrl.MarketplaceLink)}{card.Model.MarketplacePath}");
+            if (card.Model != null && lifeCts != null)
+                ConfirmAndOpenInBrowserAsync($"{urlsSource.Url(DecentralandUrl.MarketplaceLink)}{card.Model.MarketplacePath}", lifeCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ConfirmAndOpenInBrowserAsync(string url, CancellationToken ct)
+        {
+            // A NAME's page address carries its 77-digit token id, so the dialog shows only the start of it
+            string shownUrl = url.Length > REDIRECT_SHOWN_URL_MAX_LENGTH
+                ? $"{url.Substring(0, REDIRECT_SHOWN_URL_MAX_LENGTH)}{REDIRECT_SHOWN_URL_ELLIPSIS}"
+                : url;
+
+            Result<ConfirmationResult> result = await ViewDependencies.ConfirmationDialogOpener
+                .OpenConfirmationDialogAsync(
+                    new ConfirmationDialogParameter(
+                        REDIRECT_TITLE,
+                        REDIRECT_CANCEL_TEXT,
+                        REDIRECT_CONTINUE_TEXT,
+                        null,
+                        false, false,
+                        subText: string.Format(REDIRECT_BODY_FORMAT, shownUrl)),
+                    ct)
+                .SuppressToResultAsync(ReportCategory.UI);
+
+            if (ct.IsCancellationRequested || !result.Success || result.Value != ConfirmationResult.Confirm)
+                return;
+
+            webBrowser.OpenUrlMainThreadOnly(url);
         }
     }
 }
