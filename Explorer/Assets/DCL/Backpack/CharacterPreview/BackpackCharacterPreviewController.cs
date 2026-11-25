@@ -210,11 +210,12 @@ namespace DCL.Backpack.CharacterPreview
             {
                 URN urn = emote.GetUrn().Shorten();
 
-                if (previewAvatarModel.Emotes?.Contains(urn) != true)
+                previewAvatarModel.Emotes ??= new HashSet<URN>();
+                if (!previewAvatarModel.Emotes.Contains(urn))
                 {
                     // Preview against a copy so overlapping selections cannot change the equipped wheel.
                     CharacterPreviewAvatarModel model = previewAvatarModel;
-                    model.Emotes = model.Emotes == null ? new HashSet<URN>() : new HashSet<URN>(model.Emotes);
+                    model.Emotes = new HashSet<URN>(previewAvatarModel.Emotes);
                     model.Emotes.Add(urn);
                     try { await ShowLoadingSpinnerAndUpdateAvatarAsync(model, ct); }
                     catch (OperationCanceledException) { return; }
