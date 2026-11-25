@@ -26,7 +26,7 @@ namespace DCL.Communities.Tests
             firstVisit.Cancel();
             section.Visit(CancellationToken.None);
             view.ClearReceivedCalls();
-            section.Pending.TrySetCanceled(firstVisit.Token);
+            section.Pending.TrySetResult(40);
             view.NewDataRequested += Raise.Event<Action>();
 
             // Assert

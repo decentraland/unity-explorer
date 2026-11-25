@@ -209,8 +209,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid WaitForFetchAsync()
             {
-                await UniTask.WaitUntil(() => isFetching == false, cancellationToken: cancellationToken);
-                SwitchSection();
+                var panel = panelLifecycleTask;
+                await UniTask.WaitUntil(() => !isFetching || panel != panelLifecycleTask, cancellationToken: cancellationToken);
+                if (panel == panelLifecycleTask)
+                    SwitchSection();
             }
 
             void SwitchSection()
