@@ -1,0 +1,55 @@
+name: Backpack emotes original WARP check
+on:
+  push:
+    branches: ['qa/backpack-emotes-2068']
+    paths:
+      - 'catalog_run.py'
+      - 'catalog_frames.py'
+      - 'clap-title-mask.png'
+      - '.github/workflows/backpack-emotes-2068-original-warp.yml'
+permissions:
+  contents: read
+jobs:
+  player:
+    name: Backpack on WARP
+    runs-on: windows-2025
+    timeout-minutes: 36
+    env:
+      AUDIT_BUILD_URL: 'https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/feat/realm-scene-pointers-pulse-server/pr-28116-7308da1/Decentraland_windows64.zip?ci=45226322119'
+      PRODUCT_SHA: '7308da1b8caca66a9dd338ca98b5487553278206'
+      CATALOG_RENDERER: WARP
+      PYTHONUNBUFFERED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /catalog_run.py
+            /catalog_frames.py
+            /clap-title-mask.png
+      - uses: actions/checkout@v4
+        with:
+          ref: 7a86e3f306739333ebd7a065059f05b72d46a424
+          persist-credentials: false
+          path: reference
+          sparse-checkout: |
+            qa-audit
+            .claude/skills/pulse-face-to-face/scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install requests pillow pywin32
+      - name: Record Windows display adapters
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path evidence -Force | Out-Null
+          Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion,VideoProcessor | ConvertTo-Json | Set-Content evidence/windows-display-adapters.json
+      - run: python -B catalog_run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backpack-emotes-original-WARP
+          path: evidence/
+          retention-days: 7
