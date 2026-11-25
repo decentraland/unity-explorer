@@ -63,6 +63,9 @@ class Player:
                 time.sleep(1.5)
         else:
             raise RuntimeError("The player did not initialize")
+        version = str(METRICS["unity_server_info"].get("version", ""))
+        if not re.search(r"-"+METRICS["product_commit"][:7]+r"(?:[0-9a-f]*$|[-+])", version):
+            raise RuntimeError(f"Player-reported build version does not match the expected commit: {version}")
 
     def call(self, name, **args):
         return tool(self.session, name, args)
@@ -339,6 +342,7 @@ def renderer_and_timings(log):
                 timing.append(line[line.index("[BackpackEmoteTiming]"):][:800])
     (OUT/"player-renderer-and-timings.txt").write_text("\n".join(lines), encoding="utf-8")
     (OUT/"backpack-emote-timings.txt").write_text("\n".join(timing), encoding="utf-8")
+    METRICS["native_timing_records"] = len(timing)
     return lines
 
 
@@ -424,8 +428,11 @@ def main():
                 p.wait(timeout=35)
             lines = renderer_and_timings(log)
             record(renderer_lines=[s for s in lines if "Renderer:" in s], utc_end=datetime.now(timezone.utc).isoformat())
-        if METRICS["renderer"] == "T4" and not any(re.search(r"Renderer:.*(?:Tesla T4|NVIDIA T4)", line, re.I) for line in lines):
-            raise RuntimeError("Unity did not report the expected hardware adapter")
+        adapter = r"Tesla T4|NVIDIA T4" if METRICS["renderer"] == "T4" else r"Microsoft Basic Render Driver|Microsoft WARP"
+        if not any(re.search(r"Renderer:.*(?:"+adapter+r")", line, re.I) for line in lines):
+            raise RuntimeError("Unity did not report the expected visual adapter")
+        if not sha.startswith("7308da1") and not METRICS["native_timing_records"]:
+            raise RuntimeError("No catalog timing records were emitted by the repaired player")
 
 
 if __name__ == "__main__":
