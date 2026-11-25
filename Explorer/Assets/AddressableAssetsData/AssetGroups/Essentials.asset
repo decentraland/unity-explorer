@@ -430,6 +430,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e95a82fac1d946efbfd00cf0da1b68e5
+    m_Address: Assets/DCL/Lobby/Presets/Holidays_26.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eae766b15f997414794bfd4f17de5949
     m_Address: F_Eyebrows_00
     m_ReadOnly: 0
