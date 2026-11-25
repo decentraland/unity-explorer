@@ -34,7 +34,7 @@ namespace DCL.Backpack.Tests
             shirt.Model.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO()));
             shirt.GetUrn().Returns((URN)SHIRT);
             var body = Substitute.For<IWearable>();
-            body.GetUrn().Returns((URN)BodyShape.FEMALE);
+            body.GetUrn().Returns(BodyShape.FEMALE);
             var equipped = Substitute.For<IEquippedWearables>();
             equipped.Wearable(WearableCategories.Categories.BODY_SHAPE).Returns(body);
             handler = new BackpackBusController(Substitute.For<IWearableStorage>(), events, commands, equipped, null!, null!, provider, null!, null!);

@@ -22,7 +22,8 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException, retryCachedFailure);
 
-            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+            if (entityDefinition.id is { } entityId)
+                entityDefinition.AssetBundleManifestVersionOrFailed.InjectContent(entityId, entityDefinition.content);
         }
 
         public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false)
@@ -52,8 +53,14 @@ namespace ECS.StreamableLoading.AssetBundles
                     ReportHub.LogException(new Exception("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested"), ReportCategory.ASSET_BUNDLES);
                 }
 
+                if (entityDefinition.id is not { Length: > 0 } entityId)
+                {
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+                    return;
+                }
+
                 var promise = AssetBundleManifestPromise.Create(world,
-                    GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id) { RetryCachedFailures = retryCachedFailure }),
+                    GetAssetBundleManifestIntention.Create(entityId, new CommonLoadingArguments(entityId) { RetryCachedFailures = retryCachedFailure }),
                     partition);
 
                 try { promise = await promise.ToUniTaskAsync(world, cancellationToken: ct); }
@@ -65,8 +72,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = promise.Result!.Value;
 
-                if (assetBundleManifest.Succeeded)
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+                if (assetBundleManifest is { Succeeded: true, Asset: { } manifest })
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(manifest.GetVersion(), manifest.GetBuildDate());
                 else
                 {
                     assetBundleManifest.TryLogException();

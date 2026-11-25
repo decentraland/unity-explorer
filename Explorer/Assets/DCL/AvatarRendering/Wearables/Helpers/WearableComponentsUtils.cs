@@ -60,8 +60,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static BodyShape GetBodyShapeForEquip(URN pointer, BodyShape current)
         {
-            if (pointer.Equals((URN)BodyShape.FEMALE)) return BodyShape.FEMALE;
-            if (pointer.Equals((URN)BodyShape.MALE)) return BodyShape.MALE;
+            if (pointer.Equals(BodyShape.FEMALE)) return BodyShape.FEMALE;
+            if (pointer.Equals(BodyShape.MALE)) return BodyShape.MALE;
             return current;
         }
 
@@ -238,11 +238,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             List<IWearable> helperWearableList = WEARABLES_POOL.Get()!;
 
-            foreach (IWearable visibleWearable in hideWearablesResolution.VisibleWearables)
-            {
-                if (visibleWearable.WearableAssetResults[bodyShape].Results?[0] is { Succeeded: true })
-                    helperWearableList.Add(visibleWearable);
-            }
+            if (hideWearablesResolution.VisibleWearables is { } visibleWearables)
+                foreach (IWearable wearable in visibleWearables)
+                    if (wearable.WearableAssetResults[bodyShape].Results?[0] is { Succeeded: true })
+                        helperWearableList.Add(wearable);
 
             // Clean up existing pooled objects before overwriting
             hideWearablesResolution.Release();

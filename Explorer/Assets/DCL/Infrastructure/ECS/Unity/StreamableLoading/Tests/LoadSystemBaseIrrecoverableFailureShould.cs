@@ -194,7 +194,9 @@ namespace ECS.StreamableLoading.Tests
             using var world = World.Create();
             world.Create(new SceneShortInfo(Vector2Int.zero, "TEST"));
             var cache = new RecordingCache();
-            using var system = new TransientFailureTestLoadSystem(world, cache) { FailuresLeft = retryFails ? 1 : 0, CancelDuringLoad = cancelRetry };
+            using var system = new TransientFailureTestLoadSystem(world, cache);
+            system.FailuresLeft = retryFails ? 1 : 0;
+            system.CancelDuringLoad = cancelRetry;
             system.Initialize();
             var intention = NewIntention();
             var key = new IntentionsComparer<StubIntention>.SourcedIntentionId(intention, intention.CommonArguments.CurrentSource);
@@ -254,7 +256,7 @@ namespace ECS.StreamableLoading.Tests
             public bool Equals(StubIntention other) =>
                 true;
 
-            public override bool Equals(object obj) =>
+            public override bool Equals(object? obj) =>
                 obj is StubIntention other && Equals(other);
 
             public override int GetHashCode() =>

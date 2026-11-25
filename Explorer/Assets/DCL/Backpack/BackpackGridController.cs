@@ -224,11 +224,13 @@ namespace DCL.Backpack
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = gridWearables.Count; j < CURRENT_PAGE_SIZE; j++)
             {
-                loadingResults[j].gameObject.transform.SetAsFirstSibling();
-                loadingResults[j].LoadingView.gameObject.SetActive(false);
-                loadingResults[j].FullBackpackItem.SetActive(false);
+                if (loadingResults[j] is not { } emptySlot) continue;
+                emptySlot.gameObject.transform.SetAsFirstSibling();
+                emptySlot.LoadingView.gameObject.SetActive(false);
+                emptySlot.FullBackpackItem.SetActive(false);
                 usedPoolItems.Remove(j);
-                gridItemsPool.Release(loadingResults[j]);
+                loadingResults[j] = null;
+                gridItemsPool.Release(emptySlot);
             }
 
             for (int i = Math.Min(gridWearables.Count, loadingResults.Length) - 1; i >= 0; i--)
@@ -237,10 +239,9 @@ namespace DCL.Backpack
 
                 //This only happens in last page of results, when gridWearables returned twice the amount of wearables
                 //caused by clicking repeatedly on the same number on the backpack
-                if (usedPoolItems.ContainsKey(wearable.GetUrn()))
+                if (usedPoolItems.ContainsKey(wearable.GetUrn()) || loadingResults[i] is not { } backpackItemView)
                     continue;
 
-                BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(wearable.GetUrn(), backpackItemView);
 

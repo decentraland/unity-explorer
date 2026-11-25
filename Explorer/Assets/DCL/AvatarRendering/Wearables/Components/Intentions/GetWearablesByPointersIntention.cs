@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public bool Equals(GetWearablesByPointersIntention other) =>
             Equals(Pointers, other.Pointers);
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is GetWearablesByPointersIntention other && Equals(other);
 
         public override int GetHashCode() =>

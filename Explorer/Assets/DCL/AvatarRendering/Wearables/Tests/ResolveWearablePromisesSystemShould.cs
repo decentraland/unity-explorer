@@ -37,12 +37,14 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         private WearableStorage wearableStorage = null!;
         private IWearable shirt = null!;
+        private WearableDTO shirtDefinition = null!;
 
         [SetUp]
         public void SetUp()
         {
             wearableStorage = new WearableStorage();
-            shirt = wearableStorage.GetOrAddByDTO(CreateDTO());
+            shirtDefinition = CreateDTO();
+            shirt = wearableStorage.GetOrAddByDTO(shirtDefinition);
 
             var urls = Substitute.For<IDecentralandUrlsSource>();
             urls.Url(DecentralandUrl.EntitiesActiveElements).Returns("http://localhost/entities/active");
@@ -81,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void FinishWhenTheManifestFailedWithoutAModel()
         {
-            shirt.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+            shirtDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
             Entity entity = CreateIntention(dtoOnly: false);
 
             system.Update(0);
@@ -96,9 +98,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void KeepTheHealthyModelInABatchWithAFailedManifest()
         {
             const string HAT_URN = "urn:decentraland:off-chain:base-avatars:hat";
-            shirt.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
-            IWearable hat = wearableStorage.GetOrAddByDTO(CreateDTO(HAT_URN, WearableCategories.Categories.HAT));
-            hat.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+            shirtDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+            WearableDTO hatDefinition = CreateDTO(HAT_URN, WearableCategories.Categories.HAT);
+            hatDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+            IWearable hat = wearableStorage.GetOrAddByDTO(hatDefinition);
             var gameObject = new GameObject("hat");
             var model = new AttachmentRegularAsset(gameObject, AttachmentRegularAsset.RENDERER_INFO_POOL.Get(), Substitute.For<IStreamableRefCountData>());
             hat.WearableAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AttachmentAssetBase>(model);
@@ -129,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var provider = new ECSWearablesProvider(Substitute.For<IWeb3IdentityCache>(), world, wearableStorage);
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             UniTask<IWearable?> first = provider.GetForEquipAsync(WEARABLE_URN, BodyShape.MALE, timeout.Token);
-            shirt.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+            shirtDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
             system.Update(0);
             Assert.That(await first, Is.Null);
 
@@ -138,7 +141,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.That(world.Get<GetAssetBundleManifestIntention>(manifest).CommonArguments.RetryCachedFailures, Is.True);
             world.Add(manifest, new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest("v49", "1")));
 
-            for (var frame = 0; frame < 10 && shirt.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed; frame++)
+            for (var frame = 0; frame < 10 && shirtDefinition.assetBundleManifestVersion.assetBundleManifestRequestFailed; frame++)
                 await UniTask.Yield();
 
             system.Update(0);
@@ -192,7 +195,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ReleaseThePublishedBundleReferenceWhenTheParentWasCancelled()
         {
-            shirt.DTO!.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+            shirtDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
             Entity parent = CreateIntention(dtoOnly: false);
             system.Update(0);
             Entity child = SingleRequest<GetAssetBundleIntention>();

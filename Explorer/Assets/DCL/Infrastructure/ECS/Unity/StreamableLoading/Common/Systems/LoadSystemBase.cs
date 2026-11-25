@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Cache.Generic;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
@@ -342,8 +343,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     var failures = cache.IrrecoverableFailures;
                     lock (failures)
                     {
-                        if (failures.ContainsKey(intentionId)) failures[intentionId] = result;
-                        else failures.Add(intentionId, result);
+                        if (!failures.TryAdd(intentionId, result)) failures[intentionId] = result;
                     }
                 }
 

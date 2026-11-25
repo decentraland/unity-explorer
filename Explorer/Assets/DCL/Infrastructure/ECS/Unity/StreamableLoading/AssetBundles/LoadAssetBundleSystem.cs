@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
@@ -13,7 +12,6 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
 using AssetManagement;
-using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;

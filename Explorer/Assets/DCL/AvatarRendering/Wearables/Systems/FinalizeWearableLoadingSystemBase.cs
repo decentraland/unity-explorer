@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     using var _ = WearableComponentsUtils.POINTERS_POOL.Get(out var failedDTOList);
                     failedDTOList!.AddRange(promise.LoadingIntention.Pointers);
 
-                    using (var list = promise.Result.Value.Asset.ConsumeAttachments())
+                    using (var list = promiseResult.Asset.ConsumeAttachments())
                         foreach (WearableDTO assetEntity in list.Value)
                         {
                             if (wearableStorage.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)

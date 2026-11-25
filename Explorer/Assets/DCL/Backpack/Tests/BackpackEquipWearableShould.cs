@@ -56,7 +56,7 @@ namespace DCL.Backpack.Tests
             shirt.WearableAssetResults.Returns(models);
             sweater = Substitute.For<IWearable>();
             var body = Substitute.For<IWearable>();
-            body.GetUrn().Returns((URN)BodyShape.FEMALE);
+            body.GetUrn().Returns(BodyShape.FEMALE);
             var equipped = Substitute.For<IEquippedWearables>();
             equipped.Wearable(WearableCategories.Categories.BODY_SHAPE).Returns(body);
             equipped.Wearable(WearableCategories.Categories.UPPER_BODY).Returns(sweater);
@@ -81,10 +81,10 @@ namespace DCL.Backpack.Tests
         [TestCase(true)]
         public void RestoreTheCardAndEquipOnTheNextClick(bool resolverThrows)
         {
-            const string failure = "The wearable model could not be loaded";
-            if (resolverThrows) LogAssert.Expect(LogType.Exception, new Regex(failure));
+            const string FAILURE = "The wearable model could not be loaded";
+            if (resolverThrows) LogAssert.Expect(LogType.Exception, new Regex(FAILURE));
             var first = resolverThrows
-                ? UniTask.FromException<IWearable?>(new InvalidOperationException(failure))
+                ? UniTask.FromException<IWearable?>(new InvalidOperationException(FAILURE))
                 : UniTask.FromResult<IWearable?>(null);
             provider.GetForEquipAsync(SHIRT, BodyShape.FEMALE, Arg.Any<CancellationToken>())
                     .Returns(first, UniTask.FromResult<IWearable?>(shirt));

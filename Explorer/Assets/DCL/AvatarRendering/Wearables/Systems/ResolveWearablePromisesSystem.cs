@@ -64,10 +64,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
-            List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get()!;
+            List<IWearable> resolvedDefinitions = WearableComponentsUtils.WEARABLES_POOL.Get()!;
 
             var resolvedResults = 0;
-            int finishedDTOs = 0;
+            int finishedDefinitionCount = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
@@ -94,11 +94,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (wearable.Model.Succeeded)
                 {
-                    finishedDTOs++;
-                    resolvedDTOs.Add(wearable);
+                    finishedDefinitionCount++;
+                    resolvedDefinitions.Add(wearable);
                 }
                 else if (wearable.Model.Exception != null)
-                    finishedDTOs++;
+                    finishedDefinitionCount++;
                 else if (!wearable.IsLoading)
                 {
                     wearable.UpdateLoadingStatus(true);
@@ -108,17 +108,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (missingPointers.Count > 0)
             {
-                WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
+                WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDefinitions);
                 CreateMissingPointersPromise(missingPointers, ref wearablesByPointersIntention, partitionComponent);
                 return;
             }
 
             ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
 
-            if (finishedDTOs == wearablesByPointersIntention.Pointers.Count)
+            if (finishedDefinitionCount == wearablesByPointersIntention.Pointers.Count)
             {
                 if (hideWearablesResolution.VisibleWearables == null)
-                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, ref hideWearablesResolution);
+                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDefinitions, ref hideWearablesResolution);
 
                 if (wearablesByPointersIntention.DtoOnly)
                     resolvedResults = wearablesByPointersIntention.Pointers.Count;
@@ -145,7 +145,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
+            WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDefinitions);
 
             // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
@@ -174,11 +174,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool IsWaitingForAssets(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
+            if (component.DTO is not { } definition) return false;
+
+            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(definition.ContentDownloadUrl);
 
             if (!dtoHasContentDownloadUrl)
             {
-                AssetBundleManifestVersion? assetBundleManifestVersion = component.DTO.assetBundleManifestVersion;
+                AssetBundleManifestVersion? assetBundleManifestVersion = definition.assetBundleManifestVersion;
 
                 // If the manifest version is null, we bail out and wait till it's loaded (this method will be called again)
                 if (assetBundleManifestVersion == null) return true;
