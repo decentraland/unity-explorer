@@ -246,8 +246,6 @@ namespace DCL.Communities.CommunitiesCard.Places
                 int loadedPages = placesFetchData.TotalFetched / PAGE_SIZE;
                 if (sameVisit || (loadedPages > 0 && placesFetchData.PageNumber == loadedPages))
                     return;
-
-                placesFetchData.PageNumber = loadedPages;
             }
 
             communityData = community;

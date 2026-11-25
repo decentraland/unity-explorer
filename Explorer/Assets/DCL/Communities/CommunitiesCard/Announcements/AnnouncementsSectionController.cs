@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Input;
@@ -106,10 +106,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
-            {
-                currentAnnouncementsFetchData.PageNumber--;
                 return 0;
-            }
 
             if (!response.Success)
             {

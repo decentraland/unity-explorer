@@ -18,7 +18,8 @@ namespace DCL.Communities.CommunitiesCard
         protected bool isFetching;
         protected abstract SectionFetchData<T> currentSectionFetchData { get; }
 
-        private U view;
+        private readonly U view;
+        private int activeFetchId;
 
         protected CommunityFetchingControllerBase(U view,
             int pageSize)
@@ -43,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard
 
         protected async UniTask FetchNewDataAsync(CancellationToken ct)
         {
+            int fetchId = ++activeFetchId;
             isFetching = true;
 
             try
@@ -51,13 +53,17 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(false);
 
-                if (membersData.PageNumber == 0)
+                membersData.PageNumber = (membersData.TotalFetched / pageSize) + 1;
+                if (membersData.PageNumber == 1)
                     view.SetLoadingStateActive(true);
                 else
                     view.SetLoadingMoreBadgeActive(true);
 
-                membersData.PageNumber++;
-                membersData.TotalToFetch = await FetchDataAsync(ct);
+                int total = await FetchDataAsync(ct);
+                if (ct.IsCancellationRequested || fetchId != activeFetchId)
+                    return;
+
+                membersData.TotalToFetch = total;
                 membersData.TotalFetched = membersData.PageNumber * pageSize;
 
                 view.SetLoadingStateActive(false);
@@ -70,7 +76,7 @@ namespace DCL.Communities.CommunitiesCard
             }
             finally
             {
-                if (!ct.IsCancellationRequested || ct == cancellationToken)
+                if (fetchId == activeFetchId)
                     isFetching = false;
             }
         }
@@ -82,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard
 
         public virtual void Reset()
         {
+            activeFetchId++;
             isFetching = false;
             RefreshGrid(true);
         }

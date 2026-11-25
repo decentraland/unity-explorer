@@ -127,7 +127,7 @@ namespace DCL.Communities.Tests
 
             names.LoadAsync(new[] { Place(OWNER) }, CancellationToken.None).GetAwaiter().GetResult();
 
-            Assert.That(warnings, Is.EqualTo(new[] { "There was an error getting owners names. Please try again." }));
+            Assert.That(warnings, Is.EqualTo(new[] { CommunityPlaceOwnerNames.LOAD_ERROR_MESSAGE }));
         }
 
         [Test]

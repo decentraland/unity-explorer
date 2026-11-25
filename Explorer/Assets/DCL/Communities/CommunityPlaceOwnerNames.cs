@@ -9,8 +9,11 @@ using System.Threading;
 
 namespace DCL.Communities
 {
+    /// <summary>Resolves and caches place owners' display names for one controller on the Unity main thread.</summary>
     internal class CommunityPlaceOwnerNames
     {
+        internal const string LOAD_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
+
         private readonly IProfileRepository profiles;
         private readonly Dictionary<string, string> names = new (StringComparer.OrdinalIgnoreCase);
 
@@ -44,7 +47,7 @@ namespace DCL.Communities
                 names[profile.UserId.Value] = profile.Name;
 
             if (result.HadErrors && result.Profiles.Count == 0)
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("There was an error getting owners names. Please try again."));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LOAD_ERROR_MESSAGE));
         }
     }
 }
