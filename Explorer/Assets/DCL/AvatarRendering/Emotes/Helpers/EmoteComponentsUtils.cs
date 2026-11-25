@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes
             return LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP.GetValueOrDefault(emoteId, emoteUrn);
         }
 
-        public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> emotes)
+        public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> emotes, bool metadataOnly = false)
         {
             List<URN> pointers = POINTERS_POOL.Get();
 
@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Emotes
                     pointers.Add(ConvertLegacyEmoteUrnToOnChain(emote));
             }
 
-            return new GetEmotesByPointersIntention(pointers, bodyShape);
+            return new GetEmotesByPointersIntention(pointers, bodyShape, metadataOnly: metadataOnly);
         }
     }
 }

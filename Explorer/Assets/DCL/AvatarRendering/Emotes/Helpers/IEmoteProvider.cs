@@ -1,10 +1,15 @@
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmoteProvider : IElementsProvider<ITrimmedEmote, IEmote, IEmoteProvider.OwnedEmotesRequestOptions>
     {
+        UniTask GetMetadataByPointersAsync(IReadOnlyCollection<URN> pointers, CancellationToken ct, List<IEmote> results);
+
         public readonly struct OrderOperation
         {
             public readonly string By;

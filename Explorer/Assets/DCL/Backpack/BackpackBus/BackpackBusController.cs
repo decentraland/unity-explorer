@@ -231,8 +231,13 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
         }
 
-        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token, emoteReportData).Forget();
+        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
+        {
+            if (emoteStorage.TryGetElement(command.Id, out IEmote cached) && cached.Model.Succeeded)
+                SelectEmote(cached, command);
+            else
+                ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token, emoteReportData).Forget();
+        }
 
         private void SelectEmote(IEmote emote, BackpackSelectEmoteCommand command)
         {

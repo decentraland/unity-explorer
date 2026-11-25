@@ -1,5 +1,6 @@
 using DCL.Backpack.EmotesSection;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Backpack
 {
@@ -10,6 +11,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public BackpackGridView GridView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button CatalogRetry { get; private set; }
 
         [field: SerializeField]
         public BackpackEmoteBreadCrumbView BreadCrumb { get; private set; } = null!;

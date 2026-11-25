@@ -22,19 +22,24 @@ namespace DCL.AvatarRendering.Emotes
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
+        public bool MetadataOnly { get; }
+        public bool RetryFailedMetadata;
 
         public LoadTimeout Timeout;
 
         public GetEmotesByPointersIntention(List<URN> pointers,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.All,
-            int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
+            int timeout = StreamableLoadingDefaults.TIMEOUT,
+            bool metadataOnly = false) : this()
         {
             this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
             SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
+            MetadataOnly = metadataOnly;
+            RetryFailedMetadata = metadataOnly;
             Timeout = new LoadTimeout(timeout, 0);
         }
 

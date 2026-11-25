@@ -94,6 +94,9 @@ namespace DCL.AvatarRendering.Emotes
             return await source.GetTrimmedByParamsAsync(requestOptions, ct, results);
         }
 
+        public UniTask GetMetadataByPointersAsync(IReadOnlyCollection<URN> pointers, CancellationToken ct, List<IEmote> results) =>
+            source.GetMetadataByPointersAsync(pointers, ct, results);
+
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote>? results = null) =>
             await source.GetByPointersAsync(emoteIds, bodyShape, ct, results);
     }

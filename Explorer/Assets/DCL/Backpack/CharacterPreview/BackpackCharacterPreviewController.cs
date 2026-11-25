@@ -64,6 +64,7 @@ namespace DCL.Backpack.CharacterPreview
                     rotateEnabled = true;
                     panEnabled = true;
                     zoomEnabled = true;
+                    emotePreviewCancellationToken.SafeCancelAndDispose();
                     StopEmotes();
                     break;
                 case BackpackSections.Emotes:
@@ -224,7 +225,8 @@ namespace DCL.Backpack.CharacterPreview
                     }
                 }
 
-                PlayEmote(urn);
+                if (!ct.IsCancellationRequested)
+                    PlayEmote(urn);
             }
 
             emotePreviewCancellationToken = emotePreviewCancellationToken.SafeRestart();
