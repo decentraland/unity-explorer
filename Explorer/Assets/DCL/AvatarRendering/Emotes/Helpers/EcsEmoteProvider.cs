@@ -77,7 +77,12 @@ namespace DCL.AvatarRendering.Emotes
 
             var response = promise.Result!.Value;
             if (!response.Succeeded)
-                throw response.Exception!;
+            {
+                if (requestOptions.PropagateErrors)
+                    throw response.Exception!;
+
+                return (results, 0);
+            }
 
             results.AddRange(response.Asset.Emotes);
             return (results, response.Asset.TotalAmount);

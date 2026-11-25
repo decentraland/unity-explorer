@@ -15,15 +15,17 @@ namespace DCL.AvatarRendering.Emotes.Tests
 {
     public class EcsEmoteProviderShould
     {
-        [TestCase(false)]
-        [TestCase(true)]
-        public async Task DistinguishAFailedOwnedRequestFromAnEmptySuccessfulPage(bool failRequest)
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        public async Task PreserveEmptyResultsUnlessTheCallerRequestsErrors(bool failRequest, bool propagateErrors)
         {
             using var world = World.Create();
             using var identity = new IWeb3IdentityCache.Fake(Substitute.For<IWeb3Identity>());
             var provider = new EcsEmoteProvider(world, identity);
             var output = new List<ITrimmedEmote>();
-            var request = provider.GetTrimmedByParamsAsync(default, CancellationToken.None, output);
+            var options = new IEmoteProvider.OwnedEmotesRequestOptions(null, null, null, null, null, propagateErrors: propagateErrors);
+            var request = provider.GetTrimmedByParamsAsync(options, CancellationToken.None, output);
 
             var query = new QueryDescription().WithAll<GetTrimmedEmotesByParamIntention>();
             var entities = new Entity[1];
@@ -34,9 +36,9 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 : new StreamableLoadingResult<TrimmedEmotesResponse>(new TrimmedEmotesResponse(Array.Empty<ITrimmedEmote>(), 0)));
 
             var result = await request.SuppressToResultAsync();
-            Assert.That(result.Success, Is.EqualTo(!failRequest));
+            Assert.That(result.Success, Is.EqualTo(!failRequest || !propagateErrors));
             Assert.That(output, Is.Empty);
-            if (!failRequest)
+            if (result.Success)
                 Assert.That(result.Value.totalAmount, Is.Zero);
         }
     }

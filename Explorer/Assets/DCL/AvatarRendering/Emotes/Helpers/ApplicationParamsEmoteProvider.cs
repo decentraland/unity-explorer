@@ -43,9 +43,12 @@ namespace DCL.AvatarRendering.Emotes
 
                 using var bufferScope = ListPool<IEmote>.Get(out var localBuffer);
                 await source.GetMetadataByPointersAsync(pointers, ct, localBuffer);
-                results.AddRange(localBuffer);
+                if (requestOptions is { PageNum: not null, PageSize: not null })
+                    results.AddRange(localBuffer.Skip((requestOptions.PageNum.Value - 1) * requestOptions.PageSize.Value).Take(requestOptions.PageSize.Value));
+                else
+                    results.AddRange(localBuffer);
 
-                return (results, results.Count);
+                return (results, localBuffer.Count);
             }
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))

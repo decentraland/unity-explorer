@@ -30,13 +30,15 @@ namespace DCL.AvatarRendering.Emotes
             public readonly OrderOperation? OrderOperation;
             public readonly string? Name;
             public readonly bool? IncludeAmount;
+            public readonly bool PropagateErrors;
 
             public OwnedEmotesRequestOptions(int? pageNum,
                 int? pageSize,
                 URN? collectionId,
                 OrderOperation? orderOperation,
                 string? name,
-                bool? includeAmount = null)
+                bool? includeAmount = null,
+                bool propagateErrors = false)
             {
                 this.PageNum = pageNum;
                 this.PageSize = pageSize;
@@ -44,6 +46,7 @@ namespace DCL.AvatarRendering.Emotes
                 this.OrderOperation = orderOperation;
                 this.Name = name;
                 this.IncludeAmount = includeAmount;
+                this.PropagateErrors = propagateErrors;
             }
         }
     }

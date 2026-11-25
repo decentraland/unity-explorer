@@ -175,7 +175,8 @@ namespace DCL.Backpack.EmotesSection
                             pageSize: CURRENT_PAGE_SIZE,
                             collectionId: null,
                             orderOperation: currentOrder,
-                            name: currentSearch
+                            name: currentSearch,
+                            propagateErrors: true
                         ),
                         ct,
                         emotes
