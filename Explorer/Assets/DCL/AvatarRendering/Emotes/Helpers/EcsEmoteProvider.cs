@@ -23,7 +23,6 @@ namespace DCL.AvatarRendering.Emotes
 
         private readonly World world;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly List<(string, string)> requestParameters = new ();
 
         public EcsEmoteProvider(World world,
             IWeb3IdentityCache web3IdentityCache)
@@ -40,7 +39,8 @@ namespace DCL.AvatarRendering.Emotes
             bool needsBuilderAPISigning = false
         )
         {
-            requestParameters.Clear();
+            // Each intention keeps its parameters until the ECS request completes.
+            var requestParameters = new List<(string, string)>(7);
             requestParameters.Add((IElementsProviderQueryParams.TRIMMED, "true"));
 
             if (requestOptions.PageNum.HasValue)
@@ -71,7 +71,13 @@ namespace DCL.AvatarRendering.Emotes
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
-            var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
+            var promise = OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            try { promise = await promise.ToUniTaskAsync(world, cancellationToken: ct); }
+            catch (OperationCanceledException)
+            {
+                promise.ForgetLoading(world);
+                throw;
+            }
 
             ct.ThrowIfCancellationRequested();
 
