@@ -19,20 +19,20 @@ namespace DCL.Communities.Tests
             using var section = new Section(view);
             section.Visit(firstVisit.Token);
             view.NewDataRequested += Raise.Event<Action>();
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
 
             // Act
             view.NewDataRequested += Raise.Event<Action>();
             firstVisit.Cancel();
             section.Visit(CancellationToken.None);
             view.ClearReceivedCalls();
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
             view.NewDataRequested += Raise.Event<Action>();
 
             // Assert
             view.Received(1).SetLoadingMoreBadgeActive(false);
-            Assert.That(section.RequestedPages, Is.EqualTo(new[] { 1, 2, 2 }));
-            section.Pending.TrySetResult(40);
+            Assert.That(section.requestedPages, Is.EqualTo(new[] { 1, 2, 2 }));
+            section.pendingPage.TrySetResult(40);
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace DCL.Communities.Tests
             using var section = new Section(view);
             section.Visit(firstVisit.Token);
             view.NewDataRequested += Raise.Event<Action>();
-            UniTaskCompletionSource<int?> previous = section.Pending;
+            UniTaskCompletionSource<int?> previous = section.pendingPage;
 
             // Act
             UniTask replacement = section.Fetch();
@@ -54,13 +54,13 @@ namespace DCL.Communities.Tests
 
             // Assert
             view.DidNotReceive().SetLoadingStateActive(false);
-            Assert.That(section.Items, Is.Empty);
+            Assert.That(section.items, Is.Empty);
             view.DidNotReceive().RefreshGrid(Arg.Any<SectionFetchData<int>>(), Arg.Any<bool>());
 
-            Assert.That(section.RequestedPages, Is.EqualTo(new[] { 1, 1 }));
+            Assert.That(section.requestedPages, Is.EqualTo(new[] { 1, 1 }));
 
             // Act
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
             replacement.GetAwaiter().GetResult();
 
             // Assert
@@ -78,11 +78,11 @@ namespace DCL.Communities.Tests
             view.ClearReceivedCalls();
 
             // Act
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
             pending.GetAwaiter().GetResult();
 
             // Assert
-            Assert.That(section.Items, Is.Empty);
+            Assert.That(section.items, Is.Empty);
             view.DidNotReceive().RefreshGrid(Arg.Any<SectionFetchData<int>>(), Arg.Any<bool>());
         }
 
@@ -93,17 +93,17 @@ namespace DCL.Communities.Tests
             var view = Substitute.For<ICommunityFetchingView<int>>();
             using var section = new Section(view);
             view.NewDataRequested += Raise.Event<Action>();
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
 
             // Act
             view.NewDataRequested += Raise.Event<Action>();
-            section.Pending.TrySetResult(null);
+            section.pendingPage.TrySetResult(null);
             view.NewDataRequested += Raise.Event<Action>();
-            section.Pending.TrySetResult(40);
+            section.pendingPage.TrySetResult(40);
 
             // Assert
-            Assert.That(section.RequestedPages, Is.EqualTo(new[] { 1, 2, 2 }));
-            Assert.That(section.Items, Is.EqualTo(new[] { 40, 40 }));
+            Assert.That(section.requestedPages, Is.EqualTo(new[] { 1, 2, 2 }));
+            Assert.That(section.items, Is.EqualTo(new[] { 40, 40 }));
         }
 
         [TestCase(null, false)]
@@ -117,7 +117,7 @@ namespace DCL.Communities.Tests
             view.ClearReceivedCalls();
 
             // Act
-            section.Pending.TrySetResult(total);
+            section.pendingPage.TrySetResult(total);
             page.GetAwaiter().GetResult();
 
             // Assert
@@ -127,9 +127,9 @@ namespace DCL.Communities.Tests
 
         private sealed class Section : CommunityFetchingControllerBase<int, ICommunityFetchingView<int>>
         {
-            internal readonly List<int> RequestedPages = new ();
-            internal IReadOnlyList<int> Items => currentSectionFetchData.Items;
-            internal UniTaskCompletionSource<int?> Pending { get; private set; } = new ();
+            internal readonly List<int> requestedPages = new ();
+            internal IReadOnlyList<int> items => currentSectionFetchData.Items;
+            internal UniTaskCompletionSource<int?> pendingPage { get; private set; } = new ();
 
             protected override SectionFetchData<int> currentSectionFetchData { get; } = new (20);
 
@@ -141,9 +141,9 @@ namespace DCL.Communities.Tests
 
             protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
             {
-                RequestedPages.Add(currentSectionFetchData.PageNumber);
-                Pending = new UniTaskCompletionSource<int?>();
-                int? total = await Pending.Task;
+                requestedPages.Add(currentSectionFetchData.PageNumber);
+                pendingPage = new UniTaskCompletionSource<int?>();
+                int? total = await pendingPage.Task;
                 if (total.HasValue && !ct.IsCancellationRequested)
                     currentSectionFetchData.Items.Add(total.Value);
 

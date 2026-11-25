@@ -27,13 +27,13 @@ namespace DCL.Communities.Tests
             {
                 using var members = new Members(view);
                 members.ShowMembersList(community, firstVisit.Token);
-                var previous = members.Pending;
+                var previous = members.pendingPage;
 
                 // Act
                 firstVisit.Cancel();
                 members.ShowMembersList(community, secondVisit.Token);
-                int requestsAfterReentry = members.Requests;
-                members.Pending.TrySetResult(0);
+                int requestsAfterReentry = members.requestCount;
+                members.pendingPage.TrySetResult(0);
                 previous.TrySetCanceled(firstVisit.Token);
 
                 secondVisit.Cancel();
@@ -41,7 +41,7 @@ namespace DCL.Communities.Tests
 
                 // Assert
                 Assert.That(requestsAfterReentry, Is.EqualTo(2));
-                Assert.That(members.Requests, Is.EqualTo(2));
+                Assert.That(members.requestCount, Is.EqualTo(2));
             }
             finally { Object.DestroyImmediate(view.gameObject); }
         }
@@ -56,7 +56,7 @@ namespace DCL.Communities.Tests
             {
                 using var members = new Members(view);
                 members.ShowMembersList(community, CancellationToken.None);
-                var pending = members.Pending;
+                var pending = members.pendingPage;
                 var field = typeof(MembersListView).GetField(nameof(MembersListView.ActiveSectionChanged), BindingFlags.Instance | BindingFlags.NonPublic);
                 var selectSection = field?.GetValue(view) as System.Action<MembersListView.MemberListSections>
                                     ?? throw new AssertionException("The controller must subscribe to subsection changes.");
@@ -69,24 +69,24 @@ namespace DCL.Communities.Tests
                 yield return null;
 
                 // Assert
-                Assert.That(members.Requests, Is.EqualTo(1));
+                Assert.That(members.requestCount, Is.EqualTo(1));
             }
             finally { Object.DestroyImmediate(view.gameObject); }
         }
 
         private sealed class Members : MembersListController
         {
-            internal int Requests { get; private set; }
-            internal UniTaskCompletionSource<int?> Pending { get; private set; } = new ();
+            internal int requestCount { get; private set; }
+            internal UniTaskCompletionSource<int?> pendingPage { get; private set; } = new ();
 
             // The view stores these services. This public community uses only the overridden page fetch.
             internal Members(MembersListView view) : base(view, null!, null!, null, null!, null!, null!, null!, null!, null!) { }
 
             protected override UniTask<int?> FetchDataAsync(CancellationToken ct)
             {
-                Requests++;
-                Pending = new UniTaskCompletionSource<int?>();
-                return Pending.Task;
+                requestCount++;
+                pendingPage = new UniTaskCompletionSource<int?>();
+                return pendingPage.Task;
             }
         }
     }

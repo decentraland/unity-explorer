@@ -42,7 +42,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
         private readonly IFriendsService? friendsService;
@@ -57,15 +56,15 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private GetCommunityResponse.CommunityData? communityData;
 
-        private int? requestAmount;
+        private int? cachedRequestsToJoinCount;
 
-        private int? RequestsAmount
+        private int? requestsToJoinCount
         {
-            get => requestAmount;
+            get => cachedRequestsToJoinCount;
 
             set
             {
-                requestAmount = value;
+                cachedRequestsToJoinCount = value;
                 view.UpdateRequestsCounter(value.GetValueOrDefault());
             }
         }
@@ -181,7 +180,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                RequestsAmount--;
+                requestsToJoinCount--;
                 currentSectionFetchData.Items.Remove(profile);
 
                 if (intention == InviteRequestIntention.accepted)
@@ -454,7 +453,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             panelLifecycleTask?.TrySetResult();
 
             panelLifecycleTask = null;
-            RequestsAmount = null;
+            requestsToJoinCount = null;
 
             base.Reset();
         }
@@ -548,7 +547,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     membersData.Items.Add(member);
 
             if (currentSection == MembersListView.MemberListSections.Requests)
-                RequestsAmount = response.Value.total;
+                requestsToJoinCount = response.Value.total;
 
             return response.Value.total;
         }
@@ -582,7 +581,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     if (currentSectionFetchData.TotalFetched == 0)
                         tasks.Add(FetchNewDataAsync(ct));
 
-                    if (RequestsAmount == null && community.privacy == CommunityPrivacy.@private && community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
+                    if (requestsToJoinCount == null && community.privacy == CommunityPrivacy.@private && community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
                         tasks.Add(FetchRequestsToJoinAsync(ct));
 
                     await UniTask.WhenAll(tasks);
@@ -601,7 +600,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (ctkn.IsCancellationRequested || panel != panelLifecycleTask || !response.Success)
                     return;
 
-                RequestsAmount = response.Value.total;
+                requestsToJoinCount = response.Value.total;
             }
         }
 
