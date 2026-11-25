@@ -15,8 +15,8 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 36
     env:
-      AUDIT_BUILD_URL: 'https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/backpack-emote-catalog-metadata/pr-28171-f9cb71c/Decentraland_windows64.zip'
-      PRODUCT_SHA: 'f9cb71c356c0adfde0b6f34c6fab3c177d9c8a3f'
+      AUDIT_BUILD_URL: 'https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/backpack-emote-catalog-metadata/pr-28177-24cbdef/Decentraland_windows64.zip'
+      PRODUCT_SHA: '24cbdef3b35d332e8d25e96a79dd98d496bb8b2e'
       CATALOG_RENDERER: WARP
       DCL_BACKPACK_EMOTE_TIMINGS: '1'
       PYTHONUNBUFFERED: '1'

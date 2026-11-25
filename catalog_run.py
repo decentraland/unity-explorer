@@ -209,7 +209,7 @@ class Player:
         page = {"requested_icons": expected, "samples": [], "click_seconds": []}
         METRICS["pages"][name] = page
         last_seen = None
-        checkpoint_at = iter([2, 5, 10, 20, 30, 60, 90, 120])
+        checkpoint_at = iter([2, 5, 10, 20, 30, 60, 90, 120, 150, 180, 210])
         checkpoint = next(checkpoint_at, None)
         last_click = -5
         stale_details = False
@@ -266,7 +266,7 @@ class Player:
         print(name, {k:v for k,v in page.items() if k!="samples"}, flush=True)
         return page
 
-    def suite(self):
+    def suite(self, log):
         self.backpack()
         start = self.click(r"AvatarSlotTop/Button$")
         for sec in (1, 30):
@@ -274,7 +274,7 @@ class Player:
             image = self.save_screen(f"wearables-upper-{sec}s")
             record(control="upper-body", observation_by_s=round(CLOCK()-start, 3), icon_slots=wearable_cards(image))
         start = self.click(r"Backpack/Header/TabSelector/Emotes$")
-        cold = self.page("cold-page1", start, 16, select=True)
+        cold = self.page("cold-page1", start, 16, select=True, deadline=210)
         if self.button(r"/Emotes/FullContainer/PageSelector/PagesContainer/PageButton", "2"):
             if "full_icons_by_s" not in cold and cold["samples"]:
                 missing = sorted(set(range(1,17)) - set(cold["samples"][-1]["icon_slots"]))
@@ -294,6 +294,20 @@ class Player:
             for i in range(5):
                 self.save_screen(f"clap-animation-{i+1}")
                 time.sleep(.3)
+            if not METRICS["product_commit"].startswith("7308da1"):
+                # The visible base catalog can finish before the owned provider.
+                # Keep this request alive long enough to measure finalization.
+                try:
+                    with log.open(encoding="utf-8", errors="replace") as player_log:
+                        while True:
+                            final = next((line for line in player_log if "[BackpackEmoteTiming]" in line
+                                          and " page=1 " in line and " stage=catalog-complete " in line), None)
+                            if final or CLOCK() - start >= 210:
+                                break
+                            time.sleep(1)
+                    record(cold_page_catalog_finalization_observed=bool(final), observation_by_s=round(CLOCK()-start, 3))
+                except OSError as exc:
+                    record(live_player_log_read_error=type(exc).__name__)
             start = self.click(r"/Emotes/FullContainer/PageSelector/PagesContainer/PageButton", "2")
             self.page("cold-page2", start, 5)
             self.cell()
@@ -414,7 +428,7 @@ def main():
         try:
             player = Player(p)
             player.ready(primary["address"])
-            player.suite()
+            player.suite(log)
         except Exception:
             if player is not None and p.poll() is None:
                 try:
