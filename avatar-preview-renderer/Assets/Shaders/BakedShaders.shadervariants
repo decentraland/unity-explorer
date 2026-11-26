@@ -33,3 +33,12 @@ ShaderVariantCollection:
         passType: 13
       - keywords: _MAIN_LIGHT_SHADOWS
         passType: 13
+  - first: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+    second:
+      variants:
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 13
+      - keywords: _ALPHAPREMULTIPLY_ON
+        passType: 13
