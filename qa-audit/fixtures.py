@@ -45,9 +45,10 @@ def deploy_profile(account):
     color=lambda r,g,b: {"color":{"r":r,"g":g,"b":b,"a":1}}
     if label=="friend":
         names=("f_sweater","f_jeans","bun_shoes","two_tails","f_eyes_01","f_eyebrows_00","f_mouth_00")
-        if os.environ.get("AUDIT_SECTION")=="thumbretry":
-            # None of these is worn by the primary, so no thumbnail is already loaded when the friend's Passport opens.
-            names=("f_blue_jacket","f_school_skirt","ruby_blue_loafer","pony_tail","f_eyes_02","f_eyebrows_01","f_mouth_01","thunder_earring")
+    if os.environ.get("AUDIT_SECTION")=="thumbretry":
+        # Both accounts wear this outfit: the player's own avatar loads its 3D assets before the CDN is blocked, so the
+        # friend's Passport can still list the items, while their thumbnails, which nothing has requested yet, cannot load.
+        names=("f_blue_jacket","f_school_skirt","ruby_blue_loafer","pony_tail","f_eyes_02","f_eyebrows_01","f_mouth_01","thunder_earring")
     avatar={"bodyShape":prefix+"BaseFemale","wearables":[prefix+n for n in names],"emotes":[{"slot":i,"urn":n} for i,n in enumerate(("wave","clap","dance"))],
             "eyes":color(.2,.35,.55),"skin":color(.6,.45,.35),"hair":color(.8,.28,.12) if label=="friend" else color(.3,.2,.12)}
     addr=account["address"].lower()

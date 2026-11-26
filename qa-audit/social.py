@@ -415,6 +415,7 @@ class Session:
         facts["probe_url_found"] = bool(probe_url)
         facts["probe_before_block"] = cdn_block.probe(probe_url) if probe_url else None
         pid = int(os.environ["AUDIT_PLAYER_PID"])
+        time.sleep(30)  # let the player's own avatar, which wears the friend's outfit, finish loading its assets
         blocked = cdn_block.block(pid)
         facts["block"] = {k: v for k, v in blocked.items() if k != "addresses_list"}
         facts["passport_opened"] = False
@@ -435,7 +436,7 @@ class Session:
             return
         self.snap("thumbretry-2-still-open-45s-after-restore", r"/passport/.*overviewsectionbutton$", 45)
         self.snap("thumbretry-3-still-open-100s-after-restore", r"/passport/.*overviewsectionbutton$", 55)
-        self.close(r"/passport")
+        facts["passport_closed"] = self.click([r"/passport/backgroundcontainer/toprightbuttonscontainer/button_close$"])
         time.sleep(2)
         if self.open_owned_friend(pair) and self.click([r"/friendlistuser$"]):
             self.snap("thumbretry-4-reopened-20s", r"/passport/.*overviewsectionbutton$", 20)
