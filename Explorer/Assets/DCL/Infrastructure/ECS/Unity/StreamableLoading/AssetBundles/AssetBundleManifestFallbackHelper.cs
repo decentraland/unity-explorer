@@ -18,11 +18,12 @@ namespace ECS.StreamableLoading.AssetBundles
         ///     <paramref name="useManualManifest" /> stamps the manual manifest instead of fetching a real one —
         ///     used by local scene development when its bundles come as raw GLTFs rather than from an asset-bundle server.
         /// </summary>
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false, bool retryCachedFailure = false)
         {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException);
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException, retryCachedFailure);
 
-            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+            if (entityDefinition.id is { } entityId)
+                entityDefinition.AssetBundleManifestVersionOrFailed.InjectContent(entityId, entityDefinition.content);
         }
 
         public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false)
@@ -30,7 +31,7 @@ namespace ECS.StreamableLoading.AssetBundles
             await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest);
         }
 
-        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
+        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false, bool retryCachedFailure = false)
         {
             if (useManualManifest)
             {
@@ -40,7 +41,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
             //Also used for the PX escape
-            if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
+            if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty()
+                || (retryCachedFailure && entityDefinition.assetBundleManifestVersion.assetBundleManifestRequestFailed))
             {
                 //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation
                 await UniTask.SwitchToMainThread();
@@ -51,14 +53,27 @@ namespace ECS.StreamableLoading.AssetBundles
                     ReportHub.LogException(new Exception("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested"), ReportCategory.ASSET_BUNDLES);
                 }
 
+                if (entityDefinition.id is not { Length: > 0 } entityId)
+                {
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+                    return;
+                }
+
                 var promise = AssetBundleManifestPromise.Create(world,
-                    GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
+                    GetAssetBundleManifestIntention.Create(entityId, new CommonLoadingArguments(entityId) { RetryCachedFailures = retryCachedFailure }),
                     partition);
 
-                StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
+                try { promise = await promise.ToUniTaskAsync(world, cancellationToken: ct); }
+                catch (OperationCanceledException)
+                {
+                    promise.ForgetLoading(world);
+                    throw;
+                }
 
-                if (assetBundleManifest.Succeeded)
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+                StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = promise.Result!.Value;
+
+                if (assetBundleManifest is { Succeeded: true, Asset: { } manifest })
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(manifest.GetVersion(), manifest.GetBuildDate());
                 else
                 {
                     assetBundleManifest.TryLogException();

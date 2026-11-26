@@ -13,6 +13,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
 using ECS.Abstract;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -69,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     using var _ = WearableComponentsUtils.POINTERS_POOL.Get(out var failedDTOList);
                     failedDTOList!.AddRange(promise.LoadingIntention.Pointers);
 
-                    using (var list = promise.Result.Value.Asset.ConsumeAttachments())
+                    using (var list = promiseResult.Asset.ConsumeAttachments())
                         foreach (WearableDTO assetEntity in list.Value)
                         {
                             if (wearableStorage.TryGetElementWithLogs(assetEntity, GetReportCategory(), out var component) == false)
@@ -189,12 +190,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
             in BodyShape bodyShape,
             int index,
             Func<StreamableLoadingResult<TAsset>, StreamableLoadingResult<AttachmentAssetBase>> toWearableAsset
-        ) where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
+        ) where TAsset: class, IStreamableRefCountData
+          where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 ResetWearableResultOnCancellation(wearable, in bodyShape, index);
-                promise.ForgetLoading(World);
+                if ((promise.IsConsumed || World.IsAlive(promise.Entity)) && promise.SafeTryConsume(World, GetReportCategory(), out var abandoned))
+                {
+                    if (abandoned.Succeeded) abandoned.Asset!.Dereference();
+                }
+                else
+                    promise.ForgetLoading(World);
+
                 World.Destroy(entity);
                 return;
             }

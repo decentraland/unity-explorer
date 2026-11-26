@@ -1,4 +1,4 @@
-﻿using AssetManagement;
+using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.WebRequests;
 using System.Threading;
@@ -10,6 +10,7 @@ namespace ECS.StreamableLoading.Common.Components
         public URLAddress URL;
         public int Attempts;
         public int Timeout;
+        public bool RetryCachedFailures;
 
         /// <summary>
         ///     When the system fails to load from the current source it removes the source from the flags
@@ -36,6 +37,7 @@ namespace ECS.StreamableLoading.Common.Components
             AssetSource currentSource = AssetSource.Web,
             CancellationTokenSource? cancellationTokenSource = null)
         {
+            RetryCachedFailures = false;
             URL = url;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
             Timeout = timeout;

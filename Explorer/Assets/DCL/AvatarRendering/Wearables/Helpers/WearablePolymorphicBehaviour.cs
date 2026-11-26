@@ -130,10 +130,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (!wearable.TryGetFileHashConditional(bodyShape,
                     static content => content.EndsWith("_mask.png", StringComparison.OrdinalIgnoreCase),
-                    out string mainFileHash))
+                    out string? maskFileHash) || maskFileHash == null)
             {
                 // If there is no mask, we don't need to create a promise for it, and it's not an exception
-                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>((AttachmentTextureAsset)null);
+                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>(null);
                 return false;
             }
 
@@ -141,7 +141,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 typeof(Texture),
                 intention,
                 customStreamingSubdirectory,
-                mainFileHash,
+                maskFileHash,
                 wearable,
                 MASK_ASSET_INDEX,
                 partitionComponent,
@@ -196,7 +196,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world) where T: IAvatarAttachment
         {
-            if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
+            if (wearable.DTO.ContentDownloadUrl is { Length: > 0 } rawContentUrl)
             {
                 foreach (ContentDefinition content in wearable.DTO.content)
                 {
@@ -204,6 +204,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     {
                         CreateRawWearablePromise(
                             content,
+                            rawContentUrl,
                             intention,
                             wearable,
                             index,
@@ -227,7 +228,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         parentEntityID: wearable.DTO.id,
-                        cancellationTokenSource: intention.CancellationTokenSource),
+                        cancellationTokenSource: intention.CancellationTokenSource).WithRetryCachedFailures(intention.RetryCachedFailures),
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
@@ -241,6 +242,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         private static void CreateRawWearablePromise<T>(
             ContentDefinition content,
+            string rawContentUrl,
             GetWearablesByPointersIntention intention,
             T wearable,
             int index,
@@ -250,14 +252,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
             if (IsGlb(content))
-                CreateRawGltfPromise(content, wearable, intention.BodyShape, index, partitionComponent, world);
+                CreateRawGltfPromise(content, wearable, intention.BodyShape, index, partitionComponent, world, intention.RetryCachedFailures);
             else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format
             {
                 var promise = TexturePromise.Create(world,
                     new GetTextureIntention
                     {
                         // If cancellation token source was not provided a new one will be created
-                        CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
+                        CommonArguments = new CommonLoadingArguments(URLAddress.FromString(rawContentUrl + content.hash), cancellationTokenSource: intention.CancellationTokenSource) { RetryCachedFailures = intention.RetryCachedFailures },
                         ReportSource = nameof(WearablePolymorphicBehaviour),
                     },
                     partitionComponent);
@@ -292,12 +294,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private static bool IsGlb(ContentDefinition content) =>
             content.file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase);
 
-        private static void CreateRawGltfPromise<T>(ContentDefinition content, T wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world)
+        private static void CreateRawGltfPromise<T>(ContentDefinition content, T wearable, BodyShape bodyShape, int index, IPartitionComponent partitionComponent, World world, bool retryCachedFailures = false)
             where T: IAvatarAttachment
         {
             // We pass in the DTO content mappings (file -> hash) to the promise, so that external assets can be resolved
             var getGltf = GetGLTFIntention.Create(content.file, content.hash, false, wearable.DTO.content);
-            var promise = RawGltfPromise.Create(world, getGltf, partitionComponent);
+            var promise = RawGltfPromise.Create(world, getGltf.WithRetryCachedFailures(retryCachedFailures), partitionComponent);
             world.Create(promise, wearable, bodyShape, index);
         }
 
@@ -310,8 +312,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 case WearableType.FacialFeature:
                 {
-                    if (result.Asset.TryGetAsset(out Texture texture))
-                        return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(texture, result.Asset));
+                    if (result.Asset is { } bundle && bundle.TryGetAsset(out Texture texture))
+                        return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(texture, bundle));
 
                     return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, new ArgumentException($"Failed to create facial feature asset for {wearable} from the AB"));
                 }
@@ -344,7 +346,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static bool TryToConvertToRegularAsset(this StreamableLoadingResult<AssetBundleData> result, out AttachmentRegularAsset regularAssetResult)
         {
-            if (!result.Asset.TryGetAsset(out GameObject go))
+            if (result.Asset is not { } bundle || !bundle.TryGetAsset(out GameObject go))
             {
                 regularAssetResult = null;
                 return false;
@@ -358,7 +360,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
-            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            regularAssetResult = new AttachmentRegularAsset(go, rendererInfos, bundle);
             return true;
         }
 
@@ -379,9 +381,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return true;
         }
 
+        public static bool HasUsableMainAsset(this IWearable wearable, BodyShape bodyShape) =>
+            wearable.WearableAssetResults[bodyShape].Results?[MAIN_ASSET_INDEX]?.Asset switch
+            {
+                AttachmentRegularAsset model => model.MainAsset != null,
+                AttachmentTextureAsset texture => texture.Texture != null,
+                _ => false,
+            };
+
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)
         {
-            StreamableLoadingResult<AttachmentAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results;
+            var results = wearable.WearableAssetResults[bodyShape].Results;
 
             // We only care for the result in 0
             // If its a regular wearbale, the asset that we need to check the initialization its at 0 (MAIN_ASSET_INDEX)

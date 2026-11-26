@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -57,6 +57,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         };
 
         private static readonly HashSet<string> HIDE_CATEGORIES = new (StringComparer.OrdinalIgnoreCase);
+
+        public static BodyShape GetBodyShapeForEquip(URN pointer, BodyShape current)
+        {
+            if (pointer.Equals(BodyShape.FEMALE)) return BodyShape.FEMALE;
+            if (pointer.Equals(BodyShape.MALE)) return BodyShape.MALE;
+            return current;
+        }
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
@@ -231,11 +238,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             List<IWearable> helperWearableList = WEARABLES_POOL.Get()!;
 
-            foreach (IWearable visibleWearable in hideWearablesResolution.VisibleWearables)
-            {
-                if (visibleWearable.WearableAssetResults[bodyShape].Results[0].Value.Succeeded)
-                    helperWearableList.Add(visibleWearable);
-            }
+            if (hideWearablesResolution.VisibleWearables is { } visibleWearables)
+                foreach (IWearable wearable in visibleWearables)
+                    if (wearable.WearableAssetResults[bodyShape].Results?[0] is { Succeeded: true })
+                        helperWearableList.Add(wearable);
 
             // Clean up existing pooled objects before overwriting
             hideWearablesResolution.Release();

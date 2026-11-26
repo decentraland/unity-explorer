@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Runtime.Wearables;
@@ -35,13 +36,16 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly List<(string, string)> requestParameters = new ();
         private readonly World world;
+        private readonly IWearableStorage wearableStorage;
 
         public ECSWearablesProvider(
             IWeb3IdentityCache web3IdentityCache,
-            World world)
+            World world,
+            IWearableStorage wearableStorage)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.world = world;
+            this.wearableStorage = wearableStorage;
         }
 
         public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetTrimmedByParamsAsync(
@@ -111,6 +115,69 @@ namespace DCL.AvatarRendering.Wearables
             return (results, wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
+        public async UniTask<IWearable?> GetForEquipAsync(URN pointer, BodyShape bodyShape, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (pointer.IsNullOrEmpty()) return null;
+
+            pointer = pointer.Shorten();
+            bodyShape = WearableComponentsUtils.GetBodyShapeForEquip(pointer, bodyShape);
+
+            if (wearableStorage.TryGetElement(pointer, out IWearable cached) && !cached.IsLoading)
+            {
+                if (cached.Model.Succeeded)
+                {
+                    if (IsReadyForEquip(cached, pointer, bodyShape)) return cached;
+                    if (!cached.IsCompatibleWithBodyShape(bodyShape)) return null;
+
+                    if (string.IsNullOrEmpty(cached.DTO!.ContentDownloadUrl) && cached.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+                    {
+                        await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(world, cached.DTO, PartitionComponent.TOP_PRIORITY, ct,
+                            skipException: true, retryCachedFailure: true);
+
+                        if (cached.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed) return null;
+                    }
+
+                    var slots = cached.WearableAssetResults[bodyShape].Results;
+                    for (var i = 0; i < slots?.Length; i++)
+                        if (slots[i] is { Exception: not null }) slots[i] = null;
+                }
+                else if (cached.Model.Exception != null)
+                    cached.Model = default;
+            }
+
+            List<URN> pointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
+            pointers.Add(pointer);
+            var intention = new GetWearablesByPointersIntention(pointers, bodyShape, allWearableCategories) { RetryCachedFailures = true };
+            var promise = WearablePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+
+            try
+            {
+                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+                if (promise.Result is not { Succeeded: true } result || result.Asset.Wearables.Count != 1) return null;
+                IWearable candidate = result.Asset.Wearables[0];
+                return IsReadyForEquip(candidate, pointer, bodyShape) ? candidate : null;
+            }
+            finally
+            {
+                ConsumeOrCancelPromise(ref promise);
+
+                if (promise.Result is { Succeeded: true } result)
+                {
+                    foreach (IWearable wearable in result.Asset.Wearables)
+                        foreach (var slot in wearable.WearableAssetResults[bodyShape].Results!)
+                            slot?.Asset?.Dereference();
+
+                    result.Asset.Dispose();
+                }
+
+                intention.Dispose();
+            }
+        }
+
+        private static bool IsReadyForEquip(IWearable wearable, URN pointer, BodyShape bodyShape) =>
+            wearable.GetUrn().Equals(pointer) && wearable.IsCompatibleWithBodyShape(bodyShape) && wearable.HasUsableMainAsset(bodyShape);
+
         public UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct,
@@ -136,19 +203,32 @@ namespace DCL.AvatarRendering.Wearables
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories, dtoOnly),
                 PartitionComponent.TOP_PRIORITY);
 
-            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            try
+            {
+                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+                if (promise.Result is not { Succeeded: true } result) return null;
 
-            if (!promise.TryGetResult(world, out var result))
-                return null;
+                results ??= new List<IWearable>();
+                results.AddRange(result.Asset.Wearables);
+                return results;
+            }
+            finally
+            {
+                if (dtoOnly)
+                {
+                    ConsumeOrCancelPromise(ref promise);
+                    if (promise.Result is { Succeeded: true } result) result.Asset.Dispose();
+                    promise.LoadingIntention.Dispose();
+                }
+            }
+        }
 
-            if (!result.Succeeded)
-                return null;
+        private void ConsumeOrCancelPromise(ref WearablePromise promise)
+        {
+            if (promise.IsConsumed || promise.TryConsume(world, out _)) return;
 
-            results ??= new List<IWearable>();
-
-            results.AddRange(result.Asset.Wearables);
-
-            return results;
+            world.Get<GetWearablesByPointersIntention>(promise.Entity).HideWearablesResolution.Release();
+            promise.ForgetLoading(world);
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)

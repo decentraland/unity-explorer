@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
@@ -13,7 +12,6 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
 using AssetManagement;
-using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
@@ -56,9 +54,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Switch to main thread to create dependency promises
             await UniTask.SwitchToMainThread();
 
-            URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
-
-            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.AssetBundleManifest, parentIntent.ParentEntityID, customEmbeddedSubdirectory, partition, ct)));
+            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent, partition, ct)));
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -234,13 +230,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
             string hash,
-            AssetBundleManifestVersion assetBundleManifestVersion,
-            string parentEntityId,
-            URLSubdirectory customEmbeddedSubdirectory,
+            GetAssetBundleIntention parent,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityId, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
+            var dependency = GetAssetBundleIntention.FromHash(hash, parent.AssetBundleManifest, parentEntityID: parent.ParentEntityID,
+                customEmbeddedSubDirectory: parent.CommonArguments.CustomEmbeddedSubDirectory, isDependency: true);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, dependency.WithRetryCachedFailures(parent.CommonArguments.RetryCachedFailures), partition);
 
             try
             {
