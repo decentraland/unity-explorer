@@ -185,16 +185,16 @@ namespace SceneRuntime.Tests
                 Assert.DoesNotThrow(() => sceneRuntime.SetIsDisposing());
             });
 
-        // A scene that imports ~system/SceneRewards must load in the explorer, which never pays: the call resolves a refusal.
+        // A scene that imports ~system/SceneCredits must load in the explorer, which never pays: the call resolves a refusal.
         [UnityTest]
-        public IEnumerator SceneRewards_ResolveNotAvailable() =>
+        public IEnumerator SceneCredits_ResolveNotAvailable() =>
             UniTask.ToCoroutine(async () =>
             {
                 var code = @"
-            const sceneRewards = require('~system/SceneRewards')
+            const sceneCredits = require('~system/SceneCredits')
             exports.onStart = async function() {
-                const response = await sceneRewards.grantReward({ programId: '', recipient: '', outcomeId: 'match-1' })
-                probe.Record(sceneRewards.GrantRewardError.GRE_NOT_AVAILABLE, response.ok, response.error)
+                const response = await sceneCredits.grantCredits({ programId: '', recipient: '', outcomeId: 'match-1' })
+                probe.Record(sceneCredits.GrantCreditsError.GCE_NOT_AVAILABLE, response.ok, response.error)
             };
             exports.onUpdate = async function(dt) {};
         ";
@@ -203,19 +203,19 @@ namespace SceneRuntime.Tests
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
                 sceneRuntime.ExecuteSceneJson();
 
-                var probe = new GrantRewardProbe();
+                var probe = new GrantCreditsProbe();
                 sceneRuntime.engine.AddHostObject("probe", probe);
 
-                // StartScene awaits onStart, so the awaited grantReward has resolved by the time it returns.
+                // StartScene awaits onStart, so the awaited grantCredits has resolved by the time it returns.
                 await sceneRuntime.StartScene();
 
-                Assert.IsTrue(probe.Recorded, "grantReward did not resolve");
-                Assert.AreEqual(1d, probe.NotAvailable, "GrantRewardError.GRE_NOT_AVAILABLE");
+                Assert.IsTrue(probe.Recorded, "grantCredits did not resolve");
+                Assert.AreEqual(1d, probe.NotAvailable, "GrantCreditsError.GCE_NOT_AVAILABLE");
                 Assert.IsFalse(probe.Ok, "response.ok");
                 Assert.AreEqual(probe.NotAvailable, probe.Error, "response.error");
             });
 
-        public class GrantRewardProbe
+        public class GrantCreditsProbe
         {
             public bool Recorded { get; private set; }
             public double NotAvailable { get; private set; }
