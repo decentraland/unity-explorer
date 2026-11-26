@@ -39,23 +39,16 @@ namespace DCL.Chat.ChatReactions.Networking
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> channelToMessageIds = new ();
 
-        /// <summary>
-        ///     The number of emojis in the reactions atlas: valid emoji indices are 0 to <c>EmojiCount - 1</c>.
-        /// </summary>
-        public int EmojiCount { get; }
-
         internal ChatMessageReactionService(
             IReactionMessageBus reactionBus,
             IChatHistory chatHistory,
             IWeb3IdentityCache identityCache,
-            int maxDistinctReactionsPerMessage = 0,
-            int emojiCount = int.MaxValue)
+            int maxDistinctReactionsPerMessage = 0)
         {
             this.reactionBus = reactionBus;
             this.chatHistory = chatHistory;
             this.identityCache = identityCache;
             this.maxDistinctReactionsPerMessage = maxDistinctReactionsPerMessage;
-            EmojiCount = emojiCount;
 
             chatHistory.MessageAdded += OnMessageAdded;
             chatHistory.ChannelCleared += OnChannelCleared;

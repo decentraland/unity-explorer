@@ -169,7 +169,6 @@ namespace Global.Dynamic
 
             ChatOpener.Initialize(new ChatOpener(chatEventBus, uiShellContainer.MvcManager, identityCache, chatHistory));
 
-            // The bus and the service need no chat UI: built here so that consumers created before the chat plugin loads get them as plain dependencies
             (IReactionMessageBus reactionBus, ChatMessageReactionService messageReactionService) = ChatReactionsFactory.CreateNetworking(
                 reactionsConfig,
                 commsContainer.MessagePipesHub,

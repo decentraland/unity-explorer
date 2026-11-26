@@ -37,9 +37,9 @@ namespace DCL.McpServer.Tests
 
             chatHistory = new ChatHistory();
             reactionBus = new FakeReactionBus();
-            service = new ChatMessageReactionService(reactionBus, chatHistory, new IWeb3IdentityCache.Fake(new IWeb3Identity.Random()), emojiCount: EMOJI_COUNT);
+            service = new ChatMessageReactionService(reactionBus, chatHistory, new IWeb3IdentityCache.Fake(new IWeb3Identity.Random()));
 
-            tool = new ReactToChatMessageTool(chatHistory, service);
+            tool = new ReactToChatMessageTool(chatHistory, service, EMOJI_COUNT);
 
             nearby = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             message = new ChatMessage("hello", "User", "0xsender", false, "0xsender", 1000);

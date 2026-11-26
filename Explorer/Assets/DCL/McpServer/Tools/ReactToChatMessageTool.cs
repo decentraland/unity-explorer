@@ -20,6 +20,7 @@ namespace DCL.McpServer.Tools
     {
         private readonly IChatHistory chatHistory;
         private readonly ChatMessageReactionService reactionService;
+        private readonly int emojiCount;
 
         public override string Name => "react_to_chat_message";
 
@@ -35,10 +36,11 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public ReactToChatMessageTool(IChatHistory chatHistory, ChatMessageReactionService reactionService)
+        public ReactToChatMessageTool(IChatHistory chatHistory, ChatMessageReactionService reactionService, int emojiCount)
         {
             this.chatHistory = chatHistory;
             this.reactionService = reactionService;
+            this.emojiCount = emojiCount;
         }
 
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -56,8 +58,8 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Error("Chat reactions are disabled by feature flag: nothing would reach the channel."));
 
             // A negative value on the wire means "remove", which the toggle decides; receivers drop an index outside the atlas
-            if (emojiIndex < 0 || emojiIndex >= reactionService.EmojiCount)
-                return UniTask.FromResult(McpToolResult.Error($"emojiIndex must be between 0 and {reactionService.EmojiCount - 1}, the reactions emoji atlas."));
+            if (emojiIndex < 0 || emojiIndex >= emojiCount)
+                return UniTask.FromResult(McpToolResult.Error($"emojiIndex must be between 0 and {emojiCount - 1}, the reactions emoji atlas."));
 
             if (!TryFindChannel(messageId, out ChatChannel? channel))
                 return UniTask.FromResult(McpToolResult.Error($"No message with id '{messageId}' in the chat history. Read the ids with get_chat_history."));
@@ -70,8 +72,8 @@ namespace DCL.McpServer.Tools
             int after = ReactorCount(channel, messageId, emojiIndex);
 
             if (after == before)
-                return UniTask.FromResult(McpToolResult.Error("The reaction was not applied: the player has no identity yet, or the message reached its "
-                                                              + "distinct-emoji or per-emoji reactor limit."));
+                return UniTask.FromResult(McpToolResult.Error("The local chat history did not change: the player has no identity yet, or the message reached its "
+                                                              + "distinct-emoji or per-emoji reactor limit (at the reactor limit the reaction may still have been sent)."));
 
             return UniTask.FromResult(McpToolResult.Json(new JObject
             {

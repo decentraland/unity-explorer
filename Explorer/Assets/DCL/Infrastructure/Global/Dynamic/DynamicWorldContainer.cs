@@ -345,6 +345,8 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(realmNavigatorContainer.WorldInfoHub);
 
+            var chatReactionsConfig = dynamicWorldDependencies.SettingsContainer.GetSettings<ChatPluginSettings>().ReactionsConfig;
+
             var chatContainer = ChatContainer.Create(
                 staticContainer,
                 bootstrapContainer,
@@ -353,7 +355,7 @@ namespace Global.Dynamic
                 profileContainer,
                 identityCache,
                 userBlockingCache,
-                dynamicWorldDependencies.SettingsContainer.GetSettings<ChatPluginSettings>().ReactionsConfig,
+                chatReactionsConfig,
                 realmNavigatorContainer.WorldInfoHub,
                 realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,
@@ -1032,6 +1034,7 @@ namespace Global.Dynamic
                         chatContainer.ChatMessagesBus,
                         chatContainer.ChatHistory,
                         chatContainer.MessageReactionService,
+                        chatReactionsConfig.SafeTotalTiles,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
                         staticContainer.LoadingStatus,

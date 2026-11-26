@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.Web3;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -105,21 +106,10 @@ namespace DCL.McpServer.Tools
             if (string.Equals(requested, NEARBY, StringComparison.OrdinalIgnoreCase))
                 return chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out channel);
 
-            if (chatHistory.Channels.TryGetValue(new ChatChannel.ChannelId(requested), out channel))
-                return true;
+            if (Web3Address.FromUntrusted(requested) is { } wallet)
+                return chatHistory.Channels.TryGetValue(new ChatChannel.ChannelId(wallet.ToString()), out channel);
 
-            // Wallets are stored in lower case; the caller may hold a checksummed address
-            foreach (ChatChannel candidate in chatHistory.Channels.Values)
-            {
-                if (string.Equals(candidate.Id.Id, requested, StringComparison.OrdinalIgnoreCase))
-                {
-                    channel = candidate;
-                    return true;
-                }
-            }
-
-            channel = null;
-            return false;
+            return chatHistory.Channels.TryGetValue(new ChatChannel.ChannelId(requested), out channel);
         }
 
         private JObject Describe(ChatChannel channel, ChatMessage message)

@@ -70,8 +70,7 @@ namespace DCL.Chat.ChatReactions.Core
             var messageReactionService = new ChatMessageReactionService(reactionBus,
                 chatHistory,
                 web3IdentityCache,
-                reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage,
-                reactionsConfig.SafeTotalTiles);
+                reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage);
 
             return (reactionBus, messageReactionService);
         }

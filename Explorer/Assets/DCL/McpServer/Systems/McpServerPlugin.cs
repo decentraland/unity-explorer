@@ -45,6 +45,7 @@ namespace DCL.McpServer.Systems
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatHistory chatHistory;
         private readonly ChatMessageReactionService messageReactionService;
+        private readonly int reactionEmojiCount;
         private readonly ExposedCameraData exposedCameraData;
 
         private readonly Arch.Core.World globalWorld;
@@ -72,6 +73,7 @@ namespace DCL.McpServer.Systems
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             ChatMessageReactionService messageReactionService,
+            int reactionEmojiCount,
             IScenesCache scenesCache,
             ICurrentSceneInfo currentSceneInfo,
             ILoadingStatus loadingStatus,
@@ -95,6 +97,7 @@ namespace DCL.McpServer.Systems
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
             this.messageReactionService = messageReactionService;
+            this.reactionEmojiCount = reactionEmojiCount;
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.loadingStatus = loadingStatus;
@@ -145,7 +148,7 @@ namespace DCL.McpServer.Systems
                           .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus, loadingStatus))
                           .Add(new GetChatHistoryTool(chatHistory))
-                          .Add(new ReactToChatMessageTool(chatHistory, messageReactionService))
+                          .Add(new ReactToChatMessageTool(chatHistory, messageReactionService, reactionEmojiCount))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity, coroutineRunner))
                           .Add(new ListSceneEntitiesTool(scenesCache))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
