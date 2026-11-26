@@ -16,15 +16,15 @@ namespace DCL.AvatarRendering.Wearables
         private static readonly IReadOnlyList<int> DEFAULT_RETRY_DELAYS_MS = new[] { 1_000, 2_000, 5_000, 10_000, 20_000, 30_000 };
 
         /// <summary>
-        ///     Loads the thumbnail of a view that stays on screen. An attempt that fails or times out shows the default thumbnail
-        ///     and is retried after the next delay, until one succeeds, the delays run out or <paramref name="ct" /> is cancelled
-        ///     because the view closed.
+        ///     Loads the thumbnail and passes it to <paramref name="setSprite" />. A failed or timed-out attempt passes the default thumbnail
+        ///     and is retried after the next delay, until one succeeds, the delays run out or <paramref name="ct" /> is cancelled.
         /// </summary>
-        public static async UniTask LoadUntilSucceededAsync(this IThumbnailProvider provider, IThumbnailAttachment attachment, Action<Sprite> setSprite,
-            CancellationToken ct, IReadOnlyList<int>? retryDelaysMs = null)
-        {
-            retryDelaysMs ??= DEFAULT_RETRY_DELAYS_MS;
+        public static UniTask LoadWithRetriesAsync(this IThumbnailProvider provider, IThumbnailAttachment attachment, Action<Sprite> setSprite, CancellationToken ct) =>
+            provider.LoadWithRetriesAsync(attachment, setSprite, ct, DEFAULT_RETRY_DELAYS_MS);
 
+        internal static async UniTask LoadWithRetriesAsync(this IThumbnailProvider provider, IThumbnailAttachment attachment, Action<Sprite> setSprite,
+            CancellationToken ct, IReadOnlyList<int> retryDelaysMs)
+        {
             for (var attempt = 0;; attempt++)
             {
                 Sprite sprite = await provider.GetAsync(attachment, ct);

@@ -382,7 +382,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                await thumbnailProvider.LoadUntilSucceededAsync(itemWearable, sprite => itemView.EquippedItemThumbnail.sprite = sprite, ct);
+                await thumbnailProvider.LoadWithRetriesAsync(itemWearable, sprite => itemView.EquippedItemThumbnail.sprite = sprite, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -398,7 +398,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                await thumbnailProvider.LoadUntilSucceededAsync(itemEmote, sprite => itemView.EquippedItemThumbnail.sprite = sprite, ct);
+                await thumbnailProvider.LoadWithRetriesAsync(itemEmote, sprite => itemView.EquippedItemThumbnail.sprite = sprite, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

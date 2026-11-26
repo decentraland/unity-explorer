@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             FakeWearable wearable = NewWearable();
             Sprite? shown = null;
 
-            UniTask loading = provider.LoadUntilSucceededAsync(wearable, sprite => shown = sprite, CancellationToken.None, NO_RETRY_DELAY);
+            UniTask loading = provider.LoadWithRetriesAsync(wearable, sprite => shown = sprite, CancellationToken.None, NO_RETRY_DELAY);
 
             ResolvePendingDownload(FailedDownload());
             Assert.That(await PendingDownloadAppearsAsync(), Is.True, "A visible thumbnail must download again after a failed attempt");
@@ -99,7 +99,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             FakeWearable wearable = NewWearable();
             using var viewLifetime = new CancellationTokenSource();
 
-            UniTask loading = provider.LoadUntilSucceededAsync(wearable, _ => { }, viewLifetime.Token, NO_RETRY_DELAY);
+            UniTask loading = provider.LoadWithRetriesAsync(wearable, _ => { }, viewLifetime.Token, NO_RETRY_DELAY);
 
             ResolvePendingDownload(FailedDownload());
             Assert.That(await PendingDownloadAppearsAsync(), Is.True, "A visible thumbnail must download again after a failed attempt");
@@ -123,7 +123,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Sprite? shown = null;
             using var viewLifetime = new CancellationTokenSource();
 
-            UniTask loading = provider.LoadUntilSucceededAsync(wearable, sprite => shown = sprite, viewLifetime.Token, NO_RETRY_DELAY);
+            UniTask loading = provider.LoadWithRetriesAsync(wearable, sprite => shown = sprite, viewLifetime.Token, NO_RETRY_DELAY);
 
             try
             {
@@ -292,7 +292,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         private async UniTask<bool> PendingDownloadAppearsAsync()
         {
-            for (var frame = 0; frame < 120; frame++)
+            const int MAX_FRAMES_FOR_PENDING_DOWNLOAD = 120;
+
+            for (var frame = 0; frame < MAX_FRAMES_FOR_PENDING_DOWNLOAD; frame++)
             {
                 if (world.CountEntities(in THUMBNAIL_PROMISES) > 0)
                     return true;
