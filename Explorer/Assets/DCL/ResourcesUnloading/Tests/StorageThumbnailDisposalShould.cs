@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 
 namespace DCL.ResourcesUnloading.Tests
 {
@@ -113,7 +114,7 @@ namespace DCL.ResourcesUnloading.Tests
         private static StreamableLoadingResult<SpriteData>.WithFallback UnacquiredThumbnail(bool cancelled) =>
             cancelled
                 ? StreamableLoadingResult<SpriteData>.WithFallback.CancelledResult()
-                : StreamableLoadingResult<SpriteData>.WithFallback.Failed();
+                : StreamableLoadingResult<SpriteData>.WithFallback.Failed(new SpriteData(new ReleaseForbidden(), null!));
 
         private static StreamableLoadingResult<SpriteData>.WithFallback SucceededThumbnail(RefCountSpy spy) =>
             new (new SpriteData(spy, null!));
@@ -126,6 +127,17 @@ namespace DCL.ResourcesUnloading.Tests
 
         private static EmoteDTO EmoteDto(string urn) =>
             new () { metadata = new EmoteDTO.EmoteMetadataDto { id = urn } };
+
+        /// <summary>
+        ///     The fallback of a failed thumbnail, which no storage may release: the DoesNotThrow assertions catch a release.
+        /// </summary>
+        private class ReleaseForbidden : IStreamableRefCountData
+        {
+            public void Dereference() =>
+                throw new InvalidOperationException("A failed thumbnail's fallback must not be released");
+
+            public void Dispose() { }
+        }
 
         private class RefCountSpy : IStreamableRefCountData
         {

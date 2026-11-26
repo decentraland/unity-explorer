@@ -199,7 +199,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public async Task RetryAfterFailedSlotInsteadOfRethrowing()
         {
             FakeWearable wearable = NewWearable();
-            wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed();
+            wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
 
             UniTask<Sprite> getTask = provider.GetAsync(wearable, CancellationToken.None);
             int promisesSpawned = world.CountEntities(in THUMBNAIL_PROMISES);
