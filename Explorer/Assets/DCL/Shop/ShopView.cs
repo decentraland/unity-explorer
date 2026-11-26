@@ -22,10 +22,15 @@ namespace DCL.Shop
         private const float CART_BUMP_SCALE = 0.25f;
         private const float CART_BUMP_DURATION = 0.3f;
 
+        private static readonly Vector3[] CORNERS = new Vector3[4];
+
         [field: Header("Header")]
         [field: SerializeField] public SectionTab[] SectionTabs { get; private set; } = Array.Empty<SectionTab>();
         [field: SerializeField] public SearchBarView SearchBar { get; private set; } = null!;
         [field: SerializeField] public DropdownView SortDropdown { get; private set; } = null!;
+        [field: SerializeField] public ShopFiltersPanelView Filters { get; private set; } = null!;
+        [field: SerializeField] public GameObject ManaPanel { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text ManaBalanceText { get; private set; } = null!;
         [field: SerializeField] public CreditsPanelView CreditsPanel { get; private set; } = null!;
         [field: SerializeField] public Button CartButton { get; private set; } = null!;
         [field: SerializeField] public GameObject CartBadge { get; private set; } = null!;
@@ -133,6 +138,28 @@ namespace DCL.Shop
         {
             ItemPanel.gameObject.SetActive(open);
             Main.offsetMax = new Vector2(-(mainRightInset + (open ? ItemPanelInset : 0f)), Main.offsetMax.y);
+
+            // The item panel starts below the pills row, so the row keeps the width the panel takes from the grid
+            if (WearablesView.CategoryPills != null)
+                WearablesView.CategoryPills.SetRightOverflow(open ? ItemPanelInset : 0f);
+        }
+
+        /// <summary>
+        ///     Puts the top edge of the item panel on the first row of the given section.
+        /// </summary>
+        public void AlignItemPanelTop(ShopSection section)
+        {
+            ShopGridSectionView? grid = GridViewOf(section);
+
+            // A grid starts its first row below its top padding; the overview rows start at the top of their scroll area
+            RectTransform scrollArea = grid != null ? (RectTransform)grid.Grid.transform : (RectTransform)OverviewView.Scroll.transform;
+            float firstRowInset = grid != null ? grid.Grid.Padding.top : 0f;
+
+            var panel = (RectTransform)ItemPanel.transform;
+            var panelParent = (RectTransform)panel.parent;
+            scrollArea.GetWorldCorners(CORNERS);
+            float top = panelParent.InverseTransformPoint(CORNERS[1]).y - panelParent.rect.yMax - firstRowInset;
+            panel.offsetMax = new Vector2(panel.offsetMax.x, top);
         }
 
         public void SetSearchAndSortVisible(bool visible)
@@ -140,6 +167,9 @@ namespace DCL.Shop
             SearchBar.gameObject.SetActive(visible);
             SortDropdown.gameObject.SetActive(visible);
         }
+
+        public void SetFiltersVisible(bool visible) =>
+            Filters.gameObject.SetActive(visible);
 
         /// <summary>
         ///     Offers only the first sort options of the dropdown, or all of them when no limit is given.
@@ -168,6 +198,15 @@ namespace DCL.Shop
             SearchBar.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(text));
         }
 
+        public void ShowManaBalance(string balance)
+        {
+            ManaBalanceText.text = balance;
+            ManaPanel.SetActive(true);
+        }
+
+        public void HideManaBalance() =>
+            ManaPanel.SetActive(false);
+
         public void SetCartBadge(int units)
         {
             CartBadge.SetActive(units > 0);
@@ -182,6 +221,15 @@ namespace DCL.Shop
 
         public void SetCartButtonVisible(bool visible) =>
             CartButton.gameObject.SetActive(visible);
+
+        private ShopGridSectionView? GridViewOf(ShopSection section) =>
+            section switch
+            {
+                ShopSection.Wearables => WearablesView,
+                ShopSection.Emotes => EmotesView,
+                ShopSection.Favorites => FavoritesView,
+                _ => null,
+            };
 
         private void ResetCartBump()
         {

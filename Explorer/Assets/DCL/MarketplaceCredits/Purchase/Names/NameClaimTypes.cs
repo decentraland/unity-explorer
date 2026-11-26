@@ -16,6 +16,12 @@ namespace DCL.MarketplaceCredits.Purchase.Names
     public enum NameClaimStage
     {
         Preparing,
+
+        /// <summary>The buyer is asked to let CreditsManager pull the MANA part of the price.</summary>
+        ApprovingMana,
+
+        /// <summary>That approval is signed and its confirmation is being waited for. The payment is signed next.</summary>
+        ConfirmingMana,
         Signing,
         Confirming,
         Registering,
@@ -51,6 +57,11 @@ namespace DCL.MarketplaceCredits.Purchase.Names
         NotRegistered,
         Cancelled,
         UnknownError,
+
+        /// <summary>Another relayed purchase (single item, cart or NAME) is still being signed or settled.</summary>
+        PurchaseInProgress,
+        InsufficientMana,
+        ManaApprovalFailed,
     }
 
     public readonly struct NameClaimQuote

@@ -138,6 +138,9 @@ namespace DCL.AvatarRendering.Wearables
             );
         }
 
+        public UniTask<IWearable?> GetForEquipAsync(URN pointer, BodyShape bodyShape, CancellationToken ct) =>
+            source.GetForEquipAsync(pointer, bodyShape, ct);
+
         public async UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape, CancellationToken ct, List<IWearable>? results = null)
             => await source.GetByPointersAsync(pointers, bodyShape, ct, results);

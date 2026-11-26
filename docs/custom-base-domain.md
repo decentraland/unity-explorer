@@ -62,6 +62,22 @@ newly added url with a hand-written domain is caught.
   outranks both the base domain and gateway routing, for the main and the local scene
   adapter alike.
 
+## What the dcl.dev launch takes from elsewhere
+
+[`--gateway https://dcl.dev`](app-arguments.md#gateway) selects `dcl.dev` as the base
+domain, and three groups of hosts do not follow it (`DclDevGateway`, `GatewayUrlsSource`):
+
+- **Converted assets**: the abgen registry, the abgen CDN, the LOD hosts and the satellite
+  map tiles resolve under `decentraland.org`. The launch arguments alone select these
+  sources (`--abgen-pipeline`, `--abgen-lods`); the asset flags of the feature-flags document
+  are not read for them.
+- **Pulse**: the relay is a host of its own, named by the launch default for
+  [`--pulse-server`](app-arguments.md#pulse-server), not `pulse-server.<base-domain>`.
+- **Services under a path**: the feature flags, the friends socket, the catalyst, the
+  blocklist, the marketplace, the documentation links, mutes and referral progress resolve
+  to fixed paths under `https://dcl.dev`, where the subdomain-to-path gateway transform
+  would produce another path.
+
 ## The chain
 
 A base domain says where the hosts are; it says nothing about which chain they are on, and

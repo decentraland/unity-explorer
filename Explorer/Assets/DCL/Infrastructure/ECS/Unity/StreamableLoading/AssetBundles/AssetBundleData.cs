@@ -12,18 +12,18 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     A wrapper over <see cref="AssetBundle" /> to provide additional data
     /// </summary>
-    public class AssetBundleData : StreamableRefCountData<AssetBundle>
+    public class AssetBundleData : StreamableRefCountData<AssetBundle?>
     {
         /// <summary>Every loaded asset is renamed with this prefix (see <see cref="AssetInfo" />), so instantiated hierarchies are recognizable as bundle-sourced by name.</summary>
         public const string NAME_PREFIX = "AB:";
 
-        private readonly string AssetBundleName;
+        private readonly string? AssetBundleName;
 
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
         private readonly AssetBundleData[] Dependencies;
 
-        public AssetBundleData(AssetBundle assetBundle , Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle? assetBundle, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Assets = new Dictionary<string, AssetInfo>();
@@ -40,7 +40,7 @@ namespace ECS.StreamableLoading.AssetBundles
             UnloadAB();
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+        public AssetBundleData(AssetBundle? assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             //Dependencies cant be unloaded, since we dont know who will need them =(
             Dependencies = dependencies;

@@ -6,7 +6,6 @@ using DCL.Web3;
 using DCL.WebRequests;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Globalization;
 using System.Numerics;
 using System.Threading;
 
@@ -40,11 +39,21 @@ namespace DCL.MarketplaceCredits.Purchase
         }
     }
 
-    // AI Generated on the base of the backend information
-    public class CreditsManagerMetaTxRelayer
+    /// <summary>
+    ///     Relays a call as a gasless meta-transaction: reads the buyer's nonce on the contract, asks the wallet to
+    ///     sign the typed data and posts the signed transaction to the transactions server.
+    /// </summary>
+    public class MetaTxRelayer
     {
+        /// <summary>
+        ///     The transactions server refuses a sale relayed straight to the marketplace or the CollectionStore
+        ///     when any price in the call is below this (its MIN_SALE_VALUE_IN_WEI, checked per entry of a batch).
+        ///     It compares the amount as the call carries it: MANA wei for a mint and a MANA-priced trade, USD wei
+        ///     for a USD-pegged trade. Calls through the CreditsManager are not priced.
+        /// </summary>
+        public static readonly BigInteger MIN_DIRECT_SALE_VALUE_WEI = BigInteger.Pow(10, 18);
+
         private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
-        private const string ETH_CALL_METHOD = "eth_call";
         private const int HTTP_INTERNAL_SERVER_ERROR = 500;
         private static readonly TimeSpan DEFAULT_SIGNATURE_TIMEOUT = TimeSpan.FromMinutes(5);
 
@@ -54,13 +63,13 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly CreditsChainConfig chainConfig;
 
-        public CreditsManagerMetaTxRelayer(
+        public MetaTxRelayer(
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             CreditsChainConfig chainConfig) : this(ethereumApi, webRequestController, decentralandUrlsSource, chainConfig, DEFAULT_SIGNATURE_TIMEOUT) { }
 
-        internal CreditsManagerMetaTxRelayer(
+        internal MetaTxRelayer(
             IEthereumApi ethereumApi,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -74,22 +83,19 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken signCt, CancellationToken broadcastCt) =>
-            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, signCt, broadcastCt);
-
         /// <summary>
-        ///     Signs and relays one useCredits call. minNonce floors the nonce read from the contract: a group signed
-        ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
-        ///     reusing it would make the relayer reject the second transaction.
+        ///     Signs and relays one call as a meta-transaction of the given contract. minNonce floors the nonce read
+        ///     from the contract (negative for no floor): a call signed right after another one's receipt may still
+        ///     read the previous nonce from a lagging RPC node, and reusing it would make the relayer reject it.
         ///     <paramref name="signCt" /> covers the nonce read and the wallet signature and is rethrown when cancelled;
         ///     a signature that is neither given nor refused within the timeout ends as <see cref="RelayOutcome.SignatureTimedOut" />;
         ///     <paramref name="broadcastCt" /> covers the relayer request, where a cancellation is an ambiguous broadcast.
         /// </summary>
-        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
+        public virtual async UniTask<RelayResult> RelayAsync(MetaTxContract contract, string buyer, string calldata, BigInteger minNonce, CancellationToken signCt, CancellationToken broadcastCt)
         {
             BigInteger nonce;
 
-            try { nonce = await GetNonceAsync(buyer, signCt); }
+            try { nonce = await GetNonceAsync(contract.Address, buyer, signCt); }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
@@ -100,51 +106,32 @@ namespace DCL.MarketplaceCredits.Purchase
             if (minNonce > nonce)
                 nonce = minNonce;
 
-            string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
-            string signature;
+            string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(contract, chainConfig.ChainId, nonce, buyer, calldata);
 
-            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
-            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
+            // The size matters: the server relaying the request to the browser drops the ones above its message limit without answering.
+            ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: nonce {nonce}, requesting the signature of {typedDataJson.Length} characters of typed data");
+            (string signature, RelayResult? signFailure) = await SignAsync(buyer, typedDataJson, signCt);
 
-            try
-            {
-                var signRequest = new EthApiRequest
-                {
-                    id = Guid.NewGuid().GetHashCode(),
-                    method = ETH_SIGN_TYPED_DATA_METHOD,
-                    @params = new object[] { buyer, typedDataJson },
-                };
+            if (signFailure != null)
+                return signFailure.Value;
 
-                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
-                signature = signResponse.result?.ToString() ?? string.Empty;
+            ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: signed, relaying");
 
-                if (string.IsNullOrEmpty(signature))
-                    return new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned");
-            }
-            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
-            {
-                return new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s");
-            }
-            catch (OperationCanceledException) { throw; }
+            string txData;
+
+            try { txData = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(contract, buyer, calldata, signature); }
             catch (Exception e)
             {
-                bool userRejected = e.Message.IndexOf("reject", StringComparison.OrdinalIgnoreCase) >= 0
-                                    || e.Message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                if (!userRejected)
-                    ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-
-                return new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message);
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                return new RelayResult(RelayOutcome.SigningFailed, message: $"Unusable signature: {e.Message}");
             }
-
-            string txData = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(buyer, useCreditsCalldata, signature);
 
             var body = new JObject
             {
                 ["transactionData"] = new JObject
                 {
                     ["from"] = buyer,
-                    ["params"] = new JArray { chainConfig.CreditsManagerAddress, txData },
+                    ["params"] = new JArray { contract.Address, txData },
                 },
             };
 
@@ -161,6 +148,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 if (string.IsNullOrEmpty(txHash))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
 
+                ReportHub.Log(ReportCategory.CREDITS_PURCHASE, $"Meta-transaction on {contract.Address}: relayed as {txHash}");
                 return new RelayResult(RelayOutcome.Broadcast, txHash, nonce: nonce);
             }
             catch (OperationCanceledException)
@@ -188,32 +176,49 @@ namespace DCL.MarketplaceCredits.Purchase
         internal static bool IsProvenRejection(long responseCode) =>
             responseCode is > 0 and < HTTP_INTERNAL_SERVER_ERROR;
 
-        private async UniTask<BigInteger> GetNonceAsync(string buyer, CancellationToken ct)
+        /// <summary>
+        ///     Asks the wallet for the signature. Returns the failure when it was refused, failed or was not given
+        ///     within the timeout; rethrows a cancellation of <paramref name="signCt" />.
+        /// </summary>
+        private async UniTask<(string signature, RelayResult? failure)> SignAsync(string buyer, string typedDataJson, CancellationToken signCt)
         {
-            var request = new EthApiRequest
+            using CancellationTokenSource signatureCts = CancellationTokenSource.CreateLinkedTokenSource(signCt);
+            using IDisposable timeoutTimer = signatureCts.CancelAfterSlim(signatureTimeout);
+
+            try
             {
-                readonlyNetwork = chainConfig.ReadonlyNetwork,
-                id = Guid.NewGuid().GetHashCode(),
-                method = ETH_CALL_METHOD,
-                @params = new object[]
+                var signRequest = new EthApiRequest
                 {
-                    new JObject
-                    {
-                        ["to"] = chainConfig.CreditsManagerAddress,
-                        ["data"] = CreditsTradeEncoder.BuildGetNonceCalldata(buyer),
-                    },
-                    "latest",
-                },
-            };
+                    id = Guid.NewGuid().GetHashCode(),
+                    method = ETH_SIGN_TYPED_DATA_METHOD,
+                    @params = new object[] { buyer, typedDataJson },
+                };
 
-            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
-            string hex = response.result?.ToString() ?? throw new InvalidOperationException("getNonce returned no result");
-            string digits = hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
+                EthApiResponse signResponse = await ethereumApi.SendAsync(signRequest, Web3RequestSource.Internal, signatureCts.Token);
+                string signature = signResponse.result?.ToString() ?? string.Empty;
 
-            if (digits.Length == 0)
-                return BigInteger.Zero;
+                return string.IsNullOrEmpty(signature)
+                    ? (string.Empty, new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned"))
+                    : (signature, null);
+            }
+            catch (OperationCanceledException) when (signatureCts.IsCancellationRequested && !signCt.IsCancellationRequested)
+            {
+                return (string.Empty, new RelayResult(RelayOutcome.SignatureTimedOut, message: $"No signature within {signatureTimeout.TotalSeconds:F0}s"));
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                bool userRejected = e.Message.IndexOf("reject", StringComparison.OrdinalIgnoreCase) >= 0
+                                    || e.Message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
 
-            return BigInteger.Parse($"0{digits}", NumberStyles.HexNumber);
+                if (!userRejected)
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+
+                return (string.Empty, new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message));
+            }
         }
+
+        private UniTask<BigInteger> GetNonceAsync(string contractAddress, string buyer, CancellationToken ct) =>
+            EthCallReader.ReadUint256Async(ethereumApi, chainConfig.ReadonlyNetwork, contractAddress, CreditsTradeEncoder.BuildGetNonceCalldata(buyer), ct);
     }
 }

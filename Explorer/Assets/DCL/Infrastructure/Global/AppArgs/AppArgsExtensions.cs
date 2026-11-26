@@ -5,7 +5,11 @@ namespace Global.AppArgs
 {
     public static class AppArgsExtensions
     {
-        public static bool TryGetPulseServer(this IAppArgs args, out string? host) =>
+        /// <summary>
+        ///     False when --pulse-server is present but is not a bare DNS hostname or IPv4 address;
+        ///     <paramref name="host" /> is null when the flag is absent.
+        /// </summary>
+        public static bool IsPulseServerArgValid(this IAppArgs args, out string? host) =>
             !args.TryGetValue(AppArgsFlags.PULSE_SERVER, out host)
             || Uri.CheckHostName(host) is UriHostNameType.Dns or UriHostNameType.IPv4;
 

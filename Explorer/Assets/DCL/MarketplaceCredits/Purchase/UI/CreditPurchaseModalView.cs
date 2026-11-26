@@ -13,6 +13,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
     {
         private const float POPUP_SHOW_ANIMATION_TIME = 0.3f;
         private const float POPUP_HIDE_ANIMATION_TIME = 0.2f;
+        private const float SCREEN_MARGIN = 16f;
 
         [field: SerializeField] public RectTransform ContainerTransform { get; private set; } = null!;
 
@@ -38,6 +39,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public TMP_Text PriceCreditsText { get; private set; } = null!;
         [field: SerializeField] public GameObject PriceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public GameObject BalanceManaGroup { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text BalanceManaText { get; private set; } = null!;
+        [field: SerializeField] public PaymentMethodSelectorView PaymentSelector { get; private set; } = null!;
         [field: SerializeField] public TMP_Text CannotAffortText { get; private set; } = null!;
         [field: SerializeField] public GameObject BalanceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public GameObject InsufficientCreditsContainer { get; private set; } = null!;
@@ -66,17 +70,34 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public TMP_Text TryOnEmoteToggleButtonText { get; private set; } = null!;
         [field: SerializeField] public CharacterPreviewView TryOnCharacterPreviewView { get; private set; } = null!;
 
+        /// <summary>
+        ///     Shrinks the container when the canvas is shorter than it, so a tall state keeps its buttons on
+        ///     screen. Left alone while the show or hide animation is driving the scale.
+        /// </summary>
+        public void FitToScreen()
+        {
+            if (!DOTween.IsTweening(ContainerTransform))
+                ContainerTransform.localScale = FittingScale();
+        }
+
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             ContainerTransform.DOKill();
             ContainerTransform.localScale = Vector3.zero;
-            return ContainerTransform.DOScale(Vector3.one, POPUP_SHOW_ANIMATION_TIME).SetEase(Ease.OutBack).ToUniTask(cancellationToken: ct);
+            return ContainerTransform.DOScale(FittingScale(), POPUP_SHOW_ANIMATION_TIME).SetEase(Ease.OutBack).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
             ContainerTransform.DOKill();
             return ContainerTransform.DOScale(Vector3.zero, POPUP_HIDE_ANIMATION_TIME).SetEase(Ease.InBack).ToUniTask(cancellationToken: ct);
+        }
+
+        private Vector3 FittingScale()
+        {
+            float availableHeight = ((RectTransform)ContainerTransform.parent).rect.height - (2f * SCREEN_MARGIN);
+            float scale = Mathf.Min(1f, availableHeight / ContainerTransform.rect.height);
+            return new Vector3(scale, scale, 1f);
         }
     }
 }

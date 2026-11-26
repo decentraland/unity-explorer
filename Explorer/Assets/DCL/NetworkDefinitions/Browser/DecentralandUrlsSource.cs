@@ -64,7 +64,15 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         public string BaseDomain { get; }
 
+        /// <inheritdoc />
+        public bool UsesRealmScenePointers => useRealmScenePointers;
+
         protected virtual bool useRemoteAssetFlags => true;
+
+        /// <summary>
+        ///     The domain the converted-asset hosts are composed under: the asset-bundle, LOD and satellite-tile CDNs and the
+        ///     abgen registry. The regular asset-bundle registry and the profile endpoints stay on <see cref="BaseDomain" />.
+        /// </summary>
         protected virtual string assetCdnDomain => BaseDomain;
 
         private bool useRegistryForScenePointers =>
@@ -93,7 +101,9 @@ namespace DCL.Browser.DecentralandUrls
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             localAbBaseOverride = localAbBaseUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
-            this.abgenLodsForced = abgenLodsForced;
+
+            // A running local sidecar outranks the forced abgen LOD source, as it does the forced abgen pipeline.
+            this.abgenLodsForced = abgenLodsForced && string.IsNullOrEmpty(localAbBaseOverride);
             this.pulseHost = pulseHost;
             this.useRealmScenePointers = useRealmScenePointers;
 
@@ -414,7 +424,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.{BaseDomain}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.{BaseDomain}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.{BaseDomain}/api/places",
-                DecentralandUrl.CameraReelLink => $"https://reels.{BaseDomain}",
+                // Custom deployments default to the standalone Reels viewer on its own subdomain.
+                DecentralandUrl.CameraReelLink when environment == DecentralandEnvironment.Custom => $"https://reels.{BaseDomain}",
+                DecentralandUrl.CameraReelLink => $"https://{BaseDomain}/reels",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.{BaseDomain}",
                 DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{assetCdnDomain}")),

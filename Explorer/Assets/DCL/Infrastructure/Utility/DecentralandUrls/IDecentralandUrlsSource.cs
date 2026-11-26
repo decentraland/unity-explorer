@@ -93,5 +93,12 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ///     regular pipeline and the historical cache keys.
         /// </summary>
         string? AbgenLodsCacheKey => null;
+
+        /// <summary>
+        ///     True when the launch resolves scene pointers against the realm (<c>--realm-scene-pointers</c>), which
+        ///     declares a realm the registries of this environment do not index. Command-line only, so a deep link
+        ///     cannot turn it on.
+        /// </summary>
+        bool UsesRealmScenePointers => false;
     }
 }

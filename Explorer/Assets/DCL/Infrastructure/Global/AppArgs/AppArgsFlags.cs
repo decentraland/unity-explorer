@@ -22,7 +22,19 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     The native Pulse relay to connect to instead of <c>pulse-server.{base-domain}</c>: a bare DNS hostname
+        ///     or IPv4 address. Command line only — it aims the session's signed Pulse handshake at the named host,
+        ///     so <c>DeepLinkAllowlist</c> denies it and accepting it in the denied-params dialog has no effect.
+        /// </summary>
         public const string PULSE_SERVER = "pulse-server";
+
+        /// <summary>
+        ///     Resolves scene pointers against the selected realm even when the environment's asset-bundle fallback
+        ///     would send them to its registry. On when present, unless its value is "false". Command line only,
+        ///     like <see cref="PULSE_SERVER" />.
+        /// </summary>
         public const string REALM_SCENE_POINTERS = "realm-scene-pointers";
 
         /// <summary>
@@ -133,6 +145,8 @@ namespace Global.AppArgs
         public const string DISCOVER = "discover";
 
         public const string IN_GAME_SHOP = "in-game-shop";
+
+        public const string MANA_PAYMENTS = "mana-payments";
 
         public const string SCENE_ITEM_PURCHASE = "scene-item-purchase";
 

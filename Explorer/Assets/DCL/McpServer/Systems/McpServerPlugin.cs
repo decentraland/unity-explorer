@@ -32,6 +32,7 @@ namespace DCL.McpServer.Systems
     public class McpServerPlugin : IDCLGlobalPluginWithoutSettings
     {
         private const int DEFAULT_PORT = 8123;
+        private const int PORT_ATTEMPTS = 10;
 
         private const int MIN_PORT = 1024;
         private const int MAX_PORT = 65535;
@@ -162,7 +163,7 @@ namespace DCL.McpServer.Systems
                           .Add(new UiHoverTool(uiAutomation))
                           .Build();
 
-            server = new McpHttpServer(toolsRegistry, port);
+            server = new McpHttpServer(toolsRegistry, port, PORT_ATTEMPTS);
             serverCts = serverCts.SafeRestart();
 
             bool started = server.TryStart();
@@ -187,7 +188,7 @@ namespace DCL.McpServer.Systems
                 if (started)
                     ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on {endpointUrl}");
                 else
-                    ReportHub.LogError(ReportCategory.MCP, $"MCP server failed to start on port {port} — agent connections unavailable (pass a different --mcp-port)");
+                    ReportHub.LogError(ReportCategory.MCP, $"MCP server failed to start on ports {port}-{Math.Min(port + PORT_ATTEMPTS - 1, MAX_PORT)} — agent connections unavailable (pass a different --mcp-port)");
             }
             catch (OperationCanceledException)
             {
