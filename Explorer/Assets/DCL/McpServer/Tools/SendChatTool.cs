@@ -56,15 +56,16 @@ namespace DCL.McpServer.Tools
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return UniTask.FromResult(McpToolResult.Error("The chat drops messages while the client is loading: retry once loading completes."));
 
-            string? to = arguments.GetStringOrNull("to");
+            // Only an absent or null `to` means Nearby: any other value must name a wallet, or a message meant for one player would be broadcast
+            JToken? toArgument = arguments["to"];
 
-            if (string.IsNullOrEmpty(to))
+            if (toArgument == null || toArgument.Type == JTokenType.Null)
             {
                 chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, message, ChatMessageOrigin.Chat);
                 return UniTask.FromResult(McpToolResult.Text($"Sent to Nearby: {message}"));
             }
 
-            Web3Address? recipient = Web3Address.FromUntrusted(to);
+            Web3Address? recipient = Web3Address.FromUntrusted(arguments.GetStringOrNull("to"));
 
             if (recipient == null)
                 return UniTask.FromResult(McpToolResult.Error("to must be a wallet address: 0x followed by 40 hexadecimal digits."));

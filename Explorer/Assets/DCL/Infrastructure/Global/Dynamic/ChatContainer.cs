@@ -58,10 +58,12 @@ namespace Global.Dynamic
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
 
+        private readonly ReactiveProperty<ChatMessageReactionService?> messageReactionService = new (null);
+
         /// <summary>
-        ///     Set by ChatPlugin once the reactions feature exists and cleared when it is disposed; read by the MCP tools, which are built earlier.
+        ///     The chat reactions service once the chat plugin has created it; null before that and after the plugin is disposed.
         /// </summary>
-        public ReactiveProperty<ChatMessageReactionService?> MessageReactionService { get; } = new (null);
+        public IReadonlyReactiveProperty<ChatMessageReactionService?> MessageReactionService => messageReactionService;
 
         private ChatContainer(
             ChatHistory chatHistory,
@@ -236,7 +238,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
-                MessageReactionService,
+                messageReactionService,
                 CurrentChannelService);
 
         public void Dispose()

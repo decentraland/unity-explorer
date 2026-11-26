@@ -75,6 +75,33 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void RefuseARecipientThatIsNotAString()
+        {
+            // Act — none of these may fall back to Nearby: the message was meant for one player
+            McpToolResult number = Execute(new JObject { ["message"] = "hello", ["to"] = 42 });
+            McpToolResult empty = Execute(new JObject { ["message"] = "hello", ["to"] = string.Empty });
+            McpToolResult nested = Execute(new JObject { ["message"] = "hello", ["to"] = new JObject() });
+
+            // Assert
+            Assert.That(number.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(empty.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(nested.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(bus.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void SendToNearbyWhenTheRecipientIsNull()
+        {
+            // Act
+            McpToolResult result = Execute(new JObject { ["message"] = "hello", ["to"] = JValue.CreateNull() });
+
+            // Assert
+            Assert.That(result.Payload["isError"], Is.Null);
+            Assert.That(bus.Sent, Has.Count.EqualTo(1));
+            Assert.That(bus.Sent[0].Channel.ChannelType, Is.EqualTo(ChatChannel.ChatChannelType.NEARBY));
+        }
+
+        [Test]
         public void RefuseACommandAsADirectMessage()
         {
             // Act — the bus would run it as a chat command instead of sending it to the player

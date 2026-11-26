@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.Utilities;
@@ -61,10 +62,14 @@ namespace DCL.McpServer.Tools
             if (service == null)
                 return UniTask.FromResult(McpToolResult.Error("Chat reactions are not ready yet: wait until the chat has finished loading."));
 
+            // With the flag off the service has no network bus: the reaction would change the local history and reach nobody
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                return UniTask.FromResult(McpToolResult.Error("Chat reactions are disabled by feature flag: nothing would reach the channel."));
+
             if (!TryFindChannel(messageId, out ChatChannel? channel))
                 return UniTask.FromResult(McpToolResult.Error($"No message with id '{messageId}' in the chat history. Read the ids with get_chat_history."));
 
-            // Messages restored from local storage are registered only when the chat panel opens their channel
+            // FillChannel raises no MessageAdded, so restored messages stay unknown to the service until registered
             service.RegisterChannelMessages(channel);
 
             int before = ReactorCount(channel, messageId, emojiIndex);

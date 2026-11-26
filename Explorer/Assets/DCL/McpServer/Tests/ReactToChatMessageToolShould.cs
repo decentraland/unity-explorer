@@ -31,7 +31,9 @@ namespace DCL.McpServer.Tests
             FeatureFlagsConfiguration.Reset();
             OfficialWalletsHelper.Reset();
 
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeatureFlagsResultDto flags = FeatureFlagsResultDto.Empty;
+            flags.flags[FeatureFlagsStrings.CHAT_REACTIONS_ENABLED] = true;
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(flags));
             OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
             chatHistory = new ChatHistory();
@@ -91,6 +93,22 @@ namespace DCL.McpServer.Tests
             Assert.That(nearby.GetReactions(message.MessageId), Is.Null);
             Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(2));
             Assert.That(reactionBus.MessageSends[1].EmojiIndex, Is.EqualTo(~EMOJI));
+        }
+
+        [Test]
+        public void RefuseWhileReactionsAreDisabled()
+        {
+            // Arrange — with the flag off the service is built on a bus that sends nothing
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
+            // Act
+            McpToolResult result = Execute(new JObject { ["messageId"] = message.MessageId, ["emojiIndex"] = EMOJI });
+
+            // Assert
+            Assert.That(result.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(nearby.GetReactions(message.MessageId), Is.Null);
+            Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(0));
         }
 
         [Test]
