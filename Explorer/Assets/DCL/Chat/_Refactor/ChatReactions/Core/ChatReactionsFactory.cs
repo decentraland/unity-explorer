@@ -73,7 +73,8 @@ namespace DCL.Chat.ChatReactions.Core
             var messageReactionService = new ChatMessageReactionService(reactionBus,
                 chatHistory,
                 web3IdentityCache,
-                reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage);
+                reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage,
+                reactionsConfig.SafeTotalTiles);
             
             var uiSimulation = new ChatReactionUISimulation(reactionsConfig, uiLaneRect, uiLaneCanvas);
             var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig, avatarPosition);

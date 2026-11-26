@@ -32,7 +32,7 @@ namespace DCL.McpServer.Tools
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.String("messageId", "The id of the message to react to, as get_chat_history returns it.", isRequired: true)
-                  .Integer("emojiIndex", "The emoji as its index in the reactions emoji atlas (0 or greater): the number every client puts on the wire.", isRequired: true);
+                  .Integer("emojiIndex", "The emoji as its index in the reactions emoji atlas (0 up to the atlas size): the number every client puts on the wire.", isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -53,10 +53,6 @@ namespace DCL.McpServer.Tools
             if (!arguments.TryGetInt("emojiIndex", out int emojiIndex))
                 return UniTask.FromResult(McpToolResult.Error($"emojiIndex is required{arguments.NonNumericHint("emojiIndex")}."));
 
-            // A negative value on the wire means "remove": the toggle decides that, not the caller
-            if (emojiIndex < 0)
-                return UniTask.FromResult(McpToolResult.Error("emojiIndex must be 0 or greater."));
-
             ChatMessageReactionService? service = reactionService.Value;
 
             if (service == null)
@@ -65,6 +61,10 @@ namespace DCL.McpServer.Tools
             // With the flag off the service has no network bus: the reaction would change the local history and reach nobody
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
                 return UniTask.FromResult(McpToolResult.Error("Chat reactions are disabled by feature flag: nothing would reach the channel."));
+
+            // A negative value on the wire means "remove", which the toggle decides; receivers drop an index outside the atlas
+            if (emojiIndex < 0 || emojiIndex >= service.EmojiCount)
+                return UniTask.FromResult(McpToolResult.Error($"emojiIndex must be between 0 and {service.EmojiCount - 1}, the reactions emoji atlas."));
 
             if (!TryFindChannel(messageId, out ChatChannel? channel))
                 return UniTask.FromResult(McpToolResult.Error($"No message with id '{messageId}' in the chat history. Read the ids with get_chat_history."));
@@ -98,7 +98,8 @@ namespace DCL.McpServer.Tools
 
                 for (var i = 0; i < messages.Count; i++)
                 {
-                    if (messages[i].MessageId == messageId)
+                    // A system message has an id only this client knows, and the chat panel offers no reactions on it
+                    if (messages[i].MessageId == messageId && !messages[i].IsSystemMessage)
                     {
                         channel = candidate;
                         return true;

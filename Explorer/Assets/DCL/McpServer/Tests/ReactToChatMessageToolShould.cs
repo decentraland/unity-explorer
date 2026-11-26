@@ -16,6 +16,7 @@ namespace DCL.McpServer.Tests
     public class ReactToChatMessageToolShould
     {
         private const int EMOJI = 1285;
+        private const int EMOJI_COUNT = 2000;
 
         private ChatHistory chatHistory = null!;
         private FakeReactionBus reactionBus = null!;
@@ -38,7 +39,7 @@ namespace DCL.McpServer.Tests
 
             chatHistory = new ChatHistory();
             reactionBus = new FakeReactionBus();
-            service = new ChatMessageReactionService(reactionBus, chatHistory, new IWeb3IdentityCache.Fake(new IWeb3Identity.Random()));
+            service = new ChatMessageReactionService(reactionBus, chatHistory, new IWeb3IdentityCache.Fake(new IWeb3Identity.Random()), emojiCount: EMOJI_COUNT);
 
             reactionService = new ReactiveProperty<ChatMessageReactionService?>(service);
             tool = new ReactToChatMessageTool(chatHistory, reactionService);
@@ -139,6 +140,33 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Payload["isError"], Is.Null);
             Assert.That(JsonOf(result)["state"]?.Value<string>(), Is.EqualTo("added"));
             Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void RefuseAnEmojiIndexOutsideTheAtlas()
+        {
+            // Act — receivers drop an index that is not below the atlas size
+            McpToolResult result = Execute(new JObject { ["messageId"] = message.MessageId, ["emojiIndex"] = EMOJI_COUNT });
+
+            // Assert
+            Assert.That(result.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(nearby.GetReactions(message.MessageId), Is.Null);
+            Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void RefuseASystemMessage()
+        {
+            // Arrange — its id exists on this client only
+            ChatMessage notice = ChatMessage.NewFromSystem("notice");
+            nearby.AddMessage(notice);
+
+            // Act
+            McpToolResult result = Execute(new JObject { ["messageId"] = notice.MessageId, ["emojiIndex"] = EMOJI });
+
+            // Assert
+            Assert.That(result.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(0));
         }
 
         [Test]

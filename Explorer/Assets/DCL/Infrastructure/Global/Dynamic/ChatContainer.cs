@@ -38,6 +38,8 @@ namespace Global.Dynamic
     /// </summary>
     public class ChatContainer : IDisposable
     {
+        private readonly ReactiveProperty<ChatMessageReactionService?> messageReactionService = new (null);
+
         public ChatHistory ChatHistory { get; }
 
         public IChatMessagesBus ChatMessagesBus { get; }
@@ -57,8 +59,6 @@ namespace Global.Dynamic
         public StreamReactionsChatCommand StreamReactionsChatCommand { get; }
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
-
-        private readonly ReactiveProperty<ChatMessageReactionService?> messageReactionService = new (null);
 
         /// <summary>
         ///     The chat reactions service once the chat plugin has created it; null before that and after the plugin is disposed.
