@@ -20,7 +20,7 @@ MonoBehaviour:
   <FloorColor>k__BackingField: {r: 0.8867924, g: 0.37057978, b: 0.2216981, a: 1}
   <SpotColor>k__BackingField: {r: 0.35, g: 0.18, b: 0.08, a: 1}
   <ColorSampleBand>k__BackingField: 0.2
-  <MistEnabled>k__BackingField: 1
+  <MistEnabled>k__BackingField: 0
   <MistColor>k__BackingField: {r: 1, g: 0.6, b: 0.3, a: 0.25}
   <DustEnabled>k__BackingField: 1
   <DustColor>k__BackingField: {r: 1, g: 0.79, b: 0.42, a: 0.45}
@@ -33,6 +33,13 @@ MonoBehaviour:
   <VignetteMaskCenter>k__BackingField: {x: 0.5, y: 0.16}
   <VignetteMaskRadii>k__BackingField: {x: 0.27, y: 0.65, z: 0.3}
   <VignetteMaskSoftness>k__BackingField: 0.43
+  <WindowMask>k__BackingField: {fileID: 2800000, guid: ba9d0a57cc154888b6e0097998900e38, type: 3}
+  <SnowTexture>k__BackingField: {fileID: 2800000, guid: 634de0e91e8d4679a6dbf11241cef458, type: 3}
+  <SnowColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.95}
+  <SnowGlowColor>k__BackingField: {r: 0.55, g: 0.75, b: 1, a: 0.6}
+  <SnowSpeed>k__BackingField: 0.02
+  <SnowTiling>k__BackingField: 1.5
+  <SnowWind>k__BackingField: 0.012
   <Props>k__BackingField:
   - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: f2cb60b81a294f11813cdb62d0c2d267, type: 3}
     <Position>k__BackingField: {x: -2.06, y: 0, z: -2.63}
