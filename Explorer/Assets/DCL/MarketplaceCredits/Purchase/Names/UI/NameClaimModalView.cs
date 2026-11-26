@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DG.Tweening;
 using MVC;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -18,24 +20,33 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
         [field: SerializeField] public Button CloseBackground { get; private set; } = null!;
 
         [field: Header("Name and price")]
-        [field: SerializeField] public TMP_Text NameText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text[] NameTexts { get; private set; } = Array.Empty<TMP_Text>();
         [field: SerializeField] public TMP_Text PriceCreditsText { get; private set; } = null!;
         [field: SerializeField] public GameObject PriceLoadingSpinner { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
 
         [field: Header("Confirm")]
         [field: SerializeField] public GameObject ConfirmStateContainer { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text TitleText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public GameObject BalanceManaGroup { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text BalanceManaText { get; private set; } = null!;
+        [field: SerializeField] public PaymentMethodSelectorView PaymentSelector { get; private set; } = null!;
         [field: SerializeField] public Button ConfirmButton { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
 
-        [field: Header("Insufficient credits")]
-        [field: SerializeField] public GameObject InsufficientCreditsContainer { get; private set; } = null!;
+        [field: Header("Insufficient funds")]
+        [field: SerializeField] public GameObject InsufficientIcon { get; private set; } = null!;
         [field: SerializeField] public TMP_Text CannotAffordText { get; private set; } = null!;
         [field: SerializeField] public Button GetCreditsButton { get; private set; } = null!;
 
         [field: Header("Progress")]
         [field: SerializeField] public GameObject ProgressStateContainer { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ProgressStatusText { get; private set; } = null!;
+
+        [field: Header("Success")]
+        [field: SerializeField] public GameObject SuccessStateContainer { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text SuccessText { get; private set; } = null!;
+        [field: SerializeField] public Button ContinueShoppingButton { get; private set; } = null!;
 
         [field: Header("Result")]
         [field: SerializeField] public GameObject ResultStateContainer { get; private set; } = null!;

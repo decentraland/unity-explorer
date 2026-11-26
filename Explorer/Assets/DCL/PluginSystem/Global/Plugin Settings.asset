@@ -1386,6 +1386,12 @@ MonoBehaviour:
           m_SubObjectType:
           m_SubObjectGUID:
           m_EditorAssetChanged: 0
+        <ShopCartCheckoutPopupPrefab>k__BackingField:
+          m_AssetGUID: f0c3a6e9b2d5418a97d0b3e6c9a2f547
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
         <NameClaimPopupPrefab>k__BackingField:
           m_AssetGUID: a94c2e7d5b1f4083b6d2c8e1f0a37b54
           m_SubObjectName:

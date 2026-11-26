@@ -10,8 +10,8 @@ The server is compiled into all builds but stays dormant unless explicitly enabl
 
 | Flag | Effect |
 |---|---|
-| `--mcp` | Starts the MCP server on the default port **8123** |
-| `--mcp-port <port>` | Starts the MCP server on a specific port (implies `--mcp`) |
+| `--mcp` | Starts the MCP server on the default port **8123**, or the next free port up to 8132 if it is taken |
+| `--mcp-port <port>` | Starts the MCP server on a specific port, or the next free one among the following 9 (implies `--mcp`) |
 
 The flag is accepted from the command line, or from a deep link whose target realm is loopback (`decentraland://?realm=http://127.0.0.1:8000&mcp=true`) — a deep link pointing at a remote realm drops it, see [`DeepLinkAllowlist`](../Explorer/Assets/DCL/Infrastructure/Global/AppArgs/DeepLinkAllowlist.cs). The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
 
@@ -139,13 +139,13 @@ Optional determinism flags for stable screenshots: `--disable-hud`, `--skybox-ti
 
 3. The agent then loops: edit scene TypeScript → LSD hot reload applies it (or call `reload_scene`) → `get_scene_state` until ready → `screenshot` + `get_scene_logs` → verify → repeat.
 
-Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/unity-explorer-mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer as a `[client:MCP]` entry (visible with `includeClient: true`), so agents can confirm the server from inside the loop.
+Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/unity-explorer-mcp`. When the first port is taken the line says so and names the port actually used (e.g. `MCP port 8123 is in use, MCP server listening on http://127.0.0.1:8124/unity-explorer-mcp`); a startup failure (all 10 ports in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer as a `[client:MCP]` entry (visible with `includeClient: true`), so agents can confirm the server from inside the loop.
 
 A user-invokable Claude Code skill wrapping this loop is published in the **sdk-skills** repo as [`unity-explorer-mcp`](https://github.com/decentraland/sdk-skills/tree/main/unity-explorer-mcp) (installed with `npx skills add decentraland/sdk-skills`, invoked with `/unity-explorer-mcp`). It is the agent-facing counterpart of this document — when the tool surface changes here, update it there.
 
 ## Troubleshooting
 
-- **Port already in use** — the server logs an `MCP` category error and stays inert; relaunch with a different `--mcp-port`. Multiple Explorer instances (`--multi-instance`) each need their own port. To confirm which process answers on a port, check `serverInfo.pid` in the `initialize` response and the `address` field of `get_player_state`.
+- **Port already in use** — the server moves to the next free port (up to 9 above the requested one) and logs which one it bound, so a second Explorer instance gets 8124. An agent configured for 8123 keeps talking to the first instance: point it at the logged port, or pass an explicit `--mcp-port` per instance (`--multi-instance`) for stable addresses. Only when all 10 ports are taken does the server log an `MCP` category error and stay inert. To confirm which process answers on a port, check `serverInfo.pid` in the `initialize` response and the `address` field of `get_player_state`.
 - **HTTP 403** — the request carried a non-localhost `Origin` header; MCP clients and curl don't send one.
 - **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/unity-explorer-mcp/ user=Everyone` (elevated prompt), then relaunch.
 - **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).

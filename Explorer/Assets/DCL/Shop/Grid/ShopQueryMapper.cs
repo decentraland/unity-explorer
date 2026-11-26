@@ -24,6 +24,7 @@ namespace DCL.Shop
             {
                 query.MinPriceCredits = filters.MinPriceCredits;
                 query.MaxPriceCredits = filters.MaxPriceCredits;
+                query.DealsOnly = filters.Deals;
             }
             else if (filters.EffectiveStatus == ShopStatusFilter.NotForSale)
                 query.IsOnSale = false;

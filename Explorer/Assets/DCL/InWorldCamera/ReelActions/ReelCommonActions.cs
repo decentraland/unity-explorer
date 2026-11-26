@@ -12,7 +12,7 @@ namespace DCL.InWorldCamera.ReelActions
     public static class ReelCommonActions
     {
         private const string DECENTRALAND_REELS_HOME_FOLDER = "Downloads";
-        private static string reelsPath;
+        private static string? reelsPath;
 
         /// <summary>
         ///     Opens a browser tab on x.com with a tweet ready to be posted containing the reel url.

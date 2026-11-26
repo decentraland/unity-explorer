@@ -22,59 +22,30 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         [field: SerializeField] public GameObject EmptyState { get; private set; } = null!;
         [field: SerializeField] public TMP_Text TotalCreditsText { get; private set; } = null!;
 
-        [field: Header("Balance")]
-        [field: SerializeField] public Button BuyCreditsButton { get; private set; } = null!;
-
         [field: Header("Actions")]
         [field: SerializeField] public Button CheckoutButton { get; private set; } = null!;
-        [field: SerializeField] public Button ConfirmChangesButton { get; private set; } = null!;
-        [field: SerializeField] public Button BackToCartButton { get; private set; } = null!;
-        [field: SerializeField] public Button CancelConfirmationButton { get; private set; } = null!;
-        [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
-        [field: SerializeField] public Button ContinueShoppingButton { get; private set; } = null!;
-        [field: SerializeField] public Button RetryButton { get; private set; } = null!;
-        [field: SerializeField] public Button DoneButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseBackground { get; private set; } = null!;
 
-        [field: Header("States")]
-        [field: SerializeField] public GameObject LinesStateContainer { get; private set; } = null!;
-        [field: SerializeField] public GameObject ReviewingSpinner { get; private set; } = null!;
-        [field: SerializeField] public GameObject ConfirmChangesContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text ChangesSummaryText { get; private set; } = null!;
-        [field: SerializeField] public GameObject InsufficientCreditsContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text ShortfallText { get; private set; } = null!;
-        [field: SerializeField] public GameObject ProgressStateContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text ProgressStatusText { get; private set; } = null!;
-        [field: SerializeField] public GameObject SuccessStateContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text SuccessSummaryText { get; private set; } = null!;
-        [field: SerializeField] public GameObject PartialFailureStateContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text PartialSummaryText { get; private set; } = null!;
-        [field: SerializeField] public GameObject FailedStateContainer { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text FailedReasonText { get; private set; } = null!;
-        [field: SerializeField] public GameObject SignatureCountBadge { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text SignatureCountText { get; private set; } = null!;
+        private Vector3 worldAnchor;
+        private float anchorGap;
 
         /// <summary>
-        ///     Hangs the container's top-right corner <paramref name="gap" /> under <paramref name="worldAnchor" />, kept
-        ///     inside the parent rect so the popup never leaves the screen.
+        ///     Sets the world-space point the container's top-right corner hangs <paramref name="gap" /> under. It is
+        ///     applied when the view is shown.
         /// </summary>
-        public void PositionBelow(Vector3 worldAnchor, float gap)
+        public void SetAnchor(Vector3 worldAnchor, float gap)
         {
-            var parent = (RectTransform)ContainerTransform.parent;
-            Vector3 anchor = parent.InverseTransformPoint(worldAnchor);
-            Rect rect = ContainerTransform.rect;
-            Rect bounds = parent.rect;
-
-            // rect.xMax/yMax are the container's top-right edges relative to its pivot, so subtracting them turns the
-            // wanted corner position into a pivot position
-            float x = Mathf.Clamp(anchor.x - rect.xMax, bounds.xMin - rect.xMin, bounds.xMax - rect.xMax);
-            float y = Mathf.Clamp(anchor.y - gap - rect.yMax, bounds.yMin - rect.yMin, bounds.yMax - rect.yMax);
-            ContainerTransform.localPosition = new Vector3(x, y, 0f);
+            this.worldAnchor = worldAnchor;
+            anchorGap = gap;
         }
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
+            // Placed here and not before the view is activated: an inactive canvas keeps the size and scale of the
+            // resolution it was last shown at, which turns the anchor into the wrong local position.
+            PositionBelowAnchor();
+
             ContainerTransform.DOKill();
             ContainerTransform.localScale = Vector3.zero;
             return ContainerTransform.DOScale(Vector3.one, POPUP_SHOW_ANIMATION_TIME).SetEase(Ease.OutBack).ToUniTask(cancellationToken: ct);
@@ -84,6 +55,21 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
         {
             ContainerTransform.DOKill();
             return ContainerTransform.DOScale(Vector3.zero, POPUP_HIDE_ANIMATION_TIME).SetEase(Ease.InBack).ToUniTask(cancellationToken: ct);
+        }
+
+        // Kept inside the parent rect so the popup never leaves the screen.
+        private void PositionBelowAnchor()
+        {
+            var parent = (RectTransform)ContainerTransform.parent;
+            Vector3 anchor = parent.InverseTransformPoint(worldAnchor);
+            Rect rect = ContainerTransform.rect;
+            Rect bounds = parent.rect;
+
+            // rect.xMax/yMax are the container's top-right edges relative to its pivot, so subtracting them turns the
+            // wanted corner position into a pivot position
+            float x = Mathf.Clamp(anchor.x - rect.xMax, bounds.xMin - rect.xMin, bounds.xMax - rect.xMax);
+            float y = Mathf.Clamp(anchor.y - anchorGap - rect.yMax, bounds.yMin - rect.yMin, bounds.yMax - rect.yMax);
+            ContainerTransform.localPosition = new Vector3(x, y, 0f);
         }
     }
 }

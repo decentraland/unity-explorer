@@ -51,8 +51,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 Transform packTransform = packItem.transform;
 
                 packTransform.DOKill();
-                packTransform.localScale = Vector3.zero;
+
+                // The scale is zeroed after hiding the card, so nothing run by its deactivation can overwrite it
                 packItem.gameObject.SetActive(false);
+                packTransform.localScale = Vector3.zero;
 
                 packTransform.DOScale(Vector3.one, PACK_SHOW_ANIMATION_TIME)
                              .SetEase(Ease.OutBack)

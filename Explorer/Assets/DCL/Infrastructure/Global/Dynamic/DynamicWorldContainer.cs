@@ -490,16 +490,24 @@ namespace Global.Dynamic
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
-            var creditsMetaTxRelayer = new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig);
+            var creditsMetaTxRelayer = new MetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig);
             var creditsSettlementPoller = new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
-            var useCreditsExecutor = new UseCreditsExecutor(marketplaceCreditsApiClient, creditsMetaTxRelayer, creditsSettlementPoller);
+            var useCreditsExecutor = new UseCreditsExecutor(marketplaceCreditsApiClient, creditsMetaTxRelayer, creditsSettlementPoller, creditsChainConfig);
             var manaUsdRateReader = new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            var manaTokenReader = new ManaTokenReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            var manaRail = new ManaRail(manaTokenReader, creditsMetaTxRelayer, creditsSettlementPoller, creditsChainConfig);
+            var paymentOptionsProvider = new PaymentOptionsProvider(marketplaceCreditsApiClient, manaTokenReader, manaUsdRateReader, creditsChainConfig,
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.ManaPayments));
+            var relayedPurchaseGate = new RelayedPurchaseGate();
             bool isCreditsPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
 
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
                 useCreditsExecutor,
+                manaRail,
+                paymentOptionsProvider,
+                relayedPurchaseGate,
                 manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,
@@ -510,6 +518,9 @@ namespace Global.Dynamic
                 marketplaceCreditsApiClient,
                 dynamicWorldDependencies.CompositeWeb3Provider,
                 useCreditsExecutor,
+                manaRail,
+                paymentOptionsProvider,
+                relayedPurchaseGate,
                 manaUsdRateReader,
                 new AcrossBridgeStatusPoller(staticContainer.WebRequestsContainer.WebRequestController, creditsChainConfig),
                 creditsChainConfig,
@@ -525,6 +536,9 @@ namespace Global.Dynamic
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
                 useCreditsExecutor,
+                manaRail,
+                paymentOptionsProvider,
+                relayedPurchaseGate,
                 manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,
@@ -783,6 +797,7 @@ namespace Global.Dynamic
                     shopCart,
                     creditsPurchaseService,
                     cartCheckoutService,
+                    manaTokenReader,
                     nameClaimService,
                     lobbyStagePresetSetting
                 ),

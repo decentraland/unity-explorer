@@ -310,7 +310,31 @@ namespace DCL.Profiles
                         // ⚠️ The following produces potentially a very long-living task ⚠️
                         // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
                         bool versionMismatch = versionSpecified && result != null && result.Value.Version < version;
-                        return (result == null || versionMismatch) && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+
+                        if ((result == null || versionMismatch) && delayBatchResolution)
+                            return await EnforceSingleGetAsync();
+
+                        if (result == null && useCentralizedProfiles && tier == ProfileTier.Kind.Full && IsRealmOutsideTheCentralizedNetwork())
+                        {
+                            // Registered as ongoing, as a single GET is, so a concurrent request for the same profile waits for this one
+                            lock (ongoingBatches)
+                                AddToBatch(id, fromCatalyst, ongoingBatches, tier, partition);
+
+                            try { result = ResolveProfile(id, await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct), false); }
+                            catch (OperationCanceledException)
+                            {
+                                // Releases the waiters without the cancellation: it belongs to this caller's token, not to theirs
+                                ResolveProfile(id, null, false);
+                                throw;
+                            }
+                            catch (Exception e)
+                            {
+                                ResolveException(id, e);
+                                throw;
+                            }
+                        }
+
+                        return result;
                     }
                 }
                 finally
@@ -376,6 +400,8 @@ namespace DCL.Profiles
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
+                    else if (IsRealmOutsideTheCentralizedNetwork())
+                        profile = await GetFromRealmCatalystFallbackAsync(id, version, reportFailures, ct);
                 }
                 else
                 {
@@ -410,6 +436,46 @@ namespace DCL.Profiles
                 ResolveException(id, e);
                 throw;
             }
+        }
+
+        /// <summary>
+        ///     Asks the realm's own catalyst for a profile the centralized endpoint lacks. Null when the catalyst lacks it or answers
+        ///     with another id. With <paramref name="reportFailures" /> a failure is reported here and yields null; otherwise it propagates.
+        /// </summary>
+        private async UniTask<ProfileTier?> GetFromRealmCatalystFallbackAsync(string id, int version, bool reportFailures, CancellationToken ct)
+        {
+            try
+            {
+                ProfileTier? profile = await ProfilesRequest.GetAsync(webRequestController, GetUrl(id, null), id, version, false, ct);
+                return profile != null && string.Equals(profile.Value.UserId.Value, id, StringComparison.OrdinalIgnoreCase) ? profile : null;
+            }
+            catch (UnityWebRequestException e) when (e is { ResponseCode: WebRequestUtils.NOT_FOUND }) { return null; }
+            catch (Exception e) when (reportFailures && e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///     True when the launch resolves scene pointers against the realm and the realm's catalyst is hosted outside both
+        ///     the base domain and the gateway, which are the hosts the centralized endpoint answers for. False while no
+        ///     realm is configured.
+        /// </summary>
+        private bool IsRealmOutsideTheCentralizedNetwork()
+        {
+            if (!urlsSource.UsesRealmScenePointers)
+                return false;
+
+            string lambdas = urlsSource.Url(DecentralandUrl.Lambdas);
+
+            if (!Uri.TryCreate(lambdas, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            if (urlsSource.GatewayOrigin is { Length: > 0 } gateway && lambdas.StartsWith(gateway, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return !IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, urlsSource.BaseDomain);
         }
 
         private static void ReportProfileNotFound(string id, URLDomain? fromCatalyst) =>

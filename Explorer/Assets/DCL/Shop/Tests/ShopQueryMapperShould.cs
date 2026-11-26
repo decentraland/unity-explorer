@@ -9,7 +9,7 @@ namespace DCL.Shop.Tests
         public void UseTheUnifiedFeedWithThePriceRangeWhenOnSale()
         {
             // Arrange
-            var filters = new ShopGridFilters(ShopCategoryTree.WEARABLE) { SubCategoryKey = "Head", MinPriceCredits = 5, MaxPriceCredits = 50, Smart = true, Sort = ShopSortOption.Cheapest };
+            var filters = new ShopGridFilters(ShopCategoryTree.WEARABLE) { SubCategoryKey = "Head", MinPriceCredits = 5, MaxPriceCredits = 50, Smart = true, Deals = true, Sort = ShopSortOption.Cheapest };
             filters.ToggleRarity("mythic");
             filters.ToggleRarity("common");
 
@@ -26,6 +26,7 @@ namespace DCL.Shop.Tests
             Assert.AreEqual(5, query.MinPriceCredits);
             Assert.AreEqual(50, query.MaxPriceCredits);
             Assert.IsTrue(query.SmartOnly);
+            Assert.IsTrue(query.DealsOnly);
             Assert.IsNull(query.IsOnSale);
             Assert.AreEqual(ShopSort.Cheapest, query.Sort);
         }
@@ -34,7 +35,7 @@ namespace DCL.Shop.Tests
         public void UseTheCatalogFeedWithoutPricesForAllAndNotForSale()
         {
             // Arrange
-            var all = new ShopGridFilters(ShopCategoryTree.EMOTE) { ExplicitStatus = ShopStatusFilter.All, MinPriceCredits = 5, SubCategoryKey = "Dance" };
+            var all = new ShopGridFilters(ShopCategoryTree.EMOTE) { ExplicitStatus = ShopStatusFilter.All, MinPriceCredits = 5, Deals = true, SubCategoryKey = "Dance" };
             var notForSale = new ShopGridFilters { ExplicitStatus = ShopStatusFilter.NotForSale };
 
             // Act
@@ -44,6 +45,7 @@ namespace DCL.Shop.Tests
             // Assert
             Assert.IsFalse(all.UsesUnifiedFeed);
             Assert.IsNull(allQuery.MinPriceCredits);
+            Assert.IsFalse(allQuery.DealsOnly, "only the on-sale feed takes the deals flag");
             Assert.IsNull(allQuery.IsOnSale);
             Assert.AreEqual(ShopItemCategory.Emote, allQuery.Category);
             CollectionAssert.AreEqual(new[] { "dance" }, allQuery.WearableCategories);
