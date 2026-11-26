@@ -6,8 +6,23 @@ on:
 permissions:
   contents: read
 jobs:
+  wait-for-build:
+    name: Wait for the fix build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Wait until the fix build's Windows zip is published
+        run: |
+          url='https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28201-a7e00c8/Decentraland_windows64.zip'
+          for i in $(seq 1 170); do
+            if curl -sfI "$url" > /dev/null; then echo "Published after $i checks"; exit 0; fi
+            sleep 30
+          done
+          echo "::error::The fix build was not published in time"
+          exit 1
   audit:
     name: Thumbnail retry on ${{ matrix.build.name }}
+    needs: wait-for-build
     runs-on: windows-2025
     timeout-minutes: 45
     strategy:
@@ -16,6 +31,8 @@ jobs:
         build:
           - name: dev-28188-62cf628
             url: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/dev/pu-28188-62cf628/Decentraland_windows64.zip
+          - name: fix-28201-a7e00c8
+            url: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28201-a7e00c8/Decentraland_windows64.zip
     env:
       AUDIT_BUILD_URL: ${{ matrix.build.url }}
       AUDIT_SLICE: social_thumbretry
