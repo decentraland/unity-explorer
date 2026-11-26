@@ -32,6 +32,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly CancellationTokenSource fetchWearableCts = new ();
         private readonly CancellationTokenSource fetchEmoteCts = new ();
         private CancellationTokenSource equipOutfitCts = new ();
+        private CancellationTokenSource? selectionCts;
 
         private readonly ReportData emoteReportData = new (ReportCategory.EMOTE);
         private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
@@ -121,47 +122,69 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => SelectWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
+            SelectWearableAsync(command).Forget();
 
-        private void SelectWearable(IWearable wearable, BackpackSelectWearableCommand command)
+        private async UniTask SelectWearableAsync(BackpackSelectWearableCommand command)
         {
-            backpackEventBus.SendWearableSelect(wearable);
-            command.EndAction?.Invoke();
-        }
-
-        private void HandleEquipWearableCommand(BackpackEquipWearableCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
-
-        private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
-        {
-            string? category = null;
+            using var selection = CancellationTokenSource.CreateLinkedTokenSource(command.CancellationToken, fetchWearableCts.Token);
+            selectionCts?.Cancel();
+            selectionCts = selection;
+            CancellationToken ct = selection.Token;
 
             try
             {
-                category = wearable.GetCategory();
-            }
-            catch (Exception)
-            {
-                // Sometimes the wearable has no available category thus asking for it provokes NRE
-            }
+                if (ct.IsCancellationRequested) return;
+                URN pointer = new URN(command.Id).Shorten();
+                if (wearableStorage.TryGetElement(pointer, out IWearable cached) && cached.Model.Succeeded)
+                {
+                    backpackEventBus.SendWearableSelect(cached);
+                    return;
+                }
 
-            if (category == null)
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {command.Id}");
-                return;
+                IWearable? body = equippedWearables.Wearable(Runtime.Wearables.WearableCategories.Categories.BODY_SHAPE);
+                if (body == null) return;
+                var wearables = await wearablesProvider.GetDTOsByPointersAsync(new[] { pointer }, BodyShape.FromStringSafe(body.GetUrn()), ct);
+                if (ct.IsCancellationRequested || wearables == null) return;
+
+                await UniTask.SwitchToMainThread(ct);
+                foreach (IWearable wearable in wearables)
+                    if (wearable.Model.Succeeded && wearable.GetUrn().Shorten().Equals(pointer))
+                    {
+                        backpackEventBus.SendWearableSelect(wearable);
+                        return;
+                    }
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+            catch (Exception e) { ReportHub.LogException(e, wearableReportData); }
+            finally
+            {
+                if (selectionCts == selection) selectionCts = null;
+            }
+        }
+
+        private bool HandleEquipWearableCommand(BackpackEquipWearableCommand command)
+        {
+            IWearable wearable = command.Wearable;
+            string category = wearable.GetCategory();
+            if (string.IsNullOrEmpty(category)) return false;
+
+            IWearable? currentBody = equippedWearables.Wearable(Runtime.Wearables.WearableCategories.Categories.BODY_SHAPE);
+            if (currentBody == null) return false;
+
+            BodyShape targetBody = WearableComponentsUtils.GetBodyShapeForEquip(wearable.GetUrn(), BodyShape.FromStringSafe(currentBody.GetUrn()));
+            if (!wearable.HasUsableMainAsset(targetBody)) return false;
 
             IWearable? wearableToUnequip = equippedWearables.Wearable(category);
 
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
-            backpackEventBus.SendEquipWearable(wearable, command.IsManuallyEquipped);
+            backpackEventBus.SendEquipWearable(wearable, true);
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);
 
-            command.EndAction?.Invoke();
+            return true;
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)

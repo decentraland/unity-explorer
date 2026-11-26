@@ -7,7 +7,7 @@ namespace DCL.Backpack.BackpackBus
     [AutoInterface]
     public class BackpackCommandBus : IBackpackCommandBus
     {
-        public event Action<BackpackEquipWearableCommand>? EquipWearableMessageReceived;
+        public event Func<BackpackEquipWearableCommand, bool>? EquipWearableMessageReceived;
         public event Action<BackpackEquipEmoteCommand>? EquipEmoteMessageReceived;
         public event Action<BackpackUnEquipEmoteCommand>? UnEquipEmoteMessageReceived;
         public event Action<BackpackEmoteSlotSelectCommand>? EmoteSlotSelectMessageReceived;
@@ -22,10 +22,8 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackChangeColorCommand>? ChangeColorMessageReceived;
         public event Action<BackpackEquipOutfitCommand>? EquipOutfitMessageReceived;
 
-        public void SendCommand(BackpackEquipWearableCommand command)
-        {
-            EquipWearableMessageReceived?.Invoke(command);
-        }
+        public bool SendCommand(BackpackEquipWearableCommand command) =>
+            EquipWearableMessageReceived?.Invoke(command) ?? false;
 
         public void SendCommand(BackpackUnEquipWearableCommand command)
         {

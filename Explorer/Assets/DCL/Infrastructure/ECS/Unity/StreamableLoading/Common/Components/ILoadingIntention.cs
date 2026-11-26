@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
@@ -28,6 +28,14 @@ namespace ECS.StreamableLoading.Common.Components
     {
         public static bool IsCancelled<T>(this ref T intention) where T: struct, ILoadingIntention =>
             intention.CancellationTokenSource.IsCancellationRequested;
+
+        public static T WithRetryCachedFailures<T>(this T intention, bool retry) where T: struct, ILoadingIntention
+        {
+            CommonLoadingArguments arguments = intention.CommonArguments;
+            arguments.RetryCachedFailures = retry;
+            intention.CommonArguments = arguments;
+            return intention;
+        }
 
         public static void SetURL<T>(this ref T loadingIntention, URLAddress url) where T: struct, ILoadingIntention
         {

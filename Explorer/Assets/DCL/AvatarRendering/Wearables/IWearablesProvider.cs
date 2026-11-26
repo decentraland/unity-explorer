@@ -67,6 +67,8 @@ namespace DCL.AvatarRendering.Wearables
             }
         }
 
+        UniTask<IWearable?> GetForEquipAsync(URN pointer, BodyShape bodyShape, CancellationToken ct);
+
         /// <summary>
         ///     Resolves the wearables' DTOs without loading their assets.
         /// </summary>
