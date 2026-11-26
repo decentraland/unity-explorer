@@ -4,7 +4,6 @@ using DCL.Chat.History;
 using DCL.FeatureFlags;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
-using DCL.Utilities;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -20,7 +19,7 @@ namespace DCL.McpServer.Tools
     public class ReactToChatMessageTool : McpTool
     {
         private readonly IChatHistory chatHistory;
-        private readonly IReadonlyReactiveProperty<ChatMessageReactionService?> reactionService;
+        private readonly ChatMessageReactionService reactionService;
 
         public override string Name => "react_to_chat_message";
 
@@ -36,7 +35,7 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public ReactToChatMessageTool(IChatHistory chatHistory, IReadonlyReactiveProperty<ChatMessageReactionService?> reactionService)
+        public ReactToChatMessageTool(IChatHistory chatHistory, ChatMessageReactionService reactionService)
         {
             this.chatHistory = chatHistory;
             this.reactionService = reactionService;
@@ -52,27 +51,22 @@ namespace DCL.McpServer.Tools
             if (!arguments.TryGetInt("emojiIndex", out int emojiIndex))
                 return UniTask.FromResult(McpToolResult.Error($"emojiIndex is required{arguments.NonNumericHint("emojiIndex")}."));
 
-            ChatMessageReactionService? service = reactionService.Value;
-
-            if (service == null)
-                return UniTask.FromResult(McpToolResult.Error("Chat reactions are not ready yet: wait until the chat has finished loading."));
-
             // With the flag off the service has no network bus: the reaction would change the local history and reach nobody
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
                 return UniTask.FromResult(McpToolResult.Error("Chat reactions are disabled by feature flag: nothing would reach the channel."));
 
             // A negative value on the wire means "remove", which the toggle decides; receivers drop an index outside the atlas
-            if (emojiIndex < 0 || emojiIndex >= service.EmojiCount)
-                return UniTask.FromResult(McpToolResult.Error($"emojiIndex must be between 0 and {service.EmojiCount - 1}, the reactions emoji atlas."));
+            if (emojiIndex < 0 || emojiIndex >= reactionService.EmojiCount)
+                return UniTask.FromResult(McpToolResult.Error($"emojiIndex must be between 0 and {reactionService.EmojiCount - 1}, the reactions emoji atlas."));
 
             if (!TryFindChannel(messageId, out ChatChannel? channel))
                 return UniTask.FromResult(McpToolResult.Error($"No message with id '{messageId}' in the chat history. Read the ids with get_chat_history."));
 
             // FillChannel raises no MessageAdded, so restored messages stay unknown to the service until registered
-            service.RegisterChannelMessages(channel);
+            reactionService.RegisterChannelMessages(channel);
 
             int before = ReactorCount(channel, messageId, emojiIndex);
-            service.ToggleReaction(messageId, emojiIndex);
+            reactionService.ToggleReaction(messageId, emojiIndex);
             int after = ReactorCount(channel, messageId, emojiIndex);
 
             if (after == before)

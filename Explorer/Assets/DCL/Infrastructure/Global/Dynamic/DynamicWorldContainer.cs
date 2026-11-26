@@ -353,6 +353,7 @@ namespace Global.Dynamic
                 profileContainer,
                 identityCache,
                 userBlockingCache,
+                dynamicWorldDependencies.SettingsContainer.GetSettings<ChatPluginSettings>().ReactionsConfig,
                 realmNavigatorContainer.WorldInfoHub,
                 realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,

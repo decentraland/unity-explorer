@@ -12,7 +12,6 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
 using DCL.Input;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -24,7 +23,6 @@ using DCL.SocialService;
 using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.VoiceChat;
 using MVC;
@@ -94,11 +92,10 @@ namespace DCL.PluginSystem.Global
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IMessagePipesHub messagePipesHub;
-        private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
-        private readonly ReactiveProperty<ChatMessageReactionService?> sharedMessageReactionService;
+        private readonly IReactionMessageBus reactionBus;
+        private readonly ChatMessageReactionService messageReactionService;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -106,7 +103,6 @@ namespace DCL.PluginSystem.Global
         private ChatCommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
         private FallbackFontsProvider? fallbackFontsProvider;
-        private ChatMessageReactionService? messageReactionService;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -143,11 +139,10 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IMessagePipesHub messagePipesHub,
-            DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
-            ReactiveProperty<ChatMessageReactionService?> sharedMessageReactionService,
+            IReactionMessageBus reactionBus,
+            ChatMessageReactionService messageReactionService,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -183,11 +178,10 @@ namespace DCL.PluginSystem.Global
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.messagePipesHub = messagePipesHub;
-            this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
-            this.sharedMessageReactionService = sharedMessageReactionService;
+            this.reactionBus = reactionBus;
+            this.messageReactionService = messageReactionService;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -198,9 +192,8 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             streamReactionsChatCommand.Detach();
-            sharedMessageReactionService.Value = null;
 
-            if (messageReactionService != null && chatStorage != null)
+            if (chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
             chatStorage?.Dispose();
@@ -228,16 +221,10 @@ namespace DCL.PluginSystem.Global
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 mainUIView.ChatMainView.SituationalReactionView.LaneCanvas,
                 avatarReactionPosition,
-                messagePipesHub,
-                userBlockingCache,
-                web3IdentityCache,
-                chatHistory,
-                decentralandEnvironment,
+                reactionBus,
+                messageReactionService,
                 settings.ChatSettingsAsset,
                 pluginScope);
-
-            messageReactionService = reactions.MessageReactionService;
-            sharedMessageReactionService.Value = messageReactionService;
 
             // Hand the debug /streamreactions command a live control now that the reactions feature exists.
             streamReactionsChatCommand.Attach(reactions.StreamControl);

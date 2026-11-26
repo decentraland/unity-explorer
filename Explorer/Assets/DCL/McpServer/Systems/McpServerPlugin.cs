@@ -13,7 +13,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.UiSimulation;
-using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -45,7 +44,7 @@ namespace DCL.McpServer.Systems
 
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatHistory chatHistory;
-        private readonly IReadonlyReactiveProperty<ChatMessageReactionService?> messageReactionService;
+        private readonly ChatMessageReactionService messageReactionService;
         private readonly ExposedCameraData exposedCameraData;
 
         private readonly Arch.Core.World globalWorld;
@@ -72,7 +71,7 @@ namespace DCL.McpServer.Systems
             IGlobalWorldActions globalWorldActions,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
-            IReadonlyReactiveProperty<ChatMessageReactionService?> messageReactionService,
+            ChatMessageReactionService messageReactionService,
             IScenesCache scenesCache,
             ICurrentSceneInfo currentSceneInfo,
             ILoadingStatus loadingStatus,

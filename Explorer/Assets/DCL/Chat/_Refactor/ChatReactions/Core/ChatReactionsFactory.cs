@@ -28,7 +28,6 @@ namespace DCL.Chat.ChatReactions.Core
         {
             public readonly SituationalReactionFacade Facade;
             public readonly ISituationalReactionSimulation Simulation;
-            public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
             public readonly IReactionStreamControl StreamControl;
@@ -36,32 +35,30 @@ namespace DCL.Chat.ChatReactions.Core
             internal Result(
                 SituationalReactionFacade facade,
                 ISituationalReactionSimulation simulation,
-                ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
                 SituationalReactionDebugController debugController,
                 IReactionStreamControl streamControl)
             {
                 Facade = facade;
                 Simulation = simulation;
-                MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
                 StreamControl = streamControl;
             }
         }
 
-        public static Result Create(
+        /// <summary>
+        ///     Creates the network half of the feature: the bus that carries reactions and the service that applies message
+        ///     reactions to the chat history. Neither needs the chat UI, so the chat container builds and owns them, and
+        ///     <see cref="Create" /> attaches the UI-bound parts once the chat panel is loaded.
+        /// </summary>
+        public static (IReactionMessageBus ReactionBus, ChatMessageReactionService MessageReactionService) CreateNetworking(
             ChatReactionsConfig reactionsConfig,
-            RectTransform uiLaneRect,
-            Canvas uiLaneCanvas,
-            IAvatarReactionPosition avatarPosition,
             IMessagePipesHub messagePipesHub,
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache web3IdentityCache,
             IChatHistory chatHistory,
-            DecentralandEnvironment environment,
-            ChatSettingsAsset chatSettingsAsset,
-            EventSubscriptionScope scope)
+            DecentralandEnvironment environment)
         {
             IReactionMessageBus reactionBus = CreateReactionBus(messagePipesHub,
                 userBlockingCache,
@@ -69,13 +66,26 @@ namespace DCL.Chat.ChatReactions.Core
                 environment,
                 reactionsConfig,
                 reactionsConfig.SafeTotalTiles);
-            
+
             var messageReactionService = new ChatMessageReactionService(reactionBus,
                 chatHistory,
                 web3IdentityCache,
                 reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage,
                 reactionsConfig.SafeTotalTiles);
-            
+
+            return (reactionBus, messageReactionService);
+        }
+
+        public static Result Create(
+            ChatReactionsConfig reactionsConfig,
+            RectTransform uiLaneRect,
+            Canvas uiLaneCanvas,
+            IAvatarReactionPosition avatarPosition,
+            IReactionMessageBus reactionBus,
+            ChatMessageReactionService messageReactionService,
+            ChatSettingsAsset chatSettingsAsset,
+            EventSubscriptionScope scope)
+        {
             var uiSimulation = new ChatReactionUISimulation(reactionsConfig, uiLaneRect, uiLaneCanvas);
             var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig, avatarPosition);
             
@@ -115,9 +125,7 @@ namespace DCL.Chat.ChatReactions.Core
             worldSimulation.SetDebugNearbyUICallback((emoji, count) => uiSimulation.TriggerUIReaction(emoji, count));
 
             scope.Add(uiSimulation);
-            scope.Add(reactionBus);
             scope.Add(worldSimulation);
-            scope.Add(messageReactionService);
             scope.Add(situationalReactionFacade);
             scope.Add(streamEmitter);
             scope.Add(new SettingsUnsubscriber(chatSettingsAsset, bubblesHandler, reactionsHandler));
@@ -145,7 +153,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
+            return new Result(situationalReactionFacade, simulationLoop, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(

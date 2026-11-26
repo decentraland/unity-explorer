@@ -1,6 +1,8 @@
 using Arch.Core;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
@@ -18,7 +20,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.Translation;
 using DCL.UI.InputFieldFormatting;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;
@@ -38,7 +39,7 @@ namespace Global.Dynamic
     /// </summary>
     public class ChatContainer : IDisposable
     {
-        private readonly ReactiveProperty<ChatMessageReactionService?> messageReactionService = new (null);
+        private readonly IReactionMessageBus reactionBus;
 
         public ChatHistory ChatHistory { get; }
 
@@ -60,10 +61,7 @@ namespace Global.Dynamic
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
 
-        /// <summary>
-        ///     The chat reactions service once the chat plugin has created it; null before that and after the plugin is disposed.
-        /// </summary>
-        public IReadonlyReactiveProperty<ChatMessageReactionService?> MessageReactionService => messageReactionService;
+        public ChatMessageReactionService MessageReactionService { get; }
 
         private ChatContainer(
             ChatHistory chatHistory,
@@ -75,8 +73,12 @@ namespace Global.Dynamic
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ReloadSceneChatCommand reloadSceneChatCommand,
             StreamReactionsChatCommand streamReactionsChatCommand,
-            PlayerPrefsTranslationSettings translationSettings)
+            PlayerPrefsTranslationSettings translationSettings,
+            IReactionMessageBus reactionBus,
+            ChatMessageReactionService messageReactionService)
         {
+            this.reactionBus = reactionBus;
+            MessageReactionService = messageReactionService;
             ChatHistory = chatHistory;
             ChatMessagesBus = chatMessagesBus;
             ChatEventBus = chatEventBus;
@@ -97,6 +99,7 @@ namespace Global.Dynamic
             ProfileContainer profileContainer,
             IWeb3IdentityCache identityCache,
             IUserBlockingCache userBlockingCache,
+            ChatReactionsConfig reactionsConfig,
             IWorldInfoHub worldInfoHub,
             ECSReloadScene reloadSceneController,
             TeleportController teleportController,
@@ -166,6 +169,15 @@ namespace Global.Dynamic
 
             ChatOpener.Initialize(new ChatOpener(chatEventBus, uiShellContainer.MvcManager, identityCache, chatHistory));
 
+            // The bus and the service need no chat UI: built here so that consumers created before the chat plugin loads get them as plain dependencies
+            (IReactionMessageBus reactionBus, ChatMessageReactionService messageReactionService) = ChatReactionsFactory.CreateNetworking(
+                reactionsConfig,
+                commsContainer.MessagePipesHub,
+                userBlockingCache,
+                identityCache,
+                chatHistory,
+                bootstrapContainer.Environment);
+
             return new ChatContainer(
                 chatHistory,
                 chatMessagesBus,
@@ -176,7 +188,9 @@ namespace Global.Dynamic
                 new ChatSharedAreaEventBus(),
                 reloadSceneChatCommand,
                 streamReactionsChatCommand,
-                new PlayerPrefsTranslationSettings());
+                new PlayerPrefsTranslationSettings(),
+                reactionBus,
+                messageReactionService);
         }
 
         public ChatPlugin CreatePlugin(
@@ -234,15 +248,16 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,
                 ChatSharedAreaEventBus,
-                commsContainer.MessagePipesHub,
-                bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
-                messageReactionService,
+                reactionBus,
+                MessageReactionService,
                 CurrentChannelService);
 
         public void Dispose()
         {
+            MessageReactionService.Dispose();
+            reactionBus.Dispose();
             ChatMessagesBus.Dispose();
         }
     }
