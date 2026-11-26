@@ -267,7 +267,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private async UniTask LoadQuoteAndBalanceAsync(CancellationToken ct)
         {
-            // The loading height depends on the selector being hidden.
             viewInstance?.PaymentSelector.Clear();
             SetUiState(ModalState.LoadingBalance);
 

@@ -23,7 +23,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         public PaymentSelection Selection { get; private set; } = new (PaymentOptions.NONE);
 
-        /// <summary>Whether the rows are shown for the options last given to <see cref="Show" />.</summary>
         public bool IsShown => gameObject.activeSelf;
 
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
@@ -34,10 +33,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         }
 
         /// <summary>
-        ///     Starts a fresh selection on the preferred option. Both rows are hidden while MANA cannot be offered
-        ///     (no MANA held, or no MANA price for this item), which leaves credits as the only way to pay.
-        ///     manaAloneRefusedNote replaces the rate when the options rule MANA out as a method of its own and
-        ///     leave the row unavailable.
+        ///     Starts a fresh selection on the preferred option. Both rows are hidden when MANA cannot be offered
+        ///     at all. manaAloneRefusedNote replaces the rate when the options rule MANA out as a method of its own
+        ///     and leave the row unavailable.
         /// </summary>
         public void Show(PaymentOptions paymentOptions, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
         {
@@ -48,7 +46,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Render();
         }
 
-        /// <summary>An empty selection with the rows hidden, for the time the options are being read.</summary>
+        /// <summary>The rows hidden, for the time the options are being read.</summary>
         public void Clear() =>
             Show(PaymentOptions.NONE);
 

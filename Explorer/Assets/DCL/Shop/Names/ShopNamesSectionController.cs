@@ -22,7 +22,7 @@ namespace DCL.Shop
     /// <summary>
     ///     The Names section: a UNIQUE NAME tab that checks a typed name against the registrar and opens the
     ///     claim modal, and a RESALE NAME tab with the grid of the names on sale. The nametag over the avatar preview shows the name
-    ///     typed or picked in the open tab, or the player's own while there is none, always in the colour of the player's own name.
+    ///     typed or picked in the open tab, or the player's own while there is none.
     /// </summary>
     public class ShopNamesSectionController : IDisposable
     {
