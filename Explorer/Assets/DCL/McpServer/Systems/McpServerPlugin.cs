@@ -2,6 +2,8 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.McpServer.Core;
@@ -41,6 +43,9 @@ namespace DCL.McpServer.Systems
         private readonly ILoadingStatus loadingStatus;
 
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IChatHistory chatHistory;
+        private readonly ChatMessageReactionService messageReactionService;
+        private readonly int reactionEmojiCount;
         private readonly ExposedCameraData exposedCameraData;
 
         private readonly Arch.Core.World globalWorld;
@@ -66,6 +71,9 @@ namespace DCL.McpServer.Systems
             IAppArgs appArgs,
             IGlobalWorldActions globalWorldActions,
             IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
+            ChatMessageReactionService messageReactionService,
+            int reactionEmojiCount,
             IScenesCache scenesCache,
             ICurrentSceneInfo currentSceneInfo,
             ILoadingStatus loadingStatus,
@@ -87,6 +95,9 @@ namespace DCL.McpServer.Systems
 
             this.globalWorldActions = globalWorldActions;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
+            this.messageReactionService = messageReactionService;
+            this.reactionEmojiCount = reactionEmojiCount;
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.loadingStatus = loadingStatus;
@@ -135,7 +146,9 @@ namespace DCL.McpServer.Systems
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
                           .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
-                          .Add(new SendChatTool(chatMessagesBus))
+                          .Add(new SendChatTool(chatMessagesBus, loadingStatus))
+                          .Add(new GetChatHistoryTool(chatHistory))
+                          .Add(new ReactToChatMessageTool(chatHistory, messageReactionService, reactionEmojiCount))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity, coroutineRunner))
                           .Add(new ListSceneEntitiesTool(scenesCache))
                           .Add(new GetEntityDetailsTool(worldInfoHub))

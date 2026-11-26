@@ -1,6 +1,9 @@
 using Arch.Core;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -36,6 +39,8 @@ namespace Global.Dynamic
     /// </summary>
     public class ChatContainer : IDisposable
     {
+        private readonly IReactionMessageBus reactionBus;
+
         public ChatHistory ChatHistory { get; }
 
         public IChatMessagesBus ChatMessagesBus { get; }
@@ -56,6 +61,8 @@ namespace Global.Dynamic
 
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
 
+        public ChatMessageReactionService MessageReactionService { get; }
+
         private ChatContainer(
             ChatHistory chatHistory,
             IChatMessagesBus chatMessagesBus,
@@ -66,8 +73,12 @@ namespace Global.Dynamic
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ReloadSceneChatCommand reloadSceneChatCommand,
             StreamReactionsChatCommand streamReactionsChatCommand,
-            PlayerPrefsTranslationSettings translationSettings)
+            PlayerPrefsTranslationSettings translationSettings,
+            IReactionMessageBus reactionBus,
+            ChatMessageReactionService messageReactionService)
         {
+            this.reactionBus = reactionBus;
+            MessageReactionService = messageReactionService;
             ChatHistory = chatHistory;
             ChatMessagesBus = chatMessagesBus;
             ChatEventBus = chatEventBus;
@@ -88,6 +99,7 @@ namespace Global.Dynamic
             ProfileContainer profileContainer,
             IWeb3IdentityCache identityCache,
             IUserBlockingCache userBlockingCache,
+            ChatReactionsConfig reactionsConfig,
             IWorldInfoHub worldInfoHub,
             ECSReloadScene reloadSceneController,
             TeleportController teleportController,
@@ -157,6 +169,14 @@ namespace Global.Dynamic
 
             ChatOpener.Initialize(new ChatOpener(chatEventBus, uiShellContainer.MvcManager, identityCache, chatHistory));
 
+            (IReactionMessageBus reactionBus, ChatMessageReactionService messageReactionService) = ChatReactionsFactory.CreateNetworking(
+                reactionsConfig,
+                commsContainer.MessagePipesHub,
+                userBlockingCache,
+                identityCache,
+                chatHistory,
+                bootstrapContainer.Environment);
+
             return new ChatContainer(
                 chatHistory,
                 chatMessagesBus,
@@ -167,7 +187,9 @@ namespace Global.Dynamic
                 new ChatSharedAreaEventBus(),
                 reloadSceneChatCommand,
                 streamReactionsChatCommand,
-                new PlayerPrefsTranslationSettings());
+                new PlayerPrefsTranslationSettings(),
+                reactionBus,
+                messageReactionService);
         }
 
         public ChatPlugin CreatePlugin(
@@ -225,14 +247,16 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,
                 ChatSharedAreaEventBus,
-                commsContainer.MessagePipesHub,
-                bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
+                reactionBus,
+                MessageReactionService,
                 CurrentChannelService);
 
         public void Dispose()
         {
+            MessageReactionService.Dispose();
+            reactionBus.Dispose();
             ChatMessagesBus.Dispose();
         }
     }
