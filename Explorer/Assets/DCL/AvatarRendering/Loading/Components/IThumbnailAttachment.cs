@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Loading.Components
         string? GetEntityId();
 
         /// <summary>
-        ///     Waits for the thumbnail to be loaded
+        ///     Waits for the thumbnail to be loaded. A failed load returns the fallback it carries; a cancelled one throws.
         /// </summary>
         async UniTask<Sprite> WaitForThumbnailAsync(int checkInterval, CancellationToken ct)
         {
@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
             StreamableLoadingResult<SpriteData>.WithFallback result = ThumbnailAssetResult!.Value;
 
-            if (!result.Succeeded)
+            if (result.Cancelled)
                 throw new ThumbnailLoadFailedException();
 
             return result.Asset;

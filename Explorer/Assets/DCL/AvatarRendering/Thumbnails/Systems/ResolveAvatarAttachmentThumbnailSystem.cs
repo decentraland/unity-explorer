@@ -67,8 +67,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         /// <summary>
-        ///     A failed download shows the default thumbnail but does not count as loaded, so the next request downloads it again
-        ///     instead of reusing the gray placeholder for the rest of the session.
+        ///     The result of a failed download: not a success, carrying the default thumbnail to show in its place.
         /// </summary>
         private static StreamableLoadingResult<SpriteData>.WithFallback FailedDownload() =>
             StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);

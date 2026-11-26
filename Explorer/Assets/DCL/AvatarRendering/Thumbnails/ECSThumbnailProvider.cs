@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.Exceptions;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
@@ -31,7 +30,7 @@ namespace DCL.AvatarRendering.Wearables
                 if (existing.Succeeded)
                     return existing.Asset;
 
-                // Terminal non-success (timeout or cancellation) is per-attempt, never sticky: clear the slot so a fresh promise can spawn
+                // Terminal non-success (failed download, timeout or cancellation) is per-attempt, never sticky: clear the slot so a fresh promise can spawn
                 avatarAttachment.ThumbnailAssetResult = null;
             }
 
@@ -60,12 +59,6 @@ namespace DCL.AvatarRendering.Wearables
                 promiseCts.Cancel();
                 avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
 
-                return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
-            }
-            catch (ThumbnailLoadFailedException) when (avatarAttachment.ThumbnailAssetResult is { IsInitialized: true, Succeeded: false, Cancelled: false })
-            {
-                // Attachments without their own WaitForThumbnailAsync (trimmed wearables and emotes) throw on a failed load:
-                // every attachment type shows the default thumbnail for it instead. A cancelled load still throws.
                 return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
             }
         }
