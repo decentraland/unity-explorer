@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Holidays_26
   m_EditorClassIdentifier: 
   <Backdrop>k__BackingField: {fileID: 2800000, guid: c377f91981a04b7c9280f11136d19068, type: 3}
-  <BlendScreenHeight>k__BackingField: 0.376
+  <BlendScreenHeight>k__BackingField: 0.341
   <BlendDepth>k__BackingField: 4.85
   <BlendHardness>k__BackingField: 0.3
   <ImageBelowBlend>k__BackingField: 0.588
@@ -51,22 +51,26 @@ MonoBehaviour:
     <Rotation>k__BackingField: {x: 0, y: 10, z: 0}
     <Scale>k__BackingField: {x: 1, y: 1, z: 1}
   - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 5fc6c63c82d448789aac7e7ab5c89d9f, type: 3}
-    <Position>k__BackingField: {x: -0.95, y: 0, z: -1.25}
+    <Position>k__BackingField: {x: -1.34, y: -0.21, z: -1.25}
     <Rotation>k__BackingField: {x: 0, y: 30, z: 0}
     <Scale>k__BackingField: {x: 1, y: 1, z: 1}
   - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 0d219b1a526b4646bfd3ee3aa6daebae, type: 3}
-    <Position>k__BackingField: {x: -1.2, y: 0, z: -1}
+    <Position>k__BackingField: {x: -1.2, y: -0.18, z: -1}
     <Rotation>k__BackingField: {x: 0, y: -15, z: 0}
     <Scale>k__BackingField: {x: 0.8, y: 0.8, z: 0.8}
   - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: bde3cca487d84ea8b670541c6607289a, type: 3}
-    <Position>k__BackingField: {x: 1.5, y: 0, z: -1.45}
+    <Position>k__BackingField: {x: 1.18, y: -0.02, z: -0.17}
     <Rotation>k__BackingField: {x: 0, y: 50, z: 0}
     <Scale>k__BackingField: {x: 0.9, y: 0.9, z: 0.9}
   - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 34ab4e89641547bfb7134dcfa6684003, type: 3}
     <Position>k__BackingField: {x: 0.7, y: 0, z: -1.35}
     <Rotation>k__BackingField: {x: 0, y: -25, z: 0}
     <Scale>k__BackingField: {x: 0.7, y: 0.7, z: 0.7}
-  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: c7ca6943fa8d438eab7e61b53a900e0f, type: 3}
+  - <Prefab>k__BackingField: {fileID: 4203124320245819563, guid: bd0cadf6e6aa46b5907e8cc4d4d05440, type: 3}
     <Position>k__BackingField: {x: 2.66, y: 0, z: -2.55}
     <Rotation>k__BackingField: {x: 0, y: -56.9, z: 0}
     <Scale>k__BackingField: {x: 1.1, y: 1.1, z: 1.1}
+  - <Prefab>k__BackingField: {fileID: 5565271181952268228, guid: c020499a6aac49cebdc0eb70254ceb46, type: 3}
+    <Position>k__BackingField: {x: -2.81, y: 1.09, z: -1.92}
+    <Rotation>k__BackingField: {x: 0, y: 0, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}
