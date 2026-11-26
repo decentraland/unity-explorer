@@ -1,0 +1,622 @@
+"""Exercise visible social UI in a signed-in CI player. Writes only sanitized QA evidence."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import time
+from urllib.error import HTTPError
+from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
+
+
+ORIGIN = "https://dcl.dev"
+
+
+def request_json(method, path, account=None, data=None):
+    headers = {"User-Agent": "UnityExplorerGatewayQA/1", "Accept": "application/json"}
+    if account is not None:
+        import ethkeys
+        stamp = str(time.time_ns() // 1_000_000)
+        payload = f"{method}:{urlsplit(path).path}:{stamp}:{{}}".lower()
+        signature = ethkeys.personal_sign(int(account["privateKey"], 16), payload)
+        headers.update({"x-identity-timestamp": stamp, "x-identity-metadata": "{}",
+                        "x-identity-auth-chain-0": json.dumps({"type": "SIGNER", "payload": account["address"], "signature": ""}),
+                        "x-identity-auth-chain-1": json.dumps({"type": "ECDSA_SIGNED_ENTITY", "payload": payload, "signature": signature})})
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    req = Request(ORIGIN + path, method=method, headers=headers,
+                  data=None if data is None else json.dumps(data).encode())
+    try:
+        with urlopen(req, timeout=12) as response:
+            buf = response.read(2 * 1024 * 1024)
+            try:
+                return response.status, json.loads(buf)
+            except ValueError:
+                return response.status, {}
+    except HTTPError as e:
+        return e.code, {}
+    except OSError:
+        return 0, {}
+
+
+def image_facts(value):
+    if not isinstance(value, str) or not value:
+        return {"representation": "missing"}
+    parts = urlsplit(value)
+    if parts.scheme == "https" and parts.hostname in {"dcl.dev", "profile-images.decentraland.org", "profile-images.dcl.dev"}:
+        local = value
+        representation = "HTTPS URL: " + parts.hostname
+    elif re.fullmatch(r"(Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[a-z2-7]{25,110})", value):
+        local = ORIGIN + "/content/contents/" + value
+        representation = "bare content ID"
+    elif parts.scheme == "https":
+        return {"representation": "external HTTPS URL", "host": parts.hostname}
+    else:
+        return {"representation": "relative path or other value"}
+    try:
+        with urlopen(Request(local, headers={"User-Agent": "UnityExplorerGatewayQA/1"}), timeout=10) as response:
+            data = response.read(2 * 1024 * 1024)
+            return {"representation": representation, "http": response.status, "mime": response.headers.get_content_type(),
+                    "is_png": data.startswith(b"\x89PNG\r\n\x1a\n"), "sha256": hashlib.sha256(data).hexdigest()}
+    except HTTPError as e:
+        return {"representation": representation, "http": e.code}
+    except OSError:
+        return {"representation": representation, "http": 0}
+
+
+def owns_pair():
+    file = os.getenv("DCL_AUDIT_WALLETS")
+    if not file:
+        return None
+    accounts = {a["label"]: a for a in json.loads(Path(file).read_text(encoding="utf-8-sig"))["accounts"]}
+    a, b = (accounts[os.environ[k]] for k in ("DCL_AUDIT_PRIMARY", "DCL_AUDIT_FRIEND"))
+    if a["address"].lower() == b["address"].lower():
+        raise ValueError("Test fixture needs distinct wallets")
+    return a, b
+
+
+def social_readback(a, b, facts):
+    peer = b["address"].lower()
+    status, data = request_json("GET", "/social-api/v2/friends", a)
+    rows = data.get("data", {}).get("results", [])
+    facts["membership"] = {"http": status, "count": len(rows), "contains_fixture": any(
+        (r.get("address") or "").lower() == peer for r in rows)}
+    status, data = request_json("GET", "/social-api/v1/friends", a)
+    rows = [r for r in data.get("friends", []) if (r.get("address") or "").lower() == peer]
+    facts["social_enrichment"] = {"http": status, "contains_fixture": bool(rows),
+                                  "has_name": bool(rows and rows[0].get("name")),
+                                  "picture": image_facts(rows[0].get("avatarUrl") if rows else None)}
+    status, data = request_json("GET", "/lambdas/profiles/" + peer)
+    profiles = [r for r in data.get("avatars", []) if (r.get("userId") or "").lower() == peer]
+    face = profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None
+    facts["catalyst_profile"] = {"http": status, "fixture_found": bool(profiles), "face256": image_facts(face)}
+    if face:
+        uri = urlsplit(face)
+        if uri.hostname == "profile-images.decentraland.org" and uri.path.startswith("/entities/"):
+            facts["same_image_on_gateway"] = image_facts(ORIGIN + "/profile-images" + uri.path)
+    status, active = request_json("POST", "/content/entities/active", data={"pointers": [peer]})
+    entities = active if isinstance(active, list) else []
+    profiles = (entities[0].get("metadata", {}).get("avatars", []) if entities else [])
+    face = profiles[0].get("avatar", {}).get("snapshots", {}).get("face256") if profiles else None
+    facts["active_profile_entity"] = {"http": status, "profile_count": len(profiles),
+                                       "has_face256": bool(face), "face256": image_facts(face)}
+    status, feed = request_json("GET", "/notifications/notifications?limit=50", a)
+    facts["notifications"] = {"http": status, "response_type": type(feed).__name__,
+                              "entries": len(feed) if isinstance(feed, list) else None,
+                              "types": sorted({str(n.get("type")) for n in feed if isinstance(n, dict)}) if isinstance(feed, list) else []}
+
+
+def prepare_fixture(output_dir, section):
+    pair = owns_pair()
+    if not pair or section in ("communities", "creator"):
+        return
+    primary, friend = pair
+    status, _ = request_json("POST", "/social-api/v1/friendship-requests", friend, {"address": primary["address"]})
+    facts = {"request_before_login_http": status}
+    if section in ("passport", "chat", "pair", "profile", "thumbretry"):
+        status, _ = request_json("PATCH", "/social-api/v1/friendship-requests/" + friend["address"], primary,
+                                 {"intention": "accepted"})
+        facts["accept_before_login_http"] = status
+    Path(output_dir, "social-seed.json").write_text(json.dumps(facts), encoding="utf-8")
+
+
+def thumbnail_bundle_url(urn):
+    """The CDN URL of a wearable's thumbnail bundle, as the player requests it under dcl.dev."""
+    status, rows = request_json("POST", "/asset-bundle-registry/entities/active", data={"pointers": [urn]})
+    if status != 200 or not isinstance(rows, list) or not rows:
+        return None
+    entity = rows[0]
+    thumbnail = entity.get("metadata", {}).get("thumbnail")
+    content = {c.get("file"): c.get("hash") for c in entity.get("content", [])}
+    version = entity.get("versions", {}).get("assets", {}).get("windows", {}).get("version")
+    if not (thumbnail in content and version):
+        return None
+    return f"https://ab-cdn.decentraland.org/{version}/{entity['id']}/{content[thumbnail]}_windows"
+
+
+def send_key(vk):
+    from audit_input import key
+    key({0x1b: "ESCAPE", 0x0d: "ENTER"}.get(vk, chr(vk)))
+    return True
+
+
+class Session:
+    def __init__(self, session, tool, capture, output_dir):
+        self.session, self.tool, self.capture = session, tool, capture
+        self.output = Path(output_dir)
+        self.output.mkdir(parents=True, exist_ok=True)
+        self.report = {"fixture": {}, "screens": [], "actions": []}
+        self.controls = []
+
+    def flush(self):
+        (self.output / "social-audit.json").write_text(json.dumps(self.report, indent=2), encoding="utf-8")
+
+    def elements(self):
+        listing = self.tool(self.session, "ui_list", {"stack": "ugui", "checkOcclusion": True})
+        self.controls = listing.get("elements", [])
+        return self.controls
+
+    @staticmethod
+    def path(node):
+        return "/" + re.sub(r"\[\d+\]", "", node.get("path", "")).strip("/").lower()
+
+    def clear_transients(self):
+        # MCP is listening while the player still shows the loading screen. Ignore behind-screen controls.
+        for _ in range(70):
+            nodes = self.elements()
+            covering = next((n for n in nodes if re.search(r"/(?:altdialog/dialog|performanceissueprompt/.+)/closebutton$",
+                                                          self.path(n)) and not n.get("occluded")), None)
+            if covering:
+                self.tool(self.session, "ui_click", {"path": covering["path"]})
+                time.sleep(.45)
+                continue
+            if not any("/sceneloadingscreen/content/" in self.path(n) for n in nodes):
+                return
+            time.sleep(1)
+
+    def choose(self, patterns, wait=2, label=None):
+        self.clear_transients()
+        end = time.monotonic() + wait
+        while True:
+            elements = self.elements()
+            for pattern in patterns:
+                hits = [node for node in elements if re.search(pattern, self.path(node), re.I)
+                        and not node.get("disabled", False)
+                        and node.get("kind") not in ("scroll", "scrollrect")]
+                hits.sort(key=lambda node: bool(node.get("occluded", False)))
+                if label:
+                    hits = [n for n in hits if label in str(n.get("label", "")).lower()]
+                if hits:
+                    return hits[0]
+            if time.monotonic() >= end:
+                return None
+            time.sleep(.35)
+
+    def click(self, patterns, wait=2, label=None):
+        node = self.choose(patterns, wait, label)
+        if node is None:
+            return False
+        try:
+            result = self.tool(self.session, "ui_click", {"path": node["path"]})
+            self.report["actions"].append({"clicked":self.path(node), "ok": result.get("ok"), "blocked_by":result.get("blockedBy")})
+            if result.get("ok") is False:
+                return False
+            time.sleep(.65)
+            return True
+        except Exception:
+            return False
+
+    def snap(self, name, marker, settle=1.3):
+        time.sleep(settle)
+        elems = self.elements()
+        paths = [self.path(e) for e in elems]
+        matched = [p for p in paths if re.search(marker, p, re.I)]
+        unique = sorted({re.sub(r"0x[a-f0-9]{12,}", "<wallet>", p, flags=re.I) for p in paths})
+        record = {"screen": name, "view_controls_found": bool(matched), "controls": unique}
+        self.report["screens"].append(record)
+        self.flush()
+        shot = self.capture(("social-" if matched else "unreached-") + name)
+        if shot:
+            record["screenshot"] = Path(shot).name
+        self.flush()
+        return bool(matched)
+
+    def close(self, scope):
+        if not any(re.search(scope, self.path(n), re.I) for n in self.elements()):
+            return
+        if not self.click([scope + r".*/(?:button_close|closebutton|\[btn\] close|close|background_close)$", r"^/popupcloser/button$"], .5):
+            send_key(0x1b)
+
+    def open(self, patterns, key=None):
+        if self.click(patterns):
+            return True
+        return bool(key and send_key(key))
+
+    def hover(self, patterns):
+        node = self.choose(patterns, 5)
+        if node:
+            result = self.tool(self.session, "ui_hover", {"path": node["path"]})
+            self.report["actions"].append({"hovered":self.path(node), "ok": result.get("ok")})
+            time.sleep(.7)
+            return result.get("ok") is not False
+        return False
+
+    def row_action(self, row_pattern, button_pattern):
+        # MCP's next UI gesture ends a parked semantic hover. Keep the real OS pointer
+        # inside the row through mouse-down so Unity keeps its hover-only buttons active.
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        pid = int(os.environ["AUDIT_PLAYER_PID"])
+        hwnds = []
+        callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        @callback_type
+        def window(hwnd, _):
+            actual = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+            if actual.value == pid and user32.IsWindowVisible(hwnd):
+                hwnds.append(hwnd)
+            return True
+        user32.EnumWindows(window, 0)
+        if not hwnds:
+            return False
+        hwnd = hwnds[0]
+        rect = wintypes.RECT()
+        user32.GetClientRect(hwnd, ctypes.byref(rect))
+        user32.SetForegroundWindow(hwnd)
+        def move(target):
+            center = target["center"]
+            x, y = center["x"], center["y"]
+            if not (0 < x < 1 and 0 < y < 1):
+                return False
+            point = wintypes.POINT(round(rect.right*x), round(rect.bottom*y))
+            user32.ClientToScreen(hwnd, ctypes.byref(point))
+            user32.SetCursorPos(point.x, point.y)
+            at = wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(at))
+            return abs(at.x-point.x) <= 2 and abs(at.y-point.y) <= 2
+        row = self.choose([row_pattern], 5)
+        if row and move(row):
+            time.sleep(.6)
+            button = self.choose([button_pattern], 3)
+            if button and move(button):
+                time.sleep(.18)
+                user32.mouse_event(2, 0, 0, 0, 0)
+                time.sleep(.12)
+                user32.mouse_event(4, 0, 0, 0, 0)
+                time.sleep(.7)
+                self.report["actions"].append({"physical_click": self.path(button)})
+                return True
+        if self.hover([row_pattern]):
+            return self.click([button_pattern])
+        return False
+
+    def friends(self, pair):
+        facts = self.report["fixture"]
+        if pair:
+            a, b = pair
+            status, data = request_json("GET", "/social-api/v2/friends", a)
+            old = data.get("data", {}).get("results", [])
+            has_friend = any(r.get("address", "").lower() == b["address"].lower() for r in old)
+            facts["initial_membership_http"] = status
+            if not has_friend and not (self.output / "social-seed.json").exists():
+                result, _ = request_json("POST", "/social-api/v1/friendship-requests", b, {"address": a["address"]})
+                facts["request_http"] = result
+            status, data = request_json("GET", "/social-api/v2/friendship-requests?direction=received", a)
+            rows = data.get("data", {}).get("results", [])
+            owned_request = len(rows) == 1 and rows[0].get("address", "").lower() == b["address"].lower()
+            facts["received_request"] = {"http": status, "only_fixture_pending": owned_request}
+        friends = r"(?:/friends?panel(?:/|$)|/friendssection(?:/|$))"
+        self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
+        self.snap("friends-initial", friends)
+        self.click([friends + r".*requestsbutton(?:/button)?$"])
+        self.snap("friend-requests", r"/requestspanel/", 2)
+        if pair and not has_friend and owned_request:
+            facts["clicked_accept"] = False
+            if self.click([r"/requestuser$"]) and self.choose([r"/friendrequest/.*/acceptbutton$"], 5):
+                self.snap("received-request-dialog", r"/friendrequest/.*/acceptbutton$")
+                facts["clicked_accept"] = self.click([r"/friendrequest/.*/acceptbutton$"])
+                time.sleep(2)
+                self.snap("accepted-request-dialog", r"/friendrequest/")
+                self.close(r"/friendrequest/")
+            if not facts["clicked_accept"]:
+                facts["clicked_accept"] = self.row_action(r"/requestuser$", r"/requestuser[^/]*/(?:.*/)?acceptbutton$")
+            social_readback(a, b, facts)
+            if not facts["membership"]["contains_fixture"]:
+                status, _ = request_json("PATCH", "/social-api/v1/friendship-requests/" + b["address"], a, {"intention": "accepted"})
+                facts["fallback_accept_http"] = status
+        if pair:
+            social_readback(a, b, facts)
+        self.click([friends + r".*blockedbutton(?:/button)?$"])
+        self.snap("blocked", r"/blockedpanel/")
+        # Reopen so Unity does a fresh RPC page fetch even if acceptance used the HTTP companion route.
+        self.close(friends)
+        self.open([r"/(?:sidebarfriendsbutton|friendsbutton)(?:/button)?$"], ord("L"))
+        self.click([friends + r".*friendsbutton(?:/button)?$"])
+        self.choose([r"/friendlistuser$"], 10)
+        self.snap("friends-accepted", r"/friendlistuser$", 1)
+        friend_row = [r"/friendlistuser[^/]*$", r"/friendlistuser[^/]*/(?:.*/)?(?:mainbutton|userbutton)$"]
+        facts["visible_friend_rows"] = sum(any(re.search(pattern, self.path(e)) for pattern in friend_row)
+                                           for e in self.controls)
+        self.close(friends)
+
+    def open_owned_friend(self, pair):
+        if not pair:
+            return False
+        social_readback(*pair, self.report["fixture"])
+        membership = self.report["fixture"]["membership"]
+        if not membership.get("contains_fixture") or membership.get("count") != 1:
+            return False
+        if self.choose([r"/profilemenu/midmenulayout/profile$"], .2):
+            self.click([r"^/popupcloser/button$"])
+        if not self.choose([r"/friendspanel/.*/tabs/friendsbutton$"], .1):
+            self.open([r"/sidebarview/bottomlayout/friendsbutton$"], ord("L"))
+        self.click([r"/friendspanel/.*/tabs/friendsbutton$"])
+        row = self.choose([r"/friendlistuser$"], 15)
+        if not row:
+            self.snap("friend-list-attempt", r"/friendlistuser$")
+            return False
+        self.snap("owned-friend-row", r"/friendlistuser$")
+        return True
+
+    def passport(self, pair):
+        self.open([r"/sidebarprofilebutton/openprofilebutton$", r"/sidebarprofilebutton(?:/button)?$", r"/profilewidget$"])
+        self.snap("profile-menu", r"/profilemenu|/previewprofilebutton$")
+        self.click([r"/profilemenu/midmenulayout/profile$", r"/previewprofilebutton(?:/button)?$", r"/viewprofilebutton$"])
+        self.snap("own-passport-overview", r"/passport/", 8)
+        self.snap("own-passport-overview-settled", r"/passport/", 22)
+        for label in ("Badges", "Photos", "Creations"):
+            pat = r"/passport/.*" + label.lower() + r"sectionbutton(?:/button)?$"
+            if self.click([pat]):
+                self.snap("own-passport-" + label.lower(), r"/passport/")
+                if label == "Badges":
+                    self.snap("own-passport-badges-settled", r"/passport/", 22)
+        self.close(r"/passport")
+        if self.open_owned_friend(pair) and self.click([r"/friendlistuser$"]):
+            self.snap("friend-passport", r"/passport/", 7)
+            for label in ("Badges", "Photos", "Creations"):
+                if self.click([r"/passport/.*" + label.lower() + r"sectionbutton$"]):
+                    self.snap("friend-passport-" + label.lower(), r"/passport/")
+            self.close(r"/passport")
+
+    def profile(self, pair):
+        if not pair or not self.open_owned_friend(pair):
+            return
+        address = pair[1]["address"].lower()
+        facts = {}
+        for path in ("profiles", "profiles/metadata"):
+            status, response = request_json("POST", "/asset-bundle-registry/" + path, data={"ids": [address]})
+            rows = response if isinstance(response, list) else []
+            avatars = [a for r in rows if isinstance(r, dict) for a in r.get("avatars", [r]) if isinstance(a, dict)]
+            facts[path] = {"http": status, "rows": len(rows), "peer_found": any(
+                (a.get("userId") or a.get("ethAddress") or a.get("pointer") or "").lower() == address
+                for a in avatars)}
+        status, response = request_json("GET", "/lambdas/profiles/" + address)
+        rows = response.get("avatars", []) if isinstance(response, dict) else []
+        peer = next((row for row in rows if (row.get("userId") or "").lower() == address), {})
+        facts["realm_lambdas"] = {"http": status, "peer_found": bool(peer), "wearables": len(
+            (peer.get("avatar") or {}).get("wearables") or []), "fixture_name": peer.get("name") == "AuditFriend"}
+        self.report["companion_http_probes"] = facts
+        self.flush()
+        if self.click([r"/friendlistuser$"]):
+            self.snap("profile-peer-passport", r"/passport/.*overviewsectionbutton$", 20)
+            self.snap("profile-peer-passport-settled", r"/passport/.*overviewsectionbutton$", 75)
+            if self.click([r"/passport/.*creationssectionbutton$"], 8):
+                self.snap("profile-peer-empty-creations", r"/passport/.*creationssectionbutton$", 6)
+
+    def thumbretry(self, pair):
+        """dcl-one#2144: a friend's Equipped Items while the bundle CDN is unreachable, after it returns, and after reopening."""
+        if not pair or not self.open_owned_friend(pair):
+            return
+        import cdn_block
+        facts = self.report.setdefault("cdn_block", {})
+        probe_url = thumbnail_bundle_url("urn:decentraland:off-chain:base-avatars:f_blue_jacket")
+        facts["probe_url_found"] = bool(probe_url)
+        facts["probe_before_block"] = cdn_block.probe(probe_url) if probe_url else None
+        pid = int(os.environ["AUDIT_PLAYER_PID"])
+        blocked = cdn_block.block(pid)
+        facts["block"] = {k: v for k, v in blocked.items() if k != "addresses_list"}
+        facts["passport_opened"] = False
+        self.flush()
+        try:
+            # curl in the player keeps a resolved name for 60 seconds: outlast it, then drop anything it reopened.
+            time.sleep(65)
+            facts["connections_reset_before_open"] = cdn_block.reset_player_connections(pid, blocked["addresses_list"])
+            facts["probe_while_blocked"] = cdn_block.probe(probe_url) if probe_url else None
+            facts["passport_opened"] = self.click([r"/friendlistuser$"])
+            if facts["passport_opened"]:
+                self.snap("thumbretry-1-blocked-40s", r"/passport/.*overviewsectionbutton$", 40)
+        finally:
+            facts["unblock"] = cdn_block.unblock(blocked["firewall_profiles_before"])
+            facts["probe_after_unblock"] = cdn_block.probe(probe_url) if probe_url else None
+            self.flush()
+        if not facts["passport_opened"]:
+            return
+        self.snap("thumbretry-2-still-open-45s-after-restore", r"/passport/.*overviewsectionbutton$", 45)
+        self.snap("thumbretry-3-still-open-100s-after-restore", r"/passport/.*overviewsectionbutton$", 55)
+        self.close(r"/passport")
+        time.sleep(2)
+        if self.open_owned_friend(pair) and self.click([r"/friendlistuser$"]):
+            self.snap("thumbretry-4-reopened-20s", r"/passport/.*overviewsectionbutton$", 20)
+
+    def chat(self, pair):
+        self.open([r"/sidebarchatbutton(?:/button)?$"], 0x0D)
+        self.click([r"/chatconversationstoolbarviewitem$"], .6)
+        self.snap("nearby-chat", r"/chatpanel/.*(?:/chatinputbox/|/chatconversationstoolbar)")
+        if self.click([r"/chatinputbox/.*emojibutton$", r"/chatpanel/.*reactionbutton$"]):
+            self.snap("chat-emoji", r"/emoji[^/]*/")
+            self.click([r"/chatinputbox/.*emojibutton$"], .4)
+        if self.click([r"/(?:\[btn\]\s*)?members$", r"/nearbyinfocontainer[^/]*/.*membersbutton$"]):
+            self.snap("chat-members", r"/chatmemberlist/|/memberlistview/")
+            self.click([r"/chatmemberlist/.*close", r"/(?:\[btn\]\s*)?members$"])
+        self.close(r"/chatpanel")
+        if self.open_owned_friend(pair):
+            if self.row_action(r"/friendlistuser$", r"/friendlistuser/(?:.*/)?chatbutton$"):
+                self.snap("direct-message", r"/chatpanel/.*(?:/chatinputbox/|private)", 4)
+
+    def notifications(self):
+        self.open([r"/(?:sidebar)?notificationsbutton(?:/button)?$"])
+        self.choose([r"/notificationsmenu/.*(?:friendsnotification|notificationitem)$"], 12)
+        self.snap("notifications", r"/notificationsmenu(?:/|$)", 3)
+        self.click([r"/(?:sidebar)?notificationsbutton(?:/button)?$"], .4) or self.close(r"/notificationsmenu")
+
+    def communities(self):
+        self.clear_transients()
+        self.click([r"/upperlayout/discoverbutton$"])
+        if not self.click([r"/discovermenu/.*communit(?:y|ies)(?:button)?(?:/button)?$", r"/communities(?:/button)?$", r"/communitiestab$"]):
+            send_key(ord("O"))
+        self.choose([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.+viewbutton$"], 15)
+        self.snap("communities-browse", r"/communit(?:y|ies)(?:section|browser|resultcard)", 2)
+        if self.click([r"/communityresultcard(?:/header)?$", r"/communityresultcard/.*viewbutton$", r"/communityresultcard/(?:header|button)$"]):
+            self.snap("community-announcements", r"/communitycard/", 22)
+            for label in ("Members", "Places", "Photos"):
+                if self.click([r"/communitycard/.*" + label.lower() + r"sectionbutton(?:/button)?$"]):
+                    self.snap("community-" + label.lower(), r"/communitycard/", 24 if label == "Members" else 2)
+            self.close(r"/communitycard")
+        if self.click([r"/invitesandrequestsbutton(?:/button)?$"]):
+            self.snap("community-invites-requests", r"/invitesandrequestssection|/invitesandrequestsbutton")
+            self.click([r"/invitesandrequestssection/.*backbutton$"])
+        if self.click([r"/createcommunitybutton(?:/button)?$"]):
+            self.snap("create-community", r"/(?:communitycreationwizard|createoreditcommunitypanel|createcommunity)")
+            self.close(r"/(?:communitycreationwizard|createoreditcommunitypanel)")
+        self.close(r"/explorepanel")
+
+    def creator(self):
+        # Known public community and public catalog. The only member control we address is
+        # the member's profile row. This flow has no social, marketplace, or purchase mutations.
+        community = "c1bf2ebe-d1d2-4edc-9488-1047689640cb"
+        http, members = request_json("GET", "/social-api/v1/communities/" + community + "/members?limit=12")
+        rows = members.get("data", {}).get("results", [])
+        expected = next((m for m in rows if m.get("name") == "Chiri"), None)
+        if not expected:
+            self.report["creator_catalog"] = {"members_http":http, "candidate_found":False}
+            return
+        address = expected.get("memberAddress") or expected.get("address")
+        if not address or not re.fullmatch(r"0x[0-9a-f]{40}", address, re.I):
+            return
+        catalog = {}
+        for category in ("wearable", "emote"):
+            status, data = request_json("GET", "/marketplace-api/v3/catalog/items?category="+category+
+                                       "&creator="+address+"&includeSocialEmotes=false&first=100")
+            catalog[category] = {"http":status, "total":data.get("total"),
+                                 "examples":[i.get("name") for i in data.get("data", [])[:3]]}
+        self.report["creator_catalog"] = {"public_creator":"Chiri", "catalog":catalog}
+        self.click([r"/upperlayout/discoverbutton$"])
+        self.click([r"/discovermenu/.*communities$"])
+        card = r"/communityresultcard$"
+        self.choose([card], 18)
+        fields = [e for e in self.elements() if "input" in e.get("kind","").lower()
+                  and re.search(r"/communitiessection/.*search", self.path(e))]
+        if fields:
+            self.tool(self.session, "ui_set_text", {"path":fields[0]["path"], "text":"Chiri Storytelling"})
+            time.sleep(5)
+        nodes = [e for e in self.elements() if re.search(card,self.path(e))]
+        matches = [e for e in nodes if "chiri" in e.get("label","").lower()]
+        if matches:
+            result = self.tool(self.session, "ui_click", {"path":matches[0]["path"]})
+            assert result.get("ok") is not False
+        elif not self.click([card]):
+            return
+        if not self.click([r"/communitycard/.*memberssectionbutton$"], 35):
+            self.snap("creator-community-unreached", r"/communitycard/")
+            return
+        member = r"/communitymember$"
+        self.choose([member], 40)
+        rendered = [e for e in self.elements() if re.search(member,self.path(e)) and not e.get("occluded")]
+        rendered.sort(key=lambda e:(round(e["center"]["y"],2),e["center"]["x"]))
+        named = [e for e in rendered if "chiri" in e.get("label","").lower()]
+        if not rendered:
+            self.snap("creator-member-unreached", member)
+            return
+        result = self.tool(self.session, "ui_click", {"path":(named or rendered)[0]["path"]})
+        assert result.get("ok") is not False
+        self.choose([r"/passport/.*overviewsectionbutton$"], 30)
+        self.snap("creator-passport-overview", r"/passport/.*overviewsectionbutton$", 12)
+        if self.click([r"/passport/.*creationssectionbutton$"], 16):
+            self.snap("creator-passport-creations", r"/passport/.*creationssectionbutton$", 27)
+            self.snap("creator-passport-creations-settled", r"/passport/.*creationssectionbutton$", 18)
+            self.creator_view()
+
+    def creator_view(self):
+        from playwright.sync_api import Error, sync_playwright
+        emitted = Path(os.environ["USERPROFILE"], "AppData/LocalLow/Decentraland/Explorer/auth-url.txt")
+        previous = emitted.stat().st_mtime_ns if emitted.exists() else None
+        view = r"/createdwearablescontainer/.*/hoverbackground/view$"
+        if not self.row_action(view, view):
+            self.click([view], 8)
+        for attempt in range(24):
+            if emitted.exists() and emitted.stat().st_mtime_ns != previous:
+                break
+            if attempt == 8:
+                self.click([view], 3)
+            time.sleep(.25)
+        else:
+            self.report["creator_view"] = {"fresh_emitted_link": False}
+            return
+        destination = urlsplit(emitted.read_text(encoding="utf-8-sig").strip())
+        if (destination.scheme != "https" or destination.hostname not in {"market.dcl.dev", "dcl.dev"}
+                or not re.fullmatch(r"(?:/marketplace)?/contracts/0x[0-9a-fA-F]{40}/items/[0-9]+", destination.path)):
+            self.report["creator_view"] = {"fresh_emitted_link": True, "expected_public_item_path": False}
+            return
+        path = destination.path.removeprefix("/marketplace")
+        links = {"emitted": destination.scheme + "://" + destination.hostname + destination.path,
+                 "gateway-control": ORIGIN + "/marketplace" + path}
+        result = self.report["creator_view"] = {"fresh_emitted_link": True}
+        self.flush()
+        with sync_playwright() as service:
+            browser = service.chromium.launch(channel="msedge", headless=True)
+            for tag, url in links.items():
+                page = browser.new_page(viewport={"width":1440,"height":900}, device_scale_factor=2, locale="en-US")
+                result[tag] = info = {"url":url}
+                try:
+                    response = page.goto(url, wait_until="domcontentloaded", timeout=25000)
+                    info["http"] = response.status if response else None
+                except Error as e:
+                    match = re.search(r"net::[A-Z_]+", str(e))
+                    info["error"] = match.group() if match else type(e).__name__
+                page.wait_for_timeout(4000)
+                info["final_url"] = page.url
+                info["title"] = page.title()
+                target = self.output / ("social-creator-item-" + tag + ".png")
+                page.screenshot(path=str(target), animations="disabled")
+                info["screenshot"] = target.name
+                page.close()
+                self.flush()
+            browser.close()
+
+
+def run(session, tool, capture, output_dir):
+    driver = Session(session, tool, capture, output_dir)
+    pair = None
+    try:
+        pair = owns_pair()
+        player = tool(session, "get_player_state", {})
+        if pair and (player.get("address") or "").lower() != pair[0]["address"].lower():
+            driver.report["fixture"]["reason"] = "Player does not match the owned primary fixture"
+            pair = None
+        elif not pair:
+            driver.report["fixture"]["reason"] = "No twin-wallet fixture supplied"
+    except Exception as e:
+        pair = None
+        driver.report["fixture"]["reason"] = "Unavailable: " + type(e).__name__
+    selected = os.getenv("AUDIT_SECTION", "").lower()
+    driver.report["section"] = selected or "all"
+    for name, fn in [("friends", lambda: driver.friends(pair)), ("notifications", driver.notifications),
+                     ("chat", lambda: driver.chat(pair)), ("passport", lambda: driver.passport(pair)), ("communities", driver.communities),
+                     ("creator", driver.creator), ("profile", lambda: driver.profile(pair)), ("thumbretry", lambda: driver.thumbretry(pair))]:
+        if selected and selected != name:
+            continue
+        try:
+            driver.clear_transients()
+            fn()
+        except Exception as e:
+            driver.report["screens"].append({"screen": name, "driver_error": type(e).__name__})
+            try:
+                driver.capture("social-" + name + "-driver-stop")
+                send_key(0x1B)
+            except Exception:
+                pass
+        finally:
+            driver.flush()
+    return driver.report

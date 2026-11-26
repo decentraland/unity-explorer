@@ -1,0 +1,40 @@
+name: Unity dcl.dev Passport thumbnail retry proof
+# dcl-one#2144: the same scripted run against a dev build and the fix build of unity-explorer PR #10711.
+on:
+  push:
+    branches: [qa/passport-thumbnail-retry-proof]
+permissions:
+  contents: read
+jobs:
+  audit:
+    name: Thumbnail retry on ${{ matrix.build.name }}
+    runs-on: windows-2025
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - name: dev-28188-62cf628
+            url: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/dev/pu-28188-62cf628/Decentraland_windows64.zip
+    env:
+      AUDIT_BUILD_URL: ${{ matrix.build.url }}
+      AUDIT_SLICE: social_thumbretry
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            qa-audit
+            .claude/skills/pulse-face-to-face/scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install requests pillow playwright pywin32 psutil
+      - run: python -B qa-audit/runner.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: thumbretry-${{ matrix.build.name }}
+          path: evidence/
+          retention-days: 10
