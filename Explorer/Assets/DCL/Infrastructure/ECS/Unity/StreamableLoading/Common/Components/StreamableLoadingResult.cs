@@ -52,6 +52,12 @@ namespace ECS.StreamableLoading.Common.Components
             public static WithFallback Failed() =>
                 new (default!, initialized: true, succeeded: false, cancelled: false);
 
+            /// <summary>
+            ///     A failed attempt that still carries an asset to show in its place, without counting as a success.
+            /// </summary>
+            public static WithFallback Failed(T fallback) =>
+                new (fallback, initialized: true, succeeded: false, cancelled: false);
+
             public static WithFallback CancelledResult() =>
                 new (default!, initialized: true, succeeded: false, cancelled: true);
 
