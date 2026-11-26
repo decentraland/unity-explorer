@@ -2,7 +2,7 @@ using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly ICharacterObject characterObject;
+        private readonly IExposedCameraData exposedCameraData;
         private readonly Arch.Core.World globalWorld;
         private readonly bool hasDebugFlag;
 
@@ -36,14 +36,14 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
-            ICharacterObject characterObject,
+            IExposedCameraData exposedCameraData,
             Arch.Core.World globalWorld,
             bool hasDebugFlag)
         {
             this.poolsRegistry = poolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
             this.cacheCleaner = cacheCleaner;
-            this.characterObject = characterObject;
+            this.exposedCameraData = exposedCameraData;
             this.globalWorld = globalWorld;
             this.hasDebugFlag = hasDebugFlag;
         }
@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.World
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
             LightSourceApplyPropertiesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition, lightSourceSettings);
-            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, lightSourceSettings);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, exposedCameraData, lightSourceSettings);
             LightSourceLodSystem.InjectToWorld(ref builder, lightSourceSettings);
             LightSourceIntensityAnimationSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightSourceSettings);
 

@@ -39,7 +39,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             if (!LightSourceHelper.TryGetLodSettings(settings, pbLightSource.TypeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return;
 
-            lightSourceComponent.LOD = LightSourceHelper.FindLOD(lodSettings, lightSourceComponent.DistanceToPlayerSq);
+            lightSourceComponent.LOD = LightSourceHelper.FindLOD(lodSettings, lightSourceComponent.DistanceToCameraSq);
 
             if (lightSourceComponent.LOD < 0)
             {
