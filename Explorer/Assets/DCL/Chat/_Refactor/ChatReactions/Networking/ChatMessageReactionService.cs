@@ -36,13 +36,13 @@ namespace DCL.Chat.ChatReactions.Networking
         private readonly IWeb3IdentityCache identityCache;
         private readonly int maxDistinctReactionsPerMessage;
 
-        /// <summary>
-        ///     The number of emojis in the reactions atlas. Receivers drop a reaction whose index is not below it.
-        /// </summary>
-        public int EmojiCount { get; }
-
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> channelToMessageIds = new ();
+
+        /// <summary>
+        ///     The number of emojis in the reactions atlas: valid emoji indices are 0 to <c>EmojiCount - 1</c>.
+        /// </summary>
+        public int EmojiCount { get; }
 
         internal ChatMessageReactionService(
             IReactionMessageBus reactionBus,

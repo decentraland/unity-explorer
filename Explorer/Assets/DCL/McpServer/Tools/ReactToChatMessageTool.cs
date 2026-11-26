@@ -36,7 +36,6 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        /// <param name="reactionService">Holds the service once the chat plugin has created it, null before that and after it is disposed.</param>
         public ReactToChatMessageTool(IChatHistory chatHistory, IReadonlyReactiveProperty<ChatMessageReactionService?> reactionService)
         {
             this.chatHistory = chatHistory;
@@ -77,8 +76,8 @@ namespace DCL.McpServer.Tools
             int after = ReactorCount(channel, messageId, emojiIndex);
 
             if (after == before)
-                return UniTask.FromResult(McpToolResult.Error("The reaction was not applied: the player has no identity yet, or the message already holds "
-                                                              + "the most distinct emojis it can."));
+                return UniTask.FromResult(McpToolResult.Error("The reaction was not applied: the player has no identity yet, or the message reached its "
+                                                              + "distinct-emoji or per-emoji reactor limit."));
 
             return UniTask.FromResult(McpToolResult.Json(new JObject
             {

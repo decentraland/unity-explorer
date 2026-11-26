@@ -52,7 +52,6 @@ namespace DCL.McpServer.Tools
             if (message.Length > MAX_MESSAGE_LENGTH)
                 return UniTask.FromResult(McpToolResult.Error($"message exceeds the {MAX_MESSAGE_LENGTH} character limit."));
 
-            // The bus drops every message, commands included, until loading completes
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return UniTask.FromResult(McpToolResult.Error("The chat drops messages while the client is loading: retry once loading completes."));
 
@@ -70,7 +69,6 @@ namespace DCL.McpServer.Tools
             if (recipient == null)
                 return UniTask.FromResult(McpToolResult.Error("to must be a wallet address: 0x followed by 40 hexadecimal digits."));
 
-            // The bus runs every message that starts with '/' as a command, whatever its channel
             if (message[0] == '/')
                 return UniTask.FromResult(McpToolResult.Error("A direct message cannot start with '/': chat commands run only without 'to'."));
 

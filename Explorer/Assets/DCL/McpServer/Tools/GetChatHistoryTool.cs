@@ -24,6 +24,11 @@ namespace DCL.McpServer.Tools
         private const int DEFAULT_LIMIT = 20;
         private const int MAX_LIMIT = 100;
 
+        /// <summary>
+        ///     ISO 8601 in UTC with milliseconds: the format of <c>sentAtUtc</c>.
+        /// </summary>
+        private const string UTC_TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss.fffZ";
+
         private readonly IChatHistory chatHistory;
         private readonly List<(int EmojiIndex, int Count)> reactionCounts = new ();
 
@@ -151,7 +156,7 @@ namespace DCL.McpServer.Tools
                 ["senderName"] = message.SenderValidatedName,
                 ["message"] = message.Message,
                 ["timestamp"] = message.SentTimestampRaw,
-                ["sentAtUtc"] = message.SentTimestamp?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture),
+                ["sentAtUtc"] = message.SentTimestamp?.ToString(UTC_TIMESTAMP_FORMAT, CultureInfo.InvariantCulture),
                 ["sentByOwnUser"] = message.IsSentByOwnUser,
                 ["system"] = message.IsSystemMessage,
                 ["reactions"] = reactions,

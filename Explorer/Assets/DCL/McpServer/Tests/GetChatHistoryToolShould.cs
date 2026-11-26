@@ -71,6 +71,23 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void MarkSystemMessages()
+        {
+            // Arrange
+            ChatChannel nearby = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            nearby.AddMessage(ChatMessage.NewFromSystem("notice"));
+            nearby.AddMessage(CreateMessage("hello", PEER, 1000));
+
+            // Act
+            JObject payload = Execute(new JObject());
+
+            // Assert
+            var messages = (JArray)payload["messages"]!;
+            Assert.That(messages[0]["system"]?.Value<bool>(), Is.True);
+            Assert.That(messages[1]["system"]?.Value<bool>(), Is.False);
+        }
+
+        [Test]
         public void AnswerWithNoMessagesWhileNearbyIsEmpty()
         {
             // Act

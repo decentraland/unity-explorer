@@ -414,7 +414,7 @@ namespace DCL.PluginSystem.Global
             chatSharedAreaController = new ChatMainSharedAreaController(
                 () =>
                 {
-                    ChatMainSharedAreaView? view = mainUIView.ChatMainView;
+                    ChatMainSharedAreaView view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },
