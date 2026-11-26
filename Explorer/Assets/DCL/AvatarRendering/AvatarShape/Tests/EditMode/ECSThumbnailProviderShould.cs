@@ -8,7 +8,10 @@ using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using NSubstitute;
@@ -18,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -110,6 +114,52 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             Assert.That(cancelled, Is.True, "Closing the view must end the retries");
             Assert.That(await PendingDownloadAppearsAsync(), Is.False, "A closed view must not download its thumbnail again");
+        }
+
+        [Test]
+        public async Task StopRetryingAVisibleThumbnailAfterTheLastDelay()
+        {
+            FakeWearable wearable = NewWearable();
+            Sprite? shown = null;
+            using var viewLifetime = new CancellationTokenSource();
+
+            UniTask loading = provider.LoadUntilSucceededAsync(wearable, sprite => shown = sprite, viewLifetime.Token, NO_RETRY_DELAY);
+
+            try
+            {
+                ResolvePendingDownload(FailedDownload());
+                Assert.That(await PendingDownloadAppearsAsync(), Is.True, "A visible thumbnail must download again after a failed attempt");
+
+                ResolvePendingDownload(FailedDownload());
+                Assert.That(await PendingDownloadAppearsAsync(), Is.False, "A visible thumbnail must stop downloading once its retry delays run out");
+                Assert.That(loading.Status, Is.EqualTo(UniTaskStatus.Succeeded), "The load must end after its last retry");
+                Assert.That(shown, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A load that gave up keeps showing the default thumbnail");
+            }
+            finally
+            {
+                // Ends a loop that kept retrying, so it does not outlive the test
+                viewLifetime.Cancel();
+                resolver.Update(0);
+            }
+        }
+
+        [Test]
+        public void StoreAFailedBundleDownloadAsAFailureCarryingTheDefaultThumbnail()
+        {
+            FakeWearable wearable = NewWearable();
+            wearable.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
+
+            var promise = AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku_windows", AssetBundleManifestVersion.CreateManualManifest(), typeof(Texture2D)),
+                PartitionComponent.TOP_PRIORITY);
+
+            world.Create((IThumbnailAttachment)wearable, promise, (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception("Simulated aborted bundle download")));
+            resolver.Update(0);
+
+            Assert.That(wearable.ThumbnailAssetResult!.Value.IsInitialized, Is.True);
+            Assert.That(wearable.ThumbnailAssetResult!.Value.Succeeded, Is.False, "A failed bundle download must not be cached as a loaded thumbnail");
+            Assert.That(wearable.ThumbnailAssetResult!.Value.Asset.Sprite, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite));
         }
 
         [Test]
