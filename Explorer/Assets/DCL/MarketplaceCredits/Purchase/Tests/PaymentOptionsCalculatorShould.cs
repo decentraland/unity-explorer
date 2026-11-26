@@ -84,6 +84,39 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public void TellWhetherTheBuyerHoldsMana()
+        {
+            // Act
+            PaymentOptions unread = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, null);
+            PaymentOptions empty = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, BigInteger.Zero);
+            PaymentOptions holding = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, ONE_MANA);
+
+            // Assert
+            Assert.IsFalse(unread.HoldsMana);
+            Assert.IsFalse(empty.HoldsMana);
+            Assert.IsTrue(holding.HoldsMana);
+            Assert.IsFalse(PaymentOptions.NONE.HoldsMana);
+        }
+
+        [Test]
+        public void OfferManaOnlyWhenTheBuyerHoldsItAndThePriceHasAManaEquivalent()
+        {
+            // Act
+            PaymentOptions unread = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, null);
+            PaymentOptions empty = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, BigInteger.Zero);
+            PaymentOptions unpriced = PaymentOptionsCalculator.Compute(PRICE_CENTS, BigInteger.Zero, 300, ONE_MANA);
+            PaymentOptions holding = PaymentOptionsCalculator.Compute(PRICE_CENTS, PRICE_MANA_WEI, 300, ONE_MANA);
+
+            // Assert
+            Assert.IsFalse(unread.CanOfferMana);
+            Assert.IsFalse(empty.CanOfferMana);
+            Assert.IsFalse(unpriced.CanOfferMana);
+            Assert.IsTrue(unpriced.HoldsMana);
+            Assert.IsTrue(holding.CanOfferMana);
+            Assert.IsFalse(PaymentOptions.NONE.CanOfferMana);
+        }
+
+        [Test]
         public void TreatAnUnknownBalanceAsNothingHeldAndKeepItUnknown()
         {
             // Act

@@ -36,7 +36,6 @@ namespace DCL.Shop
         [field: SerializeField] public TMP_Text StatusText { get; private set; } = null!;
         [field: SerializeField] public Color StatusNeutralColor { get; private set; } = Color.white;
         [field: SerializeField] public Color StatusErrorColor { get; private set; } = Color.red;
-        [field: SerializeField] public Button MakeOfferButton { get; private set; } = null!;
 
         [field: Header("Resale names")]
         [field: SerializeField] public ShopNamesGridView ResaleGrid { get; private set; } = null!;
@@ -48,7 +47,6 @@ namespace DCL.Shop
         public event Action<ShopNamesTab>? TabClicked;
         public event Action<string>? NameChanged;
         public event Action? ClaimClicked;
-        public event Action? MakeOfferClicked;
         public event Action? InputSelected;
         public event Action? InputDeselected;
 
@@ -63,7 +61,6 @@ namespace DCL.Shop
             UniqueTab.Button.onClick.AddListener(() => TabClicked?.Invoke(ShopNamesTab.Unique));
             ResaleTab.Button.onClick.AddListener(() => TabClicked?.Invoke(ShopNamesTab.Resale));
             ClaimButton.onClick.AddListener(() => ClaimClicked?.Invoke());
-            MakeOfferButton.onClick.AddListener(() => MakeOfferClicked?.Invoke());
         }
 
         public void ShowTab(ShopNamesTab tab)
@@ -96,13 +93,12 @@ namespace DCL.Shop
             InputOutline.color = OutlineNormalColor;
         }
 
-        public void ShowStatus(string text, bool isError, bool offerAvailable)
+        public void ShowStatus(string text, bool isError, bool isTaken)
         {
             StatusRow.SetActive(true);
             StatusText.text = text;
             StatusText.color = isError ? StatusErrorColor : StatusNeutralColor;
-            MakeOfferButton.gameObject.SetActive(offerAvailable);
-            HashLabel.gameObject.SetActive(offerAvailable);
+            HashLabel.gameObject.SetActive(isTaken);
             InputOutline.color = isError ? OutlineErrorColor : OutlineNormalColor;
         }
 

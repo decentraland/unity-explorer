@@ -1321,7 +1321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.2509804}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1397,8 +1397,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.MarketplaceCredits.Purchase::DCL.MarketplaceCredits.Purchase.Cart.UI.ShopCartLineView
   <Background>k__BackingField: {fileID: 3973289429169953050}
-  <NormalBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.1}
-  <HoveredBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.2}
+  <NormalBackgroundColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.4}
+  <HoveredBackgroundColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.12941177}
   <Thumbnail>k__BackingField: {fileID: 4010617309644629598}
   <RarityBackground>k__BackingField: {fileID: 515655141856880477}
   <NameText>k__BackingField: {fileID: 1472304930086574068}

@@ -23,6 +23,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         public PaymentSelection Selection { get; private set; } = new (PaymentOptions.NONE);
 
+        public bool IsShown => gameObject.activeSelf;
+
         [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
@@ -31,22 +33,22 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         }
 
         /// <summary>
-        ///     Starts a fresh selection on the preferred option. The MANA row is hidden when MANA cannot be offered
+        ///     Starts a fresh selection on the preferred option. Both rows are hidden when MANA cannot be offered
         ///     at all. manaAloneRefusedNote replaces the rate when the options rule MANA out as a method of its own
         ///     and leave the row unavailable.
         /// </summary>
-        public void Show(PaymentOptions paymentOptions, bool isManaEnabled, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
+        public void Show(PaymentOptions paymentOptions, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
         {
             options = paymentOptions;
             this.manaAloneRefusedNote = manaAloneRefusedNote;
             Selection = new PaymentSelection(paymentOptions);
-            ManaRow.gameObject.SetActive(isManaEnabled);
+            gameObject.SetActive(paymentOptions.CanOfferMana);
             Render();
         }
 
-        /// <summary>The rows unavailable with unknown amounts, for the time the options are being read.</summary>
-        public void Clear(bool isManaEnabled) =>
-            Show(PaymentOptions.NONE, isManaEnabled);
+        /// <summary>The rows hidden, for the time the options are being read.</summary>
+        public void Clear() =>
+            Show(PaymentOptions.NONE);
 
         private void OnCreditsClicked()
         {

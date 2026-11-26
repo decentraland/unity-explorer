@@ -313,7 +313,7 @@ namespace DCL.MarketplaceCredits.Purchase.Cart.UI
                 viewInstance.ChangesNoticeText.text = ChangesNotice(reviewed);
 
             RenderLines(reviewed);
-            viewInstance.PaymentSelector.Show(options, isManaEnabled);
+            viewInstance.PaymentSelector.Show(options);
             RenderTotal();
         }
 

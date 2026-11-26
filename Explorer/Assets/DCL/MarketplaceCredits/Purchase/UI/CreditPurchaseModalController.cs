@@ -45,8 +45,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private const float FAILED_HEIGHT = 813;
         private const float COMPLETED_HEIGHT = 571;
 
-        // What the popup loses in height when the MANA row is not shown: the row and the gap above it.
-        private const float MANA_ROW_HEIGHT = 64;
+        // What the popup loses in height when the payment selector is not shown: its two rows, the gap between them and the gap above it.
+        private const float SELECTOR_HEIGHT = 132;
 
         private const string ANALYTICS_STEP_QUOTE = "quote";
         private const string ANALYTICS_STEP_BALANCE = "balance";
@@ -74,7 +74,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
         private readonly Func<CancellationToken, UniTask> openBackpackAsync;
         private readonly bool isManaEnabled;
-        private readonly float hiddenRowsHeight;
         private readonly CancellationTokenSource disposalCts = new ();
 
         private ModalState currentState;
@@ -139,7 +138,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
             this.openBackpackAsync = openBackpackAsync;
             this.isManaEnabled = isManaEnabled;
-            hiddenRowsHeight = isManaEnabled ? 0f : MANA_ROW_HEIGHT;
             purchaseService.StateChanged += OnPurchaseStateChanged;
         }
 
@@ -167,7 +165,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
 
             // The show animation scales to what fits the screen, so it needs the height of the state it opens in.
-            viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, NORMAL_HEIGHT - hiddenRowsHeight);
+            viewInstance.PaymentSelector.Clear();
+            viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, NORMAL_HEIGHT - SELECTOR_HEIGHT);
             viewInstance.TryOnCharacterPreviewView.gameObject.SetActive(IsTryOnAvailable());
             tryOnPreviewController?.OnBeforeShow();
         }
@@ -268,13 +267,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private async UniTask LoadQuoteAndBalanceAsync(CancellationToken ct)
         {
+            viewInstance?.PaymentSelector.Clear();
             SetUiState(ModalState.LoadingBalance);
 
             if (viewInstance != null)
             {
                 viewInstance.PriceCreditsText.text = string.Empty;
                 viewInstance.PriceLoadingSpinner.SetActive(true);
-                viewInstance.PaymentSelector.Clear(isManaEnabled);
             }
 
             if (identityCache.Identity == null)
@@ -330,7 +329,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (viewInstance != null)
                 {
                     viewInstance.CannotAffortText.text = InsufficientCopy(options);
-                    viewInstance.PaymentSelector.Show(options, isManaEnabled);
+                    viewInstance.PaymentSelector.Show(options);
                 }
 
                 SetUiState(canPay ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
@@ -735,14 +734,15 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
 
             bool purchasing = newState == ModalState.Purchasing;
+            float hiddenSelectorHeight = viewInstance.PaymentSelector.IsShown ? 0f : SELECTOR_HEIGHT;
 
             float height = newState switch
                            {
                                ModalState.Success => COMPLETED_HEIGHT,
                                ModalState.Purchasing => PURCHASING_HEIGHT,
-                               ModalState.InsufficientCredits => INSUFFICIENT_FUNDS_HEIGHT - hiddenRowsHeight,
+                               ModalState.InsufficientCredits => INSUFFICIENT_FUNDS_HEIGHT - hiddenSelectorHeight,
                                ModalState.Failed => FAILED_HEIGHT,
-                               _ => NORMAL_HEIGHT - hiddenRowsHeight,
+                               _ => NORMAL_HEIGHT - hiddenSelectorHeight,
                            };
 
             viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
