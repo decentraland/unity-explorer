@@ -180,8 +180,9 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 sb.Append(",\"camera_control\":\"track\"");
 
             // tells a recorded animation from the offline replay of the controller, which writes the same frame keys
+            // anim_weights: the clip weights are the Animator's own, already scaled by the transition share
             if (run.AnimationsEnabled)
-                sb.Append(",\"anim_source\":\"capture: Animator base layer after the frame's animation update\"");
+                sb.Append(",\"anim_source\":\"capture: Animator base layer after the frame's animation update\",\"anim_weights\":\"animator\"");
 
             sb.Append("}}\n");
         }
@@ -222,7 +223,8 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
         /// <summary>
         ///     <c>anim</c> [{clip, w, t, speed}] (w and t to 4 decimals, speed to 3), <c>anim_params</c>, <c>anim_state</c>
-        ///     {state, next, progress, nt, next_nt, cur_w, next_w} and <c>anim_layers</c> {point, rotation}; <c>"anim":null</c>
+        ///     {state, next, progress, nt, next_nt, cur_w, next_w, and cur_empty: true when the current state reported no clip
+        ///     weight} and <c>anim_layers</c> {point, rotation}; <c>"anim":null</c>
         ///     alone when the Animator did not run this frame.
         /// </summary>
         private static void AppendAnimation(StringBuilder sb, in LocomotionAnimationSample anim)
@@ -263,8 +265,12 @@ namespace DCL.CharacterMotion.LocomotionRecorder
               .Append(",\"nt\":").AppendFloat(anim.StateTime)
               .Append(",\"next_nt\":").AppendFloat(anim.NextTime)
               .Append(",\"cur_w\":").AppendFloat(anim.CurrentClipWeight)
-              .Append(",\"next_w\":").AppendFloat(anim.NextClipWeight)
-              .Append("},\"anim_layers\":{\"point\":").AppendFloat(anim.PointLayerWeight)
+              .Append(",\"next_w\":").AppendFloat(anim.NextClipWeight);
+
+            if (anim.CurrentClipsMissing)
+                sb.Append(",\"cur_empty\":true");
+
+            sb.Append("},\"anim_layers\":{\"point\":").AppendFloat(anim.PointLayerWeight)
               .Append(",\"rotation\":").AppendFloat(anim.RotationLayerWeight)
               .Append('}');
         }

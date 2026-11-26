@@ -296,10 +296,28 @@ namespace DCL.CharacterMotion.LocomotionRecorder.Tests
                 RotationLayerWeight = float.NaN,
             };
 
+            // an interrupted transition: the current state reports no clip, the next one only its share
+            var interrupted = new LocomotionAnimationSample
+            {
+                Present = true,
+                Clips = new[] { new LocomotionAnimClip { Clip = "Jump_Mid", W = 0.5f, T = 0.1f, Speed = 1f } },
+                State = Animator.StringToHash("Jump"),
+                StateTime = 1.9f,
+                Next = Animator.StringToHash("Up To Down"),
+                NextTime = 0.1f,
+                Progress = 0.5f,
+                CurrentClipWeight = 0f,
+                NextClipWeight = 0.5f,
+                CurrentClipsMissing = true,
+                PointLayerWeight = 0f,
+                RotationLayerWeight = 0f,
+            };
+
             var frames = new List<LocomotionFrameSample>
             {
                 new () { Kind = MovementKind.Jog, Fwd = 1f, Anim = walkToJogStop, Expected = jog.SampleAt(0f) },
                 new () { Kind = MovementKind.Jog, Fwd = 1f, Expected = jog.SampleAt(0f) },
+                new () { Kind = MovementKind.Jog, Fwd = 1f, Anim = interrupted, Expected = jog.SampleAt(0f) },
             };
 
             LocomotionRunInfo Run(bool animations) =>
@@ -312,11 +330,14 @@ namespace DCL.CharacterMotion.LocomotionRecorder.Tests
                 string[] lines = File.ReadAllLines(LocomotionTraceWriter.Write(directory, jog, in animated, frames).Path);
 
                 Assert.That(lines[0], Does.Contain("\"anim_source\":\"capture"));
+                Assert.That(lines[0], Does.Contain("\"anim_weights\":\"animator\""));
                 Assert.That(lines[1], Does.Contain("\"anim\":[{\"clip\":\"Walk\",\"w\":0.75,\"t\":0.25,\"speed\":1.0},{\"clip\":\"Jog\",\"w\":0.25,\"t\":0.1235,\"speed\":1.0}]"));
                 Assert.That(lines[1], Does.Contain("\"anim_params\":{\"MovementBlend\":1.5,\"SlideBlend\":0.0,\"JumpCount\":0,\"IsGrounded\":true,\"IsFalling\":false,\"IsLongFall\":false,\"IsStunned\":false,\"GlideBlend\":0.0}"));
                 Assert.That(lines[1], Does.Contain("\"anim_state\":{\"state\":\"Movement\",\"next\":\"Jog_Stop\",\"progress\":0.25,\"nt\":3.25,\"next_nt\":0.2,\"cur_w\":1.0,\"next_w\":0.0}"));
                 Assert.That(lines[1], Does.Contain("\"anim_layers\":{\"point\":0.0,\"rotation\":null}"));
                 Assert.That(lines[2], Does.Contain("\"anim\":null}"));
+                Assert.That(lines[3], Does.Contain("\"anim\":[{\"clip\":\"Jump_Mid\",\"w\":0.5,\"t\":0.1,\"speed\":1.0}]"));
+                Assert.That(lines[3], Does.Contain("\"cur_w\":0.0,\"next_w\":0.5,\"cur_empty\":true}"));
 
                 LocomotionRunInfo still = Run(false);
                 string[] stillLines = File.ReadAllLines(LocomotionTraceWriter.Write(directory, jog, in still, frames).Path);

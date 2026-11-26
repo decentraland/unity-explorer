@@ -10,7 +10,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         /// <summary><c>AnimationClip.name</c>.</summary>
         public string Clip;
 
-        /// <summary>The clip's weight in its state (<c>AnimatorClipInfo.weight</c>) times the state's share of a running transition: 1 − progress for the current state, progress for the next.</summary>
+        /// <summary>The clip's weight as the Animator reports it (<c>AnimatorClipInfo.weight</c>), which already includes the state's share of a running transition.</summary>
         public float W;
 
         /// <summary>The state's normalized time as a phase: its fractional part for a looping clip, held just below 1 once a non-looping clip has ended.</summary>
@@ -62,10 +62,16 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         /// <summary>The transition's normalized time; NaN outside a transition.</summary>
         public float Progress;
 
-        /// <summary>The sums of <c>AnimatorClipInfo.weight</c> over the current and the next state as Unity reports them, before any transition share is applied.</summary>
+        /// <summary>The sums of <c>AnimatorClipInfo.weight</c> over the current and the next state as Unity reports them.</summary>
         public float CurrentClipWeight;
 
         public float NextClipWeight;
+
+        /// <summary>
+        ///     The current state's clip query reported no weight (an interrupted transition, whose frozen pose Unity does not
+        ///     report as clips, or a state without a motion): the clips' weights sum to less than 1.
+        /// </summary>
+        public bool CurrentClipsMissing;
 
         public float MovementBlend;
         public float SlideBlend;
@@ -94,7 +100,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
 
             clips.Clear();
             animator.GetCurrentAnimatorClipInfo(BASE_LAYER, clipInfos);
-            float currentClipWeight = AddClips(clipInfos, current, inTransition ? 1f - progress : 1f, clips);
+            float currentClipWeight = AddClips(clipInfos, current, clips);
 
             AnimatorStateInfo next = default;
             var nextClipWeight = 0f;
@@ -103,7 +109,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
             {
                 next = animator.GetNextAnimatorStateInfo(BASE_LAYER);
                 animator.GetNextAnimatorClipInfo(BASE_LAYER, clipInfos);
-                nextClipWeight = AddClips(clipInfos, next, progress, clips);
+                nextClipWeight = AddClips(clipInfos, next, clips);
             }
 
             return new LocomotionAnimationSample
@@ -117,6 +123,7 @@ namespace DCL.CharacterMotion.LocomotionRecorder
                 Progress = progress,
                 CurrentClipWeight = currentClipWeight,
                 NextClipWeight = inTransition ? nextClipWeight : float.NaN,
+                CurrentClipsMissing = currentClipWeight <= 0f,
                 MovementBlend = animator.GetFloat(AnimationHashes.MOVEMENT_BLEND),
                 SlideBlend = animator.GetFloat(AnimationHashes.SLIDE_BLEND),
                 JumpCount = animator.GetInteger(AnimationHashes.JUMP_COUNT),
@@ -131,15 +138,15 @@ namespace DCL.CharacterMotion.LocomotionRecorder
         }
 
         /// <returns>The sum of the reported clip weights.</returns>
-        private static float AddClips(List<AnimatorClipInfo> clipInfos, AnimatorStateInfo state, float share, List<LocomotionAnimClip> clips)
+        private static float AddClips(List<AnimatorClipInfo> clipInfos, AnimatorStateInfo state, List<LocomotionAnimClip> clips)
         {
             var sum = 0f;
             float speed = state.speed * state.speedMultiplier;
 
             foreach (AnimatorClipInfo info in clipInfos)
             {
-                sum += info.weight;
-                float w = info.weight * share;
+                float w = info.weight;
+                sum += w;
 
                 if (info.clip == null || w <= 1e-6f)
                     continue;
