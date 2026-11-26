@@ -5,6 +5,7 @@ using DCL.McpServer.Utils;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using UnityEngine;
@@ -78,7 +79,7 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Json(payload));
             }
 
-            IReadOnlyList<ChatMessage> stored = channel!.Messages;
+            IReadOnlyList<ChatMessage> stored = channel.Messages;
             int count = Mathf.Min(limit, stored.Count);
             var messages = new JArray();
 
@@ -94,7 +95,7 @@ namespace DCL.McpServer.Tools
             return UniTask.FromResult(McpToolResult.Json(payload));
         }
 
-        private bool TryFindChannel(string requested, out ChatChannel? channel)
+        private bool TryFindChannel(string requested, [NotNullWhen(true)] out ChatChannel? channel)
         {
             if (string.Equals(requested, NEARBY, StringComparison.OrdinalIgnoreCase))
                 return chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out channel);

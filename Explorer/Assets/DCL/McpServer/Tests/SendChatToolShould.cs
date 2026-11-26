@@ -2,7 +2,10 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
+using DCL.RealmNavigation;
+using DCL.Utilities;
 using Newtonsoft.Json.Linq;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -15,13 +18,19 @@ namespace DCL.McpServer.Tests
         private const string WALLET = "0x5Fd69ad6170A1cBE7B15a31C588a60FD1a689E80";
 
         private RecordingBus bus = null!;
+        private ReactiveProperty<LoadingStatus.LoadingStage> loadingStage = null!;
         private SendChatTool tool = null!;
 
         [SetUp]
         public void SetUp()
         {
             bus = new RecordingBus();
-            tool = new SendChatTool(bus);
+            loadingStage = new ReactiveProperty<LoadingStatus.LoadingStage>(LoadingStatus.LoadingStage.Completed);
+
+            ILoadingStatus loadingStatus = Substitute.For<ILoadingStatus>();
+            loadingStatus.CurrentStage.Returns(loadingStage);
+
+            tool = new SendChatTool(bus, loadingStatus);
         }
 
         [Test]
@@ -73,6 +82,22 @@ namespace DCL.McpServer.Tests
 
             // Assert
             Assert.That(result.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(bus.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void RefuseToSendWhileTheClientIsLoading()
+        {
+            // Arrange — the chat bus drops every message until loading completes
+            loadingStage.Value = LoadingStatus.LoadingStage.Init;
+
+            // Act
+            McpToolResult nearby = Execute(new JObject { ["message"] = "hello" });
+            McpToolResult direct = Execute(new JObject { ["message"] = "hello", ["to"] = WALLET });
+
+            // Assert
+            Assert.That(nearby.Payload["isError"]?.Value<bool>(), Is.True);
+            Assert.That(direct.Payload["isError"]?.Value<bool>(), Is.True);
             Assert.That(bus.Sent, Is.Empty);
         }
 

@@ -4,9 +4,11 @@ using DCL.Chat.History;
 using DCL.FeatureFlags;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.McpServer.Tests
@@ -18,7 +20,7 @@ namespace DCL.McpServer.Tests
         private ChatHistory chatHistory = null!;
         private FakeReactionBus reactionBus = null!;
         private ChatMessageReactionService service = null!;
-        private MessageReactionServiceSlot slot = null!;
+        private ReactiveProperty<ChatMessageReactionService?> reactionService = null!;
         private ReactToChatMessageTool tool = null!;
         private ChatChannel nearby = null!;
         private ChatMessage message;
@@ -36,9 +38,8 @@ namespace DCL.McpServer.Tests
             reactionBus = new FakeReactionBus();
             service = new ChatMessageReactionService(reactionBus, chatHistory, new IWeb3IdentityCache.Fake(new IWeb3Identity.Random()));
 
-            slot = new MessageReactionServiceSlot();
-            slot.Attach(service);
-            tool = new ReactToChatMessageTool(chatHistory, slot);
+            reactionService = new ReactiveProperty<ChatMessageReactionService?>(service);
+            tool = new ReactToChatMessageTool(chatHistory, reactionService);
 
             nearby = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             message = new ChatMessage("hello", "User", "0xsender", false, "0xsender", 1000);
@@ -96,7 +97,7 @@ namespace DCL.McpServer.Tests
         public void RefuseWhileReactionsAreNotReady()
         {
             // Arrange
-            slot.Detach();
+            reactionService.Value = null;
 
             // Act
             McpToolResult result = Execute(new JObject { ["messageId"] = message.MessageId, ["emojiIndex"] = EMOJI });
@@ -104,6 +105,22 @@ namespace DCL.McpServer.Tests
             // Assert
             Assert.That(result.Payload["isError"]?.Value<bool>(), Is.True);
             Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReactToAMessageRestoredFromStorage()
+        {
+            // Arrange — history restored from storage raises no MessageAdded, so the service has not seen the message
+            var restored = new ChatMessage("restored", "User", "0xsender", false, "0xsender", 900);
+            nearby.FillChannel(new List<ChatMessage> { restored });
+
+            // Act
+            McpToolResult result = Execute(new JObject { ["messageId"] = restored.MessageId, ["emojiIndex"] = EMOJI });
+
+            // Assert
+            Assert.That(result.Payload["isError"], Is.Null);
+            Assert.That(JsonOf(result)["state"]?.Value<string>(), Is.EqualTo("added"));
+            Assert.That(reactionBus.MessageSends.Count, Is.EqualTo(1));
         }
 
         [Test]

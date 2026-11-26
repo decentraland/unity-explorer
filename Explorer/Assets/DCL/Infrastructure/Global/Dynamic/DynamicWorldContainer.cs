@@ -1030,7 +1030,7 @@ namespace Global.Dynamic
                         new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                         chatContainer.ChatMessagesBus,
                         chatContainer.ChatHistory,
-                        chatContainer.MessageReactionServiceSlot,
+                        chatContainer.MessageReactionService,
                         staticContainer.ScenesCache,
                         commsContainer.CurrentSceneInfo,
                         staticContainer.LoadingStatus,

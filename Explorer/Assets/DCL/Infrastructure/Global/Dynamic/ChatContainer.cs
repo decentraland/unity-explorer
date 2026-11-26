@@ -18,6 +18,7 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.Translation;
 using DCL.UI.InputFieldFormatting;
+using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;
@@ -58,9 +59,9 @@ namespace Global.Dynamic
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
 
         /// <summary>
-        ///     Filled by ChatPlugin once the reactions feature exists; read by the MCP tools, which are built earlier.
+        ///     Set by ChatPlugin once the reactions feature exists and cleared when it is disposed; read by the MCP tools, which are built earlier.
         /// </summary>
-        public MessageReactionServiceSlot MessageReactionServiceSlot { get; } = new ();
+        public ReactiveProperty<ChatMessageReactionService?> MessageReactionService { get; } = new (null);
 
         private ChatContainer(
             ChatHistory chatHistory,
@@ -235,7 +236,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
-                MessageReactionServiceSlot,
+                MessageReactionService,
                 CurrentChannelService);
 
         public void Dispose()

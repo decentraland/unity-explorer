@@ -24,6 +24,7 @@ using DCL.SocialService;
 using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.VoiceChat;
 using MVC;
@@ -97,7 +98,7 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
-        private readonly MessageReactionServiceSlot messageReactionServiceSlot;
+        private readonly ReactiveProperty<ChatMessageReactionService?> sharedMessageReactionService;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -146,7 +147,7 @@ namespace DCL.PluginSystem.Global
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
-            MessageReactionServiceSlot messageReactionServiceSlot,
+            ReactiveProperty<ChatMessageReactionService?> sharedMessageReactionService,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -186,7 +187,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
-            this.messageReactionServiceSlot = messageReactionServiceSlot;
+            this.sharedMessageReactionService = sharedMessageReactionService;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -197,7 +198,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             streamReactionsChatCommand.Detach();
-            messageReactionServiceSlot.Detach();
+            sharedMessageReactionService.Value = null;
 
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
@@ -236,7 +237,7 @@ namespace DCL.PluginSystem.Global
                 pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
-            messageReactionServiceSlot.Attach(messageReactionService);
+            sharedMessageReactionService.Value = messageReactionService;
 
             // Hand the debug /streamreactions command a live control now that the reactions feature exists.
             streamReactionsChatCommand.Attach(reactions.StreamControl);

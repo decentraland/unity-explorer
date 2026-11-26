@@ -3,6 +3,8 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.RealmNavigation;
+using DCL.Web3;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 
@@ -17,10 +19,8 @@ namespace DCL.McpServer.Tools
     {
         private const int MAX_MESSAGE_LENGTH = 500;
 
-        // "0x" followed by 40 hexadecimal digits
-        private const int WALLET_ADDRESS_LENGTH = 42;
-
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ILoadingStatus loadingStatus;
 
         public override string Name => "send_chat";
 
@@ -28,7 +28,7 @@ namespace DCL.McpServer.Tools
             "Send a message to the Nearby chat channel, or with 'to' as a direct message to one player. Nearby messages starting with '/' "
             + "run chat commands (e.g. /goto x,y, /reload, /help); command output appears in chat and scene logs. A direct message goes "
             + "straight to the chat bus: the chat panel's own rules (friends-only privacy, blocked users) are not applied. "
-            + "Read what arrived with get_chat_history.";
+            + "Nothing can be sent while the client is still loading. Read what arrived with get_chat_history.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.String("message", "The chat message or /command to send.", isRequired: true)
@@ -36,9 +36,10 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public SendChatTool(IChatMessagesBus chatMessagesBus)
+        public SendChatTool(IChatMessagesBus chatMessagesBus, ILoadingStatus loadingStatus)
         {
             this.chatMessagesBus = chatMessagesBus;
+            this.loadingStatus = loadingStatus;
         }
 
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -51,6 +52,10 @@ namespace DCL.McpServer.Tools
             if (message.Length > MAX_MESSAGE_LENGTH)
                 return UniTask.FromResult(McpToolResult.Error($"message exceeds the {MAX_MESSAGE_LENGTH} character limit."));
 
+            // The bus drops every message, commands included, until loading completes
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                return UniTask.FromResult(McpToolResult.Error("The chat drops messages while the client is loading: retry once loading completes."));
+
             string? to = arguments.GetStringOrNull("to");
 
             if (string.IsNullOrEmpty(to))
@@ -59,7 +64,9 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Text($"Sent to Nearby: {message}"));
             }
 
-            if (!IsWalletAddress(to))
+            Web3Address? recipient = Web3Address.FromUntrusted(to);
+
+            if (recipient == null)
                 return UniTask.FromResult(McpToolResult.Error("to must be a wallet address: 0x followed by 40 hexadecimal digits."));
 
             // The bus runs every message that starts with '/' as a command, whatever its channel
@@ -67,27 +74,10 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Error("A direct message cannot start with '/': chat commands run only without 'to'."));
 
             // Channel ids of direct conversations are the other player's wallet in lower case, as incoming messages name them
-            var channel = new ChatChannel(ChatChannel.ChatChannelType.USER, to.ToLowerInvariant());
+            var channel = new ChatChannel(ChatChannel.ChatChannelType.USER, recipient.Value.ToString());
             chatMessagesBus.SendWithUtcNowTimestamp(channel, message, ChatMessageOrigin.Chat);
 
             return UniTask.FromResult(McpToolResult.Text($"Sent to {channel.Id.Id}: {message}"));
-        }
-
-        private static bool IsWalletAddress(string value)
-        {
-            if (value.Length != WALLET_ADDRESS_LENGTH || value[0] != '0' || (value[1] != 'x' && value[1] != 'X'))
-                return false;
-
-            for (var i = 2; i < value.Length; i++)
-            {
-                char c = value[i];
-                bool isHex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-
-                if (!isHex)
-                    return false;
-            }
-
-            return true;
         }
     }
 }

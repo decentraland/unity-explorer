@@ -3,8 +3,10 @@ using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.History;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.Utilities;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace DCL.McpServer.Tools
@@ -17,7 +19,7 @@ namespace DCL.McpServer.Tools
     public class ReactToChatMessageTool : McpTool
     {
         private readonly IChatHistory chatHistory;
-        private readonly MessageReactionServiceSlot reactionService;
+        private readonly IReadonlyReactiveProperty<ChatMessageReactionService?> reactionService;
 
         public override string Name => "react_to_chat_message";
 
@@ -33,7 +35,8 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public ReactToChatMessageTool(IChatHistory chatHistory, MessageReactionServiceSlot reactionService)
+        /// <param name="reactionService">Holds the service once the chat plugin has created it, null before that and after it is disposed.</param>
+        public ReactToChatMessageTool(IChatHistory chatHistory, IReadonlyReactiveProperty<ChatMessageReactionService?> reactionService)
         {
             this.chatHistory = chatHistory;
             this.reactionService = reactionService;
@@ -53,7 +56,7 @@ namespace DCL.McpServer.Tools
             if (emojiIndex < 0)
                 return UniTask.FromResult(McpToolResult.Error("emojiIndex must be 0 or greater."));
 
-            ChatMessageReactionService? service = reactionService.Service;
+            ChatMessageReactionService? service = reactionService.Value;
 
             if (service == null)
                 return UniTask.FromResult(McpToolResult.Error("Chat reactions are not ready yet: wait until the chat has finished loading."));
@@ -61,9 +64,12 @@ namespace DCL.McpServer.Tools
             if (!TryFindChannel(messageId, out ChatChannel? channel))
                 return UniTask.FromResult(McpToolResult.Error($"No message with id '{messageId}' in the chat history. Read the ids with get_chat_history."));
 
-            int before = ReactorCount(channel!, messageId, emojiIndex);
+            // Messages restored from local storage are registered only when the chat panel opens their channel
+            service.RegisterChannelMessages(channel);
+
+            int before = ReactorCount(channel, messageId, emojiIndex);
             service.ToggleReaction(messageId, emojiIndex);
-            int after = ReactorCount(channel!, messageId, emojiIndex);
+            int after = ReactorCount(channel, messageId, emojiIndex);
 
             if (after == before)
                 return UniTask.FromResult(McpToolResult.Error("The reaction was not applied: the player has no identity yet, or the message already holds "
@@ -72,14 +78,14 @@ namespace DCL.McpServer.Tools
             return UniTask.FromResult(McpToolResult.Json(new JObject
             {
                 ["messageId"] = messageId,
-                ["channel"] = channel!.Id.Id,
+                ["channel"] = channel.Id.Id,
                 ["emojiIndex"] = emojiIndex,
                 ["state"] = after > before ? "added" : "removed",
                 ["reactors"] = after,
             }));
         }
 
-        private bool TryFindChannel(string messageId, out ChatChannel? channel)
+        private bool TryFindChannel(string messageId, [NotNullWhen(true)] out ChatChannel? channel)
         {
             foreach (ChatChannel candidate in chatHistory.Channels.Values)
             {
