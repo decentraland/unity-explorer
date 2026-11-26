@@ -32,7 +32,6 @@ namespace DCL.Shop
         private const string TOO_SHORT_TEXT = "NAMEs need at least {0} characters.";
         private const string CLAIMED_NOTIFICATION = "{0} is now your NAME!";
         private const string NOT_REGISTERED_NOTIFICATION = "The payment went through but {0} could not be registered. Please contact support.";
-        private const string NAMES_BROWSE_PATH = "/names/browse?search=";
 
         private readonly ShopNamesSectionView view;
         private readonly GameObject previewNametagRoot;
@@ -41,7 +40,6 @@ namespace DCL.Shop
         private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         private CancellationTokenSource? lifeCts;
         private CancellationTokenSource? checkCts;
@@ -73,14 +71,12 @@ namespace DCL.Shop
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.webBrowser = webBrowser;
-            this.urlsSource = urlsSource;
             Resale = new ShopNamesResaleController(view.ResaleGrid, api, webBrowser, urlsSource);
 
             view.TabClicked += ShowTab;
             Resale.NameSelected += OnResaleNameSelected;
             view.NameChanged += OnNameChanged;
             view.ClaimClicked += OnClaimClicked;
-            view.MakeOfferClicked += OnMakeOfferClicked;
             claimService.Completed += OnClaimCompleted;
 
             previewNametagRoot.SetActive(false);
@@ -93,7 +89,6 @@ namespace DCL.Shop
             Resale.Dispose();
             view.NameChanged -= OnNameChanged;
             view.ClaimClicked -= OnClaimClicked;
-            view.MakeOfferClicked -= OnMakeOfferClicked;
             claimService.Completed -= OnClaimCompleted;
             lifeCts.SafeCancelAndDispose();
             checkCts.SafeCancelAndDispose();
@@ -253,9 +248,6 @@ namespace DCL.Shop
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
             }
         }
-
-        private void OnMakeOfferClicked() =>
-            webBrowser.OpenUrlMainThreadOnly($"{urlsSource.Url(DecentralandUrl.MarketplaceLink)}{NAMES_BROWSE_PATH}{view.Name}");
 
         private void OnClaimCompleted(string name, NameClaimResult result)
         {

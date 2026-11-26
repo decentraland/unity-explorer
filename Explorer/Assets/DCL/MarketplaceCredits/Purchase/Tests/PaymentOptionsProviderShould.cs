@@ -103,6 +103,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(PaymentMethod.Credits, options.Options[0].Method);
             Assert.AreEqual(BigInteger.Zero, options.PriceManaWei);
             Assert.IsNull(options.ManaBalanceWei);
+            Assert.IsFalse(options.CanOfferMana);
             await manaTokenReader.DidNotReceive().BalanceOfAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 

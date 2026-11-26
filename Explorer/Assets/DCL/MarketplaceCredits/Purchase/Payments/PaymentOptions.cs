@@ -35,6 +35,9 @@ namespace DCL.MarketplaceCredits.Purchase
         /// <summary>Whether a MANA balance was read and is above zero.</summary>
         public bool HoldsMana => ManaBalanceWei is { Sign: > 0 };
 
+        /// <summary>Whether the buyer holds MANA and this price has a MANA equivalent.</summary>
+        public bool CanOfferMana => HoldsMana && PriceManaWei.Sign > 0;
+
         /// <summary>Whether the buyer holds the MANA this price costs and still may not pay with it alone.</summary>
         public bool IsManaAloneRefused => !CanManaPayAlone && PriceManaWei.Sign > 0 && ManaBalanceWei is { } balanceWei && balanceWei >= PriceManaWei;
 

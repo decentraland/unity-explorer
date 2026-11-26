@@ -735,7 +735,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
 
             bool purchasing = newState == ModalState.Purchasing;
-            float hiddenSelectorHeight = viewInstance.PaymentSelector.gameObject.activeSelf ? 0f : SELECTOR_HEIGHT;
+            float hiddenSelectorHeight = viewInstance.PaymentSelector.IsShown ? 0f : SELECTOR_HEIGHT;
 
             float height = newState switch
                            {
