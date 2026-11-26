@@ -1,11 +1,14 @@
+using Cysharp.Threading.Tasks;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Minimap
 {
@@ -15,6 +18,7 @@ namespace DCL.Minimap
     public class SkyboxTimePresenter : IDisposable
     {
         private const int MINUTES_PER_HOUR = 60;
+        private const int TIME_CHANGED_REPORT_DEBOUNCE_MS = 1000;
 
         private readonly Toggle timeProgressionToggle;
         private readonly Slider timeSlider;
@@ -22,8 +26,11 @@ namespace DCL.Minimap
         private readonly CanvasGroup sectionCanvasGroup;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IEventBus analyticsEventBus;
 
+        private CancellationTokenSource? timeChangedReportCts;
         private bool isRestrictedByScene;
+        private bool isSyncingToggleFromSettings;
         private int lastTotalMinutes = -1;
 
         public SkyboxTimePresenter(
@@ -32,7 +39,8 @@ namespace DCL.Minimap
             TMP_Text timeText,
             CanvasGroup sectionCanvasGroup,
             SkyboxSettingsAsset skyboxSettings,
-            ISceneRestrictionBusController sceneRestrictionBusController)
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IEventBus analyticsEventBus)
         {
             this.timeProgressionToggle = timeProgressionToggle;
             this.timeSlider = timeSlider;
@@ -40,6 +48,7 @@ namespace DCL.Minimap
             this.sectionCanvasGroup = sectionCanvasGroup;
             this.skyboxSettings = skyboxSettings;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.analyticsEventBus = analyticsEventBus;
 
             skyboxSettings.DayCycleChanged += OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
@@ -58,13 +67,18 @@ namespace DCL.Minimap
             skyboxSettings.DayCycleChanged -= OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            timeChangedReportCts.SafeCancelAndDispose();
 
             timeProgressionToggle.onValueChanged.RemoveListener(OnTimeProgressionToggleChanged);
             timeSlider.onValueChanged.RemoveListener(OnTimeSliderValueChanged);
         }
 
-        private void OnDayCycleChanged(bool isEnabled) =>
+        private void OnDayCycleChanged(bool isEnabled)
+        {
+            isSyncingToggleFromSettings = true;
             timeProgressionToggle.isOn = isEnabled;
+            isSyncingToggleFromSettings = false;
+        }
 
         private void OnTimeOfDayChanged(float time)
         {
@@ -86,6 +100,21 @@ namespace DCL.Minimap
             skyboxSettings.UIOverrideTimeOfDayNormalized = sliderValue;
 
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME, sliderValue);
+
+            ReportTimeChangedDebouncedAsync(sliderValue).Forget();
+        }
+
+        // The slider fires on every drag step, so only the value the user settles on is reported.
+        private async UniTaskVoid ReportTimeChangedDebouncedAsync(float time)
+        {
+            timeChangedReportCts = timeChangedReportCts.SafeRestart();
+
+            try
+            {
+                await UniTask.Delay(TIME_CHANGED_REPORT_DEBOUNCE_MS, cancellationToken: timeChangedReportCts.Token);
+                analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxTimeChanged, timeOfDay: time));
+            }
+            catch (OperationCanceledException) { }
         }
 
         /// <summary>
@@ -95,6 +124,9 @@ namespace DCL.Minimap
         private void OnTimeProgressionToggleChanged(bool isOn)
         {
             if (isRestrictedByScene) return;
+
+            if (!isSyncingToggleFromSettings)
+                analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxDayCycleToggled, state: isOn));
 
             timeSlider.interactable = !isOn;
             skyboxSettings.IsUIControlled = !isOn;

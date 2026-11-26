@@ -21,6 +21,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IDonationsService donationsService;
+        private readonly IEventBus analyticsEventBus;
 
         private MinimapController? minimapController;
 
@@ -67,7 +69,8 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
-            IDonationsService donationsService)
+            IDonationsService donationsService,
+            IEventBus analyticsEventBus)
         {
             this.minimapView = minimapView;
             this.mapRenderer = mapRenderer;
@@ -88,6 +91,7 @@ namespace DCL.PluginSystem.Global
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
             this.donationsService = donationsService;
+            this.analyticsEventBus = analyticsEventBus;
         }
 
         public void Dispose() =>
@@ -122,7 +126,8 @@ namespace DCL.PluginSystem.Global
                 includeBannedUsersFromScene,
                 homePlaceEventBus,
                 settings.MinimapContextMenuSettings,
-                donationsService
+                donationsService,
+                analyticsEventBus
             );
 
             mvcManager.RegisterController(minimapController);

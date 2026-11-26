@@ -77,6 +77,7 @@ namespace DCL.Minimap
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IDonationsService donationsService;
         private readonly MinimapContextMenuSettings minimapContextMenuSettings;
+        private readonly IEventBus analyticsEventBus;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -119,7 +120,8 @@ namespace DCL.Minimap
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
             MinimapContextMenuSettings minimapContextMenuSettings,
-            IDonationsService donationsService)
+            IDonationsService donationsService,
+            IEventBus analyticsEventBus)
             : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -142,6 +144,7 @@ namespace DCL.Minimap
             this.homePlaceEventBus = homePlaceEventBus;
             this.minimapContextMenuSettings = minimapContextMenuSettings;
             this.donationsService = donationsService;
+            this.analyticsEventBus = analyticsEventBus;
 
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
@@ -244,7 +247,7 @@ namespace DCL.Minimap
             viewInstance.SetSkyboxWidgetVisible(false);
 
             skyboxTimePresenter = new SkyboxTimePresenter(viewInstance.timeProgressionToggle, viewInstance.timeSlider,
-                viewInstance.timeText, viewInstance.skyboxCanvasGroup, skyboxSettings, sceneRestrictionBusController);
+                viewInstance.timeText, viewInstance.skyboxCanvasGroup, skyboxSettings, sceneRestrictionBusController, analyticsEventBus);
 
             RefreshOnlineUsersCount();
 
@@ -267,6 +270,8 @@ namespace DCL.Minimap
 
             viewInstance.skyboxButton.SetSelected(show);
             viewInstance.SetSkyboxWidgetVisible(show);
+
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxWidgetToggled, state: show));
         }
 
         private void OnRoomParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
@@ -306,6 +311,7 @@ namespace DCL.Minimap
 
         private void OnMinimapRendererButtonClicked()
         {
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.MapClicked));
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
@@ -333,6 +339,7 @@ namespace DCL.Minimap
 
         private void ShowContextMenu()
         {
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.ContextMenuOpened));
             SetInitialHomeToggleValue();
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
@@ -359,6 +366,7 @@ namespace DCL.Minimap
 
         private void OnFavoriteButtonClicked(bool value)
         {
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.FavoriteClicked, state: value));
             // Setting button for immediate graphic change.
             viewInstance!.favoriteButton.SetButtonState(value);
             favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
@@ -403,11 +411,18 @@ namespace DCL.Minimap
             systemClipboard.Set(ShareLinkUtilities.WithReferrer(link));
         }
 
-        private void ExpandMinimap() =>
+        // Only the user's clicks are tracked: SetMapExpanded is also driven by realm changes.
+        private void ExpandMinimap()
+        {
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.Expanded));
             SetMapExpanded(true);
+        }
 
-        private void CollapseMinimap() =>
+        private void CollapseMinimap()
+        {
+            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.Collapsed));
             SetMapExpanded(false);
+        }
 
         private void SetMapExpanded(bool isExpanded)
         {
