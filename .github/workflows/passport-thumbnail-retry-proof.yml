@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Wait until the fix build's Windows zip is published
         run: |
-          url='https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28210-4144cb8/Decentraland_windows64.zip'
+          url='https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28211-61c419d/Decentraland_windows64.zip'
           for i in $(seq 1 170); do
             if curl -sfI "$url" > /dev/null; then echo "Published after $i checks"; exit 0; fi
             sleep 30
@@ -29,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: fix-28210-4144cb8
-            url: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28210-4144cb8/Decentraland_windows64.zip
+          - name: fix-28211-61c419d
+            url: https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/fix/passport-thumbnail-retry/pr-28211-61c419d/Decentraland_windows64.zip
     env:
       AUDIT_BUILD_URL: ${{ matrix.build.url }}
       AUDIT_SLICE: social_thumbretry
