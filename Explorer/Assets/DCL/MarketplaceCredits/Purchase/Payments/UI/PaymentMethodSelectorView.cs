@@ -31,22 +31,22 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         }
 
         /// <summary>
-        ///     Starts a fresh selection on the preferred option. The MANA row is hidden when MANA cannot be offered
-        ///     at all. manaAloneRefusedNote replaces the rate when the options rule MANA out as a method of its own
-        ///     and leave the row unavailable.
+        ///     Starts a fresh selection on the preferred option. Both rows are hidden while the buyer holds no MANA,
+        ///     which leaves credits as the only way to pay. manaAloneRefusedNote replaces the rate when the options
+        ///     rule MANA out as a method of its own and leave the row unavailable.
         /// </summary>
-        public void Show(PaymentOptions paymentOptions, bool isManaEnabled, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
+        public void Show(PaymentOptions paymentOptions, string manaAloneRefusedNote = MANA_ALONE_REFUSED_NOTE)
         {
             options = paymentOptions;
             this.manaAloneRefusedNote = manaAloneRefusedNote;
             Selection = new PaymentSelection(paymentOptions);
-            ManaRow.gameObject.SetActive(isManaEnabled);
+            gameObject.SetActive(paymentOptions.HoldsMana);
             Render();
         }
 
-        /// <summary>The rows unavailable with unknown amounts, for the time the options are being read.</summary>
-        public void Clear(bool isManaEnabled) =>
-            Show(PaymentOptions.NONE, isManaEnabled);
+        /// <summary>An empty selection with the rows hidden, for the time the options are being read.</summary>
+        public void Clear() =>
+            Show(PaymentOptions.NONE);
 
         private void OnCreditsClicked()
         {

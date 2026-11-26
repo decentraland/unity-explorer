@@ -96,13 +96,12 @@ namespace DCL.Shop
             InputOutline.color = OutlineNormalColor;
         }
 
-        public void ShowStatus(string text, bool isError, bool offerAvailable)
+        public void ShowStatus(string text, bool isError, bool isTaken)
         {
             StatusRow.SetActive(true);
             StatusText.text = text;
             StatusText.color = isError ? StatusErrorColor : StatusNeutralColor;
-            MakeOfferButton.gameObject.SetActive(offerAvailable);
-            HashLabel.gameObject.SetActive(offerAvailable);
+            HashLabel.gameObject.SetActive(isTaken);
             InputOutline.color = isError ? OutlineErrorColor : OutlineNormalColor;
         }
 

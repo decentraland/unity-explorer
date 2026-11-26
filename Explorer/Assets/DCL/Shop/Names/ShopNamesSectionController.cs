@@ -10,7 +10,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileElements;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -23,13 +22,13 @@ namespace DCL.Shop
     /// <summary>
     ///     The Names section: a UNIQUE NAME tab that checks a typed name against the registrar and opens the
     ///     claim modal, and a RESALE NAME tab with the grid of the names on sale. The nametag over the avatar preview shows the name
-    ///     typed or picked in the open tab, or the player's own while there is none.
+    ///     typed or picked in the open tab, or the player's own while there is none, always in the colour of the player's own name.
     /// </summary>
     public class ShopNamesSectionController : IDisposable
     {
         private const int AVAILABILITY_DEBOUNCE_MS = 1000;
         private const string CHECKING_TEXT = "Checking availability...";
-        private const string TAKEN_TEXT = "This NAME is taken. Choose another NAME or make an offer to the owner.";
+        private const string TAKEN_TEXT = "This NAME is taken. Choose another NAME.";
         private const string TOO_SHORT_TEXT = "NAMEs need at least {0} characters.";
         private const string CLAIMED_NOTIFICATION = "{0} is now your NAME!";
         private const string NOT_REGISTERED_NOTIFICATION = "The payment went through but {0} could not be registered. Please contact support.";
@@ -173,7 +172,7 @@ namespace DCL.Shop
                 return;
 
             if (previewedName.Length > 0)
-                previewNametag.Setup(previewedName, string.Empty, hasClaimedName: true, NameColorHelper.GetNameColor(previewedName));
+                previewNametag.Setup(previewedName, string.Empty, hasClaimedName: true, ownProfile.UserNameColor);
             else
                 previewNametag.Setup(ownProfile.Compact);
 
@@ -210,11 +209,11 @@ namespace DCL.Shop
 
             if (NameRules.Validate(name) != NameValidation.Valid)
             {
-                view.ShowStatus(string.Format(TOO_SHORT_TEXT, NameRules.MIN_LENGTH), isError: true, offerAvailable: false);
+                view.ShowStatus(string.Format(TOO_SHORT_TEXT, NameRules.MIN_LENGTH), isError: true, isTaken: false);
                 return;
             }
 
-            view.ShowStatus(CHECKING_TEXT, isError: false, offerAvailable: false);
+            view.ShowStatus(CHECKING_TEXT, isError: false, isTaken: false);
 
             NameAvailability availability = await claimService.CheckAvailabilityAsync(name, ct);
 
@@ -223,7 +222,7 @@ namespace DCL.Shop
 
             if (availability == NameAvailability.Taken)
             {
-                view.ShowStatus(TAKEN_TEXT, isError: true, offerAvailable: true);
+                view.ShowStatus(TAKEN_TEXT, isError: true, isTaken: true);
                 return;
             }
 

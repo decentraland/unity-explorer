@@ -143,7 +143,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
                 viewInstance.BalanceCreditsText.text = PaymentAmountFormat.UNKNOWN;
                 viewInstance.BalanceManaText.text = PaymentAmountFormat.UNKNOWN;
                 viewInstance.PriceLoadingSpinner.SetActive(true);
-                viewInstance.PaymentSelector.Clear(isManaEnabled);
+                viewInstance.PaymentSelector.Clear();
             }
 
             if (identityCache.Identity == null)
@@ -194,7 +194,7 @@ namespace DCL.MarketplaceCredits.Purchase.Names.UI
             }
 
             ShowBalances(options);
-            viewInstance?.PaymentSelector.Show(options, isManaEnabled, MANA_ALONE_REFUSED_NOTE);
+            viewInstance?.PaymentSelector.Show(options, MANA_ALONE_REFUSED_NOTE);
             SetUiState(canPay ? ModalState.ReadyToConfirm : ModalState.InsufficientFunds);
         }
 
