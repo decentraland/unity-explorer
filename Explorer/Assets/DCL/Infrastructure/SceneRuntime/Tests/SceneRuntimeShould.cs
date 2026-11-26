@@ -185,6 +185,53 @@ namespace SceneRuntime.Tests
                 Assert.DoesNotThrow(() => sceneRuntime.SetIsDisposing());
             });
 
+        // A scene that imports ~system/SceneCredits must load in the explorer, which never pays: the call resolves a refusal.
+        [UnityTest]
+        public IEnumerator SceneCredits_ResolveNotAvailable() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var code = @"
+            const sceneCredits = require('~system/SceneCredits')
+            exports.onStart = async function() {
+                const response = await sceneCredits.grantCredits({ programId: '', recipient: '', outcomeId: 'match-1' })
+                probe.Record(sceneCredits.GrantCreditsError.GCE_NOT_AVAILABLE, response.ok, response.error)
+            };
+            exports.onUpdate = async function(dt) {};
+        ";
+
+                var sceneRuntimeFactory = NewSceneRuntimeFactory();
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                sceneRuntime.ExecuteSceneJson();
+
+                var probe = new GrantCreditsProbe();
+                sceneRuntime.engine.AddHostObject("probe", probe);
+
+                // StartScene awaits onStart, so the awaited grantCredits has resolved by the time it returns.
+                await sceneRuntime.StartScene();
+
+                Assert.IsTrue(probe.Recorded, "grantCredits did not resolve");
+                Assert.AreEqual(1d, probe.NotAvailable, "GrantCreditsError.GCE_NOT_AVAILABLE");
+                Assert.IsFalse(probe.Ok, "response.ok");
+                Assert.AreEqual(probe.NotAvailable, probe.Error, "response.error");
+            });
+
+        public class GrantCreditsProbe
+        {
+            public bool Recorded { get; private set; }
+            public double NotAvailable { get; private set; }
+            public bool Ok { get; private set; }
+            public double Error { get; private set; }
+
+            [UsedImplicitly]
+            public void Record(double notAvailable, bool ok, double error)
+            {
+                Recorded = true;
+                NotAvailable = notAvailable;
+                Ok = ok;
+                Error = error;
+            }
+        }
+
         public class TestUtilCheckOk
         {
             private bool value;
