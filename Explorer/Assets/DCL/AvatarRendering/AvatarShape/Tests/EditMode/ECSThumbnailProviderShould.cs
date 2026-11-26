@@ -113,6 +113,28 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public async Task GiveTrimmedAttachmentsTheDefaultThumbnailWhenTheDownloadFails()
+        {
+            // Trimmed attachments use IThumbnailAttachment's own WaitForThumbnailAsync, unlike FakeWearable
+            var trimmed = new FakeTrimmedWearable(new TrimmedWearableDTO
+            {
+                id = "urn:decentraland:off-chain:base-avatars:red_hoodie",
+                thumbnail = "bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku",
+                metadata = new TrimmedWearableDTO.WearableMetadataDto { id = "urn:decentraland:off-chain:base-avatars:red_hoodie" },
+            });
+
+            UniTask<Sprite> attempt = provider.GetAsync(trimmed, CancellationToken.None);
+            ResolvePendingDownload(FailedDownload());
+
+            Sprite? sprite;
+
+            try { sprite = await attempt; }
+            catch (ThumbnailLoadFailedException) { sprite = null; }
+
+            Assert.That(sprite, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A failed download of a trimmed attachment must show the default thumbnail, not throw");
+        }
+
+        [Test]
         public async Task GiveWaitingCallersTheDefaultThumbnailWhenAnotherCallerTimesOut()
         {
             FakeWearable wearable = NewWearable();
