@@ -179,8 +179,11 @@ namespace DCL.Passport.Modules
             AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, profile, getEquippedItemsCts.Token).Forget();
         }
 
+        /// <summary>
+        ///     The cards need only the definitions. Waiting for the 3D assets would drop every wearable whose asset fails to load.
+        /// </summary>
         internal static GetWearablesByPointersIntention CreateEquippedWearablesIntention(Avatar avatar) =>
-            WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender);
+            WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender, dtoOnly: true);
 
         private void SetGridAsLoading()
         {
