@@ -17,13 +17,13 @@ namespace DCL.AvatarRendering.Emotes
     {
         private readonly IAppArgs appArgs;
         private readonly IEmoteProvider source;
-        private readonly string builderDTOsUrl;
+        private readonly string builderCatalogUrl;
 
-        public ApplicationParamsEmoteProvider(IAppArgs appArgs, IEmoteProvider source, string builderDTOsUrl)
+        public ApplicationParamsEmoteProvider(IAppArgs appArgs, IEmoteProvider source, string builderCatalogUrl)
         {
             this.appArgs = appArgs;
             this.source = source;
-            this.builderDTOsUrl = builderDTOsUrl;
+            this.builderCatalogUrl = builderCatalogUrl;
         }
 
         public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetTrimmedByParamsAsync(
@@ -41,17 +41,14 @@ namespace DCL.AvatarRendering.Emotes
 
                 results ??= new List<ITrimmedEmote>();
 
-                var localBuffer = ListPool<IEmote>.Get();
+                using var bufferScope = ListPool<IEmote>.Get(out var localBuffer);
+                await source.GetMetadataByPointersAsync(pointers, ct, localBuffer);
+                if (requestOptions is { PageNum: not null, PageSize: not null })
+                    results.AddRange(localBuffer.Skip((requestOptions.PageNum.Value - 1) * requestOptions.PageSize.Value).Take(requestOptions.PageSize.Value));
+                else
+                    results.AddRange(localBuffer);
 
-                await UniTask.WhenAll(GetByPointersAsync(pointers, BodyShape.MALE, ct, localBuffer),
-                    GetByPointersAsync(pointers, BodyShape.FEMALE, ct, localBuffer));
-
-                foreach (var emote in localBuffer)
-                    results.Add(emote);
-
-                ListPool<IEmote>.Release(localBuffer);
-
-                return (results, results.Count);
+                return (results, localBuffer.Count);
             }
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
@@ -59,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                 string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
                 results ??= new List<ITrimmedEmote>();
-                var localBuffer = ListPool<ITrimmedEmote>.Get();
+                using var bufferScope = ListPool<ITrimmedEmote>.Get(out var localBuffer);
                 for (var i = 0; i < collections.Length; i++)
                 {
                     if (!BuilderCollectionIds.IsValid(collections[i], ReportCategory.EMOTE))
@@ -68,7 +65,7 @@ namespace DCL.AvatarRendering.Emotes
                     // localBuffer accumulates the loaded emotes
                     await source.GetTrimmedByParamsAsync(requestOptions, ct, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
+                            builderCatalogUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);
@@ -85,7 +82,6 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 int count = localBuffer.Count;
-                ListPool<ITrimmedEmote>.Release(localBuffer);
 
                 return (results, count);
             }
@@ -93,6 +89,9 @@ namespace DCL.AvatarRendering.Emotes
             // Regular path without any "self-preview" element
             return await source.GetTrimmedByParamsAsync(requestOptions, ct, results);
         }
+
+        public UniTask GetMetadataByPointersAsync(IReadOnlyCollection<URN> pointers, CancellationToken ct, List<IEmote> results) =>
+            source.GetMetadataByPointersAsync(pointers, ct, results);
 
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote>? results = null) =>
             await source.GetByPointersAsync(emoteIds, bodyShape, ct, results);

@@ -1,3 +1,5 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using NSubstitute;
@@ -75,6 +77,31 @@ namespace DCL.AvatarRendering.Emotes.Tests
             _ = source.Received(1)
                       .GetTrimmedByParamsAsync(Arg.Any<IEmoteProvider.OwnedEmotesRequestOptions>(), Arg.Any<CancellationToken>(),
                           Arg.Any<List<ITrimmedEmote>?>(), Arg.Any<CommonLoadingArguments?>(), true);
+        }
+
+        [Test]
+        public async Task PageThroughSelfPreviewMetadataWithoutLoadingBothBodyShapes()
+        {
+            appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_EMOTES, out Arg.Any<string?>())
+                   .Returns(call =>
+                    {
+                        call[1] = "wave,clap";
+                        return true;
+                    });
+
+            IEmote wave = new Emote();
+            IEmote clap = new Emote();
+            source.GetMetadataByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<CancellationToken>(), Arg.Any<List<IEmote>>())
+                  .Returns(call =>
+                   {
+                       call.Arg<List<IEmote>>().AddRange(new[] { wave, clap });
+                       return UniTask.CompletedTask;
+                   });
+
+            var options = new IEmoteProvider.OwnedEmotesRequestOptions(2, 1, null, null, null);
+            var page = await provider.GetTrimmedByParamsAsync(options, CancellationToken.None);
+            Assert.That(page.totalAmount, Is.EqualTo(2));
+            Assert.That(page.results, Is.EqualTo(new[] { clap }));
         }
 
         private void GivenBuilderCollections(string collectionsCsv)

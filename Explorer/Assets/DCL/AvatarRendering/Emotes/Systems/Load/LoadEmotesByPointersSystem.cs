@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest);
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
-            ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp.List);
+            ExtractMissingPointersAndResolvedEmotes(ref intention, pointersToRequest!, resolvedEmotesTmp.List);
 
             if (intention.IsTimeout(dt))
             {
@@ -92,9 +92,15 @@ namespace DCL.AvatarRendering.Emotes.Load
                 return;
             }
 
-            if (RequestMissingPointers(pointersToRequest!, partitionComponent, intention.BodyShape)) return;
+            if (RequestMissingPointers(pointersToRequest!, partitionComponent, intention.BodyShape))
+            {
+                resolvedEmotesTmp.Dispose();
+                return;
+            }
 
-            bool success = GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
+            bool success = intention.MetadataOnly
+                ? resolvedEmotesTmp.List.Count == intention.Pointers.Count
+                : GetAssetBundlesUntilAllAreResolved(in intention, partitionComponent, resolvedEmotesTmp.List);
 
             if (success)
             {
@@ -132,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             {
                 IEmote emote = resolvedEmotes[i];
 
-                if (emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()))
+                if (emote.DTO?.Metadata == null || (!intention.MetadataOnly && !successfulPointers.Contains(emote.GetUrn())))
                     resolvedEmotes.RemoveAt(i);
             }
 
@@ -218,7 +224,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         }
 
         private void ExtractMissingPointersAndResolvedEmotes(
-            in GetEmotesByPointersIntention intention,
+            ref GetEmotesByPointersIntention intention,
             ICollection<URN> missingPointers,
             IList<IEmote> resolvedEmotes
         )
@@ -243,6 +249,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                     emoteStorage.Set(shortenedPointer, emote);
                 }
 
+                if (intention.RetryFailedMetadata && !emote.IsLoading && emote.Model is { IsInitialized: true, Succeeded: false })
+                    emote.Model = default;
+
                 if (emote.Model.IsInitialized)
                     resolvedEmotes.Add(emote);
                 else if (!emote.IsLoading)
@@ -251,6 +260,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                     missingPointers.Add(shortenedPointer);
                 }
             }
+
+            intention.RetryFailedMetadata = false;
         }
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)

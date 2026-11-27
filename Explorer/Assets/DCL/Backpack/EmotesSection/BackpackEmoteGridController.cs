@@ -3,10 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Gifting.Models;
@@ -15,15 +12,13 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Utilities.Extensions;
-using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading;
-using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Diagnostics;
-using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Utility;
 using Object = UnityEngine.Object;
 
@@ -34,7 +29,10 @@ namespace DCL.Backpack.EmotesSection
         private const int CURRENT_PAGE_SIZE = 16;
         private const string EMOTE_CATEGORY = "emote";
 
+        private static readonly bool TRACE_TIMINGS = Environment.GetEnvironmentVariable("DCL_BACKPACK_EMOTE_TIMINGS") == "1";
+
         private readonly BackpackGridView view;
+        private readonly Button catalogRetry;
         private readonly BackpackCommandBus commandBus;
         private readonly IBackpackEventBus eventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -53,14 +51,15 @@ namespace DCL.Backpack.EmotesSection
         private readonly IPendingTransferService ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
+        private CancellationTokenSource? cardBindingsCancellationToken;
         private string? currentCategory;
         private string? currentSearch;
         private bool onChainEmotesOnly;
+        private int currentPage;
         private IEmoteProvider.OrderOperation currentOrder = new ("date", false);
-        private BodyShape currentBodyShape = BodyShape.MALE;
 
         public BackpackEmoteGridController(
-            BackpackGridView view,
+            EmotesView emotesView,
             BackpackCommandBus commandBus,
             IBackpackEventBus eventBus,
             NftTypeIconSO rarityBackgrounds,
@@ -76,7 +75,9 @@ namespace DCL.Backpack.EmotesSection
             IEmoteStorage emoteStorage,
             IPendingTransferService ownedNftFilter)
         {
-            this.view = view;
+            view = emotesView.GridView;
+            catalogRetry = emotesView.CatalogRetry;
+            catalogRetry.onClick.AddListener(RetryPage);
             this.commandBus = commandBus;
             this.eventBus = eventBus;
             this.rarityBackgrounds = rarityBackgrounds;
@@ -94,9 +95,7 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
             eventBus.EquipEmoteEvent += OnEquip;
-            eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
-            eventBus.EquipOutfitEvent += OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
@@ -120,7 +119,11 @@ namespace DCL.Backpack.EmotesSection
         public void Dispose()
         {
             loadElementsCancellationToken.SafeCancelAndDispose();
-            eventBus.EquipOutfitEvent -= OnEquipOutfit;
+            cardBindingsCancellationToken.SafeCancelAndDispose();
+            catalogRetry.onClick.RemoveListener(RetryPage);
+            pageSelectorController.OnSetPage -= RequestAndFillEmotes;
+            eventBus.EquipEmoteEvent -= OnEquip;
+            eventBus.UnEquipEmoteEvent -= OnUnequip;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
@@ -136,11 +139,8 @@ namespace DCL.Backpack.EmotesSection
             );
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
-        {
-            if (!string.IsNullOrEmpty(command.BodyShape))
-                currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);
-        }
+        private void RetryPage() =>
+            RequestAndFillEmotes(currentPage, currentPage == 1);
 
         private void RequestAndFillEmotes(int pageNumber)
         {
@@ -151,117 +151,213 @@ namespace DCL.Backpack.EmotesSection
         {
             loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
 
+            var timing = new CatalogTiming(pageNumber);
+            if (TRACE_TIMINGS)
+                timing.Log("page-start", timing.Start, string.Empty);
+
+            currentPage = pageNumber;
+            if (reconfigurePageSelector)
+                pageSelectorController.SetActive(false);
+
+            catalogRetry.gameObject.SetActive(false);
+            view.NoSearchResults.SetActive(false);
+            view.NoCategoryResults.SetActive(false);
+            view.RegularResults.SetActive(true);
             SetGridAsLoading();
             RequestPageAsync(loadElementsCancellationToken.Token).Forget();
             return;
 
             async UniTaskVoid RequestPageAsync(CancellationToken ct)
             {
-                List<ITrimmedEmote> customOwnedEmotes = ListPool<ITrimmedEmote>.Get();
+                using var ownedScope = ListPool<ITrimmedEmote>.Get(out var owned);
+                using var baseScope = ListPool<IEmote>.Get(out var baseEmotes);
+                bool ownedReady = false;
+                bool baseReady = onChainEmotesOnly;
+                bool catalogFailed = false;
+                bool bound = false;
+                int ownedTotal = 0;
+                int configuredTotal = -1;
 
                 try
                 {
-                    var result = await emoteProvider.GetTrimmedByParamsAsync(
-                        new IEmoteProvider.OwnedEmotesRequestOptions(
-                            pageNum: pageNumber,
-                            pageSize: CURRENT_PAGE_SIZE,
-                            collectionId: null,
-                            orderOperation: currentOrder,
-                            name: currentSearch
-                        ),
-                        ct,
-                        customOwnedEmotes
-                    );
-
-                    // The fetch repopulated the registry — a reliable point to prune pending emote gifts that
-                    // left the wallet (or came back).
-                    ownedNftFilter.Prune(GiftableType.Emote);
-
-                    int totalAmount = result.totalAmount;
-                    IReadOnlyList<ITrimmedEmote> emotes;
-
-                    // TODO: request base emotes collection instead of pointers:
-                    // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
-                    if (onChainEmotesOnly)
-                        emotes = customOwnedEmotes;
-                    else
+                    if (!baseReady && pageNumber == 1)
                     {
-                        using var scope = ListPool<IEmote>.Get(out var baseEmotes);
-                        baseEmotes = baseEmotes.EnsureNotNull();
+                        long start = CatalogTiming.Timestamp();
+                        foreach (URN pointer in emoteStorage.BaseEmotesUrns)
+                        {
+                            if (!emoteStorage.TryGetElement(pointer.Shorten(), out var cached) || !cached.Model.Succeeded || cached.DTO?.Metadata == null)
+                                continue;
 
-                        await emoteProvider.GetByPointersAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
+                            if (!cached.TrimmedModel.Succeeded)
+                                cached.PopulateTrimmedModel();
 
-                        IEnumerable<IEmote> filteredEmotes = baseEmotes;
+                            baseEmotes.Add(cached);
+                        }
 
-                        if (!string.IsNullOrEmpty(currentSearch!))
-                            filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
+                        FilterAndSortBaseEmotes(baseEmotes);
+                        if (TRACE_TIMINGS)
+                            timing.Log("cached-base", start, $"count={baseEmotes.Count}");
 
-                        if (!string.IsNullOrEmpty(currentCategory!))
-                            filteredEmotes = baseEmotes.Where(emote => emote.GetCategory() == currentCategory);
-
-                        filteredEmotes = currentOrder.By switch
-                                         {
-                                             "name" => currentOrder.IsAscending
-                                                 ? filteredEmotes.OrderBy(emote => emote.GetName())
-                                                 : filteredEmotes.OrderByDescending(emote => emote.GetName()),
-                                             _ => filteredEmotes,
-                                         };
-
-                        baseEmotes = filteredEmotes.ToList();
-
-                        int customOwnedEmotesAmount = result.totalAmount;
-                        totalAmount += baseEmotes.Count;
-
-                        var baseEmotesToSkip = 0;
-                        int emotesPageIndex = (pageNumber - 1) * CURRENT_PAGE_SIZE;
-
-                        if (emotesPageIndex > customOwnedEmotesAmount)
-                            baseEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
-
-                        // We always need to concat embedded emotes at the end, no matter the filter & sorting
-                        // otherwise the pagination in the realm provider get inconsistent with the union of the embedded emotes
-                        // The only way of getting to work properly is by the realm providing also off-chain emotes or request all emotes at once
-                        // For example:
-                        // 1. Set sort by name
-                        // 2. Page 1 will contain some embedded emotes & owned emotes
-                        // 3. Request page 2, the realm will not provide any of the owned emotes since they are part of page 1
-                        // 4. We will probably skip most of the owned emotes in the grid becoming inconsistent
-                        emotes = customOwnedEmotes.Concat(baseEmotes.Skip(baseEmotesToSkip))
-                                                  .Take(CURRENT_PAGE_SIZE)
-                                                  .ToArray();
+                        if (baseEmotes.Count > 0)
+                            Publish("cached-base");
                     }
 
-                    if (emotes.Count == 0)
+                    var ownedRequest = LoadOwnedAsync();
+                    try
                     {
+                        if (!baseReady)
+                            await LoadBaseAsync();
+                    }
+                    finally { await ownedRequest; }
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.BACKPACK);
+                    if (!ct.IsCancellationRequested && !bound)
+                        ShowCatalogError();
+                }
+
+                async UniTask LoadOwnedAsync()
+                {
+                    long start = CatalogTiming.Timestamp();
+                    var result = await emoteProvider.GetTrimmedByParamsAsync(
+                        new IEmoteProvider.OwnedEmotesRequestOptions(pageNum: pageNumber, pageSize: CURRENT_PAGE_SIZE,
+                            collectionId: null, orderOperation: currentOrder, name: currentSearch, propagateErrors: true),
+                        ct, owned).SuppressToResultAsync(ReportCategory.BACKPACK);
+
+                    if (TRACE_TIMINGS)
+                        timing.Log("owned", start, $"count={owned.Count} success={result.Success} canceled={ct.IsCancellationRequested}");
+
+                    if (ct.IsCancellationRequested) return;
+                    ownedReady = true;
+                    catalogFailed |= !result.Success;
+                    ownedTotal = result.Success ? result.Value.totalAmount : owned.Count;
+                    if (result.Success)
+                        ownedNftFilter.Prune(GiftableType.Emote);
+
+                    Publish("owned");
+                }
+
+                async UniTask LoadBaseAsync()
+                {
+                    IReadOnlyList<URN> pointers = emoteStorage.BaseEmotesUrns;
+                    long start = CatalogTiming.Timestamp();
+                    using var fetchedScope = ListPool<IEmote>.Get(out var fetched);
+                    var result = await emoteProvider.GetMetadataByPointersAsync(pointers, ct, fetched)
+                                                    .SuppressToResultAsync(ReportCategory.BACKPACK);
+
+                    if (TRACE_TIMINGS)
+                        timing.Log("base-metadata", start, $"count={fetched.Count} requested={pointers.Count} success={result.Success} canceled={ct.IsCancellationRequested}");
+
+                    if (ct.IsCancellationRequested) return;
+                    baseReady = true;
+                    // A timeout may return only some pointers. Keep any usable cached entries it omitted.
+                    using var knownScope = DictionaryPool<URN, IEmote>.Get(out var known);
+                    foreach (var cached in baseEmotes)
+                        known[cached.GetUrn()] = cached;
+                    foreach (var emote in fetched)
+                        known[emote.GetUrn()] = emote;
+
+                    baseEmotes.Clear();
+                    foreach (URN pointer in pointers)
+                        if (known.TryGetValue(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(pointer).Shorten(), out var emote))
+                            baseEmotes.Add(emote);
+
+                    catalogFailed |= !result.Success || baseEmotes.Count < pointers.Count;
+                    FilterAndSortBaseEmotes(baseEmotes);
+                    Publish("base-metadata");
+                }
+
+                void Publish(string phase)
+                {
+                    bool complete = ownedReady && baseReady;
+                    using var pageScope = ListPool<ITrimmedEmote>.Get(out var page);
+                    if (ownedReady)
+                        for (int i = 0; i < owned.Count && page.Count < CURRENT_PAGE_SIZE; i++)
+                            page.Add(owned[i]);
+
+                    int total = ownedTotal + baseEmotes.Count;
+                    int firstBase = Math.Max(0, ((pageNumber - 1) * CURRENT_PAGE_SIZE) - ownedTotal);
+                    for (int i = firstBase; i < baseEmotes.Count && page.Count < CURRENT_PAGE_SIZE; i++)
+                        page.Add(baseEmotes[i]);
+
+                    if (page.Count == 0)
+                    {
+                        if (!complete) return;
+                        if (catalogFailed)
+                        {
+                            if (!bound)
+                                ShowCatalogError();
+
+                            if (TRACE_TIMINGS)
+                                timing.Log("catalog-complete", timing.Start, $"count={usedPoolItems.Count} total={total} partial=True");
+
+                            return;
+                        }
+
                         view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSearch));
                         view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
                         view.RegularResults.SetActive(string.IsNullOrEmpty(currentSearch) && string.IsNullOrEmpty(currentCategory));
                     }
-                    else
+
+                    long start = CatalogTiming.Timestamp();
+                    bool rowsChanged = !bound || !HasSameRows(page);
+                    if (rowsChanged)
                     {
-                        view.NoSearchResults.SetActive(false);
-                        view.NoCategoryResults.SetActive(false);
-                        view.RegularResults.SetActive(true);
+                        cardBindingsCancellationToken = cardBindingsCancellationToken.SafeRestartLinked(ct);
+                        if (bound)
+                            SetGridAsLoading();
+
+                        SetGridElements(page, cardBindingsCancellationToken.Token, timing);
+                        bound = true;
                     }
 
-                    if (ct.IsCancellationRequested)
-                        return;
+                    if ((complete || reconfigurePageSelector) && configuredTotal != total)
+                    {
+                        pageSelectorController.Configure(total, CURRENT_PAGE_SIZE, pageNumber);
+                        configuredTotal = total;
+                    }
 
-                    SetGridElements(emotes);
+                    if (TRACE_TIMINGS && rowsChanged)
+                        timing.Log("cards-bound", start, $"count={page.Count} total={total} provisional={!complete} phase={phase}");
 
-                    if (reconfigurePageSelector)
-                        pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
-                }
-                catch (OperationCanceledException)
-                {
-                    //No need to do anything if the operation was canceled
-                }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.BACKPACK); }
-                finally
-                {
-                    ListPool<ITrimmedEmote>.Release(customOwnedEmotes);
+                    if (TRACE_TIMINGS && complete)
+                        timing.Log("catalog-complete", start, $"count={page.Count} total={total} partial={catalogFailed}");
                 }
             }
+        }
+
+        private bool HasSameRows(IReadOnlyList<ITrimmedEmote> page)
+        {
+            if (usedPoolItems.Count != page.Count) return false;
+
+            for (int i = 0; i < page.Count; i++)
+                if (!usedPoolItems.TryGetValue(page[i].GetUrn(), out var viewForUrn) || viewForUrn != loadingResults[i])
+                    return false;
+
+            return true;
+        }
+
+        private void FilterAndSortBaseEmotes(List<IEmote> emotes)
+        {
+            if (!string.IsNullOrEmpty(currentSearch))
+                emotes.RemoveAll(emote => !emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrEmpty(currentCategory))
+                emotes.RemoveAll(emote => emote.GetCategory() != currentCategory);
+
+            if (currentOrder.By == "name")
+                emotes.Sort((left, right) => currentOrder.IsAscending
+                    ? string.Compare(left.GetName(), right.GetName(), StringComparison.CurrentCulture)
+                    : string.Compare(right.GetName(), left.GetName(), StringComparison.CurrentCulture));
+        }
+
+        private void ShowCatalogError()
+        {
+            ClearPoolElements();
+            view.RegularResults.SetActive(false);
+            catalogRetry.gameObject.SetActive(true);
         }
 
         private void SetGridAsLoading()
@@ -274,28 +370,21 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 loadingResults[i] = backpackItemView;
-                usedPoolItems.Add(i.ToString(), backpackItemView);
             }
         }
 
-        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes)
+        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes, CancellationToken ct, CatalogTiming timing)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = emotes.Count; j < CURRENT_PAGE_SIZE; j++)
             {
                 loadingResults[j]!.gameObject.transform.SetAsFirstSibling();
-                loadingResults[j]!.LoadingView.gameObject.SetActive(false);
-                loadingResults[j]!.FullBackpackItem.SetActive(false);
-                usedPoolItems.Remove(j);
-
-                if (loadingResults[j] != null)
-                    gridItemsPool.Release(loadingResults[j]!);
+                ReleaseSlot(j);
             }
 
             for (int i = emotes.Count - 1; i >= 0; i--)
             {
                 BackpackEmoteGridItemView backpackItemView = loadingResults[i]!;
-                usedPoolItems.Remove(i);
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
 
                 if (emoteStorage.TryGetLatestTransferredAt(emotes[i].GetUrn(), out DateTime latestTransferredAt))
@@ -328,7 +417,8 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
 
                 backpackItemView.SetEquipButtonsState();
-                WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
+                backpackItemView.ShowMetadata(emotes[i].GetName());
+                WaitForThumbnailAsync(emotes[i], backpackItemView, ct, timing).Forget();
             }
         }
 
@@ -340,10 +430,19 @@ namespace DCL.Backpack.EmotesSection
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(int slot, string itemId)
+        private void EquipItem(int slot, string itemId) =>
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true, BeginLoadingSlot(slot)));
+
+        private Action BeginLoadingSlot(int slot)
         {
+            CancellationToken ct = cardBindingsCancellationToken!.Token;
             SetLoadingSlot(slot, true);
-            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true, () => SetLoadingSlot(slot, false)));
+
+            return () =>
+            {
+                if (!ct.IsCancellationRequested)
+                    SetLoadingSlot(slot, false);
+            };
         }
 
         private void SetLoadingSlot(int slot, bool isLoading)
@@ -351,8 +450,8 @@ namespace DCL.Backpack.EmotesSection
             loadingResults[slot]!.IsLoading = isLoading;
 
             for (int i = 0; i < loadingResults.Length; i++)
-                if (i != slot && loadingResults[i] != null)
-                    loadingResults[i]!.CanHover = !isLoading;
+                if (i != slot && loadingResults[i] is { } item)
+                    item.CanHover = !isLoading && !item.IsPending;
         }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
@@ -375,56 +474,99 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(1, true);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(ITrimmedEmote emote, BackpackEmoteGridItemView itemView, CancellationToken ct, CatalogTiming timing)
         {
-            try
+            const int MAX_ATTEMPTS = 2;
+            for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+                long stageStart = CatalogTiming.Timestamp();
+                // The ECS provider combines scheduling, cache access, transport and texture extraction in one wait.
+                string source = string.Empty;
+                if (TRACE_TIMINGS)
+                    source = emote.ThumbnailAssetResult switch
+                    {
+                        { IsInitialized: true, Succeeded: true } => "memory",
+                        { IsInitialized: false } => "in-flight",
+                        _ => "load",
+                    };
 
-                if (ct.IsCancellationRequested) return;
+                var result = await thumbnailProvider.GetAsync(emote, ct).SuppressToResultAsync(ReportCategory.THUMBNAILS);
 
-                itemView.WearableThumbnail.sprite = sprite;
-                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                if (result.Success && !ct.IsCancellationRequested)
+                    itemView.SetThumbnail(result.Value);
+
+                if (TRACE_TIMINGS)
+                {
+                    string outcome;
+                    if (ct.IsCancellationRequested)
+                        outcome = "canceled";
+                    else if (!result.Success)
+                        outcome = "error";
+                    else
+                        outcome = itemView.WearableThumbnail.enabled ? "artwork" : "fallback";
+
+                    timing.Log("thumbnail", stageStart, $"urn={emote.GetUrn()} source={source} attempt={attempt} outcome={outcome}");
+                }
+
+                if (attempt == MAX_ATTEMPTS || ct.IsCancellationRequested ||
+                    emote.ThumbnailAssetResult is not { IsInitialized: true, Succeeded: false, Cancelled: false })
+                    return;
+
+                // The ECS resolver retires the timed-out promise before a new attempt uses its slot.
+                if (await UniTask.DelayFrame(1, PlayerLoopTiming.LastPostLateUpdate, ct).SuppressCancellationThrow())
+                    return;
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
+        }
+
+        private readonly struct CatalogTiming
+        {
+            public readonly long Start;
+            private readonly int page;
+
+            public CatalogTiming(int page)
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+                this.page = page;
+                Start = Timestamp();
+            }
 
-                // Failure path must still unblock the cell, otherwise it sits in the "loading"
-                // state forever and the surrounding grid input stays gated.
-                if (ct.IsCancellationRequested) return;
+            public static long Timestamp() => TRACE_TIMINGS ? Stopwatch.GetTimestamp() : 0;
 
-                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
-                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            public void Log(string stage, long stageStart, string details)
+            {
+                long now = Stopwatch.GetTimestamp();
+                double elapsedMs = (now - Start) * 1000d / Stopwatch.Frequency;
+                double stageMs = (now - stageStart) * 1000d / Stopwatch.Frequency;
+                ReportHub.LogProductionInfo(FormattableString.Invariant($"[BackpackEmoteTiming] request={Start} page={page} stage={stage} elapsedMs={elapsedMs:F3} stageMs={stageMs:F3} {details}"), ReportHandler.DebugLog);
             }
         }
 
         private void ClearPoolElements()
         {
-            foreach (KeyValuePair<URN, BackpackEmoteGridItemView> backpackItemView in usedPoolItems)
-            {
-                backpackItemView.Value.OnEquip -= EquipItem;
-                backpackItemView.Value.OnUnequip -= UnEquipItem;
-                backpackItemView.Value.OnSelectItem -= SelectItem;
-                backpackItemView.Value.EquippedIcon.SetActive(false);
-                backpackItemView.Value.IsEquipped = false;
-                backpackItemView.Value.IsCompatibleWithBodyShape = false;
-                backpackItemView.Value.ItemId = "";
-                gridItemsPool.Release(backpackItemView.Value);
-            }
-
-            for (var i = 0; i < loadingResults.Length; i++)
-                loadingResults[i] = null;
+            for (int i = 0; i < loadingResults.Length; i++)
+                ReleaseSlot(i);
 
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId)
+        private void ReleaseSlot(int slot)
         {
-            SetLoadingSlot(slot, true);
-            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId, () => SetLoadingSlot(slot, false)));
+            BackpackEmoteGridItemView? item = loadingResults[slot];
+            if (item == null) return;
+
+            item.OnEquip -= EquipItem;
+            item.OnUnequip -= UnEquipItem;
+            item.OnSelectItem -= SelectItem;
+            item.ItemId = string.Empty;
+            item.IsLoading = false;
+            item.CanHover = false;
+            item.LoadingView.gameObject.SetActive(false);
+            item.FullBackpackItem.SetActive(false);
+            gridItemsPool.Release(item);
+            loadingResults[slot] = null;
         }
+
+        private void SelectItem(int slot, string itemId) =>
+            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId, BeginLoadingSlot(slot)));
 
         private void OnUnequip(int slot, IEmote? emote)
         {
@@ -443,18 +585,6 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.SetEquipButtonsState();
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(true);
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
-        }
-
-        private void OnWearableEquipped(IWearable wearable, bool isManuallyEquipped)
-        {
-            if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
-
-            foreach (BodyShape bodyShape in BodyShape.VALUES)
-            {
-                if (wearable.GetUrn() != bodyShape) continue;
-                currentBodyShape = bodyShape;
-                return;
-            }
         }
 
         private void OpenMarketplaceLink(string url) =>

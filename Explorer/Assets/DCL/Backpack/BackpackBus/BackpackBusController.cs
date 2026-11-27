@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -37,6 +38,8 @@ namespace DCL.Backpack.BackpackBus
         private readonly ReportData emoteReportData = new (ReportCategory.EMOTE);
         private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
 
+        private CancellationTokenSource? selectEmoteCts;
+
         private int currentEmoteSlot = -1;
 
         public BackpackBusController(
@@ -60,6 +63,8 @@ namespace DCL.Backpack.BackpackBus
             this.emotesProvider = emotesProvider;
             this.cacheOutfitWearablesCommand = cacheOutfitWearablesCommand;
 
+            backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
+            backpackEventBus.DeactivateEvent += CancelEmoteSelection;
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
             this.backpackCommandBus.UnEquipWearableMessageReceived += HandleUnEquipWearableCommand;
             this.backpackCommandBus.EquipEmoteMessageReceived += HandleEmoteEquipCommand;
@@ -78,6 +83,9 @@ namespace DCL.Backpack.BackpackBus
 
         public void Dispose()
         {
+            backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
+            backpackEventBus.DeactivateEvent -= CancelEmoteSelection;
+            CancelEmoteSelection();
             backpackCommandBus.EquipWearableMessageReceived -= HandleEquipWearableCommand;
             backpackCommandBus.UnEquipWearableMessageReceived -= HandleUnEquipWearableCommand;
             backpackCommandBus.EquipEmoteMessageReceived -= HandleEmoteEquipCommand;
@@ -227,7 +235,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableStorage.TryGetElement(command.Id, out IWearable? wearable))
+            if (!wearableStorage.TryGetElement(command.Id, out IWearable wearable))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
                 return;
@@ -254,14 +262,46 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
         }
 
-        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token, emoteReportData).Forget();
-
-        private void SelectEmote(IEmote emote, BackpackSelectEmoteCommand command)
+        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
         {
-            backpackEventBus.SendEmoteSelect(emote);
-            command.EndAction?.Invoke();
+            selectEmoteCts = selectEmoteCts.SafeRestart();
+            SelectEmoteAsync(command, selectEmoteCts.Token).Forget();
         }
+
+        private async UniTaskVoid SelectEmoteAsync(BackpackSelectEmoteCommand command, CancellationToken ct)
+        {
+            try
+            {
+                if (emoteStorage.TryGetElement(command.Id, out IEmote cached) && cached.Model.Succeeded)
+                {
+                    backpackEventBus.SendEmoteSelect(cached);
+                    return;
+                }
+
+                using var pointerScope = ListPool<URN>.Get(out var pointers);
+                using var resultScope = ListPool<IEmote>.Get(out var emotes);
+                pointers.Add(command.Id);
+                await emotesProvider.GetMetadataByPointersAsync(pointers, ct, emotes);
+                ct.ThrowIfCancellationRequested();
+
+                if (emotes.Count == 1)
+                    backpackEventBus.SendEmoteSelect(emotes[0]);
+                else
+                    ReportHub.LogWarning(emoteReportData, $"Couldn't fetch metadata for emote {command.Id}");
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, emoteReportData); }
+            finally { command.EndAction?.Invoke(); }
+        }
+
+        private void OnBackpackSectionChanged(BackpackSections section)
+        {
+            if (section != BackpackSections.Emotes)
+                CancelEmoteSelection();
+        }
+
+        private void CancelEmoteSelection() =>
+            selectEmoteCts.SafeCancelAndDispose();
 
         private void HandleHideCommand(BackpackHideCommand command)
         {

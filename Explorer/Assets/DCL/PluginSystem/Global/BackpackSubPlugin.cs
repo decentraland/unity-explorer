@@ -240,7 +240,7 @@ namespace DCL.PluginSystem.Global
                 ownedNftFilter
             );
 
-            var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
+            var emoteGridController = new BackpackEmoteGridController(emoteView, backpackCommandBus, backpackEventBus, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
                 sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage, ownedNftFilter);
 
             var emotesController = new EmotesController(emoteView,

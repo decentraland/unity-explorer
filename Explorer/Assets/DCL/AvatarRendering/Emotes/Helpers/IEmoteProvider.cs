@@ -1,10 +1,15 @@
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmoteProvider : IElementsProvider<ITrimmedEmote, IEmote, IEmoteProvider.OwnedEmotesRequestOptions>
     {
+        UniTask GetMetadataByPointersAsync(IReadOnlyCollection<URN> pointers, CancellationToken ct, List<IEmote> results);
+
         public readonly struct OrderOperation
         {
             public readonly string By;
@@ -25,13 +30,15 @@ namespace DCL.AvatarRendering.Emotes
             public readonly OrderOperation? OrderOperation;
             public readonly string? Name;
             public readonly bool? IncludeAmount;
+            public readonly bool PropagateErrors;
 
             public OwnedEmotesRequestOptions(int? pageNum,
                 int? pageSize,
                 URN? collectionId,
                 OrderOperation? orderOperation,
                 string? name,
-                bool? includeAmount = null)
+                bool? includeAmount = null,
+                bool propagateErrors = false)
             {
                 this.PageNum = pageNum;
                 this.PageSize = pageSize;
@@ -39,6 +46,7 @@ namespace DCL.AvatarRendering.Emotes
                 this.OrderOperation = orderOperation;
                 this.Name = name;
                 this.IncludeAmount = includeAmount;
+                this.PropagateErrors = propagateErrors;
             }
         }
     }

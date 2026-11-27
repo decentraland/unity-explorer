@@ -7,6 +7,7 @@ using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -22,7 +23,6 @@ namespace DCL.AvatarRendering.Emotes
 
         private readonly World world;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly List<(string, string)> requestParameters = new ();
 
         public EcsEmoteProvider(World world,
             IWeb3IdentityCache web3IdentityCache)
@@ -39,7 +39,8 @@ namespace DCL.AvatarRendering.Emotes
             bool needsBuilderAPISigning = false
         )
         {
-            requestParameters.Clear();
+            // Each intention keeps its parameters until the ECS request completes.
+            var requestParameters = new List<(string, string)>(7);
             requestParameters.Add((IElementsProviderQueryParams.TRIMMED, "true"));
 
             if (requestOptions.PageNum.HasValue)
@@ -70,16 +71,27 @@ namespace DCL.AvatarRendering.Emotes
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
-            var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
+            var promise = OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            try { promise = await promise.ToUniTaskAsync(world, cancellationToken: ct); }
+            catch (OperationCanceledException)
+            {
+                promise.ForgetLoading(world);
+                throw;
+            }
 
             ct.ThrowIfCancellationRequested();
 
-            if (promise.Result == null) return (results, 0);
-            if (!promise.Result.HasValue) return (results, 0);
-            if (!promise.Result!.Value.Succeeded) return (results, 0);
+            var response = promise.Result!.Value;
+            if (!response.Succeeded)
+            {
+                if (requestOptions.PropagateErrors)
+                    throw response.Exception!;
 
-            results.AddRange(promise.Result.Value.Asset.Emotes);
-            return (results, promise.Result.Value.Asset.TotalAmount);
+                return (results, 0);
+            }
+
+            results.AddRange(response.Asset.Emotes);
+            return (results, response.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(
@@ -89,15 +101,36 @@ namespace DCL.AvatarRendering.Emotes
             List<IEmote>? output = null)
         {
             output ??= new List<IEmote>();
+            await ResolvePointersAsync(EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds), ct, output);
+            return output;
+        }
 
+        public async UniTask GetMetadataByPointersAsync(IReadOnlyCollection<URN> pointers, CancellationToken ct, List<IEmote> results)
+        {
+            using var intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(default, pointers, metadataOnly: true);
+            await ResolvePointersAsync(intention, ct, results);
+        }
+
+        private async UniTask ResolvePointersAsync(GetEmotesByPointersIntention intention, CancellationToken ct, List<IEmote> output)
+        {
             output.Clear();
-
-            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
             var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            try { promise = await promise.ToUniTaskAsync(world, cancellationToken: ct); }
+            catch (OperationCanceledException) when (intention.MetadataOnly)
+            {
+                if (promise.TryConsume(world, out var completed))
+                {
+                    if (completed.Succeeded)
+                        completed.Asset.ConsumeEmotes().Dispose();
+                }
+                else
+                    promise.ForgetLoading(world);
+
+                throw;
+            }
 
             if (!promise.Result.HasValue)
-                return output;
+                return;
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception!;
@@ -107,8 +140,6 @@ namespace DCL.AvatarRendering.Emotes
             output.AddRange(emotes.Value);
             foreach (var emote in output)
                 emote.PopulateTrimmedModel();
-
-            return output;
         }
     }
 }

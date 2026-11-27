@@ -64,6 +64,7 @@ namespace DCL.Backpack.CharacterPreview
                     rotateEnabled = true;
                     panEnabled = true;
                     zoomEnabled = true;
+                    emotePreviewCancellationToken.SafeCancelAndDispose();
                     StopEmotes();
                     break;
                 case BackpackSections.Emotes:
@@ -209,22 +210,19 @@ namespace DCL.Backpack.CharacterPreview
             {
                 URN urn = emote.GetUrn().Shorten();
 
-                // An avatar with an empty emote wheel never received an equip, so the set does not exist yet
                 previewAvatarModel.Emotes ??= new HashSet<URN>();
-
-                // Ensure assets are loaded for the emote
-                if (previewAvatarModel.Emotes.Add(urn))
+                if (!previewAvatarModel.Emotes.Contains(urn))
                 {
-                    try { await ShowLoadingSpinnerAndUpdateAvatarAsync(ct); }
-                    catch (OperationCanceledException) { }
-                    finally
-                    {
-                        // Remove the emote so it stays original
-                        previewAvatarModel.Emotes.Remove(urn);
-                    }
+                    // Preview against a copy so overlapping selections cannot change the equipped wheel.
+                    CharacterPreviewAvatarModel model = previewAvatarModel;
+                    model.Emotes = new HashSet<URN>(previewAvatarModel.Emotes);
+                    model.Emotes.Add(urn);
+                    try { await ShowLoadingSpinnerAndUpdateAvatarAsync(model, ct); }
+                    catch (OperationCanceledException) { return; }
                 }
 
-                PlayEmote(urn);
+                if (!ct.IsCancellationRequested)
+                    PlayEmote(urn);
             }
 
             emotePreviewCancellationToken = emotePreviewCancellationToken.SafeRestart();

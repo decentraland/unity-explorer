@@ -38,6 +38,7 @@ namespace DCL.CharacterPreview
         private readonly bool isPreviewPlatformActive;
         private readonly Func<bool> isPlayingEmoteDelegate;
 
+        private int spinnerRequest;
         private bool initialized;
         private bool containerActive;
         private CancellationTokenSource? updateModelCancellationToken;
@@ -142,6 +143,7 @@ namespace DCL.CharacterPreview
 
         public virtual void Dispose()
         {
+            spinnerRequest++;
             initialized = false;
             previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
@@ -309,6 +311,7 @@ namespace DCL.CharacterPreview
 
         public void OnBeforeShow()
         {
+            spinnerRequest++;
             EnableSpinner();
         }
 
@@ -338,6 +341,7 @@ namespace DCL.CharacterPreview
         /// <param name="triggerOnHideBusEvent">True for keeping the rest of preview controllers informed about this hiding.</param>
         public virtual void OnHide(bool triggerOnHideBusEvent = true)
         {
+            spinnerRequest++;
             if (initialized)
             {
                 updateModelCancellationToken.SafeCancelAndDispose();
@@ -390,13 +394,19 @@ namespace DCL.CharacterPreview
             }
         }
 
-        protected async UniTask ShowLoadingSpinnerAndUpdateAvatarAsync(CancellationToken ct)
+        protected UniTask ShowLoadingSpinnerAndUpdateAvatarAsync(CancellationToken ct) =>
+            ShowLoadingSpinnerAndUpdateAvatarAsync(previewAvatarModel, ct);
+
+        protected async UniTask ShowLoadingSpinnerAndUpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct)
         {
+            int request = ++spinnerRequest;
             GameObject spinner = EnableSpinner();
-
-            await UpdateAvatarAsync(previewAvatarModel, ct);
-
-            DisableSpinner(spinner);
+            try { await UpdateAvatarAsync(model, ct); }
+            finally
+            {
+                if (request == spinnerRequest && spinner != null)
+                    DisableSpinner(spinner);
+            }
         }
 
         private void DisableSpinner(GameObject spinner)
