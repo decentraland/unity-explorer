@@ -87,9 +87,11 @@ namespace DCL.Lobby
 
         [field: Header("Window Snow")]
         [field: Tooltip("Same size as the backdrop, white where the view outside a window shows; snow falls only there. Empty turns the snow off")]
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: SerializeField] public Texture2D? WindowMask { get; private set; }
 
         [field: Tooltip("Tileable snowflakes on black: red is each flake's centre, green the glow around it")]
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         [field: SerializeField] public Texture2D? SnowTexture { get; private set; }
 
         [field: Tooltip("Colour of the flake centres; alpha is their strength")]
