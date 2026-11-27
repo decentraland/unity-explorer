@@ -18,6 +18,7 @@ using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
 using SceneRunner.Debugging.Hub;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -62,6 +63,9 @@ namespace DCL.McpServer.Systems
 
         private readonly SceneLogBuffer logBuffer;
 
+        /// <summary>Tools other plugins contribute (the locomotion recorder's), registered after the server's own.</summary>
+        private readonly IReadOnlyList<McpTool> additionalTools;
+
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
 
@@ -85,7 +89,8 @@ namespace DCL.McpServer.Systems
             UiAutomationServices uiAutomation,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            IReadOnlyList<McpTool> additionalTools)
         {
             port = appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
                    && int.TryParse(portValue, out int parsedPort)
@@ -109,6 +114,7 @@ namespace DCL.McpServer.Systems
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.additionalTools = additionalTools;
 
             logBuffer = new SceneLogBuffer();
             diagnosticsContainer.AddReportSink(logBuffer);
@@ -163,8 +169,12 @@ namespace DCL.McpServer.Systems
                           .Add(new UiSetTextTool(uiAutomation))
                           .Add(new UiScrollTool(uiAutomation))
                           .Add(new UiDragTool(uiAutomation))
-                          .Add(new UiHoverTool(uiAutomation))
-                          .Build();
+                          .Add(new UiHoverTool(uiAutomation));
+
+            foreach (McpTool tool in additionalTools)
+                toolsRegistry.Add(tool);
+
+            toolsRegistry.Build();
 
             server = new McpHttpServer(toolsRegistry, port, PORT_ATTEMPTS);
             serverCts = serverCts.SafeRestart();

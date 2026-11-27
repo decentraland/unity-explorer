@@ -7,6 +7,7 @@ using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.BadgesAPIService;
 using DCL.Browser;
+using DCL.CharacterMotion.LocomotionRecorder;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -29,6 +30,7 @@ using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.MarketplaceCredits.Purchase.Names;
+using DCL.McpServer.Core;
 using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -1005,6 +1007,18 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
+            // The locomotion recorder (debug only) is wanted by its launch flags or, with the MCP server on, by its MCP tools.
+            LocomotionRecorderPlugin? locomotionRecorderPlugin = null;
+
+            if (appArgs.HasDebugFlag())
+            {
+                bool launchedForRecorder = LocomotionRecorderOptions.TryCreate(appArgs, out LocomotionRecorderOptions? locomotionRecorderOptions);
+
+                if (launchedForRecorder || FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+                    locomotionRecorderPlugin = new LocomotionRecorderPlugin(locomotionRecorderOptions, debugBuilder, staticContainer.LoadingStatus, staticContainer.ScenesCache,
+                        staticContainer.RealmData);
+            }
+
             bool syntheticInputEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer);
 
 #if ALTTESTER
@@ -1046,8 +1060,12 @@ namespace Global.Dynamic
                         uiAutomation,
                         coroutineRunner,
                         globalWorld,
-                        localSceneDevelopment));
+                        localSceneDevelopment,
+                        locomotionRecorderPlugin?.CreateMcpTools() ?? Array.Empty<McpTool>()));
             }
+
+            if (locomotionRecorderPlugin != null)
+                globalPlugins.Add(locomotionRecorderPlugin);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
