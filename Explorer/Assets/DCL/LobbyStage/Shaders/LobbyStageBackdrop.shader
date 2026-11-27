@@ -91,13 +91,19 @@ Shader "DCL/Lobby/StageBackdrop"
             {
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
 
-                half mask = SAMPLE_TEXTURE2D(_WindowMask, sampler_WindowMask, input.uv).r;
-                float2 snowUV = float2(input.uv.x * _SnowParams.z, input.uv.y) * _SnowParams.y;
-                half2 snow = saturate((SnowLayer(snowUV, 1.6, _SnowParams.x * 0.6, 0.37) * 0.6) + SnowLayer(snowUV, 1.0, _SnowParams.x, 0.0)) * mask;
+                // Uniform across the draw, so presets without snow skip the mask, the snow reads and the trig
+                UNITY_BRANCH
+                if (max(_SnowColor.a, _SnowGlowColor.a) > 0.0)
+                {
+                    half mask = SAMPLE_TEXTURE2D(_WindowMask, sampler_WindowMask, input.uv).r;
+                    float2 snowUV = float2(input.uv.x * _SnowParams.z, input.uv.y) * _SnowParams.y;
+                    half2 snow = saturate((SnowLayer(snowUV, 1.6, _SnowParams.x * 0.6, 0.37) * 0.6) + SnowLayer(snowUV, 1.0, _SnowParams.x, 0.0)) * mask;
 
-                // The glow tints what is behind the flake, then the centre lays the core colour on top
-                color.rgb = lerp(color.rgb, _SnowGlowColor.rgb, snow.y * _SnowGlowColor.a);
-                color.rgb = lerp(color.rgb, _SnowColor.rgb, snow.x * _SnowColor.a);
+                    // The glow tints what is behind the flake, then the centre lays the core colour on top
+                    color.rgb = lerp(color.rgb, _SnowGlowColor.rgb, snow.y * _SnowGlowColor.a);
+                    color.rgb = lerp(color.rgb, _SnowColor.rgb, snow.x * _SnowColor.a);
+                }
+
                 return half4(color.rgb, 1.0);
             }
             ENDHLSL

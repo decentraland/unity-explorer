@@ -253,6 +253,9 @@ namespace DCL.Lobby
             }
             else
             {
+                // The block keeps the previous preset's values, so its snow textures are released here rather than kept referenced
+                backdropProperties.SetTexture(WINDOW_MASK, Texture2D.blackTexture);
+                backdropProperties.SetTexture(SNOW_MAP, Texture2D.blackTexture);
                 backdropProperties.SetColor(SNOW_COLOR, Color.clear);
                 backdropProperties.SetColor(SNOW_GLOW_COLOR, Color.clear);
             }
