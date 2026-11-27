@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c3d55383a43e86b45058c0bd01c53fe, type: 3}
+  m_Name: Holidays_26
+  m_EditorClassIdentifier: 
+  <Backdrop>k__BackingField: {fileID: 2800000, guid: c377f91981a04b7c9280f11136d19068, type: 3}
+  <BlendScreenHeight>k__BackingField: 0.341
+  <BlendDepth>k__BackingField: 4.85
+  <BlendHardness>k__BackingField: 0.3
+  <ImageBelowBlend>k__BackingField: 0.588
+  <FloorColor>k__BackingField: {r: 0.8867924, g: 0.37057978, b: 0.2216981, a: 1}
+  <SpotColor>k__BackingField: {r: 0.35, g: 0.18, b: 0.08, a: 1}
+  <ColorSampleBand>k__BackingField: 0.2
+  <MistEnabled>k__BackingField: 0
+  <MistColor>k__BackingField: {r: 1, g: 0.6, b: 0.3, a: 0.25}
+  <DustEnabled>k__BackingField: 1
+  <DustColor>k__BackingField: {r: 1, g: 0.79, b: 0.42, a: 0.45}
+  <LightRotation>k__BackingField: {x: 35, y: 120, z: 0}
+  <LightColor>k__BackingField: {r: 1, g: 0.78, b: 0.52, a: 1}
+  <LightIntensity>k__BackingField: 2
+  <VignetteIntensity>k__BackingField: 0.8
+  <VignetteSmoothness>k__BackingField: 1
+  <VignetteColor>k__BackingField: {r: 0.227, g: 0.024, b: 0.047, a: 1}
+  <VignetteMaskCenter>k__BackingField: {x: 0.5, y: 0.16}
+  <VignetteMaskRadii>k__BackingField: {x: 0.27, y: 0.65, z: 0.3}
+  <VignetteMaskSoftness>k__BackingField: 0.43
+  <WindowMask>k__BackingField: {fileID: 2800000, guid: ba9d0a57cc154888b6e0097998900e38, type: 3}
+  <SnowTexture>k__BackingField: {fileID: 2800000, guid: 634de0e91e8d4679a6dbf11241cef458, type: 3}
+  <SnowColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.95}
+  <SnowGlowColor>k__BackingField: {r: 0.55, g: 0.75, b: 1, a: 0.6}
+  <SnowSpeed>k__BackingField: 0.02
+  <SnowTiling>k__BackingField: 1.5
+  <SnowWind>k__BackingField: 0.012
+  <Props>k__BackingField:
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: f2cb60b81a294f11813cdb62d0c2d267, type: 3}
+    <Position>k__BackingField: {x: -2.06, y: 0, z: -2.63}
+    <Rotation>k__BackingField: {x: 0, y: 25.98, z: 0}
+    <Scale>k__BackingField: {x: 1.3, y: 1.06, z: 1.5}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 0f9e933552f5419197ce2878c1e1af0e, type: 3}
+    <Position>k__BackingField: {x: 1.62, y: 0, z: -0.55}
+    <Rotation>k__BackingField: {x: 0, y: -20, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 078e704930de4163bb00e366d4585b01, type: 3}
+    <Position>k__BackingField: {x: -1.62, y: 0, z: -0.5}
+    <Rotation>k__BackingField: {x: 0, y: 25, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 651f3a9263e443948d5df75a73d0a17e, type: 3}
+    <Position>k__BackingField: {x: 1.05, y: 0, z: -1.2}
+    <Rotation>k__BackingField: {x: 0, y: 10, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 5fc6c63c82d448789aac7e7ab5c89d9f, type: 3}
+    <Position>k__BackingField: {x: -1.34, y: -0.21, z: -1.25}
+    <Rotation>k__BackingField: {x: 0, y: 30, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 0d219b1a526b4646bfd3ee3aa6daebae, type: 3}
+    <Position>k__BackingField: {x: -1.2, y: -0.18, z: -1}
+    <Rotation>k__BackingField: {x: 0, y: -15, z: 0}
+    <Scale>k__BackingField: {x: 0.8, y: 0.8, z: 0.8}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: bde3cca487d84ea8b670541c6607289a, type: 3}
+    <Position>k__BackingField: {x: 1.18, y: -0.02, z: -0.17}
+    <Rotation>k__BackingField: {x: 0, y: 50, z: 0}
+    <Scale>k__BackingField: {x: 0.9, y: 0.9, z: 0.9}
+  - <Prefab>k__BackingField: {fileID: 919132149155446097, guid: 34ab4e89641547bfb7134dcfa6684003, type: 3}
+    <Position>k__BackingField: {x: 0.7, y: 0, z: -1.35}
+    <Rotation>k__BackingField: {x: 0, y: -25, z: 0}
+    <Scale>k__BackingField: {x: 0.7, y: 0.7, z: 0.7}
+  - <Prefab>k__BackingField: {fileID: 4203124320245819563, guid: bd0cadf6e6aa46b5907e8cc4d4d05440, type: 3}
+    <Position>k__BackingField: {x: 2.66, y: 0, z: -2.55}
+    <Rotation>k__BackingField: {x: 0, y: -56.9, z: 0}
+    <Scale>k__BackingField: {x: 1.1, y: 1.1, z: 1.1}
+  - <Prefab>k__BackingField: {fileID: 5565271181952268228, guid: c020499a6aac49cebdc0eb70254ceb46, type: 3}
+    <Position>k__BackingField: {x: -2.81, y: 1.09, z: -1.92}
+    <Rotation>k__BackingField: {x: 0, y: 0, z: 0}
+    <Scale>k__BackingField: {x: 1, y: 1, z: 1}

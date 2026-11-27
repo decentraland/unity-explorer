@@ -22,6 +22,11 @@ namespace DCL.Lobby
         private static readonly int MASK_CENTER = Shader.PropertyToID("_MaskCenter");
         private static readonly int MASK_RADIUS = Shader.PropertyToID("_MaskRadius");
         private static readonly int MASK_SOFTNESS = Shader.PropertyToID("_MaskSoftness");
+        private static readonly int WINDOW_MASK = Shader.PropertyToID("_WindowMask");
+        private static readonly int SNOW_MAP = Shader.PropertyToID("_SnowMap");
+        private static readonly int SNOW_COLOR = Shader.PropertyToID("_SnowColor");
+        private static readonly int SNOW_GLOW_COLOR = Shader.PropertyToID("_SnowGlowColor");
+        private static readonly int SNOW_PARAMS = Shader.PropertyToID("_SnowParams");
 
         [SerializeField] private Renderer backdrop = null!;
         [SerializeField] private Renderer floor = null!;
@@ -236,6 +241,24 @@ namespace DCL.Lobby
 
             if (background != null)
                 backdropProperties.SetTexture(BASE_MAP, background);
+
+            // The mask is drawn for the preset's own image, so an overriding background never gets snow in the wrong place
+            if (backgroundOverride == null && preset.WindowMask != null && preset.SnowTexture != null)
+            {
+                backdropProperties.SetTexture(WINDOW_MASK, preset.WindowMask);
+                backdropProperties.SetTexture(SNOW_MAP, preset.SnowTexture);
+                backdropProperties.SetColor(SNOW_COLOR, preset.SnowColor);
+                backdropProperties.SetColor(SNOW_GLOW_COLOR, preset.SnowGlowColor);
+                backdropProperties.SetVector(SNOW_PARAMS, new Vector4(preset.SnowSpeed, preset.SnowTiling, (float)preset.WindowMask.width / preset.WindowMask.height, preset.SnowWind));
+            }
+            else
+            {
+                // The block keeps the previous preset's values, so its snow textures are released here rather than kept referenced
+                backdropProperties.SetTexture(WINDOW_MASK, Texture2D.blackTexture);
+                backdropProperties.SetTexture(SNOW_MAP, Texture2D.blackTexture);
+                backdropProperties.SetColor(SNOW_COLOR, Color.clear);
+                backdropProperties.SetColor(SNOW_GLOW_COLOR, Color.clear);
+            }
 
             backdrop.SetPropertyBlock(backdropProperties);
 

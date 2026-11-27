@@ -85,6 +85,30 @@ namespace DCL.Lobby
 
         [field: SerializeField, Range(0.01f, 1f)] public float VignetteMaskSoftness { get; private set; } = 0.5f;
 
+        [field: Header("Window Snow")]
+        [field: Tooltip("Same size as the backdrop, white where the view outside a window shows; snow falls only there. Empty turns the snow off")]
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: SerializeField] public Texture2D? WindowMask { get; private set; }
+
+        [field: Tooltip("Tileable snowflakes on black: red is each flake's centre, green the glow around it")]
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        [field: SerializeField] public Texture2D? SnowTexture { get; private set; }
+
+        [field: Tooltip("Colour of the flake centres; alpha is their strength")]
+        [field: SerializeField] public Color SnowColor { get; private set; } = new (1f, 1f, 1f, 0.95f);
+
+        [field: Tooltip("Colour of the glow around each flake; alpha is its strength")]
+        [field: SerializeField] public Color SnowGlowColor { get; private set; } = new (0.55f, 0.75f, 1f, 0.6f);
+
+        [field: Tooltip("Fall speed, in backdrop heights per second")]
+        [field: SerializeField, Min(0f)] public float SnowSpeed { get; private set; } = 0.02f;
+
+        [field: Tooltip("How many times the snowflake tile repeats along the backdrop height; higher gives smaller flakes")]
+        [field: SerializeField, Min(0.1f)] public float SnowTiling { get; private set; } = 1.5f;
+
+        [field: Tooltip("Sideways drift, in backdrop heights per second; positive blows to the right, gusts vary it around this value")]
+        [field: SerializeField] public float SnowWind { get; private set; } = 0.01f;
+
         [field: Header("Props")]
         [field: SerializeField] public LobbyStageProp[] Props { get; private set; } = Array.Empty<LobbyStageProp>();
 

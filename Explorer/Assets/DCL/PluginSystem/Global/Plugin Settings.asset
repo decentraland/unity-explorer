@@ -1198,6 +1198,13 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+        - Name: Holidays 2026
+          Preset:
+            m_AssetGUID: e95a82fac1d946efbfd00cf0da1b68e5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
         <AvatarSettings>k__BackingField:
           <IntroEmoteURN>k__BackingField: wave
           <FlavourEmotes>k__BackingField:
