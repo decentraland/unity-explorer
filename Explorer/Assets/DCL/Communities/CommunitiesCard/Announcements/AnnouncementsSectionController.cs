@@ -96,7 +96,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             base.Reset();
         }
 
-        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
+        protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
         {
             if (communityData == null)
                 return 0;
@@ -106,16 +106,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
-            {
-                currentAnnouncementsFetchData.PageNumber--;
                 return 0;
-            }
 
             if (!response.Success)
             {
-                currentAnnouncementsFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_ANNOUNCEMENTS_FETCH_ERROR_MESSAGE));
-                return currentAnnouncementsFetchData.TotalToFetch;
+                return null;
             }
 
             if (currentAnnouncementsFetchData.PageNumber == 1 && isCreationAllowed)

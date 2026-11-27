@@ -201,7 +201,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             base.Reset();
         }
 
-        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
+        protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
         {
             int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
@@ -218,9 +218,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (!response.Success)
             {
-                placesFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
-                return placesFetchData.TotalToFetch;
+                return null;
             }
 
             await ownerNames.LoadAsync(response.Value.Data, ct);
@@ -246,8 +245,6 @@ namespace DCL.Communities.CommunitiesCard.Places
                 int loadedPages = placesFetchData.TotalFetched / PAGE_SIZE;
                 if (sameVisit || (loadedPages > 0 && placesFetchData.PageNumber == loadedPages))
                     return;
-
-                placesFetchData.PageNumber = loadedPages;
             }
 
             communityData = community;

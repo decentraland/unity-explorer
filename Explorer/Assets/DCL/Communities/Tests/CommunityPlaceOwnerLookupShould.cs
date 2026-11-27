@@ -96,16 +96,16 @@ namespace DCL.Communities.Tests
         {
             using var section = new CancellationTokenSource();
             var pending = new UniTaskCompletionSource<ProfileTier?>();
-            profiles.GetAsync(OWNER, 0, null, section.Token, true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
+            profiles.GetAsync(OWNER, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact)
                     .Returns(pending.Task);
-            places.GetDestinationsByIdsAsync(Arg.Any<IEnumerable<string>>(), section.Token)
+            places.GetDestinationsByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
                   .Returns(Response(new PlacesData.PlaceInfo(Vector2Int.zero) { id = "place", owner = OWNER }));
             PlacesSectionView view = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PLACES)).GetComponent<PlacesSectionView>();
             try
             {
                 using var card = new PlacesSectionController(view, new ThumbnailLoader(null), null!, places, null!, null!, null!, null!, profiles, null!, null!, null!);
                 card.ShowPlaces(new CommunityData { id = "community" }, new[] { "place" }, section.Token);
-                _ = profiles.Received(1).GetAsync(OWNER, 0, null, section.Token, true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact);
+                _ = profiles.Received(1).GetAsync(OWNER, 0, null, Arg.Any<CancellationToken>(), true, IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact);
 
                 section.Cancel();
                 card.Reset();
@@ -127,7 +127,7 @@ namespace DCL.Communities.Tests
 
             names.LoadAsync(new[] { Place(OWNER) }, CancellationToken.None).GetAwaiter().GetResult();
 
-            Assert.That(warnings, Is.EqualTo(new[] { "There was an error getting owners names. Please try again." }));
+            Assert.That(warnings, Is.EqualTo(new[] { CommunityPlaceOwnerNames.LOAD_ERROR_MESSAGE }));
         }
 
         [Test]

@@ -42,7 +42,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
         private readonly IFriendsService? friendsService;
@@ -57,16 +56,16 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private GetCommunityResponse.CommunityData? communityData;
 
-        private int requestAmount;
+        private int? cachedRequestsToJoinCount;
 
-        private int RequestsAmount
+        private int? requestsToJoinCount
         {
-            get => requestAmount;
+            get => cachedRequestsToJoinCount;
 
             set
             {
-                requestAmount = value;
-                view.UpdateRequestsCounter(value);
+                cachedRequestsToJoinCount = value;
+                view.UpdateRequestsCounter(value.GetValueOrDefault());
             }
         }
 
@@ -181,7 +180,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                RequestsAmount--;
+                requestsToJoinCount--;
                 currentSectionFetchData.Items.Remove(profile);
 
                 if (intention == InviteRequestIntention.accepted)
@@ -209,8 +208,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid WaitForFetchAsync()
             {
-                await UniTask.WaitUntil(() => isFetching == false, cancellationToken: cancellationToken);
-                SwitchSection();
+                var panel = panelLifecycleTask;
+                await UniTask.WaitUntil(() => !isFetching || panel != panelLifecycleTask, cancellationToken: cancellationToken);
+                if (panel == panelLifecycleTask)
+                    SwitchSection();
             }
 
             void SwitchSection()
@@ -219,7 +220,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 SectionFetchData<ICommunityMemberData> sectionData = currentSectionFetchData;
 
-                if (sectionData.PageNumber == 0)
+                if (sectionData.TotalFetched == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
                 else
                     view.SetEmptyStateActive(sectionData.Items.Count == 0);
@@ -451,7 +452,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             panelLifecycleTask?.TrySetResult();
 
-            RequestsAmount = 0;
+            panelLifecycleTask = null;
+            requestsToJoinCount = null;
 
             base.Reset();
         }
@@ -518,7 +520,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             RefreshGrid(true);
         }
 
-        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
+        protected override async UniTask<int?> FetchDataAsync(CancellationToken ct)
         {
             SectionFetchData<ICommunityMemberData> membersData = currentSectionFetchData;
 
@@ -538,18 +540,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             ct.ThrowIfCancellationRequested();
 
             if (!response.Success)
-            {
-                //If the request fails, we restore the previous page number in order to retry the same request next time
-                membersData.PageNumber--;
-                return membersData.TotalToFetch;
-            }
+                return null;
 
             foreach (var member in response.Value.members)
                 if (!membersData.Items.Contains(member))
                     membersData.Items.Add(member);
 
             if (currentSection == MembersListView.MemberListSections.Requests)
-                RequestsAmount = response.Value.total;
+                requestsToJoinCount = response.Value.total;
 
             return response.Value.total;
         }
@@ -565,39 +563,44 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 try
                 {
+                    bool sameVisit = cancellationToken == ct;
                     cancellationToken = ct;
 
-                    if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
+                    if (communityData is not null && community.id.Equals(communityData.Value.id))
+                    {
+                        if (sameVisit) return;
+                    }
+                    else
+                    {
+                        communityData = community;
+                        view.SetSectionButtonsActive(community.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
+                        panelLifecycleTask = new UniTaskCompletionSource();
+                        view.SetCommunityData(community, panelLifecycleTask.Task);
+                    }
 
-                    communityData = community;
-                    view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
-                    panelLifecycleTask = new UniTaskCompletionSource();
-                    view.SetCommunityData(community, panelLifecycleTask!.Task);
+                    if (currentSectionFetchData.TotalFetched == 0)
+                        tasks.Add(FetchNewDataAsync(ct));
 
-                    tasks.Add(FetchNewDataAsync(ct));
-
-                    if (community.privacy == CommunityPrivacy.@private && communityData?.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
+                    if (requestsToJoinCount == null && community.privacy == CommunityPrivacy.@private && community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator)
                         tasks.Add(FetchRequestsToJoinAsync(ct));
 
                     await UniTask.WhenAll(tasks);
                 }
 
-                // Fixes https://github.com/decentraland/unity-explorer/issues/6317
-                catch (OperationCanceledException) { communityData = null; }
+                catch (OperationCanceledException) { }
                 finally { ListPool<UniTask>.Release(tasks); }
             }
 
             async UniTask FetchRequestsToJoinAsync(CancellationToken ctkn)
             {
-                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
+                var panel = panelLifecycleTask;
+                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(community.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
                                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                ct.ThrowIfCancellationRequested();
-
-                if (!response.Success)
+                if (ctkn.IsCancellationRequested || panel != panelLifecycleTask || !response.Success)
                     return;
 
-                RequestsAmount = response.Value.total;
+                requestsToJoinCount = response.Value.total;
             }
         }
 
