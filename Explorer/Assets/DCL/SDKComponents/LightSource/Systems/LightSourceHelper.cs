@@ -49,16 +49,16 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         /// <summary>
-        /// Finds the LOD index for the given squared distance to the player.
+        /// Finds the LOD index for the given squared distance to the camera.
         /// Returns -1 when the distance is beyond the last LOD entry.
         /// </summary>
-        public static int FindLOD(List<LightSourceSettings.LodSettings> lodSettings, float distanceToPlayerSq)
+        public static int FindLOD(List<LightSourceSettings.LodSettings> lodSettings, float distanceToCameraSq)
         {
             for (var lod = 0; lod < lodSettings.Count; lod++)
             {
                 float distance = lodSettings[lod].Distance;
 
-                if (distanceToPlayerSq < distance * distance)
+                if (distanceToCameraSq < distance * distance)
                     return lod;
             }
 

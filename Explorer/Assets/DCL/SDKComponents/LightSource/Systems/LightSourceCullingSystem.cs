@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Character;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -17,7 +17,9 @@ using UnityEngine;
 namespace DCL.SDKComponents.LightSource.Systems
 {
     /// <summary>
-    /// Handles culling light sources based on their distance to the player.
+    /// Handles culling light sources based on their distance to the camera.
+    /// The camera, not the avatar, is the reference: it is what gets rendered, so when a scene moves the camera
+    /// away from the avatar (virtual camera, cinematic shot) the lights around what the player sees keep priority.
     /// </summary>
     [UpdateInGroup(typeof(LightSourcesGroup))]
     [UpdateAfter(typeof(LightSourceApplyPropertiesSystem))]
@@ -26,20 +28,20 @@ namespace DCL.SDKComponents.LightSource.Systems
     public partial class LightSourceCullingSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
-        private readonly ICharacterObject characterObject;
+        private readonly IExposedCameraData exposedCameraData;
         private readonly LightSourceSettings settings;
 
-        public LightSourceCullingSystem(World world, ISceneData sceneData, ICharacterObject characterObject, LightSourceSettings settings) : base(world)
+        public LightSourceCullingSystem(World world, ISceneData sceneData, IExposedCameraData exposedCameraData, LightSourceSettings settings) : base(world)
         {
             this.sceneData = sceneData;
-            this.characterObject = characterObject;
+            this.exposedCameraData = exposedCameraData;
             this.settings = settings;
         }
 
         protected override void Update(float t)
         {
             ClearLightSourceCullingQuery(World);
-            ComputeDistanceToPlayerQuery(World);
+            ComputeDistanceToCameraQuery(World, exposedCameraData.WorldPosition.Value);
             SortAndCullLightSources();
         }
 
@@ -55,11 +57,11 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ComputeDistanceToPlayer(in TransformComponent transform, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void ComputeDistanceToCamera([Data] in Vector3 cameraPosition, in TransformComponent transform, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
-            lightSourceComponent.DistanceToPlayerSq = math.distancesq(transform.Transform.position, characterObject.Position);
+            lightSourceComponent.DistanceToCameraSq = math.distancesq(transform.Transform.position, cameraPosition);
         }
 
         private void SortAndCullLightSources()
@@ -68,7 +70,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             var lightData = new NativeList<LightData>(CAPACITY, Allocator.Temp);
             CollectActiveLightSourcesQuery(World, ref lightData);
 
-            SortByDistanceToPlayer(lightData, out var ranks);
+            SortByDistanceToCamera(lightData, out var ranks);
 
             int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * settings.SceneLimitations.LightsPerParcel), settings.SceneLimitations.HardMaxLightCount);
             CullLightSourcesQuery(World, ranks, maxLightCount);
@@ -81,28 +83,28 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             // Lights that fall into a culled LOD are excluded from the ranking so they do not occupy budget slots.
-            if (IsLodCulled(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayerSq)) return;
+            if (IsLodCulled(pbLightSource.TypeCase, lightSourceComponent.DistanceToCameraSq)) return;
 
             lightSourceComponent.Index = lightData.Length;
-            lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayerSq));
+            lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToCameraSq));
         }
 
-        private bool IsLodCulled(PBLightSource.TypeOneofCase typeCase, float distanceToPlayerSq)
+        private bool IsLodCulled(PBLightSource.TypeOneofCase typeCase, float distanceToCameraSq)
         {
             if (!LightSourceHelper.TryGetLodSettings(settings, typeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return false;
 
-            return LightSourceHelper.FindLOD(lodSettings, distanceToPlayerSq) < 0;
+            return LightSourceHelper.FindLOD(lodSettings, distanceToCameraSq) < 0;
         }
 
         [BurstCompile]
-        private static void SortByDistanceToPlayer(in NativeList<LightData> lightData, out NativeArray<(int, int)> ranks)
+        private static void SortByDistanceToCamera(in NativeList<LightData> lightData, out NativeArray<(int, int)> ranks)
         {
             int lightCount = lightData.Length;
 
             var sortedIndices = new NativeArray<int>(lightCount, Allocator.Temp);
             for (var i = 0; i < lightCount; i++) sortedIndices[i] = i;
 
-            sortedIndices.Sort(new DistanceToPlayerComparer(lightData));
+            sortedIndices.Sort(new DistanceToCameraComparer(lightData));
 
             ranks = new NativeArray<(int, int)>(lightCount, Allocator.Temp);
 
@@ -156,17 +158,17 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
         }
 
-        #region DistanceToPlayerComparer
+        #region DistanceToCameraComparer
 
         /// <summary>
-        /// Sorts lights from closest to more distant to the player position.
+        /// Sorts lights from closest to more distant to the camera position.
         /// It actually sorts an array of indices. Each index IDs a light in the light data collection.
         /// </summary>
-        private struct DistanceToPlayerComparer : IComparer<int>
+        private struct DistanceToCameraComparer : IComparer<int>
         {
             public NativeList<LightData> LightData;
 
-            public DistanceToPlayerComparer(NativeList<LightData> lightData)
+            public DistanceToCameraComparer(NativeList<LightData> lightData)
             {
                 LightData = lightData;
             }
