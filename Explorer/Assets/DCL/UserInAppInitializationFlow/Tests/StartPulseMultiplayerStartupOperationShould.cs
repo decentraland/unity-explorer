@@ -21,6 +21,8 @@ namespace DCL.UserInAppInitializationFlow.Tests
     {
         private const string REALM = "main";
         private const string ENTITY_ID = "b64-L2hvbWUvZGV2L215LXNjZW5l";
+        private const string ONLINE_COMMS_ADAPTER = "fixed-adapter:signed-login:https://example.com/worlds/x/comms";
+        private const string OFFLINE_COMMS_ADAPTER = "fixed-adapter:offline:offline";
 
         private World world = null!;
         private IPulseMultiplayerService service = null!;
@@ -47,6 +49,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             selfProfile = Substitute.For<SelfProfile>();
             realmData = Substitute.For<IRealmData>();
             realmData.RealmName.Returns(REALM);
+            realmData.CommsAdapter.Returns(ONLINE_COMMS_ADAPTER);
             entityIdSource = Substitute.For<ILocalSceneEntityIdSource>();
             cts = new CancellationTokenSource();
         }
@@ -161,8 +164,43 @@ namespace DCL.UserInAppInitializationFlow.Tests
             profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
         }
 
+        [Test]
+        public async Task SkipConnectionWithoutDeactivatingWhenCommsOffline()
+        {
+            // Arrange — a single-player realm
+            var activation = new PulseActivation(true);
+            realmData.CommsAdapter.Returns(OFFLINE_COMMS_ADAPTER);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert — Pulse stays active so it can connect once the user leaves the offline realm.
+            _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            Assert.IsTrue(activation.IsActive);
+            profilePropagation.DidNotReceive().PropagateIfNewVersion(Arg.Any<Profile>());
+        }
+
+        [Test]
+        public async Task SkipConnectionWithoutResolvingTheLocalSceneRealmWhenCommsOffline()
+        {
+            // Arrange — a single-player realm in local scene development
+            var activation = new PulseActivation(true);
+            realmData.CommsAdapter.Returns(OFFLINE_COMMS_ADAPTER);
+            var pulseRealm = new PulseRealm(realmData, entityIdSource);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
+
+            // Act
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
+
+            // Assert
+            _ = entityIdSource.DidNotReceive().EntityAsync(Arg.Any<CancellationToken>());
+            _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
+            Assert.IsTrue(activation.IsActive);
+        }
+
         private StartPulseMultiplayerStartupOperation Operation(PulseActivation activation, PulseRealm pulseRealm) =>
-            new (service, profilePropagation, selfProfile, activation, pulseRealm);
+            new (service, profilePropagation, selfProfile, activation, pulseRealm, realmData);
 
         private IStartupOperation.Params MakeParams()
         {
