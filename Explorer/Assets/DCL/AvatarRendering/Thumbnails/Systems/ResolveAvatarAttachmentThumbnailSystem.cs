@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
 
             if (promise.TryConsume(World, out var result))
             {
-                wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
+                wearable.ThumbnailAssetResult = result.Succeeded ? result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL) : FailedDownload();
                 World.Destroy(entity);
             }
         }
@@ -61,9 +61,15 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
 
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
+                wearable.ThumbnailAssetResult = result.Succeeded ? result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL) : FailedDownload();
                 World.Destroy(entity);
             }
         }
+
+        /// <summary>
+        ///     The result of a failed download: not a success, carrying the default thumbnail to show in its place.
+        /// </summary>
+        private static StreamableLoadingResult<SpriteData>.WithFallback FailedDownload() =>
+            StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
     }
 }
