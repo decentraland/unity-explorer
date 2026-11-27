@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.Exceptions;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
@@ -36,12 +37,16 @@ namespace DCL.AvatarRendering.Wearables
 
             CancellationTokenSource promiseCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-            LoadThumbnailsUtils.CreateThumbnailABPromise(
+            bool startedLoad = LoadThumbnailsUtils.CreateThumbnailABPromise(
                 urlsSource,
                 avatarAttachment,
                 world,
                 PartitionComponent.TOP_PRIORITY,
                 promiseCts);
+
+            // Only the caller that started the load may end it. A caller that joined a load in flight, or found nothing to download, never uses its token source
+            if (!startedLoad)
+                promiseCts.Dispose();
 
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(timeoutMs);
@@ -54,11 +59,20 @@ namespace DCL.AvatarRendering.Wearables
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                // Timed out: cancel the underlying promise so the resolver cleans it up. Failed releases
-                // concurrent waiters with the default thumbnail and keeps the resolver from stamping Cancelled over the slot.
-                promiseCts.Cancel();
-                avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
+                // Timed out. The caller that started the load cancels its promise so the resolver cleans it up; Failed releases
+                // the callers that joined it with the default thumbnail and keeps the resolver from stamping Cancelled over the slot.
+                if (startedLoad)
+                {
+                    promiseCts.Cancel();
+                    avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
+                }
 
+                return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
+            }
+            catch (ThumbnailLoadFailedException)
+            {
+                // The caller that started the load this caller joined cancelled it: show the default thumbnail, as for a failed download
+                ct.ThrowIfCancellationRequested();
                 return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
             }
         }

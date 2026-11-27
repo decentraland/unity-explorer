@@ -187,7 +187,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public async Task GiveTrimmedAttachmentsTheDefaultThumbnailWhenTheDownloadFails()
         {
-            // Trimmed attachments use IThumbnailAttachment's own WaitForThumbnailAsync, unlike FakeWearable
             FakeTrimmedWearable trimmed = NewTrimmedWearable();
 
             UniTask<Sprite> attempt = provider.GetAsync(trimmed, CancellationToken.None);

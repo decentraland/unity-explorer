@@ -21,7 +21,11 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
     {
         public static readonly SpriteData DEFAULT_THUMBNAIL = new (new TextureData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
 
-        public static void CreateThumbnailABPromise(
+        /// <summary>
+        ///     Starts loading the attachment's thumbnail unless its slot is already resolved or loading.
+        /// </summary>
+        /// <returns>True when this call created the promise, which then uses the given cancellation token source</returns>
+        public static bool CreateThumbnailABPromise(
             IDecentralandUrlsSource realmData,
             IThumbnailAttachment attachment,
             World world,
@@ -31,7 +35,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
         {
             // Means that it has already been resolved, or we have an un-cancelled promise running that we want to keep
             if (attachment.ThumbnailAssetResult != null)
-                return;
+                return false;
 
             // it's a signal that the promise is already created, similar to `WearableAssets`
             attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
@@ -41,7 +45,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             if (thumbnailPath.IsEmpty())
             {
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_THUMBNAIL);
-                return;
+                return false;
             }
 
             AssetBundleManifestVersion? assetBundleManifestVersion = attachment.GetAssetBundleManifestVersion();
@@ -55,7 +59,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 );
 
                 CreateThumbnailTexturePromise(realmData, thumbnailPath, attachment, world, partitionComponent, cancellationTokenSource);
-                return;
+                return true;
             }
 
             var promise = AssetBundlePromise.Create(
@@ -71,6 +75,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
+            return true;
         }
 
         private static void CreateThumbnailTexturePromise(

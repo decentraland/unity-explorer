@@ -48,7 +48,8 @@ namespace DCL.AvatarRendering.Loading.Components
         string? GetEntityId();
 
         /// <summary>
-        ///     Waits for the thumbnail to be loaded. A failed load returns the fallback it carries; a cancelled one throws.
+        ///     Waits for the thumbnail to be loaded. A failed load returns the fallback it carries; a cancelled one has no sprite and throws
+        ///     <see cref="ThumbnailLoadFailedException" />. Every attachment shares this contract.
         /// </summary>
         async UniTask<Sprite> WaitForThumbnailAsync(int checkInterval, CancellationToken ct)
         {
