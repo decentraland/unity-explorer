@@ -55,6 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape
         protected override void Update(float t)
         {
             DestroyAvatarQuery(World);
+            DestroyNotInstantiatedAvatarQuery(World);
         }
 
         protected override void OnDispose()
@@ -72,8 +73,6 @@ namespace DCL.AvatarRendering.AvatarShape
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
         }
 
-        //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
-        //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
         [Query]
         private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase, ref AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
@@ -82,16 +81,31 @@ namespace DCL.AvatarRendering.AvatarShape
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
         }
 
+        // Releases deleted avatars that have no skinning: deleted mid-load, or stripped after a failed re-instantiation.
+        [Query]
+        [None(typeof(AvatarCustomSkinningComponent), typeof(AvatarTransformMatrixComponent))]
+        private void DestroyNotInstantiatedAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase, ref DeleteEntityIntention deleteEntityIntention)
+        {
+            deleteEntityIntention.DeferDeletion = false;
+            avatarShapeComponent.WearablePromise.ForgetLoading(World);
+            ReleaseAvatarBase(avatarBase);
+        }
+
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
             ref AvatarCustomSkinningComponent skinningComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase)
         {
-            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
-                mainPlayerAvatarBaseProxy.ReleaseObject();
-
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
+
+            ReleaseAvatarBase(avatarBase);
+        }
+
+        private void ReleaseAvatarBase(AvatarBase avatarBase)
+        {
+            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
+                mainPlayerAvatarBaseProxy.ReleaseObject();
 
             avatarPoolRegistry.Release(avatarBase);
         }
