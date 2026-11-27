@@ -205,7 +205,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             FakeWearable wearable = NewWearable();
 
-            UniTask<Sprite> starting = provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
+            // Long enough that the timeout cannot fire before the second caller joins; otherwise that caller starts its own load and waits out the default timeout
+            UniTask<Sprite> starting = provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 100);
+            Assert.That(starting.Status, Is.EqualTo(UniTaskStatus.Pending), "The starting caller must still be loading when the second caller joins");
+
             UniTask<Sprite> joined = provider.GetAsync(wearable, CancellationToken.None);
             await starting;
 
