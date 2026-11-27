@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
@@ -24,6 +25,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using Object = UnityEngine.Object;
@@ -165,7 +167,7 @@ namespace DCL.Passport.Modules
 
             WearablePromise equippedWearablesPromise = WearablePromise.Create(
                 world,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
+                CreateEquippedWearablesIntention(profile.Avatar),
                 PartitionComponent.TOP_PRIORITY);
 
             EmotePromise equippedEmotesPromise = EmotePromise.Create(
@@ -175,6 +177,28 @@ namespace DCL.Passport.Modules
 
             getEquippedItemsCts = getEquippedItemsCts.SafeRestart();
             AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, profile, getEquippedItemsCts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Requests only the wearable definitions: the equipped-item cards do not use the 3D assets.
+        /// </summary>
+        internal static GetWearablesByPointersIntention CreateEquippedWearablesIntention(Avatar avatar) =>
+            WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender, dtoOnly: true);
+
+        /// <summary>
+        ///     Leaves only the wearables shown as cards: not the body shape, and not hidden by another equipped wearable.
+        /// </summary>
+        internal static void KeepWearableCards(Avatar avatar, List<IWearable> wearables)
+        {
+            HashSet<string> hiddenCategories = Wearable.ComposeHiddenCategories(avatar.BodyShape, wearables, avatar.ForceRender);
+
+            for (int i = wearables.Count - 1; i >= 0; i--)
+            {
+                string category = wearables[i].GetCategory();
+
+                if (category == WearableCategories.Categories.BODY_SHAPE || hiddenCategories.Contains(category))
+                    wearables.RemoveAt(i);
+            }
         }
 
         private void SetGridAsLoading()
@@ -191,18 +215,11 @@ namespace DCL.Passport.Modules
         {
             ClearLoadingItems();
 
-            HashSet<string> hidesList = Wearable.ComposeHiddenCategories(profile.Avatar.BodyShape, gridWearables, profile.Avatar.ForceRender);
+            KeepWearableCards(profile.Avatar, gridWearables);
             var elementsAddedInTheGird = 0;
 
             foreach (IWearable wearable in gridWearables)
             {
-                if (wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
-                    continue;
-
-                string wearableCategory = wearable.GetCategory();
-                if (hidesList.Contains(wearableCategory))
-                    continue;
-
                 string rarityName = wearable.GetRarity();
                 Sprite raritySprite = rarityBackgrounds.GetTypeImage(rarityName);
                 Color rarityColor = rarityColors.GetColor(rarityName);
