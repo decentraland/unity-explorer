@@ -49,8 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         /// <summary>
-        ///     An SDK avatar removed by its scene while its wearables are still loading has an AvatarBase but no skinning.
-        ///     Its deferred deletion must still be lifted, otherwise the entity and its nametag are never released.
+        ///     An avatar deleted before its wearables are instantiated has its deferred deletion lifted, its wearable promise forgotten and its AvatarBase released.
         /// </summary>
         [Test]
         public void ReleaseAvatarDeletedBeforeInstantiation()
@@ -72,6 +71,27 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.IsFalse(world.Get<DeleteEntityIntention>(entity).DeferDeletion);
             avatarPool.Received(1).Release(avatarBase);
             Assert.IsFalse(world.IsAlive(wearablePromise.Entity));
+        }
+
+        [Test]
+        public void KeepLoadingAvatarThatIsNotDeleted()
+        {
+            // Arrange
+            AvatarBase avatarBase = avatarGameObject.AddComponent<AvatarBase>();
+
+            var wearablePromise = WearablePromise.Create(world,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, Array.Empty<string>(), Array.Empty<string>()),
+                PartitionComponent.TOP_PRIORITY);
+
+            var avatarShape = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, Color.white, Color.white, Color.white);
+            world.Create(avatarShape, avatarBase);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            avatarPool.DidNotReceive().Release(Arg.Any<AvatarBase>());
+            Assert.IsTrue(world.IsAlive(wearablePromise.Entity));
         }
     }
 }

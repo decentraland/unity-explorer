@@ -81,27 +81,31 @@ namespace DCL.AvatarRendering.AvatarShape
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
         }
 
-        // AvatarBase is attached before the wearables are instantiated, so an avatar deleted mid-load carries no skinning.
-        // Its deferred deletion is lifted here as well, otherwise the entity, its AvatarBase and its nametag would never be released.
+        // Releases deleted avatars that have no skinning: deleted mid-load, or stripped after a failed re-instantiation.
         [Query]
         [None(typeof(AvatarCustomSkinningComponent), typeof(AvatarTransformMatrixComponent))]
         private void DestroyNotInstantiatedAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase, ref DeleteEntityIntention deleteEntityIntention)
         {
             deleteEntityIntention.DeferDeletion = false;
             avatarShapeComponent.WearablePromise.ForgetLoading(World);
-            avatarPoolRegistry.Release(avatarBase);
+            ReleaseAvatarBase(avatarBase);
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
             ref AvatarCustomSkinningComponent skinningComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase)
         {
-            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
-                mainPlayerAvatarBaseProxy.ReleaseObject();
-
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
+
+            ReleaseAvatarBase(avatarBase);
+        }
+
+        private void ReleaseAvatarBase(AvatarBase avatarBase)
+        {
+            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
+                mainPlayerAvatarBaseProxy.ReleaseObject();
 
             avatarPoolRegistry.Release(avatarBase);
         }
