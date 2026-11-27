@@ -31,18 +31,9 @@ namespace ECS.Unity.Materials
         {
             switch (materialComponent.Status)
             {
-                // Dereference the loaded material
-                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result is { } material:
+                // Dereference the loaded textures
+                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied:
                     ReleaseTextures(ref materialComponent, false);
-
-                    if (material)
-                        destroyMaterial(in materialComponent.Data, material);
-                    else
-                        ReportHub.LogWarning(ReportCategory.MATERIALS, $"Entity {entity} held an already destroyed material, another entity released the same instance");
-
-                    // Detach so a component that outlives its release cannot hand the pooled material to a second owner
-                    materialComponent.Result = null;
-                    materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
                     break;
 
                 // Abort the loading process of the textures
@@ -50,6 +41,19 @@ namespace ECS.Unity.Materials
                     ReleaseTextures(ref materialComponent, true);
                     break;
             }
+
+            // A reloading material still holds the instance from its previous load
+            if (materialComponent.Result is { } material)
+            {
+                if (material)
+                    destroyMaterial(in materialComponent.Data, material);
+                else
+                    ReportHub.LogWarning(ReportCategory.MATERIALS, $"Entity {entity} held an already destroyed material, another entity released the same instance");
+            }
+
+            // Detach so a component that outlives its release cannot hand the pooled material to a second owner
+            materialComponent.Result = null;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
 
             void ReleaseTextures(ref MaterialComponent mat, bool forgetLoading)
             {
