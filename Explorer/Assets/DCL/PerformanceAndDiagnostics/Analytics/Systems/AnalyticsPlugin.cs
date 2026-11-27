@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private OutfitsAnalytics outfitsAnalytics;
         private GiftAnalytics giftAnalytics;
         private HomeMarkerAnalytics homeMarkerAnalytics;
+        private MinimapAnalytics? minimapAnalytics;
         private NearbyVoiceChatAnalytics? nearbyVoiceChatAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
@@ -86,6 +87,7 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Dispose();
             playerParcelChangedAnalytics.Dispose();
             nearbyVoiceChatAnalytics?.Dispose();
+            minimapAnalytics?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -96,6 +98,7 @@ namespace DCL.PluginSystem.Global
             outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
             giftAnalytics = new GiftAnalytics(analytics, eventBus);
             homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
+            minimapAnalytics = new MinimapAnalytics(analytics, eventBus);
 
             if (nearbyVoiceStateModel != null && nearbyMuteService != null)
                 nearbyVoiceChatAnalytics = new NearbyVoiceChatAnalytics(analytics, nearbyVoiceStateModel, nearbyMuteService);

@@ -62,6 +62,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string JUMP_IN = "map_jump_in";
         }
 
+        public static class Minimap
+        {
+            public const string EXPANDED = "minimap_expanded";
+            public const string COLLAPSED = "minimap_collapsed";
+            public const string MAP_CLICKED = "minimap_map_clicked";
+            public const string FAVORITE_CLICKED = "minimap_favorite_clicked";
+            public const string CONTEXT_MENU_OPENED = "minimap_context_menu_opened";
+            public const string SKYBOX_WIDGET_TOGGLED = "minimap_skybox_widget_toggled";
+            public const string SKYBOX_TIME_CHANGED = "minimap_skybox_time_changed";
+            public const string SKYBOX_DAY_CYCLE_TOGGLED = "minimap_skybox_day_cycle_toggled";
+        }
+
         public static class Badges
         {
             public const string WALKED_DISTANCE = "walked_distance";

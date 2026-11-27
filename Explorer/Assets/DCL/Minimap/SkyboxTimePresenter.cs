@@ -6,6 +6,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Minimap
 {
@@ -22,8 +23,10 @@ namespace DCL.Minimap
         private readonly CanvasGroup sectionCanvasGroup;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IEventBus analyticsEventBus;
 
         private bool isRestrictedByScene;
+        private bool isSyncingToggleFromSettings;
         private int lastTotalMinutes = -1;
 
         public SkyboxTimePresenter(
@@ -32,7 +35,8 @@ namespace DCL.Minimap
             TMP_Text timeText,
             CanvasGroup sectionCanvasGroup,
             SkyboxSettingsAsset skyboxSettings,
-            ISceneRestrictionBusController sceneRestrictionBusController)
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IEventBus analyticsEventBus)
         {
             this.timeProgressionToggle = timeProgressionToggle;
             this.timeSlider = timeSlider;
@@ -40,6 +44,7 @@ namespace DCL.Minimap
             this.sectionCanvasGroup = sectionCanvasGroup;
             this.skyboxSettings = skyboxSettings;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.analyticsEventBus = analyticsEventBus;
 
             skyboxSettings.DayCycleChanged += OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
@@ -63,8 +68,12 @@ namespace DCL.Minimap
             timeSlider.onValueChanged.RemoveListener(OnTimeSliderValueChanged);
         }
 
-        private void OnDayCycleChanged(bool isEnabled) =>
+        private void OnDayCycleChanged(bool isEnabled)
+        {
+            isSyncingToggleFromSettings = true;
             timeProgressionToggle.isOn = isEnabled;
+            isSyncingToggleFromSettings = false;
+        }
 
         private void OnTimeOfDayChanged(float time)
         {
@@ -86,6 +95,8 @@ namespace DCL.Minimap
             skyboxSettings.UIOverrideTimeOfDayNormalized = sliderValue;
 
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME, sliderValue);
+
+            analyticsEventBus.Publish(new MinimapEvents.SkyboxTimeChanged(sliderValue));
         }
 
         /// <summary>
@@ -95,6 +106,9 @@ namespace DCL.Minimap
         private void OnTimeProgressionToggleChanged(bool isOn)
         {
             if (isRestrictedByScene) return;
+
+            if (!isSyncingToggleFromSettings)
+                analyticsEventBus.Publish(new MinimapEvents.SkyboxDayCycleToggled(isOn));
 
             timeSlider.interactable = !isOn;
             skyboxSettings.IsUIControlled = !isOn;
