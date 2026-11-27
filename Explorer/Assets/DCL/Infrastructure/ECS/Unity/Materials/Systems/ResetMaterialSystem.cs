@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 namespace ECS.Unity.Materials.Systems
 {
     /// <summary>
-    ///     Resets material to the default one if the component was deleted
+    ///     Resets material to the default one if the component was deleted or updated to an empty one (neither Pbr nor Unlit set)
     /// </summary>
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateBefore(typeof(ApplyMaterialSystem))]
@@ -33,6 +33,22 @@ namespace ECS.Unity.Materials.Systems
         {
             ResetPrimitiveMeshQuery(World);
             ResetGltfNodeQuery(World);
+            ResetPrimitiveMeshWithEmptyMaterialQuery(World);
+            ResetGltfNodeWithEmptyMaterialQuery(World);
+        }
+
+        [Query]
+        private void ResetPrimitiveMeshWithEmptyMaterial(Entity entity, ref PBMaterial material, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
+        {
+            if (material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+                ResetPrimitiveMesh(entity, ref meshRendererComponent, ref materialComponent);
+        }
+
+        [Query]
+        private void ResetGltfNodeWithEmptyMaterial(Entity entity, ref PBMaterial material, ref GltfNode gltfNode, ref MaterialComponent materialComponent)
+        {
+            if (material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+                ResetGltfNode(entity, ref gltfNode, ref materialComponent);
         }
 
         [Query]

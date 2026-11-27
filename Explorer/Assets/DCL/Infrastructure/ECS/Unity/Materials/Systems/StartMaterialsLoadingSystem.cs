@@ -60,6 +60,10 @@ namespace ECS.Unity.Materials.Systems
 
             material.IsDirty = false;
 
+            // An update to a material with neither Pbr nor Unlit set reverts the renderer to its default; ResetMaterialSystem handles it
+            if (material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+                return;
+
             MaterialData materialData = CreateMaterialData(in material);
 
             if (MaterialDataEqualityComparer.Equals(in materialComponent.Data, in materialData))
