@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     assetBundleManifestVersion: assetBundleManifestVersion,
                     expectedAssetType: typeof(Texture2D),
                     permittedSources: AssetSource.All,
-                    parentEntityID: attachment.GetEntityId(),
+                    parentEntityID: attachment.GetEntityId() ?? string.Empty,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);
