@@ -180,7 +180,7 @@ namespace DCL.Passport.Modules
         }
 
         /// <summary>
-        ///     The cards need only the definitions. Waiting for the 3D assets would drop every wearable whose asset fails to load.
+        ///     Requests only the wearable definitions: the equipped-item cards do not use the 3D assets.
         /// </summary>
         internal static GetWearablesByPointersIntention CreateEquippedWearablesIntention(Avatar avatar) =>
             WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender, dtoOnly: true);
