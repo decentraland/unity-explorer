@@ -24,6 +24,7 @@ namespace DCL.Passport.Tests
     public class EquippedItemsPassportModuleControllerShould : UnitySystemTestBase<ResolveWearablePromisesSystem>
     {
         private const string SHIRT_URN = "urn:decentraland:off-chain:base-avatars:red_hoodie";
+        private const string HAT_URN = "urn:decentraland:off-chain:base-avatars:hat";
 
         private WearableStorage wearableStorage = null!;
 
@@ -58,7 +59,30 @@ namespace DCL.Passport.Tests
             result.Asset.Dispose();
         }
 
-        private IWearable AddDefinitionWithUnreachableAssets(string urn, string category) =>
+        [Test]
+        public void ListOnlyWearablesWithAModelForTheAvatarsBodyShape()
+        {
+            // Arrange: a profile saved by another client can keep a wearable that has no model for its body shape
+            AddDefinitionWithUnreachableAssets(BodyShape.MALE, WearableCategories.Categories.BODY_SHAPE);
+            AddDefinitionWithUnreachableAssets(SHIRT_URN, WearableCategories.Categories.UPPER_BODY, BodyShape.FEMALE);
+            IWearable hat = AddDefinitionWithUnreachableAssets(HAT_URN, WearableCategories.Categories.HAT);
+            var avatar = new Avatar(BodyShape.MALE, new HashSet<URN> { new (SHIRT_URN), new (HAT_URN) }, Color.white, Color.white, Color.white);
+
+            Entity request = world.Create(EquippedItemsPassportModuleController.CreateEquippedWearablesIntention(avatar),
+                (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
+
+            system.Update(0);
+            WearablesResolution resolution = world.Get<StreamableLoadingResult<WearablesResolution>>(request).Asset;
+
+            // Act
+            EquippedItemsPassportModuleController.KeepWearableCards(avatar, resolution.Wearables);
+
+            // Assert
+            CollectionAssert.AreEqual(new[] { hat }, resolution.Wearables);
+            resolution.Dispose();
+        }
+
+        private IWearable AddDefinitionWithUnreachableAssets(string urn, string category, string? bodyShape = null) =>
             wearableStorage.GetOrAddByDTO(new WearableDTO
             {
                 id = urn,
@@ -78,7 +102,7 @@ namespace DCL.Passport.Tests
                             {
                                 mainFile = "model.glb",
                                 contents = new[] { "model.glb" },
-                                bodyShapes = new[] { BodyShape.MALE.Value },
+                                bodyShapes = new[] { bodyShape ?? BodyShape.MALE.Value },
                                 overrideHides = Array.Empty<string>(),
                                 overrideReplaces = Array.Empty<string>(),
                             },

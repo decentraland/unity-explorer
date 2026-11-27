@@ -185,6 +185,22 @@ namespace DCL.Passport.Modules
         internal static GetWearablesByPointersIntention CreateEquippedWearablesIntention(Avatar avatar) =>
             WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender, dtoOnly: true);
 
+        /// <summary>
+        ///     Leaves only the wearables shown as cards: not the body shape, and not hidden by another equipped wearable.
+        /// </summary>
+        internal static void KeepWearableCards(Avatar avatar, List<IWearable> wearables)
+        {
+            HashSet<string> hiddenCategories = Wearable.ComposeHiddenCategories(avatar.BodyShape, wearables, avatar.ForceRender);
+
+            for (int i = wearables.Count - 1; i >= 0; i--)
+            {
+                string category = wearables[i].GetCategory();
+
+                if (category == WearableCategories.Categories.BODY_SHAPE || hiddenCategories.Contains(category))
+                    wearables.RemoveAt(i);
+            }
+        }
+
         private void SetGridAsLoading()
         {
             for (var i = 0; i < LOADING_ITEMS_POOL_DEFAULT_CAPACITY; i++)
@@ -199,18 +215,11 @@ namespace DCL.Passport.Modules
         {
             ClearLoadingItems();
 
-            HashSet<string> hidesList = Wearable.ComposeHiddenCategories(profile.Avatar.BodyShape, gridWearables, profile.Avatar.ForceRender);
+            KeepWearableCards(profile.Avatar, gridWearables);
             var elementsAddedInTheGird = 0;
 
             foreach (IWearable wearable in gridWearables)
             {
-                if (wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
-                    continue;
-
-                string wearableCategory = wearable.GetCategory();
-                if (hidesList.Contains(wearableCategory))
-                    continue;
-
                 string rarityName = wearable.GetRarity();
                 Sprite raritySprite = rarityBackgrounds.GetTypeImage(rarityName);
                 Color rarityColor = rarityColors.GetColor(rarityName);
