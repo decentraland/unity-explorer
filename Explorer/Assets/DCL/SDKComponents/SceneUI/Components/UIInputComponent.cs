@@ -19,6 +19,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             InputMapComponent.Kind.Shortcuts,
             InputMapComponent.Kind.Player,
             InputMapComponent.Kind.InWorldCamera,
+            InputMapComponent.Kind.VoiceChat,
             InputMapComponent.Kind.Submit,
         };
 

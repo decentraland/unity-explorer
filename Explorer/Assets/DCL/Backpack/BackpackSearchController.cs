@@ -37,10 +37,10 @@ namespace DCL.Backpack
         }
 
         private void RestoreInput(string text) =>
-            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Enable(InputMapComponent.BLOCK_WHILE_TYPING);
 
         private void DisableShortcutsInput(string text) =>
-            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
+            inputBlock.Disable(InputMapComponent.BLOCK_WHILE_TYPING);
 
         public void Clear()
         {
