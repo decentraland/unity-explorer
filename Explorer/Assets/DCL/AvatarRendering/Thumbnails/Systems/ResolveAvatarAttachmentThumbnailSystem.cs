@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -40,9 +41,9 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out var result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                wearable.ThumbnailAssetResult = result.Succeeded ? result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL) : FailedDownload();
+                wearable.ThumbnailAssetResult = ToThumbnail(result);
                 World.Destroy(entity);
             }
         }
@@ -64,6 +65,21 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
                 wearable.ThumbnailAssetResult = result.Succeeded ? result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL) : FailedDownload();
                 World.Destroy(entity);
             }
+        }
+
+        /// <summary>
+        ///     A bundle that loaded without a texture is a failed download too. No sprite keeps the reference its load took, so it is released here.
+        /// </summary>
+        private static StreamableLoadingResult<SpriteData>.WithFallback ToThumbnail(in StreamableLoadingResult<AssetBundleData> result)
+        {
+            if (!result.Succeeded)
+                return FailedDownload();
+
+            if (result.Asset!.TryToFullRectSpriteData(out SpriteData spriteData))
+                return new StreamableLoadingResult<SpriteData>.WithFallback(spriteData);
+
+            result.Asset.Dereference();
+            return FailedDownload();
         }
 
         /// <summary>

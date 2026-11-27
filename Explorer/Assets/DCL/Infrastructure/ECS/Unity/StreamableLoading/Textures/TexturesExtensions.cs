@@ -16,21 +16,24 @@ namespace ECS.StreamableLoading.Textures
             new (
                 result.Succeeded
                     ? new SpriteData(result.Asset!,
-                        result.Asset!.Asset.Match(video => fallback, tex2D => Sprite.Create(tex2D, new Rect(0, 0, result.Asset!.Asset.Width, result.Asset.Asset.Height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)))
+                        result.Asset!.Asset.Match(_ => fallback, tex2D => Sprite.Create(tex2D, new Rect(0, 0, result.Asset!.Asset.Width, result.Asset.Asset.Height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)))
                     : fallback);
 
-        public static StreamableLoadingResult<SpriteData>.WithFallback ToFullRectSpriteData(this StreamableLoadingResult<AssetBundleData> result, SpriteData fallback, int pixelsPerUnit = 50)
+        /// <summary>
+        ///     Creates a full-rect sprite from the texture the bundle holds. False when it holds none.
+        /// </summary>
+        public static bool TryToFullRectSpriteData(this AssetBundleData bundle, out SpriteData spriteData, int pixelsPerUnit = 50)
         {
-            if (result.Succeeded)
+            if (!bundle.TryGetAsset(out Texture2D texture))
             {
-                if (result.Asset!.TryGetAsset(out Texture2D sprite))
-                {
-                    return new StreamableLoadingResult<SpriteData>.WithFallback(new SpriteData(result.Asset!, Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
-                        VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)));
-                }
+                spriteData = default;
+                return false;
             }
 
-            return new StreamableLoadingResult<SpriteData>.WithFallback(fallback);
+            spriteData = new SpriteData(bundle, Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false));
+
+            return true;
         }
 
         /// <summary>

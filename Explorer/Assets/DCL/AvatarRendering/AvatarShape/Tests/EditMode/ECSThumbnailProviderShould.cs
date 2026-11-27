@@ -31,6 +31,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private static readonly QueryDescription THUMBNAIL_PROMISES = new QueryDescription().WithAll<IThumbnailAttachment, Promise>();
         private static readonly int[] NO_RETRY_DELAY = { 0 };
 
+        public enum AttachmentKind
+        {
+            Wearable,
+            TrimmedWearable,
+        }
+
         private World world = null!;
         private ECSThumbnailProvider provider = null!;
         private ResolveAvatarAttachmentThumbnailSystem resolver = null!;
@@ -147,15 +153,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void StoreAFailedBundleDownloadAsAFailureCarryingTheDefaultThumbnail()
         {
             FakeWearable wearable = NewWearable();
-            wearable.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
 
-            var promise = AssetBundlePromise.Create(world,
-                GetAssetBundleIntention.FromHash("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku_windows", AssetBundleManifestVersion.CreateManualManifest(), typeof(Texture2D)),
-                PartitionComponent.TOP_PRIORITY);
-
-            world.Create((IThumbnailAttachment)wearable, promise, (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
-            world.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception("Simulated aborted bundle download")));
-            resolver.Update(0);
+            ResolveBundleDownload(wearable, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, new Exception("Simulated aborted bundle download")));
 
             Assert.That(wearable.ThumbnailAssetResult!.Value.IsInitialized, Is.True);
             Assert.That(wearable.ThumbnailAssetResult!.Value.Succeeded, Is.False, "A failed bundle download must not be cached as a loaded thumbnail");
@@ -163,15 +162,32 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public void StoreABundleWithoutATextureAsAFailureCarryingTheDefaultThumbnail()
+        {
+            FakeWearable wearable = NewWearable();
+
+            ResolveBundleDownload(wearable, new StreamableLoadingResult<AssetBundleData>(LoadedBundleWithoutATexture()));
+
+            Assert.That(wearable.ThumbnailAssetResult!.Value.IsInitialized, Is.True);
+            Assert.That(wearable.ThumbnailAssetResult!.Value.Succeeded, Is.False, "A bundle that holds no texture must not be cached as a loaded thumbnail");
+            Assert.That(wearable.ThumbnailAssetResult!.Value.Asset.Sprite, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite));
+        }
+
+        [Test]
+        public void ReleaseABundleThatHoldsNoTexture()
+        {
+            FakeWearable wearable = NewWearable();
+            AssetBundleData emptyBundle = LoadedBundleWithoutATexture();
+
+            ResolveBundleDownload(wearable, new StreamableLoadingResult<AssetBundleData>(emptyBundle));
+
+            Assert.That(emptyBundle.CanBeDisposed(), Is.True, "The bundle reference taken on load must be released when no thumbnail keeps it");
+        }
+
+        [Test]
         public async Task GiveTrimmedAttachmentsTheDefaultThumbnailWhenTheDownloadFails()
         {
-            // Trimmed attachments use IThumbnailAttachment's own WaitForThumbnailAsync, unlike FakeWearable
-            var trimmed = new FakeTrimmedWearable(new TrimmedWearableDTO
-            {
-                id = "urn:decentraland:off-chain:base-avatars:red_hoodie",
-                thumbnail = "bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku",
-                metadata = new TrimmedWearableDTO.WearableMetadataDto { id = "urn:decentraland:off-chain:base-avatars:red_hoodie" },
-            });
+            FakeTrimmedWearable trimmed = NewTrimmedWearable();
 
             UniTask<Sprite> attempt = provider.GetAsync(trimmed, CancellationToken.None);
             ResolvePendingDownload(FailedDownload());
@@ -185,14 +201,58 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public async Task GiveWaitingCallersTheDefaultThumbnailWhenAnotherCallerTimesOut()
+        public async Task GiveJoinedCallersTheDefaultThumbnailWhenTheLoadTimesOut()
         {
             FakeWearable wearable = NewWearable();
 
-            UniTask<Sprite> waiting = provider.GetAsync(wearable, CancellationToken.None);
-            await provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
+            // Long enough that the timeout cannot fire before the second caller joins; otherwise that caller starts its own load and waits out the default timeout
+            UniTask<Sprite> starting = provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 100);
+            Assert.That(starting.Status, Is.EqualTo(UniTaskStatus.Pending), "The starting caller must still be loading when the second caller joins");
 
-            Assert.That(await waiting, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A caller sharing a timed-out load must get the default thumbnail, not a missing sprite");
+            UniTask<Sprite> joined = provider.GetAsync(wearable, CancellationToken.None);
+            await starting;
+
+            Assert.That(await joined, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A caller sharing a timed-out load must get the default thumbnail, not a missing sprite");
+        }
+
+        [Test]
+        public async Task LeaveASharedLoadRunningWhenAJoinedCallerTimesOut()
+        {
+            FakeWearable wearable = NewWearable();
+
+            UniTask<Sprite> starting = provider.GetAsync(wearable, CancellationToken.None);
+            Sprite joinedSprite = await provider.GetAsync(wearable, CancellationToken.None, timeoutMs: 1);
+
+            Assert.That(joinedSprite, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A joined caller that times out shows the default thumbnail");
+            Assert.That(wearable.ThumbnailAssetResult is { IsInitialized: false }, Is.True, "A joined caller's timeout must not end the load it joined");
+
+            ResolvePendingDownload(SucceededDownload());
+            Assert.That((await starting).texture, Is.SameAs(downloadedTexture), "The caller that started the load must still get the downloaded thumbnail");
+        }
+
+        [TestCase(AttachmentKind.Wearable)]
+        [TestCase(AttachmentKind.TrimmedWearable)]
+        public async Task GiveJoinedCallersTheDefaultThumbnailWhenTheStartingCallerCancelsTheLoad(AttachmentKind kind)
+        {
+            IThumbnailAttachment attachment = kind == AttachmentKind.Wearable ? NewWearable() : NewTrimmedWearable();
+            using var startingCallerLifetime = new CancellationTokenSource();
+
+            UniTask<Sprite> starting = provider.GetAsync(attachment, startingCallerLifetime.Token);
+            UniTask<Sprite> joined = provider.GetAsync(attachment, CancellationToken.None);
+
+            startingCallerLifetime.Cancel();
+            resolver.Update(0);
+            Assert.That(attachment.ThumbnailAssetResult is { Cancelled: true }, Is.True, "The resolver stamps the cancelled load on the shared slot");
+
+            try { await starting; }
+            catch (OperationCanceledException) { }
+
+            Sprite? sprite;
+
+            try { sprite = await joined; }
+            catch (ThumbnailLoadFailedException) { sprite = null; }
+
+            Assert.That(sprite, Is.SameAs(LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite), "A caller whose shared load another caller cancelled must get the default thumbnail");
         }
 
         [Test]
@@ -267,6 +327,24 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 },
             });
 
+        private static FakeTrimmedWearable NewTrimmedWearable() =>
+            new (new TrimmedWearableDTO
+            {
+                id = "urn:decentraland:off-chain:base-avatars:red_hoodie",
+                thumbnail = "bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku",
+                metadata = new TrimmedWearableDTO.WearableMetadataDto { id = "urn:decentraland:off-chain:base-avatars:red_hoodie" },
+            });
+
+        /// <summary>
+        ///     A bundle that loaded but holds no texture, carrying the reference that LoadSystemBase takes on a successful load.
+        /// </summary>
+        private static AssetBundleData LoadedBundleWithoutATexture()
+        {
+            var bundle = new AssetBundleData(null, Array.Empty<UnityEngine.Object>(), null, Array.Empty<AssetBundleData>());
+            bundle.AddReference();
+            return bundle;
+        }
+
         private static SpriteData NewSpriteData() =>
             new (new TextureData(Texture2D.whiteTexture), Sprite.Create(Texture2D.whiteTexture!, new Rect(0, 0, 1, 1), new Vector2()));
 
@@ -287,6 +365,22 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.That(pending, Is.Not.Null, "No thumbnail download is in flight");
 
             world.Add(pending!.Value.Entity, download);
+            resolver.Update(0);
+        }
+
+        /// <summary>
+        ///     Starts a thumbnail bundle download, completes it the way the loading pipeline does, then lets the real resolver system consume it.
+        /// </summary>
+        private void ResolveBundleDownload(IThumbnailAttachment attachment, StreamableLoadingResult<AssetBundleData> download)
+        {
+            attachment.ThumbnailAssetResult = new StreamableLoadingResult<SpriteData>.WithFallback();
+
+            var promise = AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku_windows", AssetBundleManifestVersion.CreateManualManifest(), typeof(Texture2D)),
+                PartitionComponent.TOP_PRIORITY);
+
+            world.Create(attachment, promise, (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Entity, download);
             resolver.Update(0);
         }
 
