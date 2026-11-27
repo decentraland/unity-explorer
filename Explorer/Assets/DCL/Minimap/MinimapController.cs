@@ -271,7 +271,7 @@ namespace DCL.Minimap
             viewInstance.skyboxButton.SetSelected(show);
             viewInstance.SetSkyboxWidgetVisible(show);
 
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxWidgetToggled, state: show));
+            analyticsEventBus.Publish(new MinimapEvents.SkyboxWidgetToggled(show));
         }
 
         private void OnRoomParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
@@ -311,7 +311,7 @@ namespace DCL.Minimap
 
         private void OnMinimapRendererButtonClicked()
         {
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.MapClicked));
+            analyticsEventBus.Publish(new MinimapEvents.MapClicked());
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
@@ -339,7 +339,7 @@ namespace DCL.Minimap
 
         private void ShowContextMenu()
         {
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.ContextMenuOpened));
+            analyticsEventBus.Publish(new MinimapEvents.ContextMenuOpened());
             SetInitialHomeToggleValue();
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
@@ -366,7 +366,7 @@ namespace DCL.Minimap
 
         private void OnFavoriteButtonClicked(bool value)
         {
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.FavoriteClicked, state: value));
+            analyticsEventBus.Publish(new MinimapEvents.FavoriteClicked(value));
             // Setting button for immediate graphic change.
             viewInstance!.favoriteButton.SetButtonState(value);
             favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
@@ -414,13 +414,13 @@ namespace DCL.Minimap
         // Only the user's clicks are tracked: SetMapExpanded is also driven by realm changes.
         private void ExpandMinimap()
         {
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.Expanded));
+            analyticsEventBus.Publish(new MinimapEvents.Expanded());
             SetMapExpanded(true);
         }
 
         private void CollapseMinimap()
         {
-            analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.Collapsed));
+            analyticsEventBus.Publish(new MinimapEvents.Collapsed());
             SetMapExpanded(false);
         }
 

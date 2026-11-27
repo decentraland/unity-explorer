@@ -1,35 +1,58 @@
 namespace DCL.Minimap
 {
+    /// <summary>
+    ///     Published on the event bus when the user interacts with the minimap.
+    /// </summary>
     public static class MinimapEvents
     {
-        public enum Action
+        public readonly struct Expanded { }
+
+        public readonly struct Collapsed { }
+
+        public readonly struct MapClicked { }
+
+        public readonly struct ContextMenuOpened { }
+
+        public readonly struct FavoriteClicked
         {
-            Expanded,
-            Collapsed,
-            MapClicked,
-            FavoriteClicked,
-            ContextMenuOpened,
-            SkyboxWidgetToggled,
-            SkyboxTimeChanged,
-            SkyboxDayCycleToggled,
+            public readonly bool IsFavorite;
+
+            public FavoriteClicked(bool isFavorite)
+            {
+                IsFavorite = isFavorite;
+            }
+        }
+
+        public readonly struct SkyboxWidgetToggled
+        {
+            public readonly bool IsOpen;
+
+            public SkyboxWidgetToggled(bool isOpen)
+            {
+                IsOpen = isOpen;
+            }
         }
 
         /// <summary>
-        ///     Published on the analytics event bus whenever the user interacts with the minimap.
-        ///     <see cref="State" /> carries the new boolean state for the actions that have one,
-        ///     <see cref="TimeOfDay" /> the normalized time of day for <see cref="Action.SkyboxTimeChanged" />.
+        ///     Published on every step of the time slider.
         /// </summary>
-        public readonly struct Interaction
+        public readonly struct SkyboxTimeChanged
         {
-            public readonly Action Action;
-            public readonly bool? State;
-            public readonly float? TimeOfDay;
+            public readonly float TimeOfDayNormalized;
 
-            public Interaction(Action action, bool? state = null, float? timeOfDay = null)
+            public SkyboxTimeChanged(float timeOfDayNormalized)
             {
-                Action = action;
-                State = state;
-                TimeOfDay = timeOfDay;
+                TimeOfDayNormalized = timeOfDayNormalized;
+            }
+        }
+
+        public readonly struct SkyboxDayCycleToggled
+        {
+            public readonly bool IsEnabled;
+
+            public SkyboxDayCycleToggled(bool isEnabled)
+            {
+                IsEnabled = isEnabled;
             }
         }
     }

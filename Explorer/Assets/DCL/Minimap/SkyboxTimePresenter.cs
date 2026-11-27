@@ -1,10 +1,8 @@
-using Cysharp.Threading.Tasks;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +16,6 @@ namespace DCL.Minimap
     public class SkyboxTimePresenter : IDisposable
     {
         private const int MINUTES_PER_HOUR = 60;
-        private const int TIME_CHANGED_REPORT_DEBOUNCE_MS = 1000;
 
         private readonly Toggle timeProgressionToggle;
         private readonly Slider timeSlider;
@@ -28,7 +25,6 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IEventBus analyticsEventBus;
 
-        private CancellationTokenSource? timeChangedReportCts;
         private bool isRestrictedByScene;
         private bool isSyncingToggleFromSettings;
         private int lastTotalMinutes = -1;
@@ -67,7 +63,6 @@ namespace DCL.Minimap
             skyboxSettings.DayCycleChanged -= OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
-            timeChangedReportCts.SafeCancelAndDispose();
 
             timeProgressionToggle.onValueChanged.RemoveListener(OnTimeProgressionToggleChanged);
             timeSlider.onValueChanged.RemoveListener(OnTimeSliderValueChanged);
@@ -101,20 +96,7 @@ namespace DCL.Minimap
 
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME, sliderValue);
 
-            ReportTimeChangedDebouncedAsync(sliderValue).Forget();
-        }
-
-        // The slider fires on every drag step, so only the value the user settles on is reported.
-        private async UniTaskVoid ReportTimeChangedDebouncedAsync(float time)
-        {
-            timeChangedReportCts = timeChangedReportCts.SafeRestart();
-
-            try
-            {
-                await UniTask.Delay(TIME_CHANGED_REPORT_DEBOUNCE_MS, cancellationToken: timeChangedReportCts.Token);
-                analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxTimeChanged, timeOfDay: time));
-            }
-            catch (OperationCanceledException) { }
+            analyticsEventBus.Publish(new MinimapEvents.SkyboxTimeChanged(sliderValue));
         }
 
         /// <summary>
@@ -126,7 +108,7 @@ namespace DCL.Minimap
             if (isRestrictedByScene) return;
 
             if (!isSyncingToggleFromSettings)
-                analyticsEventBus.Publish(new MinimapEvents.Interaction(MinimapEvents.Action.SkyboxDayCycleToggled, state: isOn));
+                analyticsEventBus.Publish(new MinimapEvents.SkyboxDayCycleToggled(isOn));
 
             timeSlider.interactable = !isOn;
             skyboxSettings.IsUIControlled = !isOn;
