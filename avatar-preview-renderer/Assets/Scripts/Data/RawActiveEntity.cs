@@ -28,6 +28,8 @@ namespace Data
             public string[] replaces = Array.Empty<string>();
             public string[] removesDefaultHiding = Array.Empty<string>();
             public bool loop; // For emotes only
+            // Absent means true.
+            public bool outlineCompatible = true;
 
             // A social emote's clips, ADR-287. JsonUtility fills an absent one with empty fields.
             public StartAnimation startAnimation;
@@ -99,6 +101,7 @@ namespace Data
                             hides = data.hides,
                             replaces = data.replaces,
                             removesDefaultHiding = data.removesDefaultHiding,
+                            outlineCompatible = data.outlineCompatible,
                             representations = data.representations.Select(r => new ActiveEntity.Metadata.Representation
                             {
                                 bodyShapes = r.bodyShapes,
