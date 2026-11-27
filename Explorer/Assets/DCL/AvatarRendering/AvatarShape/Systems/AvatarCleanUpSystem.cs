@@ -55,6 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape
         protected override void Update(float t)
         {
             DestroyAvatarQuery(World);
+            DestroyNotInstantiatedAvatarQuery(World);
         }
 
         protected override void OnDispose()
@@ -72,14 +73,23 @@ namespace DCL.AvatarRendering.AvatarShape
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
         }
 
-        //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
-        //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
         [Query]
         private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase, ref AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
         {
             deleteEntityIntention.DeferDeletion = false;
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
+        }
+
+        // AvatarBase is attached before the wearables are instantiated, so an avatar deleted mid-load carries no skinning.
+        // Its deferred deletion is lifted here as well, otherwise the entity, its AvatarBase and its nametag would never be released.
+        [Query]
+        [None(typeof(AvatarCustomSkinningComponent), typeof(AvatarTransformMatrixComponent))]
+        private void DestroyNotInstantiatedAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase, ref DeleteEntityIntention deleteEntityIntention)
+        {
+            deleteEntityIntention.DeferDeletion = false;
+            avatarShapeComponent.WearablePromise.ForgetLoading(World);
+            avatarPoolRegistry.Release(avatarBase);
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
