@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
@@ -24,6 +25,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using Object = UnityEngine.Object;
@@ -165,7 +167,7 @@ namespace DCL.Passport.Modules
 
             WearablePromise equippedWearablesPromise = WearablePromise.Create(
                 world,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
+                CreateEquippedWearablesIntention(profile.Avatar),
                 PartitionComponent.TOP_PRIORITY);
 
             EmotePromise equippedEmotesPromise = EmotePromise.Create(
@@ -176,6 +178,9 @@ namespace DCL.Passport.Modules
             getEquippedItemsCts = getEquippedItemsCts.SafeRestart();
             AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, profile, getEquippedItemsCts.Token).Forget();
         }
+
+        internal static GetWearablesByPointersIntention CreateEquippedWearablesIntention(Avatar avatar) =>
+            WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatar.BodyShape, avatar.Wearables, avatar.ForceRender);
 
         private void SetGridAsLoading()
         {

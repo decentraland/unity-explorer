@@ -6,7 +6,7 @@ namespace DCL.Passport.Modules
     public class EquippedItemsPassportModuleView : MonoBehaviour
     {
         [field: SerializeField]
-        public EquippedItemPassportFieldView equippedItemPrefab;
+        public EquippedItemPassportFieldView equippedItemPrefab = null!;
 
         [field: SerializeField]
         public RectTransform EquippedItemsContainer { get; private set; } = null!;
