@@ -83,7 +83,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 }
                 catch (Exception e)
                 {
-                    sceneExceptionsHandler.OnEngineException(e);
+                    ReportUnlessCancelled(e, ct);
 
                     // Returns empty signature in case of error
                     return new SignMessageResponse(hex, message, string.Empty);
@@ -133,7 +133,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 }
                 catch (Exception e)
                 {
-                    sceneExceptionsHandler.OnEngineException(e);
+                    ReportUnlessCancelled(e, ct);
 
                     return new SendEthereumMessageResponse
                     {
@@ -146,6 +146,15 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                     };
                 }
             }
+        }
+
+        // Dispose (scene unload) and a newer SignMessage cancel in-flight requests on purpose: not an engine fault (#10690)
+        private void ReportUnlessCancelled(Exception e, CancellationToken ct)
+        {
+            if (e is OperationCanceledException && ct.IsCancellationRequested)
+                return;
+
+            sceneExceptionsHandler.OnEngineException(e);
         }
     }
 }
