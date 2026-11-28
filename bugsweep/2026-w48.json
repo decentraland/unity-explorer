@@ -1,202 +1,202 @@
 {
- "status": "active",
- "prUrl": null,
- "requester": "U0ADNDHL1T7",
- "originChannel": "C0BB9H2CS5D",
- "since": "2026-11-14T12:01:57Z",
- "collectedAt": "2026-11-28T12:02:03Z",
- "groups": [
-  [
-   10674,
-   10697
+  "status": "active",
+  "prUrl": null,
+  "requester": "U0ADNDHL1T7",
+  "originChannel": "C0BB9H2CS5D",
+  "since": "2026-11-14T12:01:57Z",
+  "collectedAt": "2026-11-28T12:02:03Z",
+  "groups": [
+    [
+      10674,
+      10697
+    ]
+  ],
+  "issues": [
+    {
+      "number": 4894,
+      "status": "skipped",
+      "commit": null,
+      "note": "Backend (decentraland/metamorph), not client: the explorer does not decode GIFs; NFT GIFs are detected as video through the metamorph converter (LoadNFTTypeSystem HEAD on /convert -> video/*) and played by the media player as an MP4. metamorph ConverterService.ConvertFrames coalesces the GIF frames with ImageMagick and passes them to ffmpeg's concat input with no per-frame duration, so ffmpeg uses its 25 fps default and drops the GIF delays. 600 frames / 25 fps = 24 s, which matches QA's 24.1 s. The fix belongs in metamorph: write a concat list with each frame's AnimationDelay as its duration, or let ffmpeg read the GIF directly. Separate client observation: since #7780 the NftTypeResult URL is the raw image_url, so the video player opens the original URL rather than the converted MP4; worth a check by the media owners, but it does not change the frame timing. "
+    },
+    {
+      "number": 8721,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10704,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10688,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10689,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10690,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10692,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10694,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10703,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10709,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10713,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10718,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10670,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10676,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10679,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10631,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10606,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10574,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10550,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 10669,
+      "status": "skipped",
+      "commit": null,
+      "note": "same Sentry stack as #10643 (RenderGroundSystem.GetTerrainBounds NRE after an empty terrain load), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 409b006); verify there before treating it as a regression"
+    },
+    {
+      "number": 10671,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed in the open draft PR https://github.com/decentraland/unity-explorer/pull/10687 (2026-W47 sweep, commit a70765e; that week's state ref no longer exists)"
+    },
+    {
+      "number": 10683,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed in the open draft PR https://github.com/decentraland/unity-explorer/pull/10687 (2026-W47 sweep, commit b63d083; that week's state ref no longer exists)"
+    },
+    {
+      "number": 10674,
+      "status": "skipped",
+      "commit": null,
+      "note": "same defect as #10653/#10661 (CRDT AddLwwMessage ArgumentOutOfRange from a pooled list re-released after dispose), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 03e8824); verify there before treating it as a regression"
+    },
+    {
+      "number": 10697,
+      "status": "skipped",
+      "commit": null,
+      "note": "same defect as #10653/#10661 (CRDT AddLwwMessage ArgumentOutOfRange after a scene disposed right after start; reported on v0.198.0, which does not contain the fix), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 03e8824)"
+    },
+    {
+      "number": 10680,
+      "status": "skipped",
+      "commit": null,
+      "note": "same defect as #10633 (FMOD 'Error loading file' on Sound creation, only the clip name differs), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 804c6a3); verify there before treating it as a regression"
+    },
+    {
+      "number": 10695,
+      "status": "skipped",
+      "commit": null,
+      "note": "same defect as #10617 (NRE in ResetOriginalMaterials from RunCleanup), already fixed in the open 2026-w45 sweep PR https://github.com/decentraland/unity-explorer/pull/10624 (commit 59d16bb), not yet on dev"
+    },
+    {
+      "number": 10636,
+      "status": "skipped",
+      "commit": null,
+      "note": "already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit bd98244)"
+    },
+    {
+      "number": 10716,
+      "status": "skipped",
+      "commit": null,
+      "note": "in flight: open PR https://github.com/decentraland/unity-explorer/pull/10717 closes it"
+    },
+    {
+      "number": 10685,
+      "status": "skipped",
+      "commit": null,
+      "note": "not Explorer client code: the error dialog is the launcher's (v1.24.3) and the Smart App Control workaround points at code-signing/reputation of the released binaries, which lives in the release signing pipeline and the launcher repo"
+    },
+    {
+      "number": 10698,
+      "status": "skipped",
+      "commit": null,
+      "note": "tech-debt proposal with options explicitly left to evaluate later (Unleash write-time validation, proxy, detective job, client warning); picking one is a team decision, not a bug fix"
+    },
+    {
+      "number": 10706,
+      "status": "skipped",
+      "commit": null,
+      "note": "no root cause: the attached Player.log is not from a crashing run (no stack, signal or crash-handler output), so the Metal shader warnings it shows are suspects only; needs a crash log from the affected Mac"
+    }
   ]
- ],
- "issues": [
-  {
-   "number": 4894,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 8721,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10704,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10688,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10689,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10690,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10692,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10694,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10703,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10709,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10713,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10718,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10670,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10676,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10679,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10631,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10606,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10574,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10550,
-   "status": "pending",
-   "commit": null,
-   "note": null
-  },
-  {
-   "number": 10669,
-   "status": "skipped",
-   "commit": null,
-   "note": "same Sentry stack as #10643 (RenderGroundSystem.GetTerrainBounds NRE after an empty terrain load), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 409b006); verify there before treating it as a regression"
-  },
-  {
-   "number": 10671,
-   "status": "skipped",
-   "commit": null,
-   "note": "already fixed in the open draft PR https://github.com/decentraland/unity-explorer/pull/10687 (2026-W47 sweep, commit a70765e; that week's state ref no longer exists)"
-  },
-  {
-   "number": 10683,
-   "status": "skipped",
-   "commit": null,
-   "note": "already fixed in the open draft PR https://github.com/decentraland/unity-explorer/pull/10687 (2026-W47 sweep, commit b63d083; that week's state ref no longer exists)"
-  },
-  {
-   "number": 10674,
-   "status": "skipped",
-   "commit": null,
-   "note": "same defect as #10653/#10661 (CRDT AddLwwMessage ArgumentOutOfRange from a pooled list re-released after dispose), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 03e8824); verify there before treating it as a regression"
-  },
-  {
-   "number": 10697,
-   "status": "skipped",
-   "commit": null,
-   "note": "same defect as #10653/#10661 (CRDT AddLwwMessage ArgumentOutOfRange after a scene disposed right after start; reported on v0.198.0, which does not contain the fix), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 03e8824)"
-  },
-  {
-   "number": 10680,
-   "status": "skipped",
-   "commit": null,
-   "note": "same defect as #10633 (FMOD 'Error loading file' on Sound creation, only the clip name differs), already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit 804c6a3); verify there before treating it as a regression"
-  },
-  {
-   "number": 10695,
-   "status": "skipped",
-   "commit": null,
-   "note": "same defect as #10617 (NRE in ResetOriginalMaterials from RunCleanup), already fixed in the open 2026-w45 sweep PR https://github.com/decentraland/unity-explorer/pull/10624 (commit 59d16bb), not yet on dev"
-  },
-  {
-   "number": 10636,
-   "status": "skipped",
-   "commit": null,
-   "note": "already fixed in the open 2026-w46 sweep PR https://github.com/decentraland/unity-explorer/pull/10668 (commit bd98244)"
-  },
-  {
-   "number": 10716,
-   "status": "skipped",
-   "commit": null,
-   "note": "in flight: open PR https://github.com/decentraland/unity-explorer/pull/10717 closes it"
-  },
-  {
-   "number": 10685,
-   "status": "skipped",
-   "commit": null,
-   "note": "not Explorer client code: the error dialog is the launcher's (v1.24.3) and the Smart App Control workaround points at code-signing/reputation of the released binaries, which lives in the release signing pipeline and the launcher repo"
-  },
-  {
-   "number": 10698,
-   "status": "skipped",
-   "commit": null,
-   "note": "tech-debt proposal with options explicitly left to evaluate later (Unleash write-time validation, proxy, detective job, client warning); picking one is a team decision, not a bug fix"
-  },
-  {
-   "number": 10706,
-   "status": "skipped",
-   "commit": null,
-   "note": "no root cause: the attached Player.log is not from a crashing run (no stack, signal or crash-handler output), so the Metal shader warnings it shows are suspects only; needs a crash log from the affected Mac"
-  }
- ]
 }
