@@ -86,9 +86,9 @@
     },
     {
       "number": 10670,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0 + Sentry UNITY-EXPLORER-QV7 (11 events/2 users, v0.197.0, no new comments): DecentralandIdentity.Sign throws once the session outlives its expiration and nothing in-world watches Expiration (only startup/auth checks IsExpired, Notifications polls skip), so every signed request (here Explore live-events poll) fails; this is a real broken state, not noise, so demoting it at the gateway would hide it, and guarding one caller just moves the report to the next signed request; the real fix is an in-world expiry flow (re-login prompt vs forced logout), a product decision. "
     },
     {
       "number": 10676,
