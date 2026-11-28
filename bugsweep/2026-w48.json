@@ -38,9 +38,9 @@
     },
     {
       "number": 10689,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Engine-internal FMOD log with no managed frames (FMOD_ERR_CHANNEL_STOLEN): Unity polls a voice that FMOD stole because the 512 virtual-voice pool (ProjectSettings/AudioManager m_VirtualVoiceCount) ran out. Sentry R5J: 1 user, 1123 events over 11h at the 1/s debounce rate, with no scene tag and only a 404 media-stream retry in the breadcrumbs. Earlier occurrences #7707 and #10361 were never fixed (Sentry auto-resolved one; the other was closed as a duplicate). Voice exhaustion means audio actually drops, and it could be scene content or a client AudioSource leak, so a gateway filter would hide a possibly real defect. Needs a repro with an audio voice count to tell which. "
     },
     {
       "number": 10690,
