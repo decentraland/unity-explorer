@@ -104,9 +104,9 @@
     },
     {
       "number": 10631,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0: the popup text ('This item isn't ready yet', 'Come back later') is in no file under Explorer/Assets (code, prefabs, assets), so the fishing-style dialog is Genesis Plaza scene UI content; needs the scene owner, not a client fix. "
     },
     {
       "number": 10606,
