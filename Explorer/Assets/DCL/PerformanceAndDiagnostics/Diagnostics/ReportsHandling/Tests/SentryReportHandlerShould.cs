@@ -101,6 +101,33 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
+        public void DropSceneConsoleErrorsLoggedByDebugLog()
+        {
+            var @event = new SentryEvent
+            {
+                Message = "06:02:12.777 - <color=#E64C59>[JAVASCRIPT] (-77, 77)</color>: SceneError: Fehler beim Abrufen der Daten vom Server stackTrace:     at HostDelegate.<anonymous> (<anonymous>)",
+            };
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherJavaScriptErrorsLoggedByDebugLog()
+        {
+            var @event = new SentryEvent { Message = "06:02:12.777 - <color=#E64C59>[JAVASCRIPT] (-77, 77)</color>: Scene code failed to evaluate" };
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepSceneErrorTextOutsideTheJavaScriptCategory()
+        {
+            var @event = new SentryEvent { Message = "06:02:12.777 - <color=#4C80E6>[SCENE_LOADING]</color>: SceneError: Fehler beim Abrufen der Daten vom Server" };
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
         public void DropDiskFullEvenWhenUnobservedTaskWrapsIt()
         {
             var @event = new SentryEvent(new AggregateException(new IOException("Disk full. Path /Users/jane/userdata_0.json")));
