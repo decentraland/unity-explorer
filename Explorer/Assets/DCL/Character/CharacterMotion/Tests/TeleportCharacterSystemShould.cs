@@ -113,6 +113,13 @@ namespace DCL.Character.CharacterMotion.Tests
             teleportBroadcast!.DidNotReceive().BroadcastTeleport(Arg.Any<Vector3>());
         }
 
+        [TestCase(true, false, ExpectedResult = true)]
+        [TestCase(true, true, ExpectedResult = false)]
+        [TestCase(false, true, ExpectedResult = false)]
+        [TestCase(false, false, ExpectedResult = false)]
+        public bool FailOnTimeoutOnlyWhenNotCancelled(bool timedOut, bool isCancelled) =>
+            TeleportCharacterSystem.ShouldFailOnTimeout(timedOut, isCancelled);
+
         [Test]
         public void PreserveIsGroundedOnInPlaceRotation()
         {
