@@ -98,9 +98,9 @@
     },
     {
       "number": 10679,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0 (issue only had QA labels removed on 11-25, no comments): Lobby landing card, Jump Back In and Recommended rails and the Places modal all request with_connected_users=true from /destinations and render the same connected_addresses?.Length ?? user_count (LobbyDocumentController.ShowPlaceCard, PlaceCardView, PlaceDetailPanelView), and Lobby refetches on each show; the only differing count (Claim Bite 5 vs 14) is unconfirmed by the issue itself and is explained by two live fetches at different times, so there is no client logic divergence to fix. "
     },
     {
       "number": 10631,
