@@ -116,9 +116,9 @@
     },
     {
       "number": 10574,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0: DCL/SpringBones registration has no per-category gating (so the earring/hands vs hair difference is not a slot filter), no spring-bone changes since; the root cause depends on the specific GLBs' joint lists vs GPU skinning bone mapping and those GLBs are only in Slack, so it cannot be diagnosed or tested without them. "
     },
     {
       "number": 10550,
