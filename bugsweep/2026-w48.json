@@ -26,9 +26,9 @@
     },
     {
       "number": 10704,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Separate from #8721 (that one is a duplicate report; this is post-failure state recovery). The same-realm path (RealmNavigator.TeleportToParcelAsync -> MoveToParcelInSameRealmTeleportOperation) has no rollback: while pending, CheckCameraQualifiedForRepartitioningSystem points scene partitioning at the destination (source scene unloads) and TeleportCharacterSystem pins the avatar at the destination, and on timeout it only removes the intent. Restoring the source would need a rollback across RealmNavigator, partitioning and scene readiness (keep the source until commit, or re-teleport after failure), which is not a minimal local fix. The reported state (avatar still at 100,100) also contradicts that code path, and the issue says the cause of the timeout is unknown, so the failing stage needs the instrumented repro the issue asks for. "
     },
     {
       "number": 10688,
