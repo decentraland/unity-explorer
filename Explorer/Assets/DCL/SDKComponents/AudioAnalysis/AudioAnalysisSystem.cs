@@ -84,11 +84,9 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
+            // No audio source yet is a normal wait, not an error: the clip is still loading, or the LiveKit stream has no audio track published
             if (!component.TryAttachAudioFrameBuffer())
-            {
-                ReportHub.LogError(GetReportCategory(), "Cannot attach the audio frame buffer");
                 return;
-            }
 
             if (component.TryConsumeAudioFrame(frameScratch, out _, out int sampleCount))
             {
