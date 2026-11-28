@@ -110,9 +110,9 @@
     },
     {
       "number": 10606,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0: the failure is in UUAV native Rust (native/src/playback/input.rs picks the video stream via av_find_best_stream without skipping attached-pic cover art, then video_decoder_macos.rs rejects mjpeg); the C# side has no stream-selection/audio-only option, and the fix needs a Rust change plus rebuilding and recommitting the prebuilt macOS dylibs (libuuav*.dylib), which cannot be built or verified here. "
     },
     {
       "number": 10574,
