@@ -92,9 +92,9 @@
     },
     {
       "number": 10676,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0 + latest Sentry event of UNITY-EXPLORER-R4Q (15 events, 1 user, v0.197.0, burst ~0.2s after Main scene load): SentryReportHandler.BeforeSend already demotes this exact message (TASK_ALREADY_COMPLETED_MESSAGE, shipped since W38/#10275, present in v0.197.0) and SentryOptions.asset keeps auto-init off, yet the event carries no 'category' tag that BeforeSend always sets and no 'BeforeSend callback failed' breadcrumb, so it reached Sentry without going through our gateway (thrown inside the SDK's own SerializeHeaderAsync); no client-side filter point reaches it, needs a Sentry SDK upgrade/upstream look. "
     },
     {
       "number": 10679,
