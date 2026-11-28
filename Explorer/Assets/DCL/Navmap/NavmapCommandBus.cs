@@ -55,7 +55,7 @@ namespace DCL.Navmap
                 ClearPlacesFromMap();
 
             if (!place.IsWorld)
-                MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
+                MoveCameraTo(place.base_position_processed, CAMERA_MOVE_SPEED);
 
             await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel, landOnOriginalParcel), ct);
 

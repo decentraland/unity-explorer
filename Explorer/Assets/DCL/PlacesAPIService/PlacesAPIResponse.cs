@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.PlacesAPIService
 {
@@ -162,20 +163,25 @@ namespace DCL.PlacesAPIService
                     Positions = Array.Empty<Vector2Int>();
                 else
                 {
-                    Positions = new Vector2Int[positions.Length];
+                    var parsedPositions = new Vector2Int[positions.Length];
+                    var parsedCount = 0;
 
-                    for (var i = 0; i < positions.Length; i++)
-                    {
-                        string[] split = positions[i].Split(',');
-                        Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
-                    }
+                    // The API can serve malformed entries (e.g. a parcel split into ["-23", "-96"]);
+                    // they are dropped so one bad place does not fail the whole response
+                    foreach (string position in positions)
+                        if (VectorUtilities.TryParseVector2Int(position, out Vector2Int parcel))
+                            parsedPositions[parsedCount++] = parcel;
+
+                    if (parsedCount < parsedPositions.Length)
+                        Array.Resize(ref parsedPositions, parsedCount);
+
+                    Positions = parsedPositions;
                 }
 
                 if (string.IsNullOrEmpty(base_position))
                     return;
 
-                string[] splitBasePosition = base_position.Split(',');
-                base_position_processed = new Vector2Int(int.Parse(splitBasePosition[0]), int.Parse(splitBasePosition[1]));
+                VectorUtilities.TryParseVector2Int(base_position, out base_position_processed);
             }
 
             [Serializable]
