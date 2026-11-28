@@ -122,9 +122,9 @@
     },
     {
       "number": 10550,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "Re-checked origin/dev 405034af0 (only screenshots added since): PulseRealm.EnsureResolvedAsync derives the local room key 'lsd:'+preview scene id from POST /content/entities/active, a shared contract every party must compute identically; the smart-wearable preview returns [] for the parcel, so the client cannot pick a realm unilaterally; fix belongs in js-sdk-toolchain (sdk-commands start server endpoints.ts) to return a scene-like entity for the preview pointers. "
     },
     {
       "number": 10669,
