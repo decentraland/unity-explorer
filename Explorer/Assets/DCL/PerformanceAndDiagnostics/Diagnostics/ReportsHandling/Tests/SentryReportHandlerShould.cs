@@ -66,6 +66,26 @@ namespace DCL.Diagnostics.Tests
             }
         }
 
+        // A request to a loopback port nothing listens on fails like an unreachable local scene preview server (#10718)
+        private static async Task<UnityWebRequestException> NewUnreachableHostExceptionAsync()
+        {
+            var probe = new TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            int port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+
+            using UnityWebRequest request = UnityWebRequest.Get($"http://127.0.0.1:{port}/about");
+            UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+            DateTime deadline = DateTime.UtcNow.AddSeconds(10);
+
+            while (!operation.isDone && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.That(request.error, Is.EqualTo(TransientWebRequestFailure.CANNOT_CONNECT_ERROR), "Nothing should be listening on the probed port");
+
+            return new UnityWebRequestException(request);
+        }
+
         private static async Task ServeOneResponseAsync(HttpListener listener, int statusCode)
         {
             HttpListenerContext context = await listener.GetContextAsync().ConfigureAwait(false);
@@ -96,6 +116,33 @@ namespace DCL.Diagnostics.Tests
         public void KeepOtherNativeMessages()
         {
             var @event = new SentryEvent { Message = "Shader error in 'Custom/Toon': undeclared identifier" };
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void DropSceneConsoleErrorsLoggedByDebugLog()
+        {
+            var @event = new SentryEvent
+            {
+                Message = "06:02:12.777 - <color=#E64C59>[JAVASCRIPT] (-77, 77)</color>: SceneError: Fehler beim Abrufen der Daten vom Server stackTrace:     at HostDelegate.<anonymous> (<anonymous>)",
+            };
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepOtherJavaScriptErrorsLoggedByDebugLog()
+        {
+            var @event = new SentryEvent { Message = "06:02:12.777 - <color=#E64C59>[JAVASCRIPT] (-77, 77)</color>: Scene code failed to evaluate" };
+
+            Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public void KeepSceneErrorTextOutsideTheJavaScriptCategory()
+        {
+            var @event = new SentryEvent { Message = "06:02:12.777 - <color=#4C80E6>[SCENE_LOADING]</color>: SceneError: Fehler beim Abrufen der Daten vom Server" };
 
             Assert.IsNotNull(SentryReportHandler.BeforeSend(@event));
         }
@@ -297,6 +344,14 @@ namespace DCL.Diagnostics.Tests
         {
             var @event = new SentryEvent(new InvalidOperationException("Error fetching search places info:", await NewFailedRequestExceptionAsync(502)));
             @event.SetTag("category", ReportCategory.UI);
+
+            Assert.IsNull(SentryReportHandler.BeforeSend(@event));
+        }
+
+        [Test]
+        public async Task DropUnreachableHostWithStartupDefaults()
+        {
+            var @event = new SentryEvent(await NewUnreachableHostExceptionAsync());
 
             Assert.IsNull(SentryReportHandler.BeforeSend(@event));
         }

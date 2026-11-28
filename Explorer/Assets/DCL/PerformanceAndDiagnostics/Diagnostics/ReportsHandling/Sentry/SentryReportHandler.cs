@@ -37,6 +37,11 @@ namespace DCL.Diagnostics.Sentry
             "Platform does not support compute shaders",
         };
 
+        // A scene's own console.error, which Init.js marks with "SceneError: ": scene content, never a client defect (#10694).
+        // It reaches Sentry as the DebugLog handler's Unity log line (timestamp, then the colored "[JAVASCRIPT]" tag), captured by the SDK's log integration
+        private const string JAVASCRIPT_DEBUG_LOG_TAG = ">[" + ReportCategory.JAVASCRIPT + "]";
+        private const string SCENE_CONSOLE_ERROR_MARKER = "</color>: SceneError: ";
+
         // Errors raised by scene code inside the ClearScript engine, matched by name so this assembly does not reference the engine (#10088, #10125)
         private const string SCRIPT_ENGINE_EXCEPTION_TYPE = "Microsoft.ClearScript.ScriptEngineException";
 
@@ -296,7 +301,7 @@ namespace DCL.Diagnostics.Sentry
 
             string? message = @event.Message?.Formatted ?? @event.Message?.Message;
 
-            if (message != null && IsIgnoredNativeMessage(message))
+            if (message != null && (IsIgnoredNativeMessage(message) || IsSceneConsoleError(message)))
                 return Demote(message);
 
             if (@event.Exception != null && IsIgnoredException(@event.Exception, isLocalSceneDevelopment, isOffline))
@@ -321,6 +326,12 @@ namespace DCL.Diagnostics.Sentry
                     return true;
 
             return false;
+        }
+
+        private static bool IsSceneConsoleError(string message)
+        {
+            int tagIndex = message.IndexOf(JAVASCRIPT_DEBUG_LOG_TAG, StringComparison.Ordinal);
+            return tagIndex >= 0 && message.IndexOf(SCENE_CONSOLE_ERROR_MARKER, tagIndex, StringComparison.Ordinal) >= 0;
         }
 
         private static bool IsIgnoredException(Exception exception, bool isLocalSceneDevelopment, bool isOffline)

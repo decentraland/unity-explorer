@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly RoomSource roomId;
         private readonly CancellationTokenSource cts;
 
-        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
+        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, string, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
 
         private bool isDisposed;
 
@@ -77,7 +77,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
                 var name = packet.MessageCase;
-                NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
+                // The participant is pooled by LiveKit and cleared on room reconnection, so its identity must be read before leaving the callback
+                NotifySubscribersAsync(name, packet, participant.Identity, topic, cts.Token).Forget();
             }
             catch (InvalidProtocolBufferException)
             {
@@ -94,7 +95,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, LKParticipant participant, string topic, CancellationToken ctsToken)
+        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, string fromIdentity, string topic, CancellationToken ctsToken)
         {
             try
             {
@@ -108,10 +109,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 if (r.strict is IMessagePipe.ThreadStrict.MainThreadOnly)
                     await UniTask.SwitchToMainThread();
 
-                foreach (Action<(Packet, LKParticipant, string)>? action in r.list)
+                foreach (Action<(Packet, string, string)>? action in r.list)
                 {
                     ctsToken.ThrowIfCancellationRequested();
-                    action((packet, participant, topic));
+                    action((packet, fromIdentity, topic));
                 }
             }
             catch (OperationCanceledException) { }
@@ -132,7 +133,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
-                        LKParticipant participant = tuple.Item2!;
+                        string fromIdentity = tuple.Item2!;
                         string topic = tuple.Item3!;
 
                         uint version = packet.ProtocolVersion;
@@ -141,7 +142,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         {
                             ReportHub.LogWarning(
                                 ReportCategory.LIVEKIT,
-                                $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
+                                $"Received message with unsupported version {version} from {fromIdentity} with type {packet.MessageCase}"
                             );
 
                             return;
@@ -153,7 +154,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         {
                             ReportHub.LogError(
                                 ReportCategory.LIVEKIT,
-                                $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
+                                $"Received invalid message from {fromIdentity} with type {packet.MessageCase}"
                             );
 
                             return;
@@ -162,7 +163,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         var receivedMessage = new ReceivedMessage<T>(
                             payload,
                             packet,
-                            participant.Identity,
+                            fromIdentity,
                             multiPool,
                             roomId,
                             topic
@@ -173,17 +174,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
-        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
+        private (List<Action<(Packet, string, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
-                subscribers[typeName] = item = (new List<Action<(Packet, LKParticipant, string)>>(), threadStrict);
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, string, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+                subscribers[typeName] = item = (new List<Action<(Packet, string, string)>>(), threadStrict);
 
             return item;
         }
 
-        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
+        private (List<Action<(Packet, string, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, string, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
                 return null;
 
             return item;

@@ -60,6 +60,13 @@ namespace DCL.CharacterMotion.Systems
             this.teleportBroadcast = teleportBroadcast;
         }
 
+        /// <summary>
+        ///     Cancellation takes precedence over the intent's own deadline: a cancelled intent resolves as cancelled
+        ///     even when the deadline has lapsed by the time it is processed
+        /// </summary>
+        internal static bool ShouldFailOnTimeout(bool timedOut, bool isCancelled) =>
+            timedOut && !isCancelled;
+
         protected override void Update(float t)
         {
             TeleportPlayerQuery(World);
@@ -73,7 +80,9 @@ namespace DCL.CharacterMotion.Systems
         {
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
-            if (teleportIntent.TimedOut)
+            bool isCancelled = teleportIntent.CancellationToken.IsCancellationRequested;
+
+            if (ShouldFailOnTimeout(teleportIntent.TimedOut, isCancelled))
             {
                 var exception = new TimeoutException("Teleport timed out");
                 loadReport?.SetException(exception);
@@ -82,7 +91,7 @@ namespace DCL.CharacterMotion.Systems
                 return;
             }
 
-            if (teleportIntent.CancellationToken.IsCancellationRequested)
+            if (isCancelled)
             {
                 loadReport?.SetCancelled();
                 ResolveAsCancelled(entity, in teleportIntent);

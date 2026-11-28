@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
                     new PlayerOriginRaycastResultForSceneEntities(),
                     new PlayerOriginRaycastResultForGlobalEntities(),
                     new HoverStateComponent(),
-                    new HoverFeedbackComponent(hoverCanvas.TooltipsCount),
+                    new HoverFeedbackComponent(hoverCanvas.MaxTooltipsCount),
                     new ProximityResultForSceneEntities(),
                     new SyntheticPointerInput()),
                 builder.World, arguments.PlayerEntity);
