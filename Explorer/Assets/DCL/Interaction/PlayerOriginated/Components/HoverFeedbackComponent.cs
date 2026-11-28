@@ -37,8 +37,16 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// </summary>
         private readonly List<Tooltip> tooltips;
 
+        private readonly int maxTooltips;
+
+        /// <summary>
+        ///     Tooltips beyond the maximum are dropped as the hover canvas has no layout to show them
+        /// </summary>
         public void Add(in Tooltip tooltip)
         {
+            if (tooltips.Count >= maxTooltips)
+                return;
+
             tooltips.Add(tooltip);
         }
 
@@ -52,10 +60,12 @@ namespace DCL.Interaction.PlayerOriginated.Components
             tooltips.Clear();
         }
 
-        public HoverFeedbackComponent(int tooltipsCapacity) : this()
+        public HoverFeedbackComponent(int maxTooltips) : this()
         {
+            this.maxTooltips = maxTooltips;
+
             // tolerate the allocation as this components exists in a single instance in the global world
-            tooltips = new List<Tooltip>(tooltipsCapacity);
+            tooltips = new List<Tooltip>(maxTooltips);
         }
     }
 }

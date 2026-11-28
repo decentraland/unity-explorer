@@ -68,7 +68,10 @@ namespace DCL.Interaction.HoverCanvas.UI
         private int lastLayoutCount = -1;
         private bool lastLayoutIsProximity;
 
-        public int TooltipsCount => tooltips.Count;
+        /// <summary>
+        ///     The largest tooltip count a layout exists for
+        /// </summary>
+        public int MaxTooltipsCount => CURSOR_LAYOUTS.Length;
 
         public void Initialize()
         {
