@@ -21,6 +21,10 @@ namespace DCL.Diagnostics.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options)
         {
+            // Builds enable the SDK at startup, before SentryReportHandler installs its own gateway, so events of that window
+            // (e.g. the local scene preview server being unreachable during the abgen warm-up, #10718) must pass the same filter
+            options.SetBeforeSend(@event => SentryReportHandler.BeforeSend(@event));
+
             // Implements custom ANR tracing with minidumps and callstack collection
             SentryMonoBehaviour monoInstance = SentryMonoBehaviour.Instance;
             DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
